@@ -7,6 +7,14 @@
 
 <p align="center"><b>English</b> | <a href="README.ja.md">日本語</a></p>
 
+- **Website / docs:** <https://informanellica.github.io/vanilla-closedcode/>
+- **User manual:** <https://informanellica.github.io/vanilla-closedcode/manual.html>
+- **API documentation:** <https://informanellica.github.io/vanilla-closedcode/src/>
+- **Download (latest release):** <https://github.com/informanellica/vanilla-closedcode/releases/latest>
+- **Changelog:** <https://github.com/informanellica/vanilla-closedcode/releases>
+
+Runs on **Windows** and **macOS** (Apple Silicon).
+
 ## What This Fork Is
 
 ClosedCode keeps the opencode-style terminal/client-server workflow, but the LLM path is local-only.

@@ -23,7 +23,7 @@
     hero_lead: { en: 'vanilla-closedcode is a desktop coding assistant that runs entirely against your <strong>local LLM</strong>. Your code, prompts, and project context never leave your machine — no cloud API keys, no remote inference, no telemetry.', ja: 'vanilla-closedcode は、<strong>ローカル LLM</strong> だけで動作するコーディングアシスタントです。コード・プロンプト・プロジェクトの内容が端末の外に出ることはありません — クラウド API キー不要、リモート推論なし、テレメトリなし。' },
     btn_download: { en: "Download", ja: "ダウンロード" },
     btn_apidocs: { en: "API Documentation", ja: "API ドキュメント" },
-    hero_badges: { en: '<i class="bi bi-shield-lock me-1"></i>100% local inference <span class="mx-1">/</span> <i class="bi bi-laptop me-1"></i>Desktop app + CLI', ja: '<i class="bi bi-shield-lock me-1"></i>100% ローカル推論 <span class="mx-1">/</span> <i class="bi bi-laptop me-1"></i>デスクトップアプリ＋CLI' },
+    hero_badges: { en: '<i class="bi bi-shield-lock me-1"></i>100% local inference <span class="mx-1">/</span> <i class="bi bi-laptop me-1"></i>Desktop app + CLI <span class="mx-1">/</span> <i class="bi bi-windows me-1"></i>Windows <i class="bi bi-apple ms-2 me-1"></i>macOS', ja: '<i class="bi bi-shield-lock me-1"></i>100% ローカル推論 <span class="mx-1">/</span> <i class="bi bi-laptop me-1"></i>デスクトップアプリ＋CLI <span class="mx-1">/</span> <i class="bi bi-windows me-1"></i>Windows <i class="bi bi-apple ms-2 me-1"></i>macOS' },
 
     // highlights
     sec_highlights: { en: "Highlights", ja: "特長" },

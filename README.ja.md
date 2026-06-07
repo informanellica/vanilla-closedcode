@@ -7,6 +7,14 @@
 
 <p align="center"><a href="README.md">English</a> | <b>日本語</b></p>
 
+- **公式サイト / ドキュメント:** <https://informanellica.github.io/vanilla-closedcode/>
+- **ユーザーマニュアル:** <https://informanellica.github.io/vanilla-closedcode/manual.html>
+- **API ドキュメント:** <https://informanellica.github.io/vanilla-closedcode/src/>
+- **ダウンロード（最新リリース）:** <https://github.com/informanellica/vanilla-closedcode/releases/latest>
+- **更新履歴:** <https://github.com/informanellica/vanilla-closedcode/releases>
+
+対応 OS: **Windows** / **macOS**（Apple Silicon）。
+
 ## このフォークについて
 
 ClosedCode は opencode 由来のターミナル / クライアント・サーバー型ワークフローを維持しつつ、
