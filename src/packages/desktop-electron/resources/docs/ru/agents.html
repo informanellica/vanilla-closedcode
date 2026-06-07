@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Агенты — vanilla-closedcode docs</title>
+  <meta name="description" content="Настройте и используйте специализированные агенты.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html" selected>Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Агенты</h1>
+      <p class="lede">Настройте и используйте специализированные агенты.</p>
+      <p>Агенты — это специализированные ИИ-помощники, которых можно настроить для конкретных задач и рабочих процессов. Они позволяют создавать специализированные инструменты с настраиваемыми подсказками, моделями и доступом к инструментам.</p>
+<aside class="aside aside-tip">
+Используйте агент плана для анализа кода и просмотра предложений без внесения каких-либо изменений в код.
+</aside>
+Вы можете переключаться между агентами во время сеанса или вызывать их с помощью упоминания `@`.
+
+<hr>
+<h2>Типы</h2>
+<p>В closedcode есть два типа агентов; Первичные агенты и субагенты.</p>
+<hr>
+<h3>Первичные агенты</h3>
+<p>Первичные агенты — это основные помощники, с которыми вы взаимодействуете напрямую. Вы можете переключаться между ними, используя клавишу <strong>Tab</strong> или настроенную привязку клавиш <code>switch_agent</code>. Эти агенты ведут ваш основной разговор. Доступ к инструментам настраивается с помощью разрешений — например, при сборке все инструменты включены, а при планировании — ограничены.</p>
+<aside class="aside aside-tip">
+Вы можете использовать клавишу **Tab** для переключения между основными агентами во время сеанса.
+</aside>
+closedcode поставляется с двумя встроенными основными агентами: **Build** и **Plan**. Мы рассмотрим их ниже.
+
+<hr>
+<h3>Субагенты</h3>
+<p>Субагенты — это специализированные помощники, которых основные агенты могут вызывать для выполнения определенных задач. Вы также можете вызвать их вручную, <strong>@ упомянув</strong> их в своих сообщениях.</p>
+<p>closedcode поставляется с двумя встроенными субагентами: <strong>General</strong> и <strong>Explore</strong>. Мы рассмотрим это ниже.</p>
+<hr>
+<h2>Встроенные агенты</h2>
+<p>closedcode поставляется с двумя встроенными основными агентами и двумя встроенными субагентами.</p>
+<hr>
+<h3>Использование Build</h3>
+<p><em>Режим</em>: <code>primary</code></p>
+<p>Build — основной агент <strong>по умолчанию</strong> со всеми включенными инструментами. Это стандартный агент для разработки, где вам необходим полный доступ к файловым операциям и системным командам.</p>
+<hr>
+<h3>Использование Plan</h3>
+<p><em>Режим</em>: <code>primary</code></p>
+<p>Агент с ограниченным доступом, предназначенный для планирования и анализа. Мы используем систему разрешений, чтобы предоставить вам больше контроля и предотвратить непреднамеренные изменения.
+По умолчанию для всех следующих параметров установлено значение <code>ask</code>:</p>
+<ul>
+<li><code>file edits</code>: Все записи, исправления и изменения.</li>
+<li><code>bash</code>: все команды bash.</li>
+</ul>
+<p>Этот агент полезен, если вы хотите, чтобы LLM анализировал код, предлагал изменения или создавал планы без внесения каких-либо фактических изменений в вашу кодовую базу.</p>
+<hr>
+<h3>Использование General</h3>
+<p><em>Режим</em>: <code>subagent</code></p>
+<p>Универсальный агент для исследования сложных вопросов и выполнения многоэтапных задач. Имеет полный доступ к инструментам (кроме задач), поэтому при необходимости может вносить изменения в файлы. Используйте это для параллельного выполнения нескольких единиц работы.</p>
+<hr>
+<h3>Использование Explore</h3>
+<p><em>Режим</em>: <code>subagent</code></p>
+<p>Быстрый агент только для чтения для изучения кодовых баз. Невозможно изменить файлы. Используйте это, когда вам нужно быстро найти файлы по шаблонам, выполнить поиск кода по ключевым словам или ответить на вопросы о кодовой базе.</p>
+<hr>
+<h3>Использование Compact</h3>
+<p><em>Режим</em>: <code>primary</code></p>
+<p>Скрытый системный агент, который сжимает длинный контекст в меньшее резюме. Он запускается автоматически при необходимости и не может быть выбран в пользовательском интерфейсе.</p>
+<hr>
+<h3>Использование Title</h3>
+<p><em>Режим</em>: <code>primary</code></p>
+<p>Скрытый системный агент, генерирующий короткие заголовки сессий. Он запускается автоматически и не может быть выбран в пользовательском интерфейсе.</p>
+<hr>
+<h3>Использование Summary</h3>
+<p><em>Режим</em>: <code>primary</code></p>
+<p>Скрытый системный агент, создающий сводки сеансов. Он запускается автоматически и не может быть выбран в пользовательском интерфейсе.</p>
+<hr>
+<h2>Использование</h2>
+<ol>
+<li><p>Для основных агентов используйте клавишу <strong>Tab</strong> для переключения между ними во время сеанса. Вы также можете использовать настроенную привязку клавиш <code>switch_agent</code>.</p>
+</li>
+<li><p>Субагенты могут быть вызваны:</p>
+<ul>
+<li><p><strong>Автоматически</strong> основными агентами для выполнения специализированных задач на основе их описаний.</p>
+</li>
+<li><p>Вручную, <strong>@ упомянув</strong> субагента в своем сообщении. Например.</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>Навигация между сеансами</strong>. Когда субагенты создают свои собственные дочерние сеансы, вы можете перемещаться между родительским сеансом и всеми дочерними сеансами, используя:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (или настроенная вами комбинация клавиш <code>session_child_cycle</code>) для перехода вперед через родительский элемент → дочерний элемент1 → дочерний элемент2 → ... → родительский элемент.</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (или настроенная вами комбинация клавиш <code>session_child_cycle_reverse</code>) для перехода назад по родительскому элементу ← дочерний элемент1 ← дочерний элемент2 ← ... ← родительский элемент</li>
+</ul>
+<p>Это позволяет плавно переключаться между основным разговором и работой специализированного субагента.</p>
+</li>
+</ol>
+<hr>
+<h2>Настройка</h2>
+<p>Вы можете настроить встроенные агенты или создать свои собственные посредством настройки. Агенты можно настроить двумя способами:</p>
+<hr>
+<h3>JSON</h3>
+<p>Настройте агентов в файле конфигурации <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Вы также можете определить агентов, используя файлы Markdown. Поместите их в:</p>
+<ul>
+<li>Глобальный: <code>~/.config/closedcode/agents/</code></li>
+<li>Для каждого проекта: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Имя Markdown файла становится именем агента. Например, <code>review.md</code> создает агент <code>review</code>.</p>
+<hr>
+<h2>Параметры</h2>
+<p>Давайте рассмотрим эти параметры конфигурации подробно.</p>
+<hr>
+<h3>Описание</h3>
+<p>Используйте опцию <code>description</code>, чтобы предоставить краткое описание того, что делает агент и когда его использовать.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>Это <strong>обязательный</strong> параметр конфигурации.</p>
+<hr>
+<h3>Температура</h3>
+<p>Контролируйте случайность и креативность ответов LLM с помощью конфигурации <code>temperature</code>.</p>
+<p>Более низкие значения делают ответы более целенаправленными и детерминированными, а более высокие значения повышают креативность и вариативность.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>Значения температуры обычно находятся в диапазоне от 0,0 до 1,0:</p>
+<ul>
+<li><strong>0,0–0,2</strong>: очень целенаправленные и детерминированные ответы, идеальные для анализа кода и планирования.</li>
+<li><strong>0,3–0,5</strong>: сбалансированные ответы с некоторой креативностью, подходят для общих задач разработки.</li>
+<li><strong>0,6–1,0</strong>: более творческие и разнообразные ответы, полезные для мозгового штурма и исследования.</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Если температура не указана, closedcode использует значения по умолчанию, специфичные для модели; обычно 0 для большинства моделей, 0,55 для моделей Qwen.</p>
+<hr>
+<h3>Максимальное количество шагов</h3>
+<p>Управляйте максимальным количеством агентных итераций, которые агент может выполнить, прежде чем ему придется отвечать только текстом. Это позволяет пользователям, желающим контролировать расходы, устанавливать лимит на агентские действия.</p>
+<p>Если этот параметр не установлен, агент будет продолжать выполнять итерацию до тех пор, пока модель не решит остановиться или пока пользователь не прервет сеанс.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>При достижении лимита агент получает специальную системную подсказку с указанием в ответ краткой информации о своей работе и рекомендуемых оставшихся задачах.</p>
+<aside class="aside aside-caution">
+Устаревшее поле `maxSteps` устарело. Вместо этого используйте `steps`.
+</aside>
+---
+
+<h3>Отключение</h3>
+<p>Установите <code>true</code>, чтобы отключить агент.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Промпт</h3>
+<p>Укажите собственный файл системных приглашений для этого агента с помощью конфигурации <code>prompt</code>. Файл подсказки должен содержать инструкции, специфичные для целей агента.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Этот путь указан относительно того, где находится файл конфигурации. Таким образом, это работает как для глобальной конфигурации closedcode, так и для конфигурации конкретного проекта.</p>
+<hr>
+<h3>Модель</h3>
+<p>Используйте конфигурацию <code>model</code>, чтобы переопределить модель этого агента. Полезно для использования разных моделей, оптимизированных под разные задачи. Например, более быстрая модель планирования и более эффективная модель реализации.</p>
+<aside class="aside aside-tip">
+Если вы не укажете модель, основные агенты будут использовать глобально настроенную модель](/docs/config#models), а субагенты будут использовать модель основного агента, вызвавшего субагент.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>Идентификатор модели в вашей конфигурации closedcode использует формат <code>provider/model-id</code>. Например, если вы используете Ollama, вы должны использовать <code>ollama/gpt-oss:20b</code> для кодекса GPT 5.1.</p>
+<hr>
+<h3>Инструменты</h3>
+<p>Контролируйте, какие инструменты доступны в этом агенте, с помощью конфигурации <code>tools</code>. Вы можете включить или отключить определенные инструменты, установив для них значение <code>true</code> или <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+Конфигурация, специфичная для агента, переопределяет глобальную конфигурацию.
+</aside>
+Вы также можете использовать подстановочные знаки для одновременного управления несколькими инструментами. Например, чтобы отключить все инструменты с сервера MCP:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Подробнее об инструментах</a>.</p>
+<hr>
+<h3>Разрешения</h3>
+<p>Вы можете настроить разрешения, чтобы управлять действиями, которые может выполнять агент. В настоящее время разрешения для инструментов <code>edit</code>, <code>bash</code> и <code>webfetch</code> можно настроить на:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — Запросить подтверждение перед запуском инструмента.</li>
+<li><code>&quot;allow&quot;</code> — Разрешить все операции без одобрения.</li>
+<li><code>&quot;deny&quot;</code> — отключить инструмент</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Вы можете переопределить эти разрешения для каждого агента.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Вы также можете установить разрешения в агентах Markdown.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>Вы можете установить разрешения для определенных команд bash.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Это может использовать glob pattern.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Вы также можете использовать подстановочный знак <code>*</code> для управления разрешениями для всех команд.
+Поскольку последнее правило сопоставления имеет приоритет, сначала поместите подстановочный знак <code>*</code>, а затем конкретные правила.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Подробнее о разрешениях</a>.</p>
+<hr>
+<h3>Режим</h3>
+<p>Управляйте режимом агента с помощью конфигурации <code>mode</code>. Опция <code>mode</code> используется для определения того, как можно использовать агент.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p>Опция <code>mode</code> может быть установлена ​​на <code>primary</code>, <code>subagent</code> или <code>all</code>. Если <code>mode</code> не указан, по умолчанию используется <code>all</code>.</p>
+<hr>
+<h3>Скрытый</h3>
+<p>Скройте субагент из меню автозаполнения <code>@</code> с помощью <code>hidden: true</code>. Полезно для внутренних субагентов, которые другие агенты должны вызывать только программно с помощью инструмента Task.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Это влияет только на видимость пользователя в меню автозаполнения. Скрытые агенты по-прежнему могут быть вызваны моделью с помощью инструмента «Задачи», если разрешения позволяют.</p>
+<aside class="aside aside-note">
+Применяется только к агентам `mode: subagent`.
+</aside>
+---
+
+<h3>Разрешения задач</h3>
+<p>Управляйте тем, какие субагенты агент может вызывать с помощью инструмента задач с помощью <code>permission.task</code>. Использует шаблоны glob для гибкого сопоставления.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Если установлено значение <code>deny</code>, субагент полностью удаляется из описания инструмента «Задача», поэтому модель не будет пытаться его вызвать.</p>
+<aside class="aside aside-tip">
+Правила оцениваются по порядку, и **побеждает последнее подходящее правило**. В приведенном выше примере `orchestrator-planner` соответствует как `*` (запретить), так и `orchestrator-*` (разрешить), но поскольку `orchestrator-*` идет после `*`, результатом будет `allow`.
+</aside>
+<aside class="aside aside-tip">
+Пользователи всегда могут вызвать любой субагент напрямую через меню автозаполнения `@`, даже если разрешения задач агента запрещают это.
+</aside>
+---
+
+<h3>Цвет</h3>
+<p>Настройте внешний вид агента в пользовательском интерфейсе с помощью параметра <code>color</code>. Это влияет на то, как агент будет отображаться в интерфейсе.</p>
+<p>Используйте допустимый шестнадцатеричный цвет (например, <code>#FF5733</code>) или цвет темы: <code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code>.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>Управляйте разнообразием ответов с помощью опции <code>top_p</code>. Альтернатива температуре для контроля случайности.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>Значения варьируются от 0,0 до 1,0. Низкие значения делают ответы более целенаправленными, высокие — более разнообразными.</p>
+<hr>
+<h3>Дополнительно</h3>
+<p>Любые другие параметры, указанные вами в конфигурации вашего агента, будут <strong>передаваться напрямую</strong> поставщику в качестве параметров модели. Это позволяет использовать функции и параметры, специфичные для поставщика.</p>
+<p>Например, с помощью моделей рассуждения OpenAI вы можете контролировать усилия по рассуждению:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>Эти дополнительные параметры зависят от модели и поставщика. Проверьте документацию вашего провайдера на наличие доступных параметров.</p>
+<aside class="aside aside-tip">
+Запустите `closedcode models`, чтобы просмотреть список доступных моделей.
+</aside>
+---
+
+<h2>Создание агентов</h2>
+<p>Вы можете создать новых агентов, используя следующую команду:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Эта интерактивная команда:</p>
+<ol>
+<li>Спрашивает, где сохранить агента: глобально или в проекте.</li>
+<li>Запрашивает описание того, что должен делать агент.</li>
+<li>Создает соответствующий системный промпт и идентификатор.</li>
+<li>Позволяет выбрать, к каким инструментам агент будет иметь доступ.</li>
+<li>Наконец, создает файл Markdown с конфигурацией агента.</li>
+</ol>
+<hr>
+<h2>Варианты использования</h2>
+<p>Вот несколько распространенных случаев использования различных агентов.</p>
+<ul>
+<li><strong>Агент сборки</strong>: полная работа по разработке со всеми включенными инструментами.</li>
+<li><strong>Агент планирования</strong>: анализ и планирование без внесения изменений.</li>
+<li><strong>Агент проверки</strong>: проверка кода с доступом только для чтения и инструментами документирования.</li>
+<li><strong>Агент отладки</strong>: сосредоточен на исследовании с включенными инструментами bash и чтения.</li>
+<li><strong>Агент документов</strong>: запись документации с помощью файловых операций, но без системных команд.</li>
+</ul>
+<hr>
+<h2>Примеры</h2>
+<p>Вот несколько примеров агентов, которые могут оказаться вам полезными.</p>
+<aside class="aside aside-tip">
+У вас есть агент, которым вы хотели бы поделиться? [Отправьте PR](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>Агент документации</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Аудитор безопасности</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

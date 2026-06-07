@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows (WSL) — vanilla-closedcode docs</title>
+  <meta name="description" content="Pokrenite vanilla-closedcode na Windowsu preko WSL-a.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/windows-wsl.html">English</option>
+      <option value="../ar/windows-wsl.html">العربية</option>
+      <option value="../bs/windows-wsl.html" selected>Bosanski</option>
+      <option value="../da/windows-wsl.html">Dansk</option>
+      <option value="../de/windows-wsl.html">Deutsch</option>
+      <option value="../es/windows-wsl.html">Español</option>
+      <option value="../fr/windows-wsl.html">Français</option>
+      <option value="../it/windows-wsl.html">Italiano</option>
+      <option value="../ja/windows-wsl.html">日本語</option>
+      <option value="../ko/windows-wsl.html">한국어</option>
+      <option value="../nb/windows-wsl.html">Norsk</option>
+      <option value="../pl/windows-wsl.html">Polski</option>
+      <option value="../pt-br/windows-wsl.html">Português (BR)</option>
+      <option value="../ru/windows-wsl.html">Русский</option>
+      <option value="../th/windows-wsl.html">ไทย</option>
+      <option value="../tr/windows-wsl.html">Türkçe</option>
+      <option value="../zh-cn/windows-wsl.html">简体中文</option>
+      <option value="../zh-tw/windows-wsl.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li class="active"><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Windows (WSL)</h1>
+      <p class="lede">Pokrenite vanilla-closedcode na Windowsu preko WSL-a.</p>
+      <p>Iako vanilla-closedcode moze raditi direktno na Windowsu, preporucujemo <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a> za najbolje iskustvo. WSL daje Linux okruzenje koje glatko radi sa vanilla-closedcode funkcijama.</p>
+<aside class="aside aside-tip">
+<p class="aside-label">Zašto WSL?</p>
+WSL nudi bolje performanse fajl sistema, punu terminalsku podrsku i kompatibilnost s razvojnim alatima na koje se vanilla-closedcode oslanja.
+</aside>
+---
+
+<h2>Postavljanje</h2>
+<div class="steps">
+
+
+<ol>
+<li><p><strong>Instalirajte WSL</strong></p>
+<p>Ako vec niste, <a href="https://learn.microsoft.com/en-us/windows/wsl/install">instalirajte WSL</a> prema zvanicnom Microsoft vodicu.</p>
+</li>
+<li><p><strong>Instalirajte vanilla-closedcode u WSL-u</strong></p>
+<p>Kad je WSL spreman, otvorite WSL terminal i preuzmite vanilla-closedcode sa stranice izdanja: <a href="https://github.com/informanellica/vanilla-closedcode/releases">github.com/informanellica/vanilla-closedcode/releases</a>.</p>
+</li>
+<li><p><strong>Koristite vanilla-closedcode iz WSL-a</strong></p>
+<p>Idite u direktorij projekta (Windows fajlovima pristupate preko <code>/mnt/c/</code>, <code>/mnt/d/</code> itd.) i pokrenite vanilla-closedcode.</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/project
+closedcode
+</code></pre>
+</li>
+</ol>
+</div>
+
+<hr>
+<h2>Desktop aplikacija + WSL Server</h2>
+<p>Ako preferirate vanilla-closedcode Desktop aplikaciju, ali zelite da server radi u WSL-u:</p>
+<ol>
+<li><p><strong>Pokrenite server u WSL-u</strong> sa <code>--hostname 0.0.0.0</code> da dozvolite vanjske konekcije:</p>
+<pre><code class="language-bash">closedcode serve --hostname 0.0.0.0 --port 4096
+</code></pre>
+</li>
+<li><p><strong>Povezite Desktop aplikaciju</strong> na <code>http://localhost:4096</code></p>
+</li>
+</ol>
+<aside class="aside aside-note">
+Ako `localhost` ne radi u vasem setupu, povezte se preko WSL IP adrese (u WSL-u: `hostname -I`) i koristite `http://<wsl-ip>:4096`.
+</aside>
+<aside class="aside aside-caution">
+Kada koristite `--hostname 0.0.0.0`, postavite `CLOSEDCODE_SERVER_PASSWORD` da zastitite server.
+
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve --hostname 0.0.0.0
+</code></pre>
+</aside>
+---
+
+<h2>Web klijent + WSL</h2>
+<p>Za najbolje web iskustvo na Windowsu:</p>
+<ol>
+<li><p><strong>Pokrenite <code>closedcode web</code> u WSL terminalu</strong> umjesto u PowerShell-u:</p>
+<pre><code class="language-bash">closedcode web --hostname 0.0.0.0
+</code></pre>
+</li>
+<li><p><strong>Otvorite iz Windows browsera</strong> na <code>http://localhost:&lt;port&gt;</code> (vanilla-closedcode ispisuje URL)</p>
+</li>
+</ol>
+<p>Pokretanje <code>closedcode web</code> iz WSL-a osigurava ispravan pristup fajl sistemu i terminalsku integraciju, a i dalje je dostupno iz Windows browsera.</p>
+<hr>
+<h2>Pristup Windows fajlovima</h2>
+<p>WSL moze pristupiti svim Windows fajlovima kroz <code>/mnt/</code> direktorij:</p>
+<ul>
+<li>Disk <code>C:</code> → <code>/mnt/c/</code></li>
+<li>Disk <code>D:</code> → <code>/mnt/d/</code></li>
+<li>I tako dalje...</li>
+</ul>
+<p>Primjer:</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/Documents/project
+closedcode
+</code></pre>
+<aside class="aside aside-tip">
+Za najgladje iskustvo, razmislite da klonirate/kopirate repo u WSL fajl sistem (npr. pod `~/code/`) i tu pokrenete vanilla-closedcode.
+</aside>
+---
+
+<h2>Savjeti</h2>
+<ul>
+<li>Drzite vanilla-closedcode u WSL-u za projekte na Windows diskovima - pristup fajlovima je jednostavan</li>
+<li>Koristite VS Code <a href="https://code.visualstudio.com/docs/remote/wsl">WSL ekstenziju</a> uz vanilla-closedcode za integrisan tok rada</li>
+<li>Vase vanilla-closedcode konfiguracije i sesije cuvaju se u WSL okruzenju na <code>~/.local/share/closedcode/</code></li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

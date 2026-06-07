@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="使用 vanilla-closedcode 終端機使用者介面。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">使用 vanilla-closedcode 終端機使用者介面。</p>
+      <p>vanilla-closedcode 提供了一個互動式終端機介面（TUI），用於配合 LLM 處理您的專案。</p>
+<p>執行 vanilla-closedcode 即可啟動當前目錄的 TUI。</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>或者您可以為指定的工作目錄啟動它。</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>進入 TUI 後，您可以輸入訊息進行提示。</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>檔案參考</h2>
+<p>您可以使用 <code>@</code> 在訊息中參考檔案。這會在當前工作目錄中進行模糊檔案搜尋。</p>
+<aside class="aside aside-tip">
+您還可以使用 `@` 來參考訊息中的檔案。
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>檔案的內容會自動新增到對話中。</p>
+<hr>
+<h2>Bash 指令</h2>
+<p>以 <code>!</code> 開頭的訊息會作為 shell 指令執行。</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>指令的輸出會作為工具結果新增到對話中。</p>
+<hr>
+<h2>指令</h2>
+<p>使用 vanilla-closedcode TUI 時，您可以輸入 <code>/</code> 後跟指令名稱來快速執行操作。例如：</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>大多數指令還支援以 <code>ctrl+x</code> 作為前導鍵的快速鍵，其中 <code>ctrl+x</code> 是預設前導鍵。<a href="/docs/keybinds">了解更多</a>。</p>
+<p>以下是所有可用的斜線指令：</p>
+<hr>
+<h3>connect</h3>
+<p>將供應商新增到 vanilla-closedcode。允許您從可用的供應商中選擇並新增其 API 金鑰。</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>壓縮當前工作階段。<em>別名</em>：<code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>切換工具執行詳情的顯示。</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>開啟外部編輯器來撰寫訊息。使用 <code>EDITOR</code> 環境變數中設定的編輯器。<a href="#editor-setup">了解更多</a>。</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>退出 vanilla-closedcode。<em>別名</em>：<code>/quit</code>、<code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>將當前對話匯出為 Markdown 並在預設編輯器中開啟。使用 <code>EDITOR</code> 環境變數中設定的編輯器。<a href="#editor-setup">了解更多</a>。</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>顯示說明對話框。</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p>建立或更新 <code>AGENTS.md</code> 檔案。<a href="/docs/rules">了解更多</a>。</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>列出可用模型。</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>開始新的工作階段。<em>別名</em>：<code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>重做之前復原的訊息。僅在使用 <code>/undo</code> 後可用。</p>
+<aside class="aside aside-tip">
+所有檔案變更也會被恢復。
+</aside>
+在內部，這使用 Git 來管理檔案變更。因此您的專案**需要是一個 Git 儲存庫**。
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>列出工作階段並在工作階段之間切換。<em>別名</em>：<code>/resume</code>、<code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>分享當前工作階段。<a href="/docs/share">了解更多</a>。</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>列出可用主題。</p>
+<pre><code class="language-bash">/theme
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>切換對話中思考/推理區塊的可見性。啟用後，您可以看到支援擴充思考的模型的推理過程。</p>
+<aside class="aside aside-note">
+此指令僅控制思考區塊是否**顯示** — 它不會啟用或停用模型的推理能力。要切換實際的推理能力，請使用 `ctrl+t` 循環切換模型變體。
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>復原對話中的最後一條訊息。移除最近的使用者訊息、所有後續回應以及所有檔案變更。</p>
+<aside class="aside aside-tip">
+所做的任何檔案變更也會被還原。
+</aside>
+在內部，這使用 Git 來管理檔案變更。因此您的專案**需要是一個 Git 儲存庫**。
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>快速鍵：</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>取消分享當前工作階段。<a href="/docs/share#un-sharing">了解更多</a>。</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>編輯器設定</h2>
+<p><code>/editor</code> 和 <code>/export</code> 指令都使用 <code>EDITOR</code> 環境變數中指定的編輯器。</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+要使其永久生效，請將其新增到您的 shell 設定檔中；
+`~/.bashrc`、`~/.zshrc` 等。
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+要使其永久生效，請使用**系統內容** &gt; **環境變數**。
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+要使其永久生效，請將其新增到您的 PowerShell 設定檔中。
+</code></pre>
+</div>
+</div>
+
+<p>常用的編輯器選項包括：</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim 編輯器</li>
+<li><code>vim</code> - Vim 編輯器</li>
+<li><code>nano</code> - Nano 編輯器</li>
+<li><code>notepad</code> - Notepad（Windows 記事本）</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+某些編輯器（如 VS Code）需要以 `--wait` 旗標啟動。
+</aside>
+某些編輯器需要命令列參數才能以阻塞模式執行。`--wait` 旗標使編輯器程序阻塞直到關閉。
+
+<hr>
+<h2>設定</h2>
+<p>您可以透過 <code>tui.json</code>（或 <code>tui.jsonc</code>）自訂 TUI 行為。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>這與設定伺服器/執行時行為的 <code>closedcode.json</code> 是分開的。</p>
+<h3>選項</h3>
+<ul>
+<li><code>theme</code> - 設定您的 UI 主題。<a href="/docs/themes">了解更多</a>。</li>
+<li><code>keybinds</code> - 自訂鍵盤快速鍵。<a href="/docs/keybinds">了解更多</a>。</li>
+<li><code>scroll_acceleration.enabled</code> - 啟用 macOS 風格的捲動加速，實現平滑、自然的捲動體驗。啟用後，快速捲動時速度會增加，慢速移動時保持精確。<strong>此設定優先於 <code>scroll_speed</code>，啟用時會覆蓋它。</strong></li>
+<li><code>scroll_speed</code> - 控制使用捲動指令時 TUI 的捲動速度（最小值：<code>0.001</code>，支援小數值）。預設為 <code>3</code>。<strong>注意：如果 <code>scroll_acceleration.enabled</code> 設定為 <code>true</code>，則此設定會被忽略。</strong></li>
+<li><code>diff_style</code> - 控制差異呈現方式。<code>&quot;auto&quot;</code> 根據終端機寬度自適應，<code>&quot;stacked&quot;</code> 始終顯示單列。</li>
+</ul>
+<p>使用 <code>CLOSEDCODE_TUI_CONFIG</code> 載入自訂 TUI 設定路徑。</p>
+<hr>
+<h2>自訂</h2>
+<p>您可以使用指令面板（<code>ctrl+x h</code> 或 <code>/help</code>）自訂 TUI 檢視的各個方面。這些設定在重新啟動後仍會保留。</p>
+<hr>
+<h4>使用者名稱顯示</h4>
+<p>切換您的使用者名稱是否顯示在聊天訊息中。透過以下方式存取：</p>
+<ul>
+<li>指令面板：搜尋「username」或「hide username」</li>
+<li>該設定會自動儲存，並在各個 TUI 工作階段中保持記憶</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kurallar — vanilla-closedcode docs</title>
+  <meta name="description" content="closedcode için özel talimatları ayarlayın.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/rules.html">English</option>
+      <option value="../ar/rules.html">العربية</option>
+      <option value="../bs/rules.html">Bosanski</option>
+      <option value="../da/rules.html">Dansk</option>
+      <option value="../de/rules.html">Deutsch</option>
+      <option value="../es/rules.html">Español</option>
+      <option value="../fr/rules.html">Français</option>
+      <option value="../it/rules.html">Italiano</option>
+      <option value="../ja/rules.html">日本語</option>
+      <option value="../ko/rules.html">한국어</option>
+      <option value="../nb/rules.html">Norsk</option>
+      <option value="../pl/rules.html">Polski</option>
+      <option value="../pt-br/rules.html">Português (BR)</option>
+      <option value="../ru/rules.html">Русский</option>
+      <option value="../th/rules.html">ไทย</option>
+      <option value="../tr/rules.html" selected>Türkçe</option>
+      <option value="../zh-cn/rules.html">简体中文</option>
+      <option value="../zh-tw/rules.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li class="active"><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Kurallar</h1>
+      <p class="lede">closedcode için özel talimatları ayarlayın.</p>
+      <p>Bir <code>AGENTS.md</code> dosyası oluşturarak closedcode için özel talimatlar verebilirsiniz. Bu, Cursor rules yaklaşımına benzer. Özel projeniz için davranışını özelleştirmek amacıyla LLM&#39;in içeriğine dahil edilecek talimatları içerir.</p>
+<hr>
+<h2>Başlat</h2>
+<p>Yeni bir <code>AGENTS.md</code> dosyası oluşturmak için <code>/init</code> komutunu closedcode&#39;da çalıştırabilirsiniz.</p>
+<aside class="aside aside-tip">
+Projenizin `AGENTS.md` dosyasını Git'e göndermelisiniz.
+</aside>
+Bu, projenin neyle ilgili olduğunu anlamak için projenizi ve tüm içeriğini tarayacak ve onunla bir `AGENTS.md` dosyası oluşturacaktır. Bu, closedcode'un projede daha iyi gezinmesine yardımcı olur.
+
+<p>Mevcut bir <code>AGENTS.md</code> dosyanız varsa, bu dosyaya eklemeye çalışacaktır.</p>
+<hr>
+<h2>Örnek</h2>
+<p>Bu dosyayı manuel olarak da oluşturabilirsiniz. İşte bir <code>AGENTS.md</code> dosyasına koyabileceğiniz bazı şeylere bir örnek.</p>
+<pre><code class="language-markdown"># SST v3 Monorepo Project
+
+This is an SST v3 monorepo with TypeScript. The project uses npm workspaces for package management.
+
+## Project Structure
+
+- `packages/` - Contains all workspace packages (functions, core, web, etc.)
+- `infra/` - Infrastructure definitions split by service (storage.ts, api.ts, web.ts)
+- `sst.config.ts` - Main SST configuration with dynamic imports
+
+## Code Standards
+
+- Use TypeScript with strict mode enabled
+- Shared code goes in `packages/core/` with proper exports configuration
+- Functions go in `packages/functions/`
+- Infrastructure should be split into logical files in `infra/`
+
+## Monorepo Conventions
+
+- Import shared modules using workspace names: `@my-app/core/example`
+</code></pre>
+<p>Buraya projeye özel talimatlar ekliyoruz ve bu, ekibiniz arasında paylaşılacaktır.</p>
+<hr>
+<h2>Türler</h2>
+<p>closedcode ayrıca <code>AGENTS.md</code> dosyasının birden fazla konumdan okunmasını da destekler. Ve bu farklı amaçlara hizmet ediyor.</p>
+<h3>Proje</h3>
+<p>Projeye özel kurallar için proje kökünüze bir <code>AGENTS.md</code> yerleştirin. Bunlar yalnızca bu dizinde veya alt dizinlerinde çalışırken geçerlidir.</p>
+<h3>Global</h3>
+<p>Ayrıca <code>~/.config/closedcode/AGENTS.md</code> dosyasında genel kurallara sahip olabilirsiniz. Bu, tüm closedcode oturumlarına uygulanır.</p>
+<p>Bu Git&#39;e kaydedilmediği veya ekibinizle paylaşılmadığı için, LLM&#39;ın uyması gereken kişisel kuralları belirtmek için bunu kullanmanızı öneririz.</p>
+<h3>Claude Code uyumluluğu</h3>
+<p>closedcode, Claude Code&#39;dan geçiş yapan kullanıcılar için yedek olarak Claude Code&#39;un dosya kurallarını destekler:</p>
+<ul>
+<li><strong>Proje kuralları</strong>: Proje dizininizdeki <code>CLAUDE.md</code> (<code>AGENTS.md</code> yoksa kullanılır)</li>
+<li><strong>Global kurallar</strong>: <code>~/.claude/CLAUDE.md</code> (<code>~/.config/closedcode/AGENTS.md</code> yoksa kullanılır)</li>
+<li><strong>Beceriler</strong>: <code>~/.claude/skills/</code> — ayrıntılar için <a href="/docs/skills/">Agent Skills</a>&#39;e bakın</li>
+</ul>
+<p>Claude Code uyumluluğunu kapatmak için aşağıdaki ortam değişkenlerinden birini ayarlayın:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<hr>
+<h2>Öncelik</h2>
+<p>Opencode başlatıldığında kural dosyalarını şu sırayla arar:</p>
+<ol>
+<li><strong>Yerel dosyalar</strong> geçerli dizinden yukarıya doğru giderek (<code>AGENTS.md</code>, <code>CLAUDE.md</code>)</li>
+<li><strong>Global dosya</strong> <code>~/.config/closedcode/AGENTS.md</code> adresinde</li>
+<li><code>~/.claude/CLAUDE.md</code> adresindeki <strong>Claude Kod dosyası</strong> (devre dışı bırakılmadığı sürece)</li>
+</ol>
+<p>Her kategoride ilk eşleşen dosya kazanır. Örneğin, hem <code>AGENTS.md</code> hem de <code>CLAUDE.md</code> varsa yalnızca <code>AGENTS.md</code> kullanılır. Benzer şekilde, <code>~/.config/closedcode/AGENTS.md</code>, <code>~/.claude/CLAUDE.md</code>&#39;ye göre önceliklidir.</p>
+<hr>
+<h2>Özel talimatlar</h2>
+<p>Özel talimat dosyalarını <code>closedcode.json</code> veya global <code>~/.config/closedcode/closedcode.json</code>&#39;de belirtebilirsiniz. Bu, sizin ve ekibinizin, mevcut kuralları AGENTS.md&#39;ye kopyalamak yerine yeniden kullanmasına olanak tanır.</p>
+<p>Örnek:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Web&#39;den talimatlar yüklemek için uzak URL&#39;leri de kullanabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;https://raw.githubusercontent.com/my-org/shared-rules/main/style.md&quot;]
+}
+</code></pre>
+<p>Uzaktan talimatlar 5 saniyelik bir zaman aşımı ile getirilir.</p>
+<p>Tüm talimat dosyaları <code>AGENTS.md</code> dosyalarınızla birleştirilir.</p>
+<hr>
+<h2>Harici Dosyalara Referans Verme</h2>
+<p>Opencode, <code>AGENTS.md</code>&#39;daki dosya referanslarını otomatik olarak ayrıştırmasa da, benzer işlevleri iki şekilde elde edebilirsiniz:</p>
+<h3>closedcode.json&#39;u kullanma</h3>
+<p>Önerilen yaklaşım, <code>instructions</code>&#39;deki <code>closedcode.json</code> alanını kullanmaktır:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;docs/development-standards.md&quot;, &quot;test/testing-guidelines.md&quot;, &quot;packages/*/AGENTS.md&quot;]
+}
+</code></pre>
+<h3>AGENTS.md içinde manuel talimatlar</h3>
+<p><code>AGENTS.md</code>&#39;nizde açık talimatlar sağlayarak closedcode&#39;u harici dosyaları okumayı öğretebilirsiniz. İşte pratik bir örnek:</p>
+<pre><code class="language-markdown"># TypeScript Project Rules
+
+## External File Loading
+
+CRITICAL: When you encounter a file reference (e.g., @rules/general.md), use your Read tool to load it on a need-to-know basis. They&#39;re relevant to the SPECIFIC task at hand.
+
+Instructions:
+
+- Do NOT preemptively load all references - use lazy loading based on actual need
+- When loaded, treat content as mandatory instructions that override defaults
+- Follow references recursively when needed
+
+## Development Guidelines
+
+For TypeScript code style and best practices: @docs/typescript-guidelines.md
+For React component architecture and hooks patterns: @docs/react-patterns.md
+For REST API design and error handling: @docs/api-standards.md
+For testing strategies and coverage requirements: @test/testing-guidelines.md
+
+## General Guidelines
+
+Read the following file immediately as it&#39;s relevant to all workflows: @rules/general-guidelines.md.
+</code></pre>
+<p>Bu yaklaşım şunları yapmanızı sağlar:</p>
+<ul>
+<li>Modüler, yeniden kullanılabilir kural dosyaları oluşturun</li>
+<li>Sembolik bağlantılar veya git alt modülleri aracılığıyla kuralları projeler arasında paylaşın</li>
+<li>AGENTS.md dosyasını kısa tutarken ayrıntılı kılavuzlara referans verin</li>
+<li>closedcode&#39;un dosyaları yalnızca belirli bir görev için gerektiğinde yüklediğinden emin olun</li>
+</ul>
+<aside class="aside aside-tip">
+Monorepo'lar veya ortak standartlara sahip projeler için, `closedcode.json`'yi glob desenleriyle (`packages/*/AGENTS.md` gibi) kullanmak, manuel talimatlara göre daha sürdürülebilirdir.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

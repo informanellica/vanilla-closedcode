@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solução de Problemas — vanilla-closedcode docs</title>
+  <meta name="description" content="Problemas comuns e como resolvê-los.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html" selected>Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Solução de Problemas</h1>
+      <p class="lede">Problemas comuns e como resolvê-los.</p>
+      <p>Para depurar problemas com o closedcode, comece verificando os logs e os dados locais que ele armazena no disco.</p>
+<hr>
+<h2>Logs</h2>
+<p>Os arquivos de log são gravados em:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> e cole <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>Os arquivos de log são nomeados com timestamps (por exemplo, <code>2025-01-09T123456.log</code>) e os 10 arquivos de log mais recentes são mantidos.</p>
+<p>Você pode definir o nível de log com a opção de linha de comando <code>--log-level</code> para obter informações de depuração mais detalhadas. Por exemplo, <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>Armazenamento</h2>
+<p>O closedcode armazena dados de sessão e outros dados do aplicativo no disco em:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> e cole <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>Este diretório contém:</p>
+<ul>
+<li><code>auth.json</code> - Dados de autenticação como chaves de API, tokens OAuth</li>
+<li><code>log/</code> - Logs do aplicativo</li>
+<li><code>project/</code> - Dados específicos do projeto, como dados de sessão e mensagens<ul>
+<li>Se o projeto estiver dentro de um repositório Git, ele é armazenado em <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>Se não for um repositório Git, ele é armazenado em <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Aplicativo de Desktop</h2>
+<p>O closedcode Desktop executa um servidor closedcode local (o sidecar <code>closedcode-cli</code>) em segundo plano. A maioria dos problemas é causada por um plugin com mau funcionamento, um cache corrompido ou uma configuração de servidor incorreta.</p>
+<h3>Verificações rápidas</h3>
+<ul>
+<li>Saia completamente do aplicativo e reinicie-o.</li>
+<li>Se o aplicativo mostrar uma tela de erro, clique em <strong>Reiniciar</strong> e copie os detalhes do erro.</li>
+<li>Apenas macOS: menu <code>vanilla-closedcode</code> -&gt; <strong>Recarregar Webview</strong> (ajuda se a interface estiver em branco/congelada).</li>
+</ul>
+<hr>
+<h3>Desativando plugins</h3>
+<p>Se o aplicativo de desktop estiver travando ao iniciar, pendurado ou se comportando de maneira estranha, comece desativando os plugins.</p>
+<h4>Verificando a configuração global</h4>
+<p>Abra seu arquivo de configuração global e procure uma chave <code>plugin</code>.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (ou <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (instalações mais antigas): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> e cole <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>Se você tiver plugins configurados, desative-os temporariamente removendo a chave ou definindo-a como um array vazio:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>Verificando os diretórios de plugins</h4>
+<p>O closedcode também pode carregar plugins locais do disco. Mova-os temporariamente para fora do caminho (ou renomeie a pasta) e reinicie o aplicativo de desktop:</p>
+<ul>
+<li><strong>Plugins globais</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> e cole <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>Plugins de projeto</strong> (apenas se você usar configuração por projeto)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>Se o aplicativo voltar a funcionar, reative os plugins um por um para descobrir qual está causando o problema.</p>
+<hr>
+<h3>Limpando o cache</h3>
+<p>Se desativar plugins não ajudar (ou se a instalação de um plugin estiver travada), limpe o cache para que o closedcode possa reconstruí-lo.</p>
+<ol>
+<li>Saia completamente do closedcode Desktop.</li>
+<li>Exclua o diretório de cache:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; cole <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: exclua <code>~/.cache/closedcode</code> (ou execute <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> e cole <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>Reinicie o closedcode Desktop.</li>
+</ol>
+<hr>
+<h3>Corrigindo problemas de conexão com o servidor</h3>
+<p>O closedcode Desktop pode iniciar seu próprio servidor local (padrão) ou conectar-se a uma URL de servidor que você configurou.</p>
+<p>Se você ver um diálogo <strong>&quot;Conexão Falhou&quot;</strong> (ou o aplicativo nunca passa da tela de inicialização), verifique se há uma URL de servidor personalizada.</p>
+<h4>Limpando a URL do servidor padrão do desktop</h4>
+<p>Na tela inicial, clique no nome do servidor (com o ponto de status) para abrir o seletor de Servidor. Na seção <strong>Servidor padrão</strong>, clique em <strong>Limpar</strong>.</p>
+<h4>Removendo <code>server.port</code> / <code>server.hostname</code> da sua configuração</h4>
+<p>Se seu <code>closedcode.json(c)</code> contiver uma seção <code>server</code>, remova-a temporariamente e reinicie o aplicativo de desktop.</p>
+<h4>Verificando as variáveis de ambiente</h4>
+<p>Se você tiver <code>CLOSEDCODE_PORT</code> definido em seu ambiente, o aplicativo de desktop tentará usar essa porta para o servidor local.</p>
+<ul>
+<li>Desfaça <code>CLOSEDCODE_PORT</code> (ou escolha uma porta livre) e reinicie.</li>
+</ul>
+<hr>
+<h3>Linux: Problemas com Wayland / X11</h3>
+<p>No Linux, algumas configurações do Wayland podem causar janelas em branco ou erros de compositor.</p>
+<ul>
+<li>Se você estiver no Wayland e o aplicativo estiver em branco/travando, tente iniciar com <code>OC_ALLOW_WAYLAND=1</code>.</li>
+<li>Se isso piorar as coisas, remova e tente iniciar sob uma sessão X11.</li>
+</ul>
+<hr>
+<h3>Windows: Runtime do WebView2</h3>
+<p>No Windows, o closedcode Desktop requer o <strong>WebView2 Runtime</strong> do Microsoft Edge. Se o aplicativo abrir em uma janela em branco ou não iniciar, instale/atualize o WebView2 e tente novamente.</p>
+<hr>
+<h3>Windows: Problemas gerais de desempenho</h3>
+<p>Se você estiver enfrentando desempenho lento, problemas de acesso a arquivos ou problemas no terminal no Windows, tente usar <a href="/docs/windows-wsl">WSL (Windows Subsystem for Linux)</a>. O WSL fornece um ambiente Linux que funciona de forma mais integrada com os recursos do closedcode.</p>
+<hr>
+<h3>Notificações não aparecendo</h3>
+<p>O closedcode Desktop só mostra notificações do sistema quando:</p>
+<ul>
+<li>as notificações estão habilitadas para o closedcode nas configurações do seu sistema operacional, e</li>
+<li>a janela do aplicativo não está focada.</li>
+</ul>
+<hr>
+<h3>Redefinindo o armazenamento do aplicativo de desktop (último recurso)</h3>
+<p>Se o aplicativo não iniciar e você não conseguir limpar as configurações pela interface, redefina o estado salvo do aplicativo de desktop.</p>
+<ol>
+<li>Saia do closedcode Desktop.</li>
+<li>Encontre e exclua estes arquivos (eles estão no diretório de dados do aplicativo closedcode Desktop):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (URL do servidor padrão do desktop)</li>
+<li><code>closedcode.global.dat</code> e <code>closedcode.workspace.*.dat</code> (estado da interface como servidores/projetos recentes)</li>
+</ul>
+<p>Para encontrar o diretório rapidamente:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (depois pesquise pelos nomes dos arquivos acima)</li>
+<li><strong>Linux</strong>: pesquise em <code>~/.local/share</code> pelos nomes dos arquivos acima</li>
+<li><strong>Windows</strong>: Pressione <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (depois pesquise pelos nomes dos arquivos acima)</li>
+</ul>
+<hr>
+<h2>Obtendo ajuda</h2>
+<p>Se você estiver enfrentando problemas com o closedcode:</p>
+<ol>
+<li><p><strong>Relatar problemas no GitHub</strong></p>
+<p>A melhor maneira de relatar bugs ou solicitar recursos é através do nosso repositório no GitHub:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>Antes de criar um novo problema, pesquise problemas existentes para ver se seu problema já foi relatado.</p>
+</li>
+<li><p><strong>Junte-se ao nosso Discord</strong></p>
+<p>Para ajuda em tempo real e discussão da comunidade, junte-se ao nosso servidor Discord:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>Problemas comuns</h2>
+<p>Aqui estão alguns problemas comuns e como resolvê-los.</p>
+<hr>
+<h3>O closedcode não inicia</h3>
+<ol>
+<li>Verifique os logs em busca de mensagens de erro</li>
+<li>Tente executar com <code>--print-logs</code> para ver a saída no terminal</li>
+<li>Certifique-se de que você tem a versão mais recente com <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>Problemas de autenticação</h3>
+<ol>
+<li>Tente reautenticar com o comando <code>/connect</code> na TUI</li>
+<li>Verifique se suas chaves de API são válidas</li>
+<li>Certifique-se de que sua rede permite conexões com a API do provedor</li>
+</ol>
+<hr>
+<h3>Modelo não disponível</h3>
+<ol>
+<li>Verifique se você se autenticou com o provedor</li>
+<li>Verifique se o nome do modelo em sua configuração está correto</li>
+<li>Alguns modelos podem exigir acesso ou assinaturas específicas</li>
+</ol>
+<p>Se você encontrar <code>ProviderModelNotFoundError</code>, é mais provável que você esteja referenciando um modelo incorretamente em algum lugar.
+Os modelos devem ser referenciados assim: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>Exemplos:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>Para descobrir quais modelos você tem acesso, execute <code>closedcode models</code></p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>Se você encontrar um ProviderInitError, provavelmente você tem uma configuração inválida ou corrompida.</p>
+<p>Para resolver isso:</p>
+<ol>
+<li><p>Primeiro, verifique se seu provedor está configurado corretamente seguindo o <a href="/docs/providers">guia de provedores</a></p>
+</li>
+<li><p>Se o problema persistir, tente limpar sua configuração armazenada:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>No Windows, pressione <code>WIN+R</code> e exclua: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>Reautentique-se com seu provedor usando o comando <code>/connect</code> na TUI.</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError e problemas com pacotes de provedores</h3>
+<p>Se você encontrar erros de chamada de API, isso pode ser devido a pacotes de provedores desatualizados. O closedcode instala dinamicamente pacotes de provedores (OpenAI, Anthropic, Google, etc.) conforme necessário e os armazena em cache localmente.</p>
+<p>Para resolver problemas com pacotes de provedores:</p>
+<ol>
+<li><p>Limpe o cache do pacote de provedores:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>No Windows, pressione <code>WIN+R</code> e exclua: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>Reinicie o closedcode para reinstalar os pacotes de provedores mais recentes</p>
+</li>
+</ol>
+<p>Isso forçará o closedcode a baixar as versões mais recentes dos pacotes de provedores, o que muitas vezes resolve problemas de compatibilidade com parâmetros de modelo e alterações na API.</p>
+<hr>
+<h3>Copiar/colar não funciona no Linux</h3>
+<p>Usuários do Linux precisam ter um dos seguintes utilitários de área de transferência instalados para que a funcionalidade de copiar/colar funcione:</p>
+<p><strong>Para sistemas X11:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>Para sistemas Wayland:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>Para ambientes sem cabeça:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>O closedcode detectará se você está usando Wayland e preferirá <code>wl-clipboard</code>, caso contrário, tentará encontrar ferramentas de área de transferência na ordem: <code>xclip</code> e <code>xsel</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

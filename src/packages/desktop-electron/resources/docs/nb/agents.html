@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenter — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurer og bruk spesialiserte agenter.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html" selected>Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Agenter</h1>
+      <p class="lede">Konfigurer og bruk spesialiserte agenter.</p>
+      <p>Agenter er spesialiserte AI-assistenter som kan konfigureres for spesifikke oppgaver og arbeidsflyter. De lar deg lage fokuserte verktøy med tilpassede meldinger, modeller og verktøytilgang.</p>
+<aside class="aside aside-tip">
+Bruk planagenten til å analysere kode og gjennomgå forslag uten å gjøre noen kodeendringer.
+</aside>
+Du kan bytte mellom agenter under en økt eller påkalle dem med `@`-omtalen.
+
+<hr>
+<h2>Typer</h2>
+<p>Det er to typer agenter i vanilla-closedcode; primære agenter og underagenter.</p>
+<hr>
+<h3>Primæragenter</h3>
+<p>Primæragenter er de viktigste assistentene du samhandler direkte med. Du kan bla gjennom dem ved å bruke <strong>Tab</strong>-tasten, eller din konfigurerte <code>switch_agent</code>-tastebinding. Disse agentene håndterer hovedsamtalen din. Verktøytilgang konfigureres via tillatelser - for eksempel har Build alle verktøy aktivert mens Plan er begrenset.</p>
+<aside class="aside aside-tip">
+Du kan bruke **Tab**-tasten for å bytte mellom primære agenter under en økt.
+</aside>
+vanilla-closedcode kommer med to innebygde primære agenter, **Build** og **Plan**. Vi ser nærmere på disse nedenfor.
+
+<hr>
+<h3>Underagenter</h3>
+<p>Underagenter er spesialiserte assistenter som primære agenter kan påkalle for spesifikke oppgaver. Du kan også starte dem manuelt ved å <strong>@ nevne</strong> dem i meldingene dine.</p>
+<p>vanilla-closedcode kommer med to innebygde underagenter, <strong>General</strong> og <strong>Explore</strong>. Vi skal se på dette nedenfor.</p>
+<hr>
+<h2>Innebygd</h2>
+<p>vanilla-closedcode kommer med to innebygde primære agenter og to innebygde underagenter.</p>
+<hr>
+<h3>Bruk av Build</h3>
+<p><em>Modus</em>: <code>primary</code></p>
+<p>Build er <strong>standard</strong> primæragent med alle verktøy aktivert. Dette er standardagenten for utviklingsarbeid der du trenger full tilgang til filoperasjoner og systemkommandoer.</p>
+<hr>
+<h3>Bruk av Plan</h3>
+<p><em>Modus</em>: <code>primary</code></p>
+<p>En begrenset agent designet for planlegging og analyse. Vi bruker et tillatelsessystem for å gi deg mer kontroll og forhindre utilsiktede endringer.
+Som standard er alt av følgende satt til <code>ask</code>:</p>
+<ul>
+<li><code>file edits</code>: Alle skrivinger, patcher og redigeringer</li>
+<li><code>bash</code>: Alle bash-kommandoer</li>
+</ul>
+<p>Denne agenten er nyttig når du vil at LLM skal analysere kode, foreslå endringer eller lage planer uten å gjøre noen faktiske endringer i kodebasen.</p>
+<hr>
+<h3>Bruk av General</h3>
+<p><em>Modus</em>: <code>subagent</code></p>
+<p>En generell agent for å undersøke komplekse spørsmål og utføre flertrinnsoppgaver. Har full verktøytilgang (unntatt todo), slik at den kan gjøre filendringer når det er nødvendig. Bruk denne til å kjøre flere arbeidsenheter parallelt.</p>
+<hr>
+<h3>Bruk av Explore</h3>
+<p><em>Modus</em>: <code>subagent</code></p>
+<p>En rask, skrivebeskyttet agent for å utforske kodebaser. Kan ikke endre filer. Bruk dette når du raskt trenger å finne filer etter mønstre, søke i kode etter nøkkelord eller svare på spørsmål om kodebasen.</p>
+<hr>
+<h3>Bruk av Compaction</h3>
+<p><em>Modus</em>: <code>primary</code></p>
+<p>Skjult systemagent som komprimerer lang kontekst til et mindre sammendrag. Den kjører automatisk ved behov og kan ikke velges i UI.</p>
+<hr>
+<h3>Bruk av Title</h3>
+<p><em>Modus</em>: <code>primary</code></p>
+<p>Skjult systemagent som genererer korte økttitler. Den kjører automatisk og kan ikke velges i UI.</p>
+<hr>
+<h3>Bruk av Summary</h3>
+<p><em>Modus</em>: <code>primary</code></p>
+<p>Skjult systemagent som lager øktsammendrag. Den kjører automatisk og kan ikke velges i UI.</p>
+<hr>
+<h2>Bruk</h2>
+<ol>
+<li><p>For primære agenter, bruk <strong>Tab</strong>-tasten for å bla gjennom dem under en økt. Du kan også bruke din konfigurerte <code>switch_agent</code> nøkkelbinding.</p>
+</li>
+<li><p>Underagenter kan påkalles:</p>
+<ul>
+<li><p><strong>Automatisk</strong> av primære agenter for spesialiserte oppgaver basert på deres beskrivelser.</p>
+</li>
+<li><p>Manuelt ved å <strong>@ nevne</strong> en underagent i meldingen. For eksempel.</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>Navigering mellom økter</strong>: Når underagenter oppretter sine egne underordnede økter, kan du navigere mellom overordnede økter og alle underordnede økter ved å bruke:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (eller din konfigurerte <code>session_child_cycle</code>-tastebinding) for å gå videre gjennom forelder → barn1 → barn2 → ... → forelder</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (eller din konfigurerte <code>session_child_cycle_reverse</code>-tastebinding) for å gå bakover gjennom forelder ← barn1 ← barn2 ← ... ← forelder</li>
+</ul>
+<p>Dette lar deg sømløst bytte mellom hovedsamtalen og spesialisert underagentarbeid.</p>
+</li>
+</ol>
+<hr>
+<h2>Konfigurasjon</h2>
+<p>Du kan tilpasse de innebygde agentene eller lage dine egne gjennom konfigurasjon. Agenter kan konfigureres på to måter:</p>
+<hr>
+<h3>JSON</h3>
+<p>Konfigurer agenter i konfigurasjonsfilen <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Du kan også definere agenter ved å bruke markdown-filer. Plasser dem i:</p>
+<ul>
+<li>Globalt: <code>~/.config/closedcode/agents/</code></li>
+<li>Per prosjekt: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Markdown-filnavnet blir agentnavnet. For eksempel oppretter <code>review.md</code> en <code>review</code>-agent.</p>
+<hr>
+<h2>Alternativer</h2>
+<p>La oss se på disse konfigurasjonsalternativene i detalj.</p>
+<hr>
+<h3>Beskrivelse</h3>
+<p>Bruk alternativet <code>description</code> for å gi en kort beskrivelse av hva agenten gjør og når den skal brukes.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dette er et <strong>obligatorisk</strong> konfigurasjonsalternativ.</p>
+<hr>
+<h3>Temperatur</h3>
+<p>Kontroller tilfeldigheten og kreativiteten til LLMs svar med <code>temperature</code>-konfigurasjonen.</p>
+<p>Lavere verdier gjør svarene mer fokuserte og deterministiske, mens høyere verdier øker kreativiteten og variasjonen.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>Temperaturverdier varierer vanligvis fra 0,0 til 1,0:</p>
+<ul>
+<li><strong>0.0-0.2</strong>: Veldig fokuserte og deterministiske svar, ideell for kodeanalyse og planlegging</li>
+<li><strong>0,3-0,5</strong>: Balanserte svar med litt kreativitet, bra for generelle utviklingsoppgaver</li>
+<li><strong>0.6-1.0</strong>: Mer kreative og varierte svar, nyttig for idédugnad og utforskning</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hvis ingen temperatur er spesifisert, bruker vanilla-closedcode modellspesifikke standardinnstillinger; typisk 0 for de fleste modeller, 0,55 for Qwen-modeller.</p>
+<hr>
+<h3>Maks trinn</h3>
+<p>Kontroller det maksimale antallet agentiske iterasjoner en agent kan utføre før den blir tvunget til å svare kun med tekst. Dette lar brukere som ønsker å kontrollere kostnadene sette en grense for agenthandlinger.</p>
+<p>Hvis dette ikke er satt, vil agenten fortsette å iterere til modellen velger å stoppe eller brukeren avbryter økten.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>Når grensen er nådd, mottar agenten en spesiell systemmelding som instruerer den om å svare med en oppsummering av arbeidet og anbefalte gjenværende oppgaver.</p>
+<aside class="aside aside-caution">
+Det gamle `maxSteps`-feltet er avviklet. Bruk `steps` i stedet.
+</aside>
+---
+
+<h3>Deaktiver</h3>
+<p>Sett til <code>true</code> for å deaktivere agenten.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Ledetekst</h3>
+<p>Spesifiser en tilpasset systemmeldingsfil for denne agenten med <code>prompt</code>-konfigurasjonen. Ledetekstfilen skal inneholde instruksjoner som er spesifikke for agentens formål.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Denne banen er i forhold til hvor konfigurasjonsfilen er plassert. Så dette fungerer for både den globale vanilla-closedcode-konfigurasjonen og den prosjektspesifikke konfigurasjonen.</p>
+<hr>
+<h3>Modell</h3>
+<p>Bruk <code>model</code>-konfigurasjonen for å overstyre modellen for denne agenten. Nyttig for bruk av ulike modeller optimalisert for ulike oppgaver. For eksempel en raskere modell for planlegging, en mer kapabel modell for implementering.</p>
+<aside class="aside aside-tip">
+Hvis du ikke spesifiserer en modell, bruker primæragenter [modell globalt konfigurert](/docs/config#models) mens subagenter vil bruke modellen til primæragenten som påkalte subagenten.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>Modellen ID i vanilla-closedcode-konfigurasjonen din bruker formatet <code>provider/model-id</code>. For eksempel, hvis du bruker Ollama, vil du bruke <code>ollama/gpt-oss:20b</code> for GPT-OSS 20B.</p>
+<hr>
+<h3>Verktøy</h3>
+<p>Kontroller hvilke verktøy som er tilgjengelige i denne agenten med <code>tools</code>-konfigurasjonen. Du kan aktivere eller deaktivere spesifikke verktøy ved å sette dem til <code>true</code> eller <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+Den agentspesifikke konfigurasjonen overstyrer den globale konfigurasjonen.
+</aside>
+Du kan også bruke jokertegn for å kontrollere flere verktøy samtidig. For eksempel, for å deaktivere alle verktøy fra en MCP-server:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Finn ut mer om verktøy</a>.</p>
+<hr>
+<h3>Tillatelser</h3>
+<p>Du kan konfigurere tillatelser for å administrere hvilke handlinger en agent kan utføre. For øyeblikket kan tillatelsene for verktøyene <code>edit</code>, <code>bash</code> og <code>webfetch</code> konfigureres til:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — Be om godkjenning før du kjører verktøyet</li>
+<li><code>&quot;allow&quot;</code> — Tillat alle operasjoner uten godkjenning</li>
+<li><code>&quot;deny&quot;</code> — Deaktiver verktøyet</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Du kan overstyre disse tillatelsene per agent.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Du kan også angi tillatelser i Markdown-agenter.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>Du kan angi tillatelser for spesifikke bash-kommandoer.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Dette kan ta et globmønster.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Og du kan også bruke jokertegnet <code>*</code> for å administrere tillatelser for alle kommandoer.
+Siden den siste samsvarsregelen har forrang, setter du jokertegnet <code>*</code> først og spesifikke regler etter.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Finn ut mer om tillatelser</a>.</p>
+<hr>
+<h3>Modus</h3>
+<p>Kontroller agentens modus med <code>mode</code>-konfigurasjonen. Alternativet <code>mode</code> brukes til å bestemme hvordan agenten kan brukes.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p>Alternativet <code>mode</code> kan settes til <code>primary</code>, <code>subagent</code> eller <code>all</code>. Hvis ingen <code>mode</code> er spesifisert, er den standard til <code>all</code>.</p>
+<hr>
+<h3>Skjult</h3>
+<p>Skjul en underagent fra <code>@</code> autofullføringsmenyen med <code>hidden: true</code>. Nyttig for interne underagenter som bare skal påkalles programmatisk av andre agenter via oppgaveverktøyet.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Dette påvirker kun brukersynlighet i autofullfør-menyen. Skjulte agenter kan fortsatt påkalles av modellen via oppgaveverktøyet hvis tillatelser tillater det.</p>
+<aside class="aside aside-note">
+Gjelder kun `mode: subagent`-agenter.
+</aside>
+---
+
+<h3>Oppgavetillatelser</h3>
+<p>Kontroller hvilke subagenter en agent kan påkalle via oppgaveverktøyet med <code>permission.task</code>. Bruker glob-mønstre for fleksibel matching.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Når den er satt til <code>deny</code>, fjernes subagenten fullstendig fra oppgaveverktøybeskrivelsen, så modellen vil ikke forsøke å starte den.</p>
+<aside class="aside aside-tip">
+Reglene evalueres i rekkefølge, og den **siste samsvarsregelen vinner**. I eksemplet ovenfor samsvarer `orchestrator-planner` med både `*` (avslå) og `orchestrator-*` (tillat), men siden `orchestrator-*` kommer etter `*`, er resultatet `allow`.
+</aside>
+<aside class="aside aside-tip">
+Brukere kan alltid starte en hvilken som helst underagent direkte via `@` autofullføringsmenyen, selv om agentens oppgavetillatelser ville nekte det.
+</aside>
+---
+
+<h3>Farge</h3>
+<p>Tilpass agentens visuelle utseende i UI med alternativet <code>color</code>. Dette påvirker hvordan agenten vises i grensesnittet.</p>
+<p>Bruk en gyldig sekskantfarge (f.eks. <code>#FF5733</code>) eller temafarge: <code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code>.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>Kontroller responsmangfoldet med alternativet <code>top_p</code>. Alternativ til temperatur for å kontrollere tilfeldighet.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>Verdiene varierer fra 0,0 til 1,0. Lavere verdier er mer fokuserte, høyere verdier mer mangfoldige.</p>
+<hr>
+<h3>Ekstra</h3>
+<p>Eventuelle andre alternativer du spesifiserer i agentkonfigurasjonen vil bli <strong>overført direkte</strong> til leverandøren som modellalternativer. Dette lar deg bruke leverandørspesifikke funksjoner og parametere.</p>
+<p>For eksempel, med OpenAIs resonneringsmodeller kan du kontrollere resonnementinnsatsen:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>Disse tilleggsalternativene er modell- og leverandørspesifikke. Sjekk leverandørens dokumentasjon for tilgjengelige parametere.</p>
+<aside class="aside aside-tip">
+Kjør `closedcode models` for å se en liste over tilgjengelige modeller.
+</aside>
+---
+
+<h2>Opprette agenter</h2>
+<p>Du kan opprette nye agenter ved å bruke følgende kommando:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Denne interaktive kommandoen vil:</p>
+<ol>
+<li>Spør hvor du skal lagre agenten; global eller prosjektspesifikk.</li>
+<li>Beskrivelse av hva agenten skal gjøre.</li>
+<li>Generer en passende systemmelding og identifikator.</li>
+<li>La deg velge hvilke verktøy agenten har tilgang til.</li>
+<li>Lag til slutt en nedmerkingsfil med agentkonfigurasjonen.</li>
+</ol>
+<hr>
+<h2>Bruksområder</h2>
+<p>Her er noen vanlige bruksområder for forskjellige agenter.</p>
+<ul>
+<li><strong>Byggagent</strong>: Fullstendig utviklingsarbeid med alle verktøy aktivert</li>
+<li><strong>Planagent</strong>: Analyse og planlegging uten å gjøre endringer</li>
+<li><strong>Kodevurderingsagent</strong>: Kodegjennomgang med skrivebeskyttet tilgang pluss dokumentasjonsverktøy</li>
+<li><strong>Feilsøkingsagent</strong>: Fokusert på etterforskning med bash og leseverktøy aktivert</li>
+<li><strong>Dokumentasjonsagent</strong>: Dokumentasjonsskriving med filoperasjoner, men ingen systemkommandoer</li>
+</ul>
+<hr>
+<h2>Eksempler</h2>
+<p>Her er noen eksempler på agenter du kan finne nyttige.</p>
+<aside class="aside aside-tip">
+Har du en agent du vil dele? [Send inn en PR](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>Dokumentasjonsagent</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Sikkerhetsrevisor</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wtyczki — vanilla-closedcode docs</title>
+  <meta name="description" content="Napisz własną wtyczkę, aby rozszerzyć closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html" selected>Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Wtyczki</h1>
+      <p class="lede">Napisz własną wtyczkę, aby rozszerzyć closedcode.</p>
+      <p>Wtyczki umożliwiające wyłączenie closedcode poprzez podjęcie różnych zdarzeń i zachowanie. Można utworzyć wtyczkę, aby sprawdzić nowe funkcje, integrować się z usługami lub sprawdzaniem zachowania closedcode.</p>
+<p>Aby znaleźć się z przykładami, przejrzyj <a href="/docs/ecosystem#plugins">wtyczki</a> utworzone przez społeczność.</p>
+<hr>
+<h2>Użyj wtyczki</h2>
+<p>Istnieją dwa sposoby ładowania wtyczek.</p>
+<hr>
+<h3>Z plików lokalnych</h3>
+<p>Miejsce plików JavaScript lub TypeScript w katalogu wtyczki.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - Wtyczki na poziomie projektu</li>
+<li><code>~/.config/closedcode/plugins/</code> - Wtyczki globalne</li>
+</ul>
+<p>Pliki w tych katalogach są automatycznie ładowane podczas uruchamiania.</p>
+<hr>
+<h3>Z npm</h3>
+<p>szczegółowy pakiet npm w pliku konfiguracyjnym.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Obsługiwane są zarówno pakiety zwykłe, jak i pakiety npm o określonym zakresie.</p>
+<p>Przeglądaj dostępną wtyczkę w <a href="/docs/ecosystem#plugins">ekosystemie</a>.</p>
+<hr>
+<h3>Sposób instalacji wtyczek</h3>
+<p><strong>wtyczki npm</strong> są instalowane automatycznie przy użyciu npm podczas uruchamiania. Pakiety i ich zależności są buforowane w <code>~/.cache/closedcode/node_modules/</code>.</p>
+<p><strong>Wtyczki lokalne</strong> są ładowane bezpośrednio z katalogu wtyczek. Aby uzyskać dostęp do zewnętrznych pakietów, musisz zainstalować <code>package.json</code> w swoim katalogu konfiguracyjnym (zobacz <a href="#dependencies">Zależności</a>) lub opublikować wtyczkę w npm i <a href="/docs/config#plugins">dodaj ją do swojej konfiguracji</a>.</p>
+<hr>
+<h3>Kolejność ładowania</h3>
+<p>Wtyczki są ładowane ze wszystkich źródeł, a wszystkie hooki napisane po kolei. Kolejność ładowania do:</p>
+<ol>
+<li>Konfiguracja globalna (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Konfiguracja projektu (<code>closedcode.json</code>)</li>
+<li>Globalny katalog wtyczek (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Katalog wtyczek projektu (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Zduplikowane pakiety npm o tej samej nazwie i wersji są ładowane raz. Równie ważny jest dostęp lokalny i zewnętrzny npm o dodatkowych nazwach, które są zewnętrzne.</p>
+<hr>
+<h2>Utwórz wtyczkę</h2>
+<p>Wtyczka do <strong>moduł JavaScript/TypeScript</strong>, który eksportuje jeden lub więcej wtyczek
+funkcje. dostępna funkcja korzystania z obiektu kontekstu i głównego obiektu hooks.</p>
+<hr>
+<h3>Zależności</h3>
+<p>Lokalne narzędzie i narzędzie, które można wykorzystać z zewnętrznych pakietów npm. Dodaj <code>package.json</code> do swojego katalogu konfiguracyjnego z zależnościami.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>closedcode uruchomienie <code>npm install</code> przy uruchomieniu, aby je uruchomić. Twoje dodatkowe funkcje będą dostępne po zaimportowaniu.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Podstawowa struktura</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Funkcja dostępu do:</p>
+<ul>
+<li><code>project</code>: Aktualne informacje o projekcie.</li>
+<li><code>directory</code>: Bieżący katalog roboczy.</li>
+<li><code>worktree</code>: Ścieżka eksploatacyjna Git.</li>
+<li><code>client</code>: Klient SDK z closedcode do sztucznej inteligencji.</li>
+</ul>
+<hr>
+<h3>Obsługa TypeScriptu</h3>
+<p>W przypadku wtyczek TypeScript możesz importować typy z pakietu wtyczek:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Wydarzenia</h3>
+<p>Wtyczki mogą subskrybować zdarzenia, jak zastosować poniżej sekcji Przykłady. Oto lista różnych działań.</p>
+<h4>Wydarzenia dowodzenia</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Plik Wydarzenia</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Wydarzenia instalacyjne</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>Wydarzenia LSP</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Wydarzenia w wiadomościach</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>Wydarzenia związane z uprawnieniami</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Wydarzenia serwerowe</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Wydarzenia sesyjne</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Wydarzenia do zrobienia</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Wydarzenia shell</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Wydarzenia narzędziowe</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>Wydarzenia TUI</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Przykłady</h2>
+<p>Oto kilka dostępnych wtyczek, które można udostępnić do closedcode.</p>
+<hr>
+<h3>Wysyłaj powiadomienia</h3>
+<p>Wysyłaj powiadomienia, gdy wystąpią określone zdarzenia:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Używamy <code>osascript</code> do uruchamiania AppleScript na macOS. Tutaj możesz przejść do wysyłania pozostałości.</p>
+<aside class="aside aside-note">
+Jeśli korzystasz z aplikacji komputerowej closedcode, może ona automatycznie wysłać wiadomość systemową, gdy odpowiedź jest gotowa lub gdy wystąpią błędy sesji.
+</aside>
+---
+
+<h3>ochrona .env</h3>
+<p>Zablokuj closedcode czytanie plików <code>.env</code>:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Wstrzyknij zmienne środowiskowe</h3>
+<p>Wstrzyknij zmienne konsekwencje dla wszystkich wykonań (narzędzia AI i terminale użytkownika):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Niestandardowe narzędzia</h3>
+<p>Wtyczki mogą również dodawać niestandardowe narzędzia do closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>Pomocnik <code>tool</code> tworzy narzędzie użytkowe, które może wywołać kod closedcode. Pobierane schematu Zoda i narzędzie wyszukiwania za pomocą:</p>
+<ul>
+<li><code>description</code>: Co robi do narzędzia</li>
+<li><code>args</code>: Schemat Zoda dla narzędzi argumentów</li>
+<li><code>execute</code>: Funkcja uruchamiania po wywołaniu narzędzia</li>
+</ul>
+<p>Twoje narzędzie będzie dostępne dla otwartego kodu wraz z narzędziami użytkowymi.</p>
+<hr>
+<h3>Logowanie</h3>
+<p>użyj <code>client.app.log()</code> zamiast <code>console.log</code> do rejestracji strukturalnego:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Poziomy: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Aby uzyskać szczegółowe informacje, zobacz dokumentację pakietu SDK.</p>
+<hr>
+<h3>Haki zagęszczające</h3>
+<p>Dostosuj kontekst dołączony podczas kompaktowania sesji:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p>Hak <code>experimental.session.compacting</code> jest uruchamiany, zanim LLM wygeneruje podsumowanie kontynuacji. go, aby wstrzyknąć kontekst kontekstu dla domeny, której nie dostrzeżono przez domyślny monit o zagęszczenie.</p>
+<p>Można także umieścić kompletny monit o zagęszczenie, ustawiając <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Gdy urządzenie jest <code>output.prompt</code>, jest całkowicie dostępne na domyślnym monit o zagęszczanie. Tablica <code>output.context</code> jest w tym przypadku poniesiona.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,204 @@
+// Express route group for the instance /provider endpoints (list, auth, OAuth).
+import express from "express";
+import { Effect } from "effect";
+import z from "zod";
+import { mapValues } from "remeda";
+import { Config } from "@/config/config.js";
+import { Provider } from "@/provider/provider.js";
+import { ModelsDev } from "@/provider/models.js";
+import { ProviderAuth } from "@/provider/auth.js";
+import { ProviderID } from "@/provider/schema.js";
+import { AppRuntime } from "@/effect/app-runtime.js";
+import { registerOperation } from "../../express/openapi.js";
+import { validator } from "../../express/validate.js";
+import { errors } from "../../express/errors.js";
+
+// OTel attribute key normalisation: `fooID` -> `foo.id`; any other param is namespaced under `closedcode.`.
+function paramToAttributeKey(key) {
+  const m = key.match(/^(.+)ID$/);
+  if (m) return `${m[1].toLowerCase()}.id`;
+  return `closedcode.${key}`;
+}
+
+// OTel span attributes for an Express request: method, path, and matched route params.
+function requestAttributes(req) {
+  const attributes = {
+    "http.method": req.method,
+    "http.path": req.baseUrl + req.path,
+  };
+  for (const [key, value] of Object.entries(req.params ?? {})) {
+    attributes[paramToAttributeKey(key)] = value;
+  }
+  return attributes;
+}
+
+// Runs an Effect generator under an OTel span and responds with the JSON result.
+async function jsonRequest(name, req, res, effect) {
+  const result = await AppRuntime.runPromise(
+    Effect.gen(() => effect()).pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })),
+  );
+  res.json(result);
+}
+
+export function ProviderRoutes(registry) {
+  const router = express.Router();
+
+  // Registers a route's openapi metadata against the GROUP-RELATIVE mount ("/provider").
+  const describe = (method, path, meta) => registry && registerOperation(registry, method, "/provider" + path, meta);
+
+  describe("get", "/", {
+    summary: "List providers",
+    description: "Get a list of all available AI providers, including both available and connected ones.",
+    operationId: "provider.list",
+    responses: {
+      200: {
+        description: "List of providers",
+        content: {
+          "application/json": {
+            schema: Provider.ListResult.zod,
+          },
+        },
+      },
+    },
+  });
+  router.get("/", async (req, res, next) => {
+    try {
+      await jsonRequest("ProviderRoutes.list", req, res, function* () {
+        const svc = yield* Provider.Service;
+        const cfg = yield* Config.Service;
+        const config = yield* cfg.get();
+        const all = yield* ModelsDev.Service.use((s) => s.get());
+        const disabled = new Set(config.disabled_providers ?? []);
+        const enabled = config.enabled_providers ? new Set(config.enabled_providers) : undefined;
+        const filtered = {};
+        for (const [key, value] of Object.entries(all)) {
+          if ((enabled ? enabled.has(key) : true) && !disabled.has(key) && Provider.isLocalProvider(Provider.fromModelsDevProvider(value))) {
+            filtered[key] = value;
+          }
+        }
+        const connected = yield* svc.list();
+        const providers = Object.assign(mapValues(filtered, (x) => Provider.fromModelsDevProvider(x)), connected);
+        return {
+          all: Object.values(providers),
+          default: Provider.defaultModelIDs(providers),
+          connected: Object.keys(connected),
+        };
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  describe("get", "/auth", {
+    summary: "Get provider auth methods",
+    description: "Retrieve available authentication methods for all AI providers.",
+    operationId: "provider.auth",
+    responses: {
+      200: {
+        description: "Provider auth methods",
+        content: {
+          "application/json": {
+            schema: ProviderAuth.Methods.zod,
+          },
+        },
+      },
+    },
+  });
+  router.get("/auth", async (req, res, next) => {
+    try {
+      await jsonRequest("ProviderRoutes.auth", req, res, function* () {
+        const svc = yield* ProviderAuth.Service;
+        return yield* svc.methods();
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  describe("post", "/:providerID/oauth/authorize", {
+    summary: "OAuth authorize",
+    description: "Initiate OAuth authorization for a specific AI provider to get an authorization URL.",
+    operationId: "provider.oauth.authorize",
+    responses: {
+      200: {
+        description: "Authorization URL and method",
+        content: {
+          "application/json": {
+            schema: ProviderAuth.Authorization.zod.optional(),
+          },
+        },
+      },
+      ...errors(400),
+    },
+  });
+  router.post(
+    "/:providerID/oauth/authorize",
+    validator("param", z.object({
+      providerID: ProviderID.zod.meta({
+        description: "Provider ID",
+      }),
+    })),
+    validator("json", ProviderAuth.AuthorizeInput.zod),
+    async (req, res, next) => {
+      try {
+        await jsonRequest("ProviderRoutes.oauth.authorize", req, res, function* () {
+          const providerID = req.valid.param.providerID;
+          const { method, inputs } = req.valid.json;
+          const svc = yield* ProviderAuth.Service;
+          return yield* svc.authorize({
+            providerID,
+            method,
+            inputs,
+          });
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  describe("post", "/:providerID/oauth/callback", {
+    summary: "OAuth callback",
+    description: "Handle the OAuth callback from a provider after user authorization.",
+    operationId: "provider.oauth.callback",
+    responses: {
+      200: {
+        description: "OAuth callback processed successfully",
+        content: {
+          "application/json": {
+            schema: z.boolean(),
+          },
+        },
+      },
+      ...errors(400),
+    },
+  });
+  router.post(
+    "/:providerID/oauth/callback",
+    validator("param", z.object({
+      providerID: ProviderID.zod.meta({
+        description: "Provider ID",
+      }),
+    })),
+    validator("json", ProviderAuth.CallbackInput.zod),
+    async (req, res, next) => {
+      try {
+        await jsonRequest("ProviderRoutes.oauth.callback", req, res, function* () {
+          const providerID = req.valid.param.providerID;
+          const { method, code } = req.valid.json;
+          const svc = yield* ProviderAuth.Service;
+          yield* svc.callback({
+            providerID,
+            method,
+            code,
+          });
+          return true;
+        });
+      } catch (err) {
+        next(err);
+      }
+    },
+  );
+
+  return router;
+}

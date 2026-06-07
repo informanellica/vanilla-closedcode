@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="closedcode CLI 옵션과 명령어.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html" selected>한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">closedcode CLI 옵션과 명령어.</p>
+      <p>closedcode CLI는 인수 없이 실행하면 기본적으로 <a href="/docs/tui">TUI</a>를 시작합니다.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>이 페이지에 나온 것처럼 명령을 함께 전달할 수도 있습니다. 이를 통해 closedcode를 프로그래밍 방식으로 사용할 수 있습니다.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>vanilla-closedcode 터미널 사용자 인터페이스를 시작합니다.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>마지막 세션 이어서 실행</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>이어서 실행할 세션 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>세션을 이어갈 때 포크 생성 (<code>--continue</code> 또는 <code>--session</code>과 함께 사용)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>사용할 프롬프트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>사용할 모델 (<code>provider/model</code> 형식)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>사용할 에이전트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>수신 포트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>수신 호스트명</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>명령어</h2>
+<p>closedcode CLI는 아래 명령들도 제공합니다.</p>
+<hr>
+<h3>agent</h3>
+<p>closedcode용 에이전트를 관리합니다.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p><code>serve</code> 또는 <code>web</code> 명령으로 이미 실행 중인 closedcode 백엔드 서버에 터미널을 연결합니다.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>원격 closedcode 백엔드와 TUI를 연결해 사용할 수 있습니다. 예:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>TUI를 시작할 작업 디렉터리</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>마지막 세션 이어서 실행</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>이어서 실행할 세션 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>이어서 실행할 때 세션 포크 (<code>--continue</code> 또는 <code>--session</code>과 함께 사용)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>기본 인증 비밀번호 (기본값: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>기본 인증 사용자 이름 (기본값: <code>CLOSEDCODE_SERVER_USERNAME</code> 또는 <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>커스텀 설정으로 새 에이전트를 만듭니다.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>이 명령은 커스텀 시스템 프롬프트와 도구 설정을 사용해 새 에이전트를 만드는 과정을 안내합니다.</p>
+<hr>
+<h4>list</h4>
+<p>사용 가능한 모든 에이전트를 표시합니다.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>provider 인증 정보와 로그인을 관리합니다.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode는 <a href="https://models.dev">Models.dev</a>의 provider 목록을 기반으로 동작하므로, <code>closedcode auth login</code>으로 원하는 provider의 API 키를 설정할 수 있습니다. 인증 정보는 <code>~/.local/share/closedcode/auth.json</code>에 저장됩니다.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>vanilla-closedcode 시작 시 인증 파일에서 provider 정보를 불러오며, 시스템 환경 변수나 프로젝트의 <code>.env</code>에 정의된 키도 함께 로드합니다.</p>
+<hr>
+<h4>list</h4>
+<p>인증 파일에 저장된 provider 목록을 표시합니다.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>축약형도 사용할 수 있습니다.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>인증 파일에서 provider 정보를 제거해 로그아웃합니다.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>저장소 자동화를 위한 GitHub 에이전트를 관리합니다.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>저장소에 GitHub 에이전트를 설치합니다.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>필요한 GitHub Actions 워크플로를 설정하고 구성 과정을 안내합니다. <a href="/docs/github">더 알아보기</a>.</p>
+<hr>
+<h4>run</h4>
+<p>GitHub 에이전트를 실행합니다. 보통 GitHub Actions에서 사용합니다.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>플래그</h5>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>실행할 GitHub 모의 이벤트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub 개인 액세스 토큰</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>Model Context Protocol 서버를 관리합니다.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>구성에 MCP 서버를 추가합니다.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>이 명령은 로컬 또는 원격 MCP 서버를 추가하는 과정을 안내합니다.</p>
+<hr>
+<h4>list</h4>
+<p>구성된 MCP 서버와 연결 상태를 표시합니다.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>축약형도 사용할 수 있습니다.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>OAuth를 지원하는 MCP 서버를 인증합니다.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>서버 이름을 입력하지 않으면 OAuth 지원 서버 목록에서 선택하라는 안내가 표시됩니다.</p>
+<p>OAuth 지원 서버와 인증 상태를 목록으로 볼 수도 있습니다.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>축약형도 사용할 수 있습니다.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>MCP 서버의 OAuth 인증 정보를 제거합니다.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>MCP 서버의 OAuth 연결 문제를 디버그합니다.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>구성된 provider에서 사용 가능한 모델 목록을 표시합니다.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>이 명령은 구성된 provider 전체에서 사용 가능한 모델을 <code>provider/model</code> 형식으로 출력합니다.</p>
+<p><a href="/docs/config/">config</a>에 지정할 정확한 모델명을 확인할 때 유용합니다.</p>
+<p>특정 provider ID를 넘겨 해당 provider의 모델만 필터링할 수도 있습니다.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>models.dev에서 모델 캐시 새로고침</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>더 자세한 모델 출력 사용(비용 등 메타데이터 포함)</td>
+</tr>
+</tbody></table>
+<p><code>--refresh</code> 플래그를 사용하면 캐시된 모델 목록을 갱신할 수 있습니다. provider에 새 모델이 추가된 뒤 vanilla-closedcode에서 바로 확인하고 싶을 때 유용합니다.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>프롬프트를 직접 전달해 비대화형 모드로 closedcode를 실행합니다.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>스크립트, 자동화, 또는 전체 TUI를 띄우지 않고 빠른 응답이 필요할 때 유용합니다. 예:</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>매번 MCP 서버 콜드 부트가 발생하지 않도록, 실행 중인 <code>closedcode serve</code> 인스턴스에 붙어서 실행할 수도 있습니다.</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>실행할 명령(인수는 message로 전달)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>마지막 세션 이어서 실행</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>이어서 실행할 세션 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>세션을 이어갈 때 포크 생성 (<code>--continue</code> 또는 <code>--session</code>과 함께 사용)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>세션 공유</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>사용할 모델 (<code>provider/model</code> 형식)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>사용할 에이전트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>메시지에 첨부할 파일</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>출력 형식: default(포맷됨) 또는 json(원시 JSON 이벤트)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>세션 제목(값이 없으면 프롬프트를 잘라 자동 생성)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>실행 중인 closedcode 서버에 연결(예: <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>기본 인증 비밀번호 (기본값: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>기본 인증 사용자 이름 (기본값: <code>CLOSEDCODE_SERVER_USERNAME</code> 또는 <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>실행할 디렉터리, 또는 연결 시 원격 서버 경로</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>모델 변형 (제공자별 추론 수준)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>사고 블록 표시</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>로컬 서버 포트(기본값: 랜덤 포트)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>API 접근용 headless vanilla-closedcode 서버를 시작합니다. 전체 HTTP 인터페이스는 <a href="/docs/server">server docs</a>를 참고하세요.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>이 명령은 TUI 없이 closedcode 기능에 접근할 수 있는 HTTP 서버를 시작합니다. <code>CLOSEDCODE_SERVER_PASSWORD</code>를 설정하면 HTTP basic auth가 활성화됩니다(기본 사용자명: <code>closedcode</code>).</p>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>수신 포트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>수신 호스트명</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS 검색 활성화</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>허용할 추가 브라우저 origin(CORS)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>vanilla-closedcode 세션을 관리합니다.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>vanilla-closedcode 세션 목록을 표시합니다.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>플래그</h5>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>최근 N개 세션만 표시</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>출력 형식: table 또는 json(기본 table)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>vanilla-closedcode 세션의 토큰 사용량과 비용 통계를 표시합니다.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>최근 N일 통계 표시(기본값: 전체 기간)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>표시할 도구 개수(기본값: 전체)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>모델 사용량 상세 표시(기본 숨김). 숫자를 주면 상위 N개 표시</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>프로젝트 필터(기본: 전체 프로젝트, 빈 문자열: 현재 프로젝트)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>세션 데이터를 JSON으로 내보냅니다.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>세션 ID를 지정하지 않으면 사용 가능한 세션에서 선택하라는 안내가 표시됩니다.</p>
+<hr>
+<h3>import</h3>
+<p>JSON 파일 또는 vanilla-closedcode 공유 URL에서 세션 데이터를 가져옵니다.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>로컬 파일이나 vanilla-closedcode 공유 URL에서 가져올 수 있습니다.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>웹 인터페이스를 포함한 headless vanilla-closedcode 서버를 시작합니다.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>이 명령은 HTTP 서버를 시작하고 웹 브라우저를 열어 웹 인터페이스로 vanilla-closedcode에 접속합니다. <code>CLOSEDCODE_SERVER_PASSWORD</code>를 설정하면 HTTP basic auth가 활성화됩니다(기본 사용자명: <code>closedcode</code>).</p>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>수신 포트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>수신 호스트명</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS 검색 활성화</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>허용할 추가 브라우저 origin(CORS)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>ACP(Agent Client Protocol) 서버를 시작합니다.</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>이 명령은 nd-JSON 형식으로 stdin/stdout을 통해 통신하는 ACP 서버를 시작합니다.</p>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>작업 디렉터리</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>수신 포트</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>수신 호스트명</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>vanilla-closedcode를 제거하고 관련 파일을 삭제합니다.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>설정 파일 유지</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>세션 데이터와 스냅샷 유지</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>실제 삭제 없이 삭제 대상만 표시</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>확인 프롬프트 건너뛰기</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>closedcode를 최신 버전 또는 특정 버전으로 업데이트합니다.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>최신 버전으로 업그레이드:</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>특정 버전으로 업그레이드:</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>플래그</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>설치 방식 지정: curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>전역 플래그</h2>
+<p>closedcode CLI는 아래 전역 플래그를 지원합니다.</p>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>축약</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>도움말 표시</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>버전 출력</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>로그를 stderr로 출력</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>로그 레벨(DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>환경 변수</h2>
+<p>vanilla-closedcode는 환경 변수로도 구성할 수 있습니다.</p>
+<table>
+<thead>
+<tr>
+<th>변수</th>
+<th>타입</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>세션 자동 공유</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>Windows에서 Git Bash 실행 파일 경로</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>설정 파일 경로</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>설정 디렉터리 경로</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>인라인 JSON 설정 내용</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>자동 업데이트 확인 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>오래된 데이터 정리(prune) 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>터미널 제목 자동 업데이트 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>인라인 JSON 권한 설정</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>기본 플러그인 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>LSP 서버 자동 다운로드 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>실험적 모델 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>자동 컨텍스트 컴팩션 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td><code>.claude</code>(프롬프트 + 스킬) 읽기 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td><code>~/.claude/CLAUDE.md</code> 읽기 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td><code>.claude/skills</code> 로드 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>원격 소스에서 모델 목록 가져오기 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>테스트용 가짜 VCS provider</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>클라이언트 식별자(기본값: <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>Exa 웹 검색 도구 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td><code>serve</code>/<code>web</code> 기본 인증 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>기본 인증 사용자명 오버라이드(기본 <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>모델 설정을 가져올 사용자 지정 URL</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>실험적 기능</h3>
+<p>아래 환경 변수는 변경되거나 제거될 수 있는 실험 기능을 활성화합니다.</p>
+<table>
+<thead>
+<tr>
+<th>변수</th>
+<th>타입</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>모든 실험 기능 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>아이콘 탐색 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>TUI에서 선택 시 복사 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>number</td>
+<td>bash 명령 기본 타임아웃(ms)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>number</td>
+<td>LLM 응답 최대 출력 토큰 수</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>전체 디렉터리 파일 감시 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>oxfmt 포매터 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>실험적 LSP 도구 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>파일 감시 비활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>실험적 Exa 기능 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>python 파일에 대해 TY LSP 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>실험적 Markdown 기능 활성화</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>Plan mode 활성화</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dozvole — vanilla-closedcode docs</title>
+  <meta name="description" content="Kontrolirajte koje radnje zahtijevaju odobrenje za pokretanje.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html" selected>Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Dozvole</h1>
+      <p class="lede">Kontrolirajte koje radnje zahtijevaju odobrenje za pokretanje.</p>
+      <p>vanilla-closedcode koristi <code>permission</code> konfiguraciju da odluči da li će se određena radnja pokrenuti automatski, zatražiti od vas ili biti blokirana.
+Od <code>v1.1.1</code>, naslijeđena <code>tools</code> logička konfiguracija je zastarjela i spojena je u <code>permission</code>. Stara <code>tools</code> konfiguracija je još uvijek podržana za kompatibilnost unatrag.</p>
+<hr>
+<h2>Akcije</h2>
+<p>Svako pravilo dozvole rješava jedno od:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — pokrenuti bez odobrenja</li>
+<li><code>&quot;ask&quot;</code> — upit za odobrenje</li>
+<li><code>&quot;deny&quot;</code> — blokiraj akciju</li>
+</ul>
+<hr>
+<h2>Konfiguracija</h2>
+<p>Dozvole možete postaviti globalno (sa <code>*</code>) i nadjačati određene alate.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Također možete postaviti sve dozvole odjednom:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Granularna pravila (sintaksa objekta)</h2>
+<p>Za većinu dozvola, možete koristiti objekt za primjenu različitih radnji na osnovu unosa alata.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Pravila se procjenjuju na osnovu podudaranja uzorka, pri čemu **pobjeđuje **poslednje odgovarajuće pravilo*_. Uobičajeni obrazac je da se prvo pravilo <code>&quot;*&quot;</code> stavi sveobuhvatno, a poslije njega konkretnija pravila.</p>
+<h3>Zamjenski znakovi</h3>
+<p>Uzorci dozvola koriste jednostavno podudaranje zamjenskih znakova:</p>
+<ul>
+<li><code>*</code> odgovara nula ili više bilo kojeg znaka</li>
+<li><code>?</code> odgovara tačno jednom znaku</li>
+<li>Svi ostali likovi se bukvalno podudaraju</li>
+</ul>
+<h3>Proširenje kućnog direktorija</h3>
+<p>Možete koristiti <code>~</code> ili <code>$HOME</code> na početku obrasca da referencirate svoj početni direktorij. Ovo je posebno korisno za <a href="#external-directories"><code>external_directory</code></a> pravila.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Vanjski direktoriji</h3>
+<p>Koristite <code>external_directory</code> da dozvolite pozive alata koji dodiruju putanje izvan radnog direktorija gdje je vanilla-closedcode pokrenut. Ovo se odnosi na bilo koji alat koji uzima putanju kao ulaz (na primjer <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> i mnoge <code>bash</code> komande).
+Proširenje kuće (poput <code>~/...</code>) utiče samo na način na koji je obrazac napisan. Ne čini vanjsku stazu dijelom trenutnog radnog prostora, tako da staze izvan radnog direktorija i dalje moraju biti dozvoljene preko <code>external_directory</code>.
+Na primjer, ovo omogućava pristup svemu pod <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Svaki direktorij koji je ovdje dozvoljen nasljeđuje iste zadane postavke kao trenutni radni prostor. Pošto je <a href="#defaults"><code>read</code> zadano na <code>allow</code></a>, čitanje je također dozvoljeno za unose pod <code>external_directory</code> osim ako se ne poništi. Dodajte eksplicitna pravila kada bi alat trebao biti ograničen na ovim stazama, kao što je blokiranje uređivanja uz zadržavanje čitanja:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Držite ovu listu fokusiranom na pouzdane putanje, a dodatna allow/deny pravila dodajte po potrebi za druge alate (npr. <code>bash</code>).</p>
+<h2>Dostupne dozvole</h2>
+<p>Dozvole vanilla-closedcode su označene imenom alata, plus nekoliko sigurnosnih mjera:</p>
+<ul>
+<li><code>read</code> — čitanje datoteke (odgovara putanji datoteke)</li>
+<li><code>edit</code> — sve izmjene fajlova (pokriva <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — globbiranje fajla (odgovara glob uzorku)</li>
+<li><code>grep</code> — pretraga sadržaja (podudara se sa regularnim izrazom)</li>
+<li><code>bash</code> — izvođenje komandi ljuske (podudara se s raščlanjenim komandama kao što je <code>git status --porcelain</code>)</li>
+<li><code>task</code> — pokretanje subagenta (odgovara tipu podagenta)</li>
+<li><code>skill</code> — učitavanje vještine (odgovara nazivu vještine)</li>
+<li><code>lsp</code> — pokretanje LSP upita (trenutno negranularno)</li>
+<li><code>webfetch</code> — dohvaćanje URL-a (odgovara URL-u)</li>
+<li><code>websearch</code> — pretraživanje weba (odgovara upitu)</li>
+<li><code>external_directory</code> — pokreće se kada alat dodirne staze izvan radnog direktorija projekta</li>
+<li><code>doom_loop</code> — aktivira se kada se isti poziv alata ponovi 3 puta sa identičnim unosom</li>
+</ul>
+<hr>
+<h2>Zadane postavke</h2>
+<p>Ako ništa ne navedete, vanilla-closedcode počinje od dozvoljenih zadanih vrijednosti:</p>
+<ul>
+<li>Većina dozvola je zadana na <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> i <code>external_directory</code> zadano na <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> je <code>&quot;allow&quot;</code>, ali <code>.env</code> fajlovi su po defaultu odbijeni:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Šta radi “Ask”</h2>
+<p>Kada vanilla-closedcode zatraži odobrenje, korisničko sučelje nudi tri ishoda:</p>
+<ul>
+<li><code>once</code> — odobri samo ovaj zahtjev</li>
+<li><code>always</code> — odobri buduće zahtjeve koji odgovaraju predloženim obrascima (za ostatak trenutne vanilla-closedcode sesije)</li>
+<li><code>reject</code> — odbiti zahtjev
+Skup obrazaca koje bi <code>always</code> odobrio pruža alat (na primjer, bash odobrenja obično stavljaju na bijelu listu sigurni prefiks komande kao što je <code>git status*</code>).</li>
+</ul>
+<hr>
+<h2>Agenti</h2>
+<p>Možete nadjačati dozvole po agentu. Dozvole agenta su spojene sa globalnom konfiguracijom, a pravila agenta imaju prednost. <a href="/docs/agents#permissions">Saznajte više</a> o dozvolama agenta.</p>
+<aside class="aside aside-note">
+Pogledajte gornji odjeljak [Granularna pravila (sintaksa objekata)](#granular-rules-object-syntax) za detaljnije primjere podudaranja uzoraka.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Također možete konfigurirati dozvole agenta u Markdownu:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Koristite podudaranje uzoraka za naredbe s argumentima. `"grep *"` dozvoljava `grep pattern file.txt`, dok bi ga samo `"grep"` blokirao. Naredbe poput `git status` rade za zadano ponašanje, ali zahtijevaju eksplicitnu dozvolu (kao `"git status *"`) kada se prosljeđuju argumenti.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

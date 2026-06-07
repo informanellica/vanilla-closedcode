@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الأذونات — vanilla-closedcode docs</title>
+  <meta name="description" content="تحكّم في الإجراءات التي تتطلب موافقة قبل تنفيذها.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html" selected>العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الأذونات</h1>
+      <p class="lede">تحكّم في الإجراءات التي تتطلب موافقة قبل تنفيذها.</p>
+      <p>يستخدم vanilla-closedcode إعداد <code>permission</code> لتحديد ما إذا كان إجراءٌ ما سيُنفّذ تلقائيًا، أو سيطلب موافقتك، أو سيتم حظره.</p>
+<p>اعتبارًا من <code>v1.1.1</code>، تم إهمال إعداد <code>tools</code> القديم (المنطقي) ودمجه ضمن <code>permission</code>. ولا يزال إعداد <code>tools</code> القديم مدعومًا للتوافق مع الإصدارات السابقة.</p>
+<hr>
+<h2>الإجراءات</h2>
+<p>يؤول كل حكم أذونات إلى إحدى القيم التالية:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — تشغيل دون موافقة</li>
+<li><code>&quot;ask&quot;</code> — طلب الموافقة</li>
+<li><code>&quot;deny&quot;</code> — حظر الإجراء</li>
+</ul>
+<hr>
+<h2>الإعداد</h2>
+<p>يمكنك تعيين الأذونات بشكل عام (باستخدام <code>*</code>) ثم تجاوزها لأدوات محددة.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>يمكنك أيضًا تعيين جميع الأذونات دفعة واحدة:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>قواعد دقيقة (صيغة الكائن)</h2>
+<p>في معظم الأذونات، يمكنك استخدام كائن لتطبيق إجراءات مختلفة بناءً على مُدخلات الأداة.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>تُقيَّم القواعد عبر مطابقة الأنماط، مع كون <strong>آخر قاعدة مطابقة هي التي تُطبَّق</strong>. من الشائع وضع قاعدة الشمول <code>&quot;*&quot;</code> أولًا ثم القواعد الأكثر تحديدًا بعدها.</p>
+<h3>أحرف البدل</h3>
+<p>تستخدم أنماط الأذونات مطابقة بسيطة لأحرف البدل:</p>
+<ul>
+<li><code>*</code> يطابق صفرًا أو أكثر من أي حرف</li>
+<li><code>?</code> يطابق حرفًا واحدًا بالضبط</li>
+<li>جميع الأحرف الأخرى تُطابق حرفيًا</li>
+</ul>
+<h3>توسيع مجلد المنزل</h3>
+<p>يمكنك استخدام <code>~</code> أو <code>$HOME</code> في بداية النمط للإشارة إلى مجلد المنزل. هذا مفيد خصوصًا لقواعد <a href="#external-directories"><code>external_directory</code></a>.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>الأدلة الخارجية</h3>
+<p>استخدم <code>external_directory</code> للسماح باستدعاءات الأدوات التي تلمس مسارات خارج دليل العمل الذي بدأ منه vanilla-closedcode. ينطبق ذلك على أي أداة تأخذ مسارًا كمدخل (مثل <code>read</code> و<code>edit</code> و<code>glob</code> و<code>grep</code> والعديد من أوامر <code>bash</code>).</p>
+<p>توسيع المنزل (مثل <code>~/...</code>) يؤثر فقط على طريقة كتابة النمط. لا يجعل ذلك المسار الخارجي جزءًا من مساحة العمل الحالية، لذا يجب السماح بالمسارات خارج دليل العمل عبر <code>external_directory</code> أيضًا.</p>
+<p>على سبيل المثال، يتيح هذا الوصول إلى كل ما يقع تحت <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>أي دليل مسموح به هنا يرث نفس القيم الافتراضية لمساحة العمل الحالية. وبما أن <a href="#defaults"><code>read</code> افتراضيًا هو <code>allow</code></a>، فإن عمليات القراءة تكون مسموحة أيضًا للعناصر ضمن <code>external_directory</code> ما لم يتم تجاوز ذلك. أضِف قواعد صريحة عندما يجب تقييد أداة ما في هذه المسارات، مثل حظر التعديلات مع الإبقاء على القراءة:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>اجعل القائمة مقتصرة على المسارات الموثوقة، ثم أضِف طبقات إضافية من قواعد <code>allow</code> أو <code>deny</code> حسب الحاجة لأدوات أخرى (مثل <code>bash</code>).</p>
+<hr>
+<h2>الأذونات المتاحة</h2>
+<p>تُعرَّف أذونات vanilla-closedcode بأسماء الأدوات، بالإضافة إلى بعض حواجز الأمان:</p>
+<ul>
+<li><code>read</code> — قراءة ملف (يطابق مسار الملف)</li>
+<li><code>edit</code> — جميع تعديلات الملفات (يشمل <code>edit</code> و<code>write</code> و<code>patch</code>)</li>
+<li><code>glob</code> — مطابقة أسماء الملفات (يطابق نمط الـ glob)</li>
+<li><code>grep</code> — البحث في المحتوى (يطابق نمط regex)</li>
+<li><code>bash</code> — تشغيل أوامر shell (يطابق الأوامر المُحلَّلة مثل <code>git status --porcelain</code>)</li>
+<li><code>task</code> — تشغيل وكلاء فرعيين (يطابق نوع الوكيل الفرعي)</li>
+<li><code>skill</code> — تحميل مهارة (يطابق اسم المهارة)</li>
+<li><code>lsp</code> — تشغيل استعلامات LSP (حاليًا دون قواعد دقيقة)</li>
+<li><code>webfetch</code> — جلب عنوان URL (يطابق الـ URL)</li>
+<li><code>websearch</code> — بحث الويب (يطابق الاستعلام)</li>
+<li><code>external_directory</code> — يُفعَّل عندما تلمس أداة مسارات خارج دليل عمل المشروع</li>
+<li><code>doom_loop</code> — يُفعَّل عندما يتكرر نفس استدعاء الأداة 3 مرات مع نفس المُدخلات</li>
+</ul>
+<hr>
+<h2>القيم الافتراضية</h2>
+<p>إذا لم تحدد شيئًا، يبدأ vanilla-closedcode بقيم افتراضية متساهلة:</p>
+<ul>
+<li>معظم الأذونات افتراضيًا تكون <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> و<code>external_directory</code> افتراضيًا تكون <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> هو <code>&quot;allow&quot;</code>، لكن ملفات <code>.env</code> تكون مرفوضة افتراضيًا:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>ماذا تفعل <code>&quot;ask&quot;</code></h2>
+<p>عندما يطلب vanilla-closedcode الموافقة، تعرض الواجهة ثلاث نتائج ممكنة:</p>
+<ul>
+<li><code>once</code> — الموافقة على هذا الطلب فقط</li>
+<li><code>always</code> — الموافقة على الطلبات المستقبلية المطابقة للأنماط المقترحة (لباقي جلسة vanilla-closedcode الحالية)</li>
+<li><code>reject</code> — رفض الطلب</li>
+</ul>
+<p>مجموعة الأنماط التي ستوافق عليها <code>always</code> تُوفَّر من الأداة نفسها (على سبيل المثال، موافقات <code>bash</code> عادةً ما تُدرج بادئة أمر آمنة في القائمة البيضاء مثل <code>git status*</code>).</p>
+<hr>
+<h2>الوكلاء</h2>
+<p>يمكنك تجاوز الأذونات لكل وكيل. تُدمَج أذونات الوكلاء مع الإعداد العام، وتكون قواعد الوكيل هي ذات الأولوية. <a href="/docs/agents#permissions">تعرّف أكثر</a> على أذونات الوكلاء.</p>
+<aside class="aside aside-note">
+ارجع إلى قسم [قواعد دقيقة (صيغة الكائن)](#granular-rules-object-syntax) للحصول على أمثلة أكثر تفصيلًا حول مطابقة الأنماط.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>يمكنك أيضًا ضبط أذونات الوكيل في Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+استخدم مطابقة الأنماط للأوامر التي تحتوي على معاملات. يسمح `"grep *"` بتنفيذ `grep pattern file.txt`، بينما سيحظر `"grep"` وحده ذلك. تعمل أوامر مثل `git status` للسلوك الافتراضي، لكنها تتطلب إذنًا صريحًا (مثل `"git status *"`) عند تمرير معاملات.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

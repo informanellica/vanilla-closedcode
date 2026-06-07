@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Servidores MCP — vanilla-closedcode docs</title>
+  <meta name="description" content="Adicione ferramentas MCP locais e remotas.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html" selected>Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Servidores MCP</h1>
+      <p class="lede">Adicione ferramentas MCP locais e remotas.</p>
+      <p>Você pode adicionar ferramentas externas ao closedcode usando o <em>Model Context Protocol</em>, ou MCP. O closedcode suporta servidores locais e remotos.</p>
+<p>Uma vez adicionadas, as ferramentas MCP estão automaticamente disponíveis para o LLM juntamente com as ferramentas integradas.</p>
+<hr>
+<h4>Avisos</h4>
+<p>Quando você usa um servidor MCP, ele adiciona ao contexto. Isso pode rapidamente se acumular se você tiver muitas ferramentas. Portanto, recomendamos ter cuidado com quais servidores MCP você usa.</p>
+<aside class="aside aside-tip">
+Os servidores MCP adicionam ao seu contexto, então você deve ter cuidado com quais você habilita.
+</aside>
+Certos servidores MCP, como o servidor MCP do GitHub, tendem a adicionar muitos tokens e podem facilmente exceder o limite de contexto.
+
+<hr>
+<h2>Habilitando</h2>
+<p>Você pode definir servidores MCP em sua <a href="./config.html">Configuração do closedcode</a> sob <code>mcp</code>. Adicione cada MCP com um nome único. Você pode se referir a esse MCP pelo nome ao solicitar ao LLM.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>Você também pode desabilitar um servidor definindo <code>enabled</code> como <code>false</code>. Isso é útil se você quiser desabilitar temporariamente um servidor sem removê-lo de sua configuração.</p>
+<hr>
+
+<h2>Local</h2>
+<p>Adicione servidores MCP locais usando <code>type</code> como <code>&quot;local&quot;</code> dentro do objeto MCP.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>O comando é como o servidor MCP local é iniciado. Você também pode passar uma lista de variáveis de ambiente.</p>
+<p>Por exemplo, aqui está como você pode adicionar o servidor MCP de teste <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a>.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>E para usá-lo, posso adicionar <code>use the mcp_everything tool</code> aos meus prompts.</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>Opções</h4>
+<p>Aqui estão todas as opções para configurar um servidor MCP local.</p>
+<table>
+<thead>
+<tr>
+<th>Opção</th>
+<th>Tipo</th>
+<th>Requerido</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>S</td>
+<td>Tipo de conexão do servidor MCP, deve ser <code>&quot;local&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Array</td>
+<td>S</td>
+<td>Comando e argumentos para executar o servidor MCP.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Object</td>
+<td></td>
+<td>Variáveis de ambiente a serem definidas ao executar o servidor.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Habilitar ou desabilitar o servidor MCP na inicialização.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>Tempo limite em ms para buscar ferramentas do servidor MCP. O padrão é 5000 (5 segundos).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Remoto</h2>
+<p>Adicione servidores MCP remotos definindo <code>type</code> como <code>&quot;remote&quot;</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>O <code>url</code> é a URL do servidor MCP remoto e com a opção <code>headers</code> você pode passar uma lista de cabeçalhos.</p>
+<hr>
+<h4>Opções</h4>
+<table>
+<thead>
+<tr>
+<th>Opção</th>
+<th>Tipo</th>
+<th>Requerido</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>S</td>
+<td>Tipo de conexão do servidor MCP, deve ser <code>&quot;remote&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>String</td>
+<td>S</td>
+<td>URL do servidor MCP remoto.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Habilitar ou desabilitar o servidor MCP na inicialização.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Object</td>
+<td></td>
+<td>Cabeçalhos a serem enviados com a solicitação.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Object</td>
+<td></td>
+<td>Configuração de autenticação OAuth. Veja a seção <a href="#oauth">OAuth</a> abaixo.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>Tempo limite em ms para buscar ferramentas do servidor MCP. O padrão é 5000 (5 segundos).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>O closedcode lida automaticamente com a autenticação OAuth para servidores MCP remotos. Quando um servidor requer autenticação, o closedcode irá:</p>
+<ol>
+<li>Detectar a resposta 401 e iniciar o fluxo OAuth</li>
+<li>Usar <strong>Registro Dinâmico de Cliente (RFC 7591)</strong> se suportado pelo servidor</li>
+<li>Armazenar tokens de forma segura para futuras solicitações</li>
+</ol>
+<hr>
+<h3>Automático</h3>
+<p>Para a maioria dos servidores MCP habilitados para OAuth, nenhuma configuração especial é necessária. Basta configurar o servidor remoto:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Se o servidor requer autenticação, o closedcode solicitará que você se autentique quando tentar usá-lo pela primeira vez. Se não, você pode <a href="#authenticating">iniciar manualmente o fluxo</a> com <code>closedcode mcp auth &lt;server-name&gt;</code>.</p>
+<hr>
+<h3>Pré-registrado</h3>
+<p>Se você tiver credenciais de cliente do provedor do servidor MCP, pode configurá-las:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Autenticação</h3>
+<p>Você pode iniciar manualmente a autenticação ou gerenciar credenciais.</p>
+<p>Autentique-se com um servidor MCP específico:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>Liste todos os servidores MCP e seu status de autenticação:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Remova credenciais armazenadas:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p>O comando <code>mcp auth</code> abrirá seu navegador para autorização. Após você autorizar, o closedcode armazenará os tokens de forma segura em <code>~/.local/share/closedcode/mcp-auth.json</code>.</p>
+<hr>
+<h4>Desabilitando OAuth</h4>
+<p>Se você quiser desabilitar o OAuth automático para um servidor (por exemplo, para servidores que usam chaves de API em vez disso), defina <code>oauth</code> como <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Opções de OAuth</h4>
+<table>
+<thead>
+<tr>
+<th>Opção</th>
+<th>Tipo</th>
+<th>Descrição</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>Objeto de configuração OAuth, ou <code>false</code> para desabilitar a detecção automática de OAuth.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>ID do cliente OAuth. Se não fornecido, o registro dinâmico do cliente será tentado.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>Segredo do cliente OAuth, se necessário pelo servidor de autorização.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>Escopos OAuth a serem solicitados durante a autorização.</td>
+</tr>
+</tbody></table>
+<h4>Depuração</h4>
+<p>Se um servidor MCP remoto estiver falhando na autenticação, você pode diagnosticar problemas com:</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p>O comando <code>mcp debug</code> mostra o status de autenticação atual, testa a conectividade HTTP e tenta o fluxo de descoberta OAuth.</p>
+<hr>
+<h2>Gerenciamento</h2>
+<p>Seus MCPs estão disponíveis como ferramentas no closedcode, juntamente com ferramentas integradas. Portanto, você pode gerenciá-los através da configuração do closedcode como qualquer outra ferramenta.</p>
+<hr>
+<h3>Global</h3>
+<p>Isso significa que você pode habilitá-los ou desabilitá-los globalmente.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>Também podemos usar um padrão glob para desabilitar todos os MCPs correspondentes.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>Aqui estamos usando o padrão glob <code>my-mcp*</code> para desabilitar todos os MCPs.</p>
+<hr>
+<h3>Por agente</h3>
+<p>Se você tiver um grande número de servidores MCP, pode querer habilitá-los apenas por agente e desabilitá-los globalmente. Para fazer isso:</p>
+<ol>
+<li>Desabilite-o como uma ferramenta globalmente.</li>
+<li>Em sua <a href="/docs/agents#tools">configuração de agente</a>, habilite o servidor MCP como uma ferramenta.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Padrões glob</h4>
+<p>O padrão glob usa padrões simples de regex globbing:</p>
+<ul>
+<li><code>*</code> corresponde a zero ou mais de qualquer caractere (por exemplo, <code>&quot;my-mcp*&quot;</code> corresponde a <code>my-mcp_search</code>, <code>my-mcp_list</code>, etc.)</li>
+<li><code>?</code> corresponde exatamente a um caractere</li>
+<li>Todos os outros caracteres correspondem literalmente</li>
+</ul>
+<aside class="aside aside-note">
+As ferramentas do servidor MCP são registradas com o nome do servidor como prefixo, então para desabilitar todas as ferramentas de um servidor, simplesmente use:
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>Exemplos</h2>
+<p>Abaixo estão exemplos de alguns servidores MCP comuns. Você pode enviar um PR se quiser documentar outros servidores.</p>
+<hr>
+<h3>Sentry</h3>
+<p>Adicione o <a href="https://mcp.sentry.dev">servidor MCP Sentry</a> para interagir com seus projetos e problemas do Sentry.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>Após adicionar a configuração, autentique-se com o Sentry:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>Isso abrirá uma janela do navegador para completar o fluxo OAuth e conectar o closedcode à sua conta do Sentry.</p>
+<p>Uma vez autenticado, você pode usar ferramentas do Sentry em seus prompts para consultar problemas, projetos e dados de erro.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>Adicione o <a href="https://github.com/upstash/context7">servidor MCP Context7</a> para pesquisar através de documentos.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Se você se inscreveu para uma conta gratuita, pode usar sua chave de API e obter limites de taxa mais altos.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Aqui estamos assumindo que você tem a variável de ambiente <code>CONTEXT7_API_KEY</code> definida.</p>
+<p>Adicione <code>use context7</code> aos seus prompts para usar o servidor MCP Context7.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>Alternativamente, você pode adicionar algo assim ao seu <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>Adicione o <a href="https://grep.app">Grep by Vercel</a> servidor MCP para pesquisar através de trechos de código no GitHub.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>Como nomeamos nosso servidor MCP como <code>gh_grep</code>, você pode adicionar <code>use the gh_grep tool</code> aos seus prompts para fazer o agente usá-lo.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>Alternativamente, você pode adicionar algo assim ao seu <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

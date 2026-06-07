@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>代理技能 — vanilla-closedcode docs</title>
+  <meta name="description" content="透過 SKILL.md 定義可重複使用的行為">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>代理技能</h1>
+      <p class="lede">透過 SKILL.md 定義可重複使用的行為</p>
+      <p>代理技能讓 vanilla-closedcode 能夠從你的儲存庫或主目錄中發現可重複使用的指令。
+技能透過原生的 <code>skill</code> 工具按需載入——代理可以查看可用技能，並在需要時載入完整內容。</p>
+<hr>
+<h2>放置檔案</h2>
+<p>為每個技能名稱建立一個資料夾，並在其中放入 <code>SKILL.md</code>。
+vanilla-closedcode 會搜尋以下位置：</p>
+<ul>
+<li>專案設定：<code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>全域設定：<code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>專案 Claude 相容：<code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>全域 Claude 相容：<code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>專案代理相容：<code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>全域代理相容：<code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>了解發現機制</h2>
+<p>對於專案本地路徑，vanilla-closedcode 會從當前工作目錄向上遍歷，直到到達 git 工作樹根目錄。
+在此過程中，它會載入 <code>.closedcode/</code> 中所有匹配的 <code>skills/*/SKILL.md</code>，以及匹配的 <code>.claude/skills/*/SKILL.md</code> 或 <code>.agents/skills/*/SKILL.md</code>。</p>
+<p>全域定義也會從 <code>~/.config/closedcode/skills/*/SKILL.md</code>、<code>~/.claude/skills/*/SKILL.md</code> 和 <code>~/.agents/skills/*/SKILL.md</code> 中載入。</p>
+<hr>
+<h2>撰寫 frontmatter</h2>
+<p>每個 <code>SKILL.md</code> 必須以 YAML frontmatter 開頭。
+僅識別以下欄位：</p>
+<ul>
+<li><code>name</code>（必填）</li>
+<li><code>description</code>（必填）</li>
+<li><code>license</code>（選填）</li>
+<li><code>compatibility</code>（選填）</li>
+<li><code>metadata</code>（選填，字串到字串的映射）</li>
+</ul>
+<p>未知的 frontmatter 欄位會被忽略。</p>
+<hr>
+<h2>驗證名稱</h2>
+<p><code>name</code> 必須滿足：</p>
+<ul>
+<li>長度為 1–64 個字元</li>
+<li>僅包含小寫字母和數字，可用單個連字號分隔</li>
+<li>不以 <code>-</code> 開頭或結尾</li>
+<li>不包含連續的 <code>--</code></li>
+<li>與包含 <code>SKILL.md</code> 的目錄名稱一致</li>
+</ul>
+<p>等效的正規表示式：</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>遵循長度規則</h2>
+<p><code>description</code> 必須為 1-1024 個字元。
+請保持描述足夠具體，以便代理能夠正確選擇。</p>
+<hr>
+<h2>使用範例</h2>
+<p>建立 <code>.closedcode/skills/git-release/SKILL.md</code>，內容如下：</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>識別工具描述</h2>
+<p>vanilla-closedcode 會在 <code>skill</code> 工具描述中列出可用技能。
+每個條目包含技能名稱和描述：</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>代理透過呼叫工具來載入技能：</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>設定權限</h2>
+<p>在 <code>closedcode.json</code> 中使用基於模式的權限來控制代理可以存取哪些技能：</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>權限</th>
+<th>行為</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>技能立即載入</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>對代理隱藏技能，拒絕存取</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>載入前提示使用者確認</td>
+</tr>
+</tbody></table>
+<p>模式支援萬用字元：<code>internal-*</code> 可匹配 <code>internal-docs</code>、<code>internal-tools</code> 等。</p>
+<hr>
+<h2>按代理覆蓋權限</h2>
+<p>為特定代理授予與全域預設值不同的權限。</p>
+<p><strong>自訂代理</strong>（在代理 frontmatter 中）：</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>內建代理</strong>（在 <code>closedcode.json</code> 中）：</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>停用技能工具</h2>
+<p>為不需要使用技能的代理完全停用技能功能：</p>
+<p><strong>自訂代理</strong>：</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>內建代理</strong>：</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>停用後，<code>&lt;available_skills&gt;</code> 部分將被完全省略。</p>
+<hr>
+<h2>排查載入問題</h2>
+<p>如果某個技能沒有顯示：</p>
+<ol>
+<li>確認 <code>SKILL.md</code> 檔案名稱全部為大寫字母</li>
+<li>檢查 frontmatter 是否包含 <code>name</code> 和 <code>description</code></li>
+<li>確保技能名稱在所有位置中唯一</li>
+<li>檢查權限設定——設為 <code>deny</code> 的技能會對代理隱藏</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

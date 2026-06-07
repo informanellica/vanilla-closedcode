@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modele — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurowanie dostawcy i modelu LLM.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html" selected>Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Modele</h1>
+      <p class="lede">Konfigurowanie dostawcy i modelu LLM.</p>
+      <p>closedcode używa <a href="https://ai-sdk.dev/">AI SDK</a> i <a href="https://models.dev">Models.dev</a> do obsługi <strong>ponad 75 dostawców LLM</strong> i obsługi uruchamiania modeli pierwszych.</p>
+<hr>
+<h2>Dostawcy</h2>
+<p>Dostępna usługa dostawcy jest dostępna. Jeśli otrzymasz poświadczenie dostawcy za pomocą polecenia <code>/connect</code>, będzie on dostępny po uruchomieniu closedcode.</p>
+<p>Dowiedz się więcej o <a href="/docs/providers">dostawcach</a>.</p>
+<hr>
+<h2>Wybierz model</h2>
+<p>Po skonfigurowaniu dostawcy możesz wybrać dostępny model, wpisując:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>Polecane modele</h2>
+<p>Na rynku jest mnóstwo modeli, co tydzień pojawia się nowe.</p>
+<aside class="aside aside-tip">
+Rozważ skorzystanie z jednego z rekomendowanych przez nas modeli.
+</aside>
+Jednak tylko kilka z nich jest dobrych przy generowaniu kodu, jak i wywołaniu narzędzia.
+
+<p>Oto kilka modeli, które dobrze współpracują z closedcode, w kolejności. (Nie jest to lista wyczerpująca i nie jest konieczna aktualna):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>Kodeks GPT 5.1</li>
+<li>Klaudiusz Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Bliźnięta 3Pro</li>
+</ul>
+<hr>
+<h2>Ustaw wartość domyślną</h2>
+<p>Aby zainstalować jeden z nich jako model domyślny, możesz zainstalować klucz <code>model</code> w swoim
+closedcode konfiguracja</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>Tutaj pełny identyfikator do <code>provider_id/model_id</code>. Na przykład, użycie Ollama, przestrzeganie <code>ollama/gpt-oss:20b</code> dla Kodeksu GPT 5.1.</p>
+<p>Jeśli skonfigurowałeś [dostawcę zwykłegogo] (./providers#custom), <code>provider_id</code> jest kluczem z części <code>provider</code> twojej konfiguracji, a <code>model_id</code> jest kluczem z <code>provider.models</code>.</p>
+<hr>
+<h2>Skonfiguruj modele</h2>
+<p>Można globalnie skorzystać z opcji modelu poprzez plik config.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>Tutaj konfigurujemy urządzenia globalne dla dwóch modeli: <code>gpt-5</code> w przypadku dostępu za pośrednictwem dostawcy <code>openai</code> i <code>claude-sonnet-4-20250514</code> w przypadku dostępu za pośrednictwem dostawcy <code>anthropic</code>.
+Wbudowane nazwy dostawców i modele można znaleźć na <a href="https://models.dev">Models.dev</a>.</p>
+<p>Można także skorzystać z opcji dla dowolnych agentów, których używa się. Konfiguracja agenta jest dostępna jako opcja globalna. <a href="/docs/agents/#additional">Dowiedz się więcej</a>.</p>
+<p>Można również zastosować alternatywne warianty, które wykluczają. Warianty konfiguracji ustawień konfiguracyjnych dla tego samego modelu bez tworzenia duplikatów wpisów:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Warianty</h2>
+<p>Wiele modeli obsługuje wiele wariantów lub różnych wybranych. closedcode jest dostarczany z podstawowymi wariantami wariantów dla dostawców.</p>
+<h3>Wbudowane warianty</h3>
+<p>closedcode jest dostarczany z domyślnymi wariantami dla wielu dostawców:</p>
+<p><strong>Antropiczny</strong>:</p>
+<ul>
+<li><code>high</code> – Wysoki budżet na przemyślenie (domyślnie)</li>
+<li><code>max</code> - Maksymalny budżet na myślenie</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>Różni się zależnością od modelu, ale mniej więcej:</p>
+<ul>
+<li><code>none</code> – Brak uzasadnienia</li>
+<li><code>minimal</code> - Minimalny wysiłek rozumowania</li>
+<li><code>low</code> - Niewielki wysiłek w zakresie rozumowania</li>
+<li><code>medium</code> – Średni wysiłek rozumowania</li>
+<li><code>high</code> - Duży wysiłek w zakresie rozumowania</li>
+<li><code>xhigh</code> - Bardzo duży wysiłek w zakresie rozumowania</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> — Mniejszy nakład pracy/budżet tokena</li>
+<li><code>high</code> — Większy nakład pracy/budżet tokena</li>
+</ul>
+<aside class="aside aside-tip">
+Lista ta nie jest kompletna. Wielu innych dostawców oferuje także opcję odchylenia ustawień.
+</aside>
+### Warianty niestandardowe
+
+<p>Można uwzględnić warianty lub dodać własne:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>Przełączanie wariantów</h3>
+<p>Naciśnij klawisza <code>variant_cycle</code>, aby szybko przełączać się między wariantami. <a href="/docs/keybinds">Dowiedz się więcej</a>.</p>
+<hr>
+<h2>Ładowanie modeli</h2>
+<p>Po uruchomieniu closedcode sprawdzanie modeli w następującej kolejności:</p>
+<ol>
+<li><p>Flaga wiersza autora <code>--model</code> lub <code>-m</code>. Format jest taki sam jak w pliku konfiguracyjnym: <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>Lista modeli w konstrukcji closedcode.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>Sformatuj tutaj na <code>provider/model</code>.</p>
+</li>
+<li><p>Ostatni używany model.</p>
+</li>
+<li><p>Pierwszy model sterujący priorytetem wewnętrznym.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

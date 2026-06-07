@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>設定 — vanilla-closedcode docs</title>
+  <meta name="description" content="使用 vanilla-closedcode JSON 設定。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>設定</h1>
+      <p class="lede">使用 vanilla-closedcode JSON 設定。</p>
+      <p>您可以使用 JSON 設定檔來設定 vanilla-closedcode。</p>
+<hr>
+<h2>格式</h2>
+<p>vanilla-closedcode 支援 <strong>JSON</strong> 和 <strong>JSONC</strong>（帶註解的 JSON）格式。</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>位置</h2>
+<p>您可以將設定放置在不同的位置，它們具有不同的優先順序。</p>
+<aside class="aside aside-note">
+設定檔是**合併在一起**的，而不是替換。
+</aside>
+設定檔是合併在一起的，而不是被替換。來自以下設定位置的設定會被合併。後面的設定僅在鍵衝突時覆寫前面的設定。所有設定中的非衝突設定都會被保留。
+
+<p>例如，如果您的全域設定設定了 <code>autoupdate: true</code>，而您的專案設定設定了 <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>，則最終設定將包含這兩個設定。</p>
+<hr>
+<h3>優先順序</h3>
+<p>設定來源按以下順序載入（後面的來源覆寫前面的來源）：</p>
+<ol>
+<li><strong>全域設定</strong>（<code>~/.config/closedcode/closedcode.json</code>）- 使用者偏好</li>
+<li><strong>自訂設定</strong>（<code>CLOSEDCODE_CONFIG</code> 環境變數）- 自訂覆寫</li>
+<li><strong>專案設定</strong>（專案中的 <code>closedcode.json</code>）- 專案特定設定</li>
+<li><strong><code>.closedcode</code> 目錄</strong> - 代理、指令、外掛程式</li>
+<li><strong>內嵌設定</strong>（<code>CLOSEDCODE_CONFIG_CONTENT</code> 環境變數）- 執行時覆寫</li>
+</ol>
+<p>這意味著專案設定可以覆寫全域預設值，全域設定可以覆寫遠端組織預設值。</p>
+<aside class="aside aside-note">
+`.closedcode` 和 `~/.config/closedcode` 目錄的子目錄使用**複數名稱**：`agents/`、`commands/`、`modes/`、`plugins/`、`skills/`、`tools/` 和 `themes/`。為了向後相容，也支援單數名稱（例如 `agent/`）。
+</aside>
+---
+
+
+<h3>全域</h3>
+<p>將全域 vanilla-closedcode 設定放在 <code>~/.config/closedcode/closedcode.json</code> 中。使用全域設定來設定使用者層級的偏好，例如主題、供應商或快捷鍵。</p>
+<p>全域設定覆寫遠端組織預設值。</p>
+<hr>
+<h3>專案層級</h3>
+<p>在專案根目錄中新增 <code>closedcode.json</code>。專案設定在標準設定檔中具有最高優先級——它會覆寫全域設定和遠端設定。</p>
+<aside class="aside aside-tip">
+將專案特定設定放在專案的根目錄中。
+</aside>
+當 vanilla-closedcode 啟動時，它會在當前目錄中尋找設定檔，或向上遍歷到最近的 Git 目錄。
+
+<p>該設定檔也可以安全地提交到 Git 中，並使用與全域設定相同的 Schema。</p>
+<hr>
+<h3>自訂路徑</h3>
+<p>使用 <code>CLOSEDCODE_CONFIG</code> 環境變數指定自訂設定檔路徑。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>自訂設定在優先順序中位於全域設定和專案設定之間載入。</p>
+<hr>
+<h3>自訂目錄</h3>
+<p>使用 <code>CLOSEDCODE_CONFIG_DIR</code> 環境變數指定自訂設定目錄。該目錄會像標準 <code>.closedcode</code> 目錄一樣被搜尋代理、指令、模式和外掛程式，並且應遵循相同的結構。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>自訂目錄在全域設定和 <code>.closedcode</code> 目錄之後載入，因此<strong>可以覆寫</strong>它們的設定。</p>
+<hr>
+<h2>Schema</h2>
+<p>設定檔具有在 <strong><code>config.json</code></strong> 中定義的 Schema。</p>
+<p>您的編輯器應該能夠基於該 Schema 進行驗證和自動補全。</p>
+<hr>
+<h3>TUI</h3>
+<p>您可以透過 <code>tui</code> 選項設定 TUI 相關設定。</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    },
+    &quot;diff_style&quot;: &quot;auto&quot;
+  }
+}
+</code></pre>
+<p>可用選項：</p>
+<ul>
+<li><code>scroll_acceleration.enabled</code> - 啟用 macOS 風格的捲動加速。<strong>優先於 <code>scroll_speed</code>。</strong></li>
+<li><code>scroll_speed</code> - 自訂捲動速度倍率（預設值：<code>3</code>，最小值：<code>1</code>）。如果 <code>scroll_acceleration.enabled</code> 為 <code>true</code>，則忽略此選項。</li>
+<li><code>diff_style</code> - 控制差異呈現方式。<code>&quot;auto&quot;</code> 根據終端機寬度自適應，<code>&quot;stacked&quot;</code> 始終顯示單列。</li>
+</ul>
+<p>使用 <code>CLOSEDCODE_TUI_CONFIG</code> 指向自訂 TUI 設定檔。</p>
+<p><code>closedcode.json</code> 中的舊版 <code>theme</code>、<code>keybinds</code> 和 <code>tui</code> 鍵已被棄用，並將在可能的情況下自動遷移。</p>
+<p><a href="/docs/tui">在此了解更多關於 TUI 的資訊</a>。</p>
+<hr>
+<h3>伺服器</h3>
+<p>您可以透過 <code>server</code> 選項為 <code>closedcode serve</code> 和 <code>closedcode web</code> 指令設定伺服器設定。</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>可用選項：</p>
+<ul>
+<li><code>port</code> - 監聽連接埠。</li>
+<li><code>hostname</code> - 監聽主機名稱。當 <code>mdns</code> 啟用且未設定主機名稱時，預設為 <code>0.0.0.0</code>。</li>
+<li><code>mdns</code> - 啟用 mDNS 服務探索。這允許網路上的其他裝置發現您的 vanilla-closedcode 伺服器。</li>
+<li><code>mdnsDomain</code> - mDNS 服務的自訂網域名稱。預設為 <code>closedcode.local</code>。適用於在同一網路上執行多個實例的情境。</li>
+<li><code>cors</code> - 從基於瀏覽器的用戶端使用 HTTP 伺服器時允許 CORS 的額外來源。值必須是完整的來源（通訊協定 + 主機 + 可選連接埠），例如 <code>https://app.example.com</code>。</li>
+</ul>
+<p><a href="/docs/server">在此了解更多關於伺服器的資訊</a>。</p>
+<hr>
+<h3>工具</h3>
+<p>您可以透過 <code>tools</code> 選項管理 LLM 可以使用的工具。</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">在此了解更多關於工具的資訊</a>。</p>
+<hr>
+<h3>模型</h3>
+<p>您可以透過 <code>provider</code>、<code>model</code> 和 <code>small_model</code> 選項在 vanilla-closedcode 設定中設定要使用的供應商和模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p><code>small_model</code> 選項為標題生成等輕量級任務設定單獨的模型。預設情況下，如果您的供應商有更便宜的模型可用，vanilla-closedcode 會嘗試使用該模型，否則會回退到您的主模型。</p>
+<p>供應商選項可以包括 <code>timeout</code> 和 <code>setCacheKey</code>：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - 請求逾時時間，單位為毫秒（預設值：300000）。設定為 <code>false</code> 可停用逾時。</li>
+<li><code>setCacheKey</code> - 確保始終為指定供應商設定快取金鑰。</li>
+</ul>
+<p>您還可以設定<a href="/docs/models#local">本地模型</a>。<a href="/docs/models">了解更多</a>。</p>
+<hr>
+<h4>供應商特定選項</h4>
+<p>一些供應商支援除通用 <code>timeout</code> 和 <code>apiKey</code> 設定之外的額外設定選項。</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock 支援 AWS 特定設定：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - Bedrock 的 AWS 區域（預設為 <code>AWS_REGION</code> 環境變數或 <code>us-east-1</code>）</li>
+<li><code>profile</code> - 來自 <code>~/.aws/credentials</code> 的 AWS 命名設定檔（預設為 <code>AWS_PROFILE</code> 環境變數）</li>
+<li><code>endpoint</code> - VPC 端點的自訂端點 URL。這是通用 <code>baseURL</code> 選項使用 AWS 特定術語的別名。如果兩者都指定，<code>endpoint</code> 優先。</li>
+</ul>
+<aside class="aside aside-note">
+Bearer Token（`AWS_BEARER_TOKEN_BEDROCK` 或 `/connect`）優先於基於設定檔的身分驗證。詳情請參見[認證優先級](/docs/providers#authentication-precedence)。
+</aside>
+[了解更多關於 Amazon Bedrock 設定的資訊](/docs/providers#amazon-bedrock)。
+
+<hr>
+<h3>主題</h3>
+<p>在 <code>tui.json</code> 中設定您的 UI 主題。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">在此了解更多</a>。</p>
+<hr>
+<h3>代理</h3>
+<p>您可以透過 <code>agent</code> 選項為特定任務設定專用代理。</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>您還可以使用 <code>~/.config/closedcode/agents/</code> 或 <code>.closedcode/agents/</code> 中的 Markdown 檔案定義代理。<a href="/docs/agents">在此了解更多</a>。</p>
+<hr>
+<h3>預設代理</h3>
+<p>您可以使用 <code>default_agent</code> 選項設定預設代理。當未明確指定代理時，將使用該預設代理。</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>預設代理必須是主代理（不能是子代理）。可以是內建代理（如 <code>&quot;build&quot;</code> 或 <code>&quot;plan&quot;</code>），也可以是您定義的<a href="/docs/agents">自訂代理</a>。如果指定的代理不存在或是子代理，vanilla-closedcode 將回退到 <code>&quot;build&quot;</code> 並發出警告。</p>
+<p>此設定適用於所有介面：TUI、CLI（<code>closedcode run</code>）、桌面應用程式和 GitHub Action。</p>
+<hr>
+<h3>分享</h3>
+<p>您可以透過 <code>share</code> 選項設定<a href="/docs/share">分享</a>功能。</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>該選項接受：</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - 允許透過指令手動分享（預設）</li>
+<li><code>&quot;auto&quot;</code> - 自動分享新工作階段</li>
+<li><code>&quot;disabled&quot;</code> - 完全停用分享</li>
+</ul>
+<p>預設情況下，分享設定為手動模式，您需要使用 <code>/share</code> 指令明確分享工作階段。</p>
+<hr>
+<h3>指令</h3>
+<p>您可以透過 <code>command</code> 選項為重複任務設定自訂指令。</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>您還可以使用 <code>~/.config/closedcode/commands/</code> 或 <code>.closedcode/commands/</code> 中的 Markdown 檔案定義指令。<a href="/docs/commands">在此了解更多</a>。</p>
+<hr>
+<h3>快捷鍵</h3>
+<p>在 <code>tui.json</code> 中自訂快捷鍵。</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">在此了解更多</a>。</p>
+<hr>
+<h3>自動更新</h3>
+<p>vanilla-closedcode 啟動時會自動下載新版本。您可以使用 <code>autoupdate</code> 選項停用此功能。</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>如果您不想自動更新但希望在新版本可用時收到通知，可將 <code>autoupdate</code> 設定為 <code>&quot;notify&quot;</code>。
+請注意，此功能僅在未透過 Homebrew 等套件管理器安裝時有效。</p>
+<hr>
+<h3>格式化器</h3>
+<p>您可以透過 <code>formatter</code> 選項設定程式碼格式化器。</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">在此了解更多關於格式化器的資訊</a>。</p>
+<hr>
+<h3>權限</h3>
+<p>預設情況下，vanilla-closedcode <strong>允許所有操作</strong>，無需明確批准。您可以使用 <code>permission</code> 選項變更此行為。</p>
+<p>例如，要讓 <code>edit</code> 和 <code>bash</code> 工具需要使用者確認：</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">在此了解更多關於權限的資訊</a>。</p>
+<hr>
+<h3>壓縮</h3>
+<p>您可以透過 <code>compaction</code> 選項控制上下文壓縮行為。</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - 當上下文已滿時自動壓縮工作階段（預設值：<code>true</code>）。</li>
+<li><code>prune</code> - 刪除舊的工具輸出以節省 Token（預設值：<code>true</code>）。</li>
+<li><code>reserved</code> - 壓縮時的 Token 緩衝區。保留足夠的窗口以避免壓縮過程中溢出。</li>
+</ul>
+<hr>
+<h3>檔案監看器</h3>
+<p>您可以透過 <code>watcher</code> 選項設定檔案監看器的忽略模式。</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>模式遵循 glob 語法。使用此選項可以從檔案監看中排除頻繁變動的目錄。</p>
+<hr>
+<h3>MCP 伺服器</h3>
+<p>您可以透過 <code>mcp</code> 選項設定要使用的 MCP 伺服器。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">在此了解更多</a>。</p>
+<hr>
+<h3>外掛程式</h3>
+<p><a href="/docs/plugins">外掛程式</a>透過自訂工具、掛鉤和整合來擴展 vanilla-closedcode。</p>
+<p>將外掛程式檔案放置在 <code>.closedcode/plugins/</code> 或 <code>~/.config/closedcode/plugins/</code> 中。您還可以透過 <code>plugin</code> 選項從 npm 載入外掛程式。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">在此了解更多</a>。</p>
+<hr>
+<h3>指示</h3>
+<p>您可以透過 <code>instructions</code> 選項為所使用的模型設定指示。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>該選項接受指示檔案路徑和 glob 模式的陣列。<a href="/docs/rules">在此了解更多關於規則的資訊</a>。</p>
+<hr>
+<h3>停用供應商</h3>
+<p>您可以透過 <code>disabled_providers</code> 選項停用自動載入的供應商。當您希望阻止某些供應商被載入（即使其憑證可用）時，此選項非常有用。</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` 優先於 `enabled_providers`。
+</aside>
+`disabled_providers` 選項接受供應商 ID 的陣列。當某個供應商被停用時：
+
+<ul>
+<li>即使設定了環境變數，也不會被載入。</li>
+<li>即使透過 <code>/connect</code> 指令設定了 API 金鑰，也不會被載入。</li>
+<li>該供應商的模型不會出現在模型選擇列表中。</li>
+</ul>
+<hr>
+<h3>啟用供應商</h3>
+<p>您可以透過 <code>enabled_providers</code> 選項指定允許使用的供應商白名單。設定後，僅啟用指定的供應商，所有其他供應商將被忽略。</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>當您希望限制 vanilla-closedcode 僅使用特定供應商，而不是逐一停用其他供應商時，此選項非常有用。</p>
+<aside class="aside aside-note">
+`disabled_providers` 優先於 `enabled_providers`。
+</aside>
+如果某個供應商同時出現在 `enabled_providers` 和 `disabled_providers` 中，為了向後相容，`disabled_providers` 優先。
+
+<hr>
+<h3>實驗性功能</h3>
+<p><code>experimental</code> 鍵包含正在積極開發中的選項。</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+實驗性選項不穩定。它們可能會在不另行通知的情況下被變更或移除。
+</aside>
+---
+
+<h2>變數</h2>
+<p>您可以在設定檔中使用變數替換來參照環境變數和檔案內容。</p>
+<hr>
+<h3>環境變數</h3>
+<p>使用 <code>{env:VARIABLE_NAME}</code> 來替換環境變數：</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>如果環境變數未設定，它將被替換為空字串。</p>
+<hr>
+<h3>檔案</h3>
+<p>使用 <code>{file:path/to/file}</code> 來替換檔案內容：</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>檔案路徑可以是：</p>
+<ul>
+<li>相對於設定檔所在目錄的路徑</li>
+<li>以 <code>/</code> 或 <code>~</code> 開頭的絕對路徑</li>
+</ul>
+<p>這些功能適用於：</p>
+<ul>
+<li>將 API 金鑰等敏感資料保存在單獨的檔案中。</li>
+<li>引入大型指示檔案而不會使設定變得雜亂。</li>
+<li>在多個設定檔之間共享通用設定片段。</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

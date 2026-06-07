@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>網路 — vanilla-closedcode docs</title>
+  <meta name="description" content="設定代理伺服器和自訂憑證。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html">Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html">Norsk</option>
+      <option value="../pl/network.html">Polski</option>
+      <option value="../pt-br/network.html">Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html">ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>網路</h1>
+      <p class="lede">設定代理伺服器和自訂憑證。</p>
+      <p>vanilla-closedcode 支援標準代理環境變數和自訂憑證，適用於企業網路環境。</p>
+<hr>
+<h2>代理伺服器</h2>
+<p>vanilla-closedcode 遵循標準代理環境變數。</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+TUI 與本地 HTTP 伺服器進行通訊。您必須為此連線繞過代理，以防止路由迴圈。
+</aside>
+您可以使用 [CLI 旗標](/docs/cli#run)來設定伺服器的連接埠和主機名稱。
+
+<hr>
+<h3>身分驗證</h3>
+<p>如果您的代理需要基本身分驗證，請在 URL 中包含憑證。</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+避免將密碼寫死在程式碼中。請使用環境變數或安全的憑證儲存方式。
+</aside>
+對於需要進階身分驗證（如 NTLM 或 Kerberos）的代理，建議使用支援相應身分驗證方式的 LLM 閘道。
+
+<hr>
+<h2>自訂憑證</h2>
+<p>如果您的企業使用自訂 CA 進行 HTTPS 連線，請設定 vanilla-closedcode 以信任這些憑證。</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>此設定同時適用於代理連線和直接 API 存取。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

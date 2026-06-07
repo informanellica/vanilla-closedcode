@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSP Sunucuları — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode, LSP sunucularınızla bütünleşir.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/lsp.html">English</option>
+      <option value="../ar/lsp.html">العربية</option>
+      <option value="../bs/lsp.html">Bosanski</option>
+      <option value="../da/lsp.html">Dansk</option>
+      <option value="../de/lsp.html">Deutsch</option>
+      <option value="../es/lsp.html">Español</option>
+      <option value="../fr/lsp.html">Français</option>
+      <option value="../it/lsp.html">Italiano</option>
+      <option value="../ja/lsp.html">日本語</option>
+      <option value="../ko/lsp.html">한국어</option>
+      <option value="../nb/lsp.html">Norsk</option>
+      <option value="../pl/lsp.html">Polski</option>
+      <option value="../pt-br/lsp.html">Português (BR)</option>
+      <option value="../ru/lsp.html">Русский</option>
+      <option value="../th/lsp.html">ไทย</option>
+      <option value="../tr/lsp.html" selected>Türkçe</option>
+      <option value="../zh-cn/lsp.html">简体中文</option>
+      <option value="../zh-tw/lsp.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li class="active"><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>LSP Sunucuları</h1>
+      <p class="lede">vanilla-closedcode, LSP sunucularınızla bütünleşir.</p>
+      <p>vanilla-closedcode, LLM&#39;in kod tabanınızla etkileşime girmesine yardımcı olmak için Dil Sunucusu Protokolünüzle (LSP) bütünleşir. LLM&#39;ye geri bildirim sağlamak için tanılamayı kullanır.</p>
+<hr>
+<h2>Yerleşik</h2>
+<p>vanilla-closedcode, popüler diller için çeşitli yerleşik LSP sunucularıyla birlikte gelir:</p>
+<table>
+<thead>
+<tr>
+<th>LSP Sunucu</th>
+<th>Uzantılar</th>
+<th>Gereksinimler</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>astro</td>
+<td>.astro</td>
+<td>Astro projeleri için otomatik kurulumlar</td>
+</tr>
+<tr>
+<td>bash</td>
+<td>.sh, .bash, .zsh, .ksh</td>
+<td><code>bash-language-server</code>&#39;ı otomatik olarak yükler</td>
+</tr>
+<tr>
+<td>clangd</td>
+<td>.c, .cpp, .cc, .cxx, .c++, .h, .hpp, .hh, .hxx, .h++</td>
+<td>C/C++ projeleri için otomatik kurulumlar</td>
+</tr>
+<tr>
+<td>csharp</td>
+<td>.cs</td>
+<td><code>.NET SDK</code> kurulu</td>
+</tr>
+<tr>
+<td>clojure-lsp</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td><code>clojure-lsp</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>deno</td>
+<td>.ts, .tsx, .js, .jsx, .mjs</td>
+<td><code>deno</code> komutu mevcut (deno.json/deno.jsonc otomatik olarak algılanır)</td>
+</tr>
+<tr>
+<td>elixir-ls</td>
+<td>.ex, .exs</td>
+<td><code>elixir</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>eslint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue</td>
+<td>Projede <code>eslint</code> bağımlılığı</td>
+</tr>
+<tr>
+<td>fsharp</td>
+<td>.fs, .fsi, .fsx, .fsscript</td>
+<td><code>.NET SDK</code> kurulu</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td><code>gleam</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>gopls</td>
+<td>.go</td>
+<td><code>go</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>hls</td>
+<td>.hs, .lhs</td>
+<td><code>haskell-language-server-wrapper</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>jdtls</td>
+<td>.java</td>
+<td><code>Java SDK (version 21+)</code> kurulu</td>
+</tr>
+<tr>
+<td>julials</td>
+<td>.jl</td>
+<td><code>julia</code> ve <code>LanguageServer.jl</code> kurulu</td>
+</tr>
+<tr>
+<td>kotlin-ls</td>
+<td>.kt, .kts</td>
+<td>Kotlin projeleri için otomatik kurulumlar</td>
+</tr>
+<tr>
+<td>lua-ls</td>
+<td>.lua</td>
+<td>Lua projeleri için otomatik kurulumlar</td>
+</tr>
+<tr>
+<td>nixd</td>
+<td>.nix</td>
+<td><code>nixd</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>ocaml-lsp</td>
+<td>.ml, .mli</td>
+<td><code>ocamllsp</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>oxlint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue, .astro, .svelte</td>
+<td>Projede <code>oxlint</code> bağımlılığı</td>
+</tr>
+<tr>
+<td>php intelephense</td>
+<td>.php</td>
+<td>PHP projeleri için otomatik yüklemeler</td>
+</tr>
+<tr>
+<td>prisma</td>
+<td>.prisma</td>
+<td><code>prisma</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>pyright</td>
+<td>.py, .pyi</td>
+<td><code>pyright</code> bağımlılığı kurulu</td>
+</tr>
+<tr>
+<td>ruby-lsp (rubocop)</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>ruby</code> ve <code>gem</code> komutları mevcut</td>
+</tr>
+<tr>
+<td>rust</td>
+<td>.rs</td>
+<td><code>rust-analyzer</code> komutu mevcut</td>
+</tr>
+<tr>
+<td>sourcekit-lsp</td>
+<td>.swift, .objc, .objcpp</td>
+<td><code>swift</code> kurulu (macOS&#39;ta <code>xcode</code>)</td>
+</tr>
+<tr>
+<td>svelte</td>
+<td>.svelte</td>
+<td>Svelte projeleri için otomatik kurulumlar</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>GitHub sürümlerinden otomatik yüklemeler</td>
+</tr>
+<tr>
+<td>tinymist</td>
+<td>.typ, .typc</td>
+<td>GitHub sürümlerinden otomatik yüklemeler</td>
+</tr>
+<tr>
+<td>typescript</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts</td>
+<td>Projede <code>typescript</code> bağımlılığı</td>
+</tr>
+<tr>
+<td>vue</td>
+<td>.vue</td>
+<td>Vue projeleri için otomatik yüklemeler</td>
+</tr>
+<tr>
+<td>yaml-ls</td>
+<td>.yaml, .yml</td>
+<td>Red Hat yaml-language-server&#39;ı otomatik olarak yükler</td>
+</tr>
+<tr>
+<td>zls</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> komutu mevcut</td>
+</tr>
+</tbody></table>
+<p>Yukarıdaki dosya uzantılarından biri tespit edildiğinde ve gereksinimler karşılandığında LSP sunucuları otomatik olarak etkinleştirilir.</p>
+<aside class="aside aside-note">
+`CLOSEDCODE_DISABLE_LSP_DOWNLOAD` ortam değişkenini `true` olarak ayarlayarak otomatik LSP sunucu indirmelerini devre dışı bırakabilirsiniz.
+</aside>
+---
+
+<h2>Nasıl Çalışır?</h2>
+<p>closedcode bir dosyayı açtığında:</p>
+<ol>
+<li>Dosya uzantısını tüm etkin LSP sunucularına göre kontrol eder.</li>
+<li>Henüz çalışmıyorsa uygun LSP sunucusunu başlatır.</li>
+</ol>
+<hr>
+<h2>Yapılandırma</h2>
+<p>LSP sunucularını, closedcode yapılandırmanızdaki <code>lsp</code> bölümü aracılığıyla özelleştirebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {}
+}
+</code></pre>
+<p>Her LSP sunucusu aşağıdakileri destekler:</p>
+<table>
+<thead>
+<tr>
+<th>Özellik</th>
+<th>Tip</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>LSP sunucusunu devre dışı bırakmak için bunu <code>true</code> olarak ayarlayın</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>LSP sunucusunu başlatma komutu</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>Bu LSP sunucusunun işlemesi gereken dosya uzantıları</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>object</td>
+<td>Sunucuyu başlatırken ayarlanacak ortam değişkenleri</td>
+</tr>
+<tr>
+<td><code>initialization</code></td>
+<td>object</td>
+<td>LSP sunucusuna gönderilecek başlatma seçenekleri</td>
+</tr>
+</tbody></table>
+<p>Bazı örneklere bakalım.</p>
+<hr>
+<h3>Ortam değişkenleri</h3>
+<p>LSP sunucusunu başlatırken ortam değişkenlerini ayarlamak için <code>env</code> özelliğini kullanın:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;rust&quot;: {
+      &quot;env&quot;: {
+        &quot;RUST_LOG&quot;: &quot;debug&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Başlatma seçenekleri</h3>
+<p>Başlatma seçeneklerini LSP sunucusuna iletmek için <code>initialization</code> özelliğini kullanın. Bunlar LSP <code>initialize</code> isteği sırasında gönderilen sunucuya özel ayarlardır:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;initialization&quot;: {
+        &quot;preferences&quot;: {
+          &quot;importModuleSpecifierPreference&quot;: &quot;relative&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+Başlatma seçenekleri LSP sunucusuna göre değişir. Mevcut seçenekler için LSP sunucunuzun belgelerine bakın.
+</aside>
+---
+
+<h3>LSP sunucularını devre dışı bırakma</h3>
+<p><strong>tüm</strong> LSP sunucularını genel olarak devre dışı bırakmak için <code>lsp</code>&#39;yi <code>false</code> olarak ayarlayın:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: false
+}
+</code></pre>
+<p><strong>Belirli</strong> bir LSP sunucusunu devre dışı bırakmak için <code>disabled</code>&#39;yi <code>true</code> olarak ayarlayın:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Özel LSP sunucuları</h3>
+<p>Komutu ve dosya uzantılarını belirterek özel LSP sunucuları ekleyebilirsiniz:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;custom-lsp&quot;: {
+      &quot;command&quot;: [&quot;custom-lsp-server&quot;, &quot;--stdio&quot;],
+      &quot;extensions&quot;: [&quot;.custom&quot;]
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Ek Bilgiler</h2>
+<h3>PHP Intelephense</h3>
+<p>PHP Intelephense, bir lisans anahtarı aracılığıyla premium özellikler sunar. Anahtarı (yalnızca) şu adresteki bir metin dosyasına yerleştirerek bir lisans anahtarı sağlayabilirsiniz:</p>
+<ul>
+<li>macOS/Linux&#39;ta: <code>$HOME/intelephense/license.txt</code></li>
+<li>Windows&#39;ta: <code>%USERPROFILE%/intelephense/license.txt</code></li>
+</ul>
+<p>Dosya, ek içerik olmadan yalnızca lisans anahtarını içermelidir.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

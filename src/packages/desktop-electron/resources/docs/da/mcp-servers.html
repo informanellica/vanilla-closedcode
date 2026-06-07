@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP-servere — vanilla-closedcode docs</title>
+  <meta name="description" content="Tilføj lokale og eksterne MCP værktøjer.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html" selected>Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCP-servere</h1>
+      <p class="lede">Tilføj lokale og eksterne MCP værktøjer.</p>
+      <p>Du kan tilføje eksterne værktøjer til vanilla-closedcode ved hjælp af <em>Model Context Protocol</em> eller MCP. vanilla-closedcode understøtter både lokale og eksterne servere.</p>
+<p>Når de er tilføjet, er MCP automatisk tilgængelig for LLM sammen med indbyggede værktøjer.</p>
+<hr>
+<h4>Forbehold</h4>
+<p>Når du bruger en MCP-server, føjes den til konteksten. Dette kan hurtigt stige, hvis du har mange værktøjer. Så vi anbefaler at være forsigtig med hvilke MCP-servere du bruger.</p>
+<aside class="aside aside-tip">
+MCP-servere tilføjer til din kontekst, så du vil være forsigtig med, hvilke du aktiverer.
+</aside>
+Visse MCP-servere, som GitHub MCP-servere, har en tendens til at tilføje mange tokens og kan nemt overskride kontekstgrænsen.
+
+<hr>
+<h2>Aktivering</h2>
+<p>Du kan definere MCP-servere i din <a href="./config.html">vanilla-closedcode Config</a> under <code>mcp</code>. Tilføj hver MCP med et unikt navn. Du kan henvise til denne MCP ved navn, når du spørger LLM.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>Du kan også deaktivere en server ved at indstille <code>enabled</code> til <code>false</code>. Dette er nyttigt, hvis du midlertidigt vil deaktivere en server uden at fjerne den fra din konfiguration.</p>
+<hr>
+
+<h2>Lokal</h2>
+<p>Tilføj lokale MCP-servere ved hjælp af <code>type</code> til <code>&quot;local&quot;</code> i MCP-objektet.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;npx&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Kommandoen er, hvordan den lokale MCP-server starter. Du kan også sende en liste over miljøvariabler ind.</p>
+<p>For eksempel kan du tilføje test-MCP-serveren <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a>.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>Og for at bruge det kan jeg tilføje <code>use the mcp_everything tool</code> til mine prompter.</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>Indstillinger</h4>
+<p>Her er alle muligheder for at konfigurere en lokal MCP-server.</p>
+<table>
+<thead>
+<tr>
+<th>Mulighed</th>
+<th>Skriv</th>
+<th>Påkrævet</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Type MCP serverforbindelse, skal være <code>&quot;local&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Array</td>
+<td>Y</td>
+<td>Kommando og argumenter til at køre MCP-serveren.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Object</td>
+<td></td>
+<td>Miljøvariabler, der skal indstilles, når serveren kører.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Aktiver eller deaktiver MCP-serveren ved opstart.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Nummer</td>
+<td></td>
+<td>Timeout i ms for at hente værktøjer fra MCP-serveren. Standard er 5000 (5 sekunder).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Ekstern</h2>
+<p>Tilføj ekstern MCP-server ved at indstille <code>type</code> til <code>&quot;remote&quot;</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> er URL for den eksterne MCP server, og med indstillingen <code>headers</code> kan du sende en liste over overskrifter ind.</p>
+<hr>
+<h4>Indstillinger</h4>
+<table>
+<thead>
+<tr>
+<th>Mulighed</th>
+<th>Skriv</th>
+<th>Påkrævet</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Type MCP serverforbindelse, skal være <code>&quot;remote&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>String</td>
+<td>Y</td>
+<td>URL af den eksterne MCP-server.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Aktiver eller deaktiver MCP-serveren ved opstart.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Object</td>
+<td></td>
+<td>Overskrifter til at sende med anmodningen.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Object</td>
+<td></td>
+<td>OAuth-godkendelseskonfiguration. Se afsnittet <a href="#oauth">OAuth</a> nedenfor.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Nummer</td>
+<td></td>
+<td>Timeout i ms for at hente værktøjer fra MCP-serveren. Standard er 5000 (5 sekunder).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>vanilla-closedcode håndterer automatisk OAuth-godkendelse for eksterne MCP-servere. Når en server kræver godkendelse, vil vanilla-closedcode:</p>
+<ol>
+<li>Registrer 401-svaret, og start OAuth-flowet</li>
+<li>Brug <strong>Dynamic Client Registration (RFC 7591)</strong>, hvis det understøtter af serveren</li>
+<li>Opbevar tokens sikkert til fremtidige anmodninger</li>
+</ol>
+<hr>
+<h3>Automatisk</h3>
+<p>For de fleste OAuth-aktiverede MCP-servere kræver ingen speciel konfiguration. Bare konfigureret fjernserver:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hvis serveren kræver godkendelse, vil vanilla-closedcode bede dig om at godkende, når du prøver at bruge den første gang. Hvis ikke, kan du <a href="#authenticating">manually trigger the flow</a> med <code>closedcode mcp auth &lt;server-name&gt;</code>.</p>
+<hr>
+<h3>Forhåndsregistreret</h3>
+<p>Hvis du har klientlegitimationsoplysninger fra MCP-serverudbyderen, kan du konfigurere dem:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Godkendelse</h3>
+<p>Du kan manuelt udløse godkendelse eller administrere legitimationsoplysninger.</p>
+<p>Godkendt med en specifik MCP-server:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>Liste over alle MCP-servere og deres godkendelsesstatus:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Fjern gemte legitimationsoplysninger:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p>Kommandoen <code>mcp auth</code> åbner din browser for godkendelse. Når du har godkendt, vil vanilla-closedcode opbevare tokens sikkert i <code>~/.local/share/closedcode/mcp-auth.json</code>.</p>
+<hr>
+<h4>Deaktivering af OAuth</h4>
+<p>Hvis du vil deaktivere automatisk OAuth for en server (f.eks. for servere, der bruger API-nøgler i stedet), skal du indstille <code>oauth</code> til <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth-indstillinger</h4>
+<table>
+<thead>
+<tr>
+<th>Mulighed</th>
+<th>Skriv</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>OAuth-konfigurationsobjekt eller <code>false</code> for at deaktivere OAuth-auto-detektion.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>OAuth-klient-id. Hvis det ikke er angivet, vil dynamisk klientregistrering blive forsøgt.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>OAuth-klienthemmelighed, hvis det kræves af autorisationsserveren.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>OAuth-omfang at anmode om under godkendelse.</td>
+</tr>
+</tbody></table>
+<h4>Fejlfinding</h4>
+<p>Hvis en ekstern MCP-server ikke kan godkendes, kan du diagnosticere problemer med:</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p>Kommandoen <code>mcp debug</code> viser den aktuelle godkendelsesstatus, tester HTTP-forbindelse og forsøger OAuth-opdagelsesflowet.</p>
+<hr>
+<h2>Administration</h2>
+<p>Dine MCPs er tilgængelige som værktøjer i <strong>TK_</strong> sammen med indbyggede værktøjer. Så du kan administrere dem gennem vanilla-closedcode-konfigurationen som ethvert andet værktøj.</p>
+<hr>
+<h3>Global</h3>
+<p>Det betyder, at du kan aktivere eller deaktivere dem globalt.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>Vi kan også bruge et globmønster til at deaktivere alle matchende MCPs.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>Her bruger vi globmønsteret <code>my-mcp*</code> til at deaktivere alle MCPs.</p>
+<hr>
+<h3>Per agent</h3>
+<p>Hvis du har et stort antal MCP-servere, vil du måske kun aktivere dem pr. agent og deaktivere dem globalt. Sådan gør du:</p>
+<ol>
+<li>Deaktiver det som et værktøj globalt.</li>
+<li>Aktiver MCP-serveren som et værktøj i din <a href="/docs/agents#tools">agent config</a>.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Glob-mønstre</h4>
+<p>Glob-mønsteret bruger simple regex-globing-mønstre:</p>
+<ul>
+<li><code>*</code> matcher nul eller flere af ethvert tegn (f.eks. <code>&quot;my-mcp*&quot;</code> matcher <code>my-mcp_search</code>, <code>my-mcp_list</code> osv.)</li>
+<li><code>?</code> matcher nøjagtigt ét tegn</li>
+<li>Alle andre karakterer matcher bogstaveligt talt</li>
+</ul>
+<aside class="aside aside-note">
+MCP serverværktøjer er registreret med servernavn som præfiks, så for at deaktivere alle værktøjer til en server skal du blot bruge:
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>Eksempler</h2>
+<p>Nedenfor er eksempler på nogle almindelige MCP-servere. Du kan indsende en PR, hvis du vil dokumentere andre servere.</p>
+<hr>
+<h3>Sentry</h3>
+<p>Tilføj <a href="https://mcp.sentry.dev">Sentry MCP server</a> for at interagere med dine Sentry-projekter og -problemer.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>Efter tilføjelse af konfigurationen skal du godkende med Sentry:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>Dette åbner et browservindue for at fuldføre OAuth-flowet og forbinde vanilla-closedcode til din Sentry-konto.</p>
+<p>Når du er godkendt, kan du bruge Sentry-værktøjer i dine prompter til at forespørge om problemer, projekter og fejldata.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>Tilføj <a href="https://github.com/upstash/context7">Context7 MCP server</a> for at søge i dokumenter.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hvis du har tilmeldt dig en gratis konto, kan du bruge din API-nøgle og få højere satsgrænser.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Her antager vi, at du har sat miljøvariablen <code>CONTEXT7_API_KEY</code>.</p>
+<p>Føj <code>use context7</code> til dine prompter for at bruge Context7 MCP server.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>Alternativt kan du tilføje noget som dette til din <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>Tilføj serveren <a href="https://grep.app">Grep by Vercel</a> MCP for at søge gennem kodestykker på GitHub.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>Da vi navngav vores MCP-server <code>gh_grep</code>, kan du tilføje <code>use the gh_grep tool</code> til dine prompter for at få agenten til at bruge den.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>Alternativt kan du tilføje noget som dette til din <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

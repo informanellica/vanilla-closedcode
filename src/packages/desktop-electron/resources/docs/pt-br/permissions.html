@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Permissões — vanilla-closedcode docs</title>
+  <meta name="description" content="Controle quais ações requerem aprovação para serem executadas.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html" selected>Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Permissões</h1>
+      <p class="lede">Controle quais ações requerem aprovação para serem executadas.</p>
+      <p>O closedcode usa a configuração <code>permission</code> para decidir se uma determinada ação deve ser executada automaticamente, solicitar sua aprovação ou ser bloqueada.</p>
+<p>A partir da versão <code>v1.1.1</code>, a configuração booleana legada <code>tools</code> foi descontinuada e mesclada na <code>permission</code>. A antiga configuração <code>tools</code> ainda é suportada para compatibilidade retroativa.</p>
+<hr>
+<h2>Ações</h2>
+<p>Cada regra de permissão se resolve em uma das seguintes opções:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — executar sem aprovação</li>
+<li><code>&quot;ask&quot;</code> — solicitar aprovação</li>
+<li><code>&quot;deny&quot;</code> — bloquear a ação</li>
+</ul>
+<hr>
+<h2>Configuração</h2>
+<p>Você pode definir permissões globalmente (com <code>*</code>), e substituir ferramentas específicas.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Você também pode definir todas as permissões de uma vez:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Regras Granulares (Sintaxe de Objeto)</h2>
+<p>Para a maioria das permissões, você pode usar um objeto para aplicar diferentes ações com base na entrada da ferramenta.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>As regras são avaliadas por correspondência de padrão, com a <strong>última regra correspondente vencendo</strong>. Um padrão comum é colocar a regra de captura <code>&quot;*&quot;</code> primeiro, e regras mais específicas depois.</p>
+<h3>Coringas</h3>
+<p>Os padrões de permissão usam correspondência simples de coringas:</p>
+<ul>
+<li><code>*</code> corresponde a zero ou mais de qualquer caractere</li>
+<li><code>?</code> corresponde exatamente a um caractere</li>
+<li>Todos os outros caracteres correspondem literalmente</li>
+</ul>
+<h3>Expansão do Diretório Home</h3>
+<p>Você pode usar <code>~</code> ou <code>$HOME</code> no início de um padrão para referenciar seu diretório home. Isso é particularmente útil para regras de <a href="#external-directories"><code>external_directory</code></a>.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Diretórios Externos</h3>
+<p>Use <code>external_directory</code> para permitir chamadas de ferramentas que tocam em caminhos fora do diretório de trabalho onde o closedcode foi iniciado. Isso se aplica a qualquer ferramenta que aceite um caminho como entrada (por exemplo, <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> e muitos comandos <code>bash</code>).</p>
+<p>A expansão do home (como <code>~/...</code>) afeta apenas como um padrão é escrito. Não torna um caminho externo parte do espaço de trabalho atual, então caminhos fora do diretório de trabalho ainda devem ser permitidos via <code>external_directory</code>.</p>
+<p>Por exemplo, isso permite acesso a tudo sob <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Qualquer diretório permitido aqui herda os mesmos padrões do espaço de trabalho atual. Como <a href="#defaults"><code>read</code> padrão é <code>allow</code></a>, leituras também são permitidas para entradas sob <code>external_directory</code>, a menos que sejam substituídas. Adicione regras explícitas quando uma ferramenta deve ser restrita nesses caminhos, como bloquear edições enquanto mantém leituras:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Mantenha a lista focada em caminhos confiáveis e adicione regras adicionais de permissão ou negação conforme necessário para outras ferramentas (por exemplo, <code>bash</code>).</p>
+<hr>
+<h2>Permissões Disponíveis</h2>
+<p>As permissões do closedcode são indexadas pelo nome da ferramenta, além de alguns guardas de segurança:</p>
+<ul>
+<li><code>read</code> — leitura de um arquivo (corresponde ao caminho do arquivo)</li>
+<li><code>edit</code> — todas as modificações de arquivo (cobre <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — globbing de arquivos (corresponde ao padrão glob)</li>
+<li><code>grep</code> — busca de conteúdo (corresponde ao padrão regex)</li>
+<li><code>bash</code> — execução de comandos de shell (corresponde a comandos analisados como <code>git status --porcelain</code>)</li>
+<li><code>task</code> — lançamento de subagentes (corresponde ao tipo de subagente)</li>
+<li><code>skill</code> — carregamento de uma habilidade (corresponde ao nome da habilidade)</li>
+<li><code>lsp</code> — execução de consultas LSP (atualmente não granular)</li>
+<li><code>webfetch</code> — busca de uma URL (corresponde à URL)</li>
+<li><code>websearch</code> — busca na web (corresponde à consulta)</li>
+<li><code>external_directory</code> — acionado quando uma ferramenta toca em caminhos fora do diretório de trabalho do projeto</li>
+<li><code>doom_loop</code> — acionado quando a mesma chamada de ferramenta se repete 3 vezes com entrada idêntica</li>
+</ul>
+<hr>
+<h2>Padrões</h2>
+<p>Se você não especificar nada, o closedcode começa com padrões permissivos:</p>
+<ul>
+<li>A maioria das permissões padrão é <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> e <code>external_directory</code> padrão é <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> é <code>&quot;allow&quot;</code>, mas arquivos <code>.env</code> são negados por padrão:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>O que “Ask” Faz</h2>
+<p>Quando o closedcode solicita aprovação, a interface oferece três resultados:</p>
+<ul>
+<li><code>once</code> — aprovar apenas esta solicitação</li>
+<li><code>always</code> — aprovar futuras solicitações que correspondam aos padrões sugeridos (para o restante da sessão atual do closedcode)</li>
+<li><code>reject</code> — negar a solicitação</li>
+</ul>
+<p>O conjunto de padrões que <code>always</code> aprovaria é fornecido pela ferramenta (por exemplo, aprovações de bash normalmente incluem um prefixo de comando seguro como <code>git status*</code>).</p>
+<hr>
+<h2>Agentes</h2>
+<p>Você pode substituir permissões por agente. As permissões do agente são mescladas com a configuração global, e as regras do agente têm precedência. <a href="/docs/agents#permissions">Saiba mais</a> sobre permissões de agentes.</p>
+<aside class="aside aside-note">
+Consulte a seção [Regras Granulares (Sintaxe de Objeto)](#granular-rules-object-syntax) acima para exemplos mais detalhados de correspondência de padrões.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Você também pode configurar permissões de agentes em Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Use correspondência de padrões para comandos com argumentos. `"grep *"` permite `grep pattern file.txt`, enquanto `"grep"` sozinho o bloquearia. Comandos como `git status` funcionam para o comportamento padrão, mas requerem permissão explícita (como `"git status *"`) quando argumentos são passados.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

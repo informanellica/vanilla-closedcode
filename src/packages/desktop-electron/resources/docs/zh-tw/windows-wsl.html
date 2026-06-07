@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows (WSL) — vanilla-closedcode docs</title>
+  <meta name="description" content="透過 WSL 在 Windows 上執行 vanilla-closedcode 以獲得最佳體驗。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/windows-wsl.html">English</option>
+      <option value="../ar/windows-wsl.html">العربية</option>
+      <option value="../bs/windows-wsl.html">Bosanski</option>
+      <option value="../da/windows-wsl.html">Dansk</option>
+      <option value="../de/windows-wsl.html">Deutsch</option>
+      <option value="../es/windows-wsl.html">Español</option>
+      <option value="../fr/windows-wsl.html">Français</option>
+      <option value="../it/windows-wsl.html">Italiano</option>
+      <option value="../ja/windows-wsl.html">日本語</option>
+      <option value="../ko/windows-wsl.html">한국어</option>
+      <option value="../nb/windows-wsl.html">Norsk</option>
+      <option value="../pl/windows-wsl.html">Polski</option>
+      <option value="../pt-br/windows-wsl.html">Português (BR)</option>
+      <option value="../ru/windows-wsl.html">Русский</option>
+      <option value="../th/windows-wsl.html">ไทย</option>
+      <option value="../tr/windows-wsl.html">Türkçe</option>
+      <option value="../zh-cn/windows-wsl.html">简体中文</option>
+      <option value="../zh-tw/windows-wsl.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li class="active"><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Windows (WSL)</h1>
+      <p class="lede">透過 WSL 在 Windows 上執行 vanilla-closedcode 以獲得最佳體驗。</p>
+      <p>雖然 vanilla-closedcode 可以直接在 Windows 上執行，但我們推薦使用 <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a> 以獲得最佳體驗。WSL 提供了一個 Linux 環境，能夠與 vanilla-closedcode 的各項功能無縫配合。</p>
+<aside class="aside aside-tip">
+<p class="aside-label">為什麼選擇 WSL？</p>
+WSL 提供更出色的檔案系統效能、完整的終端機支援，以及與 vanilla-closedcode 所依賴的開發工具的良好相容性。
+</aside>
+---
+
+<h2>安裝設定</h2>
+<div class="steps">
+
+
+<ol>
+<li><p><strong>安裝 WSL</strong></p>
+<p>如果尚未安裝，請參照 Microsoft 官方指南<a href="https://learn.microsoft.com/en-us/windows/wsl/install">安裝 WSL</a>。</p>
+</li>
+<li><p><strong>在 WSL 中安裝 vanilla-closedcode</strong></p>
+<p>WSL 設定完成後，開啟 WSL 終端機，使用任一<a href="/docs/">安裝方式</a>安裝 vanilla-closedcode。</p>
+<pre><code class="language-bash">curl -fsSL https://github.com/informanellica/vanilla-closedcode/releases | bash
+</code></pre>
+</li>
+<li><p><strong>從 WSL 中使用 vanilla-closedcode</strong></p>
+<p>導航到你的專案目錄（透過 <code>/mnt/c/</code>、<code>/mnt/d/</code> 等路徑存取 Windows 檔案），然後執行 vanilla-closedcode。</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/project
+closedcode
+</code></pre>
+</li>
+</ol>
+</div>
+
+<hr>
+<h2>桌面應用程式 + WSL 伺服器</h2>
+<p>如果你希望使用 vanilla-closedcode 桌面應用程式，同時在 WSL 中執行伺服器：</p>
+<ol>
+<li><p><strong>在 WSL 中啟動伺服器</strong>，新增 <code>--hostname 0.0.0.0</code> 以允許外部連線：</p>
+<pre><code class="language-bash">closedcode serve --hostname 0.0.0.0 --port 4096
+</code></pre>
+</li>
+<li><p><strong>在桌面應用程式中連線到</strong> <code>http://localhost:4096</code></p>
+</li>
+</ol>
+<aside class="aside aside-note">
+如果 `localhost` 在你的環境中無法使用，請改用 WSL 的 IP 位址進行連線（在 WSL 中執行：`hostname -I`），使用 `http://<wsl-ip>:4096`。
+</aside>
+<aside class="aside aside-caution">
+使用 `--hostname 0.0.0.0` 時，請設定 `CLOSEDCODE_SERVER_PASSWORD` 以保護伺服器安全。
+</aside>
+```bash
+CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve --hostname 0.0.0.0
+```
+
+<hr>
+<h2>Web 客戶端 + WSL</h2>
+<p>要在 Windows 上獲得最佳的 Web 體驗：</p>
+<ol>
+<li><p><strong>在 WSL 終端機中執行 <code>closedcode web</code></strong>，而非在 PowerShell 中執行：</p>
+<pre><code class="language-bash">closedcode web --hostname 0.0.0.0
+</code></pre>
+</li>
+<li><p><strong>在 Windows 瀏覽器中存取</strong> <code>http://localhost:&lt;port&gt;</code>（vanilla-closedcode 會輸出該 URL）</p>
+</li>
+</ol>
+<p>從 WSL 中執行 <code>closedcode web</code> 可確保正確的檔案系統存取和終端機整合，同時仍可透過 Windows 瀏覽器進行存取。</p>
+<hr>
+<h2>存取 Windows 檔案</h2>
+<p>WSL 可以透過 <code>/mnt/</code> 目錄存取你的所有 Windows 檔案：</p>
+<ul>
+<li><code>C:</code> 磁碟 → <code>/mnt/c/</code></li>
+<li><code>D:</code> 磁碟 → <code>/mnt/d/</code></li>
+<li>其他磁碟以此類推...</li>
+</ul>
+<p>範例：</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/Documents/project
+closedcode
+</code></pre>
+<aside class="aside aside-tip">
+為了獲得更流暢的體驗，建議將儲存庫克隆或複製到 WSL 檔案系統中（例如 `~/code/` 目錄下），然後在該位置執行 vanilla-closedcode。
+</aside>
+---
+
+<h2>使用技巧</h2>
+<ul>
+<li>對於儲存在 Windows 磁碟上的專案，在 WSL 中執行 vanilla-closedcode 即可無縫存取檔案</li>
+<li>搭配 VS Code 的 <a href="https://code.visualstudio.com/docs/remote/wsl">WSL 擴充套件</a> 使用 vanilla-closedcode，打造一體化的開發工作流程</li>
+<li>vanilla-closedcode 的設定和工作階段資料儲存在 WSL 環境中的 <code>~/.local/share/closedcode/</code></li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

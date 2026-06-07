@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>İzinler — vanilla-closedcode docs</title>
+  <meta name="description" content="Hangi işlemlerin çalıştırılması için onay sürecini kontrol edin.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html" selected>Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>İzinler</h1>
+      <p class="lede">Hangi işlemlerin çalıştırılması için onay sürecini kontrol edin.</p>
+      <p>closedcode, belirli bir eylemin otomatik olarak mı çalıştırılacağına, size sorulacağına veya engelleneceğine karar vermek için <code>permission</code> yapılandırmasını kullanır.</p>
+<p><code>v1.1.1</code> itibarıyla eski <code>tools</code> boolean yapılandırması kullanımdan kaldırıldı ve <code>permission</code> ile birleştirildi. Eski <code>tools</code> yapılandırması geriye dönük uyumluluk açısından hâlâ desteklenmektedir.</p>
+<hr>
+<h2>Eylemler</h2>
+<p>Her izin kuralı şunlardan birine çözümlenir:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — onay olmadan çalıştır</li>
+<li><code>&quot;ask&quot;</code> — onay istemi</li>
+<li><code>&quot;deny&quot;</code> — eylemi engelle</li>
+</ul>
+<hr>
+<h2>Yapılandırma</h2>
+<p>İzinleri genel olarak (<code>*</code> ile) ayarlayabilir ve belirli araçları geçersiz kılabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Ayrıca tüm izinleri aynı anda ayarlayabilirsiniz:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Ayrıntılı Kurallar (Nesne Sözdizimi)</h2>
+<p>Çoğu izin için, araç girişine bağlı olarak farklı eylemleri uygulamak için bir nesneyi kullanabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Kurallar, <strong>son eşleşen kuralın kazanması</strong> ile kalıp eşleşmesine göre değerlendirilir. Yaygın bir model, tümünü yakala <code>&quot;*&quot;</code> kuralını ilk sıraya koymak ve daha spesifik kuralları ondan sonra koymaktır.</p>
+<h3>Joker Karakterler</h3>
+<p>İzin kalıpları basit joker karakter eşleştirmesini kullanır:</p>
+<ul>
+<li><code>*</code> herhangi bir karakterin sıfır veya daha fazlasıyla eşleşir</li>
+<li><code>?</code> tam olarak bir karakterle eşleşir</li>
+<li>Diğer tüm karakterler birebir eşleşir</li>
+</ul>
+<h3>Ana Dizin Genişletme</h3>
+<p>Ana dizininize referans vermek için bir modelin başlangıcında <code>~</code> veya <code>$HOME</code> kullanabilirsiniz. Bu özellikle <a href="#external-directories"><code>external_directory</code></a> kuralları için kullanışlıdır.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Harici Dizinler</h3>
+<p>closedcode&#39;un başlatıldığı çalışma dizini dışındaki yollara dokunan araç çağrılarına izin vermek için <code>external_directory</code> kullanın. Bu, girdi olarak bir yolu alan tüm araçlar için geçerlidir (örneğin <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> ve birçok <code>bash</code> komutu).</p>
+<p>Ana sayfa genişletmesi (<code>~/...</code> gibi) yalnızca bir kalıbın nasıl yazıldığını etkiler. Geçerli çalışma alanının harici bir yolunu oluşturmaz, dolayısıyla çalışma dizini dışındaki yollara yine de <code>external_directory</code> aracılığıyla izin verilmesi gerekir.</p>
+<p>Örneğin bu, <code>~/projects/personal/</code> altındaki her şeye erişime izin verir:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Burada izin verilen herhangi bir dizin, geçerli çalışma alanıyla aynı varsayılanları devralır. <a href="#defaults"><code>read</code> defaults to <code>allow</code></a>&#39;dan bu yana, geçersiz kılınmadığı sürece <code>external_directory</code> altındaki girişler için okumalara da izin verilir. Bir aracın bu yollarda kısıtlanması gerektiğinde (okumaları tutarken düzenlemeleri engellemek gibi) açık kurallar ekleyin:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Listeyi güvenilir yollara odaklı tutun ve diğer araçlar için gereken ekstra izin verme veya reddetme kurallarını katmanlayın (örneğin <code>bash</code>).</p>
+<hr>
+<h2>Mevcut İzinler</h2>
+<p>closedcode izinleri araç adına ve birkaç güvenlik önlemine göre anahtarlanır:</p>
+<ul>
+<li><code>read</code> — bir dosyayı okumak (dosya yoluyla eşleşir)</li>
+<li><code>edit</code> — tüm dosya değişiklikleri (<code>edit</code>, <code>write</code>, <code>patch</code>&#39;i kapsar)</li>
+<li><code>glob</code> — dosya genellemesi (glob düzeniyle eşleşir)</li>
+<li><code>grep</code> — içerik arama (regex modeliyle eşleşir)</li>
+<li><code>bash</code> — kabuk komutlarını çalıştırma (<code>git status --porcelain</code> gibi ayrıştırılmış komutlarla eşleşir)</li>
+<li><code>task</code> — alt agent&#39;ların başlatılması (alt agent türüyle eşleşir)</li>
+<li><code>skill</code> — bir skill yükleniyor (skill adıyla eşleşir)</li>
+<li><code>lsp</code> — LSP sorgularını çalıştırıyor (şu anda ayrıntılı değil)</li>
+<li><code>webfetch</code> — URL getiriliyor (URL ile eşleşiyor)</li>
+<li><code>websearch</code> — web arama (sorguyla eşleşir)</li>
+<li><code>external_directory</code> — bir araç proje çalışma dizini dışındaki yollara dokunduğunda tetiklenir</li>
+<li><code>doom_loop</code> — aynı araç çağrısı aynı girdiyle 3 kez tekrarlandığında tetiklenir</li>
+</ul>
+<hr>
+<h2>Varsayılanlar</h2>
+<p>Hiçbir şey belirtmezseniz closedcode izin verilen varsayılanlardan başlar:</p>
+<ul>
+<li>Çoğu izin varsayılan olarak <code>&quot;allow&quot;</code> şeklindedir.</li>
+<li><code>doom_loop</code> ve <code>external_directory</code> varsayılan olarak <code>&quot;ask&quot;</code>&#39;dir.</li>
+<li><code>read</code>, <code>&quot;allow&quot;</code>&#39;dır, ancak <code>.env</code> dosyaları varsayılan olarak reddedilir:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>“Sor” Ne Yapar?</h2>
+<p>closedcode onay istediğinde kullanıcı arayüzü üç sonuç sunar:</p>
+<ul>
+<li><code>once</code> — yalnızca bu isteği onayla</li>
+<li><code>always</code> — önerilen kalıplarla eşleşen gelecekteki istekleri onaylayın (geçerli closedcode oturumunun geri kalanı için)</li>
+<li><code>reject</code> — isteği reddet</li>
+</ul>
+<p><code>always</code>&#39;ın onaylayacağı kalıp seti araç tarafından sağlanır (örneğin, bash onayları genellikle <code>git status*</code> gibi güvenli bir komut önekini beyaz listeye alır).</p>
+<hr>
+<h2>Agent&#39;lar</h2>
+<p>Agent bazında izinleri geçersiz kılabilirsiniz. Agent izinleri global yapılandırmayla birleştirilir ve agent kuralları önceliklidir. <a href="/docs/agents#permissions">Daha fazla bilgi</a>.</p>
+<aside class="aside aside-note">
+Daha ayrıntılı desen eşleştirme örnekleri için yukarıdaki [Ayrıntılı kurallar (nesne söz dizimi)](#granular-rules-object-syntax) bölümüne bakın.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Agent izinlerini Markdown&#39;da da yapılandırabilirsiniz:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Bağımsız değişken içeren komutlar için kalıp eşleştirmeyi kullanın. `"grep *"`, `grep pattern file.txt`'ye izin verir, ancak `"grep"` tek başına onu engeller. `git status` gibi komutlar varsayılan davranış için çalışır ancak argümanlar aktarıldığında açık izin (`"git status *"` gibi) gerektirir.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

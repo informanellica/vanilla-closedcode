@@ -1,0 +1,3 @@
+[submodule "nero_modules/jsdoc-theme"]
+	path = src/nero_modules/jsdoc-theme
+	url = https://github.com/informanellica/nero-jsdoc-theme.git

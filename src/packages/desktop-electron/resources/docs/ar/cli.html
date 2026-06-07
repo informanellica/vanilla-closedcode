@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="أوامر وخيارات CLI في vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html" selected>العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">أوامر وخيارات CLI في vanilla-closedcode.</p>
+      <p>يبدأ CLI الخاص بـ vanilla-closedcode افتراضيا واجهة <a href="/docs/tui">TUI</a> عند تشغيله بدون أي معاملات.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>كما يدعم أيضا أوامر موثقة في هذه الصفحة، ما يتيح لك التفاعل مع vanilla-closedcode برمجيا.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>بدء واجهة المستخدم terminal (TUI) الخاصة بـ vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>الخيارات</h4>
+<table>
+<thead>
+<tr>
+<th>الخيار</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>متابعة الجلسة الأخيرة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>معرّف الجلسة للمتابعة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>تفريع الجلسة عند المتابعة (يستخدم مع <code>--continue</code> أو <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>الموجّه المراد استخدامه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>النموذج المراد استخدامه بصيغة provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>الوكيل المراد استخدامه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>المنفذ الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>اسم المضيف الذي يتم الاستماع عليه</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>الأوامر</h2>
+<p>يتضمن CLI الخاص بـ vanilla-closedcode أيضا الأوامر التالية.</p>
+<hr>
+<h3>agent</h3>
+<p>إدارة وكلاء vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>إرفاق terminal بخادم الواجهة الخلفية لـ vanilla-closedcode قيد التشغيل بالفعل، والذي تم تشغيله عبر الأمرين <code>serve</code> أو <code>web</code>.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>يتيح ذلك استخدام واجهة TUI مع واجهة خلفية لـ vanilla-closedcode تعمل عن بعد. على سبيل المثال:</p>
+<pre><code class="language-bash"># ابدأ خادم الواجهة الخلفية للوصول عبر الويب/الجوال
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# في محطة طرفية (terminal) أخرى، اربط TUI بالواجهة الخلفية قيد التشغيل
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>دليل العمل الذي ستبدأ منه واجهة TUI</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>متابعة آخر جلسة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>معرّف الجلسة للمتابعة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>تفريع الجلسة عند المتابعة (استخدمه مع <code>--continue</code> أو <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>كلمة مرور المصادقة الأساسية (الافتراضي <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>اسم مستخدم المصادقة الأساسية (الافتراضي <code>CLOSEDCODE_SERVER_USERNAME</code> أو <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>إنشاء وكيل جديد بإعدادات مخصصة.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>سيرشدك هذا الأمر خلال إنشاء وكيل جديد مع موجه نظام مخصص وإعدادات الأدوات.</p>
+<hr>
+<h4>list</h4>
+<p>عرض جميع الوكلاء المتاحين.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>أمر لإدارة بيانات الاعتماد وتسجيل الدخول لمزودي الخدمة.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>يعتمد vanilla-closedcode على قائمة المزودين في <a href="https://models.dev">Models.dev</a>، لذا يمكنك استخدام <code>closedcode auth login</code> لتهيئة مفاتيح API لأي مزود ترغب باستخدامه. يتم حفظ ذلك في <code>~/.local/share/closedcode/auth.json</code>.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>عند تشغيل vanilla-closedcode يقوم بتحميل المزودين من ملف بيانات الاعتماد، وكذلك أي مفاتيح معرّفة في متغيرات البيئة لديك أو في ملف <code>.env</code> ضمن مشروعك.</p>
+<hr>
+<h4>list</h4>
+<p>يسرد جميع المزودين الذين تم توثيقهم كما هم محفوظون في ملف بيانات الاعتماد.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>أو النسخة المختصرة.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>يسجلك خارج مزود عبر حذفه من ملف بيانات الاعتماد.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>إدارة وكيل GitHub لأتمتة المستودع.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>تثبيت وكيل GitHub في مستودعك.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>يقوم ذلك بإعداد سير عمل GitHub Actions اللازم ويرشدك خلال عملية التهيئة. <a href="/docs/github">اعرف المزيد</a>.</p>
+<hr>
+<h4>run</h4>
+<p>تشغيل وكيل GitHub. يُستخدم هذا عادة ضمن GitHub Actions.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>الرايات</h5>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>حدث GitHub مُحاكى لتشغيل الوكيل عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>رمز وصول شخصي لـ GitHub</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>إدارة خوادم Model Context Protocol.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>إضافة خادم MCP إلى تهيئتك.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>سيرشدك هذا الأمر خلال إضافة خادم MCP محلي أو بعيد.</p>
+<hr>
+<h4>list</h4>
+<p>عرض جميع خوادم MCP المُهيأة وحالة اتصالها.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>أو استخدم النسخة المختصرة.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>إجراء المصادقة مع خادم MCP يدعم OAuth.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>إذا لم تُحدِّد اسم خادم، فسيُطلب منك الاختيار من الخوادم المتاحة الداعمة لـ OAuth.</p>
+<p>يمكنك أيضا عرض الخوادم الداعمة لـ OAuth وحالة المصادقة الخاصة بها.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>أو استخدم النسخة المختصرة.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>إزالة بيانات اعتماد OAuth لخادم MCP.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>تشخيص مشاكل اتصال OAuth لخادم MCP.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>عرض جميع النماذج المتاحة من المزودين المُهيأين.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>يعرض هذا الأمر جميع النماذج المتاحة عبر المزودين المُهيأين لديك بصيغة <code>provider/model</code>.</p>
+<p>هذا مفيد لتحديد اسم النموذج الدقيق الذي ستستخدمه في <a href="/docs/config/">تهيئتك</a>.</p>
+<p>يمكنك اختياريا تمرير معرّف مزود لتصفية النماذج حسب ذلك المزود.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>تحديث ذاكرة التخزين المؤقت للنماذج من models.dev</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>استخدام مخرجات أكثر تفصيلا للنماذج (تشمل بيانات مثل التكاليف)</td>
+</tr>
+</tbody></table>
+<p>استخدم الراية <code>--refresh</code> لتحديث قائمة النماذج المخزنة مؤقتا. يفيد ذلك عند إضافة نماذج جديدة إلى مزود وتريد رؤيتها في vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>تشغيل closedcode في وضع غير تفاعلي عبر تمرير موجه مباشرة.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>هذا مفيد للبرمجة النصية والأتمتة، أو عندما تريد إجابة سريعة دون تشغيل واجهة TUI كاملة. على سبيل المثال.</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>يمكنك أيضا الإرفاق بمثيل <code>closedcode serve</code> قيد التشغيل لتجنّب زمن الإقلاع البارد لخوادم MCP في كل تشغيل:</p>
+<pre><code class="language-bash"># ابدأ خادمًا بلا واجهة في محطة طرفية واحدة
+closedcode serve
+
+# في محطة طرفية أخرى، شغّل الأوامر التي ترتبط به
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>الأمر المراد تشغيله؛ استخدم الرسالة كوسائط</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>متابعة الجلسة الأخيرة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>معرّف الجلسة للمتابعة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>تفريع الجلسة عند المتابعة (يستخدم مع <code>--continue</code> أو <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>مشاركة الجلسة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>النموذج المراد استخدامه بصيغة provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>الوكيل المراد استخدامه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>ملف/ملفات لإرفاقها بالرسالة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>التنسيق: default (منسق) أو json (أحداث JSON خام)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>عنوان للجلسة (يستخدم موجهًا مقتطعًا إن لم تُحدَّد قيمة)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>الإرفاق بخادم closedcode قيد التشغيل (مثل <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>كلمة مرور المصادقة الأساسية (الافتراضي <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>اسم مستخدم المصادقة الأساسية (الافتراضي <code>CLOSEDCODE_SERVER_USERNAME</code> أو <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>دليل التشغيل، أو المسار على الخادم البعيد عند الإرفاق</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>متغير النموذج (جهد الاستدلال الخاص بالمزود)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>عرض كتل التفكير</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>منفذ الخادم المحلي (الافتراضي منفذ عشوائي)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>بدء خادم vanilla-closedcode بدون واجهة للوصول عبر API. راجع <a href="/docs/server">توثيق الخادم</a> لواجهة HTTP الكاملة.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>يشغّل هذا خادم HTTP يوفّر وصولا عبر API لوظائف closedcode دون واجهة TUI. اضبط <code>CLOSEDCODE_SERVER_PASSWORD</code> لتفعيل مصادقة HTTP الأساسية (اسم المستخدم الافتراضي <code>closedcode</code>).</p>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>المنفذ الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>اسم المضيف الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>تفعيل اكتشاف mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>أصول/منشأات إضافية للمتصفح للسماح بـ CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>إدارة جلسات vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>عرض جميع جلسات vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>الرايات</h5>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>حصر النتائج في أحدث N جلسات</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>تنسيق المخرجات: table أو json (table)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>عرض إحصاءات استخدام الرموز والتكلفة لجلسات vanilla-closedcode لديك.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>عرض الإحصاءات لآخر N يومًا (الافتراضي: كل الوقت)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>عدد الأدوات المطلوب عرضها (الافتراضي: الكل)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>عرض تفصيل استخدام النماذج (مخفي افتراضيا). مرّر رقمًا لعرض أعلى N</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>التصفية حسب المشروع (الافتراضي: كل المشاريع، سلسلة فارغة: المشروع الحالي)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>تصدير بيانات الجلسة بصيغة JSON.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>إذا لم تُقدّم معرّف جلسة، فسيُطلب منك الاختيار من الجلسات المتاحة.</p>
+<hr>
+<h3>import</h3>
+<p>استيراد بيانات الجلسة من ملف JSON أو رابط مشاركة vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>يمكنك الاستيراد من ملف محلي أو من رابط مشاركة vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>بدء خادم vanilla-closedcode بدون واجهة مع واجهة ويب.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>يشغّل هذا خادم HTTP ويفتح متصفح ويب للوصول إلى vanilla-closedcode عبر واجهة ويب. اضبط <code>CLOSEDCODE_SERVER_PASSWORD</code> لتفعيل مصادقة HTTP الأساسية (اسم المستخدم الافتراضي <code>closedcode</code>).</p>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>المنفذ الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>اسم المضيف الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>تفعيل اكتشاف mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>أصول/منشأات إضافية للمتصفح للسماح بـ CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>بدء خادم ACP (Agent Client Protocol).</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>يشغّل هذا الأمر خادم ACP يتواصل عبر stdin/stdout باستخدام nd-JSON.</p>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>دليل العمل</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>المنفذ الذي يتم الاستماع عليه</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>اسم المضيف الذي يتم الاستماع عليه</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>إلغاء تثبيت vanilla-closedcode وإزالة جميع الملفات ذات الصلة.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>الإبقاء على ملفات التهيئة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>الإبقاء على بيانات الجلسات واللقطات</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>عرض ما سيتم حذفه دون تنفيذ الحذف</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>تخطي مطالبات التأكيد</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>تحديث closedcode إلى أحدث إصدار أو إلى إصدار محدد.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>للترقية إلى أحدث إصدار.</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>للترقية إلى إصدار محدد.</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>الرايات</h4>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>طريقة التثبيت المستخدمة: curl أو npm أو pnpm أو bun أو brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>الخيارات العامة</h2>
+<p>يدعم سطر أوامر closedcode الخيارات العامة التالية.</p>
+<table>
+<thead>
+<tr>
+<th>الراية</th>
+<th>المختصر</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>عرض المساعدة</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>طباعة رقم الإصدار</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>طباعة السجلات إلى stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>مستوى السجل (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>متغيرات البيئة</h2>
+<p>يمكن تهيئة vanilla-closedcode باستخدام متغيرات البيئة.</p>
+<table>
+<thead>
+<tr>
+<th>المتغير</th>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>مشاركة الجلسات تلقائيا</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>مسار ملف Git Bash التنفيذي على Windows</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>مسار ملف التهيئة</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>مسار دليل التهيئة</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>محتوى تهيئة JSON مُضمّن</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>تعطيل التحقق التلقائي من التحديثات</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>تعطيل تنقية البيانات القديمة</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>تعطيل تحديث عنوان terminal تلقائيا</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>تهيئة أذونات JSON مُضمّنة</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>تعطيل الإضافات الافتراضية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>تعطيل تنزيل خوادم LSP تلقائيا</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>تفعيل النماذج التجريبية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>تعطيل ضغط السياق تلقائيا</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td>تعطيل القراءة من <code>.claude</code> (الموجه + المهارات)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td>تعطيل قراءة <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td>تعطيل تحميل <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>تعطيل جلب النماذج من مصادر بعيدة</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>مزود VCS وهمي لأغراض الاختبار</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>معرّف العميل (الافتراضي <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>تفعيل أدوات بحث الويب من Exa</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td>تفعيل المصادقة الأساسية لخادمي <code>serve</code>/<code>web</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>تجاوز اسم مستخدم المصادقة الأساسية (الافتراضي <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>رابط مخصص لجلب تهيئة النماذج</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>تجريبي</h3>
+<p>تقوم متغيرات البيئة التالية بتفعيل ميزات تجريبية قد تتغير أو تتم إزالتها.</p>
+<table>
+<thead>
+<tr>
+<th>المتغير</th>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>تفعيل جميع الميزات التجريبية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>تفعيل اكتشاف الأيقونات</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>تعطيل النسخ عند التحديد في TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>number</td>
+<td>المهلة الافتراضية لأوامر bash بالميلي ثانية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>number</td>
+<td>الحد الأقصى لرموز المخرجات لاستجابات LLM</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>تفعيل مراقب الملفات لكامل الدليل</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>تفعيل مُنسّق oxfmt</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>تفعيل أداة LSP تجريبية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>تعطيل مراقب الملفات</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>تفعيل ميزات Exa التجريبية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>تمكين TY LSP لملفات python</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>تفعيل ميزات markdown تجريبية</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>تفعيل وضع الخطة</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

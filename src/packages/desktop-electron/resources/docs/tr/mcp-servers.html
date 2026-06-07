@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP sunucuları — vanilla-closedcode docs</title>
+  <meta name="description" content="Yerel ve uzak MCP araçlarını ekleyin.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html" selected>Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCP sunucuları</h1>
+      <p class="lede">Yerel ve uzak MCP araçlarını ekleyin.</p>
+      <p><em>Model Bağlam Protokolü</em> veya MCP kullanarak closedcode&#39;a harici araçlar ekleyebilirsiniz. closedcode hem yerel hem de uzak sunucuları destekler.</p>
+<p>MCP araçları eklendikten sonra yerleşik araçların yanı sıra LLM tarafından otomatik olarak kullanılabilir.</p>
+<hr>
+<h4>Uyarılar</h4>
+<p>Bir MCP sunucusu kullandığınızda bağlama eklenir. Çok fazla aletiniz varsa, bu hızla artabilir. Bu nedenle hangi MCP sunucularını kullandığınıza dikkat etmenizi öneririz.</p>
+<aside class="aside aside-tip">
+MCP sunucuları içeriğinize katkıda bulunur, bu nedenle hangilerini etkinleştirdiğinize dikkat etmek istersiniz.
+</aside>
+GitHub MCP sunucusu gibi belirli MCP sunucuları çok sayıda belirteç ekleme eğilimindedir ve bağlam sınırını kolayca aşabilir.
+
+<hr>
+<h2>Etkinleştirme</h2>
+<p>MCP sunucularını <a href="./config.html">closedcode Config</a>&#39;nizde <code>mcp</code> altında tanımlayabilirsiniz. Her MCP&#39;ü benzersiz bir adla ekleyin. LLM isteminde bulunurken bu MCP adına başvurabilirsiniz.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>Ayrıca <code>enabled</code> öğesini <code>false</code> olarak ayarlayarak bir sunucuyu devre dışı bırakabilirsiniz. Bir sunucuyu yapılandırmanızdan kaldırmadan geçici olarak devre dışı bırakmak istiyorsanız bu kullanışlıdır.</p>
+<hr>
+
+<h2>Yerel</h2>
+<p><code>type</code> kullanarak yerel MCP sunucularını MCP nesnesi içindeki <code>&quot;local&quot;</code>&#39;ye ekleyin.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;npx&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Komut, yerel MCP sunucusunun nasıl başlatıldığıdır. Ayrıca ortam değişkenlerinin bir listesini de iletebilirsiniz.</p>
+<p>Örneğin, <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a> MCP test sunucusunu şu şekilde görebilirsiniz.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>Ve bunu kullanmak için istemlerime <code>use the mcp_everything tool</code> kullanıyorum.</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>Seçenekler</h4>
+<p>Yerel bir MCP sunucusunu yapılandırmak için tüm seçenekler burada verilmiştir.</p>
+<table>
+<thead>
+<tr>
+<th>Seçenek</th>
+<th>Tür</th>
+<th>Gerekli</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>Dize</td>
+<td>Y</td>
+<td>MCP sunucu bağlantısı türü, <code>&quot;local&quot;</code> olmalıdır.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Dizi</td>
+<td>Y</td>
+<td>MCP sunucusunu çalıştırmak için komut ve argümanlar.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Nesne</td>
+<td></td>
+<td>Sunucuyu çalıştırırken ayarlanacak ortam değişkenleri.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Başlangıçta MCP sunucusunu etkinleştirin veya devre dışı bırakın.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Sayı</td>
+<td></td>
+<td>MCP sunucusundan araçları getirirken ms cinsinden zaman aşımı. Varsayılan 5000&#39;dir (5 saniye).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Uzak</h2>
+<p><code>type</code>&#39;yi <code>&quot;remote&quot;</code> olarak ayarlayarak uzak MCP sunucularını ekleyin.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> uzak MCP sunucusunun URL&#39;sidir ve <code>headers</code> seçeneğiyle bir başlık listesi iletebilirsiniz.</p>
+<hr>
+<h4>Seçenekler</h4>
+<table>
+<thead>
+<tr>
+<th>Seçenek</th>
+<th>Tür</th>
+<th>Gerekli</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>Dize</td>
+<td>Y</td>
+<td>MCP sunucu bağlantısı türü, <code>&quot;remote&quot;</code> olmalıdır.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>Dize</td>
+<td>Y</td>
+<td>Uzak MCP sunucusunun URL.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Başlangıçta MCP sunucusunu etkinleştirin veya devre dışı bırakın.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Nesne</td>
+<td></td>
+<td>İstekle birlikte gönderilecek başlıklar.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Object</td>
+<td></td>
+<td>OAuth authentication configuration. See <a href="#oauth">OAuth</a> section below.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Sayı</td>
+<td></td>
+<td>MCP sunucusundan araçları getirirken ms cinsinden zaman aşımı. Varsayılan 5000&#39;dir (5 saniye).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>closedcode, uzak MCP sunucuları için OAuth kimlik doğrulamasını otomatik olarak yönetir. Bir sunucu kimlik doğrulaması gerektirdiğinde closedcode şunları yapar:</p>
+<ol>
+<li>401 yanıtını tespit edin ve OAuth akışını başlatın</li>
+<li>Sunucu tarafından destekleniyorsa <strong>Dinamik İstemci Kaydı (RFC 7591)</strong> kullanın</li>
+<li>Gelecekteki istekler için belirteçleri güvenli bir şekilde saklayın</li>
+</ol>
+<hr>
+<h3>Otomatik</h3>
+<p>OAuth&#39;un etkin olduğu çoğu MCP sunucusu için özel bir yapılandırmaya gerek yoktur. Uzak sunucuyu yapılandırmanız yeterli:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Sunucu kimlik doğrulama gerektiriyorsa closedcode, onu ilk kez kullanmaya çalıştığınızda kimlik doğrulamanızı isteyecektir. Değilse, <code>closedcode mcp auth &lt;server-name&gt;</code> ile <a href="#authenticating">manually trigger the flow</a> yapabilirsiniz.</p>
+<hr>
+<h3>Ön kayıtlı</h3>
+<p>MCP sunucu sağlayıcısından istemci kimlik bilgileriniz varsa, bunları yapılandırabilirsiniz:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Kimlik doğrulama</h3>
+<p>Kimlik doğrulamayı manuel olarak tetikleyebilir veya kimlik bilgilerini yönetebilirsiniz.</p>
+<p>Belirli bir MCP sunucusuyla kimlik doğrulaması yapın:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>Tüm MCP sunucularını ve kimlik doğrulama durumlarını listeleyin:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Remove stored credentials:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p><code>mcp auth</code> komutu tarayıcınızı yetkilendirme için açacaktır. Yetkilendirmenizin ardından closedcode, belirteçleri <code>~/.local/share/closedcode/mcp-auth.json</code>&#39;de güvenli bir şekilde saklar.</p>
+<hr>
+<h4>OAuth&#39;u devre dışı bırakma</h4>
+<p>Bir sunucu için otomatik OAuth&#39;u devre dışı bırakmak istiyorsanız (örneğin, bunun yerine API anahtarlarını kullanan sunucular için), <code>oauth</code>&#39;yi <code>false</code> olarak ayarlayın:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth Seçenekleri</h4>
+<table>
+<thead>
+<tr>
+<th>Seçenek</th>
+<th>Tür</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>OAuth config object, or <code>false</code> to disable OAuth auto-detection.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>Dize</td>
+<td>OAuth istemci kimliği. Sağlanmadığı takdirde dinamik müşteri kaydı denenecektir.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>Dize</td>
+<td>Yetkilendirme sunucusu gerektiriyorsa OAuth istemci sırrı.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>OAuth scopes to request during authorization.</td>
+</tr>
+</tbody></table>
+<h4>Hata Ayıklama</h4>
+<p>Uzak bir MCP sunucusunun kimlik doğrulaması başarısız olursa aşağıdakileri kullanarak sorunları teşhis edebilirsiniz:</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p><code>mcp debug</code> komutu mevcut kimlik doğrulama durumunu gösterir, HTTP bağlantısını test eder ve OAuth bulma akışını dener.</p>
+<hr>
+<h2>Yönetim</h2>
+<p>MCP&#39;leriniz yerleşik araçların yanı sıra closedcode&#39;da araç olarak mevcuttur. Böylece bunları diğer araçlar gibi closedcode yapılandırması aracılığıyla yönetebilirsiniz.</p>
+<hr>
+<h3>Global</h3>
+<p>Bu, bunları global olarak etkinleştirebileceğiniz veya devre dışı bırakabileceğiniz anlamına gelir.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>Eşleşen tüm MCP&#39;leri devre dışı bırakmak için bir glob modeli de kullanabiliriz.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>Burada tüm MCP&#39;leri devre dışı bırakmak için <code>my-mcp*</code> glob modelini kullanıyoruz.</p>
+<hr>
+<h3>Agent başına</h3>
+<p>Çok sayıda MCP sunucunuz varsa, bunları yalnızca aracı başına etkinleştirmek ve genel olarak devre dışı bırakmak isteyebilirsiniz. Bunu yapmak için:</p>
+<ol>
+<li>Global olarak bir araç olarak devre dışı bırakın.</li>
+<li><a href="/docs/agents#tools">agent config</a>&#39;nizde, MCP sunucusunu bir araç olarak etkinleştirin.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Glob desenleri</h4>
+<p>Glob modeli, basit normal ifade globbing modellerini kullanır:</p>
+<ul>
+<li><code>*</code> herhangi bir karakterin sıfır veya daha fazlasıyla eşleşir (örneğin, <code>&quot;my-mcp*&quot;</code> <code>my-mcp_search</code>, <code>my-mcp_list</code> vb. ile eşleşir)</li>
+<li><code>?</code> matches exactly one character</li>
+<li>All other characters match literally</li>
+</ul>
+<aside class="aside aside-note">
+MCP sunucu araçları önek olarak sunucu adıyla kayıtlıdır, dolayısıyla bir sunucuya ilişkin tüm araçları devre dışı bırakmak için aşağıdakileri kullanmanız yeterlidir:
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>Örnekler</h2>
+<p>Aşağıda bazı yaygın MCP sunucularının örnekleri verilmiştir. Diğer sunucuları belgelemek istiyorsanız PR gönderebilirsiniz.</p>
+<hr>
+<h3>Sentry</h3>
+<p>Sentry projelerinizle ve sorunlarınızla etkileşimde bulunmak için <a href="https://mcp.sentry.dev">Sentry MCP server</a> ekleyin.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>Yapılandırmayı ekledikten sonra Sentry ile kimlik doğrulaması yapın:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>Bu, OAuth akışını tamamlamak ve closedcode&#39;u Sentry hesabınıza bağlamak için bir tarayıcı penceresi açacaktır.</p>
+<p>Kimlik doğrulaması yapıldıktan sonra sorunları, projeleri ve hata verilerini sorgulamak için istemlerinizde Sentry araçlarını kullanabilirsiniz.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>Dokumanlar arasında arama yapmak için <a href="https://github.com/upstash/context7">Context7 MCP server</a> ekleyin.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ücretsiz bir hesaba kaydolduysanız API anahtarınızı kullanarak daha yüksek ücret limitleri elde edebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Burada <code>CONTEXT7_API_KEY</code> ortam değişkeninin ayarlandığını varsayıyoruz.</p>
+<p>Context7 MCP sunucunu kullanmak için isteklerinize <code>use context7</code> ekleyin.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>Alternatif olarak <a href="/docs/rules/">AGENTS.md</a>&#39;a buna benzer bir şey ekleyebilirsiniz.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>GitHub&#39;daki kod parçacıkları arasında arama yapmak için <a href="https://grep.app">Grep by Vercel</a> MCP sunucusunu ekleyin.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>MCP sunucumuzu <code>gh_grep</code> olarak adlandırdığımız için, aracının onu kullanmasını sağlamak için istemlerinize <code>use the gh_grep tool</code> ekleyebilirsiniz.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>Alternatif olarak <a href="/docs/rules/">AGENTS.md</a>&#39;a buna benzer bir şey ekleyebilirsiniz.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

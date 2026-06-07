@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>استكشاف الأخطاء وإصلاحها — vanilla-closedcode docs</title>
+  <meta name="description" content="المشكلات الشائعة وكيفية حلها.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html" selected>العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>استكشاف الأخطاء وإصلاحها</h1>
+      <p class="lede">المشكلات الشائعة وكيفية حلها.</p>
+      <p>لاستكشاف المشكلات في vanilla-closedcode وإصلاحها، ابدأ بالتحقق من السجلات والبيانات المحلية التي يخزنها على القرص.</p>
+<hr>
+<h2>السجلات</h2>
+<p>يتم حفظ ملفات السجل في:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> والصق <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>تتم تسمية ملفات السجل بطوابع زمنية (مثل <code>2025-01-09T123456.log</code>) ويتم الاحتفاظ بأحدث 10 ملفات سجل.</p>
+<p>يمكنك ضبط مستوى السجل باستخدام خيار CLI <code>--log-level</code> للحصول على معلومات تصحيح أكثر تفصيلا. على سبيل المثال: <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>التخزين</h2>
+<p>يخزن closedcode بيانات الجلسات وبيانات التطبيق الأخرى على القرص في:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> والصق <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>يحتوي هذا الدليل على:</p>
+<ul>
+<li><code>auth.json</code> - بيانات المصادقة مثل مفاتيح API ورموز OAuth</li>
+<li><code>log/</code> - سجلات التطبيق</li>
+<li><code>project/</code> - بيانات خاصة بالمشروع مثل بيانات الجلسة والرسائل<ul>
+<li>إذا كان المشروع داخل مستودع Git، فسيتم تخزينه في <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>إذا لم يكن داخل مستودع Git، فسيتم تخزينه في <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>تطبيق سطح المكتب</h2>
+<p>يشغل vanilla-closedcode Desktop خادما محليا لـ vanilla-closedcode (العملية الجانبية <code>closedcode-cli</code>) في الخلفية. معظم المشكلات سببها إضافة لا تعمل بشكل صحيح، أو ذاكرة تخزين مؤقت تالفة، أو إعداد خادم غير صحيح.</p>
+<h3>فحوصات سريعة</h3>
+<ul>
+<li>أغلق التطبيق تماما ثم أعد تشغيله.</li>
+<li>إذا عرض التطبيق شاشة خطأ، انقر <strong>Restart</strong> وانسخ تفاصيل الخطأ.</li>
+<li>على macOS فقط: قائمة <code>vanilla-closedcode</code> -&gt; <strong>Reload Webview</strong> (يفيد إذا كانت الواجهة فارغة/متجمدة).</li>
+</ul>
+<hr>
+<h3>تعطيل الإضافات</h3>
+<p>إذا كان تطبيق سطح المكتب يتعطل عند التشغيل، أو يتوقف عن الاستجابة، أو يتصرف بشكل غريب، فابدأ بتعطيل الإضافات.</p>
+<h4>تحقق من الإعدادات العامة</h4>
+<p>افتح ملف الإعدادات العام وابحث عن المفتاح <code>plugin</code>.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (أو <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (عمليات تثبيت أقدم): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> والصق <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>إذا كانت لديك إضافات مضبوطة، فقم بتعطيلها مؤقتا بإزالة المفتاح أو ضبطه على مصفوفة فارغة:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>تحقق من أدلة الإضافات</h4>
+<p>يمكن لـ vanilla-closedcode أيضا تحميل إضافات محلية من القرص. انقلها مؤقتا إلى مكان آخر (أو أعد تسمية المجلد) ثم أعد تشغيل تطبيق سطح المكتب:</p>
+<ul>
+<li><strong>إضافات عامة</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> والصق <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>إضافات المشروع</strong> (فقط إذا كنت تستخدم إعدادات لكل مشروع)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>إذا عاد التطبيق للعمل، فأعد تفعيل الإضافات واحدة تلو الأخرى لمعرفة أيها يسبب المشكلة.</p>
+<hr>
+<h3>مسح ذاكرة التخزين المؤقت</h3>
+<p>إذا لم يساعد تعطيل الإضافات (أو كانت عملية تثبيت إضافة عالقة)، فامسح ذاكرة التخزين المؤقت حتى يتمكن vanilla-closedcode من إعادة بنائها.</p>
+<ol>
+<li>أغلق vanilla-closedcode Desktop تماما.</li>
+<li>احذف دليل ذاكرة التخزين المؤقت:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; الصق <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: احذف <code>~/.cache/closedcode</code> (أو شغّل <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> والصق <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>أعد تشغيل vanilla-closedcode Desktop.</li>
+</ol>
+<hr>
+<h3>إصلاح مشكلات اتصال الخادم</h3>
+<p>يمكن لـ vanilla-closedcode Desktop إما تشغيل خادمه المحلي (افتراضيا) أو الاتصال بعنوان URL لخادم قمت بتهيئته.</p>
+<p>إذا ظهرت نافذة <strong>&quot;Connection Failed&quot;</strong> (أو لم يتجاوز التطبيق شاشة البداية)، فتحقق مما إذا كان هناك عنوان URL مخصص للخادم.</p>
+<h4>مسح عنوان URL الافتراضي لخادم سطح المكتب</h4>
+<p>من شاشة Home، انقر اسم الخادم (مع نقطة الحالة) لفتح محدد الخوادم. في قسم <strong>Default server</strong>، انقر <strong>Clear</strong>.</p>
+<h4>إزالة <code>server.port</code> / <code>server.hostname</code> من الإعدادات</h4>
+<p>إذا كان <code>closedcode.json(c)</code> يحتوي على قسم <code>server</code>، فأزله مؤقتا ثم أعد تشغيل تطبيق سطح المكتب.</p>
+<h4>تحقق من متغيرات البيئة</h4>
+<p>إذا كان <code>CLOSEDCODE_PORT</code> مضبوطا في بيئتك، فسيحاول تطبيق سطح المكتب استخدام ذلك المنفذ للخادم المحلي.</p>
+<ul>
+<li>أزل ضبط <code>CLOSEDCODE_PORT</code> (أو اختر منفذا متاحا) ثم أعد التشغيل.</li>
+</ul>
+<hr>
+<h3>Linux: مشكلات Wayland / X11</h3>
+<p>على Linux، قد تتسبب بعض إعدادات Wayland في نوافذ فارغة أو أخطاء في مدير التركيب (compositor).</p>
+<ul>
+<li>إذا كنت تستخدم Wayland وكانت نافذة التطبيق فارغة/يتعطل، فجرّب التشغيل مع <code>OC_ALLOW_WAYLAND=1</code>.</li>
+<li>إذا جعل ذلك الأمور أسوأ، فأزل هذا المتغير وجرّب التشغيل ضمن جلسة X11 بدلا من ذلك.</li>
+</ul>
+<hr>
+<h3>Windows: بيئة تشغيل WebView2</h3>
+<p>على Windows، يتطلب vanilla-closedcode Desktop وجود <strong>WebView2 Runtime</strong> الخاصة بـ Microsoft Edge. إذا فتح التطبيق نافذة فارغة أو لم يبدأ، فقم بتثبيت/تحديث WebView2 ثم جرّب مجددا.</p>
+<hr>
+<h3>Windows: مشكلات الأداء العامة</h3>
+<p>إذا كنت تواجه بطءا في الأداء، أو مشكلات في الوصول إلى الملفات، أو مشكلات في terminal على Windows، فجرّب استخدام <a href="/docs/windows-wsl">WSL (نظام Windows الفرعي لـ Linux)</a>. يوفر WSL بيئة Linux تعمل بسلاسة أكبر مع ميزات vanilla-closedcode.</p>
+<hr>
+<h3>الإشعارات لا تظهر</h3>
+<p>لا يعرض vanilla-closedcode Desktop إشعارات النظام إلا عندما:</p>
+<ul>
+<li>تكون الإشعارات مفعلة لـ vanilla-closedcode في إعدادات نظام التشغيل، و</li>
+<li>تكون نافذة التطبيق غير نشطة.</li>
+</ul>
+<hr>
+<h3>إعادة تعيين تخزين تطبيق سطح المكتب (كحل أخير)</h3>
+<p>إذا لم يبدأ التطبيق ولم تتمكن من مسح الإعدادات من داخل الواجهة، فأعد تعيين الحالة المحفوظة لتطبيق سطح المكتب.</p>
+<ol>
+<li>أغلق vanilla-closedcode Desktop.</li>
+<li>اعثر على هذه الملفات واحذفها (توجد في دليل بيانات تطبيق vanilla-closedcode Desktop):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (عنوان URL الافتراضي لخادم سطح المكتب)</li>
+<li><code>closedcode.global.dat</code> و <code>closedcode.workspace.*.dat</code> (حالة الواجهة مثل الخوادم/المشاريع الأخيرة)</li>
+</ul>
+<p>للعثور على الدليل بسرعة:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (ثم ابحث عن أسماء الملفات أعلاه)</li>
+<li><strong>Linux</strong>: ابحث ضمن <code>~/.local/share</code> عن أسماء الملفات أعلاه</li>
+<li><strong>Windows</strong>: اضغط <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (ثم ابحث عن أسماء الملفات أعلاه)</li>
+</ul>
+<hr>
+<h2>الحصول على المساعدة</h2>
+<p>إذا كنت تواجه مشكلات مع vanilla-closedcode:</p>
+<ol>
+<li><p><strong>الإبلاغ عن المشكلات على GitHub</strong></p>
+<p>أفضل طريقة للإبلاغ عن الأخطاء أو طلب الميزات هي عبر مستودعنا على GitHub:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>قبل إنشاء مشكلة جديدة، ابحث في المشكلات الموجودة لمعرفة ما إذا كانت مشكلتك قد تم الإبلاغ عنها بالفعل.</p>
+</li>
+<li><p><strong>انضم إلى Discord</strong></p>
+<p>للحصول على مساعدة فورية ونقاشات المجتمع، انضم إلى خادم Discord الخاص بنا:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>مشكلات شائعة</h2>
+<p>فيما يلي بعض المشكلات الشائعة وكيفية حلها.</p>
+<hr>
+<h3>vanilla-closedcode لا يبدأ</h3>
+<ol>
+<li>تحقق من السجلات بحثا عن رسائل الخطأ</li>
+<li>جرّب التشغيل مع <code>--print-logs</code> لرؤية المخرجات في terminal</li>
+<li>تأكد من أنك تستخدم أحدث إصدار عبر <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>مشكلات المصادقة</h3>
+<ol>
+<li>جرّب إعادة المصادقة باستخدام الأمر <code>/connect</code> في واجهة TUI</li>
+<li>تحقق من أن مفاتيح API الخاصة بك صالحة</li>
+<li>تأكد من أن شبكتك تسمح بالاتصال بواجهة API الخاصة بالمزوّد</li>
+</ol>
+<hr>
+<h3>النموذج غير متاح</h3>
+<ol>
+<li>تحقق من أنك قمت بالمصادقة مع المزوّد</li>
+<li>تأكد من أن اسم النموذج في الإعدادات صحيح</li>
+<li>قد تتطلب بعض النماذج صلاحيات وصول محددة أو اشتراكات</li>
+</ol>
+<p>إذا واجهت <code>ProviderModelNotFoundError</code> فمن المرجح أنك تشير إلى نموذج بشكل غير صحيح في مكان ما.
+يجب الإشارة إلى النماذج بهذه الصيغة: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>أمثلة:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>لمعرفة النماذج التي لديك صلاحية الوصول إليها، شغّل <code>closedcode models</code></p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>إذا واجهت ProviderInitError، فمن المحتمل أن إعداداتك غير صالحة أو تالفة.</p>
+<p>لحل ذلك:</p>
+<ol>
+<li><p>أولا، تحقق من أن المزوّد مضبوط بشكل صحيح باتباع <a href="/docs/providers">دليل المزوّدين</a></p>
+</li>
+<li><p>إذا استمرت المشكلة، فجرّب مسح الإعدادات المخزنة لديك:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>على Windows، اضغط <code>WIN+R</code> واحذف: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>أعد المصادقة مع المزوّد باستخدام الأمر <code>/connect</code> في واجهة TUI.</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError ومشكلات حزم المزوّد</h3>
+<p>إذا واجهت أخطاء في استدعاءات API، فقد يكون السبب حزم مزوّد قديمة. يقوم closedcode بتثبيت حزم المزوّد (OpenAI و Anthropic و Google وغير ذلك) ديناميكيا عند الحاجة ويقوم بتخزينها مؤقتا محليا.</p>
+<p>لحل مشكلات حزم المزوّد:</p>
+<ol>
+<li><p>امسح ذاكرة التخزين المؤقت لحزم المزوّد:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>على Windows، اضغط <code>WIN+R</code> واحذف: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>أعد تشغيل closedcode لإعادة تثبيت أحدث حزم المزوّد</p>
+</li>
+</ol>
+<p>سيجبر ذلك closedcode على تنزيل أحدث إصدارات حزم المزوّد، وهو ما يحل غالبا مشكلات التوافق مع معاملات النماذج وتغييرات API.</p>
+<hr>
+<h3>النسخ/اللصق لا يعمل على Linux</h3>
+<p>يحتاج مستخدمو Linux إلى تثبيت إحدى أدوات الحافظة التالية حتى تعمل ميزة النسخ/اللصق:</p>
+<p><strong>لأنظمة X11:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>لأنظمة Wayland:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>للبيئات بدون واجهة رسومية (Headless):</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>سيكتشف closedcode ما إذا كنت تستخدم Wayland ويفضل <code>wl-clipboard</code>، وإلا فسيحاول العثور على أدوات الحافظة بالترتيب التالي: <code>xclip</code> ثم <code>xsel</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Temalar — vanilla-closedcode docs</title>
+  <meta name="description" content="Yerleşik bir tema seçin veya kendiniz oluşturun.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/themes.html">English</option>
+      <option value="../ar/themes.html">العربية</option>
+      <option value="../bs/themes.html">Bosanski</option>
+      <option value="../da/themes.html">Dansk</option>
+      <option value="../de/themes.html">Deutsch</option>
+      <option value="../es/themes.html">Español</option>
+      <option value="../fr/themes.html">Français</option>
+      <option value="../it/themes.html">Italiano</option>
+      <option value="../ja/themes.html">日本語</option>
+      <option value="../ko/themes.html">한국어</option>
+      <option value="../nb/themes.html">Norsk</option>
+      <option value="../pl/themes.html">Polski</option>
+      <option value="../pt-br/themes.html">Português (BR)</option>
+      <option value="../ru/themes.html">Русский</option>
+      <option value="../th/themes.html">ไทย</option>
+      <option value="../tr/themes.html" selected>Türkçe</option>
+      <option value="../zh-cn/themes.html">简体中文</option>
+      <option value="../zh-tw/themes.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li class="active"><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Temalar</h1>
+      <p class="lede">Yerleşik bir tema seçin veya kendiniz oluşturun.</p>
+      <p>closedcode ile birden fazla yerleşik tema arasından seçim yapabilir, terminal temanıza uyum sağlayan bir tema kullanabilir veya kendi özel temanızı tanımlayabilirsiniz.</p>
+<p>Varsayılan olarak closedcode kendi <code>closedcode</code> temasını kullanır.</p>
+<hr>
+<h2>Terminal gereksinimleri</h2>
+<p>Temaların tüm renk paletiyle doğru görünmesi için terminalinizin <strong>truecolor</strong> (24-bit renk) desteklemesi gerekir. Çoğu modern terminal bunu varsayılan olarak destekler, ancak gerekirse etkinleştirmeniz gerekebilir:</p>
+<ul>
+<li><strong>Desteği kontrol edin</strong>: <code>echo $COLORTERM</code> çalıştırın - çıktı <code>truecolor</code> veya <code>24bit</code> olmalıdır</li>
+<li><strong>Truecolor etkinleştirin</strong>: kabuk profilinizde <code>COLORTERM=truecolor</code> ortam değişkenini ayarlayın</li>
+<li><strong>Terminal uyumluluğu</strong>: terminal emülatörünüzün 24-bit rengi desteklediğinden emin olun (iTerm2, Alacritty, Kitty, Windows Terminal ve GNOME Terminal&#39;in yeni sürümleri gibi modern terminaller genelde destekler)</li>
+</ul>
+<p>Truecolor desteği yoksa temalar daha düşük renk doğruluğu ile görünebilir veya en yakın 256 renk yaklaşımına düşebilir.</p>
+<hr>
+<h2>Yerleşik temalar</h2>
+<p>closedcode birden fazla yerleşik temayla gelir.</p>
+<table>
+<thead>
+<tr>
+<th>Ad</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>system</code></td>
+<td>Terminalinizin arka plan rengine uyum sağlar</td>
+</tr>
+<tr>
+<td><code>tokyonight</code></td>
+<td><a href="https://github.com/folke/tokyonight.nvim">tokyonight</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>everforest</code></td>
+<td><a href="https://github.com/sainnhe/everforest">Everforest</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>ayu</code></td>
+<td><a href="https://github.com/ayu-theme">Ayu</a> koyu temasını temel alır</td>
+</tr>
+<tr>
+<td><code>catppuccin</code></td>
+<td><a href="https://github.com/catppuccin">Catppuccin</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>catppuccin-macchiato</code></td>
+<td><a href="https://github.com/catppuccin">Catppuccin</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>gruvbox</code></td>
+<td><a href="https://github.com/morhetz/gruvbox">Gruvbox</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>kanagawa</code></td>
+<td><a href="https://github.com/rebelot/kanagawa.nvim">Kanagawa</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>nord</code></td>
+<td><a href="https://github.com/nordtheme/nord">Nord</a> temasını temel alır</td>
+</tr>
+<tr>
+<td><code>matrix</code></td>
+<td>Hacker tarzı yeşil üzerine siyah tema</td>
+</tr>
+<tr>
+<td><code>one-dark</code></td>
+<td><a href="https://github.com/Th3Whit3Wolf/one-nvim">Atom One</a> Dark temasını temel alır</td>
+</tr>
+</tbody></table>
+<p>Ve daha fazlası; sürekli yeni temalar ekliyoruz.</p>
+<hr>
+<h2>Sistem teması</h2>
+<p><code>system</code> teması, terminalinizin renk düzenine otomatik uyum sağlamak için tasarlanmıştır. Sabit renk kullanan klasik temalardan farklı olarak <em>system</em> teması:</p>
+<ul>
+<li><strong>Gri ölçeği üretir</strong>: En iyi kontrast için terminal arka planına göre özel gri tonları oluşturur</li>
+<li><strong>ANSI renkleri kullanır</strong>: 0-15 arası standart ANSI renklerini syntax highlighting ve UI öğelerinde kullanır, böylece terminal paletinize uyar</li>
+<li><strong>Terminal varsayılanlarını korur</strong>: Metin ve arka plan renklerinde <code>none</code> kullanarak terminalin yerel görünümünü korur</li>
+</ul>
+<p>Sistem teması şu kullanıcılar için idealdir:</p>
+<ul>
+<li>closedcode&#39;un terminal görünümüyle birebir uyumlu olmasını isteyenler</li>
+<li>Özel terminal renk şemaları kullananlar</li>
+<li>Tüm terminal uygulamalarında tutarlı bir görünüm tercih edenler</li>
+</ul>
+<hr>
+<h2>Tema kullanımı</h2>
+<p><code>/theme</code> komutuyla tema seçicisini açıp tema seçebilirsiniz. İsterseniz <code>tui.json</code> içinde de belirtebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<hr>
+<h2>Özel temalar</h2>
+<p>closedcode, kullanıcıların kolayca tema oluşturup özelleştirebilmesi için esnek bir JSON tabanlı tema sistemi sunar.</p>
+<hr>
+<h3>Hiyerarşi</h3>
+<p>Temalar birden fazla dizinden şu sırayla yüklenir; daha sonra gelen dizin öncekini ezer:</p>
+<ol>
+<li><strong>Yerleşik temalar</strong> - Binary içine gömülüdür</li>
+<li><strong>Kullanıcı yapılandırma dizini</strong> - <code>~/.config/closedcode/themes/*.json</code> veya <code>$XDG_CONFIG_HOME/closedcode/themes/*.json</code></li>
+<li><strong>Proje kök dizini</strong> - <code>&lt;project-root&gt;/.closedcode/themes/*.json</code></li>
+<li><strong>Geçerli çalışma dizini</strong> - <code>./.closedcode/themes/*.json</code></li>
+</ol>
+<p>Birden fazla dizinde aynı adlı tema varsa, önceliği daha yüksek dizindeki tema kullanılır.</p>
+<hr>
+<h3>Tema oluşturma</h3>
+<p>Özel tema oluşturmak için tema dizinlerinden birinde bir JSON dosyası oluşturun.</p>
+<p>Kullanıcı geneli temalar için:</p>
+<pre><code class="language-bash">mkdir -p ~/.config/closedcode/themes
+vim ~/.config/closedcode/themes/my-theme.json
+</code></pre>
+<p>Proje özel temalar için:</p>
+<pre><code class="language-bash">mkdir -p .closedcode/themes
+vim .closedcode/themes/my-theme.json
+</code></pre>
+<hr>
+<h3>JSON formatı</h3>
+<p>Temalar aşağıdaki özellikleri destekleyen esnek bir JSON formatı kullanır:</p>
+<ul>
+<li><strong>Hex renkler</strong>: <code>&quot;#ffffff&quot;</code></li>
+<li><strong>ANSI renkler</strong>: <code>3</code> (0-255)</li>
+<li><strong>Renk referansları</strong>: <code>&quot;primary&quot;</code> veya özel tanımlar</li>
+<li><strong>Koyu/açık varyantlar</strong>: <code>{&quot;dark&quot;: &quot;#000&quot;, &quot;light&quot;: &quot;#fff&quot;}</code></li>
+<li><strong>Renk yok</strong>: <code>&quot;none&quot;</code> - Terminal varsayılan rengi veya şeffaflık kullanılır</li>
+</ul>
+<hr>
+<h3>Renk tanımları</h3>
+<p><code>defs</code> bölümü isteğe bağlıdır ve tema içinde tekrar kullanılabilir renkler tanımlamanızı sağlar.</p>
+<hr>
+<h3>Terminal varsayılanları</h3>
+<p>Özel <code>&quot;none&quot;</code> değeri, terminalin varsayılan rengini miras almak için herhangi bir renkte kullanılabilir. Bu, terminalinizin renk şemasıyla doğal şekilde bütünleşen temalar oluştururken özellikle faydalıdır:</p>
+<ul>
+<li><code>&quot;text&quot;: &quot;none&quot;</code> - Terminalin varsayılan ön plan rengini kullanır</li>
+<li><code>&quot;background&quot;: &quot;none&quot;</code> - Terminalin varsayılan arka plan rengini kullanır</li>
+</ul>
+<hr>
+<h3>Örnek</h3>
+<p>Aşağıda özel bir tema örneği var:</p>
+<pre><code class="language-json">{
+  &quot;defs&quot;: {
+    &quot;nord0&quot;: &quot;#2E3440&quot;,
+    &quot;nord1&quot;: &quot;#3B4252&quot;,
+    &quot;nord2&quot;: &quot;#434C5E&quot;,
+    &quot;nord3&quot;: &quot;#4C566A&quot;,
+    &quot;nord4&quot;: &quot;#D8DEE9&quot;,
+    &quot;nord5&quot;: &quot;#E5E9F0&quot;,
+    &quot;nord6&quot;: &quot;#ECEFF4&quot;,
+    &quot;nord7&quot;: &quot;#8FBCBB&quot;,
+    &quot;nord8&quot;: &quot;#88C0D0&quot;,
+    &quot;nord9&quot;: &quot;#81A1C1&quot;,
+    &quot;nord10&quot;: &quot;#5E81AC&quot;,
+    &quot;nord11&quot;: &quot;#BF616A&quot;,
+    &quot;nord12&quot;: &quot;#D08770&quot;,
+    &quot;nord13&quot;: &quot;#EBCB8B&quot;,
+    &quot;nord14&quot;: &quot;#A3BE8C&quot;,
+    &quot;nord15&quot;: &quot;#B48EAD&quot;
+  },
+  &quot;theme&quot;: {
+    &quot;primary&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;secondary&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;accent&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;error&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;warning&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;success&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;info&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;text&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;textMuted&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord1&quot;
+    },
+    &quot;background&quot;: {
+      &quot;dark&quot;: &quot;nord0&quot;,
+      &quot;light&quot;: &quot;nord6&quot;
+    },
+    &quot;backgroundPanel&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;backgroundElement&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;border&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;borderActive&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord2&quot;
+    },
+    &quot;borderSubtle&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffContext&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHunkHeader&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHighlightAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffHighlightRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffAddedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffContextBg&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;diffLineNumber&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;diffAddedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;markdownText&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;markdownHeading&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownLink&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownLinkText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCode&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;markdownBlockQuote&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownEmph&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;markdownStrong&quot;: {
+      &quot;dark&quot;: &quot;nord13&quot;,
+      &quot;light&quot;: &quot;nord13&quot;
+    },
+    &quot;markdownHorizontalRule&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownListItem&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownListEnumeration&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownImage&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownImageText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCodeBlock&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;syntaxComment&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;syntaxKeyword&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxFunction&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord8&quot;
+    },
+    &quot;syntaxVariable&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxString&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;syntaxNumber&quot;: {
+      &quot;dark&quot;: &quot;nord15&quot;,
+      &quot;light&quot;: &quot;nord15&quot;
+    },
+    &quot;syntaxType&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxOperator&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxPunctuation&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    }
+  }
+}
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

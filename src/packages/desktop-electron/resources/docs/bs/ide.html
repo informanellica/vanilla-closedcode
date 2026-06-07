@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDE — vanilla-closedcode docs</title>
+  <meta name="description" content="Ekstenzija vanilla-closedcode za VS Code, Cursor i druge IDE">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/ide.html">English</option>
+      <option value="../ar/ide.html">العربية</option>
+      <option value="../bs/ide.html" selected>Bosanski</option>
+      <option value="../da/ide.html">Dansk</option>
+      <option value="../de/ide.html">Deutsch</option>
+      <option value="../es/ide.html">Español</option>
+      <option value="../fr/ide.html">Français</option>
+      <option value="../it/ide.html">Italiano</option>
+      <option value="../ja/ide.html">日本語</option>
+      <option value="../ko/ide.html">한국어</option>
+      <option value="../nb/ide.html">Norsk</option>
+      <option value="../pl/ide.html">Polski</option>
+      <option value="../pt-br/ide.html">Português (BR)</option>
+      <option value="../ru/ide.html">Русский</option>
+      <option value="../th/ide.html">ไทย</option>
+      <option value="../tr/ide.html">Türkçe</option>
+      <option value="../zh-cn/ide.html">简体中文</option>
+      <option value="../zh-tw/ide.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li class="active"><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>IDE</h1>
+      <p class="lede">Ekstenzija vanilla-closedcode za VS Code, Cursor i druge IDE</p>
+      <p>vanilla-closedcode se integriše sa VS kodom, Cursor-om ili bilo kojim IDE-om koji podržava terminal. Samo pokrenite <code>closedcode</code> u terminalu da započnete.</p>
+<hr>
+<h2>Korištenje</h2>
+<ul>
+<li><strong>Brzo pokretanje</strong>: Koristite <code>Cmd+Esc</code> (Mac) ili <code>Ctrl+Esc</code> (Windows/Linux) da otvorite vanilla-closedcode u prikazu podijeljenog terminala ili fokusirajte postojeću terminalsku sesiju ako je već pokrenuta.</li>
+<li><strong>Nova sesija</strong>: Koristite <code>Cmd+Shift+Esc</code> (Mac) ili <code>Ctrl+Shift+Esc</code> (Windows/Linux) da započnete novu vanilla-closedcode terminalsku sesiju, čak i ako je ona već otvorena. Takođe možete kliknuti na dugme vanilla-closedcode u korisničkom sučelju.</li>
+<li><strong>Svijest o kontekstu</strong>: Automatski dijelite svoj trenutni odabir ili karticu s vanilla-closedcode.</li>
+<li><strong>Prečice za referencu datoteka</strong>: Koristite <code>Cmd+Option+K</code> (Mac) ili <code>Alt+Ctrl+K</code> (Linux/Windows) za umetanje referenci datoteka. Na primjer, <code>@File#L37-42</code>.</li>
+</ul>
+<hr>
+<h2>Instalacija</h2>
+<p>Da biste instalirali vanilla-closedcode na VS Code i popularne viljuške kao što su Cursor, Windsurf, VSCodium:</p>
+<ol>
+<li>Otvorite VS Code</li>
+<li>Otvorite integrirani terminal</li>
+<li>Pokrenite <code>closedcode</code> - ekstenzija se automatski instalira
+Ako s druge strane želite da koristite svoj vlastiti IDE kada pokrenete <code>/editor</code> ili <code>/export</code> iz TUI-ja, morat ćete postaviti <code>export EDITOR=&quot;code --wait&quot;</code>. <a href="/docs/tui/#editor-setup">Saznajte više</a>.</li>
+</ol>
+<hr>
+<h3>Ručna instalacija</h3>
+<p>Potražite <strong>vanilla-closedcode</strong> na Extension Marketplaceu i kliknite na <strong>Instaliraj</strong>.</p>
+<hr>
+<h3>Rješavanje problema</h3>
+<p>Ako se ekstenzija ne uspije automatski instalirati:</p>
+<ul>
+<li>Uvjerite se da koristite <code>closedcode</code> u integriranom terminalu.</li>
+<li>Potvrdite da je CLI za vaš IDE instaliran:<ul>
+<li>Za VS kod: <code>code</code> naredbu</li>
+<li>Za Cursor: <code>cursor</code> naredba</li>
+<li>Za Windsurf: <code>windsurf</code> komanda</li>
+<li>Za VSCodium: <code>codium</code> komanda</li>
+<li>Ako ne, pokrenite <code>Cmd+Shift+P</code> (Mac) ili <code>Ctrl+Shift+P</code> (Windows/Linux) i potražite &quot;Shell Command: Install &#39;code&#39; command in PATH&quot; (ili ekvivalent za vaš IDE)</li>
+</ul>
+</li>
+<li>Osigurajte da VS Code ima dozvolu za instaliranje ekstenzija</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

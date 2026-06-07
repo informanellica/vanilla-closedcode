@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugins — vanilla-closedcode docs</title>
+  <meta name="description" content="Écrivez vos propres plugins pour étendre vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html" selected>Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Français</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Plugins</h1>
+      <p class="lede">Écrivez vos propres plugins pour étendre vanilla-closedcode.</p>
+      <p>Les plugins vous permettent d&#39;étendre vanilla-closedcode en vous connectant à divers événements et en personnalisant le comportement. Vous pouvez créer des plugins pour ajouter de nouvelles fonctionnalités, intégrer des services externes ou modifier le comportement par défaut de vanilla-closedcode.</p>
+<p>Pour des exemples, consultez les <a href="/docs/ecosystem#plugins">plugins</a> créés par la communauté.</p>
+<hr>
+<h2>Utiliser un plugin</h2>
+<p>Il existe deux manières de charger des plugins.</p>
+<hr>
+<h3>À partir de fichiers locaux</h3>
+<p>Placez les fichiers JavaScript ou TypeScript dans le répertoire du plugin.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - Plugins au niveau du projet</li>
+<li><code>~/.config/closedcode/plugins/</code> - Plugins globaux</li>
+</ul>
+<p>Les fichiers de ces répertoires sont automatiquement chargés au démarrage.</p>
+<hr>
+<h3>Depuis npm</h3>
+<p>Spécifiez les packages npm dans votre fichier de configuration.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Les packages npm scopés et standards sont pris en charge.</p>
+<p>Parcourez les plugins disponibles dans le <a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>Comment les plugins sont installés</h3>
+<p>Les <strong>plugins npm</strong> sont installés automatiquement à l&#39;aide de npm au démarrage. Les packages et leurs dépendances sont mis en cache dans <code>~/.cache/closedcode/node_modules/</code>.</p>
+<p>Les <strong>plugins locaux</strong> sont chargés directement depuis le répertoire des plugins. Pour utiliser des packages externes, vous devez créer un <code>package.json</code> dans votre répertoire de configuration (voir <a href="#dependencies">Dépendances</a>), ou publier le plugin sur npm et <a href="/docs/config#plugins">l&#39;ajouter à votre config</a>.</p>
+<hr>
+<h3>Ordre de chargement</h3>
+<p>Les plugins sont chargés à partir de toutes les sources et tous les hooks s&#39;exécutent dans l&#39;ordre. L&#39;ordre de chargement est le suivant :</p>
+<ol>
+<li>Configuration globale (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Configuration du projet (<code>closedcode.json</code>)</li>
+<li>Répertoire global des plugins (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Répertoire des plugins du projet (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Les packages npm en double avec le même nom et la même version sont chargés une fois. Cependant, un plugin local et un plugin npm portant des noms similaires sont tous deux chargés séparément.</p>
+<hr>
+<h2>Créer un plugin</h2>
+<p>Un plugin est un <strong>module JavaScript/TypeScript</strong> qui exporte une ou plusieurs fonctions de plugin. Chaque fonction reçoit un objet contextuel et renvoie un objet hooks.</p>
+<hr>
+<h3>Dépendances</h3>
+<p>Les plugins locaux et les outils personnalisés peuvent utiliser des packages npm externes. Ajoutez un <code>package.json</code> à votre répertoire de configuration avec les dépendances dont vous avez besoin.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode exécute <code>npm install</code> au démarrage pour les installer. Vos plugins et outils peuvent ensuite les importer.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Structure de base</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>La fonction plugin reçoit :</p>
+<ul>
+<li><code>project</code> : informations sur le projet actuel.</li>
+<li><code>directory</code> : le répertoire de travail actuel.</li>
+<li><code>worktree</code> : le chemin de l&#39;arbre de travail git.</li>
+<li><code>client</code> : un client SDK closedcode pour interagir avec l&#39;IA.</li>
+</ul>
+<hr>
+<h3>Prise en charge de TypeScript</h3>
+<p>Pour les plugins TypeScript, vous pouvez importer des types à partir du package du plugin :</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Événements</h3>
+<p>Les plugins peuvent s&#39;abonner à des événements comme indiqué ci-dessous dans la section Exemples. Voici une liste des différents événements disponibles.</p>
+<h4>Événements de commande</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Événements de fichier</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Événements d&#39;installation</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP Événements</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Événements de messages</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>Événements d&#39;autorisation</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Événements du serveur</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Événements de session</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Événements à faire</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Événements Shell</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Événements d&#39;outils</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI Événements</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Exemples</h2>
+<p>Voici quelques exemples de plugins que vous pouvez utiliser pour étendre closedcode.</p>
+<hr>
+<h3>Envoyer des notifications</h3>
+<p>Envoyez des notifications lorsque certains événements se produisent :</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Nous utilisons <code>osascript</code> pour exécuter AppleScript sur macOS. Ici, nous l&#39;utilisons pour envoyer des notifications.</p>
+<aside class="aside aside-note">
+Si vous utilisez l'application de bureau vanilla-closedcode, elle peut envoyer automatiquement des notifications système lorsqu'une réponse est prête ou en cas d'erreur de session.
+</aside>
+---
+
+<h3>Protection .env</h3>
+<p>Empêchez closedcode de lire les fichiers <code>.env</code>:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Injecter des variables d&#39;environnement</h3>
+<p>Injectez des variables d&#39;environnement dans toutes les exécutions du shell (outils d&#39;IA et terminal utilisateur) :</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Outils personnalisés</h3>
+<p>Les plugins peuvent également ajouter des outils personnalisés à closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>L&#39;assistant <code>tool</code> crée un outil personnalisé que closedcode peut appeler. Il prend une fonction de schéma Zod et renvoie une définition d&#39;outil avec :</p>
+<ul>
+<li><code>description</code> : ce que fait l&#39;outil</li>
+<li><code>args</code> : schéma Zod pour les arguments de l&#39;outil</li>
+<li><code>execute</code> : Fonction qui s&#39;exécute lorsque l&#39;outil est appelé</li>
+</ul>
+<p>Vos outils personnalisés seront disponibles pour closedcode aux côtés des outils intégrés.</p>
+<hr>
+<h3>Journalisation</h3>
+<p>Utilisez <code>client.app.log()</code> au lieu de <code>console.log</code> pour la journalisation structurée :</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Niveaux : <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Voir la <a href="https://github.com/informanellica/vanilla-closedcode">documentation du SDK</a> pour plus de détails.</p>
+<hr>
+<h3>Hooks de compactage</h3>
+<p>Personnalisez le contexte inclus lorsqu&#39;une session est compactée :</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p>Le hook <code>experimental.session.compacting</code> se déclenche avant que le LLM ne génère un résumé de continuation. Utilisez-le pour injecter un contexte spécifique au domaine que le prompt de compactage par défaut manquerait.</p>
+<p>Vous pouvez également remplacer entièrement le prompt de compactage en définissant <code>output.prompt</code> :</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Lorsque <code>output.prompt</code> est défini, il remplace complètement le prompt de compactage par défaut. Le tableau <code>output.context</code> est ignoré dans ce cas.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

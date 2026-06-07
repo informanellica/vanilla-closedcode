@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>النماذج — vanilla-closedcode docs</title>
+  <meta name="description" content="تهيئة مزوّد LLM والنموذج.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html" selected>العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>النماذج</h1>
+      <p class="lede">تهيئة مزوّد LLM والنموذج.</p>
+      <p>يستخدم vanilla-closedcode كلاً من <a href="https://ai-sdk.dev/">AI SDK</a> و<a href="https://models.dev">Models.dev</a> لدعم <strong>أكثر من 75 مزوّداً لنماذج LLM</strong>، كما يدعم تشغيل النماذج محلياً.</p>
+<hr>
+<h2>المزوّدون</h2>
+<p>أكثر المزوّدين شيوعاً مُحمَّلون مسبقاً افتراضياً. إذا أضفت بيانات اعتماد أحد المزوّدين عبر الأمر <code>/connect</code> فستكون متاحة عند تشغيل vanilla-closedcode.</p>
+<p>تعرّف على المزيد حول <a href="/docs/providers">المزوّدين</a>.</p>
+<hr>
+<h2>اختر نموذجاً</h2>
+<p>بعد تهيئة المزوّد يمكنك اختيار النموذج الذي تريده بكتابة:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>النماذج الموصى بها</h2>
+<p>هناك الكثير من النماذج المتاحة، وتظهر نماذج جديدة كل أسبوع.</p>
+<aside class="aside aside-tip">
+ننصح باستخدام أحد النماذج التي نوصي بها.
+</aside>
+لكن القليل منها فقط يكون جيداً في كلٍ من توليد الشيفرة واستدعاء الأدوات.
+
+<p>فيما يلي عدة نماذج تعمل جيداً مع vanilla-closedcode، دون ترتيب معيّن. (هذه ليست قائمة شاملة وقد لا تكون محدَّثة دائماً):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>تعيين الافتراضي</h2>
+<p>لتعيين أحد هذه النماذج كنموذج افتراضي، يمكنك ضبط المفتاح <code>model</code> في ملف إعدادات vanilla-closedcode.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>المعرّف الكامل هنا يكون بالشكل <code>provider_id/model_id</code>. على سبيل المثال، إذا كنت تستخدم Ollama فستستخدم <code>ollama/gpt-oss:20b</code> لنموذج GPT-OSS 20B.</p>
+<p>إذا كنت قد هيّأت <a href="/docs/providers#custom">مزوّداً مخصّصاً</a>، فإن <code>provider_id</code> هو المفتاح الموجود ضمن قسم <code>provider</code> في إعداداتك، و<code>model_id</code> هو المفتاح الموجود ضمن <code>provider.models</code>.</p>
+<hr>
+<h2>إعداد النماذج</h2>
+<p>يمكنك ضبط خيارات النموذج على مستوى عام عبر ملف الإعدادات.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>هنا نقوم بضبط إعدادات عامة لنموذجين مدمجين: <code>gpt-5</code> عند الوصول إليه عبر مزوّد <code>openai</code>، و<code>claude-sonnet-4-20250514</code> عند الوصول إليه عبر مزوّد <code>anthropic</code>.
+يمكن العثور على أسماء المزوّدين والنماذج المدمجة على <a href="https://models.dev">Models.dev</a>.</p>
+<p>يمكنك أيضاً ضبط هذه الخيارات لأي وكلاء تستخدمهم. تتجاوز إعدادات الوكيل أي خيارات عامة هنا. <a href="/docs/agents/#additional">اعرف المزيد</a>.</p>
+<p>كما يمكنك تعريف متغيّرات مخصّصة تُوسّع المتغيّرات المدمجة. تتيح لك المتغيّرات ضبط إعدادات مختلفة للنموذج نفسه دون إنشاء إدخالات مكرّرة:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>المتغيّرات</h2>
+<p>تدعم العديد من النماذج عدة متغيّرات بإعدادات مختلفة. يأتي vanilla-closedcode مع متغيّرات افتراضية مدمجة للمزوّدين الشائعين.</p>
+<h3>المتغيّرات المدمجة</h3>
+<p>يأتي vanilla-closedcode مع متغيّرات افتراضية لعدد كبير من المزوّدين:</p>
+<p><strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - ميزانية تفكير مرتفعة (الافتراضي)</li>
+<li><code>max</code> - أقصى ميزانية تفكير</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>تختلف حسب النموذج، لكن بشكل عام:</p>
+<ul>
+<li><code>none</code> - بدون استدلال</li>
+<li><code>minimal</code> - أقل جهد للاستدلال</li>
+<li><code>low</code> - جهد استدلال منخفض</li>
+<li><code>medium</code> - جهد استدلال متوسط</li>
+<li><code>high</code> - جهد استدلال مرتفع</li>
+<li><code>xhigh</code> - جهد استدلال مرتفع جداً</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> - جهد/ميزانية رموز أقل</li>
+<li><code>high</code> - جهد/ميزانية رموز أعلى</li>
+</ul>
+<aside class="aside aside-tip">
+هذه القائمة ليست شاملة. لدى العديد من المزوّدين الآخرين إعدادات افتراضية مدمجة أيضاً.
+</aside>
+### متغيّرات مخصّصة
+
+<p>يمكنك تجاوز المتغيّرات الموجودة أو إضافة متغيّراتك الخاصة:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>التبديل بين المتغيّرات</h3>
+<p>استخدم اختصار لوحة المفاتيح <code>variant_cycle</code> للتبديل بسرعة بين المتغيّرات. <a href="/docs/keybinds">اعرف المزيد</a>.</p>
+<hr>
+<h2>تحميل النماذج</h2>
+<p>عند بدء تشغيل vanilla-closedcode، يتحقق من النماذج وفق ترتيب الأولوية التالي:</p>
+<ol>
+<li><p>خيار CLI <code>--model</code> أو <code>-m</code>. الصيغة هي نفسها الموجودة في ملف الإعدادات: <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>قائمة النماذج في إعدادات vanilla-closedcode.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>الصيغة هنا هي <code>provider/model</code>.</p>
+</li>
+<li><p>آخر نموذج تم استخدامه.</p>
+</li>
+<li><p>أول نموذج وفق أولوية داخلية.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

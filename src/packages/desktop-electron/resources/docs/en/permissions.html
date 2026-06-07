@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Permissions — vanilla-closedcode docs</title>
+  <meta name="description" content="Control which actions require approval to run.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html" selected>English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">English</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Permissions</h1>
+      <p class="lede">Control which actions require approval to run.</p>
+      <p>vanilla-closedcode uses the <code>permission</code> config to decide whether a given action should run automatically, prompt you, or be blocked.</p>
+<p>As of <code>v1.1.1</code>, the legacy <code>tools</code> boolean config is deprecated and has been merged into <code>permission</code>. The old <code>tools</code> config is still supported for backwards compatibility.</p>
+<hr>
+<h2>Actions</h2>
+<p>Each permission rule resolves to one of:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — run without approval</li>
+<li><code>&quot;ask&quot;</code> — prompt for approval</li>
+<li><code>&quot;deny&quot;</code> — block the action</li>
+</ul>
+<hr>
+<h2>Configuration</h2>
+<p>You can set permissions globally (with <code>*</code>), and override specific tools.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>You can also set all permissions at once:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Granular Rules (Object Syntax)</h2>
+<p>For most permissions, you can use an object to apply different actions based on the tool input.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Rules are evaluated by pattern match, with the <strong>last matching rule winning</strong>. A common pattern is to put the catch-all <code>&quot;*&quot;</code> rule first, and more specific rules after it.</p>
+<h3>Wildcards</h3>
+<p>Permission patterns use simple wildcard matching:</p>
+<ul>
+<li><code>*</code> matches zero or more of any character</li>
+<li><code>?</code> matches exactly one character</li>
+<li>All other characters match literally</li>
+</ul>
+<h3>Home Directory Expansion</h3>
+<p>You can use <code>~</code> or <code>$HOME</code> at the start of a pattern to reference your home directory. This is particularly useful for <a href="#external-directories"><code>external_directory</code></a> rules.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>External Directories</h3>
+<p>Use <code>external_directory</code> to allow tool calls that touch paths outside the working directory where vanilla-closedcode was started. This applies to any tool that takes a path as input (for example <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code>, and many <code>bash</code> commands).</p>
+<p>Home expansion (like <code>~/...</code>) only affects how a pattern is written. It does not make an external path part of the current workspace, so paths outside the working directory must still be allowed via <code>external_directory</code>.</p>
+<p>For example, this allows access to everything under <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Any directory allowed here inherits the same defaults as the current workspace. Since <a href="#defaults"><code>read</code> defaults to <code>allow</code></a>, reads are also allowed for entries under <code>external_directory</code> unless overridden. Add explicit rules when a tool should be restricted in these paths, such as blocking edits while keeping reads:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Keep the list focused on trusted paths, and layer extra allow or deny rules as needed for other tools (for example <code>bash</code>).</p>
+<hr>
+<h2>Available Permissions</h2>
+<p>vanilla-closedcode permissions are keyed by tool name, plus a couple of safety guards:</p>
+<ul>
+<li><code>read</code> — reading a file (matches the file path)</li>
+<li><code>edit</code> — all file modifications (covers <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — file globbing (matches the glob pattern)</li>
+<li><code>grep</code> — content search (matches the regex pattern)</li>
+<li><code>bash</code> — running shell commands (matches parsed commands like <code>git status --porcelain</code>)</li>
+<li><code>task</code> — launching subagents (matches the subagent type)</li>
+<li><code>skill</code> — loading a skill (matches the skill name)</li>
+<li><code>lsp</code> — running LSP queries (currently non-granular)</li>
+<li><code>question</code> — asking the user questions during execution</li>
+<li><code>webfetch</code> — fetching a URL (matches the URL)</li>
+<li><code>websearch</code> — web search (matches the query)</li>
+<li><code>external_directory</code> — triggered when a tool touches paths outside the project working directory</li>
+<li><code>doom_loop</code> — triggered when the same tool call repeats 3 times with identical input</li>
+</ul>
+<hr>
+<h2>Defaults</h2>
+<p>If you don’t specify anything, vanilla-closedcode starts from permissive defaults:</p>
+<ul>
+<li>Most permissions default to <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> and <code>external_directory</code> default to <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> is <code>&quot;allow&quot;</code>, but <code>.env</code> files are denied by default:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>What “Ask” Does</h2>
+<p>When vanilla-closedcode prompts for approval, the UI offers three outcomes:</p>
+<ul>
+<li><code>once</code> — approve just this request</li>
+<li><code>always</code> — approve future requests matching the suggested patterns (for the rest of the current vanilla-closedcode session)</li>
+<li><code>reject</code> — deny the request</li>
+</ul>
+<p>The set of patterns that <code>always</code> would approve is provided by the tool (for example, bash approvals typically whitelist a safe command prefix like <code>git status*</code>).</p>
+<hr>
+<h2>Agents</h2>
+<p>You can override permissions per agent. Agent permissions are merged with the global config, and agent rules take precedence. <a href="/docs/agents#permissions">Learn more</a> about agent permissions.</p>
+<aside class="aside aside-note">
+Refer to the [Granular Rules (Object Syntax)](#granular-rules-object-syntax) section above for more detailed pattern matching examples.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>You can also configure agent permissions in Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Use pattern matching for commands with arguments. `"grep *"` allows `grep pattern file.txt`, while `"grep"` alone would block it. Commands like `git status` work for default behavior but require explicit permission (like `"git status *"`) when arguments are passed.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

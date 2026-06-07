@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="closedcode CLI seçenekleri ve komutları.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html" selected>Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">closedcode CLI seçenekleri ve komutları.</p>
+      <p>closedcode CLI herhangi bir argüman olmadan çalıştırıldığında varsayılan olarak <a href="/docs/tui">TUI</a>&#39;yi başlatır.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Ancak bu sayfada belgelendiği gibi komutları da kabul eder. Bu, closedcode ile programlı olarak etkileşim kurmanıza olanak tanır.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>closedcode terminal kullanıcı arayüzünü başlatır.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Son oturuma devam et</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Devam edecek oturum kimliği</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Devam ederken oturumu fork&#39;lar (<code>--continue</code> veya <code>--session</code> ile kullanın)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>Kullanılacak prompt</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>provider/model biçiminde kullanılacak model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Kullanılacak agent</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Dinlenecek port</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>Dinlenecek host adı</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Komutlar</h2>
+<p>closedcode CLI ayrıca aşağıdaki komutlara da sahiptir.</p>
+<hr>
+<h3>agent</h3>
+<p>closedcode için agent&#39;ları yönetin.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p><code>serve</code> veya <code>web</code> komutlarıyla başlatılan, halihazırda çalışan bir closedcode arka uç sunucusuna bir terminal ekleyin.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>Bu, TUI öğesinin uzak bir closedcode arka ucuyla kullanılmasına olanak tanır. Örneğin:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>TUI&#39;yi başlatmak için çalışma dizini</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Son oturuma devam et</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Devam edecek oturum açma bilgileri</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Devam ederken oturumu çatalla (<code>--continue</code> veya <code>--session</code> ile kullanın)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Temel kimlik doğrulama parolası (varsayılan: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Temel kimlik doğrulama kullanıcı adı (varsayılan: <code>CLOSEDCODE_SERVER_USERNAME</code> veya <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>Özel yapılandırmaya sahip yeni bir agent oluşturun.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Bu komut, özel sistem istemi ve araç yapılandırmasıyla yeni bir agent oluşturma konusunda size yol gösterecektir.</p>
+<hr>
+<h4>list</h4>
+<p>Mevcut tüm agent&#39;ları listeleyin.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>Sağlayıcılar için kimlik bilgilerini ve oturum açmayı yönetme komutu.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>closedcode, <a href="https://models.dev">Models.dev</a> adresindeki sağlayıcı listesi tarafından desteklenmektedir, dolayısıyla kullanmak istediğiniz herhangi bir sağlayıcı için API anahtarlarını ayarlamak üzere <code>closedcode auth login</code> kullanabilirsiniz. Bu <code>~/.local/share/closedcode/auth.json</code>&#39;de saklanıyor.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>closedcode başlatıldığında sağlayıcıları kimlik bilgileri dosyasından yükler. Ayrıca ortam değişkenlerindeki veya projenizdeki <code>.env</code> dosyasındaki anahtarları da kullanır.</p>
+<hr>
+<h4>list</h4>
+<p>Kimlik bilgileri dosyasında depolanan tüm kimliği doğrulanmış sağlayıcıları listeler.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>Veya kısa versiyonu.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Bir sağlayıcıyı kimlik bilgileri dosyasından temizleyerek oturumunuzu kapatır.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>Depo otomasyonu için GitHub aracısını yönetin.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>GitHub aracısını deponuza yükleyin.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>Bu komut gerekli GitHub Actions workflow&#39;unu kurar ve yapılandırma adımlarında size rehberlik eder. <a href="/docs/github">Daha fazla bilgi</a>.</p>
+<hr>
+<h4>run</h4>
+<p>GitHub aracısını çalıştırın. Bu genellikle GitHub Eylemlerinde kullanılır.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>Bayraklar</h5>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>Aracıyı çalıştırmak için GitHub sahte olayı</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub personal access token</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>Model Bağlam Protokolü sunucularını yönetin.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>Yapılandırmanıza bir MCP sunucusu ekleyin.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>Bu komut, yerel veya uzak bir MCP sunucusu ekleme konusunda size yol gösterecektir.</p>
+<hr>
+<h4>list</h4>
+<p>Yapılandırılmış tüm MCP sunucularını ve bağlantı durumlarını listeleyin.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Veya kısa versiyonunu kullanın.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>OAuth&#39;un etkin olduğu bir MCP sunucusuyla kimlik doğrulaması yapın.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>Sunucu adı belirtmezseniz mevcut OAuth özellikli sunucular arasından seçim yapmanız istenir.</p>
+<p>Ayrıca OAuth özellikli sunucuları ve bunların kimlik doğrulama durumlarını da listeleyebilirsiniz.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>Veya kısa versiyonunu kullanın.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>MCP sunucusu için OAuth kimlik bilgilerini kaldırın.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>MCP sunucusu için OAuth bağlantı sorunlarının hatalarını ayıklayın.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>Yapılandırılmış sağlayıcıların tüm mevcut modellerini listeleyin.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>Bu komut, yapılandırdığınız sağlayıcılardaki modelleri <code>provider/model</code> formatında listeler.</p>
+<p>Bu, <a href="/docs/config/">config dosyanızda</a> kullanmanız gereken tam model adını bulmak için kullanışlıdır.</p>
+<p>Modelleri bu sağlayıcıya göre filtrelemek için isteğe bağlı olarak bir sağlayıcı kimliğini iletebilirsiniz.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>Modeller.dev&#39;den model önbelleğini yenileyin</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>Daha ayrıntılı model çıktısı kullanın (maliyetler gibi meta veriler içerir)</td>
+</tr>
+</tbody></table>
+<p>Önbelleğe alınan model listesini güncellemek için <code>--refresh</code> bayrağını kullanın. Bu, bir sağlayıcıya yeni modeller eklendiğinde ve bunları closedcode&#39;da görmek istediğinizde kullanışlıdır.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>Doğrudan bir istem ileterek closedcode&#39;u etkileşimli olmayan modda çalıştırın.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>Bu, komut dosyası oluşturma, otomasyon veya TUI&#39;un tamamını başlatmadan hızlı bir yanıt istediğinizde kullanışlıdır. Örneğin.</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>Ayrıca, her çalıştırmada MCP sunucusunun soğuk önyükleme sürelerini önlemek için çalışan bir <code>closedcode serve</code> örneğine de ekleyebilirsiniz:</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>Çalıştırılacak komut, args için mesajı kullanın</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Son oturuma devam et</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Devam edecek oturum kimliği</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Devam ederken oturumu fork&#39;lar (<code>--continue</code> veya <code>--session</code> ile kullanın)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>Oturumu paylaşın</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>provider/model biçiminde kullanılacak model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Kullanılacak temsilci</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Mesaja eklenecek dosya(lar)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Biçim: varsayılan (biçimlendirilmiş) veya json (ham JSON olayları)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>Oturumun başlığı (değer sağlanmazsa kısaltılmış bilgi istemi kullanılır)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>Çalışan bir closedcode sunucusuna ekleyin (ör. <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Temel kimlik doğrulama parolası (varsayılan: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Temel kimlik doğrulama kullanıcı adı (varsayılan: <code>CLOSEDCODE_SERVER_USERNAME</code> veya <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Çalıştırılacak dizin veya bağlanırken uzak sunucudaki yol</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>Model varyantı (sağlayıcıya özgü muhakeme düzeyi)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>Düşünme bloklarını göster</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Yerel sunucunun bağlantı noktası (varsayılan olarak rastgele bağlantı noktasıdır)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>API erişimi için headless bir closedcode sunucusu başlatır. Tam HTTP arayüzü için <a href="/docs/server">server docs</a> sayfasına bakın.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>Bu, TUI arayüzü olmadan closedcode işlevselliğine API erişimi sağlayan bir HTTP sunucusunu başlatır. HTTP temel kimlik doğrulamasını etkinleştirmek için <code>CLOSEDCODE_SERVER_PASSWORD</code> öğesini ayarlayın (kullanıcı adı varsayılan olarak <code>closedcode</code> şeklindedir).</p>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Dinlenecek bağlantı noktası</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Dinlenecek ana bilgisayar adı</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS bulmayı etkinleştir</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>CORS&#39;a izin verecek ek tarayıcı kaynakları</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>closedcode oturumlarını yönetin.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>Tüm closedcode oturumlarını listeleyin.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>Bayraklar</h5>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>En son N oturumla sınırla</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Çıkış formatı: tablo veya json (tablo)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>closedcode oturumlarınız için belirteç kullanımı ve maliyet istatistiklerini gösterin.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>Son N güne ait istatistikleri göster (tüm zamanlar)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>Gösterilecek araç sayısı (tümü)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>Model kullanım dökümünü göster (varsayılan olarak gizlidir). En üstteki N&#39;yi göstermek için bir sayı iletin</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>Projeye göre filtrele (tüm projeler, boş değer: mevcut proje)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>Oturum verilerini JSON olarak dışa aktarın.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>Bir oturum kimliği sağlamazsanız mevcut oturumlar arasından seçim yapmanız istenir.</p>
+<hr>
+<h3>import</h3>
+<p>Bir JSON dosyasından veya closedcode paylaşımından URL oturum verilerini içe aktarın.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>Yerel bir dosyadan veya closedcode paylaşımından (URL) içe aktarabilirsiniz.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>Web arayüzüyle başsız bir closedcode sunucusu başlatın.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>Bu, bir HTTP sunucusunu başlatır ve bir web arayüzü aracılığıyla closedcode&#39;a erişmek için bir web tarayıcısı açar. HTTP temel kimlik doğrulamasını etkinleştirmek için <code>CLOSEDCODE_SERVER_PASSWORD</code> öğesini ayarlayın (kullanıcı adı varsayılan olarak <code>closedcode</code> şeklindedir).</p>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Dinlenecek bağlantı noktası</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Dinlenecek ana bilgisayar adı</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS bulmayı etkinleştir</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>CORS&#39;a izin verecek ek tarayıcı kaynakları</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>Bir ACP (Ajan İstemci Protokolü) sunucusu başlatın.</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>Bu komut, nd-JSON kullanarak stdin/stdout aracılığıyla iletişim kuran bir ACP sunucusunu başlatır.</p>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>Çalışma dizini</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Dinlenecek port</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Dinlenecek host adı</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>closedcode&#39;u kaldırın ve ilgili tüm dosyaları kaldırın.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Yapılandırma dosyalarını sakla</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>Oturum verilerini ve anlık görüntüleri saklayın</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>Nelerin kaldırılmadan kaldırılacağı göster</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Onay istemlerini atla</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>closedcode&#39;u en son sürüme veya belirli bir sürüme günceller.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>En son sürüme yükseltmek için.</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>Belirli bir sürüme yükseltmek için:</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>Bayraklar</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Kullanılan kurulum yöntemi: curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Global bayraklar</h2>
+<p>closedcode CLI aşağıdaki global bayrakları destekler.</p>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Kısa</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>Yardımı görüntüle</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>Sürüm numarasını yazdır</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>Günlükleri stderr&#39;e yazdır</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>Günlük düzeyi (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Ortam değişkenleri</h2>
+<p>closedcode ortam değişkenleri kullanılarak yapılandırılabilir.</p>
+<table>
+<thead>
+<tr>
+<th>Değişken</th>
+<th>Tip</th>
+<th>Açıklama</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>Oturumları otomatik olarak paylaş</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>Windows&#39;ta yürütülebilir Git Bash&#39;in Yolu</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>Yapılandırma dosyasının yolu</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_TUI_CONFIG</code></td>
+<td>string</td>
+<td>TUI yapılandırma dosyasının yolu</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>Yapılandırma dizinine giden yol</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>Satır içi JSON config içeriği</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>Otomatik güncelleme kontrollerini devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>Eski verilerin temizlenmesini devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>Otomatik terminal başlığı güncellemelerini devre dışı bırakın</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>Satır içi JSON izin config&#39;i</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>Varsayılan eklentileri devre dışı bırakın</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>Otomatik LSP sunucu indirmelerini devre dışı bırakın</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>Deneysel modelleri etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>Otomatik context sıkıştırmayı devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td><code>.claude</code>&#39;den okumayı devre dışı bırak (istem + beceriler)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td><code>~/.claude/CLAUDE.md</code> dosyasını okumayı devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td><code>.claude/skills</code> yüklemesini devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>Uzak kaynaklardan model getirmeyi devre dışı bırakın</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>Test amaçlı sahte VCS sağlayıcısı</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>Client kimliği (varsayılan: <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>Exa web arama araçlarını etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td><code>serve</code>/<code>web</code> için temel kimlik doğrulamayı etkinleştirin</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>Temel kimlik doğrulama kullanıcı adını geçersiz kıl (varsayılan <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>Model yapılandırmasını almak için özel URL</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Deneysel</h3>
+<p>Bu ortam değişkenleri değişebilecek veya kaldırılabilecek deneysel özellikleri etkinleştirir.</p>
+<table>
+<thead>
+<tr>
+<th>Değişken</th>
+<th>Tip</th>
+<th>Tanım</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>Tüm deneysel özellikleri etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>Simge bulmayı etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>TUI&#39;da seçim yapıldığında kopyalamayı devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>number</td>
+<td>MS cinsinden bash komutları için varsayılan zaman aşımı</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>number</td>
+<td>LLM yanıtları için maksimum çıktı belirteçleri</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Tüm dizin için dosya izleyiciyi etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>Oxfmt biçimlendiriciyi etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>Deneysel LSP aracını etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Dosya izleyiciyi devre dışı bırak</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>Deneysel Exa özelliklerini etkinleştirin</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>python dosyaları için TY LSP&#39;yi etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>Deneysel işaretleme özelliklerini etkinleştir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>Plan modunu etkinleştir</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

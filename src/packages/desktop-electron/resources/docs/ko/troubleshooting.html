@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>문제 해결 — vanilla-closedcode docs</title>
+  <meta name="description" content="일반적인 문제와 해결 방법.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html" selected>한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>문제 해결</h1>
+      <p class="lede">일반적인 문제와 해결 방법.</p>
+      <p>closedcode와 문제를 디버그하려면 로그와 로컬 데이터를 확인하여 디스크에 저장합니다.</p>
+<hr>
+<h2>로깅</h2>
+<p>로그 파일은 다음과 같습니다:</p>
+<p>-<strong>macOS/리눅스</strong>: <code>~/.local/share/closedcode/log/</code></p>
+<ul>
+<li><strong>Windows</strong>: 압박 <code>WIN+R</code>와 풀 <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>로그 파일은 타임스탬프 (예 : <code>2025-01-09T123456.log</code>)과 가장 최근 10 로그 파일이 보관됩니다.</p>
+<p>자세한 디버그 정보를 얻기 위해 <code>--log-level</code> 명령줄 옵션을 사용하여 로그 레벨을 설정할 수 있습니다. 예를 들면, <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>저장소</h2>
+<p>closedcode 저장 세션 데이터 및 디스크에 다른 응용 데이터:</p>
+<p>-<strong>macOS/리눅스</strong>: <code>~/.local/share/closedcode/</code></p>
+<ul>
+<li><strong>Windows</strong>: 압박 <code>WIN+R</code>와 풀 <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>이 디렉토리는 다음과 같습니다:</p>
+<ul>
+<li><code>auth.json</code> - API 키, OAuth 토큰과 같은 인증 데이터</li>
+<li><code>log/</code> - 응용 프로그램 로그</li>
+<li><code>project/</code> - 세션 및 메시지 데이터와 같은 프로젝트별 데이터</li>
+<li>프로젝트가 Git repo 안에 있는 경우에, 그것은 <code>./&lt;project-slug&gt;/storage/</code>에서 저장됩니다</li>
+<li>Git repo가 아닌 경우 <code>./global/storage/</code>에 저장됩니다.</li>
+</ul>
+<hr>
+<h2>데스크톱 앱</h2>
+<p>closedcode 데스크톱은 배경에서 로컬 closedcode 서버 (<code>closedcode-cli</code> sidecar)를 실행합니다. 대부분의 문제는 misbehaving 플러그인, 손상된 캐시, 또는 나쁜 서버 설정에 의해 발생합니다.</p>
+<h2>빠른 확인</h2>
+<ul>
+<li>완전히 종료하고 앱을 다시 시작.</li>
+<li>앱이 오류 화면을 보여 주면 ** Restart**를 클릭하고 오류 세부 정보를 복사합니다.</li>
+<li>macOS만: <code>vanilla-closedcode</code> 메뉴 -&gt; **웹뷰 **(UI가 공백/frozen인 경우).</li>
+</ul>
+<hr>
+<h2>플러그인 비활성화</h2>
+<p>데스크톱 앱이 출시, 거는, 또는 이상한 것에서 충돌하면 플러그인을 비활성화하여 시작합니다.</p>
+<h3>전역 설정 확인</h3>
+<p>글로벌 설정 파일을 열고 <code>plugin</code> 키를 찾습니다.</p>
+<p>-<strong>macOS/리눅스</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (또는 <code>~/.config/closedcode/closedcode.json</code>) -<strong>macOS/Linux</strong> (외부 설치): <code>~/.local/share/closedcode/closedcode.jsonc</code></p>
+<ul>
+<li><strong>Windows</strong>: 압박 <code>WIN+R</code>와 풀 <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>구성 된 플러그인이있는 경우, 일시적으로 키를 제거하거나 빈 배열로 설정하여 비활성화하십시오.</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h3>플러그인 디렉터리 확인</h3>
+<p>closedcode는 디스크에서 로컬 플러그인을로드 할 수 있습니다. Temporarily 이동 이러한 방법 (또는 폴더 이름을 변경) 및 데스크톱 응용 프로그램을 다시 시작:</p>
+<ul>
+<li><strong>글로벌 플러그인</strong> -<strong>macOS/리눅스</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: 압박 <code>WIN+R</code>와 풀 <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+<li><strong>프로젝트 플러그인</strong> (프로젝트 설정만 사용)</li>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+<p>앱이 다시 일하는 경우, 재 활성화 플러그인은 한 번에 문제가 발생할 수 있습니다.</p>
+<hr>
+<h4>캐시 삭제</h4>
+<p>플러그인을 비활성화하는 경우 도움이되지 않습니다 (또는 플러그인 설치가 붙어있다), 캐시를 삭제 그래서 closedcode는 그것을 재구성 할 수 있습니다.</p>
+<ol>
+<li>Quit closedcode 데스크톱 완전히.</li>
+<li>캐시 디렉토리 삭제:</li>
+</ol>
+<p>-<strong>macOS</strong>: 찾기 -&gt; <code>Cmd+Shift+G</code> -&gt; 붙여넣기 <code>~/.cache/closedcode</code></p>
+<ul>
+<li><strong>Linux</strong>: <code>~/.cache/closedcode</code> 삭제 (또는 <code>rm -rf ~/.cache/closedcode</code> 실행)</li>
+<li><strong>Windows</strong>: 압박 <code>WIN+R</code>와 풀 <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>Restart closedcode 데스크탑.</li>
+</ol>
+<hr>
+<h2>서버 연결 문제 수정</h2>
+<p>closedcode 데스크톱은 자체 로컬 서버(기본)를 시작하거나 구성된 서버 URL에 연결할 수 있습니다.</p>
+<p><strong>&quot;Connection Failed&quot;</strong> 대화 상자 (또는 앱이 스패시 화면을 지나지 않습니다), 사용자 정의 서버 URL을 확인합니다.</p>
+<h3>데스크톱 기본 서버 URL 삭제</h3>
+<p>Home 화면에서 Server Picker를 열려면 서버 이름(상태 점)을 클릭하십시오. <strong>기본 서버</strong> 섹션에서 <strong>Clear</strong>를 클릭합니다.</p>
+<h4>설정에서 server.port/server.hostname 제거</h4>
+<p><code>closedcode.json(c)</code>가 <code>server</code> 섹션을 포함하면 일시적으로 제거하고 데스크톱 앱을 다시 시작합니다.</p>
+<h3>환경 변수 확인</h3>
+<p><code>CLOSEDCODE_PORT</code>가 있는 경우, 데스크탑 앱은 로컬 서버의 포트를 사용하려고 합니다.</p>
+<ul>
+<li><code>CLOSEDCODE_PORT</code> (또는 무료 포트를 선택) 및 재시작.</li>
+</ul>
+<hr>
+<h2>Linux: Wayland / X11 문제</h2>
+<p>Linux에서 일부 Wayland 설정은 공백 창이나 compositor 오류를 일으킬 수 있습니다.</p>
+<ul>
+<li>If you&#39;re on Wayland and the app is blank/crashing, <code>OC_ALLOW_WAYLAND=1</code>로 출시하려고합니다.</li>
+<li>더 나쁜 것을 만드는 경우, 제거하고 X11 세션에서 실행하려고합니다.</li>
+</ul>
+<hr>
+<h2>Windows: WebView2 런타임</h2>
+<p>Windows에서 closedcode 데스크톱은 Microsoft Edge ** WebView2 실행 시간 **를 요구합니다. 앱이 공백 창에 열거나 시작하지 않을 경우, install/update WebView2를 설치하고 다시 시도하십시오.</p>
+<hr>
+<h2>Windows: 일반 성능 문제</h2>
+<p>느린 성능, 파일 액세스 문제 또는 Windows의 terminal 문제를 경험하는 경우 <a href="/docs/windows-wsl">WSL (Windows Subsystem for Linux)</a>를 사용하여 시도하십시오. WSL은 closedcode의 기능으로 더 원활하게 작동하는 Linux 환경을 제공합니다.</p>
+<hr>
+<h2>알림이 표시되지 않음</h2>
+<p>closedcode 데스크톱은 시스템 알림을 보여줍니다 :</p>
+<ul>
+<li>OS 설정에서 closedcode에 대한 알림이 활성화되고,</li>
+<li>앱 창이 집중되지 않습니다.</li>
+</ul>
+<hr>
+<h2>데스크톱 앱 저장소 재설정 (최후의 수단)</h2>
+<p>앱이 시작되지 않은 경우 UI 내부에서 설정을 취소할 수 없습니다. 데스크탑 앱의 저장된 상태를 재설정하십시오.</p>
+<ol>
+<li>Quit closedcode 데스크탑.</li>
+<li>이 파일을 찾아 삭제 (closedcode 데스크톱 앱 데이터 디렉토리에서 라이브):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (데스크톱 기본 서버 URL)</li>
+<li><code>closedcode.global.dat</code> 및 <code>closedcode.workspace.*.dat</code> (최근 서버/프로젝트와 같은 UI 국가)</li>
+</ul>
+<p>빠른 디렉토리를 찾을 수:</p>
+<p>-<strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (위의 파일명 검색)</p>
+<ul>
+<li>**리눅스 **: 위의 파일명에 대한 <code>~/.local/share</code>의 밑에 검색</li>
+<li><strong>Windows</strong>: <code>WIN+R</code> -&gt; <code>%APPDATA%</code>를 눌러 (위의 파일 이름을 검색)</li>
+</ul>
+<hr>
+<h2>도움 받기</h2>
+<p>closedcode와 문제가 발생하면:</p>
+<ol>
+<li>** GitHub의 문제 해결 **</li>
+</ol>
+<p>버그 또는 요청 기능을보고하는 가장 좋은 방법은 GitHub 저장소를 통해 다음과 같습니다.</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>새로운 문제를 만들기 전에, 당신의 문제가 이미보고 된 경우 기존 문제를 검색.</p>
+<ol start="2">
+<li>** 우리의 Discord **</li>
+</ol>
+<p>실시간 도움말 및 커뮤니티 토론을 위해 Discord 서버에 가입하십시오.</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+<hr>
+<h2>일반적인 문제</h2>
+<p>몇 가지 일반적인 문제와 해결 방법.</p>
+<hr>
+<h2>closedcode가 시작되지 않습니다.</h2>
+<ol>
+<li>오류 메시지에 대한 로그 확인</li>
+<li>terminal에 있는 산출을 보기 위하여 <code>--print-logs</code>로 달리기를 시도하십시오</li>
+<li>당신은 <code>closedcode upgrade</code>를 가진 최신 버전이 있는 것을 지킵니다</li>
+</ol>
+<hr>
+<h3>인증 문제</h3>
+<ol>
+<li>TUI에서 <code>/connect</code> 명령으로 다시 입력 시도</li>
+<li>API 키가 유효하다는 것을 확인</li>
+<li>네트워크가 공급자의 API에 연결을 허용</li>
+</ol>
+<hr>
+<h4>모델을 사용할 수 없음</h4>
+<ol>
+<li>공급자와 정통한 확인</li>
+<li>config의 모델명을 수정한다.</li>
+<li>몇몇 모형은 특정한 접근 또는 구독을 요구할지도 모릅니다</li>
+</ol>
+<p>만약 당신이 <code>ProviderModelNotFoundError</code>에 직면 하는 경우 가장 가능성이 잘못
+모델 어딘가를 나타냅니다.
+모형은 이렇게 참고되어야 합니다: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>예제:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>당신이 액세스 할 수있는 모델을 파악하려면, <code>closedcode models</code>를 실행</p>
+<hr>
+<h2>ProviderInitError</h2>
+<p>ProviderInitError가 발생하면 잘못된 구성이나 손상된 구성이 있습니다.</p>
+<p>해결하기:</p>
+<ol>
+<li><p>첫째로, 당신의 공급자는 <a href="./providers">providers guide</a>를 따르기 위하여 제대로 설치됩니다</p>
+</li>
+<li><p>문제가 발생하면 저장된 구성을 삭제하십시오.</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+</li>
+</ol>
+<p>Windows에서, <code>WIN+R</code>를 누르고 삭제하십시오: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+<ol start="3">
+<li>TUI의 <code>/connect</code> 명령을 사용하여 공급자와 재해.</li>
+</ol>
+<hr>
+<h3>AI_APICallError 및 공급자 패키지 문제</h3>
+<p>API 호출 오류가 발생하면, 이 공급 업체 패키지로 인해 발생할 수 있습니다. closedcode 동적 설치 공급자 패키지 (OpenAI, Anthropic, Google 등) 필요 하 고 로컬로 캐시.</p>
+<p>공급자 패키지 문제를 해결하려면:</p>
+<ol>
+<li><p>공급자 포장 캐시를 지우십시오:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+</li>
+</ol>
+<p>Windows에서, <code>WIN+R</code>를 누르고 삭제하십시오: <code>%USERPROFILE%\.cache\closedcode</code></p>
+<ol start="2">
+<li>최신 공급자 포장을 재설치하는 Restart closedcode</li>
+</ol>
+<p>이것은 종종 모델 매개 변수와 API 변경과 호환성 문제를 해결하는 공급자 패키지의 가장 최근 버전을 다운로드하기 위해 closedcode를 강제합니다.</p>
+<hr>
+<h4>Linux에서 복사/붙여넣기 작동 안 함</h4>
+<p>Linux 사용자는 다음과 같은 클립 보드 유틸리티 중 하나가 복사 / 붙여 넣기 기능에 설치해야합니다.</p>
+<p>** X11 시스템:**</p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>웨이랜드 시스템:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p>** 헤드리스 환경에 대한:**</p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>closedcode는 당신이 Wayland를 사용하고 <code>wl-clipboard</code>를 선호하는 경우에 검출할 것입니다, 그렇지 않으면의 순서에 있는 클립보드 공구를 찾아낼 것입니다: <code>xclip</code>와 <code>xsel</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

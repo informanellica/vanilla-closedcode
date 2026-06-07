@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "closedcode",
+  "version": "1.14.33",
+  "description": "AI-powered development tool (local LLM only)",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm --prefix packages/closedcode run dev",
+    "dev:desktop": "npm --prefix packages/desktop-electron run dev",
+    "dev:web": "npm --prefix packages/app run dev",
+    "dev:storybook": "npm --prefix packages/storybook run storybook",
+    "lint": "oxlint",
+    "typecheck": "turbo typecheck",
+    "postinstall": "patch-package && npm --prefix packages/closedcode run fix-node-pty",
+    "test": "echo 'do not run tests from root' && exit 1",
+    "docs": "node scripts/docs.cjs",
+    "docs:single": "jsdoc -c jsdoc.json",
+    "docs:setup": "npm --prefix nero_modules/jsdoc-theme install --omit=dev"
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/sdk/js",
+    "packages/slack"
+  ],
+  "devDependencies": {
+    "@actions/artifact": "5.0.1",
+    "@tsconfig/node22": "22.0.2",
+    "@types/mime-types": "3.0.1",
+    "@types/node": "22.13.9",
+    "glob": "13.0.5",
+    "oxlint": "1.60.0",
+    "oxlint-tsgolint": "0.21.0",
+    "patch-package": "8.0.0",
+    "prettier": "3.6.2",
+    "semver": "^7.6.0",
+    "sst": "3.18.10",
+    "tsx": "4.19.2",
+    "turbo": "2.8.13",
+    "typescript": "5.8.2"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.933.0",
+    "plugin": "file:./packages/plugin",
+    "script": "file:./packages/script",
+    "sdk": "file:./packages/sdk/js",
+    "@standard-community/standard-json": "^0.3.5",
+    "@standard-community/standard-openapi": "^0.2.9",
+    "effect": "4.0.0-beta.59",
+    "heap-snapshot-toolkit": "1.1.3",
+    "ioredis": "^5.10.1",
+    "koffi": "^2.16.2",
+    "quansync": "^0.2.11",
+    "typescript": "5.8.2",
+    "valibot": "^1.4.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/informanellica/vanilla-closedcode"
+  },
+  "license": "MIT",
+  "prettier": {
+    "semi": false,
+    "printWidth": 120
+  },
+  "overrides": {
+    "@types/node": "22.13.9",
+    "effect": "4.0.0-beta.59"
+  }
+}

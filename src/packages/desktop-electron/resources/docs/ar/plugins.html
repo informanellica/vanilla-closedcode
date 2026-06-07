@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الإضافات — vanilla-closedcode docs</title>
+  <meta name="description" content="اكتب إضافاتك الخاصة لتوسيع vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html" selected>العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الإضافات</h1>
+      <p class="lede">اكتب إضافاتك الخاصة لتوسيع vanilla-closedcode.</p>
+      <p>تتيح لك الإضافات توسيع vanilla-closedcode عبر ربطها بأحداث مختلفة وتخصيص السلوك. يمكنك إنشاء إضافات لإضافة ميزات جديدة، أو التكامل مع خدمات خارجية، أو تعديل السلوك الافتراضي لـ vanilla-closedcode.</p>
+<p>للاطلاع على أمثلة، راجع <a href="/docs/ecosystem#plugins">الإضافات</a> التي أنشأها المجتمع.</p>
+<hr>
+<h2>استخدام إضافة</h2>
+<p>هناك طريقتان لتحميل الإضافات.</p>
+<hr>
+<h3>من ملفات محلية</h3>
+<p>ضع ملفات JavaScript أو TypeScript في دليل الإضافات.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - إضافات على مستوى المشروع</li>
+<li><code>~/.config/closedcode/plugins/</code> - إضافات عامة</li>
+</ul>
+<p>تُحمَّل الملفات في هذه الأدلة تلقائيا عند بدء التشغيل.</p>
+<hr>
+<h3>من npm</h3>
+<p>حدّد حزم npm في ملف الإعدادات.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>يتم دعم حزم npm العادية والحزم ذات النطاق (scoped).</p>
+<p>تصفّح الإضافات المتاحة في <a href="/docs/ecosystem#plugins">النظام البيئي</a>.</p>
+<hr>
+<h3>كيفية تثبيت الإضافات</h3>
+<p><strong>إضافات npm</strong> تُثبَّت تلقائيا باستخدام npm عند بدء التشغيل. تُخزَّن الحزم واعتمادياتها مؤقتا في <code>~/.cache/closedcode/node_modules/</code>.</p>
+<p><strong>الإضافات المحلية</strong> تُحمَّل مباشرة من دليل الإضافات. لاستخدام حزم خارجية، يجب إنشاء <code>package.json</code> داخل دليل الإعدادات لديك (راجع <a href="#dependencies">الاعتماديات</a>)، أو نشر الإضافة على npm ثم <a href="/docs/config#plugins">إضافتها إلى إعداداتك</a>.</p>
+<hr>
+<h3>ترتيب التحميل</h3>
+<p>تُحمَّل الإضافات من جميع المصادر وتعمل جميع الخطافات بالتتابع. ترتيب التحميل هو:</p>
+<ol>
+<li>إعدادات عامة (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>إعدادات المشروع (<code>closedcode.json</code>)</li>
+<li>دليل الإضافات العام (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>دليل إضافات المشروع (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>تُحمَّل حزم npm المكررة ذات الاسم والإصدار نفسيهما مرة واحدة. ومع ذلك، تُحمَّل الإضافة المحلية وإضافة npm ذات الاسم المشابه كلتاهما بشكل مستقل.</p>
+<hr>
+<h2>إنشاء إضافة</h2>
+<p>الإضافة هي <strong>وحدة JavaScript/TypeScript</strong> تصدّر دالة إضافة واحدة أو أكثر.
+تستقبل كل دالة كائنا للسياق وتعيد كائنا للخطافات.</p>
+<hr>
+<h3>الاعتماديات</h3>
+<p>يمكن للإضافات المحلية والأدوات المخصصة استخدام حزم npm خارجية. أضف <code>package.json</code> إلى دليل الإعدادات لديك متضمنا الاعتماديات التي تحتاجها.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>يشغّل vanilla-closedcode الأمر <code>npm install</code> عند بدء التشغيل لتثبيتها. بعد ذلك يمكن لإضافاتك وأدواتك استيرادها.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>البنية الأساسية</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>تستقبل دالة الإضافة ما يلي:</p>
+<ul>
+<li><code>project</code>: معلومات المشروع الحالي.</li>
+<li><code>directory</code>: دليل العمل الحالي.</li>
+<li><code>worktree</code>: مسار git worktree.</li>
+<li><code>client</code>: عميل SDK لـ closedcode للتفاعل مع الذكاء الاصطناعي.</li>
+</ul>
+<hr>
+<h3>دعم TypeScript</h3>
+<p>بالنسبة لإضافات TypeScript، يمكنك استيراد الأنواع من حزمة الإضافة:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>الأحداث</h3>
+<p>يمكن للإضافات الاشتراك في الأحداث كما هو موضح أدناه في قسم الأمثلة. فيما يلي قائمة بالأحداث المتاحة.</p>
+<h4>أحداث الأوامر</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>أحداث الملفات</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>أحداث التثبيت</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>أحداث LSP</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>أحداث الرسائل</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>أحداث الأذونات</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>أحداث الخادم</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>أحداث الجلسة</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>أحداث Todo</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>أحداث shell</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>أحداث الأدوات</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>أحداث واجهة TUI</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>أمثلة</h2>
+<p>فيما يلي بعض أمثلة الإضافات التي يمكنك استخدامها لتوسيع closedcode.</p>
+<hr>
+<h3>إرسال إشعارات</h3>
+<p>أرسل إشعارات عند وقوع أحداث معينة:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>نستخدم <code>osascript</code> لتشغيل AppleScript على macOS. هنا نستخدمه لإرسال إشعارات.</p>
+<aside class="aside aside-note">
+إذا كنت تستخدم تطبيق vanilla-closedcode لسطح المكتب، فيمكنه إرسال إشعارات النظام تلقائيا عند جاهزية الرد أو عند حدوث خطأ في جلسة.
+</aside>
+---
+
+<h3>حماية .env</h3>
+<p>امنع closedcode من قراءة ملفات <code>.env</code>:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>حقن متغيرات البيئة</h3>
+<p>احقن متغيرات البيئة في جميع عمليات تنفيذ shell (أدوات الذكاء الاصطناعي وterminal المستخدم):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>أدوات مخصصة</h3>
+<p>يمكن للإضافات أيضا إضافة أدوات مخصصة إلى closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>تقوم الدالة المساعدة <code>tool</code> بإنشاء أداة مخصصة يمكن لـ closedcode استدعاؤها. تأخذ دالة مخطط Zod وتعيد تعريف أداة يتضمن:</p>
+<ul>
+<li><code>description</code>: ما الذي تفعله الأداة</li>
+<li><code>args</code>: مخطط Zod لوسائط الأداة</li>
+<li><code>execute</code>: الدالة التي تُشغَّل عند استدعاء الأداة</li>
+</ul>
+<p>ستكون أدواتك المخصصة متاحة لـ closedcode إلى جانب الأدوات المضمنة.</p>
+<hr>
+<h3>التسجيل</h3>
+<p>استخدم <code>client.app.log()</code> بدلا من <code>console.log</code> للتسجيل البنيوي:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>المستويات: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. راجع توثيق SDK للتفاصيل.</p>
+<hr>
+<h3>خطافات الضغط</h3>
+<p>خصّص السياق الذي يتم تضمينه عند ضغط جلسة:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p>يعمل الخطاف <code>experimental.session.compacting</code> قبل أن ينشئ نموذج اللغة الكبير (LLM) ملخص المتابعة. استخدمه لحقن سياق خاص بالمجال قد يفوته موجّه الضغط الافتراضي.</p>
+<p>يمكنك أيضا استبدال موجّه الضغط بالكامل عبر ضبط <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>عند ضبط <code>output.prompt</code> فإنه يستبدل موجّه الضغط الافتراضي بالكامل. يتم تجاهل المصفوفة <code>output.context</code> في هذه الحالة.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

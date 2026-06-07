@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الإعدادات — vanilla-closedcode docs</title>
+  <meta name="description" content="استخدام ملف إعدادات vanilla-closedcode بصيغة JSON.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html" selected>العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الإعدادات</h1>
+      <p class="lede">استخدام ملف إعدادات vanilla-closedcode بصيغة JSON.</p>
+      <p>يمكنك ضبط vanilla-closedcode باستخدام ملف إعدادات بصيغة JSON.</p>
+<hr>
+<h2>التنسيق</h2>
+<p>يدعم vanilla-closedcode تنسيقي <strong>JSON</strong> و<strong>JSONC</strong> (JSON مع تعليقات).</p>
+<pre><code class="language-jsonc">{
+  // إعدادات السمة
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+}
+</code></pre>
+<hr>
+<h2>المواقع</h2>
+<p>يمكنك وضع ملف الإعدادات في عدة مواقع مختلفة، ولكل موقع
+ترتيب أولوية مختلف.</p>
+<aside class="aside aside-note">
+تُدمَج ملفات الإعدادات **معًا** ولا تُستبدَل.
+</aside>
+تُدمَج ملفات الإعدادات معًا ولا تُستبدَل. يتم جمع الإعدادات من مواقع الإعدادات التالية. تتجاوز الإعدادات اللاحقة الإعدادات السابقة فقط عند تعارض المفاتيح. أما الإعدادات غير المتعارضة فتبقى محفوظة من جميع الملفات.
+
+<p>على سبيل المثال، إذا كان الإعداد العام يضبط <code>theme: &quot;closedcode&quot;</code> و<code>autoupdate: true</code>، وكان إعداد المشروع يضبط <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>، فستتضمن الإعدادات النهائية الخيارات الثلاثة جميعها.</p>
+<hr>
+<h3>ترتيب الأولوية</h3>
+<p>تُحمَّل مصادر الإعدادات بهذا الترتيب (المصادر اللاحقة تتجاوز السابقة):</p>
+<ol>
+<li><strong>الإعدادات العامة</strong> (<code>~/.config/closedcode/closedcode.json</code>) - تفضيلات المستخدم</li>
+<li><strong>إعدادات مخصصة</strong> (<code>CLOSEDCODE_CONFIG</code> env var) - تجاوزات مخصصة</li>
+<li><strong>إعدادات المشروع</strong> (<code>closedcode.json</code> داخل المشروع) - إعدادات خاصة بالمشروع</li>
+<li><strong>أدلة <code>.closedcode</code></strong> - الوكلاء، الأوامر، الإضافات</li>
+<li><strong>إعدادات ضمنية</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> env var) - تجاوزات وقت التشغيل</li>
+</ol>
+<p>هذا يعني أن إعدادات المشروع يمكنها تجاوز الإعدادات العامة، وأن الإعدادات العامة يمكنها تجاوز الإعدادات الافتراضية البعيدة على مستوى المؤسسة.</p>
+<aside class="aside aside-note">
+يستخدم الدليلان `.closedcode` و`~/.config/closedcode` **أسماء جمع** للأدلة الفرعية: `agents/` و`commands/` و`modes/` و`plugins/` و`skills/` و`tools/` و`themes/`. كما تُدعَم أسماء المفرد (مثل `agent/`) للتوافق مع الإصدارات السابقة.
+</aside>
+---
+
+
+<h3>عام</h3>
+<p>ضع إعدادات vanilla-closedcode العامة في <code>~/.config/closedcode/closedcode.json</code>. استخدم الإعدادات العامة للتفضيلات على مستوى المستخدم مثل السمات، والمزوّدين، أو اختصارات المفاتيح.</p>
+<p>تتجاوز الإعدادات العامة القيم الافتراضية البعيدة الخاصة بالمؤسسة.</p>
+<hr>
+<h3>لكل مشروع</h3>
+<p>أضف <code>closedcode.json</code> في جذر مشروعك. تمتلك إعدادات المشروع أعلى أولوية بين ملفات الإعدادات القياسية، إذ تتجاوز الإعدادات العامة والبعيدة معًا.</p>
+<aside class="aside aside-tip">
+ضع إعدادات المشروع الخاصة في جذر مشروعك.
+</aside>
+عند تشغيل vanilla-closedcode، يبحث عن ملف إعدادات في الدليل الحالي أو يصعد حتى أقرب دليل Git.
+
+<p>ومن الآمن أيضًا تضمينه في Git، كما يستخدم نفس المخطط الخاص بالإعدادات العامة.</p>
+<hr>
+<h3>مسار مخصص</h3>
+<p>حدّد مسار ملف إعدادات مخصصًا باستخدام متغير البيئة <code>CLOSEDCODE_CONFIG</code>.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>تُحمَّل الإعدادات المخصصة بين الإعدادات العامة وإعدادات المشروع ضمن ترتيب الأولوية.</p>
+<hr>
+<h3>دليل مخصص</h3>
+<p>حدّد دليل إعدادات مخصصًا باستخدام متغير البيئة <code>CLOSEDCODE_CONFIG_DIR</code>.
+سيتم البحث داخل هذا الدليل عن الوكلاء والأوامر والأوضاع والإضافات تمامًا مثل
+الدليل القياسي <code>.closedcode</code>، ويجب أن يتبع نفس البنية.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>يُحمَّل الدليل المخصص بعد الإعدادات العامة وأدلة <code>.closedcode</code>، لذلك <strong>يمكنه تجاوز</strong> إعداداتها.</p>
+<hr>
+<h2>المخطط</h2>
+<p>يحتوي ملف الإعدادات على مخطط مُعرَّف في <strong><code>config.json</code></strong>.</p>
+<p>يفترض أن يتمكن محررك من التحقق والإكمال التلقائي اعتمادًا على هذا المخطط.</p>
+<hr>
+<h3>TUI</h3>
+<p>يمكنك ضبط الإعدادات الخاصة بـ TUI عبر الخيار <code>tui</code>.</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    },
+    &quot;diff_style&quot;: &quot;auto&quot;
+  }
+}
+</code></pre>
+<p>الخيارات المتاحة:</p>
+<ul>
+<li><code>scroll_acceleration.enabled</code> - تفعيل تسارع التمرير بأسلوب macOS. <strong>له أولوية على <code>scroll_speed</code>.</strong></li>
+<li><code>scroll_speed</code> - مُضاعِف سرعة تمرير مخصص (الافتراضي: <code>3</code>، الحد الأدنى: <code>1</code>). يتم تجاهله إذا كان <code>scroll_acceleration.enabled</code> مساويًا لـ <code>true</code>.</li>
+<li><code>diff_style</code> - التحكم في عرض <code>diff</code>. القيمة <code>&quot;auto&quot;</code> تتكيف مع عرض terminal، و<code>&quot;stacked&quot;</code> تعرض عمودًا واحدًا دائمًا.</li>
+</ul>
+<p><a href="/docs/tui">تعرف على المزيد حول استخدام TUI هنا</a>.</p>
+<hr>
+<h3>الخادم</h3>
+<p>يمكنك ضبط إعدادات الخادم لأوامر <code>closedcode serve</code> و<code>closedcode web</code> عبر الخيار <code>server</code>.</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>الخيارات المتاحة:</p>
+<ul>
+<li><code>port</code> - المنفذ الذي سيتم الاستماع عليه.</li>
+<li><code>hostname</code> - اسم المضيف الذي سيتم الاستماع عليه. عند تفعيل <code>mdns</code> وعدم ضبط اسم مضيف، تكون القيمة الافتراضية <code>0.0.0.0</code>.</li>
+<li><code>mdns</code> - تفعيل اكتشاف الخدمة عبر mDNS. يتيح ذلك للأجهزة الأخرى على الشبكة اكتشاف خادم vanilla-closedcode.</li>
+<li><code>mdnsDomain</code> - اسم نطاق مخصص لخدمة mDNS. القيمة الافتراضية هي <code>closedcode.local</code>. مفيد لتشغيل عدة نُسخ على نفس الشبكة.</li>
+<li><code>cors</code> - أصول إضافية مسموح بها لـ CORS عند استخدام خادم HTTP من عميل يعتمد على المتصفح. يجب أن تكون القيم أصولًا كاملة (البروتوكول + المضيف + منفذ اختياري)، مثل <code>https://app.example.com</code>.</li>
+</ul>
+<p><a href="/docs/server">تعرف على المزيد حول الخادم هنا</a>.</p>
+<hr>
+<h3>الأدوات</h3>
+<p>يمكنك إدارة الأدوات التي يمكن لـ LLM استخدامها عبر الخيار <code>tools</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">تعرف على المزيد حول الأدوات هنا</a>.</p>
+<hr>
+<h3>النماذج</h3>
+<p>يمكنك ضبط المزوّدين والنماذج التي تريد استخدامها في إعدادات vanilla-closedcode عبر الخيارات <code>provider</code> و<code>model</code> و<code>small_model</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p>يضبط الخيار <code>small_model</code> نموذجًا منفصلًا للمهام الخفيفة مثل توليد العناوين. افتراضيًا يحاول vanilla-closedcode استخدام نموذج أقل تكلفة إذا كان متاحًا لدى مزوّدك، وإلا فسيعود إلى النموذج الرئيسي.</p>
+<p>قد تتضمن خيارات المزوّد <code>timeout</code> و<code>setCacheKey</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - مهلة الطلب بالميلي ثانية (الافتراضي: 300000). اضبطه إلى <code>false</code> لتعطيله.</li>
+<li><code>setCacheKey</code> - يضمن تعيين مفتاح التخزين المؤقت دائمًا للمزوّد المحدد.</li>
+</ul>
+<p>يمكنك أيضًا ضبط <a href="/docs/models#local">النماذج المحلية</a>. <a href="/docs/models">تعرف على المزيد</a>.</p>
+<hr>
+<h4>خيارات خاصة بالمزوّد</h4>
+<p>يدعم بعض المزوّدين خيارات إعداد إضافية تتجاوز الإعدادات العامة مثل <code>timeout</code> و<code>apiKey</code>.</p>
+<h5>Amazon Bedrock</h5>
+<p>يدعم Amazon Bedrock إعدادات خاصة بـ AWS:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - منطقة AWS لـ Bedrock (الافتراضي: متغير البيئة <code>AWS_REGION</code> أو <code>us-east-1</code>)</li>
+<li><code>profile</code> - ملف تعريف AWS المُسمّى من <code>~/.aws/credentials</code> (الافتراضي: متغير البيئة <code>AWS_PROFILE</code>)</li>
+<li><code>endpoint</code> - عنوان URL لنقطة نهاية مخصصة لنقاط نهاية VPC. هذا اسم بديل للخيار العام <code>baseURL</code> باستخدام مصطلحات AWS. إذا تم تحديدهما معًا، تكون أولوية <code>endpoint</code> أعلى.</li>
+</ul>
+<aside class="aside aside-note">
+لرموز Bearer (`AWS_BEARER_TOKEN_BEDROCK` أو `/connect`) أولوية أعلى من المصادقة القائمة على ملف التعريف. راجع [أولوية المصادقة](/docs/providers#authentication-precedence) للتفاصيل.
+</aside>
+[تعرف على المزيد حول إعداد Amazon Bedrock](/docs/providers#amazon-bedrock).
+
+<hr>
+<h3>السمات</h3>
+<p>يمكنك ضبط السمة التي تريد استخدامها في إعدادات vanilla-closedcode عبر الخيار <code>theme</code>.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>الوكلاء</h3>
+<p>يمكنك ضبط وكلاء متخصصين لمهام محددة عبر الخيار <code>agent</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // تعطيل أدوات تعديل الملفات لوكيل المراجعة فقط
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>يمكنك أيضًا تعريف الوكلاء باستخدام ملفات markdown في <code>~/.config/closedcode/agents/</code> أو <code>.closedcode/agents/</code>. <a href="/docs/agents">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>الوكيل الافتراضي</h3>
+<p>يمكنك تعيين الوكيل الافتراضي باستخدام الخيار <code>default_agent</code>. يحدد ذلك أي وكيل سيتم استخدامه عندما لا يتم تحديد وكيل صراحةً.</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>يجب أن يكون الوكيل الافتراضي وكيلًا أساسيًا (وليس وكيلًا فرعيًا). يمكن أن يكون وكيلًا مدمجًا مثل <code>&quot;build&quot;</code> أو <code>&quot;plan&quot;</code>، أو <a href="/docs/agents">وكيلًا مخصصًا</a> قمت بتعريفه. إذا لم يكن الوكيل المحدد موجودًا أو كان وكيلًا فرعيًا، فسيعود vanilla-closedcode إلى <code>&quot;build&quot;</code> مع تحذير.</p>
+<p>ينطبق هذا الإعداد على جميع الواجهات: TUI وCLI (<code>closedcode run</code>) وتطبيق سطح المكتب وGitHub Action.</p>
+<hr>
+<h3>المشاركة</h3>
+<p>يمكنك ضبط ميزة <a href="/docs/share">share</a> عبر الخيار <code>share</code>.</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>يقبل هذا الإعداد القيم التالية:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - السماح بالمشاركة اليدوية عبر الأوامر (الافتراضي)</li>
+<li><code>&quot;auto&quot;</code> - مشاركة المحادثات الجديدة تلقائيًا</li>
+<li><code>&quot;disabled&quot;</code> - تعطيل المشاركة بالكامل</li>
+</ul>
+<p>افتراضيًا تكون المشاركة في الوضع اليدوي، حيث تحتاج إلى مشاركة المحادثات صراحةً باستخدام الأمر <code>/share</code>.</p>
+<hr>
+<h3>الأوامر</h3>
+<p>يمكنك ضبط أوامر مخصصة للمهام المتكررة عبر الخيار <code>command</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>يمكنك أيضًا تعريف الأوامر باستخدام ملفات markdown في <code>~/.config/closedcode/commands/</code> أو <code>.closedcode/commands/</code>. <a href="/docs/commands">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>اختصارات المفاتيح</h3>
+<p>يمكنك تخصيص اختصارات المفاتيح عبر الخيار <code>keybinds</code>.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>التحديث التلقائي</h3>
+<p>سيقوم vanilla-closedcode بتنزيل أي تحديثات جديدة تلقائيًا عند بدء التشغيل. يمكنك تعطيل ذلك عبر الخيار <code>autoupdate</code>.</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>إذا لم تكن تريد التحديثات لكنك تريد الإشعار عند توفر نسخة جديدة، فاضبط <code>autoupdate</code> على <code>&quot;notify&quot;</code>.
+لاحظ أن هذا يعمل فقط إذا لم يتم تثبيته عبر مدير حزم مثل Homebrew.</p>
+<hr>
+<h3>المنسّقات</h3>
+<p>يمكنك ضبط منسّقات الشفرة عبر الخيار <code>formatter</code>.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">تعرف على المزيد حول المنسّقات هنا</a>.</p>
+<hr>
+<h3>الأذونات</h3>
+<p>افتراضيًا يسمح closedcode <strong>بجميع العمليات</strong> دون الحاجة إلى موافقة صريحة. يمكنك تغيير ذلك عبر الخيار <code>permission</code>.</p>
+<p>على سبيل المثال، لضمان أن أداتي <code>edit</code> و<code>bash</code> تتطلبان موافقة المستخدم:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">تعرف على المزيد حول الأذونات هنا</a>.</p>
+<hr>
+<h3>ضغط السياق</h3>
+<p>يمكنك التحكم في سلوك ضغط السياق عبر الخيار <code>compaction</code>.</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - ضغط الجلسة تلقائيًا عند امتلاء السياق (الافتراضي: <code>true</code>).</li>
+<li><code>prune</code> - إزالة مخرجات الأدوات القديمة لتوفير الرموز (tokens) (الافتراضي: <code>true</code>).</li>
+<li><code>reserved</code> - مخزن مؤقت للرموز (tokens) من أجل الضغط. يترك نافذة كافية لتجنب الفيضان أثناء الضغط.</li>
+</ul>
+<hr>
+<h3>المراقِب</h3>
+<p>يمكنك ضبط أنماط التجاهل لمراقِب الملفات عبر الخيار <code>watcher</code>.</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>تتبع الأنماط صياغة <code>glob</code>. استخدم ذلك لاستبعاد الأدلة المزدحمة من مراقبة الملفات.</p>
+<hr>
+<h3>خوادم MCP</h3>
+<p>يمكنك ضبط خوادم MCP التي تريد استخدامها عبر الخيار <code>mcp</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>الإضافات</h3>
+<p><a href="/docs/plugins">الإضافات</a> توسّع vanilla-closedcode بأدوات وخُطافات وتكاملات مخصصة.</p>
+<p>ضع ملفات الإضافات في <code>.closedcode/plugins/</code> أو <code>~/.config/closedcode/plugins/</code>. يمكنك أيضًا تحميل إضافات من npm عبر الخيار <code>plugin</code>.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">تعرف على المزيد هنا</a>.</p>
+<hr>
+<h3>التعليمات</h3>
+<p>يمكنك ضبط التعليمات الخاصة بالنموذج الذي تستخدمه عبر الخيار <code>instructions</code>.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>يقبل هذا مصفوفة من المسارات وأنماط <code>glob</code> لملفات التعليمات. <a href="/docs/rules">تعرف على المزيد
+حول القواعد هنا</a>.</p>
+<hr>
+<h3>المزوّدون المعطّلون</h3>
+<p>يمكنك تعطيل المزوّدين الذين يتم تحميلهم تلقائيًا عبر الخيار <code>disabled_providers</code>. هذا مفيد عندما تريد منع تحميل مزوّدين معينين حتى لو كانت بيانات الاعتماد الخاصة بهم متاحة.</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+الخيار `disabled_providers` له أولوية على `enabled_providers`.
+</aside>
+يقبل الخيار `disabled_providers` مصفوفة من معرفات المزوّدين. عند تعطيل مزوّد:
+
+<ul>
+<li>لن يتم تحميله حتى لو كانت متغيرات البيئة مضبوطة.</li>
+<li>لن يتم تحميله حتى لو كانت مفاتيح API مضبوطة عبر الأمر <code>/connect</code>.</li>
+<li>لن تظهر نماذج هذا المزوّد في قائمة اختيار النموذج.</li>
+</ul>
+<hr>
+<h3>المزوّدون المفعّلون</h3>
+<p>يمكنك تحديد قائمة سماح للمزوّدين عبر الخيار <code>enabled_providers</code>. عند ضبطه، سيتم تفعيل المزوّدين المحددين فقط وسيتم تجاهل البقية.</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>هذا مفيد عندما تريد تقييد vanilla-closedcode لاستخدام مزوّدين محددين بدلًا من تعطيلهم واحدًا تلو الآخر.</p>
+<aside class="aside aside-note">
+الخيار `disabled_providers` له أولوية على `enabled_providers`.
+</aside>
+إذا ظهر مزوّد ضمن كل من `enabled_providers` و`disabled_providers`، تكون أولوية `disabled_providers` أعلى للتوافق مع الإصدارات السابقة.
+
+<hr>
+<h3>تجريبي</h3>
+<p>يحتوي المفتاح <code>experimental</code> على خيارات قيد التطوير النشط.</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+الخيارات التجريبية غير مستقرة. قد تتغير أو تُزال دون إشعار.
+</aside>
+---
+
+<h2>المتغيرات</h2>
+<p>يمكنك استخدام استبدال المتغيرات في ملفات الإعدادات للإشارة إلى متغيرات البيئة ومحتويات الملفات.</p>
+<hr>
+<h3>متغيرات البيئة</h3>
+<p>استخدم <code>{env:VARIABLE_NAME}</code> لاستبدال متغيرات البيئة:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>إذا لم يكن متغير البيئة مضبوطًا، فسيتم استبداله بسلسلة فارغة.</p>
+<hr>
+<h3>الملفات</h3>
+<p>استخدم <code>{file:path/to/file}</code> لاستبدال محتويات ملف:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>يمكن أن تكون مسارات الملفات:</p>
+<ul>
+<li>نسبية إلى دليل ملف الإعدادات</li>
+<li>أو مسارات مطلقة تبدأ بـ <code>/</code> أو <code>~</code></li>
+</ul>
+<p>يُفيد ذلك في:</p>
+<ul>
+<li>الاحتفاظ بالبيانات الحساسة مثل مفاتيح API في ملفات منفصلة.</li>
+<li>تضمين ملفات تعليمات كبيرة دون تشويش ملف الإعدادات.</li>
+<li>مشاركة مقتطفات إعدادات مشتركة عبر عدة ملفات إعدادات.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

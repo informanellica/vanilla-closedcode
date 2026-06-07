@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konfigurasjon — vanilla-closedcode docs</title>
+  <meta name="description" content="Ved å bruke closedcode JSON-konfigurasjonen.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html" selected>Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Konfigurasjon</h1>
+      <p class="lede">Ved å bruke closedcode JSON-konfigurasjonen.</p>
+      <p>Du kan konfigurere vanilla-closedcode ved å bruke en JSON konfigurasjonsfil.</p>
+<hr>
+<h2>Format</h2>
+<p>vanilla-closedcode støtter både <strong>JSON</strong> og <strong>JSONC</strong> (JSON med kommentarer) formater.</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>Plasseringer</h2>
+<p>Du kan plassere konfigurasjonen på et par forskjellige steder, og de har en
+annen rekkefølge.</p>
+<aside class="aside aside-note">
+Konfigurasjonsfiler er **slått sammen**, ikke erstattet.
+</aside>
+Konfigurasjonsfiler slås sammen, ikke erstattes. Innstillinger fra følgende konfigurasjonsplasseringer kombineres. Senere konfigurasjoner overstyrer tidligere kun for motstridende nøkler. Ikke-motstridende innstillinger fra alle konfigurasjoner er bevart.
+
+<p>For eksempel, hvis din globale konfigurasjon setter <code>theme: &quot;closedcode&quot;</code> og <code>autoupdate: true</code>, og prosjektkonfigurasjonen setter <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>, vil den endelige konfigurasjonen inkludere alle tre innstillingene.</p>
+<hr>
+<h3>Prioritetsrekkefølge</h3>
+<p>Konfigurasjonskilder lastes inn i denne rekkefølgen (senere kilder overstyrer tidligere):</p>
+<ol>
+<li><strong>Global konfigurasjon</strong> (<code>~/.config/closedcode/closedcode.json</code>) - brukerinnstillinger</li>
+<li><strong>Egendefinert konfigurasjon</strong> (<code>CLOSEDCODE_CONFIG</code> env var) - egendefinerte overstyringer</li>
+<li><strong>Prosjektkonfigurasjon</strong> (<code>closedcode.json</code> i prosjekt) - prosjektspesifikke innstillinger</li>
+<li><strong><code>.closedcode</code> kataloger</strong> - agenter, kommandoer, plugins</li>
+<li><strong>Inline config</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> env var) - kjøretidsoverstyringer</li>
+</ol>
+<p>Dette betyr at prosjektkonfigurasjoner kan overstyre globale standardinnstillinger, og globale konfigurasjoner kan overstyre eksterne organisasjonsstandarder.</p>
+<aside class="aside aside-note">
+`.closedcode` og `~/.config/closedcode` katalogene bruker **flertallsnavn** på underkataloger: `agents/`, `commands/`, `modes/`, `plugins/`, `skills/`, `tools/` og `themes/`. Enkeltnavn (f.eks. `agent/`) støttes også for bakoverkompatibilitet.
+</aside>
+---
+
+
+<h3>Global konfigurasjon</h3>
+<p>Plasser din globale vanilla-closedcode-konfigurasjon i <code>~/.config/closedcode/closedcode.json</code>. Bruk global konfigurasjon for brukerspesifikke preferanser som temaer, leverandører eller nøkkelbindinger.</p>
+<p>Global konfigurasjon overstyrer eksterne organisasjonsstandarder.</p>
+<hr>
+<h3>Per prosjekt</h3>
+<p>Legg til <code>closedcode.json</code> i prosjektroten din. Prosjektkonfigurasjon har den høyeste prioritet blant standard config-filer - den overstyrer både globale og eksterne konfigurasjoner.</p>
+<aside class="aside aside-tip">
+Plasser prosjektspesifikk konfigurasjon i roten til prosjektet ditt.
+</aside>
+Når vanilla-closedcode starter opp, ser den etter en konfigurasjonsfil i gjeldende katalog eller går opp til nærmeste Git-katalog.
+
+<p>Det er også trygt å sjekke inn dette i Git og bruker samme skjema som det globale.</p>
+<hr>
+<h3>Egendefinert bane</h3>
+<p>Spesifiser en tilpasset konfigurasjonsfilbane ved å bruke miljøvariabelen <code>CLOSEDCODE_CONFIG</code>.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Egendefinert konfigurasjon lastes inn mellom globale og prosjektkonfigurasjoner i prioritetsrekkefølge.</p>
+<hr>
+<h3>Egendefinert katalog</h3>
+<p>Spesifiser en tilpasset konfigurasjonskatalog ved å bruke <code>CLOSEDCODE_CONFIG_DIR</code>
+miljøvariabel. Denne katalogen vil bli søkt etter agenter, kommandoer,
+moduser og plugins akkurat som standard <code>.closedcode</code> katalog, og bør
+følge samme struktur.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Den egendefinerte katalogen lastes inn etter den globale konfigurasjonen og <code>.closedcode</code>-katalogene, slik at den <strong>kan overstyre</strong> innstillingene deres.</p>
+<hr>
+<h2>Skjema</h2>
+<p>Konfigurasjonsfilen har et skjema som er definert i <strong><code>config.json</code></strong>.</p>
+<p>Redaktøren din skal kunne validere og autofullføre basert på skjemaet.</p>
+<hr>
+<h3>TUI</h3>
+<p>Du kan konfigurere TUI-spesifikke innstillinger gjennom alternativet <code>tui</code>.</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    },
+    &quot;diff_style&quot;: &quot;auto&quot;
+  }
+}
+</code></pre>
+<p>Tilgjengelige alternativer:</p>
+<ul>
+<li><code>scroll_acceleration.enabled</code> - Aktiver rulleakselerasjon i macOS-stil. <strong>Tar forrang over <code>scroll_speed</code>.</strong></li>
+<li><code>scroll_speed</code> - Egendefinert rullehastighetsmultiplikator (standard: <code>3</code>, minimum: <code>1</code>). Ignorert hvis <code>scroll_acceleration.enabled</code> er <code>true</code>.</li>
+<li><code>diff_style</code> - Kontroller diff-gjengivelse. <code>&quot;auto&quot;</code> tilpasser seg terminalbredden, <code>&quot;stacked&quot;</code> viser alltid en kolonne.</li>
+</ul>
+<p><a href="/docs/tui">Les mer om bruk av TUI her</a>.</p>
+<hr>
+<h3>Tjener</h3>
+<p>Du kan konfigurere serverinnstillinger for kommandoene <code>closedcode serve</code> og <code>closedcode web</code> gjennom alternativet <code>server</code>.</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>Tilgjengelige alternativer:</p>
+<ul>
+<li><code>port</code> - Port å lytte på.</li>
+<li><code>hostname</code> - Vertsnavn å lytte på. Når <code>mdns</code> er aktivert og ingen vertsnavn er angitt, er standard <code>0.0.0.0</code>.</li>
+<li><code>mdns</code> - Aktiver mDNS-tjenesteoppdagelse. Dette lar andre enheter på nettverket oppdage vanilla-closedcode-serveren din.</li>
+<li><code>mdnsDomain</code> - Egendefinert domenenavn for mDNS-tjeneste. Standard er <code>closedcode.local</code>. Nyttig for å kjøre flere forekomster på samme nettverk.</li>
+<li><code>cors</code> - Ytterligere opprinnelser for å tillate CORS når du bruker HTTP-serveren fra en nettleserbasert klient. Verdiene må være fullstendige opprinnelser (skjema + vert + valgfri port), f.eks. <code>https://app.example.com</code>.</li>
+</ul>
+<p><a href="/docs/server">Les mer om serveren her</a>.</p>
+<hr>
+<h3>Verktøy</h3>
+<p>Du kan administrere verktøyene en LLM kan bruke gjennom alternativet <code>tools</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Les mer om verktøy her</a>.</p>
+<hr>
+<h3>Modeller</h3>
+<p>Du kan konfigurere leverandørene og modellene du vil bruke i vanilla-closedcode-konfigurasjonen gjennom alternativene <code>provider</code>, <code>model</code> og <code>small_model</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p>Alternativet <code>small_model</code> konfigurerer en egen modell for lette oppgaver som tittelgenerering. Som standard prøver vanilla-closedcode å bruke en rimeligere modell hvis en er tilgjengelig fra leverandøren din, ellers faller den tilbake til hovedmodellen din.</p>
+<p>Leverandøralternativer kan inkludere <code>timeout</code> og <code>setCacheKey</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - Tidsavbrudd for forespørsler i millisekunder (standard: 300 000). Sett til <code>false</code> for å deaktivere.</li>
+<li><code>setCacheKey</code> - Sørg for at en hurtigbuffernøkkel alltid settes for valgt leverandør.</li>
+</ul>
+<p>Du kan også konfigurere <a href="/docs/models#local">lokale modeller</a>. <a href="/docs/models">Finn ut mer</a>.</p>
+<hr>
+<h4>Leverandørspesifikke alternativer</h4>
+<p>Noen leverandører støtter flere konfigurasjonsalternativer utover de generiske innstillingene <code>timeout</code> og <code>apiKey</code>.</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock støtter AWS-spesifikk konfigurasjon:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - AWS-region for Bedrock (standard er <code>AWS_REGION</code> env var eller <code>us-east-1</code>)</li>
+<li><code>profile</code> - AWS navngitt profil fra <code>~/.aws/credentials</code> (standard til <code>AWS_PROFILE</code> env var)</li>
+<li><code>endpoint</code> - Egendefinert endepunkt URL for VPC endepunkter. Dette er et alias for det generiske <code>baseURL</code>-alternativet som bruker AWS-spesifikk terminologi. Hvis begge er spesifisert, har <code>endpoint</code> forrang.</li>
+</ul>
+<aside class="aside aside-note">
+Bærer-tokens (`AWS_BEARER_TOKEN_BEDROCK` eller `/connect`) har forrang over profilbasert autentisering. Se [autentiseringsprioritet](/docs/providers#authentication-precedence) for detaljer.
+</aside>
+[Les mer om konfigurasjon av Amazon Bedrock](/docs/providers#amazon-bedrock).
+
+<hr>
+<h3>Temaer</h3>
+<p>Angi UI-temaet ditt i <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">Les mer her</a>.</p>
+<hr>
+<h3>Agenter</h3>
+<p>Du kan konfigurere spesialiserte agenter for spesifikke oppgaver gjennom alternativet <code>agent</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Du kan også definere agenter ved å bruke markdown-filer i <code>~/.config/closedcode/agents/</code> eller <code>.closedcode/agents/</code>. <a href="/docs/agents">Les mer her</a>.</p>
+<hr>
+<h3>Standardagent</h3>
+<p>Du kan angi standard agent ved å bruke alternativet <code>default_agent</code>. Dette bestemmer hvilken agent som brukes når ingen er eksplisitt spesifisert.</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>Standardagenten må være en primæragent (ikke en underagent). Dette kan være en innebygd agent som <code>&quot;build&quot;</code> eller <code>&quot;plan&quot;</code>, eller en <a href="/docs/agents">egendefinert agent</a> du har definert. Hvis den angitte agenten ikke eksisterer eller er en subagent, vil vanilla-closedcode falle tilbake til <code>&quot;build&quot;</code> med en advarsel.</p>
+<p>Denne innstillingen gjelder for alle grensesnitt: TUI, CLI (<code>closedcode run</code>), skrivebordsapp og GitHub Action.</p>
+<hr>
+<h3>Deling</h3>
+<p>Du kan konfigurere <a href="/docs/share">share</a>-funksjonen gjennom alternativet <code>share</code>.</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>Dette krever:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - Tillat manuell deling via kommandoer (standard)</li>
+<li><code>&quot;auto&quot;</code> - Del nye samtaler automatisk</li>
+<li><code>&quot;disabled&quot;</code> - Deaktiver deling helt</li>
+</ul>
+<p>Som standard er deling satt til manuell modus der du eksplisitt må dele samtaler ved å bruke kommandoen <code>/share</code>.</p>
+<hr>
+<h3>Kommandoer</h3>
+<p>Du kan konfigurere egendefinerte kommandoer for repeterende oppgaver gjennom alternativet <code>command</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>Du kan også definere kommandoer ved å bruke markdown-filer i <code>~/.config/closedcode/commands/</code> eller <code>.closedcode/commands/</code>. <a href="/docs/commands">Les mer her</a>.</p>
+<hr>
+<h3>Tastebindinger</h3>
+<p>Tilpass tastebindinger i <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">Les mer her</a>.</p>
+<hr>
+<h3>Autooppdatering</h3>
+<p>vanilla-closedcode vil automatisk laste ned eventuelle nye oppdateringer når den starter opp. Du kan deaktivere dette med alternativet <code>autoupdate</code>.</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>Hvis du ikke vil ha oppdateringer, men ønsker å bli varslet når en ny versjon er tilgjengelig, sett <code>autoupdate</code> til <code>&quot;notify&quot;</code>.
+Legg merke til at dette bare fungerer hvis det ikke ble installert med en pakkebehandling som Homebrew.</p>
+<hr>
+<h3>Formatere</h3>
+<p>Du kan konfigurere kodeformatere gjennom alternativet <code>formatter</code>.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">Les mer om formattere her</a>.</p>
+<hr>
+<h3>Tillatelser</h3>
+<p>Som standard <strong>tillater vanilla-closedcode alle operasjoner</strong> uten å kreve eksplisitt godkjenning. Du kan endre dette ved å bruke alternativet <code>permission</code>.</p>
+<p>Slik sikrer du at verktøyene <code>edit</code> og <code>bash</code> krever brukergodkjenning:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Les mer om tillatelser her</a>.</p>
+<hr>
+<h3>Komprimering</h3>
+<p>Du kan styre kontekstkomprimering gjennom alternativet <code>compaction</code>.</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - Komprimer økten automatisk når konteksten er full (standard: <code>true</code>).</li>
+<li><code>prune</code> - Fjern gamle verktøyutdata for å spare tokens (standard: <code>true</code>).</li>
+<li><code>reserved</code> - Token-buffer for komprimering. Etterlater nok vindu til å unngå overflyt under komprimering</li>
+</ul>
+<hr>
+<h3>Filovervåker</h3>
+<p>Du kan konfigurere ignoreringsmønstre for filovervåking gjennom alternativet <code>watcher</code>.</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>Mønstre følger glob-syntaks. Bruk dette for å ekskludere støyende kataloger fra filovervåking.</p>
+<hr>
+<h3>MCP servere</h3>
+<p>Du kan konfigurere MCP-servere du vil bruke gjennom alternativet <code>mcp</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">Les mer her</a>.</p>
+<hr>
+<h3>Utvidelser</h3>
+<p><a href="/docs/plugins">Plugins</a> utvider vanilla-closedcode med tilpassede verktøy, kroker og integrasjoner.</p>
+<p>Plasser plugin-filer i <code>.closedcode/plugins/</code> eller <code>~/.config/closedcode/plugins/</code>. Du kan også laste inn plugins fra npm gjennom alternativet <code>plugin</code>.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">Les mer her</a>.</p>
+<hr>
+<h3>Instruksjoner</h3>
+<p>Du kan konfigurere instruksjoner for modellen du bruker gjennom alternativet <code>instructions</code>.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Dette krever en liste med baner og globmønstre til instruksjonsfiler. <a href="/docs/rules">Les mer
+om regler her</a>.</p>
+<hr>
+<h3>Deaktiverte leverandører</h3>
+<p>Du kan deaktivere leverandører som lastes automatisk gjennom alternativet <code>disabled_providers</code>. Dette er nyttig når du vil forhindre at enkelte leverandører lastes inn selv om deres legitimasjon er tilgjengelig.</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` har prioritet over `enabled_providers`.
+</aside>
+Alternativet `disabled_providers` godtar en rekke leverandør-ID-er. Når en leverandør er deaktivert:
+
+<ul>
+<li>Den blir ikke lastet selv om miljøvariabler er angitt.</li>
+<li>Den vil ikke bli lastet inn selv om API-nøkler er konfigurert gjennom <code>/connect</code>-kommandoen.</li>
+<li>Leverandørens modeller vises ikke i modellvalglisten.</li>
+</ul>
+<hr>
+<h3>Aktiverte leverandører</h3>
+<p>Du kan spesifisere en godkjenningsliste over leverandører gjennom alternativet <code>enabled_providers</code>. Når angitt, vil bare de angitte leverandørene være aktivert og alle andre vil bli ignorert.</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>Dette er nyttig når du vil begrense vanilla-closedcode til kun å bruke spesifikke leverandører i stedet for å deaktivere dem én etter én.</p>
+<aside class="aside aside-note">
+`disabled_providers` har prioritet over `enabled_providers`.
+</aside>
+Hvis en leverandør vises i både `enabled_providers` og `disabled_providers`, har `disabled_providers` prioritet for bakoverkompatibilitet.
+
+<hr>
+<h3>Eksperimentelt</h3>
+<p><code>experimental</code>-nøkkelen inneholder alternativer som er under aktiv utvikling.</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+Eksperimentelle alternativer er ikke stabile. De kan endres eller fjernes uten varsel.
+</aside>
+---
+
+<h2>Variabler</h2>
+<p>Du kan bruke variabelerstatning i konfigurasjonsfilene dine for å referere til miljøvariabler og filinnhold.</p>
+<hr>
+<h3>Miljøvariabler</h3>
+<p>Bruk <code>{env:VARIABLE_NAME}</code> for å erstatte miljøvariabler:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Hvis miljøvariabelen ikke er angitt, vil den bli erstattet med en tom streng.</p>
+<hr>
+<h3>Filer</h3>
+<p>Bruk <code>{file:path/to/file}</code> for å erstatte innholdet i en fil:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Filbaner kan være:</p>
+<ul>
+<li>I forhold til konfigurasjonsfilkatalogen</li>
+<li>Eller absolutte baner som begynner med <code>/</code> eller <code>~</code></li>
+</ul>
+<p>Disse er nyttige for:</p>
+<ul>
+<li>Oppbevaring av sensitive data som API-nøkler i separate filer.</li>
+<li>Inkludert store instruksjonsfiler uten å rote konfigurasjonen din.</li>
+<li>Deling av vanlige konfigurasjonsbiter på tvers av flere konfigurasjonsfiler.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

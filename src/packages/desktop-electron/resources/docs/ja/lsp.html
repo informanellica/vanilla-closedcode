@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSPサーバー — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode は LSP サーバーと統合します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/lsp.html">English</option>
+      <option value="../ar/lsp.html">العربية</option>
+      <option value="../bs/lsp.html">Bosanski</option>
+      <option value="../da/lsp.html">Dansk</option>
+      <option value="../de/lsp.html">Deutsch</option>
+      <option value="../es/lsp.html">Español</option>
+      <option value="../fr/lsp.html">Français</option>
+      <option value="../it/lsp.html">Italiano</option>
+      <option value="../ja/lsp.html" selected>日本語</option>
+      <option value="../ko/lsp.html">한국어</option>
+      <option value="../nb/lsp.html">Norsk</option>
+      <option value="../pl/lsp.html">Polski</option>
+      <option value="../pt-br/lsp.html">Português (BR)</option>
+      <option value="../ru/lsp.html">Русский</option>
+      <option value="../th/lsp.html">ไทย</option>
+      <option value="../tr/lsp.html">Türkçe</option>
+      <option value="../zh-cn/lsp.html">简体中文</option>
+      <option value="../zh-tw/lsp.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li class="active"><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>LSPサーバー</h1>
+      <p class="lede">vanilla-closedcode は LSP サーバーと統合します。</p>
+      <p>vanilla-closedcode は言語サーバープロトコル (LSP) と統合して、LLM がコードベースと対話できるようにします。診断を使用して LLM にフィードバックを提供します。</p>
+<hr>
+<h2>組み込み</h2>
+<p>vanilla-closedcode には、一般的な言語用のいくつかの組み込み LSP サーバーが付属しています。</p>
+<table>
+<thead>
+<tr>
+<th>LSP Server</th>
+<th>Extensions</th>
+<th>Requirements</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>astro</td>
+<td>.astro</td>
+<td>Auto-installs for Astro projects</td>
+</tr>
+<tr>
+<td>bash</td>
+<td>.sh, .bash, .zsh, .ksh</td>
+<td>Auto-installs bash-language-server</td>
+</tr>
+<tr>
+<td>clangd</td>
+<td>.c, .cpp, .cc, .cxx, .c++, .h, .hpp, .hh, .hxx, .h++</td>
+<td>Auto-installs for C/C++ projects</td>
+</tr>
+<tr>
+<td>csharp</td>
+<td>.cs</td>
+<td><code>.NET SDK</code> installed</td>
+</tr>
+<tr>
+<td>clojure-lsp</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td><code>clojure-lsp</code> command available</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> command available</td>
+</tr>
+<tr>
+<td>deno</td>
+<td>.ts, .tsx, .js, .jsx, .mjs</td>
+<td><code>deno</code> command available (auto-detects deno.json/deno.jsonc)</td>
+</tr>
+<tr>
+<td>elixir-ls</td>
+<td>.ex, .exs</td>
+<td><code>elixir</code> command available</td>
+</tr>
+<tr>
+<td>eslint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue</td>
+<td><code>eslint</code> dependency in project</td>
+</tr>
+<tr>
+<td>fsharp</td>
+<td>.fs, .fsi, .fsx, .fsscript</td>
+<td><code>.NET SDK</code> installed</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td><code>gleam</code> command available</td>
+</tr>
+<tr>
+<td>gopls</td>
+<td>.go</td>
+<td><code>go</code> command available</td>
+</tr>
+<tr>
+<td>hls</td>
+<td>.hs, .lhs</td>
+<td><code>haskell-language-server-wrapper</code> command available</td>
+</tr>
+<tr>
+<td>jdtls</td>
+<td>.java</td>
+<td><code>Java SDK (version 21+)</code> installed</td>
+</tr>
+<tr>
+<td>julials</td>
+<td>.jl</td>
+<td><code>julia</code> and <code>LanguageServer.jl</code> installed</td>
+</tr>
+<tr>
+<td>kotlin-ls</td>
+<td>.kt, .kts</td>
+<td>Auto-installs for Kotlin projects</td>
+</tr>
+<tr>
+<td>lua-ls</td>
+<td>.lua</td>
+<td>Auto-installs for Lua projects</td>
+</tr>
+<tr>
+<td>nixd</td>
+<td>.nix</td>
+<td><code>nixd</code> command available</td>
+</tr>
+<tr>
+<td>ocaml-lsp</td>
+<td>.ml, .mli</td>
+<td><code>ocamllsp</code> command available</td>
+</tr>
+<tr>
+<td>oxlint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue, .astro, .svelte</td>
+<td><code>oxlint</code> dependency in project</td>
+</tr>
+<tr>
+<td>php intelephense</td>
+<td>.php</td>
+<td>Auto-installs for PHP projects</td>
+</tr>
+<tr>
+<td>prisma</td>
+<td>.prisma</td>
+<td><code>prisma</code> command available</td>
+</tr>
+<tr>
+<td>pyright</td>
+<td>.py, .pyi</td>
+<td><code>pyright</code> dependency installed</td>
+</tr>
+<tr>
+<td>ruby-lsp (rubocop)</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>ruby</code> and <code>gem</code> commands available</td>
+</tr>
+<tr>
+<td>rust</td>
+<td>.rs</td>
+<td><code>rust-analyzer</code> command available</td>
+</tr>
+<tr>
+<td>sourcekit-lsp</td>
+<td>.swift, .objc, .objcpp</td>
+<td><code>swift</code> installed (<code>xcode</code> on macOS)</td>
+</tr>
+<tr>
+<td>svelte</td>
+<td>.svelte</td>
+<td>Auto-installs for Svelte projects</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>Auto-installs from GitHub releases</td>
+</tr>
+<tr>
+<td>tinymist</td>
+<td>.typ, .typc</td>
+<td>Auto-installs from GitHub releases</td>
+</tr>
+<tr>
+<td>typescript</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts</td>
+<td><code>typescript</code> dependency in project</td>
+</tr>
+<tr>
+<td>vue</td>
+<td>.vue</td>
+<td>Auto-installs for Vue projects</td>
+</tr>
+<tr>
+<td>yaml-ls</td>
+<td>.yaml, .yml</td>
+<td>Auto-installs Red Hat yaml-language-server</td>
+</tr>
+<tr>
+<td>zls</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> command available</td>
+</tr>
+</tbody></table>
+<p>上記のファイル拡張子のいずれかが検出され、要件が満たされると、LSP サーバーは自動的に有効になります。</p>
+<aside class="aside aside-note">
+`CLOSEDCODE_DISABLE_LSP_DOWNLOAD` 環境変数を `true` に設定すると、LSP サーバーの自動ダウンロードを無効にできます。
+</aside>
+---
+
+<h2>仕組み</h2>
+<p>vanilla-closedcode がファイルを開くと、次のようになります。</p>
+<ol>
+<li>有効なすべての LSP サーバーに対してファイル拡張子をチェックします。</li>
+<li>適切な LSP サーバーがまだ実行されていない場合は開始します。</li>
+</ol>
+<hr>
+<h2>設定</h2>
+<p>vanilla-closedcode 設定の <code>lsp</code> セクションを通じて LSP サーバーをカスタマイズできます。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {}
+}
+</code></pre>
+<p>各 LSP サーバーは以下をサポートします。</p>
+<table>
+<thead>
+<tr>
+<th>プロパティ</th>
+<th>タイプ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>ブール値</td>
+<td>LSP サーバーを無効にするには、これを <code>true</code> に設定します。</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>文字列[]</td>
+<td>LSP サーバーを起動するコマンド</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>文字列[]</td>
+<td>この LSP サーバーが処理するファイル拡張子</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>オブジェクト</td>
+<td>サーバーの起動時に設定する環境変数</td>
+</tr>
+<tr>
+<td><code>initialization</code></td>
+<td>オブジェクト</td>
+<td>LSP サーバーに送信する初期化オプション</td>
+</tr>
+</tbody></table>
+<p>いくつかの例を見てみましょう。</p>
+<hr>
+<h3>環境変数</h3>
+<p>LSP サーバーの起動時に <code>env</code> プロパティを使用して環境変数を設定します。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;rust&quot;: {
+      &quot;env&quot;: {
+        &quot;RUST_LOG&quot;: &quot;debug&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>初期化オプション</h3>
+<p><code>initialization</code> プロパティを使用して、初期化オプションを LSP サーバーに渡します。これらは、LSP <code>initialize</code> リクエスト中に送信されるサーバー固有の設定です。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;initialization&quot;: {
+        &quot;preferences&quot;: {
+          &quot;importModuleSpecifierPreference&quot;: &quot;relative&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+初期化オプションは LSP サーバーによって異なります。利用可能なオプションについては、LSP サーバーのドキュメントを確認してください。
+</aside>
+---
+
+<h3>LSPサーバーの無効化</h3>
+<p><strong>すべて</strong> LSP サーバーをグローバルに無効にするには、<code>lsp</code> を <code>false</code> に設定します。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: false
+}
+</code></pre>
+<p><strong>特定</strong> LSP サーバーを無効にするには、<code>disabled</code> を <code>true</code> に設定します。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>カスタム LSP サーバー</h3>
+<p>コマンドとファイル拡張子を指定して、カスタム LSP サーバーを追加できます。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;custom-lsp&quot;: {
+      &quot;command&quot;: [&quot;custom-lsp-server&quot;, &quot;--stdio&quot;],
+      &quot;extensions&quot;: [&quot;.custom&quot;]
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>追加情報</h2>
+<h3>PHP Intelephense</h3>
+<p>PHP Intelephense は、ライセンスキーを通じてプレミアム機能を提供します。ライセンスキーを指定するには、次の場所にあるテキストファイルにキー (のみ) を配置します。</p>
+<ul>
+<li>macOS/Linux の場合: <code>$HOME/intelephense/license.txt</code></li>
+<li>Windows の場合: <code>%USERPROFILE%/intelephense/license.txt</code></li>
+</ul>
+<p>ファイルにはライセンスキーのみが含まれており、追加のコンテンツは含まれていません。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,773 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sunucu — vanilla-closedcode docs</title>
+  <meta name="description" content="closedcode sunucusuyla HTTP uzerinden etkilesin.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html" selected>Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Sunucu</h1>
+      <p class="lede">closedcode sunucusuyla HTTP uzerinden etkilesin.</p>
+      <p><code>closedcode serve</code> komutu, closedcode istemcisinin kullanabileceği bir OpenAPI endpoint&#39;i açan headless bir HTTP sunucusu çalıştırır.</p>
+<hr>
+<h3>Kullanım</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>Seçenekler</h4>
+<table>
+<thead>
+<tr>
+<th>Bayrak</th>
+<th>Açıklama</th>
+<th>Varsayılan</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>Dinlenecek bağlantı noktası</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>Dinlenecek ana bilgisayar adı</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>mDNS keşfini etkinleştir</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>mDNS hizmeti için özel alan adı</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>İzin verilecek ek tarayıcı kaynakları (origin)</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> birden fazla kez geçilebilir:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>Kimlik Doğrulama</h3>
+<p>Sunucuyu HTTP temel kimlik doğrulama (basic auth) ile korumak için <code>CLOSEDCODE_SERVER_PASSWORD</code> ayarlayın. Kullanıcı adı varsayılan olarak <code>closedcode</code> değeridir; değiştirmek isterseniz <code>CLOSEDCODE_SERVER_USERNAME</code> ayarlayabilirsiniz. Bu ayar hem <code>closedcode serve</code> hem de <code>closedcode web</code> için geçerlidir.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>Nasıl çalışır</h3>
+<p><code>closedcode</code> çalıştırdığınızda hem TUI hem de sunucu başlar. TUI, sunucuyla konuşan istemci tarafıdır.
+Sunucu bir OpenAPI 3.1 spesifikasyon uç noktası açar. Bu uç nokta <a href="/docs/sdk">SDK</a> üretiminde de kullanılır.</p>
+<aside class="aside aside-tip">
+closedcode ile programatik etkileşim için closedcode sunucusunu kullanın.
+</aside>
+Bu mimari, closedcode'un birden fazla istemciyi desteklemesini ve programatik kullanımları mümkün kılmasını sağlar.
+
+<p><code>closedcode serve</code> ile bağımsız bir sunucu başlatabilirsiniz. closedcode TUI açıksa, <code>closedcode serve</code> yeni bir sunucu başlatır.</p>
+<hr>
+<h4>Mevcut sunucuya bağlanın</h4>
+<p>TUI başlarken rastgele bir port ve hostname atanır. Bunun yerine <code>--hostname</code> ve <code>--port</code> <a href="/docs/cli">bayraklarını</a> verebilirsiniz.</p>
+<p><a href="#tui"><code>/tui</code></a> uç noktası sunucu üzerinden TUI&#39;yi sürmek için kullanılabilir. Örneğin bir istemi önceden doldurabilir veya çalıştırabilirsiniz. Bu kurulum closedcode <a href="/docs/ide">IDE</a> eklentileri tarafından kullanılır.</p>
+<hr>
+<h2>Spesifikasyon</h2>
+<p>Sunucu, şu adreste görülebilen bir OpenAPI 3.1 spesifikasyonu yayınlar:</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>Örneğin <code>http://localhost:4096/doc</code>. İstemci oluşturmak, istek/yanit tiplerini incelemek veya Swagger gezgininde açmak için bu spec&#39;i kullanın.</p>
+<hr>
+<h2>API&#39;ler</h2>
+<p>closedcode sunucusu aşağıdaki API&#39;leri sunar.</p>
+<hr>
+<h3>Global</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>Sunucu sağlığını ve sürümünü al</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>Küresel olayları al (SSE akışı)</td>
+<td>Olay akışı</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Proje</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>Tüm projeleri listele</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>Mevcut projeyi al</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Yol &amp; VCS</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>Mevcut yolu al</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>Mevcut proje için VCS bilgisini al</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Örnek (Instance)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>Mevcut örneği (instance) kapat</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Config</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>Yapılandırma bilgisini al</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>Yapılandırmayı güncelle</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>Sağlayıcıları ve varsayılan modelleri listele</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Sağlayıcı (Provider)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>Tüm sağlayıcıları listele</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>Sağlayıcı kimlik doğrulama yöntemlerini al</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>OAuth kullanarak bir sağlayıcıyı yetkilendir</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>Bir sağlayıcı için OAuth geri çağrısını işle</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Oturumlar (Sessions)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Notlar</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>Tüm oturumları listele</td>
+<td><a href={typesUrl}><code>Session[]</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>Yeni bir oturum oluştur</td>
+<td>gövde: <code>{ parentID?, title? }</code>, <a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>Tüm oturumlar için durumu al</td>
+<td><code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>Oturum ayrıntılarını al</td>
+<td><a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>Bir oturumu ve tüm verilerini sil</td>
+<td><code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>Oturum özelliklerini güncelle</td>
+<td>gövde: <code>{ title? }</code>, <a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>Bir oturumun alt oturumlarını al</td>
+<td><a href={typesUrl}><code>Session[]</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>Bir oturum için yapılacaklar listesini al</td>
+<td><a href={typesUrl}><code>Todo[]</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>Uygulamayı analiz et ve <code>AGENTS.md</code> oluştur</td>
+<td>gövde: <code>{ messageID, providerID, modelID }</code>, <code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>Mevcut bir oturumu bir mesajda çatalla</td>
+<td>gövde: <code>{ messageID? }</code>, <a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>Çalışan bir oturumu iptal et</td>
+<td><code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Bir oturumu paylaş</td>
+<td><a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Bir oturumun paylaşımını kaldır</td>
+<td><a href={typesUrl}><code>Session</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>Bu oturum için farkı (diff) al</td>
+<td>sorgu: <code>messageID?</code>, <a href={typesUrl}><code>FileDiff[]</code></a> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>Oturumu özetle</td>
+<td>gövde: <code>{ providerID, modelID }</code>, <code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>Bir mesajı geri al</td>
+<td>gövde: <code>{ messageID, partID? }</code>, <code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>Geri alınan tüm mesajları geri yükle</td>
+<td><code>boolean</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>Bir izin isteğine yanıt ver</td>
+<td>gövde: <code>{ response, remember? }</code>, <code>boolean</code> döndürür</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Mesajlar</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Notlar</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Bir oturumdaki mesajları listele</td>
+<td>sorgu: <code>limit?</code>, <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Bir mesaj gönder ve yanıt bekle</td>
+<td>gövde: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>, <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code> döndürür</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>Mesaj ayrıntılarını al</td>
+<td><code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>Eşzamansız bir mesaj gönder (bekleme yok)</td>
+<td>gövde: <code>/session/:id/message</code> ile aynı, <code>204 No Content</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>Bir eğik çizgi (slash) komutu çalıştır</td>
+<td>gövde: <code>{ messageID?, agent?, model?, command, arguments }</code>, <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code> döndürür</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>Bir kabuk komutu çalıştır</td>
+<td>gövde: <code>{ agent, model?, command }</code>, <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code> döndürür</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Komutlar</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>Tüm komutları listele</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Dosyalar</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>Dosyalarda metin ara</td>
+<td><code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code> içeren eşleşme nesneleri dizisi</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>Dosya ve dizinleri isme göre bul</td>
+<td><code>string[]</code> (yollar)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>Çalışma alanı sembollerini bul</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>Dosya ve dizinleri listele</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>Bir dosyayı oku</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>İzlenen dosyalar için durumu al</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> sorgu parametreleri</h4>
+<ul>
+<li><code>query</code> (gerekli) - arama metni (bulanık eşleşme)</li>
+<li><code>type</code> (isteğe bağlı) - sonuçları <code>&quot;file&quot;</code> veya <code>&quot;directory&quot;</code> ile sınırlama</li>
+<li><code>directory</code> (isteğe bağlı) - arama için proje kökünü geçersiz kılma</li>
+<li><code>limit</code> (isteğe bağlı) - en fazla sonuç (1-200)</li>
+<li><code>dirs</code> (isteğe bağlı) - eski bayrak (<code>&quot;false&quot;</code> sadece dosyaları döndürür)</li>
+</ul>
+<hr>
+<h3>Araçlar (Deneysel)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>Tüm araç kimliklerini listele</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>Bir model için araçları JSON şemalarıyla listele</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, Biçimlendiriciler &amp; MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>LSP sunucu durumunu al</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>Biçimlendirici durumunu al</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>MCP sunucu durumunu al</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>Dinamik olarak MCP sunucusu ekle</td>
+<td>gövde: <code>{ name, config }</code>, MCP durum nesnesi döndürür</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Agent&#39;lar</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>Tüm mevcut agent&#39;ları listele</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Günlük (Logging)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>Günlük girdisi yaz. Gövde: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>İsteme metin ekle</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>Yardım iletişim kutusunu aç</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>Oturum seçiciyi aç</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>Tema seçiciyi aç</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>Model seçiciyi aç</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>Mevcut istemi gönder</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>İstemi temizle</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>Bir komut çalıştır (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>Toast bildirimi göster (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>Bir sonraki kontrol isteğini bekle</td>
+<td>Kontrol isteği nesnesi</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>Bir kontrol isteğine yanıt ver (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Kimlik Doğrulama (Auth)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>Kimlik bilgilerini ayarla. Gövde sağlayıcı şemasıyla eşleşmelidir</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Olaylar (Events)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>Sunucu tarafından gönderilen olay akışı (SSE). İlk olay <code>server.connected</code>, ardından veriyolu olayları</td>
+<td>Sunucu tarafından gönderilen olay akışı</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Dokümanlar (Docs)</h3>
+<table>
+<thead>
+<tr>
+<th>Yöntem</th>
+<th>Yol</th>
+<th>Açıklama</th>
+<th>Yanıt</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>OpenAPI 3.1 spesifikasyonu</td>
+<td>OpenAPI spec içeren HTML sayfası</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

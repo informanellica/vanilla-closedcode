@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Leverandører — vanilla-closedcode docs</title>
+  <meta name="description" content="Bruke en hvilken som helst LLM-leverandør i vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/providers.html">English</option>
+      <option value="../ar/providers.html">العربية</option>
+      <option value="../bs/providers.html">Bosanski</option>
+      <option value="../da/providers.html">Dansk</option>
+      <option value="../de/providers.html">Deutsch</option>
+      <option value="../es/providers.html">Español</option>
+      <option value="../fr/providers.html">Français</option>
+      <option value="../it/providers.html">Italiano</option>
+      <option value="../ja/providers.html">日本語</option>
+      <option value="../ko/providers.html">한국어</option>
+      <option value="../nb/providers.html" selected>Norsk</option>
+      <option value="../pl/providers.html">Polski</option>
+      <option value="../pt-br/providers.html">Português (BR)</option>
+      <option value="../ru/providers.html">Русский</option>
+      <option value="../th/providers.html">ไทย</option>
+      <option value="../tr/providers.html">Türkçe</option>
+      <option value="../zh-cn/providers.html">简体中文</option>
+      <option value="../zh-tw/providers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li class="active"><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Leverandører</h1>
+      <p class="lede">Bruke en hvilken som helst LLM-leverandør i vanilla-closedcode.</p>
+      <p>vanilla-closedcode bruker <a href="https://ai-sdk.dev/">AI SDK</a> og <a href="https://models.dev">Models.dev</a> for å støtte <strong>75+ LLM leverandører</strong> og den støtter kjøring av lokale modeller.</p>
+<p>For å legge til en leverandør må du:</p>
+<ol>
+<li>Legg til API-nøkkelen for leverandøren ved å bruke kommandoen <code>/connect</code>.</li>
+<li>Konfigurer leverandøren i vanilla-closedcode-konfigurasjonen.</li>
+</ol>
+<hr>
+<h3>Legitimasjon</h3>
+<p>Når du legger til en leverandørs API-nøkler med <code>/connect</code>-kommandoen, lagres de
+i <code>~/.local/share/closedcode/auth.json</code>.</p>
+<hr>
+<h3>Konfigurasjon</h3>
+<p>Du kan tilpasse leverandørene gjennom <code>provider</code>-delen i vanilla-closedcode
+konfig.</p>
+<hr>
+<h4>Base-URL</h4>
+<p>Du kan tilpasse base-URL-en for enhver leverandør ved å angi alternativet <code>baseURL</code>. Dette er nyttig når du bruker proxy-tjenester eller tilpassede endepunkter.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.anthropic.com/v1&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Katalog</h2>
+<p>La oss se på noen av leverandørene i detalj. Hvis du vil legge til en leverandør til
+liste, åpne gjerne en PR.</p>
+<aside class="aside aside-note">
+Ser du ikke en leverandør her? Send inn en PR.
+</aside>
+---
+
+<h3>302.AI</h3>
+<ol>
+<li><p>Gå over til <a href="https://302.ai/">302.AI-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>302.AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn 302.AI API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Amazon Bedrock</h3>
+<p>Slik bruker du Amazon Bedrock med vanilla-closedcode:</p>
+<ol>
+<li><p>Gå over til <strong>modellkatalogen</strong> i Amazon Bedrock-konsollen og be om
+tilgang til modellene du ønsker.</p>
+<p>:::tip
+Du må ha tilgang til modellen du ønsker i Amazon Bedrock.
+:::</p>
+</li>
+<li><p><strong>Konfigurer autentisering</strong> ved å bruke en av følgende metoder:</p>
+<h4>Miljøvariabler (hurtigstart)</h4>
+<p>Angi en av disse miljøvariablene mens du kjører vanilla-closedcode:</p>
+<pre><code class="language-bash"># Option 1: Using AWS access keys
+AWS_ACCESS_KEY_ID=XXX AWS_SECRET_ACCESS_KEY=YYY closedcode
+
+# Option 2: Using named AWS profile
+AWS_PROFILE=my-profile closedcode
+
+# Option 3: Using Bedrock bearer token
+AWS_BEARER_TOKEN_BEDROCK=XXX closedcode
+</code></pre>
+<p>Eller legg dem til bash-profilen din:</p>
+<pre><code class="language-bash">export AWS_PROFILE=my-dev-profile
+export AWS_REGION=us-east-1
+</code></pre>
+<h4>Konfigurasjonsfil (anbefalt)</h4>
+<p>For prosjektspesifikk eller vedvarende konfigurasjon, bruk <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>Tilgjengelige alternativer:</strong></p>
+<ul>
+<li><code>region</code> - AWS region (f.eks. <code>us-east-1</code>, <code>eu-west-1</code>)</li>
+<li><code>profile</code> - AWS navngitt profil fra <code>~/.aws/credentials</code></li>
+<li><code>endpoint</code> - Egendefinert endepunkt URL for VPC-endepunkter (alias for generisk <code>baseURL</code>-alternativ)</li>
+</ul>
+<p>:::tip
+Alternativer for konfigurasjonsfil har forrang over miljøvariabler.
+:::</p>
+<h4>Avansert: VPC-endepunkter</h4>
+<p>Hvis du bruker VPC-endepunkter for Bedrock:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;production&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>:::note
+Alternativet <code>endpoint</code> er et alias for det generiske alternativet <code>baseURL</code>, ved å bruke AWS-spesifikk terminologi. Hvis både <code>endpoint</code> og <code>baseURL</code> er spesifisert, har <code>endpoint</code> forrang.
+:::</p>
+<h4>Autentiseringsmetoder</h4>
+<ul>
+<li><strong><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code></strong>: Opprett en IAM-bruker og generer tilgangsnøkler i AWS-konsollen</li>
+<li><strong><code>AWS_PROFILE</code></strong>: Bruk navngitte profiler fra <code>~/.aws/credentials</code>. Konfigurer først med <code>aws configure --profile my-profile</code> eller <code>aws sso login</code></li>
+<li><strong><code>AWS_BEARER_TOKEN_BEDROCK</code></strong>: Generer langsiktige API-nøkler fra Amazon Bedrock-konsollen</li>
+<li><strong><code>AWS_WEB_IDENTITY_TOKEN_FILE</code> / <code>AWS_ROLE_ARN</code></strong>: For EKS IRSA (IAM roller for tjenestekontoer) eller andre Kubernetes-miljøer med OIDC føderasjon. Disse miljøvariablene injiseres automatisk av Kubernetes når du bruker tjenestekontokommentarer.</li>
+</ul>
+<h4>Autentiseringsprioritet</h4>
+<p>Amazon Bedrock bruker følgende autentiseringsprioritet:</p>
+<ol>
+<li><strong>Bearer Token</strong> - <code>AWS_BEARER_TOKEN_BEDROCK</code> miljøvariabel eller token fra kommandoen <code>/connect</code></li>
+<li><strong>AWS legitimasjonskjede</strong> - profil, tilgangsnøkler, delt legitimasjon, IAM roller, nettidentitetstokener (EKS IRSA), forekomstmetadata</li>
+</ol>
+<p>:::note
+Når et bærertoken er angitt (via <code>/connect</code> eller <code>AWS_BEARER_TOKEN_BEDROCK</code>), har det forrang over alle AWS legitimasjonsmetoder inkludert konfigurerte profiler.
+:::</p>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge modellen du ønsker.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-note">
+For egendefinerte slutningsprofiler, bruk modellen og leverandørnavnet i nøkkelen og sett egenskapen `id` til arn. Dette sikrer korrekt caching:
+
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      // ...
+      &quot;models&quot;: {
+        &quot;anthropic-claude-sonnet-4.5&quot;: {
+          &quot;id&quot;: &quot;arn:aws:bedrock:us-east-1:xxx:application-inference-profile/yyy&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</aside>
+---
+
+<h3>Anthropic</h3>
+<ol>
+<li><p>Når du har registrert deg, kjør kommandoen <code>/connect</code> og velg Anthropic.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Her kan du velge alternativet <strong>Claude Pro/Max</strong> og det vil åpne nettleseren din
+og ber deg om å autentisere.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ Claude Pro/Max
+│ Create an API Key
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>Nå skal alle Anthropic-modellene være tilgjengelige når du bruker kommandoen <code>/models</code>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>:::info
+Å bruke Claude Pro/Max-abonnementet ditt i closedcode støttes ikke offisielt av <a href="https://anthropic.com">Anthropic</a>.
+:::</p>
+<h5>Bruke API-nøkler</h5>
+<p>Du kan også velge <strong>Opprett en API nøkkel</strong> hvis du ikke har et Pro/Max-abonnement. Den åpner også nettleseren din og ber deg logge på Anthropic og gi deg en kode du kan lime inn i terminalen din.</p>
+<p>Eller hvis du allerede har en API-nøkkel, kan du velge <strong>Angi API-nøkkel manuelt</strong> og lime den inn i terminalen.</p>
+<hr>
+<h3>Atomic Chat</h3>
+<p>Du kan konfigurere closedcode til å bruke lokale modeller via <a href="https://atomic.chat">Atomic Chat</a> — et skrivebordsprogram som kjører lokale LLM-er bak en OpenAI-kompatibel API-server (standard endepunkt <code>http://127.0.0.1:1337/v1</code>).</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;atomic-chat&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Atomic Chat (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1337/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;&lt;your-model-id&gt;&quot;: {
+          &quot;name&quot;: &quot;&lt;your-model-name&gt;&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>I dette eksempelet:</p>
+<ul>
+<li><code>atomic-chat</code> er den egendefinerte leverandør-ID-en. Det kan være en hvilken som helst streng.</li>
+<li><code>npm</code> spesifiserer pakken som skal brukes for denne leverandøren. Her brukes <code>@ai-sdk/openai-compatible</code> for enhver OpenAI-kompatibel API.</li>
+<li><code>name</code> er visningsnavnet for leverandøren i grensesnittet.</li>
+<li><code>options.baseURL</code> er endepunktet for den lokale serveren. Endre vert og port for å matche Atomic Chat-oppsettet ditt.</li>
+<li><code>models</code> er en kartlegging av modell-IDer til visningsnavnene deres. Hver ID må samsvare med <code>id</code> som returneres av <code>GET /v1/models</code> — kjør <code>curl http://127.0.0.1:1337/v1/models</code> for å liste ID-ene som er lastet inn i Atomic Chat nå.</li>
+</ul>
+<aside class="aside aside-tip">
+Hvis verktøykall ikke fungerer godt, velg en lastet modell med god tool calling-støtte (for eksempel en Qwen-Coder- eller DeepSeek-Coder-variant).
+</aside>
+---
+
+<h3>Azure OpenAI</h3>
+<aside class="aside aside-note">
+Hvis du støter på «Beklager, men jeg kan ikke hjelpe med den forespørselen»-feil, kan du prøve å endre innholdsfilteret fra **DefaultV2** til **Default** i Azure-ressursen.
+</aside>
+1. Gå over til [Azure-portalen](https://portal.azure.com/) og lag en **Azure OpenAI**-ressurs. Du trenger:
+   - **Ressursnavn**: Dette blir en del av API-endepunktet (`https://RESOURCE_NAME.openai.azure.com/`)
+   - **API nøkkel**: Enten `KEY 1` eller `KEY 2` fra ressursen din
+
+<ol start="2">
+<li><p>Gå til <a href="https://ai.azure.com/">Azure AI Foundry</a> og distribuer en modell.</p>
+<p>:::note
+Distribusjonsnavnet må samsvare med modellnavnet for at vanilla-closedcode skal fungere skikkelig.
+:::</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Azure</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Angi ressursnavnet ditt som en miljøvariabel:</p>
+<pre><code class="language-bash">AZURE_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>Eller legg den til bash-profilen din:</p>
+<pre><code class="language-bash">export AZURE_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge den distribuerte modellen.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Azure Cognitive Services</h3>
+<ol>
+<li><p>Gå over til <a href="https://portal.azure.com/">Azure-portalen</a> og lag en <strong>Azure OpenAI</strong>-ressurs. Du trenger:</p>
+<ul>
+<li><strong>Ressursnavn</strong>: Dette blir en del av API-endepunktet (<code>https://AZURE_COGNITIVE_SERVICES_RESOURCE_NAME.cognitiveservices.azure.com/</code>)</li>
+<li><strong>API nøkkel</strong>: Enten <code>KEY 1</code> eller <code>KEY 2</code> fra ressursen din</li>
+</ul>
+</li>
+<li><p>Gå til <a href="https://ai.azure.com/">Azure AI Foundry</a> og distribuer en modell.</p>
+<p>:::note
+Distribusjonsnavnet må samsvare med modellnavnet for at vanilla-closedcode skal fungere skikkelig.
+:::</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Azure Cognitive Services</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Angi ressursnavnet ditt som en miljøvariabel:</p>
+<pre><code class="language-bash">AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>Eller legg den til bash-profilen din:</p>
+<pre><code class="language-bash">export AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge den distribuerte modellen.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Baseten</h3>
+<ol>
+<li><p>Gå over til <a href="https://app.baseten.co/">Baseten</a>, opprett en konto og generer en API nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Baseten</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn din Baseten API nøkkel.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cerebras</h3>
+<ol>
+<li><p>Gå over til <a href="https://inference.cerebras.ai/">Cerebras-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Cerebras</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Cerebras API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Qwen 3 Coder 480B</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cloudflare AI Gateway</h3>
+<p>Cloudflare AI Gateway lar deg få tilgang til modeller fra OpenAI, Anthropic, Workers AI og mer gjennom et enhetlig endepunkt. Med <a href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/">Unified Billing</a> trenger du ikke separate API-nøkler for hver leverandør.</p>
+<ol>
+<li><p>Gå over til <a href="https://dash.cloudflare.com/">Cloudflare-dashbordet</a>, naviger til <strong>AI</strong> &gt; <strong>AI Gateway</strong>, og lag en ny gateway.</p>
+</li>
+<li><p>Angi konto ID og gateway ID som miljøvariabler.</p>
+<pre><code class="language-bash">export CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+export CLOUDFLARE_GATEWAY_ID=your-gateway-id
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Cloudflare AI Gateway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Cloudflare API-tokenet ditt.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+<p>Eller angi den som en miljøvariabel.</p>
+<pre><code class="language-bash">export CLOUDFLARE_API_TOKEN=your-api-token
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Du kan også legge til modeller gjennom vanilla-closedcode-konfigurasjonen.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;cloudflare-ai-gateway&quot;: {
+      &quot;models&quot;: {
+        &quot;openai/gpt-4o&quot;: {},
+        &quot;anthropic/claude-sonnet-4&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cortecs</h3>
+<ol>
+<li><p>Gå over til <a href="https://cortecs.ai/">Cortecs-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Cortecs</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Cortecs API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>DeepSeek</h3>
+<ol>
+<li><p>Gå over til <a href="https://platform.deepseek.com/">DeepSeek-konsollen</a>, opprett en konto og klikk på <strong>Opprett ny API-nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>DeepSeek</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn DeepSeek API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en DeepSeek-modell som <em>DeepSeek V4 Pro</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Deep Infra</h3>
+<ol>
+<li><p>Gå over til <a href="https://deepinfra.com/dash">Deep Infra-dashbordet</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Deep Infra</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Deep Infra API nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Firmware</h3>
+<ol>
+<li><p>Gå over til <a href="https://app.firmware.ai/signup">Firmware dashboard</a>, opprett en konto og generer en API nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Firmware</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn firmware API nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Fireworks AI</h3>
+<ol>
+<li><p>Gå over til <a href="https://app.fireworks.ai/">Fireworks AI-konsollen</a>, opprett en konto og klikk på <strong>Create API Key</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Fireworks AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Fireworks AI API nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>GitLab Duo</h3>
+<p>GitLab Duo gir AI-drevet agentchat med native verktøyoppringingsfunksjoner gjennom GitLabs Anthropic-proxy.</p>
+<ol>
+<li><p>Kjør kommandoen <code>/connect</code> og velg GitLab.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Velg autentiseringsmetoden din:</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ OAuth (Recommended)
+│ Personal Access Token
+└
+</code></pre>
+<h4>Bruke OAuth (anbefalt)</h4>
+<p>Velg <strong>OAuth</strong> og nettleseren din åpnes for autorisasjon.</p>
+<h4>Bruker personlig tilgangstoken</h4>
+<ol>
+<li>Gå til <a href="https://gitlab.com/-/user_settings/personal_access_tokens">GitLab User Settings &gt; Access Tokens</a></li>
+<li>Klikk på <strong>Legg til nytt token</strong></li>
+<li>Navn: <code>vanilla-closedcode</code>, omfang: <code>api</code></li>
+<li>Kopier tokenet (starter med <code>glpat-</code>)</li>
+<li>Skriv den inn i terminalen</li>
+</ol>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å se tilgjengelige modeller.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Tre Claude-baserte modeller er tilgjengelige:</p>
+<ul>
+<li><strong>duo-chat-haiku-4-5</strong> (standard) - Raske svar for raske oppgaver</li>
+<li><strong>duo-chat-sonnet-4-5</strong> - Balansert ytelse for de fleste arbeidsflyter</li>
+<li><strong>duo-chat-opus-4-5</strong> - Mest egnet for kompleks analyse</li>
+</ul>
+</li>
+</ol>
+<aside class="aside aside-note">
+Du kan også spesifisere 'GITLAB_TOKEN' miljøvariabel hvis du ikke vil
+for å lagre token i vanilla-closedcode auth-lagring.
+</aside>
+##### Selvhostet GitLab
+
+<aside class="aside aside-note">
+<p class="aside-label">Merknad om samsvar</p>
+vanilla-closedcode uses a small model for some AI tasks like generating the session title. To keep these tasks on your own GitLab-hosted instance, set <code>small_model</code> in your <code>closedcode.json</code> and disable session sharing:
+
+<pre><code class="language-json">{
+  &quot;small_model&quot;: &quot;gitlab/duo-chat-haiku-4-5&quot;,
+  &quot;share&quot;: &quot;disabled&quot;
+}
+</code></pre>
+</aside>
+For selvhostede GitLab-forekomster:
+
+<pre><code class="language-bash">
+</code></pre>
+<p>Hvis forekomsten din kjører en tilpasset AI-gateway:</p>
+<pre><code class="language-bash">GITLAB_AI_GATEWAY_URL=https://ai-gateway.company.com
+</code></pre>
+<p>Eller legg til bash-profilen din:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<aside class="aside aside-note">
+GitLab-administratoren din må aktivere følgende:
+
+<ol>
+<li><a href="https://docs.gitlab.com/user/duo_agent_platform/turn_on_off/">Duo Agent Platform</a> for brukeren, gruppen eller forekomsten</li>
+<li>Funksjonsflagg (via Rails-konsollen):<ul>
+<li><code>agent_platform_claude_code</code></li>
+<li><code>third_party_agents_enabled</code>
+:::</li>
+</ul>
+</li>
+</ol>
+<h5>OAuth for selvvertsbaserte forekomster</h5>
+<p>For å få Oauth til å fungere for din selvhostede forekomst, må du opprette
+en ny applikasjon (Innstillinger → Programmer) med
+tilbakeringing URL <code>http://127.0.0.1:8080/callback</code> og følgende omfang:</p>
+<ul>
+<li>api (Få tilgang til API på dine vegne)</li>
+<li>read_user (Les din personlige informasjon)</li>
+<li>read_repository (tillater skrivebeskyttet tilgang til depotet)</li>
+</ul>
+<p>Utsett deretter applikasjonen ID som miljøvariabel:</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Mer dokumentasjon på <a href="https://www.npmjs.com/package/opencode-gitlab-auth">opencode-gitlab-auth</a> hjemmeside.</p>
+<h5>Konfigurasjon</h5>
+<p>Tilpass gjennom <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;gitlab&quot;: {
+      &quot;options&quot;: {
+        &quot;instanceUrl&quot;: &quot;https://gitlab.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h5>GitLab API Verktøy (valgfritt, men sterkt anbefalt)</h5>
+<p>For å få tilgang til GitLab-verktøy (sammenslåingsforespørsler, problemer, pipelines, CI/CD, etc.):</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-gitlab-plugin&quot;]
+}
+</code></pre>
+<p>Denne plugin-en gir omfattende GitLab-repository-administrasjonsfunksjoner, inkludert MR-anmeldelser, problemsporing, pipeline-overvåking og mer.</p>
+<hr>
+<h3>GitHub Copilot</h3>
+<p>Slik bruker du GitHub Copilot-abonnementet med vanilla-closedcode:</p>
+<p>:::note
+Noen modeller kan trenge en <a href="https://github.com/features/copilot/plans">Pro+
+abonnement</a> å bruke.</p>
+<p>Noen modeller må aktiveres manuelt i <a href="https://docs.github.com/en/copilot/how-tos/use-ai-models/configure-access-to-ai-models#setup-for-individual-use">GitHub Copilot-innstillingene</a>.</p>
+</aside>
+1. Kjør kommandoen `/connect` og søk etter GitHub Copilot.
+
+<pre><code class="language-txt">/connect
+</code></pre>
+<ol start="2">
+<li><p>Naviger til <a href="https://github.com/login/device">github.com/login/device</a> og skriv inn koden.</p>
+<pre><code class="language-txt">┌ Login with GitHub Copilot
+│
+│ https://github.com/login/device
+│
+│ Enter code: 8F43-6FCF
+│
+└ Waiting for authorization...
+</code></pre>
+</li>
+<li><p>Kjør nå kommandoen <code>/models</code> for å velge modellen du ønsker.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Google Vertex AI</h3>
+<p>Slik bruker du Google Vertex AI med vanilla-closedcode:</p>
+<ol>
+<li><p>Gå over til <strong>Model Garden</strong> i Google Cloud Console og sjekk
+modeller tilgjengelig i din region.</p>
+<p>:::note
+Du må ha et Google Cloud-prosjekt med Vertex AI API aktivert.
+:::</p>
+</li>
+<li><p>Angi de nødvendige miljøvariablene:</p>
+<ul>
+<li><code>GOOGLE_CLOUD_PROJECT</code>: Google Cloud-prosjektet ditt ID</li>
+<li><code>VERTEX_LOCATION</code> (valgfritt): Regionen for verteks AI (standard til <code>global</code>)</li>
+<li>Autentisering (velg en):<ul>
+<li><code>GOOGLE_APPLICATION_CREDENTIALS</code>: Bane til tjenestekontoen JSON nøkkelfil</li>
+<li>Autentiser med gcloud CLI: <code>gcloud auth application-default login</code></li>
+</ul>
+</li>
+</ul>
+<p>Sett dem mens du kjører vanilla-closedcode.</p>
+<pre><code class="language-bash">GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json GOOGLE_CLOUD_PROJECT=your-project-id closedcode
+</code></pre>
+<p>Eller legg dem til på bash-profilen din.</p>
+<pre><code class="language-bash">export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export VERTEX_LOCATION=global
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-tip">
+`global`-regionen forbedrer tilgjengeligheten og reduserer feil uten ekstra kostnad. Bruk regionale endepunkter (f.eks. `us-central1`) for krav til dataopphold. [Finn ut mer](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models#regional_and_global_endpoints)
+</aside>
+3. Kjør kommandoen `/models` for å velge modellen du ønsker.
+
+<pre><code class="language-txt">/models
+</code></pre>
+<hr>
+<h3>Groq</h3>
+<ol>
+<li><p>Gå over til <a href="https://console.groq.com/">Groq-konsollen</a>, klikk på <strong>Create API Key</strong>, og kopier nøkkelen.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter Groq.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn API-nøkkelen for leverandøren.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge den du ønsker.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Hugging Face</h3>
+<p><a href="https://huggingface.co/docs/inference-providers">Hugging Face Inference Providers</a> gir tilgang til åpne modeller som støttes av 17+ leverandører.</p>
+<ol>
+<li><p>Gå over til <a href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained">Hugging Face-innstillinger</a> for å opprette et token med tillatelse til å ringe til inferensleverandører.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Hugging Face</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn ditt Hugging Face-token.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Kimi-K2-Instruct</em> eller <em>GLM-4.6</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a> er en LLM observerbarhetsplattform som gir logging, overvåking og analyser for AI-applikasjonene dine. Helicone AI Gateway ruter forespørslene dine til riktig leverandør automatisk basert på modellen.</p>
+<ol>
+<li><p>Gå over til <a href="https://helicone.ai">Helicone</a>, opprett en konto og generer en API nøkkel fra dashbordet.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Helicone</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Helicone API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>For flere leverandører og avanserte funksjoner som bufring og hastighetsbegrensning, sjekk <a href="https://docs.helicone.ai">Helicone-dokumentasjonen</a>.</p>
+<h4>Valgfrie konfigurasjoner</h4>
+<p>I tilfelle du ser en funksjon eller modell fra Helicone som ikke konfigureres automatisk gjennom vanilla-closedcode, kan du alltid konfigurere den selv.</p>
+<p>Her er <a href="https://helicone.ai/models">Helicone&#39;s Model Directory</a>, du trenger denne for å hente ID-ene til modellene du vil legge til.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>Egendefinerte headere</h4>
+<p>Helicone støtter tilpassede headere for funksjoner som bufring, brukersporing og øktadministrasjon. Legg dem til leverandørkonfigurasjonen din ved å bruke <code>options.headers</code>:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>Sesjonssporing</h5>
+<p>Helicones <a href="https://docs.helicone.ai/features/sessions">Sessions</a> funksjon lar deg gruppere relaterte LLM forespørsler sammen. Bruk <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a> plugin for automatisk å logge hver vanilla-closedcode-samtale som en økt i Helicone.</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>Legg den til i konfigurasjonen din.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>Programtillegget injiserer <code>Helicone-Session-Id</code> og <code>Helicone-Session-Name</code> headere i forespørslene dine. På Helicones Sessions-side vil du se hver vanilla-closedcode-samtale oppført som en separat økt.</p>
+<h5>Vanlige Helicone-headere</h5>
+<table>
+<thead>
+<tr>
+<th>Overskrift</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>Aktiver responsbufring (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>Spor beregninger etter bruker</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>Legg til egendefinerte egenskaper (f.eks. <code>Helicone-Property-Environment</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>Knytt forespørsler til spørsmålsversjoner</td>
+</tr>
+</tbody></table>
+<p>Se <a href="https://docs.helicone.ai/helicone-headers/header-directory">Helicone Header Directory</a> for alle tilgjengelige overskrifter.</p>
+<hr>
+<h3>llama.cpp</h3>
+<p>Du kan konfigurere vanilla-closedcode for å bruke lokale modeller gjennom <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a> llama-server-verktøyet.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;llama.cpp&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;llama-server (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:8080/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;qwen3-coder:a3b&quot;: {
+          &quot;name&quot;: &quot;Qwen3-Coder: a3b-30b (local)&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 128000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>I dette eksemplet:</p>
+<ul>
+<li><code>llama.cpp</code> er den tilpassede leverandøren ID. Dette kan være hvilken som helst streng du vil.</li>
+<li><code>npm</code> spesifiserer pakken som skal brukes for denne leverandøren. Her brukes <code>@ai-sdk/openai-compatible</code> for enhver OpenAI-kompatibel API.</li>
+<li><code>name</code> er visningsnavnet for leverandøren i UI.</li>
+<li><code>options.baseURL</code> er endepunktet for den lokale serveren.</li>
+<li><code>models</code> er et kart over modell-ID-er til deres konfigurasjoner. Modellnavnet vil vises i modellvalglisten.</li>
+</ul>
+<hr>
+<h3>IO.NET</h3>
+<p>IO.NET tilbyr 17 modeller optimert for ulike brukstilfeller:</p>
+<ol>
+<li><p>Gå over til <a href="https://ai.io.net/">IO.NET-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>IO.NET</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn nøkkelen IO.NET API.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>LM Studio</h3>
+<p>Du kan konfigurere vanilla-closedcode for å bruke lokale modeller gjennom LM Studio.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;lmstudio&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;LM Studio (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1234/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;google/gemma-3n-e4b&quot;: {
+          &quot;name&quot;: &quot;Gemma 3n-e4b (local)&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>I dette eksemplet:</p>
+<ul>
+<li><code>lmstudio</code> er den tilpassede leverandøren ID. Dette kan være hvilken som helst streng du vil.</li>
+<li><code>npm</code> spesifiserer pakken som skal brukes for denne leverandøren. Her brukes <code>@ai-sdk/openai-compatible</code> for enhver OpenAI-kompatibel API.</li>
+<li><code>name</code> er visningsnavnet for leverandøren i UI.</li>
+<li><code>options.baseURL</code> er endepunktet for den lokale serveren.</li>
+<li><code>models</code> er et kart over modell-ID-er til deres konfigurasjoner. Modellnavnet vil vises i modellvalglisten.</li>
+</ul>
+<hr>
+<h3>Moonshot AI</h3>
+<p>Slik bruker du Kimi K2 fra Moonshot AI:</p>
+<ol>
+<li><p>Gå over til <a href="https://platform.moonshot.ai/console">Moonshot AI-konsollen</a>, opprett en konto og klikk på <strong>Opprett API-nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Moonshot AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Moonshot API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge <em>Kimi K2</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>MiniMax</h3>
+<ol>
+<li><p>Gå over til <a href="https://platform.minimax.io/login">MiniMax API-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>MiniMax</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn MiniMax API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>M2.1</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Nebius Token Factory</h3>
+<ol>
+<li><p>Gå over til <a href="https://tokenfactory.nebius.com/">Nebius Token Factory-konsollen</a>, opprett en konto og klikk på <strong>Legg til nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Nebius Token Factory</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Nebius Token Factory API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Ollama</h3>
+<p>Du kan konfigurere vanilla-closedcode for å bruke lokale modeller gjennom Ollama.</p>
+<aside class="aside aside-tip">
+Ollama kan automatisk konfigurere seg selv for vanilla-closedcode. Se [Ollama-integrasjonsdokumentene](https://docs.ollama.com/integrations/opencode) for detaljer.
+</aside>
+```json title="closedcode.json" "ollama" {5, 6, 8, 10-14}
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "llama2": {
+          "name": "Llama 2"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>I dette eksemplet:</p>
+<ul>
+<li><code>ollama</code> er den tilpassede leverandøren ID. Dette kan være hvilken som helst streng du vil.</li>
+<li><code>npm</code> spesifiserer pakken som skal brukes for denne leverandøren. Her brukes <code>@ai-sdk/openai-compatible</code> for enhver OpenAI-kompatibel API.</li>
+<li><code>name</code> er visningsnavnet for leverandøren i UI.</li>
+<li><code>options.baseURL</code> er endepunktet for den lokale serveren.</li>
+<li><code>models</code> er et kart over modell-ID-er til deres konfigurasjoner. Modellnavnet vil vises i modellvalglisten.</li>
+</ul>
+<aside class="aside aside-tip">
+Hvis verktøykall ikke fungerer, prøv å øke `num_ctx` i Ollama. Start rundt 16k - 32k.
+</aside>
+---
+
+<h3>Ollama Cloud</h3>
+<p>Slik bruker du Ollama Cloud med vanilla-closedcode:</p>
+<ol>
+<li><p>Gå over til <a href="https://ollama.com/">https://ollama.com/</a> og logg på eller opprett en konto.</p>
+</li>
+<li><p>Naviger til <strong>Innstillinger</strong> &gt; <strong>Nøkler</strong> og klikk på <strong>Legg til API nøkkel</strong> for å generere en ny API nøkkel.</p>
+</li>
+<li><p>Kopier API-nøkkelen for bruk i vanilla-closedcode.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Ollama Cloud</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn din Ollama Cloud API nøkkel.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><strong>Viktig</strong>: Før du bruker skymodeller i vanilla-closedcode, må du hente modellinformasjonen lokalt:</p>
+<pre><code class="language-bash">ollama pull gpt-oss:20b-cloud
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge din Ollama Cloud-modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OpenAI</h3>
+<p>Vi anbefaler at du registrerer deg for <a href="https://chatgpt.com/pricing">ChatGPT Plus eller Pro</a>.</p>
+<ol>
+<li><p>Når du har registrert deg, kjør kommandoen <code>/connect</code> og velg OpenAI.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Her kan du velge alternativet <strong>ChatGPT Plus/Pro</strong> og det åpner nettleseren din
+og ber deg om å autentisere.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ ChatGPT Plus/Pro
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>Nå skal alle OpenAI-modellene være tilgjengelige når du bruker kommandoen <code>/models</code>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<h5>Bruke API-nøkler</h5>
+<p>Hvis du allerede har en API-nøkkel, kan du velge <strong>Angi API-nøkkel manuelt</strong> og lime den inn i terminalen.</p>
+<hr>
+<h3>OpenRouter</h3>
+<ol>
+<li><p>Gå over til <a href="https://openrouter.ai/settings/keys">OpenRouter-dashbordet</a>, klikk på <strong>Create API Key</strong>, og kopier nøkkelen.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter OpenRouter.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn API-nøkkelen for leverandøren.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Mange OpenRouter-modeller er forhåndslastet som standard, kjør kommandoen <code>/models</code> for å velge den du ønsker.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Du kan også legge til flere modeller gjennom vanilla-closedcode-konfigurasjonen.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>Du kan også tilpasse dem gjennom vanilla-closedcode-konfigurasjonen. Her er et eksempel på å spesifisere en leverandør</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP AI Core</h3>
+<p>SAP AI Core gir tilgang til 40+ modeller fra OpenAI, Anthropic, Google, Amazon, Meta, Mistral og AI21 gjennom en enhetlig plattform.</p>
+<ol>
+<li><p>Gå til din <a href="https://account.hana.ondemand.com/">SAP BTP Cockpit</a>, naviger til din SAP AI kjernetjenesteforekomst, og lag en tjenestenøkkel.</p>
+<p>:::tip
+Tjenestenøkkelen er et JSON-objekt som inneholder <code>clientid</code>, <code>clientsecret</code>, <code>url</code> og <code>serviceurls.AI_API_URL</code>. Du finner AI kjerneforekomsten din under <strong>Tjenester</strong> &gt; <strong>Forekomster og abonnementer</strong> i BTP Cockpit.
+:::</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>SAP AI Core</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn tjenestenøkkelen JSON.</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>Eller angi miljøvariabelen <code>AICORE_SERVICE_KEY</code>:</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>Eller legg den til bash-profilen din:</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>Angi eventuelt distribusjon ID og ressursgruppe:</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+Disse innstillingene er valgfrie og bør konfigureres i henhold til SAP AI kjerneoppsettet.
+:::</p>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge fra 40+ tilgjengelige modeller.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OVHcloud AI Endpoints</h3>
+<ol>
+<li><p>Gå over til <a href="https://ovh.com/manager">OVHcloud-panelet</a>. Naviger til <code>Public Cloud</code>-delen, <code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code> og i <code>API Keys</code>-fanen klikker du på <strong>Opprett en ny API-nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>OVHcloud AI Endpoints</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn OVHcloud AI Endpoints API nøkkel.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>gpt-oss-120b</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Scaleway</h3>
+<p>Slik bruker du <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative APIs</a> med vanilla-closedcode:</p>
+<ol>
+<li><p>Gå over til <a href="https://console.scaleway.com/iam/api-keys">Scaleway Console IAM innstillinger</a> for å generere en ny API nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Scaleway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Scaleway API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>devstral-2-123b-instruct-2512</em> eller <em>gpt-oss-120b</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Together AI</h3>
+<ol>
+<li><p>Gå over til <a href="https://api.together.ai">Together AI-konsollen</a>, opprett en konto og klikk på <strong>Legg til nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Together AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Together AI API nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Venice AI</h3>
+<ol>
+<li><p>Gå over til <a href="https://venice.ai">Venice AI-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Venice AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Venice AI API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Llama 3.3 70B</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Vercel AI Gateway</h3>
+<p>Vercel AI Gateway lar deg få tilgang til modeller fra OpenAI, Anthropic, Google, xAI og mer gjennom et enhetlig endepunkt. Modeller tilbys til listepris uten påslag.</p>
+<ol>
+<li><p>Gå over til <a href="https://vercel.com/">Vercel dashboard</a>, naviger til fanen <strong>AI Gateway</strong>, og klikk på <strong>API nøkler</strong> for å opprette en ny API nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Vercel AI Gateway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Vercel AI Gateway API nøkkel.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>Du kan også tilpasse modeller gjennom vanilla-closedcode-konfigurasjonen. Her er et eksempel på spesifisering av leverandørrutingsrekkefølge.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Noen nyttige rutealternativer:</p>
+<table>
+<thead>
+<tr>
+<th>Alternativ</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>Providersekvens for å prøve</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>Begrens til spesifikke leverandører</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>Bruk kun leverandører med null retningslinjer for datalagring</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p>Gå over til <a href="https://console.x.ai/">xAI-konsollen</a>, opprett en konto og generer en API-nøkkel.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>xAI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn xAI API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>Grok Beta</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Z.AI</h3>
+<ol>
+<li><p>Gå over til <a href="https://z.ai/manage-apikey/apikey-list">Z.AI API-konsollen</a>, opprett en konto og klikk på <strong>Opprett en ny API-nøkkel</strong>.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Z.AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p>Hvis du abonnerer på <strong>GLM Coding Plan</strong>, velg <strong>Z.AI Coding Plan</strong>.</p>
+</li>
+<li><p>Skriv inn Z.AI API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell som <em>GLM-4.7</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>Egendefinert leverandør</h2>
+<p>Slik legger du til en <strong>OpenAI-kompatibel</strong>-leverandør som ikke er oppført i <code>/connect</code>-kommandoen:</p>
+<aside class="aside aside-tip">
+Du kan bruke hvilken som helst OpenAI-kompatibel leverandør med vanilla-closedcode. De fleste moderne AI-leverandører tilbyr OpenAI-kompatible APIer.
+</aside>
+1. Kjør kommandoen `/connect` og rull ned til **Annet**.
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>Skriv inn en unik ID for leverandøren.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::note
+Velg en minneverdig ID, du vil bruke denne i konfigurasjonsfilen din.
+:::</p>
+</li>
+<li><p>Skriv inn API-nøkkelen for leverandøren.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>Opprett eller oppdater <code>closedcode.json</code>-filen i prosjektkatalogen:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Her er konfigurasjonsalternativene:</p>
+<ul>
+<li><strong>npm</strong>: AI SDK pakke å bruke, <code>@ai-sdk/openai-compatible</code> for OpenAI-kompatible leverandører</li>
+<li><strong>navn</strong>: Visningsnavn i UI.</li>
+<li><strong>modeller</strong>: Tilgjengelige modeller.</li>
+<li><strong>options.baseURL</strong>: API endepunkt URL.</li>
+<li><strong>options.apiKey</strong>: Angi API-nøkkelen hvis du ikke bruker auth.</li>
+<li><strong>options.headers</strong>: Angi egendefinerte overskrifter.</li>
+</ul>
+<p>Mer om de avanserte alternativene i eksemplet nedenfor.</p>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> og din egendefinerte leverandør og modeller vil vises i utvalgslisten.</p>
+</li>
+</ol>
+<hr>
+<h5>Eksempel</h5>
+<p>Her er et eksempel på innstilling av alternativene <code>apiKey</code>, <code>headers</code> og modell <code>limit</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Konfigurasjonsdetaljer:</p>
+<ul>
+<li><strong>apiKey</strong>: Angi med <code>env</code> variabel syntaks, <a href="/docs/config#env-vars">finn ut mer</a>.</li>
+<li><strong>headere</strong>: Egendefinerte headere sendt med hver forespørsel.</li>
+<li><strong>limit.context</strong>: Maksimalt Input Tokens som modellen godtar.</li>
+<li><strong>limit.output</strong>: Maksimalt antall tokens modellen kan generere.</li>
+</ul>
+<p><code>limit</code>-feltene lar vanilla-closedcode forstå hvor mye kontekst du har igjen. Standardleverandører henter disse automatisk fra models.dev.</p>
+<hr>
+<h2>Feilsøking</h2>
+<p>Hvis du har problemer med å konfigurere en leverandør, sjekk følgende:</p>
+<ol>
+<li><p><strong>Sjekk autentiseringsoppsettet</strong>: Kjør <code>closedcode auth list</code> for å se om legitimasjonen
+for leverandøren legges til konfigurasjonen din.</p>
+<p>Dette gjelder ikke leverandører som Amazon Bedrock, som er avhengige av miljøvariabler for godkjenning.</p>
+</li>
+<li><p>For tilpassede leverandører, sjekk vanilla-closedcode-konfigurasjonen og:</p>
+<ul>
+<li>Sørg for at leverandør-ID-en som brukes i <code>/connect</code>-kommandoen samsvarer med ID i vanilla-closedcode-konfigurasjonen.</li>
+<li>Den riktige npm-pakken brukes for leverandøren. Bruk for eksempel <code>@ai-sdk/cerebras</code> for Cerebras. Og for alle andre OpenAI-kompatible leverandører, bruk <code>@ai-sdk/openai-compatible</code>.</li>
+<li>Kontroller at riktig API-endepunkt er brukt i <code>options.baseURL</code>-feltet.</li>
+</ul>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

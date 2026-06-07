@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="สัญญาณและคำสั่งของ vanilla-closedcode CLI">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html" selected>ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">สัญญาณและคำสั่งของ vanilla-closedcode CLI</p>
+      <p>vanilla-closedcode CLI จะเริ่มต้น <a href="/docs/tui">TUI</a> เป็นค่าเริ่มต้นเมื่อเรียกใช้โดยไม่มีอาร์กิวเมนต์</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>นอกจากนี้ยังรับคำสั่งและแฟล็ก ซึ่งช่วยให้คุณใช้ vanilla-closedcode ผ่านโปรแกรมได้</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>เริ่ม TUI เพื่อใช้ vanilla-closedcode แบบโต้ตอบ</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>ดำเนินการต่อจากเซสชันล่าสุด</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID เซสชันเพื่อดำเนินการต่อ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>แยกเซสชันเมื่อทำต่อ (ใช้กับ <code>--continue</code> หรือ <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>พรอมต์เริ่มต้นที่จะใช้</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>โมเดลที่จะใช้ในรูปแบบ provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>เอเจนต์ที่จะใช้</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>พอร์ตที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>ชื่อโฮสต์ที่จะฟัง</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>คำสั่ง</h2>
+<p>vanilla-closedcode CLI ยังมีคำสั่งย่อยอีกมากมาย</p>
+<hr>
+<h3>agent</h3>
+<p>จัดการเอเจนต์สำหรับ vanilla-closedcode</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>เชื่อมต่อกับเซิร์ฟเวอร์แบ็กเอนด์ vanilla-closedcode ที่กำลังทำงานอยู่ ซึ่งเริ่มต้นผ่านคำสั่ง <code>serve</code> หรือ <code>web</code></p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>วิธีนี้ช่วยให้คุณใช้ TUI กับแบ็กเอนด์ vanilla-closedcode ระยะไกลได้ ตัวอย่าง:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>ไดเร็กทอรีการทำงานเพื่อเริ่มต้น TUI ใน</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>ดำเนินการต่อจากเซสชันล่าสุด</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID เซสชันเพื่อดำเนินการต่อ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>แยกเซสชันเมื่อดำเนินการต่อ (ใช้กับ <code>--continue</code> หรือ <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>รหัสผ่านการยืนยันตัวตนพื้นฐาน (ค่าเริ่มต้นคือ <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>ชื่อผู้ใช้การยืนยันตัวตนพื้นฐาน (ค่าเริ่มต้นคือ <code>CLOSEDCODE_SERVER_USERNAME</code> หรือ <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>สร้างเอเจนต์ใหม่</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>คำสั่งนี้จะแนะนำคุณตลอดกระบวนการสร้างเอเจนต์ใหม่ พร้อมพรอมต์ระบบและความสามารถของเครื่องมือ</p>
+<hr>
+<h4>list</h4>
+<p>แสดงรายชื่อเอเจนต์ที่พร้อมใช้งานทั้งหมด</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>จัดการการตรวจสอบสิทธิ์และข้อมูลรับรอง</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode ได้รับการกำหนดค่าไว้ล่วงหน้าด้วยรายชื่อผู้ให้บริการทั่วไปที่ <a href="https://models.dev">Models.dev</a> ดังนั้นคุณเพียงแค่ต้องใส่คีย์ API สำหรับผู้ให้บริการที่คุณต้องการใช้ ข้อมูลนี้จะถูกเก็บไว้ที่ <code>~/.local/share/closedcode/auth.json</code></p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>เมื่อ vanilla-closedcode เริ่มต้น ระบบจะโหลดข้อมูลรับรองจากไฟล์นี้ ดังนั้นคุณจึงไม่ต้องกังวลกับการตั้งค่าตัวแปรสภาพแวดล้อมหรือไฟล์ <code>.env</code> ในโปรเจ็กต์ของคุณ</p>
+<hr>
+<h4>list</h4>
+<p>แสดงรายการข้อมูลรับรองการตรวจสอบสิทธิ์ทั้งหมดที่กำหนดค่าไว้</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>หรือใช้นามแฝงสั้น</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>ออกจากระบบของผู้ให้บริการและลบข้อมูลรับรองออกจากไฟล์ auth</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>จัดการเอเจนต์ GitHub สำหรับเวิร์กโฟลว์อัตโนมัติ</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>ติดตั้งเอเจนต์ GitHub ใน repository ของคุณ</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>คำสั่งนี้จะสร้างเวิร์กโฟลว์ GitHub Actions และแนะนำคุณตลอดกระบวนการตั้งค่า <a href="/docs/github">เรียนรู้เพิ่มเติม</a></p>
+<hr>
+<h4>run</h4>
+<p>รันเอเจนต์ GitHub ด้วยตนเองหรือใน GitHub Actions</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>แฟล็ก</h5>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>เหตุการณ์ GitHub เพื่อทริกเกอร์เอเจนต์</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub token</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>จัดการเซิร์ฟเวอร์ Model Context Protocol (MCP)</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>เพิ่มเซิร์ฟเวอร์ MCP ลงในการกำหนดค่าของคุณ</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>คำสั่งนี้จะแนะนำคุณผ่านวิซาร์ดเพื่อกำหนดค่าเซิร์ฟเวอร์ MCP ใหม่</p>
+<hr>
+<h4>list</h4>
+<p>แสดงรายชื่อเซิร์ฟเวอร์ MCP ทั้งหมดที่กำหนดค่าไว้และสถานะ</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>หรือใช้นามแฝงสั้น</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>ยืนยันตัวตนกับเซิร์ฟเวอร์ MCP ที่ต้องการ OAuth</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>หากไม่ระบุชื่อเซิร์ฟเวอร์ คุณจะได้รับแจ้งให้เลือกจากเซิร์ฟเวอร์ที่รองรับ OAuth ที่พร้อมใช้งาน</p>
+<p>คุณยังสามารถแสดงรายการสถานะการตรวจสอบสิทธิ์ OAuth ได้:</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>หรือใช้นามแฝงสั้น</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>ลบข้อมูลรับรอง OAuth สำหรับเซิร์ฟเวอร์ MCP</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>ดีบักการเชื่อมต่อเซิร์ฟเวอร์ MCP</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>แสดงรายการโมเดลที่พร้อมใช้งานทั้งหมดจากผู้ให้บริการที่กำหนดค่าไว้</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>คำสั่งนี้จะแสดง ID โมเดลทั้งหมดในรูปแบบ <code>provider/model</code></p>
+<p>คุณสามารถใช้ชื่อโมเดลเหล่านี้ในการกำหนดค่า <a href="/docs/config/">config</a> ของคุณ</p>
+<p>คุณยังสามารถส่งผ่านรหัสผู้ให้บริการเพื่อกรองโมเดลตามผู้ให้บริการรายนั้นได้</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>รีเฟรชแคชโมเดลจาก models.dev</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>แสดงรายละเอียดโมเดลเพิ่มเติม (รวมข้อมูลเมตาเช่นต้นทุน)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--json"}</code></nobr></td>
+<td>แสดงผลลัพธ์เป็น JSON</td>
+</tr>
+</tbody></table>
+<p>ใช้แฟล็ก <code>--refresh</code> เพื่ออัปเดตรายการโมเดลที่แคชไว้ มีประโยชน์เมื่อมีการเพิ่มโมเดลใหม่ให้กับผู้ให้บริการและคุณต้องการเห็นใน vanilla-closedcode</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>รัน vanilla-closedcode โดยไม่ต้องใช้ TUI โดยส่งพรอมต์โดยตรง</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>มีประโยชน์สำหรับการทำงานอัตโนมัติหรือเมื่อต้องการคำตอบอย่างรวดเร็วโดยไม่ต้องเปิด TUI ตัวอย่าง:</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>คุณยังสามารถแนบไปกับเซิร์ฟเวอร์ <code>closedcode serve</code> ที่ทำงานอยู่ หรือใช้เซิร์ฟเวอร์ MCP แบบ headless:</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>คำสั่งที่จะรัน (ใช้ส่วนที่เหลือของ args เป็นอาร์กิวเมนต์)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>ดำเนินการต่อจากเซสชันล่าสุด</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID เซสชันเพื่อดำเนินการต่อ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>แยกเซสชันเมื่อทำต่อ (ใช้กับ <code>--continue</code> หรือ <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>สร้างลิงก์แชร์สำหรับเซสชัน</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>โมเดลที่จะใช้ในรูปแบบ provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>เอเจนต์ที่จะใช้</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>แนบไฟล์ไปกับข้อความ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>รูปแบบเอาต์พุต: text (จัดรูปแบบ) หรือ json (JSON ดิบ)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>ชื่อสำหรับเซสชัน (หากไม่ได้ระบุ จะสร้างจากพรอมต์)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>แนบไปกับเซิร์ฟเวอร์ closedcode ที่ทำงานอยู่ (เช่น <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>รหัสผ่านการยืนยันตัวตนพื้นฐาน (ค่าเริ่มต้นคือ <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>ชื่อผู้ใช้การยืนยันตัวตนพื้นฐาน (ค่าเริ่มต้นคือ <code>CLOSEDCODE_SERVER_USERNAME</code> หรือ <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>ไดเร็กทอรีสำหรับรัน หรือเส้นทางบนเซิร์ฟเวอร์ระยะไกลเมื่อแนบ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>ตัวแปรโมเดล (ระดับการใช้เหตุผลเฉพาะผู้ให้บริการ)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>แสดงบล็อกความคิด</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>พอร์ตสำหรับเซิร์ฟเวอร์ภายในเครื่อง (หากไม่ได้ระบุ จะใช้พอร์ตสุ่ม)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>เริ่มต้นเซิร์ฟเวอร์ vanilla-closedcode headless ที่ให้บริการ API HTTP ดู <a href="/docs/server">เอกสารเซิร์ฟเวอร์</a> สำหรับรายละเอียด API เต็มรูปแบบ</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>คำสั่งนี้จะเริ่มต้นเซิร์ฟเวอร์ HTTP ให้ API เข้าถึงฟังก์ชันการทำงานของ vanilla-closedcode ได้โดยไม่ต้องมี TUI นอกจากนี้ยังรองรับการตรวจสอบสิทธิ์พื้นฐาน HTTP (ชื่อผู้ใช้เริ่มต้นคือ <code>closedcode</code> และรหัสผ่านระบุโดย <code>CLOSEDCODE_SERVER_PASSWORD</code>)</p>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>พอร์ตที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>ชื่อโฮสต์ที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>เปิดใช้งานการค้นหา mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>ต้นกำเนิดเพิ่มเติมที่อนุญาตสำหรับ CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>จัดการเซสชัน vanilla-closedcode</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>แสดงรายการเซสชัน vanilla-closedcode ทั้งหมด</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>แฟล็ก</h5>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>จำกัดการแสดงผล N รายการล่าสุด</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>รูปแบบ table หรือ json</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>แสดงสถิติการใช้งานและค่าใช้จ่ายสำหรับ vanilla-closedcode ของคุณ</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>แสดงสถิติของ N วันที่ผ่านมา (ค่าเริ่มต้น: ตลอดเวลา)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>แสดงสถิติการใช้เครื่องมือ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>แสดงรายละเอียดการใช้งานโมเดล (ซ่อนไว้ตามค่าเริ่มต้น)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>กรองตามโครงการ (ค่าเริ่มต้น: โครงการปัจจุบัน)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>ส่งออกประวัติเซสชันเป็น JSON</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>หากไม่ระบุรหัสเซสชัน คุณจะได้รับแจ้งให้เลือกจากรายการล่าสุด</p>
+<hr>
+<h3>import</h3>
+<p>นำเข้าเซสชันจากไฟล์ JSON หรือ URL ที่แชร์ของ vanilla-closedcode</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>คุณสามารถนำเข้าไฟล์ในเครื่องหรือ URL ที่แชร์</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>เริ่ม vanilla-closedcode ในโหมดเซิร์ฟเวอร์พร้อมเว็บอินเตอร์เฟส</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>คำสั่งนี้จะเริ่มต้นเซิร์ฟเวอร์ HTTP และเปิดเว็บเบราว์เซอร์เพื่อเข้าถึง vanilla-closedcode ผ่านทางเว็บอินเตอร์เฟส รองรับการตรวจสอบสิทธิ์พื้นฐาน HTTP (ชื่อผู้ใช้เริ่มต้นคือ <code>closedcode</code> และรหัสผ่านระบุโดย <code>CLOSEDCODE_SERVER_PASSWORD</code>)</p>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>พอร์ตที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>ชื่อโฮสต์ที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>เปิดใช้งานการค้นหา mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>ต้นกำเนิดเพิ่มเติมที่อนุญาตสำหรับ CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>เริ่มต้นเซิร์ฟเวอร์ ACP (Agent Client Protocol)</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>คำสั่งนี้เริ่มต้นเซิร์ฟเวอร์ ACP ที่สื่อสารผ่าน stdin/stdout ด้วย nd-JSON</p>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>ไดเร็กทอรีการทำงาน</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>พอร์ตที่จะฟัง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>ชื่อโฮสต์ที่จะฟัง</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>ถอนการติดตั้ง vanilla-closedcode และลบข้อมูลการกำหนดค่าทั้งหมด</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>เก็บไฟล์การกำหนดค่าไว้</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>เก็บไฟล์ข้อมูล (เซสชันและสแน็ปช็อต)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>แสดงสิ่งที่จะลบออกโดยไม่ต้องทำจริง</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>บังคับลบโดยไม่มีการแจ้งเตือน</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>อัปเกรด vanilla-closedcode เป็นเวอร์ชันล่าสุดหรือเวอร์ชันที่ระบุ</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>อัปเกรดเป็นเวอร์ชันล่าสุด</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>อัปเกรดเป็นเวอร์ชันที่ระบุ</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>แฟล็ก</h4>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>วิธีการติดตั้งที่ใช้ curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>แฟล็กระดับโลก</h2>
+<p>vanilla-closedcode CLI ยอมรับแฟล็กสากลต่อไปนี้สำหรับทุกคำสั่ง</p>
+<table>
+<thead>
+<tr>
+<th>แฟล็ก</th>
+<th>สั้น</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>แสดงความช่วยเหลือ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>พิมพ์เวอร์ชัน</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>พิมพ์บันทึกไปยัง stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>ระดับการบันทึก (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>ตัวแปรสภาพแวดล้อม</h2>
+<p>vanilla-closedcode สามารถกำหนดค่าโดยใช้ตัวแปรสภาพแวดล้อม</p>
+<table>
+<thead>
+<tr>
+<th>ตัวแปร</th>
+<th>ชนิด</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>Boolean</td>
+<td>แชร์เซสชันอัตโนมัติเมื่อสร้าง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>String</td>
+<td>เส้นทางไปยัง Git Bash บน Windows</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>String</td>
+<td>เส้นทางไปยังไฟล์การกำหนดค่า</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_TUI_CONFIG</code></td>
+<td>String</td>
+<td>เส้นทางไปยังไฟล์การกำหนดค่า TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>String</td>
+<td>เส้นทางไปยังไดเร็กทอรีการกำหนดค่า</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>String</td>
+<td>เนื้อหาการกำหนดค่าแบบ inline JSON</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการอัปเดตอัตโนมัติ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการลบข้อมูลเซสชันเก่า</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการตั้งชื่อหน้าต่าง terminal</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>String</td>
+<td>การกำหนดค่าสิทธิ์แบบ inline JSON</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานปลั๊กอินเริ่มต้น</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการดาวน์โหลด LSP อัตโนมัติ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งานโมเดลทดลอง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการบีบอัดบริบทอัตโนมัติ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการนำเข้าจาก <code>.claude</code> (prompt + skills)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการนำเข้า <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการนำเข้า <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการดึงรายการโมเดลจากระยะไกล</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>String</td>
+<td>เปิดใช้งาน VCS จำลองสำหรับการทดสอบ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>String</td>
+<td>ตัวระบุไคลเอนต์ (ค่าเริ่มต้นคือ <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งานการใช้ Exa แทน ls หากมี</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>String</td>
+<td>รหัสผ่านสำหรับการตรวจสอบสิทธิ์พื้นฐาน <code>serve</code>/<code>web</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>String</td>
+<td>ชื่อผู้ใช้สำหรับการตรวจสอบสิทธิ์พื้นฐาน (ค่าเริ่มต้น <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>String</td>
+<td>URL ที่กำหนดเองสำหรับการดึงรายการโมเดล</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ขั้นทดลอง</h3>
+<p>ตัวแปรสภาพแวดล้อมเหล่านี้เปิดใช้งานฟีเจอร์ทดลองที่อาจมีการเปลี่ยนแปลงหรือถูกลบออก</p>
+<table>
+<thead>
+<tr>
+<th>ตัวแปร</th>
+<th>ชนิด</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งานฟีเจอร์ทดลองทั้งหมด</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>Boolean</td>
+<td>การค้นหาไอคอนทดลอง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานการคัดลอกเมื่อเลือกใน TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>Number</td>
+<td>การหมดเวลาเริ่มต้นสำหรับคำสั่ง bash ในหน่วย ms</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>Number</td>
+<td>ขีดจำกัดสูงสุดสำหรับโทเค็นเอาต์พุต LLM</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งานตัวเฝ้าดูไฟล์สำหรับไดเร็กทอรีทั้งหมด</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>Boolean</td>
+<td>ใช้ oxfmt เป็นตัวจัดรูปแบบ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งานเครื่องมือ LSP ทดลอง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>Boolean</td>
+<td>ปิดใช้งานตัวเฝ้าดูไฟล์</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>Boolean</td>
+<td>ฟีเจอร์ Exa ทดลอง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งาน TY LSP สำหรับไฟล์ python</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>Boolean</td>
+<td>ใช้ Markdown renderer แบบทดลอง</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>Boolean</td>
+<td>เปิดใช้งาน Plan mode</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

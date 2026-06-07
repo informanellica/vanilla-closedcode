@@ -1,0 +1,79 @@
+import { GlobalRegistrator } from "@happy-dom/global-registrator";
+GlobalRegistrator.register();
+const originalGetContext = HTMLCanvasElement.prototype.getContext;
+// - we're overriding with a simplified mock
+HTMLCanvasElement.prototype.getContext = function (contextType, _options) {
+  if (contextType === "2d") {
+    return {
+      canvas: this,
+      fillStyle: "#000000",
+      strokeStyle: "#000000",
+      font: "12px monospace",
+      textAlign: "start",
+      textBaseline: "alphabetic",
+      globalAlpha: 1,
+      globalCompositeOperation: "source-over",
+      imageSmoothingEnabled: true,
+      lineWidth: 1,
+      lineCap: "butt",
+      lineJoin: "miter",
+      miterLimit: 10,
+      shadowBlur: 0,
+      shadowColor: "rgba(0, 0, 0, 0)",
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
+      fillRect: () => {},
+      strokeRect: () => {},
+      clearRect: () => {},
+      fillText: () => {},
+      strokeText: () => {},
+      measureText: text => ({
+        width: text.length * 8
+      }),
+      drawImage: () => {},
+      save: () => {},
+      restore: () => {},
+      scale: () => {},
+      rotate: () => {},
+      translate: () => {},
+      transform: () => {},
+      setTransform: () => {},
+      resetTransform: () => {},
+      createLinearGradient: () => ({
+        addColorStop: () => {}
+      }),
+      createRadialGradient: () => ({
+        addColorStop: () => {}
+      }),
+      createPattern: () => null,
+      beginPath: () => {},
+      closePath: () => {},
+      moveTo: () => {},
+      lineTo: () => {},
+      bezierCurveTo: () => {},
+      quadraticCurveTo: () => {},
+      arc: () => {},
+      arcTo: () => {},
+      ellipse: () => {},
+      rect: () => {},
+      fill: () => {},
+      stroke: () => {},
+      clip: () => {},
+      isPointInPath: () => false,
+      isPointInStroke: () => false,
+      getTransform: () => ({}),
+      getImageData: () => ({
+        data: new Uint8ClampedArray(0),
+        width: 0,
+        height: 0
+      }),
+      putImageData: () => {},
+      createImageData: () => ({
+        data: new Uint8ClampedArray(0),
+        width: 0,
+        height: 0
+      })
+    };
+  }
+  return originalGetContext.call(this, contextType, _options);
+};

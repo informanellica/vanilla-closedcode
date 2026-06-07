@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الأدوات المخصصة — vanilla-closedcode docs</title>
+  <meta name="description" content="أنشئ أدوات يمكن لـ LLM استدعاؤها في closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html" selected>العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الأدوات المخصصة</h1>
+      <p class="lede">أنشئ أدوات يمكن لـ LLM استدعاؤها في closedcode.</p>
+      <p>الأدوات المخصصة هي دوال تنشئها يمكن لـ LLM استدعاؤها أثناء المحادثات. تعمل جنبا إلى جنب مع <a href="/docs/tools">الأدوات المدمجة</a> في closedcode مثل <code>read</code> و<code>write</code> و<code>bash</code>.</p>
+<hr>
+<h2>إنشاء أداة</h2>
+<p>تُعرّف الأدوات كملفات <strong>TypeScript</strong> أو <strong>JavaScript</strong>. لكن تعريف الأداة يمكنه استدعاء سكربتات مكتوبة <strong>بأي لغة</strong> — إذ تُستخدم TypeScript أو JavaScript فقط لتعريف الأداة نفسه.</p>
+<hr>
+<h3>الموقع</h3>
+<p>يمكن تعريفها:</p>
+<ul>
+<li>محليا بوضعها في مجلد <code>.closedcode/tools/</code> داخل مشروعك.</li>
+<li>أو عالميا بوضعها في <code>~/.config/closedcode/tools/</code>.</li>
+</ul>
+<hr>
+<h3>البنية</h3>
+<p>أسهل طريقة لإنشاء أدوات هي استخدام المساعد <code>tool()</code> الذي يوفر أمان الأنواع والتحقق.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p>يصبح <strong>اسم الملف</strong> هو <strong>اسم الأداة</strong>. المثال أعلاه ينشئ أداة باسم <code>database</code>.</p>
+<hr>
+<h4>عدة أدوات في ملف واحد</h4>
+<p>يمكنك أيضا تصدير عدة أدوات من ملف واحد. يصبح كل تصدير <strong>أداة مستقلة</strong> باسم <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong>:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>ينشئ هذا أداتين: <code>math_add</code> و<code>math_multiply</code>.</p>
+<hr>
+<h4>تضارب الأسماء مع الأدوات المدمجة</h4>
+<p>تُصنّف الأدوات المخصصة حسب اسم الأداة. إذا استخدمت أداة مخصصة نفس اسم أداة مدمجة، فإن الأداة المخصصة تأخذ الأولوية.</p>
+<p>على سبيل المثال، يستبدل هذا الملف أداة <code>bash</code> المدمجة:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+فضّل استخدام أسماء فريدة ما لم تكن تريد استبدال أداة مدمجة عمدا. إذا كنت تريد تعطيل أداة مدمجة ولكن لا تريد استبدالها، استخدم [الأذونات](/docs/permissions).
+</aside>
+---
+
+<h3>الوسائط</h3>
+<p>يمكنك استخدام <code>tool.schema</code>، وهو في الأساس <a href="https://zod.dev">Zod</a>، لتعريف أنواع الوسائط.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>يمكنك أيضا استيراد <a href="https://zod.dev">Zod</a> مباشرة وإرجاع كائن عادي:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>السياق</h3>
+<p>تستقبل الأدوات سياقا حول الجلسة الحالية:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>استخدم <code>context.directory</code> لدليل العمل الخاص بالجلسة.
+استخدم <code>context.worktree</code> لجذر شجرة العمل (worktree) في git.</p>
+<hr>
+<h2>أمثلة</h2>
+<h3>كتابة أداة بلغة Python</h3>
+<p>يمكنك كتابة أدواتك بأي لغة تريدها. إليك مثالا يجمع رقمين باستخدام Python.</p>
+<p>أولا، أنشئ الأداة كسكربت Python:</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>ثم أنشئ تعريف الأداة الذي يستدعيه:</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>هنا نستخدم أداة <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> لتشغيل سكربت Python.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

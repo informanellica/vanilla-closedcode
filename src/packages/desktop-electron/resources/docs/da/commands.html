@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kommandoer — vanilla-closedcode docs</title>
+  <meta name="description" content="Opret brugerdefinerede kommandoer til gentagne opgaver.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html" selected>Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Kommandoer</h1>
+      <p class="lede">Opret brugerdefinerede kommandoer til gentagne opgaver.</p>
+      <p>Brugerdefinerede kommandoer giver mulighed for at angive en prompt, du vil køre, når denne kommando udføres i TUI.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Brugerdefinerede kommandoer er ud over de indbyggede kommandoer som <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Learn more</a>.</p>
+<hr>
+<h2>Oprettelse af kommandofiler</h2>
+<p>Opret markdown-filer i mappen <code>commands/</code> for at definere brugerdefinerede kommandoer.</p>
+<p>Opret <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Frontmatter definerer kommandoegenskaber. Indholdet bliver skabelonen.</p>
+<p>Brug kommandoen ved at skrive <code>/</code> efterfulgt af kommandonavnet.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Konfiguration</h2>
+<p>Du kan tilføje brugerdefinerede kommandoer gennem vanilla-closedcode-konfigurationen eller ved at oprette markdown-filer i <code>commands/</code>-mappen.</p>
+<hr>
+<h3>JSON</h3>
+<p>Brug indstillingerne <code>command</code> i din vanilla-closedcode <a href="/docs/config">config</a>:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Nu kan du køre denne kommando i TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Du kan også definere kommandoer ved hjælp af markdown-filer. Placer dem i:</p>
+<ul>
+<li>Globalt: <code>~/.config/closedcode/commands/</code></li>
+<li>Pr. projekt: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Markdown-filnavnet bliver kommandonavnet. For eksempel lader <code>test.md</code>
+du løber:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Prompt-konfiguration</h2>
+<p>Spørgsmålene til de brugerdefinerede kommandoer understøtter flere specielle pladsholdere og syntaks.</p>
+<hr>
+<h3>Argumenter</h3>
+<p>Send argumenter til kommandoer ved hjælp af pladsholderen <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Kør kommandoen med argumenter:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>Og <code>$ARGUMENTS</code> vil blive erstattet med <code>Button</code>.</p>
+<p>Du kan også få adgang til individuelle argumenter ved hjælp af positionelle parametre:</p>
+<ul>
+<li><code>$1</code> - Første argument</li>
+<li><code>$2</code> - Andet argument</li>
+<li><code>$3</code> - Tredje argument</li>
+<li>Og så videre...</li>
+</ul>
+<p>For eksempel:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Kør kommandoen:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Dette erstatter:</p>
+<ul>
+<li><code>$1</code> med <code>config.json</code></li>
+<li><code>$2</code> med <code>src</code></li>
+<li><code>$3</code> med <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Shell-output</h3>
+<p>Brug <em>!<code>command</code></em> til at injicere <a href="/docs/tui#bash-commands">bash command</a> output i din prompt.</p>
+<p>For eksempel, for at oprette en brugerdefineret kommando, der analyserer testdækning:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Eller for at gennemgå de seneste ændringer:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Kommandoer kører i dit projekts rodmappe, og deres output bliver en del af prompten.</p>
+<hr>
+<h3>Fil-referencer</h3>
+<p>Inkluder filer i din kommando ved hjælp af <code>@</code> efterfulgt af filnavnet.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Filindholdet bliver automatisk integreret i prompten.</p>
+<hr>
+<h2>Indstillinger</h2>
+<p>Lad os se nærmere på konfigurationsmulighederne.</p>
+<hr>
+<h3>Skabelon (<code>template</code>)</h3>
+<p>Indstillingen <code>template</code> definerer den prompt, der sendes til LLM, når kommandoen udføres.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dette er en <strong>påkrævet</strong> konfigurationsindstilling.</p>
+<hr>
+<h3>Beskrivelse (<code>description</code>)</h3>
+<p>Brug indstillingen <code>description</code> til at give en kort beskrivelse af, hvad kommandoen gør.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dette vises som beskrivelsen i TUI, når du indtaster kommandoen.</p>
+<hr>
+<h3>Agent</h3>
+<p>Brug <code>agent</code>-konfigurationen til valgfrit at angive, hvilken <a href="/docs/agents">agent</a> der skal udføre denne kommando.
+Hvis dette er en <a href="/docs/agents/#subagents">subagent</a>, vil kommandoen som standard udløse en subagent påkaldelse.
+For at deaktivere denne adfærd skal du indstille <code>subtask</code> til <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dette er en <strong>valgfri</strong> konfigurationsindstilling. Hvis det ikke er angivet, er standarden din nuværende agent.</p>
+<hr>
+<h3>Underopgave (<code>subtask</code>)</h3>
+<p>Brug <code>subtask</code> boolean til at tvinge kommandoen til at udløse en <a href="/docs/agents/#subagents">subagent</a> påkaldelse.
+Dette er nyttigt, hvis du ønsker, at kommandoen ikke skal forurene din primære kontekst og vil <strong>tvinge</strong> agenten til at fungere som en underagent,
+øjeblikkelig <code>mode</code> er sat til <code>primary</code> på <a href="/docs/agents">agent</a> konfigurationen.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Dette er en <strong>valgfri</strong> konfigurationsindstilling.</p>
+<hr>
+<h3>Model</h3>
+<p>Brug <code>model</code>-konfigurationen til at tilsidesætte standardmodellen for denne kommando.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dette er en <strong>valgfri</strong> konfigurationsindstilling.</p>
+<hr>
+<h2>Indbyggede kommandoer</h2>
+<p>closedcode indeholder flere indbyggede kommandoer som <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">learn more</a>.</p>
+<aside class="aside aside-note">
+Brugerdefinerede kommandoer kan tilsidesætte indbyggede kommandoer.
+</aside>
+Hvis du definerer en brugerdefineret kommando med samme navn, vil den tilsidesætte den indbyggede kommando.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

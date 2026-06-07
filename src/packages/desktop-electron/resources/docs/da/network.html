@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Netværk — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurer proxyer og brugerdefinerede certifikater.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html" selected>Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html">Norsk</option>
+      <option value="../pl/network.html">Polski</option>
+      <option value="../pt-br/network.html">Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html">ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Netværk</h1>
+      <p class="lede">Konfigurer proxyer og brugerdefinerede certifikater.</p>
+      <p>vanilla-closedcode understøtter standard proxymiljøvariabler og brugerdefinerede certifikater til virksomhedsnetværksmiljøer.</p>
+<hr>
+<h2>Proxy</h2>
+<p>vanilla-closedcode respekterer standard proxy-miljøvariabler.</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+TUI kommunikerer med en lokal HTTP-server. Du skal omgå proxyen for denne forbindelse for at forhindre routingsløjfer.
+</aside>
+Du kan konfigurere serverens port og værtsnavn ved hjælp af [CLI flags](/docs/cli#run).
+
+<hr>
+<h3>Godkendelse</h3>
+<p>Hvis din proxy kræver grundlæggende godkendelse, skal du inkludere legitimationsoplysninger i URL.</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+Undgå hardkodning af adgangskoder. Brug miljøvariabler eller sikker lagring af legitimationsoplysninger.
+</aside>
+For proxyer, der kræver avanceret godkendelse som NTLM eller Kerberos, kan du overveje at bruge en LLM Gateway, der understøtter din godkendelsesmetode.
+
+<hr>
+<h2>Brugerdefinerede certifikater</h2>
+<p>Hvis din virksomhed bruger tilpassede CA&#39;er til HTTPS-forbindelser, skal du konfigurere vanilla-closedcode til at stole på dem.</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Dette virker for både proxy-forbindelser og direkte API-adgang.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

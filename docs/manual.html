@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>マニュアル | vanilla-closedcode</title>
+  <meta name="description" content="vanilla-closedcode のオンラインマニュアル。ローカル LLM 専用の AI コーディングエージェント (Electron デスクトップ版)。">
+  <link rel="icon" href="./assets/img/icon.png">
+  <link href="./assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="./assets/vendor/bootstrap/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="./assets/css/custom.css" rel="stylesheet">
+</head>
+
+<body>
+<header>
+  <div class="navbar navbar-dark bg-dark shadow-sm">
+    <div class="container">
+      <a href="./" class="navbar-brand d-flex align-items-center">
+        <img src="./assets/img/icon.png" alt="" width="22" height="22" class="me-2">
+        <strong>vanilla-closedcode</strong>
+      </a>
+      <div>
+        <a href="./" class="text-light text-decoration-none small me-3">
+          <i class="bi bi-house me-1"></i>トップ
+        </a>
+        <a href="https://github.com/informanellica/vanilla-closedcode/releases" class="text-light text-decoration-none small me-3">
+          <i class="bi bi-clock-history me-1"></i>更新履歴
+        </a>
+        <a href="https://github.com/informanellica/vanilla-closedcode" class="text-light text-decoration-none small">
+          <i class="bi bi-github me-1"></i>GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="container py-5 doc-body">
+
+  <h1><i class="bi bi-book me-2"></i>マニュアル</h1>
+  <p class="lead">vanilla-closedcode の操作マニュアルです。ローカル LLM 専用の Electron デスクトップ版 AI コーディングエージェントです。あなたのコードとプロンプトは端末の外に出ません。</p>
+
+  <figure class="my-4">
+    <img src="./assets/img/editor-chat.png" alt="vanilla-closedcode の画面: 左にファイルツリー、中央にコードエディタ、下にローカルモデル (gpt-oss) との AI チャット、右に git 変更" class="img-fluid rounded border shadow-sm">
+    <figcaption class="small text-body-secondary mt-2">ファイルツリー・コードエディタ・AI チャット (ローカルモデル) ・git 変更を 1 画面で。チャットからの編集はディスクに保存され、右の差分で確認できます。</figcaption>
+  </figure>
+
+  <nav class="my-4 p-3 bg-body-tertiary rounded">
+    <strong>目次</strong>
+    <ul class="mb-0 mt-2">
+      <li><a href="#install">インストールと起動</a></li>
+      <li><a href="#llm">ローカル LLM サーバーの準備</a></li>
+      <li><a href="#basics">基本操作</a></li>
+      <li><a href="#agents">主な機能 (Agent / セッション / プロジェクト)</a></li>
+      <li><a href="#terminal">統合ターミナルとファイルツリー</a></li>
+      <li><a href="#shortcuts">キーボードショートカット</a></li>
+      <li><a href="#settings">設定とデータ保存先</a></li>
+      <li><a href="#troubleshoot">トラブルシューティング</a></li>
+    </ul>
+  </nav>
+
+  <h2 id="install">インストールと起動</h2>
+  <ol>
+    <li><a href="https://github.com/informanellica/vanilla-closedcode/releases/latest">最新版リリース</a>から OS に合ったインストーラをダウンロード
+      <ul>
+        <li>Windows: <code>vanilla-closedcode-desktop-windows-x64.exe</code></li>
+        <li>macOS (Apple Silicon): <code>vanilla-closedcode-desktop-darwin-aarch64.dmg</code></li>
+        <li>macOS (Intel): <code>vanilla-closedcode-desktop-darwin-x64.dmg</code></li>
+        <li>Linux: <code>.deb</code> / <code>.rpm</code> / AppImage</li>
+      </ul>
+    </li>
+    <li>インストーラを実行 (Windows はインストール先・スタートメニュー登録を選択可能)</li>
+    <li>スタートメニュー (または Launchpad / アプリケーションメニュー) から「vanilla-closedcode」を起動</li>
+  </ol>
+  <p class="small text-body-secondary">本アプリは Electron 製です。初回起動時はモデルやプロジェクトが未設定のため、ホーム画面で「Open Project」と LLM 接続先の指定を行ってください。</p>
+
+  <h3>開発版から起動する場合</h3>
+  <pre><code>npm install
+npm run dev:desktop</code></pre>
+  <p>パッケージ済みアプリを生成する場合は <code>npm --prefix packages/desktop-electron run package</code> を実行します。</p>
+
+  <h2 id="llm">ローカル LLM サーバーの準備</h2>
+  <p>vanilla-closedcode は <strong>localhost のローカル LLM サーバーのみ</strong>に接続します。外部クラウドプロバイダーへの送信はランタイムレベルでブロックされます。事前に下記のいずれかを起動しておいてください。</p>
+  <ul>
+    <li><strong>Ollama</strong> — <code>ollama serve</code> でサーバー起動 →  <code>ollama pull モデル名</code> でモデル取得</li>
+    <li><strong>LM Studio</strong> — ローカルサーバー機能を有効化</li>
+    <li><strong>llama.cpp</strong> — <code>llama-server</code> を実行</li>
+    <li><strong>vLLM</strong> / <strong>Jan</strong> など OpenAI 互換 API を提供する任意のサーバー</li>
+  </ul>
+
+  <figure class="my-4">
+    <img src="./assets/img/settings-provider.png" alt="設定の LLM サーバー・プロバイダ画面に接続済みの Ollama" class="img-fluid rounded border shadow-sm">
+    <figcaption class="small text-body-secondary mt-2">設定 → LLM → 「サーバー・プロバイダ」。ローカルエンドポイント (例: Ollama <code>http://localhost:11434/v1</code>) を接続済みプロバイダーとして登録します。</figcaption>
+  </figure>
+
+  <h2 id="basics">基本操作</h2>
+  <figure class="my-4">
+    <img src="./assets/img/home.png" alt="vanilla-closedcode のホーム画面" class="img-fluid rounded border shadow-sm">
+    <figcaption class="small text-body-secondary mt-2">起動直後のホーム画面。「フォルダを開く」「新しいセッション」「プロバイダーに接続」、最近のプロジェクト、サーバー状態にここからアクセスします。</figcaption>
+  </figure>
+  <ul>
+    <li><strong>プロジェクトを開く</strong> <i class="bi bi-folder2-open"></i> — メニュー <code>File &gt; Open Project...</code> (macOS は <kbd>Cmd</kbd>+<kbd>O</kbd>) で作業ディレクトリを選択</li>
+    <li><strong>新規セッション</strong> <i class="bi bi-plus-square"></i> — <code>File &gt; New Session</code> (<kbd>Shift</kbd>+<kbd>Cmd</kbd>+<kbd>S</kbd>) でその場で新しいチャットを開始</li>
+    <li><strong>新規ウィンドウ</strong> — <code>File &gt; New Window</code> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>) で別プロジェクトを同時に開ける</li>
+    <li><strong>サイドバー切替</strong> <i class="bi bi-layout-sidebar"></i> — <code>View &gt; Toggle Sidebar</code> (<kbd>Cmd</kbd>+<kbd>B</kbd>) でセッション一覧の表示/非表示</li>
+    <li><strong>戻る・進む</strong> <i class="bi bi-arrow-left"></i><i class="bi bi-arrow-right"></i> — <kbd>Cmd</kbd>+<kbd>[</kbd> / <kbd>Cmd</kbd>+<kbd>]</kbd> で履歴を行き来</li>
+  </ul>
+
+  <h2 id="agents">主な機能 (Agent / セッション / プロジェクト)</h2>
+  <h3>Agent モード</h3>
+  <p><kbd>Tab</kbd> キーで Agent を切り替えできます。</p>
+  <ul>
+    <li><i class="bi bi-hammer"></i> <strong>build</strong> — デフォルト。フルアクセスの開発用 Agent。ファイル編集とコマンド実行が可能</li>
+    <li><i class="bi bi-binoculars"></i> <strong>plan</strong> — 読み取り専用 Agent。ファイル編集を拒否し、bash 実行前に確認。コードベース探索や変更計画用</li>
+    <li><i class="bi bi-search"></i> <strong>general (サブ Agent)</strong> — 複雑な検索やマルチステップ処理向け。メッセージ内で <code>@general</code> と入力して呼び出し</li>
+  </ul>
+
+  <h3>セッション</h3>
+  <ul>
+    <li><strong>セッション一覧</strong> — 左サイドバーで過去の会話を選択。プロジェクトごとに分離されます</li>
+    <li><strong>前後のセッションへ移動</strong> — <kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>Option</kbd>+<kbd>↓</kbd></li>
+    <li><strong>セッション再開</strong> — 一覧から選ぶと履歴とコンテキストごと復元</li>
+  </ul>
+
+  <h3>プロジェクト</h3>
+  <ul>
+    <li><strong>プロジェクト切替</strong> — <kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>↓</kbd> で最近のプロジェクトを巡回</li>
+    <li><strong>複数プロジェクト同時操作</strong> — 新規ウィンドウで別プロジェクトを並列に開ける</li>
+  </ul>
+
+  <h2 id="terminal">統合ターミナルとファイルツリー</h2>
+  <ul>
+    <li><i class="bi bi-terminal"></i> <strong>ターミナルパネル</strong> — <code>View &gt; Toggle Terminal</code> (<kbd>Ctrl</kbd>+<kbd>`</kbd>) でプロジェクト直下の shell を開閉。<code>node-pty</code> により実機シェルと同等の動作</li>
+    <li><i class="bi bi-folder"></i> <strong>ファイルツリー</strong> — <code>View &gt; Toggle File Tree</code> でプロジェクトのファイルツリーを表示</li>
+    <li><strong>コンテキストメニュー</strong> — Webview 内で右クリックすると <code>electron-context-menu</code> によるコピー/ペースト/検索などの標準メニュー</li>
+  </ul>
+
+  <h2 id="shortcuts">キーボードショートカット</h2>
+  <p class="small text-body-secondary">macOS では <kbd>Cmd</kbd>、Windows/Linux では <kbd>Ctrl</kbd> に読み替えてください。アプリメニューは macOS のみ表示され、他 OS ではメニューバーは自動非表示です。</p>
+  <table class="table table-sm">
+    <tbody>
+      <tr><td><kbd>Tab</kbd></td><td>Agent 切り替え (build ⇄ plan)</td></tr>
+      <tr><td><kbd>Shift</kbd>+<kbd>Cmd</kbd>+<kbd>S</kbd></td><td>新規セッション</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>O</kbd></td><td>プロジェクトを開く</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd></td><td>新規ウィンドウ</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>B</kbd></td><td>サイドバー切替</td></tr>
+      <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>ターミナル切替</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>[</kbd> / <kbd>Cmd</kbd>+<kbd>]</kbd></td><td>戻る / 進む</td></tr>
+      <tr><td><kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>Option</kbd>+<kbd>↓</kbd></td><td>前 / 次のセッション</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd></td><td>前 / 次のプロジェクト</td></tr>
+      <tr><td><kbd>Cmd</kbd>+<kbd>R</kbd></td><td>Webview リロード</td></tr>
+      <tr><td><kbd>F12</kbd> / <kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>I</kbd></td><td>開発者ツール開閉</td></tr>
+      <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd></td><td>ズームイン / ズームアウト / リセット</td></tr>
+      <tr><td><kbd>F11</kbd> (Win/Linux) / <kbd>Ctrl</kbd>+<kbd>Cmd</kbd>+<kbd>F</kbd> (mac)</td><td>フルスクリーン切替</td></tr>
+    </tbody>
+  </table>
+
+  <h2 id="settings">設定とデータ保存先</h2>
+  <ul>
+    <li><strong>アプリ設定</strong> — <code>electron-store</code> によりユーザーデータディレクトリの JSON に保存されます
+      <ul>
+        <li>Windows: <code>%APPDATA%/vanilla-closedcode/</code></li>
+        <li>macOS: <code>~/Library/Application Support/vanilla-closedcode/</code></li>
+        <li>Linux: <code>~/.config/vanilla-closedcode/</code></li>
+      </ul>
+    </li>
+    <li><strong>ウィンドウサイズ・位置</strong> — <code>electron-window-state</code> により次回起動時に復元</li>
+    <li><strong>ログ</strong> — <code>electron-log</code> によりユーザーデータディレクトリ下の <code>logs/</code> に出力。トラブル時に確認</li>
+    <li><strong>自動更新</strong> — <code>electron-updater</code> 経由。macOS では <code>vanilla-closedcode &gt; Check for Updates...</code> から手動チェックも可能</li>
+    <li><strong>LLM 接続先</strong> — UI 内の設定からエンドポイント (例: <code>http://localhost:11434</code>) とモデル名を指定。外部 (非 localhost) への通信はランタイムでブロックされます</li>
+  </ul>
+
+  <h2 id="troubleshoot">トラブルシューティング</h2>
+  <ul>
+    <li><strong>LLM に接続できない</strong> — Ollama などのサーバーが起動しているか、ポート (デフォルト 11434) が開いているか確認。<code>curl http://localhost:11434/api/tags</code> で疎通テスト</li>
+    <li><strong>モデルが応答しない / 遅い</strong> — モデルサイズを下げる、CPU/GPU リソースを確認、コンテキスト長を調整</li>
+    <li><strong>ターミナルが開かない</strong> — プラットフォーム別の <code>@lydell/node-pty-*</code> ネイティブモジュールが正しくインストールされているか確認。再インストールが必要な場合は <code>npm install</code></li>
+    <li><strong>更新が失敗する</strong> — 一度アプリを終了し、最新リリースを再ダウンロードして上書きインストール</li>
+    <li><strong>ログの場所</strong> — 上記「設定とデータ保存先」を参照。バグ報告時にはログ末尾を添付すると解決が早まります</li>
+  </ul>
+  <p class="small text-body-secondary">サポートは <a href="https://github.com/informanellica/vanilla-closedcode/issues">本リポジトリの Issues</a> で受け付けています。</p>
+
+</main>
+
+<footer class="text-body-secondary py-4 border-top mt-5">
+  <div class="container small">
+    <p class="mb-1">© Informanellica</p>
+    <p class="mb-0">
+      <a href="./" class="text-body-secondary">← vanilla-closedcode トップ</a>
+      ・<a href="https://informanellica.github.io/" class="text-body-secondary">Software Album</a>
+    </p>
+  </div>
+</footer>
+
+<script src="./assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+</body>
+</html>

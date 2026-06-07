@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Narzędzia specjalistyczne — vanilla-closedcode docs</title>
+  <meta name="description" content="Twórz narzędzi, które LLM mogą być uruchamiane w otwartym kodzie.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html" selected>Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Narzędzia specjalistyczne</h1>
+      <p class="lede">Twórz narzędzi, które LLM mogą być uruchamiane w otwartym kodzie.</p>
+      <p>Narzędzia specjalistyczne to funkcje, które tworzysz i które LLM może wywoływać podczas rozmów. Współpracują one z <a href="/docs/tools">wbudowanymi narzędziami</a> closedcode, takimi jak <code>read</code>, <code>write</code> i <code>bash</code>.</p>
+<hr>
+<h2>Tworzenie narzędzia</h2>
+<p>Narzędzia tworzą pliki <strong>TypeScript</strong> lub <strong>JavaScript</strong>. Definicja narzędzia może być odwoływana do skryptów napisanych w <strong>dowolnym języku</strong> — TypeScript lub JavaScript są używane tylko w tym samym narzędziu.</p>
+<hr>
+<h3>Lokalizacja</h3>
+<p>Można je uruchomić:</p>
+<ul>
+<li>Lokalnie, umieszczając je w katalogu <code>.closedcode/tools/</code> swojego projektu.</li>
+<li>Lub globalnie, umieszczając je w <code>~/.config/closedcode/tools/</code>.</li>
+</ul>
+<hr>
+<h3>Struktura</h3>
+<p>Najłatwiejszym sposobem tworzenia narzędzia jest pomocnika <code>tool()</code>, który zapewnia bezpieczeństwo i sprawdzanie poprawności.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p><strong>Nazwa pliku</strong> staje się <strong>nazwą narzędzia</strong>. Pierwotne narzędzie <code>database</code>.</p>
+<hr>
+<h4>Wiele narzędzi na plik</h4>
+<p>Można także eksportować wiele narzędzi z jednego pliku. Każdy eksport staje się <strong>oddzielnym językiem</strong> o nazwie <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong>:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>Tworzy to dwa narzędzia: <code>math_add</code> i <code>math_multiply</code>.</p>
+<hr>
+<h4>Kolizje nazw z wbudowanymi narzędziami</h4>
+<p>Niestandardowe narzędzia są identyfikowane według nazwy narzędzia. Jeśli niestandardowe narzędzie używa tej samej nazwy co wbudowane narzędzie, niestandardowe narzędzie ma pierwszeństwo.</p>
+<p>Na przykład ten plik zastępuje wbudowane narzędzie <code>bash</code>:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+Preferuj unikalne nazwy, chyba że celowo chcesz zastąpić wbudowane narzędzie. Jeśli chcesz wyłączyć wbudowane narzędzie, ale go nie nadpisywać, użyj [uprawnień](/docs/permissions).
+</aside>
+---
+
+<h3>Argumenty</h3>
+<p>Do zdefiniowania argumentów można zastosować <code>tool.schema</code>, czyli po prostu <a href="https://zod.dev">Zod</a>.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>Można także bezpośrednio zaimportować <a href="https://zod.dev">Zod</a> i zwyczajowo zwykły obiekt:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Kontekst</h3>
+<p>Narzędzia kontekstowe charakterystycznej sesji:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p><code>context.directory</code> jako katalogowy pracodawczy.
+<code>context.worktree</code> dla katalogu głównego zwalczającego git.</p>
+<hr>
+<h2>Przykład</h2>
+<h3>Napisz narzędzie w Pythonie</h3>
+<p>Możesz pisać swoje narzędzia w dowolnym języku. Oto przykład dodania dwóch liczb przy użyciu języka Python.</p>
+<p>Najpierw utwórz narzędzie jako skrypt w języku Python:</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>Następnie utwórz definicję narzędzia, która go wywołuje:</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>Tutaj używamy narzędzia <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> do uruchomienia skryptu w języku Python.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

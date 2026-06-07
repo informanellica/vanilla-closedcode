@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الأوامر — vanilla-closedcode docs</title>
+  <meta name="description" content="أنشئ أوامر مخصصة للمهام المتكررة.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html" selected>العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الأوامر</h1>
+      <p class="lede">أنشئ أوامر مخصصة للمهام المتكررة.</p>
+      <p>تتيح لك الأوامر المخصصة تحديد مُطالبة (prompt) تريد تشغيلها عند تنفيذ ذلك الأمر في واجهة TUI.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>تُعدّ الأوامر المخصصة إضافةً إلى الأوامر المضمنة مثل <code>/init</code> و<code>/undo</code> و<code>/redo</code> و<code>/share</code> و<code>/help</code>. <a href="/docs/tui#commands">اعرف المزيد</a>.</p>
+<hr>
+<h2>إنشاء ملفات الأوامر</h2>
+<p>أنشئ ملفات Markdown داخل الدليل <code>commands/</code> لتعريف أوامر مخصصة.</p>
+<p>أنشئ الملف <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>تُعرِّف ترويسة Frontmatter خصائص الأمر، بينما يصبح المحتوى هو القالب.</p>
+<p>استخدم الأمر بكتابة <code>/</code> ثم اسم الأمر.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>الإعداد</h2>
+<p>يمكنك إضافة أوامر مخصصة عبر إعدادات vanilla-closedcode أو بإنشاء ملفات Markdown داخل الدليل <code>commands/</code>.</p>
+<hr>
+<h3>JSON</h3>
+<p>استخدم خيار <code>command</code> في <a href="/docs/config">config</a> الخاص بـ vanilla-closedcode:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // يصبح هذا اسم الأمر
+    &quot;test&quot;: {
+      // هذه هي المطالبة التي ستُرسل إلى LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // يظهر هذا كوصف في TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>يمكنك الآن تشغيل هذا الأمر في واجهة TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>يمكنك أيضًا تعريف الأوامر باستخدام ملفات Markdown. ضعها في:</p>
+<ul>
+<li>على مستوى النظام: <code>~/.config/closedcode/commands/</code></li>
+<li>لكل مشروع: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>يصبح اسم ملف Markdown هو اسم الأمر. على سبيل المثال، يتيح لك <code>test.md</code> تشغيل:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>إعداد المُطالبة</h2>
+<p>تدعم مُطالبات الأوامر المخصصة عدة عناصر نائبة (placeholders) وبنى خاصة.</p>
+<hr>
+<h3>الوسائط</h3>
+<p>مرِّر وسائط إلى الأوامر باستخدام العنصر النائب <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>شغِّل الأمر مع وسائط:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>وسيُستبدل <code>$ARGUMENTS</code> بالقيمة <code>Button</code>.</p>
+<p>يمكنك أيضًا الوصول إلى كل وسيط على حدة باستخدام المعاملات الموضعية:</p>
+<ul>
+<li><code>$1</code> - الوسيط الأول</li>
+<li><code>$2</code> - الوسيط الثاني</li>
+<li><code>$3</code> - الوسيط الثالث</li>
+<li>وهكذا...</li>
+</ul>
+<p>على سبيل المثال:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>شغِّل الأمر:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>سيؤدي ذلك إلى استبدال:</p>
+<ul>
+<li><code>$1</code> بـ <code>config.json</code></li>
+<li><code>$2</code> بـ <code>src</code></li>
+<li><code>$3</code> بـ <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>خرج shell</h3>
+<p>استخدم <em>!<code>command</code></em> لحقن خرج <a href="/docs/tui#bash-commands">أمر bash</a> داخل مُطالبتك.</p>
+<p>على سبيل المثال، لإنشاء أمر مخصص يُحلل تغطية الاختبارات:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>أو لمراجعة التغييرات الأخيرة:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>تُشغَّل الأوامر في دليل جذر مشروعك ويصبح خرجها جزءًا من المُطالبة.</p>
+<hr>
+<h3>مراجع الملفات</h3>
+<p>ضمِّن الملفات في أمرك باستخدام <code>@</code> ثم اسم الملف.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>يُدرج محتوى الملف في المُطالبة تلقائيًا.</p>
+<hr>
+<h2>الخيارات</h2>
+<p>لنلقِ نظرةً على خيارات الإعداد بالتفصيل.</p>
+<hr>
+<h3>القالب (<code>template</code>)</h3>
+<p>يُعرِّف خيار <code>template</code> المُطالبة التي ستُرسل إلى نموذج اللغة (LLM) عند تنفيذ الأمر.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذا خيار إعداد <strong>إلزامي</strong>.</p>
+<hr>
+<h3>الوصف (<code>description</code>)</h3>
+<p>استخدم خيار <code>description</code> لتقديم وصف موجز لما يفعله الأمر.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>يظهر هذا الوصف في واجهة TUI عند كتابة الأمر.</p>
+<hr>
+<h3>الوكيل (<code>agent</code>)</h3>
+<p>استخدم إعداد <code>agent</code> لتحديد أي <a href="/docs/agents">agent</a> ينبغي أن ينفّذ هذا الأمر (اختياريًا).
+إذا كان هذا <a href="/docs/agents/#subagents">subagent</a>، فسيؤدي الأمر افتراضيًا إلى تشغيل استدعاء subagent.
+لإيقاف هذا السلوك، عيِّن <code>subtask</code> إلى <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذا خيار إعداد <strong>اختياري</strong>. إن لم تُحدده، فسيُستخدم agent الحالي افتراضيًا.</p>
+<hr>
+<h3>مهمة فرعية (<code>subtask</code>)</h3>
+<p>استخدم القيمة المنطقية <code>subtask</code> لفرض أن يُشغِّل الأمر استدعاء <a href="/docs/agents/#subagents">subagent</a>.
+يفيد هذا إذا أردت ألا يلوّث الأمر السياق الأساسي لديك، إذ سيُجبر (<strong>force</strong>) الـ agent على العمل كـ subagent،
+حتى لو كان <code>mode</code> مضبوطًا على <code>primary</code> في إعدادات <a href="/docs/agents">agent</a>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>هذا خيار إعداد <strong>اختياري</strong>.</p>
+<hr>
+<h3>النموذج (<code>model</code>)</h3>
+<p>استخدم إعداد <code>model</code> لتجاوز النموذج الافتراضي لهذا الأمر.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذا خيار إعداد <strong>اختياري</strong>.</p>
+<hr>
+<h2>الأوامر المضمنة</h2>
+<p>يتضمن closedcode عدة أوامر مضمنة مثل <code>/init</code> و<code>/undo</code> و<code>/redo</code> و<code>/share</code> و<code>/help</code>؛ <a href="/docs/tui#commands">اعرف المزيد</a>.</p>
+<aside class="aside aside-note">
+يمكن للأوامر المخصصة تجاوز الأوامر المضمنة.
+</aside>
+إذا عرّفت أمرًا مخصصًا بالاسم نفسه، فسيستبدل الأمر المضمن.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

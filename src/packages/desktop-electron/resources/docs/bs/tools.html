@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alati — vanilla-closedcode docs</title>
+  <meta name="description" content="Upravljajte alatima koje LLM moze koristiti.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tools.html">English</option>
+      <option value="../ar/tools.html">العربية</option>
+      <option value="../bs/tools.html" selected>Bosanski</option>
+      <option value="../da/tools.html">Dansk</option>
+      <option value="../de/tools.html">Deutsch</option>
+      <option value="../es/tools.html">Español</option>
+      <option value="../fr/tools.html">Français</option>
+      <option value="../it/tools.html">Italiano</option>
+      <option value="../ja/tools.html">日本語</option>
+      <option value="../ko/tools.html">한국어</option>
+      <option value="../nb/tools.html">Norsk</option>
+      <option value="../pl/tools.html">Polski</option>
+      <option value="../pt-br/tools.html">Português (BR)</option>
+      <option value="../ru/tools.html">Русский</option>
+      <option value="../th/tools.html">ไทย</option>
+      <option value="../tr/tools.html">Türkçe</option>
+      <option value="../zh-cn/tools.html">简体中文</option>
+      <option value="../zh-tw/tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li class="active"><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Alati</h1>
+      <p class="lede">Upravljajte alatima koje LLM moze koristiti.</p>
+      <p>Alati omogucavaju LLM-u da izvrsava akcije u vasem kodu. vanilla-closedcode dolazi sa skupom ugradenih alata, a mozete ga prosiriti kroz <a href="/docs/custom-tools">custom tools</a> ili <a href="/docs/mcp-servers">MCP servers</a>.</p>
+<p>Po defaultu su svi alati <strong>ukljuceni</strong> i ne traze dozvolu za pokretanje. Ponasanje alata kontrolisete kroz <a href="/docs/permissions">permissions</a>.</p>
+<hr>
+<h2>Konfiguracija</h2>
+<p>Koristite polje <code>permission</code> za kontrolu ponasanja alata. Za svaki alat mozete postaviti allow, deny ili ask.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;,
+    &quot;bash&quot;: &quot;ask&quot;,
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Mozete koristiti i wildcard obrasce da kontrolisete vise alata odjednom. Na primjer, da trazite odobrenje za sve alate jednog MCP servera:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;mymcp_*&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Saznajte vise</a> o konfigurisanju dozvola.</p>
+<hr>
+<h2>Ugrađeni</h2>
+<p>Ovo su svi ugradeni alati dostupni u vanilla-closedcode.</p>
+<hr>
+<h3>bash</h3>
+<p>Izvrsava shell komande u okruzenju projekta.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Ovaj alat omogucava LLM-u da pokrece terminalske komande kao <code>npm install</code>, <code>git status</code> i druge shell komande.</p>
+<hr>
+<h3>edit</h3>
+<p>Mijenja postojece datoteke tacnim zamjenama stringova.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Ovaj alat radi precizne izmjene datoteka zamjenom tacnih poklapanja teksta. To je glavni nacin na koji LLM mijenja kod.</p>
+<hr>
+<h3>write</h3>
+<p>Kreira nove datoteke ili prepisuje postojece.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Koristite ovo da dozvolite LLM-u kreiranje novih datoteka. Ako datoteka vec postoji, bit ce prepisana.</p>
+<aside class="aside aside-note">
+`write` alat kontrolise `edit` dozvola, koja pokriva sve izmjene datoteka (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>read</h3>
+<p>Cita sadrzaj datoteka iz vaseg koda.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Ovaj alat cita datoteke i vraca njihov sadrzaj. Podrzava citanje odredenih raspona linija kod velikih fajlova.</p>
+<hr>
+<h3>grep</h3>
+<p>Pretrazuje sadrzaj datoteka pomocu regularnih izraza.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;grep&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Brza pretraga sadrzaja kroz cijeli kod. Podrzava puni regex i filtriranje po obrascima datoteka.</p>
+<hr>
+<h3>glob</h3>
+<p>Pronalazi datoteke po obrascima.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;glob&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Trazi datoteke koristeci glob obrasce kao <code>**/*.js</code> ili <code>src/**/*.ts</code>. Vraca putanje sortirane po vremenu izmjene.</p>
+<hr>
+<h3>lsp (eksperimentalno)</h3>
+<p>Komunicira sa konfigurisanim LSP serverima za funkcije inteligencije koda kao definicije, reference, hover info i hijerarhija poziva.</p>
+<aside class="aside aside-note">
+Ovaj alat je dostupan samo kada je `CLOSEDCODE_EXPERIMENTAL_LSP_TOOL=true` (ili `CLOSEDCODE_EXPERIMENTAL=true`).
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "lsp": "allow"
+  }
+}
+```
+
+<p>Podrzane operacije ukljucuju <code>goToDefinition</code>, <code>findReferences</code>, <code>hover</code>, <code>documentSymbol</code>, <code>workspaceSymbol</code>, <code>goToImplementation</code>, <code>prepareCallHierarchy</code>, <code>incomingCalls</code> i <code>outgoingCalls</code>.</p>
+<p>Za konfiguraciju dostupnih LSP servera u projektu, pogledajte <a href="/docs/lsp">LSP Servers</a>.</p>
+<hr>
+<h3>patch</h3>
+<p>Primjenjuje zakrpe na datoteke.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Ovaj alat primjenjuje patch datoteke na kod. Koristan je za diffs i patch-eve iz razlicitih izvora.</p>
+<aside class="aside aside-note">
+`patch` alat kontrolise `edit` dozvola, koja pokriva sve izmjene datoteka (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>skill</h3>
+<p>Ucitajte <a href="/docs/skills">skill</a> (<code>SKILL.md</code> datoteku) i vratite njegov sadrzaj u razgovor.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<hr>
+<h3>todowrite</h3>
+<p>Upravlja todo listama tokom coding sesija.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;todowrite&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Kreira i azurira liste zadataka za pracenje napretka tokom slozenih operacija. LLM ovo koristi za organizaciju zadataka u vise koraka.</p>
+<aside class="aside aside-note">
+Ovaj alat je po defaultu iskljucen za subagente, ali ga mozete rucno ukljuciti. [Saznajte vise](/docs/agents/#permissions)
+</aside>
+---
+
+<h3>webfetch</h3>
+<p>Preuzima web sadrzaj.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Omogucava LLM-u da preuzima i cita web stranice. Korisno za dokumentaciju i online istrazivanje.</p>
+<hr>
+<h3>websearch</h3>
+<p>Pretrazuje web za informacije.</p>
+<aside class="aside aside-note">
+Ovaj alat je dostupan samo uz vanilla-closedcode provajdera ili kada je varijabla `CLOSEDCODE_ENABLE_EXA` postavljena na truthy vrijednost (npr. `true` ili `1`).
+
+<p>Da ukljucite pri pokretanju vanilla-closedcode:</p>
+<pre><code class="language-bash">CLOSEDCODE_ENABLE_EXA=1 closedcode
+</code></pre>
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "websearch": "allow"
+  }
+}
+```
+
+<p>Vrsi web pretrage preko Exa AI da pronade relevantne informacije online. Korisno za istrazivanje tema, aktuelnosti i podataka van granice trening skupa.</p>
+<p>API kljuc nije potreban - alat se direktno povezuje na Exa AI hosted MCP servis bez autentifikacije.</p>
+<aside class="aside aside-tip">
+Koristite `websearch` kada trebate pronaci informacije (discovery), a `webfetch` kada trebate preuzeti sadrzaj sa konkretnog URL-a (retrieval).
+</aside>
+---
+
+<h3>question</h3>
+<p>Postavlja korisniku pitanja tokom izvrsavanja.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;question&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Ovaj alat omogucava LLM-u da postavlja pitanja korisniku tokom zadatka. Koristan je za:</p>
+<ul>
+<li>Prikupljanje korisnickih preferencija i zahtjeva</li>
+<li>Razjasnjavanje nejasnih uputstava</li>
+<li>Donosenje odluka oko implementacije</li>
+<li>Nudjenje izbora o smjeru rada</li>
+</ul>
+<p>Svako pitanje ukljucuje naslov, tekst pitanja i listu opcija. Korisnici mogu izabrati ponudenu opciju ili upisati vlastiti odgovor. Kada ima vise pitanja, mogu se kretati izmedu njih prije slanja svih odgovora.</p>
+<hr>
+<h2>Prilagođeni alati</h2>
+<p>Custom tools vam omogucavaju da definisete vlastite funkcije koje LLM moze pozivati. Definisu se u config datoteci i mogu izvrsavati proizvoljan kod.</p>
+<p><a href="/docs/custom-tools">Saznajte vise</a> o kreiranju custom tools.</p>
+<hr>
+<h2>MCP serveri</h2>
+<p>MCP (Model Context Protocol) serveri omogucavaju integraciju eksternih alata i servisa. Ovo ukljucuje pristup bazama, API integracije i third-party servise.</p>
+<p><a href="/docs/mcp-servers">Saznajte vise</a> o konfigurisanju MCP servera.</p>
+<hr>
+<h2>Interno</h2>
+<p>Interno, alati kao <code>grep</code> i <code>glob</code> koriste <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a>. Po defaultu, ripgrep postuje <code>.gitignore</code> obrasce, pa se fajlovi i direktoriji iz <code>.gitignore</code> izostavljaju iz pretraga i listinga.</p>
+<hr>
+<h3>Obrasci ignorisanja</h3>
+<p>Da ukljucite fajlove koji bi inace bili ignorisani, kreirajte <code>.ignore</code> datoteku u korijenu projekta. Ova datoteka moze eksplicitno dozvoliti odredene putanje.</p>
+<pre><code class="language-text">!node_modules/
+!dist/
+!build/
+</code></pre>
+<p>Na primjer, ova <code>.ignore</code> datoteka dozvoljava ripgrep-u da pretrazuje <code>node_modules/</code>, <code>dist/</code> i <code>build/</code> direktorije i kada su navedeni u <code>.gitignore</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

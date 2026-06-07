@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>主題 — vanilla-closedcode docs</title>
+  <meta name="description" content="選擇內建主題或定義您自己的主題。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/themes.html">English</option>
+      <option value="../ar/themes.html">العربية</option>
+      <option value="../bs/themes.html">Bosanski</option>
+      <option value="../da/themes.html">Dansk</option>
+      <option value="../de/themes.html">Deutsch</option>
+      <option value="../es/themes.html">Español</option>
+      <option value="../fr/themes.html">Français</option>
+      <option value="../it/themes.html">Italiano</option>
+      <option value="../ja/themes.html">日本語</option>
+      <option value="../ko/themes.html">한국어</option>
+      <option value="../nb/themes.html">Norsk</option>
+      <option value="../pl/themes.html">Polski</option>
+      <option value="../pt-br/themes.html">Português (BR)</option>
+      <option value="../ru/themes.html">Русский</option>
+      <option value="../th/themes.html">ไทย</option>
+      <option value="../tr/themes.html">Türkçe</option>
+      <option value="../zh-cn/themes.html">简体中文</option>
+      <option value="../zh-tw/themes.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li class="active"><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>主題</h1>
+      <p class="lede">選擇內建主題或定義您自己的主題。</p>
+      <p>透過 vanilla-closedcode，您可以從多個內建主題中進行選擇，使用能自動適配終端機主題的主題，或者定義您自己的自訂主題。</p>
+<p>預設情況下，vanilla-closedcode 使用我們自己的 <code>closedcode</code> 主題。</p>
+<hr>
+<h2>終端機要求</h2>
+<p>為了使主題能夠正確顯示完整的調色盤，您的終端機必須支援<strong>真彩色</strong>（24 位元色）。大多數現代終端機預設支援此功能，但您可能需要手動啟用：</p>
+<ul>
+<li><strong>檢查支援情況</strong>：執行 <code>echo $COLORTERM</code> — 輸出應為 <code>truecolor</code> 或 <code>24bit</code></li>
+<li><strong>啟用真彩色</strong>：在您的 shell 設定檔中設定環境變數 <code>COLORTERM=truecolor</code></li>
+<li><strong>終端機相容性</strong>：確保您的終端機模擬器支援 24 位元色（大多數現代終端機如 iTerm2、Alacritty、Kitty、Windows Terminal 以及較新版本的 GNOME Terminal 均已支援）</li>
+</ul>
+<p>如果沒有真彩色支援，主題可能會出現色彩精度下降的情況，或者回退到最接近的 256 色近似值。</p>
+<hr>
+<h2>內建主題</h2>
+<p>vanilla-closedcode 自帶多個內建主題。</p>
+<table>
+<thead>
+<tr>
+<th>名稱</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>system</code></td>
+<td>自動適配終端機的背景顏色</td>
+</tr>
+<tr>
+<td><code>tokyonight</code></td>
+<td>基於 <a href="https://github.com/folke/tokyonight.nvim">Tokyonight</a> 主題</td>
+</tr>
+<tr>
+<td><code>everforest</code></td>
+<td>基於 <a href="https://github.com/sainnhe/everforest">Everforest</a> 主題</td>
+</tr>
+<tr>
+<td><code>ayu</code></td>
+<td>基於 <a href="https://github.com/ayu-theme">Ayu</a> 暗色主題</td>
+</tr>
+<tr>
+<td><code>catppuccin</code></td>
+<td>基於 <a href="https://github.com/catppuccin">Catppuccin</a> 主題</td>
+</tr>
+<tr>
+<td><code>catppuccin-macchiato</code></td>
+<td>基於 <a href="https://github.com/catppuccin">Catppuccin</a> 主題</td>
+</tr>
+<tr>
+<td><code>gruvbox</code></td>
+<td>基於 <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> 主題</td>
+</tr>
+<tr>
+<td><code>kanagawa</code></td>
+<td>基於 <a href="https://github.com/rebelot/kanagawa.nvim">Kanagawa</a> 主題</td>
+</tr>
+<tr>
+<td><code>nord</code></td>
+<td>基於 <a href="https://github.com/nordtheme/nord">Nord</a> 主題</td>
+</tr>
+<tr>
+<td><code>matrix</code></td>
+<td>駭客風格的黑底綠字主題</td>
+</tr>
+<tr>
+<td><code>one-dark</code></td>
+<td>基於 <a href="https://github.com/Th3Whit3Wolf/one-nvim">Atom One</a> Dark 主題</td>
+</tr>
+</tbody></table>
+<p>我們還在不斷新增更多主題。</p>
+<hr>
+<h2>系統主題</h2>
+<p><code>system</code> 主題旨在自動適配您終端機的配色方案。與使用固定顏色的傳統主題不同，<em>system</em> 主題具有以下特點：</p>
+<ul>
+<li><strong>產生灰階色階</strong>：根據終端機的背景顏色建立自訂灰階色階，確保最佳對比度。</li>
+<li><strong>使用 ANSI 顏色</strong>：利用標準 ANSI 顏色（0-15）進行語法高亮和 UI 元素渲染，遵循終端機的調色盤設定。</li>
+<li><strong>保留終端機預設值</strong>：將文字和背景顏色設為 <code>none</code>，以保持終端機的原生外觀。</li>
+</ul>
+<p>系統主題適合以下使用者：</p>
+<ul>
+<li>希望 vanilla-closedcode 與終端機的外觀保持一致</li>
+<li>使用了自訂終端機配色方案</li>
+<li>偏好所有終端機應用程式擁有統一的視覺風格</li>
+</ul>
+<hr>
+<h2>使用主題</h2>
+<p>您可以透過 <code>/theme</code> 指令調出主題選擇介面來選擇主題，也可以在 <code>tui.json</code> 中直接指定。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<hr>
+<h2>自訂主題</h2>
+<p>vanilla-closedcode 支援靈活的基於 JSON 的主題系統，讓使用者可以輕鬆建立和自訂主題。</p>
+<hr>
+<h3>層級優先順序</h3>
+<p>主題按以下順序從多個目錄載入，後面的目錄會覆蓋前面的目錄：</p>
+<ol>
+<li><strong>內建主題</strong> — 嵌入在二進位檔案中</li>
+<li><strong>使用者設定目錄</strong> — 定義在 <code>~/.config/closedcode/themes/*.json</code> 或 <code>$XDG_CONFIG_HOME/closedcode/themes/*.json</code></li>
+<li><strong>專案根目錄</strong> — 定義在 <code>&lt;project-root&gt;/.closedcode/themes/*.json</code></li>
+<li><strong>當前工作目錄</strong> — 定義在 <code>./.closedcode/themes/*.json</code></li>
+</ol>
+<p>如果多個目錄包含同名主題，將使用優先順序較高的目錄中的主題。</p>
+<hr>
+<h3>建立主題</h3>
+<p>要建立自訂主題，請在上述任一主題目錄中建立一個 JSON 檔案。</p>
+<p>建立使用者級主題：</p>
+<pre><code class="language-bash">mkdir -p ~/.config/closedcode/themes
+vim ~/.config/closedcode/themes/my-theme.json
+</code></pre>
+<p>建立專案級主題：</p>
+<pre><code class="language-bash">mkdir -p .closedcode/themes
+vim .closedcode/themes/my-theme.json
+</code></pre>
+<hr>
+<h3>JSON 格式</h3>
+<p>主題使用靈活的 JSON 格式，支援以下特性：</p>
+<ul>
+<li><strong>十六進位顏色</strong>：<code>&quot;#ffffff&quot;</code></li>
+<li><strong>ANSI 顏色</strong>：<code>3</code>（0-255）</li>
+<li><strong>顏色參考</strong>：<code>&quot;primary&quot;</code> 或自訂定義的顏色名</li>
+<li><strong>深色/淺色變體</strong>：<code>{&quot;dark&quot;: &quot;#000&quot;, &quot;light&quot;: &quot;#fff&quot;}</code></li>
+<li><strong>無顏色</strong>：<code>&quot;none&quot;</code> — 使用終端機的預設顏色或透明背景</li>
+</ul>
+<hr>
+<h3>顏色定義</h3>
+<p><code>defs</code> 部分是選填的，它允許您定義可在主題中重複引用的可重複使用顏色。</p>
+<hr>
+<h3>終端機預設值</h3>
+<p>特殊值 <code>&quot;none&quot;</code> 可用於任何顏色屬性，以繼承終端機的預設顏色。這在建立需要與終端機配色方案無縫融合的主題時特別有用：</p>
+<ul>
+<li><code>&quot;text&quot;: &quot;none&quot;</code> — 使用終端機的預設前景色</li>
+<li><code>&quot;background&quot;: &quot;none&quot;</code> — 使用終端機的預設背景色</li>
+</ul>
+<hr>
+<h3>範例</h3>
+<p>以下是一個自訂主題的完整範例：</p>
+<pre><code class="language-json">{
+  &quot;defs&quot;: {
+    &quot;nord0&quot;: &quot;#2E3440&quot;,
+    &quot;nord1&quot;: &quot;#3B4252&quot;,
+    &quot;nord2&quot;: &quot;#434C5E&quot;,
+    &quot;nord3&quot;: &quot;#4C566A&quot;,
+    &quot;nord4&quot;: &quot;#D8DEE9&quot;,
+    &quot;nord5&quot;: &quot;#E5E9F0&quot;,
+    &quot;nord6&quot;: &quot;#ECEFF4&quot;,
+    &quot;nord7&quot;: &quot;#8FBCBB&quot;,
+    &quot;nord8&quot;: &quot;#88C0D0&quot;,
+    &quot;nord9&quot;: &quot;#81A1C1&quot;,
+    &quot;nord10&quot;: &quot;#5E81AC&quot;,
+    &quot;nord11&quot;: &quot;#BF616A&quot;,
+    &quot;nord12&quot;: &quot;#D08770&quot;,
+    &quot;nord13&quot;: &quot;#EBCB8B&quot;,
+    &quot;nord14&quot;: &quot;#A3BE8C&quot;,
+    &quot;nord15&quot;: &quot;#B48EAD&quot;
+  },
+  &quot;theme&quot;: {
+    &quot;primary&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;secondary&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;accent&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;error&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;warning&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;success&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;info&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;text&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;textMuted&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord1&quot;
+    },
+    &quot;background&quot;: {
+      &quot;dark&quot;: &quot;nord0&quot;,
+      &quot;light&quot;: &quot;nord6&quot;
+    },
+    &quot;backgroundPanel&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;backgroundElement&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;border&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;borderActive&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord2&quot;
+    },
+    &quot;borderSubtle&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffContext&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHunkHeader&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHighlightAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffHighlightRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffAddedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffContextBg&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;diffLineNumber&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;diffAddedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;markdownText&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;markdownHeading&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownLink&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownLinkText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCode&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;markdownBlockQuote&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownEmph&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;markdownStrong&quot;: {
+      &quot;dark&quot;: &quot;nord13&quot;,
+      &quot;light&quot;: &quot;nord13&quot;
+    },
+    &quot;markdownHorizontalRule&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownListItem&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownListEnumeration&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownImage&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownImageText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCodeBlock&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;syntaxComment&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;syntaxKeyword&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxFunction&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord8&quot;
+    },
+    &quot;syntaxVariable&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxString&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;syntaxNumber&quot;: {
+      &quot;dark&quot;: &quot;nord15&quot;,
+      &quot;light&quot;: &quot;nord15&quot;
+    },
+    &quot;syntaxType&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxOperator&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxPunctuation&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    }
+  }
+}
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

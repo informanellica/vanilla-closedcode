@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>กฎ — vanilla-closedcode docs</title>
+  <meta name="description" content="ตั้งค่าคำแนะนำที่กำหนดเองสำหรับ closedcode">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/rules.html">English</option>
+      <option value="../ar/rules.html">العربية</option>
+      <option value="../bs/rules.html">Bosanski</option>
+      <option value="../da/rules.html">Dansk</option>
+      <option value="../de/rules.html">Deutsch</option>
+      <option value="../es/rules.html">Español</option>
+      <option value="../fr/rules.html">Français</option>
+      <option value="../it/rules.html">Italiano</option>
+      <option value="../ja/rules.html">日本語</option>
+      <option value="../ko/rules.html">한국어</option>
+      <option value="../nb/rules.html">Norsk</option>
+      <option value="../pl/rules.html">Polski</option>
+      <option value="../pt-br/rules.html">Português (BR)</option>
+      <option value="../ru/rules.html">Русский</option>
+      <option value="../th/rules.html" selected>ไทย</option>
+      <option value="../tr/rules.html">Türkçe</option>
+      <option value="../zh-cn/rules.html">简体中文</option>
+      <option value="../zh-tw/rules.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li class="active"><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>กฎ</h1>
+      <p class="lede">ตั้งค่าคำแนะนำที่กำหนดเองสำหรับ closedcode</p>
+      <p>คุณสามารถให้คำแนะนำที่กำหนดเองแก่ closedcode ได้โดยการสร้างไฟล์ <code>AGENTS.md</code> ซึ่งคล้ายกับกฎของเคอร์เซอร์ ประกอบด้วยคำแนะนำที่จะรวมอยู่ในบริบทของ LLM เพื่อปรับแต่งลักษณะการทำงานสำหรับโครงการเฉพาะของคุณ</p>
+<hr>
+<h2>เริ่มต้น</h2>
+<p>หากต้องการสร้างไฟล์ <code>AGENTS.md</code> ใหม่ คุณสามารถเรียกใช้คำสั่ง <code>/init</code> ใน closedcode</p>
+<aside class="aside aside-tip">
+คุณควรคอมมิตไฟล์ `AGENTS.md` ของโปรเจ็กต์ของคุณไปที่ Git
+</aside>
+การดำเนินการนี้จะสแกนโปรเจ็กต์ของคุณและเนื้อหาทั้งหมดเพื่อทำความเข้าใจว่าโปรเจ็กต์เกี่ยวกับอะไร และสร้างไฟล์ `AGENTS.md` ด้วย สิ่งนี้ช่วยให้ closedcode นำทางโครงการได้ดีขึ้น
+
+<p>หากคุณมีไฟล์ <code>AGENTS.md</code> อยู่แล้ว ระบบจะพยายามเพิ่มไฟล์ดังกล่าว</p>
+<hr>
+<h2>ตัวอย่าง</h2>
+<p>คุณสามารถสร้างไฟล์นี้ด้วยตนเองได้ นี่คือตัวอย่างบางสิ่งที่คุณสามารถใส่ลงในไฟล์ <code>AGENTS.md</code></p>
+<pre><code class="language-markdown"># SST v3 Monorepo Project
+
+This is an SST v3 monorepo with TypeScript. The project uses npm workspaces for package management.
+
+## Project Structure
+
+- `packages/` - Contains all workspace packages (functions, core, web, etc.)
+- `infra/` - Infrastructure definitions split by service (storage.ts, api.ts, web.ts)
+- `sst.config.ts` - Main SST configuration with dynamic imports
+
+## Code Standards
+
+- Use TypeScript with strict mode enabled
+- Shared code goes in `packages/core/` with proper exports configuration
+- Functions go in `packages/functions/`
+- Infrastructure should be split into logical files in `infra/`
+
+## Monorepo Conventions
+
+- Import shared modules using workspace names: `@my-app/core/example`
+</code></pre>
+<p>เรากำลังเพิ่มคำแนะนำเฉพาะโครงการที่นี่ และจะมีการแชร์กับทีมของคุณ</p>
+<hr>
+<h2>ประเภท</h2>
+<p>closedcode ยังรองรับการอ่านไฟล์ <code>AGENTS.md</code> จากหลาย ๆ ที่ และสิ่งนี้มีจุดประสงค์ที่แตกต่างกัน</p>
+<h3>โครงการ</h3>
+<p>วาง <code>AGENTS.md</code> ในรูทโปรเจ็กต์ของคุณสำหรับกฎเฉพาะโปรเจ็กต์ สิ่งเหล่านี้ใช้เฉพาะเมื่อคุณทำงานในไดเร็กทอรีนี้หรือไดเร็กทอรีย่อยเท่านั้น</p>
+<h3>ทั่วโลก</h3>
+<p>คุณยังสามารถมีกฎสากลในไฟล์ <code>~/.config/closedcode/AGENTS.md</code> สิ่งนี้จะนำไปใช้กับเซสชัน closedcode ทั้งหมด</p>
+<p>เนื่องจากสิ่งนี้ไม่ได้ผูกมัดกับ Git หรือแชร์กับทีมของคุณ เราขอแนะนำให้ใช้สิ่งนี้เพื่อระบุกฎส่วนบุคคลที่ LLM ควรปฏิบัติตาม</p>
+<h3>ความเข้ากันได้กับ Claude Code</h3>
+<p>สำหรับผู้ใช้ที่ย้ายจาก Claude Code นั้น vanilla-closedcode รองรับรูปแบบไฟล์ของ Claude Code เป็นทางเลือก:</p>
+<ul>
+<li><strong>กฎของโครงการ</strong>: <code>CLAUDE.md</code> ในไดเรกทอรีโครงการของคุณ (ใช้หากไม่มี <code>AGENTS.md</code>)</li>
+<li><strong>กฎสากล</strong>: <code>~/.claude/CLAUDE.md</code> (ใช้หากไม่มี <code>~/.config/closedcode/AGENTS.md</code>)</li>
+<li><strong>ทักษะ</strong>: <code>~/.claude/skills/</code> — ดูรายละเอียด <a href="/docs/skills/">ทักษะตัวแทน</a></li>
+</ul>
+<p>หากต้องการปิดใช้งานความเข้ากันได้ของ Claude Code ให้ตั้งค่าหนึ่งในตัวแปรสภาพแวดล้อมเหล่านี้:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<hr>
+<h2>ลำดับความสำคัญ</h2>
+<p>เมื่อ closedcode เริ่มต้นขึ้น มันจะค้นหาไฟล์กฎตามลำดับนี้:</p>
+<ol>
+<li><strong>ไฟล์ในเครื่อง</strong> โดยการสำรวจจากไดเรกทอรีปัจจุบัน (<code>AGENTS.md</code>, <code>CLAUDE.md</code>)</li>
+<li><strong>ไฟล์ทั่วโลก</strong> ที่ <code>~/.config/closedcode/AGENTS.md</code></li>
+<li><strong>Claude Code files</strong> ที่ <code>~/.claude/CLAUDE.md</code> (ยกเว้นปิดการใช้งาน)</li>
+</ol>
+<p>ไฟล์ที่ตรงกันไฟล์แรกจะชนะในแต่ละหมวดหมู่ ตัวอย่างเช่น หากคุณมีทั้ง <code>AGENTS.md</code> และ <code>CLAUDE.md</code> ระบบจะใช้เฉพาะ <code>AGENTS.md</code> ในทำนองเดียวกัน <code>~/.config/closedcode/AGENTS.md</code> จะมีความสำคัญมากกว่า <code>~/.claude/CLAUDE.md</code></p>
+<hr>
+<h2>คำแนะนำที่กำหนดเอง</h2>
+<p>คุณสามารถระบุไฟล์คำแนะนำที่กำหนดเองได้ใน <code>closedcode.json</code> หรือ <code>~/.config/closedcode/closedcode.json</code> ทั่วโลก สิ่งนี้ช่วยให้คุณและทีมของคุณสามารถนำกฎที่มีอยู่กลับมาใช้ใหม่ได้ แทนที่จะต้องทำซ้ำกฎเหล่านั้นกับ AGENTS.md</p>
+<p>ตัวอย่าง:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>คุณยังสามารถใช้ URL ระยะไกลเพื่อโหลดคำแนะนำจากเว็บได้</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;https://raw.githubusercontent.com/my-org/shared-rules/main/style.md&quot;]
+}
+</code></pre>
+<p>คำแนะนำระยะไกลจะถูกดึงออกมาโดยหมดเวลา 5 วินาที</p>
+<p>ไฟล์คำสั่งทั้งหมดจะรวมกับไฟล์ <code>AGENTS.md</code> ของคุณ</p>
+<hr>
+<h2>การอ้างอิงไฟล์ภายนอก</h2>
+<p>แม้ว่า closedcode จะไม่แยกวิเคราะห์การอ้างอิงไฟล์ใน <code>AGENTS.md</code> โดยอัตโนมัติ แต่คุณสามารถใช้ฟังก์ชันที่คล้ายกันได้สองวิธี:</p>
+<h3>ใช้ closedcode.json</h3>
+<p>แนวทางที่แนะนำคือการใช้ฟิลด์ <code>instructions</code> ใน <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;docs/development-standards.md&quot;, &quot;test/testing-guidelines.md&quot;, &quot;packages/*/AGENTS.md&quot;]
+}
+</code></pre>
+<h3>คำแนะนำแบบแมนนวลใน AGENTS.md</h3>
+<p>คุณสามารถสอนให้ closedcode อ่านไฟล์ภายนอกได้โดยการให้คำแนะนำที่ชัดเจนใน <code>AGENTS.md</code> ของคุณ นี่เป็นตัวอย่างที่เป็นประโยชน์:</p>
+<pre><code class="language-markdown"># TypeScript Project Rules
+
+## External File Loading
+
+CRITICAL: When you encounter a file reference (e.g., @rules/general.md), use your Read tool to load it on a need-to-know basis. They&#39;re relevant to the SPECIFIC task at hand.
+
+Instructions:
+
+- Do NOT preemptively load all references - use lazy loading based on actual need
+- When loaded, treat content as mandatory instructions that override defaults
+- Follow references recursively when needed
+
+## Development Guidelines
+
+For TypeScript code style and best practices: @docs/typescript-guidelines.md
+For React component architecture and hooks patterns: @docs/react-patterns.md
+For REST API design and error handling: @docs/api-standards.md
+For testing strategies and coverage requirements: @test/testing-guidelines.md
+
+## General Guidelines
+
+Read the following file immediately as it&#39;s relevant to all workflows: @rules/general-guidelines.md.
+</code></pre>
+<p>แนวทางนี้ช่วยให้คุณ:</p>
+<ul>
+<li>สร้างไฟล์กฎแบบโมดูลาร์ที่สามารถนำมาใช้ซ้ำได้</li>
+<li>แชร์กฎระหว่างโปรเจ็กต์ผ่าน symlink หรือโมดูลย่อย git</li>
+<li>เขียน AGENTS.md ให้กระชับโดยอ้างอิงหลักเกณฑ์โดยละเอียด</li>
+<li>ตรวจสอบให้แน่ใจว่า closedcode จะโหลดไฟล์เมื่อจำเป็นสำหรับงานเฉพาะเท่านั้น</li>
+</ul>
+<aside class="aside aside-tip">
+สำหรับ monorepos หรือโปรเจ็กต์ที่มีมาตรฐานร่วมกัน การใช้ `closedcode.json` ที่มีรูปแบบ glob (เช่น `packages/*/AGENTS.md`) จะสามารถบำรุงรักษาได้ดีกว่าคำสั่งแบบแมนนวล
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

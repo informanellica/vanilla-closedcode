@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Разрешения — vanilla-closedcode docs</title>
+  <meta name="description" content="Контролируйте, какие действия требуют одобрения для выполнения.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html" selected>Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Разрешения</h1>
+      <p class="lede">Контролируйте, какие действия требуют одобрения для выполнения.</p>
+      <p>closedcode использует конфигурацию <code>permission</code>, чтобы решить, должно ли данное действие выполняться автоматически, запрашивать вас или блокироваться.</p>
+<p>Начиная с <code>v1.1.1</code>, устаревшая логическая конфигурация <code>tools</code> устарела и была объединена с <code>permission</code>. Старая конфигурация <code>tools</code> по-прежнему поддерживается для обеспечения обратной совместимости.</p>
+<hr>
+<h2>Действия</h2>
+<p>Каждое правило разрешения разрешается в одно из:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — запуск без одобрения</li>
+<li><code>&quot;ask&quot;</code> — запрос на одобрение</li>
+<li><code>&quot;deny&quot;</code> — заблокировать действие</li>
+</ul>
+<hr>
+<h2>Конфигурация</h2>
+<p>Вы можете устанавливать разрешения глобально (с помощью <code>*</code>) и переопределять определенные инструменты.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Вы также можете установить все разрешения одновременно:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Детальные правила (синтаксис объекта)</h2>
+<p>Для большинства разрешений вы можете использовать объект для применения различных действий на основе входных данных инструмента.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Правила оцениваются по шаблону, при этом <strong>выигрывает последнее совпадающее правило</strong>. Обычно сначала ставится универсальное правило <code>&quot;*&quot;</code>, а после него — более конкретные правила.</p>
+<h3>Подстановочные знаки</h3>
+<p>В шаблонах разрешений используется простое сопоставление с подстановочными знаками:</p>
+<ul>
+<li><code>*</code> соответствует нулю или более любого символа.</li>
+<li><code>?</code> соответствует ровно одному символу</li>
+<li>Все остальные символы совпадают буквально</li>
+</ul>
+<h3>Расширение домашнего каталога</h3>
+<p>Вы можете использовать <code>~</code> или <code>$HOME</code> в начале шаблона для ссылки на ваш домашний каталог. Это особенно полезно для правил <a href="#external-directories"><code>external_directory</code></a>.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Внешние каталоги</h3>
+<p>Используйте <code>external_directory</code>, чтобы разрешить вызовы инструментов, затрагивающие пути за пределами рабочего каталога, в котором был запущен closedcode. Это применимо к любому инструменту, который принимает путь в качестве входных данных (например, <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> и многие команды <code>bash</code>).</p>
+<p>Расширение дома (например, <code>~/...</code>) влияет только на запись шаблона. Он не делает внешний путь частью текущего рабочего пространства, поэтому пути за пределами рабочего каталога все равно должны быть разрешены через <code>external_directory</code>.</p>
+<p>Например, это позволяет получить доступ ко всему, что находится под <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Любой каталог, разрешенный здесь, наследует те же настройки по умолчанию, что и текущая рабочая область. Поскольку для <a href="#defaults"><code>read</code> по умолчанию установлено значение <code>allow</code></a>, чтение также разрешено для записей под <code>external_directory</code>, если оно не переопределено. Добавьте явные правила, когда инструмент должен быть ограничен в этих путях, например, блокировать редактирование при сохранении чтения:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Держите список сосредоточенным на доверенных путях и добавляйте дополнительные правила разрешения или запрета по мере необходимости для других инструментов (например, <code>bash</code>).</p>
+<hr>
+<h2>Доступные разрешения</h2>
+<p>Разрешения closedcode привязаны к имени инструмента, а также к нескольким мерам безопасности:</p>
+<ul>
+<li><code>read</code> — чтение файла (соответствует пути к файлу)</li>
+<li><code>edit</code> — все модификации файлов (охватывает <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — подстановка файла (соответствует шаблону подстановки)</li>
+<li><code>grep</code> — поиск по контенту (соответствует шаблону регулярного выражения)</li>
+<li><code>bash</code> — запуск shell-команд (соответствует проанализированным командам, например <code>git status --porcelain</code>)</li>
+<li><code>task</code> — запуск субагентов (соответствует типу субагента)</li>
+<li><code>skill</code> — загрузка навыка (соответствует названию навыка)</li>
+<li><code>lsp</code> — выполнение запросов LSP (в настоящее время не детализированных)</li>
+<li><code>webfetch</code> — получение URL-адреса (соответствует URL-адресу)</li>
+<li><code>websearch</code> — поиск в сети (соответствует запросу)</li>
+<li><code>external_directory</code> — срабатывает, когда инструмент касается путей за пределами рабочего каталога проекта.</li>
+<li><code>doom_loop</code> — срабатывает, когда один и тот же вызов инструмента повторяется 3 раза с одинаковым вводом.</li>
+</ul>
+<hr>
+<h2>По умолчанию</h2>
+<p>Если вы ничего не укажете, closedcode запустится с разрешенных значений по умолчанию:</p>
+<ul>
+<li>Большинство разрешений по умолчанию имеют значение <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> и <code>external_directory</code> по умолчанию равны <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> — это <code>&quot;allow&quot;</code>, но файлы <code>.env</code> по умолчанию запрещены:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Что означает «ask»</h2>
+<p>Когда closedcode запрашивает одобрение, пользовательский интерфейс предлагает три результата:</p>
+<ul>
+<li><code>once</code> — утвердить только этот запрос</li>
+<li><code>always</code> — одобрять будущие запросы, соответствующие предложенным шаблонам (до конца текущего сеанса closedcode).</li>
+<li><code>reject</code> — отклонить запрос</li>
+</ul>
+<p>Набор шаблонов, которые одобрит <code>always</code>, предоставляется инструментом (например, разрешения bash обычно включают в белый список безопасный префикс команды, такой как <code>git status*</code>).</p>
+<hr>
+<h2>Агенты</h2>
+<p>Вы можете переопределить разрешения для каждого агента. Разрешения агента объединяются с глобальной конфигурацией, и правила агента имеют приоритет. <a href="/docs/agents#permissions">Подробнее</a> о разрешениях агента.</p>
+<aside class="aside aside-note">
+Более подробные примеры сопоставления с образцом см. в разделе [Детальные правила (синтаксис объекта)](#granular-rules-object-syntax) выше.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Вы также можете настроить разрешения агента в Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Используйте сопоставление с образцом для команд с аргументами. `"grep *"` разрешает `grep pattern file.txt`, а сам `"grep"` блокирует его. Такие команды, как `git status`, работают по умолчанию, но требуют явного разрешения (например, `"git status *"`) при передаче аргументов.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

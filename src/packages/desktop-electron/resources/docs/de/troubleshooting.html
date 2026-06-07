@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fehlerbehebung — vanilla-closedcode docs</title>
+  <meta name="description" content="Haeufige Probleme und schnelle Loesungen.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html" selected>Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Deutsch</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Fehlerbehebung</h1>
+      <p class="lede">Haeufige Probleme und schnelle Loesungen.</p>
+      <p>Wenn vanilla-closedcode Probleme macht, starte mit Logs und lokal gespeicherten Daten auf der Festplatte.</p>
+<hr>
+<h2>Logs</h2>
+<p>Logdateien werden hier gespeichert:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> und fuege ein: <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>Dateinamen enthalten Zeitstempel (z. B. <code>2025-01-09T123456.log</code>) und es bleiben die letzten 10 Logs erhalten.</p>
+<p>Mit <code>--log-level</code> bekommst du detailliertere Diagnoseinfos, z. B. <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>Speicher</h2>
+<p>closedcode speichert Sitzungs- und App-Daten auf der Festplatte unter:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> und fuege ein: <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>Dieses Verzeichnis enthaelt:</p>
+<ul>
+<li><code>auth.json</code> - Authentifizierungsdaten wie API-Keys und OAuth-Tokens</li>
+<li><code>log/</code> - Anwendungslogs</li>
+<li><code>project/</code> - Projektspezifische Daten wie Sitzungen und Nachrichten<ul>
+<li>In Git-Repositories unter <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>Ohne Git unter <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Desktop-App</h2>
+<p>vanilla-closedcode Desktop startet im Hintergrund einen lokalen vanilla-closedcode-Server (<code>closedcode-cli</code>-Sidecar).
+Viele Probleme kommen von fehlerhaften Plugins, kaputtem Cache oder falschen Server-Einstellungen.</p>
+<h3>Schnellchecks</h3>
+<ul>
+<li>App komplett beenden und neu starten</li>
+<li>Bei Fehlerbildschirm <strong>Restart</strong> klicken und Details kopieren</li>
+<li>Nur macOS: <code>vanilla-closedcode</code>-Menue -&gt; <strong>Reload Webview</strong> (hilft bei leerer/eingefrorener UI)</li>
+</ul>
+<hr>
+<h3>Plugins deaktivieren</h3>
+<p>Wenn die Desktop-App beim Start abstuerzt, haengt oder sich seltsam verhaelt, deaktiviere zunaechst Plugins.</p>
+<h4>Globale Konfiguration prüfen</h4>
+<p>Oeffne deine globale Konfigurationsdatei und suche nach dem <code>plugin</code>-Schluessel.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (oder <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (aeltere Installationen): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> und fuege ein: <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>Wenn du Plugins konfiguriert hast, deaktiviere sie voruebergehend, indem du den Schluessel entfernst oder auf ein leeres Array setzt:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>Plugin-Verzeichnisse prüfen</h4>
+<p>vanilla-closedcode kann auch lokale Plugins von der Festplatte laden. Verschiebe diese voruebergehend (oder benenne den Ordner um) und starte die Desktop-App neu:</p>
+<ul>
+<li><strong>Globale Plugins</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> und fuege ein: <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>Projekt-Plugins</strong> (nur bei projektspezifischer Konfig)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>Wenn die App wieder funktioniert, aktiviere Plugins nacheinander, um den Verursacher zu finden.</p>
+<hr>
+<h3>Cache leeren</h3>
+<p>Wenn das Deaktivieren von Plugins nicht hilft (oder eine Plugin-Installation haengt), leere den Cache, damit vanilla-closedcode ihn neu aufbauen kann.</p>
+<ol>
+<li>Beende vanilla-closedcode Desktop komplett.</li>
+<li>Loesche das Cache-Verzeichnis:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; einfuegen: <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: loesche <code>~/.cache/closedcode</code> (oder fuehre aus: <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> und fuege ein: <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>Starte vanilla-closedcode Desktop neu.</li>
+</ol>
+<hr>
+<h3>Server-Verbindungsprobleme beheben</h3>
+<p>vanilla-closedcode Desktop kann entweder einen eigenen lokalen Server starten (Standard) oder sich mit einer konfigurierten Server-URL verbinden.</p>
+<p>Wenn du einen <strong>&quot;Connection Failed&quot;</strong>-Dialog siehst (oder die App beim Splash-Screen haengen bleibt), pruefe auf eine benutzerdefinierte Server-URL.</p>
+<h4>Desktop-Standard-Server-URL löschen</h4>
+<p>Klicke im Startbildschirm auf den Servernamen (mit dem Statuspunkt), um die Serverauswahl zu oeffnen. Klicke im Bereich <strong>Default server</strong> auf <strong>Clear</strong>.</p>
+<h4><code>server.port</code> / <code>server.hostname</code> aus Konfiguration entfernen</h4>
+<p>Wenn deine <code>closedcode.json(c)</code> einen <code>server</code>-Abschnitt enthaelt, entferne ihn voruebergehend und starte die Desktop-App neu.</p>
+<h4>Umgebungsvariablen prüfen</h4>
+<p>Wenn du <code>CLOSEDCODE_PORT</code> in deiner Umgebung gesetzt hast, versucht die Desktop-App diesen Port fuer den lokalen Server zu nutzen.</p>
+<ul>
+<li>Setze <code>CLOSEDCODE_PORT</code> zurueck (oder waehle einen freien Port) und starte neu.</li>
+</ul>
+<hr>
+<h3>Linux: Wayland / X11-Probleme</h3>
+<p>Unter Linux koennen manche Wayland-Setups leere Fenster oder Compositor-Fehler verursachen.</p>
+<ul>
+<li>Wenn du Wayland nutzt und die App leer ist/abstuerzt, versuche den Start mit <code>OC_ALLOW_WAYLAND=1</code>.</li>
+<li>Wenn das es verschlimmert, entferne es und versuche den Start in einer X11-Session.</li>
+</ul>
+<hr>
+<h3>Windows: WebView2-Laufzeit</h3>
+<p>Unter Windows benoetigt vanilla-closedcode Desktop die Microsoft Edge <strong>WebView2 Runtime</strong>. Wenn die App ein leeres Fenster zeigt oder nicht startet, installiere/aktualisiere WebView2 und versuche es erneut.</p>
+<hr>
+<h3>Windows: Allgemeine Performance-Probleme</h3>
+<p>Wenn du langsame Performance, Dateizugriffsprobleme oder Terminal-Probleme unter Windows hast, versuche <a href="/docs/windows-wsl">WSL (Windows Subsystem for Linux)</a>. WSL bietet eine Linux-Umgebung, die nahtloser mit vanilla-closedcode-Features funktioniert.</p>
+<hr>
+<h3>Benachrichtigungen werden nicht angezeigt</h3>
+<p>vanilla-closedcode Desktop zeigt Systembenachrichtigungen nur wenn:</p>
+<ul>
+<li>Benachrichtigungen fuer vanilla-closedcode in den OS-Einstellungen aktiviert sind, und</li>
+<li>das App-Fenster nicht fokussiert ist.</li>
+</ul>
+<hr>
+<h3>Desktop-App-Speicher zurücksetzen (letzter Ausweg)</h3>
+<p>Wenn die App nicht startet und du Einstellungen nicht in der UI loeschen kannst, setze den gespeicherten Zustand der Desktop-App zurueck.</p>
+<ol>
+<li>Beende vanilla-closedcode Desktop.</li>
+<li>Finde und loesche diese Dateien (im App-Data-Verzeichnis von vanilla-closedcode Desktop):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (desktop default server URL)</li>
+<li><code>closedcode.global.dat</code> und <code>closedcode.workspace.*.dat</code> (UI state like recent servers/projects)</li>
+</ul>
+<p>So findest du das Verzeichnis schnell:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (dann suche nach den Dateinamen oben)</li>
+<li><strong>Linux</strong>: suche unter <code>~/.local/share</code> nach den Dateinamen oben</li>
+<li><strong>Windows</strong>: Druecke <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (dann suche nach den Dateinamen oben)</li>
+</ul>
+<hr>
+<h2>Hilfe bekommen</h2>
+<p>Wenn du Probleme mit vanilla-closedcode hast:</p>
+<ol>
+<li><p><strong>Probleme auf GitHub melden</strong></p>
+<p>Bugs und Feature-Wuensche meldest du am besten im GitHub-Repository:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>Suche vor dem Erstellen nach bestehenden Issues, damit Duplikate vermieden werden.</p>
+</li>
+<li><p><strong>Unserem Discord beitreten</strong></p>
+<p>Fuer schnelle Hilfe und Austausch in der Community:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>Haeufige Probleme</h2>
+<p>Hier sind typische Fehlerbilder und wie du sie loest.</p>
+<hr>
+<h3>vanilla-closedcode startet nicht</h3>
+<ol>
+<li>Pruefe die Logs auf Fehlermeldungen</li>
+<li>Versuche den Start mit <code>--print-logs</code>, um Ausgaben im Terminal zu sehen</li>
+<li>Stelle sicher, dass du die neueste Version hast: <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>Authentifizierungsprobleme</h3>
+<ol>
+<li>Versuche erneute Authentifizierung mit <code>/connect</code> in der TUI</li>
+<li>Pruefe, ob deine API-Keys gueltig sind</li>
+<li>Stelle sicher, dass dein Netzwerk Verbindungen zur Provider-API erlaubt</li>
+</ol>
+<hr>
+<h3>Modell nicht verfügbar</h3>
+<ol>
+<li>Pruefe, ob du dich beim Provider authentifiziert hast</li>
+<li>Verifiziere, dass der Modellname in deiner Config korrekt ist</li>
+<li>Manche Modelle erfordern speziellen Zugriff oder Abonnements</li>
+</ol>
+<p>Wenn du <code>ProviderModelNotFoundError</code> erhaeltst, referenzierst du ein Modell wahrscheinlich falsch.
+Modelle sollten so referenziert werden: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>Beispiele:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>Um zu sehen, auf welche Modelle du Zugriff hast, fuehre <code>closedcode models</code> aus.</p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>Wenn du einen ProviderInitError erhaeltst, hast du wahrscheinlich eine ungueltige oder korrupte Konfiguration.</p>
+<p>Zur Loesung:</p>
+<ol>
+<li><p>Pruefe zuerst, ob dein Provider korrekt eingerichtet ist, gemaess dem <a href="/docs/providers">Provider-Guide</a></p>
+</li>
+<li><p>Wenn das Problem besteht, versuche deine gespeicherte Konfiguration zu loeschen:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>Unter Windows druecke <code>WIN+R</code> und loesche: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>Authentifiziere dich erneut beim Provider mit dem <code>/connect</code>-Befehl in der TUI.</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError und Provider-Paket-Probleme</h3>
+<p>Wenn du API-Call-Fehler erhaeltst, kann das an veralteten Provider-Paketen liegen. closedcode installiert Provider-Pakete (OpenAI, Anthropic, Google, etc.) dynamisch bei Bedarf und cached sie lokal.</p>
+<p>Um Provider-Paket-Probleme zu loesen:</p>
+<ol>
+<li><p>Leere den Provider-Paket-Cache:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>Unter Windows druecke <code>WIN+R</code> und loesche: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>Starte closedcode neu, um die neuesten Provider-Pakete zu installieren</p>
+</li>
+</ol>
+<p>Dies zwingt closedcode, die neuesten Versionen der Provider-Pakete herunterzuladen, was oft Kompatibilitaetsprobleme mit Modellparametern und API-Aenderungen loest.</p>
+<hr>
+<h3>Copy/Paste funktioniert nicht unter Linux</h3>
+<p>Linux-Nutzer muessen eines der folgenden Clipboard-Utilities installiert haben, damit Copy/Paste funktioniert:</p>
+<p><strong>Fuer X11-Systeme:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>Fuer Wayland-Systeme:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>Fuer Headless-Umgebungen:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>closedcode erkennt, ob du Wayland nutzt und bevorzugt <code>wl-clipboard</code>, sonst versucht es <code>xclip</code> und <code>xsel</code> (in dieser Reihenfolge).</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

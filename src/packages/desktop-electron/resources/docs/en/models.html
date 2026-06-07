@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Models — vanilla-closedcode docs</title>
+  <meta name="description" content="Configuring an LLM provider and model.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html" selected>English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">English</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Models</h1>
+      <p class="lede">Configuring an LLM provider and model.</p>
+      <p>vanilla-closedcode uses the <a href="https://ai-sdk.dev/">AI SDK</a> and <a href="https://models.dev">Models.dev</a> to support <strong>75+ LLM providers</strong> and it supports running local models.</p>
+<hr>
+<h2>Providers</h2>
+<p>Most popular providers are preloaded by default. If you&#39;ve added the credentials for a provider through the <code>/connect</code> command, they&#39;ll be available when you start vanilla-closedcode.</p>
+<p>Learn more about <a href="/docs/providers">providers</a>.</p>
+<hr>
+<h2>Select a model</h2>
+<p>Once you&#39;ve configured your provider you can select the model you want by typing in:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>Recommended models</h2>
+<p>There are a lot of models out there, with new models coming out every week.</p>
+<aside class="aside aside-tip">
+Consider using one of the models we recommend.
+</aside>
+However, there are only a few of them that are good at both generating code and tool calling.
+
+<p>Here are several models that work well with vanilla-closedcode, in no particular order. (This is not an exhaustive list nor is it necessarily up to date):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>Set a default</h2>
+<p>To set one of these as the default model, you can set the <code>model</code> key in your
+vanilla-closedcode config.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>Here the full ID is <code>provider_id/model_id</code>. For example, if you&#39;re using Ollama, you would use <code>ollama/gpt-oss:20b</code> for GPT-OSS 20B.</p>
+<p>If you&#39;ve configured a <a href="/docs/providers#custom">custom provider</a>, the <code>provider_id</code> is key from the <code>provider</code> part of your config, and the <code>model_id</code> is the key from <code>provider.models</code>.</p>
+<hr>
+<h2>Configure models</h2>
+<p>You can globally configure a model&#39;s options through the config.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>Here we&#39;re configuring global settings for two built-in models: <code>gpt-5</code> when accessed via the <code>openai</code> provider, and <code>claude-sonnet-4-20250514</code> when accessed via the <code>anthropic</code> provider.
+The built-in provider and model names can be found on <a href="https://models.dev">Models.dev</a>.</p>
+<p>You can also configure these options for any agents that you are using. The agent config overrides any global options here. <a href="/docs/agents/#additional">Learn more</a>.</p>
+<p>You can also define custom variants that extend built-in ones. Variants let you configure different settings for the same model without creating duplicate entries:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Variants</h2>
+<p>Many models support multiple variants with different configurations. vanilla-closedcode ships with built-in default variants for popular providers.</p>
+<h3>Built-in variants</h3>
+<p>vanilla-closedcode ships with default variants for many providers:</p>
+<p><strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - High thinking budget (default)</li>
+<li><code>max</code> - Maximum thinking budget</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>Varies by model but roughly:</p>
+<ul>
+<li><code>none</code> - No reasoning</li>
+<li><code>minimal</code> - Minimal reasoning effort</li>
+<li><code>low</code> - Low reasoning effort</li>
+<li><code>medium</code> - Medium reasoning effort</li>
+<li><code>high</code> - High reasoning effort</li>
+<li><code>xhigh</code> - Extra high reasoning effort</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> - Lower effort/token budget</li>
+<li><code>high</code> - Higher effort/token budget</li>
+</ul>
+<aside class="aside aside-tip">
+This list is not comprehensive. Many other providers have built-in defaults too.
+</aside>
+### Custom variants
+
+<p>You can override existing variants or add your own:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>Cycle variants</h3>
+<p>Use the keybind <code>variant_cycle</code> to quickly switch between variants. <a href="/docs/keybinds">Learn more</a>.</p>
+<hr>
+<h2>Loading models</h2>
+<p>When vanilla-closedcode starts up, it checks for models in the following priority order:</p>
+<ol>
+<li><p>The <code>--model</code> or <code>-m</code> command line flag. The format is the same as in the config file: <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>The model list in the vanilla-closedcode config.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>The format here is <code>provider/model</code>.</p>
+</li>
+<li><p>The last used model.</p>
+</li>
+<li><p>The first model using an internal priority.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

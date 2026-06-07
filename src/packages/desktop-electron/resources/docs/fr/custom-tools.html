@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outils personnalisés — vanilla-closedcode docs</title>
+  <meta name="description" content="Créez des outils que le LLM peut appeler dans closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html" selected>Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Français</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Outils personnalisés</h1>
+      <p class="lede">Créez des outils que le LLM peut appeler dans closedcode.</p>
+      <p>Les outils personnalisés sont des fonctions que vous créez et que le LLM peut appeler pendant les conversations. Ils fonctionnent avec les <a href="/docs/tools">outils intégrés</a> de closedcode comme <code>read</code>, <code>write</code> et <code>bash</code>.</p>
+<hr>
+<h2>Création d&#39;un outil</h2>
+<p>Les outils sont définis sous forme de fichiers <strong>TypeScript</strong> ou <strong>JavaScript</strong>. Cependant, la définition de l&#39;outil peut appeler des scripts écrits dans <strong>n&#39;importe quel langage</strong> : TypeScript ou JavaScript n&#39;est utilisé que pour la définition de l&#39;outil elle-même.</p>
+<hr>
+<h3>Emplacement</h3>
+<p>Ils peuvent être définis :</p>
+<ul>
+<li>Localement en les plaçant dans le répertoire <code>.closedcode/tools/</code> de votre projet.</li>
+<li>Ou globalement, en les plaçant dans <code>~/.config/closedcode/tools/</code>.</li>
+</ul>
+<hr>
+<h3>Structure</h3>
+<p>Le moyen le plus simple de créer des outils est d&#39;utiliser l&#39;assistant <code>tool()</code> qui fournit la sécurité et la validation de type.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p>Le <strong>nom de fichier</strong> devient le <strong>nom de l&#39;outil</strong>. Ce qui précède crée un outil <code>database</code>.</p>
+<hr>
+<h4>Plusieurs outils par fichier</h4>
+<p>Vous pouvez également exporter plusieurs outils à partir d&#39;un seul fichier. Chaque exportation devient <strong>un outil distinct</strong> portant le nom <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong> :</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>Cela crée deux outils : <code>math_add</code> et <code>math_multiply</code>.</p>
+<hr>
+<h3>Arguments</h3>
+<p>Vous pouvez utiliser <code>tool.schema</code>, qui est simplement <a href="https://zod.dev">Zod</a>, pour définir les types d&#39;arguments.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>Vous pouvez également importer <a href="https://zod.dev">Zod</a> directement et renvoyer un objet simple :</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Contexte</h3>
+<p>Les outils reçoivent le contexte de la session en cours :</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>Utilisez <code>context.directory</code> pour le répertoire de travail de la session.
+Utilisez <code>context.worktree</code> pour la racine du worktree git.</p>
+<hr>
+<h2>Exemples</h2>
+<h3>Écrire un outil en Python</h3>
+<p>Vous pouvez écrire vos outils dans le langage de votre choix. Voici un exemple qui ajoute deux nombres à l&#39;aide de Python.</p>
+<p>Tout d&#39;abord, créez l&#39;outil en tant que script Python :</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>Créez ensuite la définition d&#39;outil qui l&#39;invoque :</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>Ici, nous utilisons l&#39;utilitaire <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> pour exécuter le script Python.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

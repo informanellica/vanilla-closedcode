@@ -1,0 +1,242 @@
+/*
+ * vanilla-ide.js — in-app file editor (vanilla, no bundler, no `import`).
+ *
+ * Reuses the CodeMirror 5 approach from shin-htmleditor.js. Loaded as a classic
+ * <script> (globals only). Depends on:
+ *   - window.CodeMirror   (vendored at ./vendor/codemirror, classic scripts)
+ *   - window.api.readFile / window.api.writeFile  (Electron preload bridge)
+ *
+ * Public API (one editor per host element):
+ *   window.VanillaIDE.mount(hostEl, { absPath, relName })
+ *   window.VanillaIDE.unmount(hostEl)
+ *   window.VanillaIDE.isDirty(hostEl) -> boolean
+ */
+(function () {
+  "use strict";
+
+  // host element -> instance state
+  var instances = new WeakMap();
+
+  function hasBridge() {
+    return typeof window !== "undefined" && window.api && typeof window.api.readFile === "function";
+  }
+
+  // Pick a CodeMirror mime/mode for a filename, but only if the corresponding
+  // mode script was actually loaded (see index.html). Otherwise plain text.
+  function detectMode(name) {
+    var CM = window.CodeMirror;
+    if (!CM || typeof CM.findModeByFileName !== "function") return null;
+    var info = CM.findModeByFileName(name || "");
+    if (!info || !info.mode) return null;
+    if (!CM.modes || !CM.modes[info.mode]) return null;
+    return info.mime || info.mode;
+  }
+
+  function isDark() {
+    var root = document.documentElement;
+    return (root.getAttribute("data-bs-theme") || "").toLowerCase() === "dark";
+  }
+
+  function themeName() {
+    return isDark() ? "material-darker" : "default";
+  }
+
+  function el(tag, cls, text) {
+    var node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text != null) node.textContent = text;
+    return node;
+  }
+
+  function buildChrome(hostEl, relName, onExit) {
+    hostEl.innerHTML = "";
+    hostEl.classList.add("vide-host");
+
+    var bar = el("div", "vide-toolbar");
+    var name = el("span", "vide-name", relName || "");
+    var spacer = el("span", "vide-spacer");
+    var dirty = el("span", "vide-dirty", "●"); // ● unsaved indicator
+    dirty.title = "未保存の変更";
+    dirty.style.visibility = "hidden";
+    var status = el("span", "vide-status", "");
+    // Save and view-mode controls live in the app toolbar now, so the chrome
+    // bar only shows the file name, the unsaved (●) indicator, and status.
+
+    bar.appendChild(name);
+    bar.appendChild(dirty);
+    bar.appendChild(spacer);
+    bar.appendChild(status);
+
+    var editorWrap = el("div", "vide-editor");
+
+    hostEl.appendChild(bar);
+    hostEl.appendChild(editorWrap);
+
+    return { bar: bar, editorWrap: editorWrap, dirty: dirty, status: status, name: name };
+  }
+
+  function setStatus(inst, msg, isError) {
+    if (!inst.chrome) return;
+    inst.chrome.status.textContent = msg || "";
+    inst.chrome.status.classList.toggle("text-danger", !!isError);
+    if (msg && !isError) {
+      clearTimeout(inst._statusTimer);
+      inst._statusTimer = setTimeout(function () {
+        if (inst.chrome) inst.chrome.status.textContent = "";
+      }, 2000);
+    }
+  }
+
+  // Notify the Solid tab system when an editor's dirty state changes, keyed by
+  // the project-relative path (inst.relName === file.pathFromTab(tab)).
+  function emitDirty(inst, dirty) {
+    if (!inst || !inst.relName) return;
+    if (inst._lastDirty === dirty) return; // only on change
+    inst._lastDirty = dirty;
+    try {
+      window.dispatchEvent(new CustomEvent("vide:dirty", {
+        detail: { path: inst.relName, dirty: !!dirty }
+      }));
+    } catch (e) {}
+  }
+
+  function refreshDirty(inst) {
+    var clean = inst.cm ? inst.cm.isClean(inst.baseGen) : true;
+    inst.chrome.dirty.style.visibility = clean ? "hidden" : "visible";
+    emitDirty(inst, !clean);
+  }
+
+  // Notepad++-style editor status (cursor line/col, char count, EOL, encoding,
+  // read-only), keyed by path. Consumed by the bottom status bar.
+  function emitEditorState(inst) {
+    if (!inst || !inst.cm || !inst.relName) return;
+    var cm = inst.cm;
+    var cur = cm.getCursor();
+    var sel = cm.getSelection();
+    try {
+      window.dispatchEvent(new CustomEvent("vide:editorstate", {
+        detail: {
+          path: inst.relName,
+          line: cur.line + 1,
+          col: cur.ch + 1,
+          chars: cm.getValue().length,
+          lines: cm.lineCount(),
+          selChars: sel ? sel.length : 0,
+          eol: inst.eol || "LF",
+          encoding: inst.encoding || "UTF-8",
+          readonly: !!cm.getOption("readOnly"),
+        },
+      }));
+    } catch (e) {}
+  }
+
+  function save(inst) {
+    if (!inst.cm || !hasBridge()) return;
+    if (inst.cm.isClean(inst.baseGen)) return;
+    var content = inst.cm.getValue();
+    setStatus(inst, "保存中…");
+    window.api.writeFile(inst.absPath, content).then(function () {
+      inst.baseGen = inst.cm.changeGeneration(true);
+      refreshDirty(inst);
+      setStatus(inst, "保存しました");
+    }, function (err) {
+      refreshDirty(inst);
+      setStatus(inst, "保存に失敗: " + (err && err.message ? err.message : err), true);
+    });
+  }
+
+  function applyTheme(inst) {
+    if (inst.cm) inst.cm.setOption("theme", themeName());
+  }
+
+  function mount(hostEl, opts) {
+    if (!hostEl) return;
+    unmount(hostEl); // idempotent
+
+    var absPath = opts && opts.absPath;
+    var relName = (opts && opts.relName) || absPath || "";
+
+    if (!hasBridge()) {
+      hostEl.innerHTML = "";
+      hostEl.appendChild(el("div", "vide-message", "編集はデスクトップ版でのみ利用できます。"));
+      return;
+    }
+    if (!window.CodeMirror) {
+      hostEl.innerHTML = "";
+      hostEl.appendChild(el("div", "vide-message", "エディタの読み込みに失敗しました (CodeMirror)。"));
+      return;
+    }
+
+    var chrome = buildChrome(hostEl, relName, opts && opts.onExit);
+    var inst = { hostEl: hostEl, absPath: absPath, relName: relName, chrome: chrome, cm: null, baseGen: 1 };
+    instances.set(hostEl, inst);
+
+    chrome.editorWrap.appendChild(el("div", "vide-loading", "読み込み中…"));
+
+    window.api.readFile(absPath).then(function (content) {
+      if (instances.get(hostEl) !== inst) return; // unmounted/replaced meanwhile
+      chrome.editorWrap.innerHTML = "";
+      var raw = content == null ? "" : String(content);
+      // Detect line ending + encoding from the original bytes-as-string (CM
+      // normalizes to \n internally, so capture this before mounting).
+      inst.eol = /\r\n/.test(raw) ? "CRLF" : /\r/.test(raw) ? "CR" : "LF";
+      inst.encoding = raw.charCodeAt(0) === 0xFEFF ? "UTF-8-BOM" : "UTF-8";
+      var CM = window.CodeMirror;
+      var cm = CM(chrome.editorWrap, {
+        value: raw,
+        lineNumbers: true,
+        theme: themeName(),
+        mode: detectMode(relName),
+        lineWrapping: false,
+        extraKeys: {
+          "Ctrl-S": function () { save(inst); },
+          "Cmd-S": function () { save(inst); }
+        }
+      });
+      cm.setSize("100%", "100%");
+      inst.cm = cm;
+      inst.baseGen = cm.changeGeneration(true);
+      cm.on("change", function () { refreshDirty(inst); emitEditorState(inst); });
+      cm.on("cursorActivity", function () { emitEditorState(inst); });
+      refreshDirty(inst);
+      emitEditorState(inst);
+      // CM mis-measures when mounted hidden; refresh on next frame.
+      requestAnimationFrame(function () { if (inst.cm) inst.cm.refresh(); });
+
+      // Follow Bootstrap light/dark theme switches.
+      inst.observer = new MutationObserver(function () { applyTheme(inst); });
+      inst.observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
+    }, function (err) {
+      if (instances.get(hostEl) !== inst) return;
+      chrome.editorWrap.innerHTML = "";
+      chrome.editorWrap.appendChild(el("div", "vide-message", "ファイルを開けませんでした: " + (err && err.message ? err.message : err)));
+    });
+  }
+
+  function unmount(hostEl) {
+    var inst = instances.get(hostEl);
+    if (!inst) return;
+    if (inst.observer) { try { inst.observer.disconnect(); } catch (e) {} }
+    clearTimeout(inst._statusTimer);
+    emitDirty(inst, false); // clear tab indicator on unmount
+    instances.delete(hostEl);
+    inst.cm = null;
+    if (hostEl) {
+      hostEl.innerHTML = "";
+      hostEl.classList.remove("vide-host");
+    }
+  }
+
+  function isDirty(hostEl) {
+    var inst = instances.get(hostEl);
+    return !!(inst && inst.cm && !inst.cm.isClean(inst.baseGen));
+  }
+
+  window.VanillaIDE = { mount: mount, unmount: unmount, isDirty: isDirty, save: function (hostEl) {
+    var inst = instances.get(hostEl);
+    if (inst) save(inst);
+  }, refresh: function (hostEl) {
+    var inst = instances.get(hostEl);
+    if (inst && inst.cm) inst.cm.refresh();
+  } };
+})();

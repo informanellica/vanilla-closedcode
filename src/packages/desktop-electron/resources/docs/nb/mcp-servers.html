@@ -1,0 +1,605 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP-servere — vanilla-closedcode docs</title>
+  <meta name="description" content="Legg til lokale og eksterne MCP-verktøy.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html" selected>Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCP-servere</h1>
+      <p class="lede">Legg til lokale og eksterne MCP-verktøy.</p>
+      <p>Du kan legge til eksterne verktøy i vanilla-closedcode ved å bruke <em>Model Context Protocol</em> eller MCP. vanilla-closedcode støtter både lokale og eksterne servere.</p>
+<p>Når de er lagt til, er MCP-verktøy automatisk tilgjengelige for LLM sammen med innebygde verktøy.</p>
+<hr>
+<h4>Advarsler</h4>
+<p>Når du bruker en MCP-server, legger den til konteksten. Dette kan fort gå opp hvis du har mange verktøy. Så vi anbefaler å være forsiktig med hvilke MCP-servere du bruker.</p>
+<aside class="aside aside-tip">
+MCP-servere legger til konteksten din, så du vil være forsiktig med hvilke du aktiverer.
+</aside>
+Enkelte MCP-servere, som GitHub MCP-serveren, har en tendens til å legge til mange tokens og kan lett overskride kontekstgrensen.
+
+<hr>
+<h2>Aktivering</h2>
+<p>Du kan definere MCP-servere i <a href="https://github.com/informanellica/vanilla-closedcode">vanilla-closedcode Config</a> under <code>mcp</code>. Legg til hver MCP med et unikt navn. Du kan referere til den MCP ved navn når du spør LLM-en.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>Du kan også deaktivere en server ved å sette <code>enabled</code> til <code>false</code>. Dette er nyttig hvis du vil deaktivere en server midlertidig uten å fjerne den fra konfigurasjonen.</p>
+<hr>
+
+<h2>Lokal</h2>
+<p>Legg til lokale MCP-servere ved å bruke <code>type</code> til <code>&quot;local&quot;</code> i MCP-objektet.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Kommandoen er hvordan den lokale MCP-serveren startes. Du kan også sende inn en liste over miljøvariabler.</p>
+<p>For eksempel, her er hvordan du kan legge til test <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a> MCP serveren.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>Og for å bruke den kan du legge til <code>use the mcp_everything tool</code> i ledetekstene mine.</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>Alternativer</h4>
+<p>Her er alle alternativene for å konfigurere en lokal MCP-server.</p>
+<table>
+<thead>
+<tr>
+<th>Alternativ</th>
+<th>Type</th>
+<th>Påkrevd</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Type MCP servertilkobling, må være <code>&quot;local&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Array</td>
+<td>Y</td>
+<td>Kommando og argumenter for å kjøre MCP-serveren.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Object</td>
+<td></td>
+<td>Miljøvariabler som skal angis når serveren kjøres.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Aktiver eller deaktiver MCP-serveren ved oppstart.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>Tidsavbrudd i ms for henting av verktøy fra MCP-serveren. Standard er 5000 (5 sekunder).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Ekstern</h2>
+<p>Legg til eksterne MCP-servere ved å sette <code>type</code> til <code>&quot;remote&quot;</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> er URL til den eksterne MCP serveren og med alternativet <code>headers</code> kan du sende inn en liste over headere.</p>
+<hr>
+<h4>Alternativer</h4>
+<table>
+<thead>
+<tr>
+<th>Alternativ</th>
+<th>Type</th>
+<th>Påkrevd</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Type MCP servertilkobling, må være <code>&quot;remote&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>String</td>
+<td>Y</td>
+<td>URL av den eksterne MCP-serveren.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Aktiver eller deaktiver MCP-serveren ved oppstart.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Object</td>
+<td></td>
+<td>Headere å sende med forespørselen.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Object</td>
+<td></td>
+<td>OAuth-autentiseringskonfigurasjon. Se delen <a href="#oauth">OAuth</a> nedenfor.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>Tidsavbrudd i ms for henting av verktøy fra MCP-serveren. Standard er 5000 (5 sekunder).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>vanilla-closedcode håndterer automatisk OAuth-autentisering for eksterne MCP-servere. Når en server krever autentisering, vil vanilla-closedcode:</p>
+<ol>
+<li>Oppdag 401-svaret og start OAuth-flyten</li>
+<li>Bruk <strong>Dynamisk klientregistrering (RFC 7591)</strong> hvis det støttes av serveren</li>
+<li>Lagre tokens sikkert for fremtidige forespørsler</li>
+</ol>
+<hr>
+<h3>Automatisk</h3>
+<p>For de fleste OAuth-aktiverte MCP-servere er ingen spesiell konfigurasjon nødvendig. Bare konfigurer den eksterne serveren:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hvis serveren krever autentisering, vil vanilla-closedcode be deg om å autentisere når du prøver å bruke den for første gang. Hvis ikke, kan du <a href="#authenticating">utløse flyten manuelt</a> med <code>closedcode mcp auth &lt;server-name&gt;</code>.</p>
+<hr>
+<h3>Forhåndsregistrert</h3>
+<p>Hvis du har klientlegitimasjon fra MCP-serverleverandøren, kan du konfigurere dem:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Autentisering</h3>
+<p>Du kan utløse autentisering manuelt eller administrere legitimasjon.</p>
+<p>Autentiser med en spesifikk MCP-server:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>Liste alle MCP-servere og deres autentiseringsstatus:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Fjern lagret legitimasjon:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p>Kommandoen <code>mcp auth</code> åpner nettleseren din for autorisasjon. Etter at du har godkjent, vil vanilla-closedcode lagre tokens sikkert i <code>~/.local/share/closedcode/mcp-auth.json</code>.</p>
+<hr>
+<h4>Deaktivering av OAuth</h4>
+<p>Hvis du vil deaktivere automatisk OAuth for en server (f.eks. for servere som bruker API-nøkler i stedet), setter du <code>oauth</code> til <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth-alternativer</h4>
+<table>
+<thead>
+<tr>
+<th>Alternativ</th>
+<th>Type</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>OAuth-konfigurasjonsobjekt, eller <code>false</code> for å deaktivere automatisk OAuth-deteksjon.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>OAuth-klient ID. Hvis ikke oppgitt, vil dynamisk klientregistrering bli forsøkt.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>OAuth-klienthemmelighet, hvis det kreves av autorisasjonsserveren.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>OAuth-omfang å be om under autorisasjon.</td>
+</tr>
+</tbody></table>
+<h4>Feilsøking</h4>
+<p>Hvis en ekstern MCP-server ikke klarer å autentisere, kan du diagnostisere problemer med:</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p>Kommandoen <code>mcp debug</code> viser gjeldende autentiseringsstatus, tester HTTP-tilkoblingen og forsøker OAuth-oppdagelsesflyten.</p>
+<hr>
+<h2>Administrering</h2>
+<p>MCP-ene dine er tilgjengelige som verktøy i vanilla-closedcode, sammen med innebygde verktøy. Så du kan administrere dem gjennom vanilla-closedcode-konfigurasjonen som alle andre verktøy.</p>
+<hr>
+<h3>Globalt</h3>
+<p>Dette betyr at du kan aktivere eller deaktivere dem globalt.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>Vi kan også bruke et globmønster for å deaktivere alle matchende MCP-er.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>Her bruker vi globmønsteret <code>my-mcp*</code> for å deaktivere alle MCP-er.</p>
+<hr>
+<h3>Per agent</h3>
+<p>Hvis du har et stort antall MCP-servere, vil du kanskje bare aktivere dem per agent og deaktivere dem globalt. Slik gjør du dette:</p>
+<ol>
+<li>Deaktiver det som et verktøy globalt.</li>
+<li>Aktiver MCP-serveren som et verktøy i <a href="/docs/agents#tools">agent config</a>.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Glob-mønstre</h4>
+<p>Glob-mønsteret bruker enkle regex-globing-mønstre:</p>
+<ul>
+<li><code>*</code> samsvarer med null eller flere av alle tegn (f.eks. <code>&quot;my-mcp*&quot;</code> samsvarer med <code>my-mcp_search</code>, <code>my-mcp_list</code>, osv.)</li>
+<li><code>?</code> samsvarer med nøyaktig ett tegn</li>
+<li>Alle andre karakterer samsvarer bokstavelig talt</li>
+</ul>
+<aside class="aside aside-note">
+MCP serververktøy er registrert med servernavn som prefiks, så for å deaktivere alle verktøy for en server bruker du bare:
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>Eksempler</h2>
+<p>Nedenfor er eksempler på noen vanlige MCP-servere. Du kan sende inn en PR hvis du vil dokumentere andre servere.</p>
+<hr>
+<h3>Sentry</h3>
+<p>Legg til <a href="https://mcp.sentry.dev">Sentry MCP-serveren</a> for å samhandle med Sentry-prosjektene og problemene dine.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>Etter å ha lagt til konfigurasjonen, autentiser med Sentry:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>Dette åpner et nettleservindu for å fullføre OAuth-flyten og koble vanilla-closedcode til Sentry-kontoen din.</p>
+<p>Når du er autentisert, kan du bruke Sentry-verktøy i ledetekstene dine for å spørre etter problemer, prosjekter og feildata.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>Legg til <a href="https://github.com/upstash/context7">Context7 MCP-serveren</a> for å søke gjennom dokumenter.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hvis du har registrert deg for en gratis konto, kan du bruke API-nøkkelen din og få høyere satsgrenser.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Her antar vi at du har <code>CONTEXT7_API_KEY</code> miljøvariabelen satt.</p>
+<p>Legg til <code>use context7</code> i instruksjonene for å bruke Context7 MCP-serveren.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>Alternativt kan du legge til noe slikt til din <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>Legg til <a href="https://grep.app">Grep by Vercel</a> MCP-serveren for å søke gjennom kodebiter på GitHub.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>Siden vi kalte MCP-serveren vår <code>gh_grep</code>, kan du legge til <code>use the gh_grep tool</code> i spørsmålene dine for å få agenten til å bruke den.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>Alternativt kan du legge til noe slikt til din <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a> er en LLM observerbarhetsplattform som gir logging, overvåking og analyser for AI-applikasjonene dine. Helicone AI Gateway ruter forespørslene dine til riktig leverandør automatisk basert på modellen.</p>
+<ol>
+<li><p>Gå over til <a href="https://helicone.ai">Helicone</a>, opprett en konto og generer en API nøkkel fra dashbordet.</p>
+</li>
+<li><p>Kjør kommandoen <code>/connect</code> og søk etter <strong>Helicone</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Skriv inn Helicone API-nøkkelen.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Kjør kommandoen <code>/models</code> for å velge en modell.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>For flere leverandører og avanserte funksjoner som bufring og hastighetsbegrensning, sjekk <a href="https://docs.helicone.ai">Helicone-dokumentasjonen</a>.</p>
+<h4>Valgfrie konfigurasjoner</h4>
+<p>I tilfelle du ser en funksjon eller modell fra Helicone som ikke konfigureres automatisk gjennom vanilla-closedcode, kan du alltid konfigurere den selv.</p>
+<p>Her er <a href="https://helicone.ai/models">Helicone&#39;s Model Directory</a>, du trenger denne for å hente ID-ene til modellene du vil legge til.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>Egendefinerte headere</h4>
+<p>Helicone støtter tilpassede headere for funksjoner som bufring, brukersporing og øktadministrasjon. Legg dem til leverandørkonfigurasjonen din ved å bruke <code>options.headers</code>:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>Sesjonssporing</h5>
+<p>Helicones <a href="https://docs.helicone.ai/features/sessions">Sessions</a> funksjon lar deg gruppere relaterte LLM forespørsler sammen. Bruk <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a> plugin for automatisk å logge hver vanilla-closedcode-samtale som en økt i Helicone.</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>Legg den til i konfigurasjonen din.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>Programtillegget injiserer <code>Helicone-Session-Id</code> og <code>Helicone-Session-Name</code> overskrifter i forespørslene dine. På Helicones Sessions-side vil du se hver vanilla-closedcode-samtale oppført som en separat økt.</p>
+<h5>Vanlige Helicone-headere</h5>
+<table>
+<thead>
+<tr>
+<th>Overskrift</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>Aktiver responsbufring (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>Spor beregninger etter bruker</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>Legg til egendefinerte egenskaper (f.eks. <code>Helicone-Property-Environment</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>Knytt forespørsler til spørsmålsversjoner</td>
+</tr>
+</tbody></table>
+<p>Se <a href="https://docs.helicone.ai/helicone-headers/header-directory">Helicone Header Directory</a> for alle tilgjengelige overskrifter.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

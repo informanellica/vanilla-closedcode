@@ -1,0 +1,429 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>プラグイン — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode を拡張する独自のプラグインを作成します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html" selected>日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>プラグイン</h1>
+      <p class="lede">vanilla-closedcode を拡張する独自のプラグインを作成します。</p>
+      <p>プラグインを使用すると、さまざまなイベントにフックして動作をカスタマイズすることで vanilla-closedcode を拡張できます。プラグインを作成して、新しい機能を追加したり、外部サービスと統合したり、vanilla-closedcode のデフォルトの動作を変更したりできます。</p>
+<p>たとえば、コミュニティによって作成された <a href="/docs/ecosystem#plugins">plugins</a> をチェックしてください。</p>
+<hr>
+<h2>プラグインの使用</h2>
+<p>プラグインをロードするには 2 つの方法があります。</p>
+<hr>
+<h3>ローカルファイルから</h3>
+<p>JavaScript または TypeScript ファイルをプラグインディレクトリに配置します。</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - プロジェクトレベルのプラグイン</li>
+<li><code>~/.config/closedcode/plugins/</code> - グローバルプラグイン</li>
+</ul>
+<p>これらのディレクトリ内のファイルは起動時に自動的にロードされます。</p>
+<hr>
+<h3>npm から</h3>
+<p>設定ファイルで npm パッケージを指定します。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>通常の npm パッケージとスコープ指定された npm パッケージの両方がサポートされています。</p>
+<p><a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>プラグインのインストール</h3>
+<p><strong>npm プラグイン</strong> は、起動時に npm を使用して自動的にインストールされます。パッケージとその依存関係は <code>~/.cache/closedcode/node_modules/</code> にキャッシュされます。</p>
+<p><strong>ローカルプラグイン</strong>は、プラグインディレクトリから直接ロードされます。外部パッケージを使用するには、config ディレクトリ内に <code>package.json</code> を作成するか (<a href="#dependencies">Dependency</a> を参照)、プラグインを npm に公開して <a href="/docs/config#plugins">config</a> に追加する必要があります。</p>
+<hr>
+<h3>ロード順序</h3>
+<p>プラグインはすべてのソースからロードされ、すべてのフックが順番に実行されます。ロード順序は次のとおりです。</p>
+<ol>
+<li>グローバル設定 (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>プロジェクト設定 (<code>closedcode.json</code>)</li>
+<li>グローバルプラグインディレクトリ (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>プロジェクトプラグインディレクトリ (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>同じ名前とバージョンを持つ重複した npm パッケージは 1 回ロードされます。ただし、似た名前のローカルプラグインと npm プラグインは両方とも別々にロードされます。</p>
+<hr>
+<h2>プラグインを作成する</h2>
+<p>プラグインは、1 つ以上のプラグインをエクスポートする <strong>JavaScript/TypeScript モジュール</strong>です。
+各関数はコンテキストオブジェクトを受け取り、フックオブジェクトを返します。</p>
+<hr>
+<h3>依存関係</h3>
+<p>ローカルプラグインとカスタムツールは外部の npm パッケージを使用できます。必要な依存関係を含む <code>package.json</code> を config ディレクトリに追加します。</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode は起動時に <code>npm install</code> を実行してこれらをインストールします。プラグインとツールはそれらをインポートできるようになります。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>基本構造</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>プラグイン関数は以下を受け取ります。</p>
+<ul>
+<li><code>project</code>: 現在のプロジェクト情報。</li>
+<li><code>directory</code>: 現在の作業ディレクトリ。</li>
+<li><code>worktree</code>: git ワークツリーのパス。</li>
+<li><code>client</code>: AI と対話するための vanilla-closedcode SDK クライアント。</li>
+</ul>
+<hr>
+<h3>TypeScript のサポート</h3>
+<p>TypeScript プラグインの場合、プラグインパッケージから型をインポートできます。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>イベント</h3>
+<p>以下の「例」セクションに示すように、プラグインはイベントをサブスクライブできます。利用可能なさまざまなイベントのリストは次のとおりです。</p>
+<h4>コマンドイベント</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>ファイルイベント</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>インストールイベント</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSPイベント</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>メッセージイベント</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>許可イベント</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>サーバーイベント</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>セッションイベント</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>ToDo イベント</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>シェルイベント</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>ツールイベント</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUIイベント</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>例</h2>
+<p>ここでは、vanilla-closedcode を拡張するために使用できるプラグインの例をいくつか示します。</p>
+<hr>
+<h3>通知を送信する</h3>
+<p>特定のイベントが発生したときに通知を送信します。</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>macOS 上で AppleScript を実行するために <code>osascript</code> を使用しています。ここでは通知を送信するために使用しています。</p>
+<aside class="aside aside-note">
+組み込みツールと同じ名前のプラグインツールを使用すると、プラグインツールが優先されます。
+</aside>
+---
+
+<h3>ロギング</h3>
+<p>構造化ログには <code>console.log</code> の代わりに <code>client.app.log()</code> を使用します。</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>レベル: <code>debug</code>、<code>info</code>、<code>warn</code>、<code>error</code>。詳細については、SDK ドキュメント を参照してください。</p>
+<hr>
+<h3>圧縮フック</h3>
+<p>セッションが圧縮されたときに含まれるコンテキストをカスタマイズします。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> フックは、LLM が継続概要を生成する前に起動します。これを使用して、デフォルトの圧縮プロンプトでは見逃されるドメイン固有のコンテキストを挿入します。</p>
+<p><code>output.prompt</code> を設定することで、圧縮プロンプトを完全に置き換えることもできます。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p><code>output.prompt</code> を設定すると、デフォルトの圧縮プロンプトが完全に置き換えられます。この場合、<code>output.context</code> 配列は無視されます。</p>
+<hr>
+<h3>.env の保護</h3>
+<p>vanilla-closedcode が <code>.env</code> ファイルを読み取らないようにします。</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>環境変数を挿入する</h3>
+<p>すべてのシェル実行 (AI ツールとユーザーターミナル) に環境変数を挿入します。</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>カスタムツール</h3>
+<p>プラグインは vanilla-closedcode にカスタムツールを追加することもできます。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code> ヘルパーは、vanilla-closedcode が呼び出すことができるカスタムツールを作成します。 Zod スキーマ関数を受け取り、次のようなツール定義を返します。</p>
+<ul>
+<li><code>description</code>: ツールの機能</li>
+<li><code>args</code>: ツールの引数の Zod スキーマ</li>
+<li><code>execute</code>: ツールが呼び出されたときに実行される関数</li>
+</ul>
+<p>カスタムツールは、組み込みツールと並行して vanilla-closedcode で使用できます。</p>
+<hr>
+<h3>ロギング</h3>
+<p>構造化ログには <code>client.app.log()</code> の代わりに <code>console.log</code> を使用します。</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>レベル: <code>debug</code>、<code>info</code>、<code>warn</code>、<code>error</code>。詳細については、SDK ドキュメント を参照してください。</p>
+<hr>
+<h3>圧縮フック</h3>
+<p>セッションが圧縮されたときに含まれるコンテキストをカスタマイズします。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> フックは、LLM が継続概要を生成する前に起動します。これを使用して、デフォルトの圧縮プロンプトでは見逃されるドメイン固有のコンテキストを挿入します。</p>
+<p><code>output.prompt</code> を設定することで、圧縮プロンプトを完全に置き換えることもできます。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p><code>output.prompt</code> を設定すると、デフォルトの圧縮プロンプトが完全に置き換えられます。この場合、<code>output.context</code> 配列は無視されます。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

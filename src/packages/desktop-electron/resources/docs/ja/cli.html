@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode CLI のオプションとコマンド。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html" selected>日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">vanilla-closedcode CLI のオプションとコマンド。</p>
+      <p>vanilla-closedcode CLI は、引数なしで実行すると、デフォルトで <a href="/docs/tui">TUI</a> を開始します。</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>ただし、このページに記載されているようにコマンドも受け入れます。これにより、vanilla-closedcode をプログラム的に操作できるようになります。</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>vanilla-closedcode ターミナルユーザーインターフェイスを開始します。</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>最後のセッションを続行</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td></td>
+<td>続行時にセッションをフォーク (<code>-s</code> または <code>--fork</code> と併用)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td>続行するセッション ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>使用のプロンプト</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>プロバイダー/モデルの形式で使用するモデル</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>使用するエージェント</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>リッスンするポート</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>リッスンするホスト名</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>コマンド</h2>
+<p>vanilla-closedcode CLI には次のコマンドもあります。</p>
+<hr>
+<h3>agent</h3>
+<p>vanilla-closedcode のエージェントを管理します。</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p><code>serve</code> または <code>web</code> コマンドを使用して起動された、すでに実行中の vanilla-closedcode バックエンドサーバーにターミナルを接続します。</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>これにより、リモート vanilla-closedcode バックエンドで TUI を使用できるようになります。例えば：</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>TUI を開始する作業ディレクトリ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>最後のセッションを続行</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>続行するセッション ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>続行時にセッションをフォーク（<code>--continue</code> または <code>--session</code> と使用）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Basic 認証パスワード（デフォルトは <code>CLOSEDCODE_SERVER_PASSWORD</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Basic 認証ユーザー名（デフォルトは <code>CLOSEDCODE_SERVER_USERNAME</code> または <code>closedcode</code>）</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>カスタム構成で新しいエージェントを作成します。</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>このコマンドは、カスタムシステムプロンプトとツール構成を使用して新しいエージェントを作成する手順を示します。</p>
+<hr>
+<h4>list</h4>
+<p>利用可能なエージェントをすべてリストします。</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>プロバイダーの資格情報とログインを管理するコマンド。</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode は <a href="https://models.dev">Models.dev</a> のプロバイダーリストを利用しているため、<code>closedcode auth login</code> を使用して、使用したいプロバイダーの API キーを構成できます。これは <code>~/.local/share/closedcode/auth.json</code> に保存されます。</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>vanilla-closedcode が起動すると、認証情報ファイルからプロバイダーがロードされます。また、環境またはプロジェクト内の <code>.env</code> ファイルで定義されたキーがあるかどうかも確認します。</p>
+<hr>
+<h4>list</h4>
+<p>認証情報ファイルに保存されているすべての認証されたプロバイダーをリストします。</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>またはショートバージョン。</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>資格情報ファイルからプロバイダーをクリアすることで、プロバイダーからログアウトします。</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>リポジトリ自動化のための GitHub エージェントを管理します。</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>GitHub エージェントをリポジトリにインストールします。</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>これにより、必要な GitHub Actions ワークフローが設定され、構成プロセスがガイドされます。 <a href="/docs/github">詳細はこちら</a>。</p>
+<hr>
+<h4>run</h4>
+<p>GitHub エージェントを実行します。これは通常、GitHub Actions で使用されます。</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>フラグ</h5>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>エージェントを実行するための GitHub モック イベント</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub 個人アクセストークン</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>モデルコンテキストプロトコルサーバーを管理します。</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>MCP サーバーを構成に追加します。</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>このコマンドは、ローカルまたはリモートの MCP サーバーを追加する手順を示します。</p>
+<hr>
+<h4>list</h4>
+<p>構成されているすべての MCP サーバーとその接続ステータスをリストします。</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>または、短いバージョンを使用してください。</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>OAuth 対応の MCP サーバーで認証します。</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>サーバー名を指定しない場合は、利用可能な OAuth 対応サーバーから選択するように求められます。</p>
+<p>OAuth 対応サーバーとその認証ステータスを一覧表示することもできます。</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>または、短いバージョンを使用してください。</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>MCP サーバーの OAuth 資格情報を削除します。</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>MCP サーバーの OAuth 接続の問題をデバッグします。</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>構成されたプロバイダーから利用可能なすべてのモデルをリストします。</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>このコマンドは、構成されたプロバイダー全体で利用可能なすべてのモデルを <code>provider/model</code> の形式で表示します。</p>
+<p>これは、<a href="/docs/config/">設定</a> で使用する正確なモデル名を把握するのに役立ちます。</p>
+<p>オプションでプロバイダー ID を渡して、そのプロバイダーによってモデルをフィルターできます。</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>models.dev からモデルキャッシュを更新します。</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>より詳細なモデル出力を使用します (コストなどのメタデータを含む)</td>
+</tr>
+</tbody></table>
+<p><code>--refresh</code> フラグを使用して、キャッシュされたモデルリストを更新します。これは、新しいモデルがプロバイダーに追加され、それを vanilla-closedcode で確認したい場合に便利です。</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>プロンプトを直接渡して、非対話モードで closedcode を実行します。</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>これは、スクリプト作成、自動化、または完全な TUI を起動せずに迅速な回答が必要な場合に便利です。例えば。</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>実行中の <code>closedcode serve</code> インスタンスにアタッチして、実行ごとの MCP サーバーのコールドブート時間を回避することもできます。</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>実行するコマンド。引数には message を使用します。</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>最後のセッションを続行</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>続行するセッション ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>続行時にセッションをフォーク (<code>--continue</code> または <code>--session</code> と併用)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>セッションを共有する</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>プロバイダー/モデルの形式で使用するモデル</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>使用するエージェント</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>メッセージに添付するファイル</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>形式: デフォルト (フォーマット済み) または json (生の JSON イベント)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>セッションのタイトル (値が指定されていない場合は、切り詰められたプロンプトが使用されます)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>実行中の closedcode サーバー (<a href="http://localhost:4096">http://localhost:4096</a> など) に接続します。</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Basic 認証パスワード（デフォルトは <code>CLOSEDCODE_SERVER_PASSWORD</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Basic 認証ユーザー名（デフォルトは <code>CLOSEDCODE_SERVER_USERNAME</code> または <code>closedcode</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>実行ディレクトリ、またはアタッチ時のリモートサーバー上のパス</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>モデルバリアント（プロバイダー固有の推論レベル）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>思考ブロックを表示</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>ローカルサーバーのポート (デフォルトはランダムポート)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>API アクセスのためにヘッドレス vanilla-closedcode サーバーを起動します。完全な HTTP インターフェイスについては、<a href="/docs/server">サーバーのドキュメント</a> を確認してください。</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>これにより、TUI インターフェイスを使用せずに closedcode 機能への API アクセスを提供する HTTP サーバーが起動します。 <code>CLOSEDCODE_SERVER_PASSWORD</code> を設定して HTTP 基本認証を有効にします (ユーザー名のデフォルトは <code>closedcode</code>)。</p>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>リッスンするポート</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>リッスンするホスト名</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS 検出を有効にする</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>CORS を許可する追加のブラウザーオリジン</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>vanilla-closedcode セッションを管理します。</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>すべての vanilla-closedcode セッションをリストします。</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>フラグ</h5>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>最新のセッションを N 個に制限</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>出力形式: テーブルまたは json (テーブル)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>vanilla-closedcode セッションのトークンの使用状況とコストの統計を表示します。</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>過去 N 日間の統計を表示 (全期間)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>表示するツールの数 (すべて)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>モデルの使用状況の内訳を表示 (デフォルトでは非表示)。上位 N 件を表示するには数値を渡します</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>プロジェクトでフィルタリング (全プロジェクト、空文字列: 現在のプロジェクト)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>セッションデータを JSON としてエクスポートします。</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>セッション ID を指定しない場合は、利用可能なセッションから選択するように求められます。</p>
+<hr>
+<h3>import</h3>
+<p>JSON ファイルまたは vanilla-closedcode 共有 URL からセッションデータをインポートします。</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>ローカルファイルまたは vanilla-closedcode 共有 URL からインポートできます。</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>Web インターフェイスを使用してヘッドレス vanilla-closedcode サーバーを起動します。</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>これにより、HTTP サーバーが起動し、Web ブラウザが開き、Web インターフェイスを通じて vanilla-closedcode にアクセスします。 <code>CLOSEDCODE_SERVER_PASSWORD</code> を設定して HTTP 基本認証を有効にします (ユーザー名のデフォルトは <code>closedcode</code>)。</p>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>リッスンするポート</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>リッスンするホスト名</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>mDNS 検出を有効にする</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>CORS を許可する追加のブラウザーオリジン</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>ACP (エージェントクライアントプロトコル) サーバーを起動します。</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>このコマンドは、nd-JSON を使用して stdin/stdout 経由で通信する ACP サーバーを起動します。</p>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>作業ディレクトリ</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>リッスンするポート</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>リッスンするホスト名</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>vanilla-closedcode をアンインストールし、関連ファイルをすべて削除します。</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>構成ファイルを保持する</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>セッションデータとスナップショットを保持する</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>削除せずに削除される内容を表示する</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>確認プロンプトをスキップする</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>closedcode を最新バージョンまたは特定のバージョンに更新します。</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>最新バージョンにアップグレードするには。</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>特定のバージョンにアップグレードするには。</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>フラグ</h4>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>使用されたインストール方法。curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>グローバルフラグ</h2>
+<p>closedcode CLI は次のグローバルフラグを受け取ります。</p>
+<table>
+<thead>
+<tr>
+<th>フラグ</th>
+<th>ショート</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>ヘルプを表示</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>バージョン番号を出力</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>ログを標準エラー出力に出力</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>ログレベル (DEBUG、INFO、WARN、ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>環境変数</h2>
+<p>vanilla-closedcode は環境変数を使用して構成できます。</p>
+<table>
+<thead>
+<tr>
+<th>変数</th>
+<th>タイプ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>ブール値</td>
+<td>セッションを自動的に共有する</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>文字列</td>
+<td>Windows 上で実行可能な Git Bash へのパス</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>文字列</td>
+<td>構成ファイルへのパス</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>文字列</td>
+<td>config ディレクトリへのパス</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>文字列</td>
+<td>インライン JSON 構成コンテンツ</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>ブール値</td>
+<td>自動更新チェックを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>ブール値</td>
+<td>古いデータのプルーニングを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>ブール値</td>
+<td>ターミナルタイトルの自動更新を無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>文字列</td>
+<td>インライン化された json 権限設定</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>ブール値</td>
+<td>デフォルトのプラグインを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>ブール値</td>
+<td>LSP サーバーの自動ダウンロードを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>ブール値</td>
+<td>実験モデルを有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>ブール値</td>
+<td>自動コンテキスト圧縮を無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>ブール値</td>
+<td><code>.claude</code> からの読み取りを無効にする (プロンプト + スキル)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>ブール値</td>
+<td><code>~/.claude/CLAUDE.md</code> の読み取りを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>ブール値</td>
+<td><code>.claude/skills</code> のロードを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>ブール値</td>
+<td>リモートソースからのモデルの取得を無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>文字列</td>
+<td>テスト目的の偽の VCS プロバイダー</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>文字列</td>
+<td>クライアント識別子 (デフォルトは <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>ブール値</td>
+<td>Exa Web 検索ツールを有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>文字列</td>
+<td><code>serve</code>/<code>web</code> の基本認証を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>文字列</td>
+<td>基本認証ユーザー名 (デフォルト <code>closedcode</code>) をオーバーライドします。</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>文字列</td>
+<td>モデル設定を取得するためのカスタム URL</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>実験的</h3>
+<p>これらの環境変数により、変更または削除される可能性のある実験的な機能が有効になります。</p>
+<table>
+<thead>
+<tr>
+<th>変数</th>
+<th>タイプ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>ブール値</td>
+<td>すべての実験的機能を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>ブール値</td>
+<td>アイコン検出を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>ブール値</td>
+<td>TUI で選択時のコピーを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>数値</td>
+<td>bash コマンドのデフォルトのタイムアウト (ミリ秒)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>数値</td>
+<td>LLM 応答の最大出力トークン</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>ブール値</td>
+<td>ディレクトリ全体のファイル監視を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>ブール値</td>
+<td>oxfmt フォーマッタを有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>ブール値</td>
+<td>実験的な LSP ツールを有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>ブール値</td>
+<td>ファイルウォッチャーを無効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>ブール値</td>
+<td>実験的な Exa 機能を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>ブール値</td>
+<td>python ファイルの TY LSP を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>ブール値</td>
+<td>試験的な Markdown 機能を有効にする</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>ブール値</td>
+<td>プランモードを有効にする</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

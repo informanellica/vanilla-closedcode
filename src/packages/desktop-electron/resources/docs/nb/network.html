@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nettverk — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurer proxyer og tilpassede sertifikater.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html">Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html" selected>Norsk</option>
+      <option value="../pl/network.html">Polski</option>
+      <option value="../pt-br/network.html">Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html">ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Nettverk</h1>
+      <p class="lede">Konfigurer proxyer og tilpassede sertifikater.</p>
+      <p>vanilla-closedcode støtter standard proxy-miljøvariabler og tilpassede sertifikater for bedriftsnettverksmiljøer.</p>
+<hr>
+<h2>Mellomtjener</h2>
+<p>vanilla-closedcode respekterer standard proxy-miljøvariabler.</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+TUI-en kommuniserer med en lokal HTTP-server. Du må unngå proxy for denne tilkoblingen for å unngå rutingsløyfer.
+</aside>
+Du kan konfigurere serverens port og vertsnavn ved å bruke [CLI-flagg](/docs/cli#run).
+
+<hr>
+<h3>Autentisering</h3>
+<p>Hvis proxyen din krever grunnleggende autentisering, inkluder påloggingsinformasjon i URL-en.</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+Unngå hardkoding av passord. Bruk miljøvariabler eller sikker lagring av påloggingsinformasjon.
+</aside>
+For proxyer som krever avansert autentisering som NTLM eller Kerberos, bør du vurdere en LLM Gateway som støtter din autentiseringsmetode.
+
+<hr>
+<h2>Egendefinerte sertifikater</h2>
+<p>Hvis bedriften din bruker egendefinerte CA-er for HTTPS-tilkoblinger, konfigurer vanilla-closedcode til å stole på dem.</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Dette fungerer for både proxy-tilkoblinger og direkte API-tilgang.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

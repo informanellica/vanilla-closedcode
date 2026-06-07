@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Komutlar — vanilla-closedcode docs</title>
+  <meta name="description" content="Tekrarlanan görevler için özel komutlar oluşturulur.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html" selected>Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Komutlar</h1>
+      <p class="lede">Tekrarlanan görevler için özel komutlar oluşturulur.</p>
+      <p>Özel komutlar, söz konusu komut TUI&#39;da yürütüldüğünde çalıştırmak istediğiniz istemi belirtmenize olanak tanır.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Özel komutlar, <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code> gibi komutlara ek olarak sunulur. <a href="/docs/tui#commands">Daha fazla bilgi</a>.</p>
+<hr>
+<h2>Komut dosyaları oluşturma</h2>
+<p>Özel komutları tanımlamak için <code>commands/</code> dizininde işaretleme dosyaları oluşturun.</p>
+<p><code>.closedcode/commands/test.md</code> oluştur:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Ön madde komut özelliklerini tanımlar. İçerik şablon haline gelir.</p>
+<p><code>/</code> ve ardından komut adını yazarak komutu kullanın.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Yapılandırma</h2>
+<p>closedcode işlemleri aracılığıyla veya <code>commands/</code> dizininde işaretleme dosyalarının oluşturulması özel komutlar ile yapılabilir.</p>
+<hr>
+<h3>JSON</h3>
+<p>closedcode <a href="/docs/config">config</a>&#39;deki <code>command</code> seçeneğini kullanın:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Artık bu komutu TUI&#39;da çalıştırabilirsiniz:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Markdown dosyalarını kullanarak komutları da tanımlayabilirsiniz. Bunları şuraya yerleştirin:</p>
+<ul>
+<li>Küresel: <code>~/.config/closedcode/commands/</code></li>
+<li>Proje başına: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Markdown dosyasının adı komut adı olur. Örneğin, <code>test.md</code> şunu sağlar:
+sen koşuyorsun:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>İstem yapılandırması</h2>
+<p>Özel komut istemleri birçok özel yer tutucuyu ve sözdizimini destekler.</p>
+<hr>
+<h3>Argümanlar</h3>
+<p><code>$ARGUMENTS</code> yer tutucusunu kullanarak komutlara argümanları iletin.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Komutu bağımsız değişkenlerle çalıştırın:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>Ve <code>$ARGUMENTS</code>, <code>Button</code> ile değiştirilecektir.</p>
+<p>Konumsal parametreleri kullanarak bağımsız değişkenlere de erişebilirsiniz:</p>
+<ul>
+<li><code>$1</code> - İlk argüman</li>
+<li><code>$2</code> - İkinci argüman</li>
+<li><code>$3</code> - Üçüncü argüman</li>
+<li>Ve benzeri...</li>
+</ul>
+<p>Örneğin:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Komutu çalıştırın:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Bu şunun yerini alır:</p>
+<ul>
+<li><code>$1</code> ile <code>config.json</code></li>
+<li><code>$2</code> ile <code>src</code></li>
+<li><code>$3</code> ile <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Shell output</h3>
+<p>İsteminize <a href="/docs/tui#bash-commands">bash command</a> çıktısını enjekte etmek için _<em>!<code>command</code></em> kullanın.</p>
+<p>Örneğin, test kapsamını analiz eden özel bir komut oluşturmak için:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Or to review recent changes:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Komutlar projenizin kök dizininde çalışır ve çıktıları istemin bir parçası olur.</p>
+<hr>
+<h3>Dosya referansları</h3>
+<p>Komutunuza <code>@</code> ve ardından dosya adını kullanarak dosyaları ekleyin.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Dosya içeriği otomatik olarak istemde yer alır.</p>
+<hr>
+<h2>Seçenekler</h2>
+<p>Yapılandırma seçeneklerine ayrıntılı olarak bakalım.</p>
+<hr>
+<h3>Şablon</h3>
+<p><code>template</code> seçeneği, komut yürütüldüğünde LLM&#39;ye gönderilecek olan istemi tanımlar.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu <strong>gerekli</strong> bir yapılandırma seçeneğidir.</p>
+<hr>
+<h3>Açıklama</h3>
+<p>Komutun ne yaptığına ilişkin kısa bir açıklama sağlamak için <code>description</code> seçeneğini kullanın.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu, komutu yazdığınızda TUI içindeki açıklama olarak gösterilir.</p>
+<hr>
+<h3>Ajan</h3>
+<p>İsteğe bağlı olarak bu komutu hangi <a href="/docs/agents">agent</a>&#39;nin yürütmesi gerektiğini belirtmek için <code>agent</code> yapılandırmasını kullanın.
+Bu bir <a href="/docs/agents/#subagents">subagent</a> ise, komut varsayılan olarak bir alt aracı çağrısını tetikleyecektir.
+Bu davranışı devre dışı bırakmak için <code>subtask</code> öğesini <code>false</code> olarak ayarlayın.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu <strong>isteğe bağlı</strong> bir yapılandırma seçeneğidir. Belirtilmemişse, varsayılan olarak mevcut temsilciniz kullanılır.</p>
+<hr>
+<h3>Subtask</h3>
+<p>Komutu bir <a href="/docs/agents/#subagents">subagent</a> çağrısını tetiklemeye zorlamak için <code>subtask</code> boolean&#39;ını kullanın.
+Bu, komutun birincil bağlamınızı kirletmemesini ve aracıyı bir alt aracı olarak davranmaya <strong>zorlamasını</strong> istiyorsanız kullanışlıdır.
+<code>mode</code>, <a href="/docs/agents">agent</a> yapılandırmasında <code>primary</code> olarak ayarlanmış olsa bile.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Bu <strong>isteğe bağlı</strong> bir yapılandırma seçeneğidir.</p>
+<hr>
+<h3>Modeli</h3>
+<p>Bu parçanın varsayılan kodu geçersiz için <code>model</code> kontrolünü kullanın.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu <strong>isteğe bağlı</strong> bir yapılandırma seçeneğidir.</p>
+<hr>
+<h2>Yerleşik</h2>
+<p>closedcode, <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code> gibi çeşitli yerleşik komutlar içerir; <a href="/docs/tui#commands">learn more</a>.</p>
+<aside class="aside aside-note">
+Özel komutlar yerleşik komutları geçersiz kılabilir.
+</aside>
+Aynı adda özel bir komut tanımlarsanız yerleşik komutu geçersiz kılar.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

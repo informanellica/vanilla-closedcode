@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Themes — vanilla-closedcode docs</title>
+  <meta name="description" content="Waehle ein eingebautes Theme oder erstelle eins.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/themes.html">English</option>
+      <option value="../ar/themes.html">العربية</option>
+      <option value="../bs/themes.html">Bosanski</option>
+      <option value="../da/themes.html">Dansk</option>
+      <option value="../de/themes.html" selected>Deutsch</option>
+      <option value="../es/themes.html">Español</option>
+      <option value="../fr/themes.html">Français</option>
+      <option value="../it/themes.html">Italiano</option>
+      <option value="../ja/themes.html">日本語</option>
+      <option value="../ko/themes.html">한국어</option>
+      <option value="../nb/themes.html">Norsk</option>
+      <option value="../pl/themes.html">Polski</option>
+      <option value="../pt-br/themes.html">Português (BR)</option>
+      <option value="../ru/themes.html">Русский</option>
+      <option value="../th/themes.html">ไทย</option>
+      <option value="../tr/themes.html">Türkçe</option>
+      <option value="../zh-cn/themes.html">简体中文</option>
+      <option value="../zh-tw/themes.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Deutsch</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li class="active"><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Themes</h1>
+      <p class="lede">Waehle ein eingebautes Theme oder erstelle eins.</p>
+      <p>Mit vanilla-closedcode kannst du ein eingebautes Theme waehlen, ein an dein Terminal angepasstes Theme nutzen oder ein eigenes Theme definieren.</p>
+<p>Standardmaessig verwendet vanilla-closedcode das <code>closedcode</code>-Theme.</p>
+<hr>
+<h2>Terminal-Anforderungen</h2>
+<p>Damit Themes mit voller Farbpalette korrekt angezeigt werden, muss dein Terminal <strong>truecolor</strong> (24-Bit-Farben) unterstuetzen.
+Die meisten modernen Terminals koennen das bereits, eventuell musst du es aber aktivieren:</p>
+<ul>
+<li><strong>Support pruefen</strong>: Fuehre <code>echo $COLORTERM</code> aus - erwartet ist <code>truecolor</code> oder <code>24bit</code></li>
+<li><strong>Truecolor aktivieren</strong>: Setze in deinem Shell-Profil <code>COLORTERM=truecolor</code></li>
+<li><strong>Terminal-Kompatibilitaet</strong>: Stelle sicher, dass dein Terminal-Emulator 24-Bit-Farben unterstuetzt</li>
+</ul>
+<p>Ohne truecolor werden Farben weniger exakt dargestellt oder auf eine 256-Farben-Naeherung reduziert.</p>
+<hr>
+<h2>Eingebaute Themes</h2>
+<p>vanilla-closedcode liefert mehrere eingebaute Themes mit.</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>system</code></td>
+<td>Adapts to your terminal’s background color</td>
+</tr>
+<tr>
+<td><code>tokyonight</code></td>
+<td>Based on the <a href="https://github.com/folke/tokyonight.nvim">Tokyonight</a> theme</td>
+</tr>
+<tr>
+<td><code>everforest</code></td>
+<td>Based on the <a href="https://github.com/sainnhe/everforest">Everforest</a> theme</td>
+</tr>
+<tr>
+<td><code>ayu</code></td>
+<td>Based on the <a href="https://github.com/ayu-theme">Ayu</a> dark theme</td>
+</tr>
+<tr>
+<td><code>catppuccin</code></td>
+<td>Based on the <a href="https://github.com/catppuccin">Catppuccin</a> theme</td>
+</tr>
+<tr>
+<td><code>catppuccin-macchiato</code></td>
+<td>Based on the <a href="https://github.com/catppuccin">Catppuccin</a> theme</td>
+</tr>
+<tr>
+<td><code>gruvbox</code></td>
+<td>Based on the <a href="https://github.com/morhetz/gruvbox">Gruvbox</a> theme</td>
+</tr>
+<tr>
+<td><code>kanagawa</code></td>
+<td>Based on the <a href="https://github.com/rebelot/kanagawa.nvim">Kanagawa</a> theme</td>
+</tr>
+<tr>
+<td><code>nord</code></td>
+<td>Based on the <a href="https://github.com/nordtheme/nord">Nord</a> theme</td>
+</tr>
+<tr>
+<td><code>matrix</code></td>
+<td>Hacker-style green on black theme</td>
+</tr>
+<tr>
+<td><code>one-dark</code></td>
+<td>Based on the <a href="https://github.com/Th3Whit3Wolf/one-nvim">Atom One</a> Dark theme</td>
+</tr>
+</tbody></table>
+<p>Und es kommen laufend weitere dazu.</p>
+<hr>
+<h2>System-Theme</h2>
+<p>Das <code>system</code>-Theme passt sich automatisch an das Farbschema deines Terminals an.
+Im Gegensatz zu Themes mit festen Farben gilt beim <em>system</em>-Theme:</p>
+<ul>
+<li><strong>Generiert Graustufen</strong>: Basierend auf deiner Terminal-Hintergrundfarbe fuer guten Kontrast</li>
+<li><strong>Nutzt ANSI-Farben</strong>: Verwendet Standardfarben (0-15), die dein Terminalschema respektieren</li>
+<li><strong>Behaelt Terminal-Defaults</strong>: Verwendet <code>none</code> fuer Text und Hintergruende</li>
+</ul>
+<p>Das System-Theme ist ideal fuer Nutzer, die:</p>
+<ul>
+<li>vanilla-closedcode optisch ans Terminal anpassen wollen</li>
+<li>eigene Terminal-Farbschemata nutzen</li>
+<li>ein konsistentes Erscheinungsbild in Terminal-Apps bevorzugen</li>
+</ul>
+<hr>
+<h2>Theme verwenden</h2>
+<p>Du kannst ein Theme ueber <code>/theme</code> auswaehlen oder direkt in der <a href="/docs/config">Konfiguration</a> setzen.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<hr>
+<h2>Eigene Themes</h2>
+<p>vanilla-closedcode unterstuetzt ein flexibles JSON-basiertes Theme-System.
+Damit lassen sich Themes einfach erstellen und anpassen.</p>
+<hr>
+<h3>Hierarchie</h3>
+<p>Themes werden aus mehreren Verzeichnissen in folgender Reihenfolge geladen, wobei spaetere Verzeichnisse fruehere ueberschreiben:</p>
+<ol>
+<li><strong>Eingebaute Themes</strong> - Diese sind im Binary eingebettet</li>
+<li><strong>Benutzer-Config-Verzeichnis</strong> - Definiert in <code>~/.config/closedcode/themes/*.json</code> oder <code>$XDG_CONFIG_HOME/closedcode/themes/*.json</code></li>
+<li><strong>Projekt-Root-Verzeichnis</strong> - Definiert in <code>&lt;project-root&gt;/.closedcode/themes/*.json</code></li>
+<li><strong>Aktuelles Arbeitsverzeichnis</strong> - Definiert in <code>./.closedcode/themes/*.json</code></li>
+</ol>
+<p>Wenn mehrere Verzeichnisse ein Theme mit demselben Namen enthalten, wird das Theme aus dem Verzeichnis mit der hoeheren Prioritaet verwendet.</p>
+<hr>
+<h3>Theme erstellen</h3>
+<p>Um ein eigenes Theme zu erstellen, lege eine JSON-Datei in einem der Theme-Verzeichnisse an.</p>
+<p>Fuer benutzerweite Themes:</p>
+<pre><code class="language-bash">mkdir -p ~/.config/closedcode/themes
+vim ~/.config/closedcode/themes/my-theme.json
+</code></pre>
+<p>Und fuer projektspezifische Themes:</p>
+<pre><code class="language-bash">mkdir -p .closedcode/themes
+vim .closedcode/themes/my-theme.json
+</code></pre>
+<hr>
+<h3>JSON-Format</h3>
+<p>Themes nutzen ein flexibles JSON-Format mit Unterstuetzung fuer:</p>
+<ul>
+<li><strong>Hex-Farben</strong>: <code>&quot;#ffffff&quot;</code></li>
+<li><strong>ANSI-Farben</strong>: <code>3</code> (0-255)</li>
+<li><strong>Farbreferenzen</strong>: <code>&quot;primary&quot;</code> oder eigene Definitionen</li>
+<li><strong>Dunkel/Hell-Varianten</strong>: <code>{&quot;dark&quot;: &quot;#000&quot;, &quot;light&quot;: &quot;#fff&quot;}</code></li>
+<li><strong>Keine Farbe</strong>: <code>&quot;none&quot;</code> - Nutzt die Standardfarbe des Terminals oder transparent</li>
+</ul>
+<hr>
+<h3>Farbdefinitionen</h3>
+<p>Der <code>defs</code>-Abschnitt ist optional und erlaubt es dir, wiederverwendbare Farben zu definieren, die im Theme referenziert werden koennen.</p>
+<hr>
+<h3>Terminal-Standardwerte</h3>
+<p>Der spezielle Wert <code>&quot;none&quot;</code> kann fuer jede Farbe verwendet werden, um die Standardfarbe des Terminals zu erben. Das ist besonders nuetzlich, um Themes zu erstellen, die nahtlos mit deinem Terminal-Farbschema verschmelzen:</p>
+<ul>
+<li><code>&quot;text&quot;: &quot;none&quot;</code> - Nutzt die Standard-Vordergrundfarbe des Terminals</li>
+<li><code>&quot;background&quot;: &quot;none&quot;</code> - Nutzt die Standard-Hintergrundfarbe des Terminals</li>
+</ul>
+<hr>
+<h3>Beispiel</h3>
+<p>Hier ist ein Beispiel fuer ein eigenes Theme:</p>
+<pre><code class="language-json">{
+  &quot;defs&quot;: {
+    &quot;nord0&quot;: &quot;#2E3440&quot;,
+    &quot;nord1&quot;: &quot;#3B4252&quot;,
+    &quot;nord2&quot;: &quot;#434C5E&quot;,
+    &quot;nord3&quot;: &quot;#4C566A&quot;,
+    &quot;nord4&quot;: &quot;#D8DEE9&quot;,
+    &quot;nord5&quot;: &quot;#E5E9F0&quot;,
+    &quot;nord6&quot;: &quot;#ECEFF4&quot;,
+    &quot;nord7&quot;: &quot;#8FBCBB&quot;,
+    &quot;nord8&quot;: &quot;#88C0D0&quot;,
+    &quot;nord9&quot;: &quot;#81A1C1&quot;,
+    &quot;nord10&quot;: &quot;#5E81AC&quot;,
+    &quot;nord11&quot;: &quot;#BF616A&quot;,
+    &quot;nord12&quot;: &quot;#D08770&quot;,
+    &quot;nord13&quot;: &quot;#EBCB8B&quot;,
+    &quot;nord14&quot;: &quot;#A3BE8C&quot;,
+    &quot;nord15&quot;: &quot;#B48EAD&quot;
+  },
+  &quot;theme&quot;: {
+    &quot;primary&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;secondary&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;accent&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;error&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;warning&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;success&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;info&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;text&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;textMuted&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord1&quot;
+    },
+    &quot;background&quot;: {
+      &quot;dark&quot;: &quot;nord0&quot;,
+      &quot;light&quot;: &quot;nord6&quot;
+    },
+    &quot;backgroundPanel&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;backgroundElement&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;border&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;borderActive&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord2&quot;
+    },
+    &quot;borderSubtle&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffContext&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHunkHeader&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;diffHighlightAdded&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;diffHighlightRemoved&quot;: {
+      &quot;dark&quot;: &quot;nord11&quot;,
+      &quot;light&quot;: &quot;nord11&quot;
+    },
+    &quot;diffAddedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffContextBg&quot;: {
+      &quot;dark&quot;: &quot;nord1&quot;,
+      &quot;light&quot;: &quot;nord5&quot;
+    },
+    &quot;diffLineNumber&quot;: {
+      &quot;dark&quot;: &quot;nord2&quot;,
+      &quot;light&quot;: &quot;nord4&quot;
+    },
+    &quot;diffAddedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;diffRemovedLineNumberBg&quot;: {
+      &quot;dark&quot;: &quot;#3B4252&quot;,
+      &quot;light&quot;: &quot;#E5E9F0&quot;
+    },
+    &quot;markdownText&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;markdownHeading&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownLink&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownLinkText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCode&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;markdownBlockQuote&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownEmph&quot;: {
+      &quot;dark&quot;: &quot;nord12&quot;,
+      &quot;light&quot;: &quot;nord12&quot;
+    },
+    &quot;markdownStrong&quot;: {
+      &quot;dark&quot;: &quot;nord13&quot;,
+      &quot;light&quot;: &quot;nord13&quot;
+    },
+    &quot;markdownHorizontalRule&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;markdownListItem&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord10&quot;
+    },
+    &quot;markdownListEnumeration&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownImage&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;markdownImageText&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;markdownCodeBlock&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    },
+    &quot;syntaxComment&quot;: {
+      &quot;dark&quot;: &quot;nord3&quot;,
+      &quot;light&quot;: &quot;nord3&quot;
+    },
+    &quot;syntaxKeyword&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxFunction&quot;: {
+      &quot;dark&quot;: &quot;nord8&quot;,
+      &quot;light&quot;: &quot;nord8&quot;
+    },
+    &quot;syntaxVariable&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxString&quot;: {
+      &quot;dark&quot;: &quot;nord14&quot;,
+      &quot;light&quot;: &quot;nord14&quot;
+    },
+    &quot;syntaxNumber&quot;: {
+      &quot;dark&quot;: &quot;nord15&quot;,
+      &quot;light&quot;: &quot;nord15&quot;
+    },
+    &quot;syntaxType&quot;: {
+      &quot;dark&quot;: &quot;nord7&quot;,
+      &quot;light&quot;: &quot;nord7&quot;
+    },
+    &quot;syntaxOperator&quot;: {
+      &quot;dark&quot;: &quot;nord9&quot;,
+      &quot;light&quot;: &quot;nord9&quot;
+    },
+    &quot;syntaxPunctuation&quot;: {
+      &quot;dark&quot;: &quot;nord4&quot;,
+      &quot;light&quot;: &quot;nord0&quot;
+    }
+  }
+}
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

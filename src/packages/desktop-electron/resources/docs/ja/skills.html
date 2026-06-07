@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>エージェントスキル — vanilla-closedcode docs</title>
+  <meta name="description" content="SKILL.md 定義による再利用可能な動作の定義">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html" selected>日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>エージェントスキル</h1>
+      <p class="lede">SKILL.md 定義による再利用可能な動作の定義</p>
+      <p>エージェントスキルにより、vanilla-closedcode はリポジトリまたはホームディレクトリから再利用可能な命令を検出できます。
+スキルはネイティブの <code>skill</code> ツールを介してオンデマンドでロードされます。エージェントは利用可能なスキルを確認し、必要に応じて完全なコンテンツをロードできます。</p>
+<hr>
+<h2>ファイルの配置</h2>
+<p>スキル名ごとにフォルダーを 1 つ作成し、その中に <code>SKILL.md</code> を置きます。
+vanilla-closedcode は次の場所を検索します。</p>
+<ul>
+<li>プロジェクト設定: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>グローバル設定: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>プロジェクト Claude 互換: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>グローバル Claude 互換: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>プロジェクトエージェント互換: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>グローバルエージェント互換: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>検出の仕組み</h2>
+<p>プロジェクトのローカルパスの場合、vanilla-closedcode は現在の作業ディレクトリから git ワークツリーに到達するまで進みます。
+途中で、一致する <code>skills/*/SKILL.md</code> を <code>.closedcode/</code> に読み込み、一致する <code>.claude/skills/*/SKILL.md</code> または <code>.agents/skills/*/SKILL.md</code> を読み込みます。</p>
+<p>グローバル定義は、<code>~/.config/closedcode/skills/*/SKILL.md</code>、<code>~/.claude/skills/*/SKILL.md</code>、および <code>~/.agents/skills/*/SKILL.md</code> からもロードされます。</p>
+<hr>
+<h2>フロントマターの記述</h2>
+<p>各 <code>SKILL.md</code> は YAML フロントマターで始まる必要があります。
+次のフィールドのみが認識されます。</p>
+<ul>
+<li><code>name</code> (必須)</li>
+<li><code>description</code> (必須)</li>
+<li><code>license</code> (オプション)</li>
+<li><code>compatibility</code> (オプション)</li>
+<li><code>metadata</code> (オプション、文字列間のマップ)</li>
+</ul>
+<p>不明なフロントマターフィールドは無視されます。</p>
+<hr>
+<h2>名前の検証</h2>
+<p><code>name</code> は次のことを行う必要があります。</p>
+<ul>
+<li>1 ～ 64 文字であること</li>
+<li>単一のハイフンで区切られた小文字の英数字であること</li>
+<li><code>-</code> で開始または終了しない</li>
+<li>連続した <code>--</code> を含まない</li>
+<li><code>SKILL.md</code> を含むディレクトリ名と一致する</li>
+</ul>
+<p>同等の正規表現:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>長さのルール</h2>
+<p><code>description</code> は 1 ～ 1024 文字である必要があります。
+エージェントが正しく選択できるように、十分具体的な内容にしてください。</p>
+<hr>
+<h2>使用例</h2>
+<p>次のように <code>.closedcode/skills/git-release/SKILL.md</code> を作成します。</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>ツールの説明認識</h2>
+<p>vanilla-closedcode では、<code>skill</code> ツールの説明に利用可能なスキルがリストされています。
+各エントリにはスキル名と説明が含まれます。</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>エージェントはツールを呼び出してスキルをロードします。</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>権限の設定</h2>
+<p><code>closedcode.json</code> のパターンベースの権限を使用して、エージェントがアクセスできるスキルを制御します。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>許可</th>
+<th>アクション</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>スキルはすぐにロードされます</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>スキルはエージェントから隠蔽され、アクセスは拒否されました</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>ロードする前にユーザーに承認を求めるメッセージが表示される</td>
+</tr>
+</tbody></table>
+<p>パターンはワイルドカードをサポートしています: <code>internal-*</code> は <code>internal-docs</code>、<code>internal-tools</code> などに一致します。</p>
+<hr>
+<h2>エージェントごとの上書き</h2>
+<p>特定のエージェントにグローバルのデフォルトとは異なる権限を与えます。</p>
+<p><strong>カスタムエージェントの場合</strong> (エージェントフロントマター内):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>組み込みエージェントの場合</strong> (<code>closedcode.json</code> 内):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>スキルツールの無効化</h2>
+<p>スキルを使用すべきではないエージェントのスキルを完全に無効にします。</p>
+<p><strong>カスタムエージェントの場合</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>組み込みエージェントの場合</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>無効にすると、<code>&lt;available_skills&gt;</code> セクションが完全に省略されます。</p>
+<hr>
+<h2>読み込みのトラブルシューティング</h2>
+<p>スキルが表示されない場合:</p>
+<ol>
+<li><code>SKILL.md</code> のスペルがすべて大文字であることを確認してください</li>
+<li>フロントマターに <code>name</code> と <code>description</code> が含まれていることを確認します</li>
+<li>スキル名がすべての場所で一意であることを確認する</li>
+<li>権限を確認してください - <code>deny</code> のスキルはエージェントから非表示になります</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

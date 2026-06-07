@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Brugerdefinerede værktøjer — vanilla-closedcode docs</title>
+  <meta name="description" content="Opret værktøjer, som LLM kan kalde closedcode ind.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html" selected>Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Brugerdefinerede værktøjer</h1>
+      <p class="lede">Opret værktøjer, som LLM kan kalde closedcode ind.</p>
+      <p>Brugerdefinerede værktøjer er funktioner, du opretter, som LLM kan kalde under samtaler. De arbejder sammen med closedcodes <a href="/docs/tools">built-in tools</a> som <code>read</code>, <code>write</code> og <code>bash</code>.</p>
+<hr>
+<h2>Oprettelse af et værktøj</h2>
+<p>Værktøjer er defineret som <strong>TypeScript</strong>- eller <strong>JavaScript</strong>-filer. Værktøjsdefinitionen kan dog kalde scripts skrevet på <strong>alle sprog</strong> - TypeScript eller JavaScript bruges kun til selve værktøjsdefinitionen.</p>
+<hr>
+<h3>Placering</h3>
+<p>De kan definere:</p>
+<ul>
+<li>Lokalt ved at placere dem i biblioteket <code>.closedcode/tools/</code> i dit projekt.</li>
+<li>Eller globalt ved at placere dem i <code>~/.config/closedcode/tools/</code>.</li>
+</ul>
+<hr>
+<h3>Struktur</h3>
+<p>Den nemmeste måde at oprette værktøjer på er at bruge <code>tool()</code>-hjælperen, som giver typesikkerhed og validering.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p><strong>filnavnet</strong> bliver <strong>værktøjsnavnet</strong>. Ovenstående opretter et <code>database</code> værktøj.</p>
+<hr>
+<h4>Flere værktøjer pr. fil</h4>
+<p>Du kan også eksportere flere værktøjer fra en enkelt fil. Hver eksport bliver <strong>et separat værktøj</strong> med navnet <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong>:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>Dette skaber værktøjer: <code>math_add</code> og <code>math_multiply</code>.</p>
+<hr>
+<h4>Navnekollisioner med indbyggede værktøjer</h4>
+<p>Brugerdefinerede værktøjer er identificeret ved værktøjsnavn. Hvis et brugerdefineret værktøj bruger samme navn som et indbygget værktøj, har det brugerdefinerede værktøj forrang.</p>
+<p>For eksempel erstatter denne fil det indbyggede <code>bash</code> værktøj:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+Foretræk unikke navne, medmindre du bevidst ønsker at erstatte et indbygget værktøj. Hvis du vil deaktivere et indbygget værktøj, men ikke overskrive det, skal du bruge [tilladelser](/docs/permissions).
+</aside>
+---
+
+<h3>Argumenter</h3>
+<p>Du kan bruge <code>tool.schema</code>, som kun er <a href="https://zod.dev">Zod</a>, til at definere argumenttyper.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>Du kan også importere <a href="https://zod.dev">Zod</a> direkte og returnere et almindeligt objekt:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Kontekst</h3>
+<p>Værktøjer modtager kontekst om den aktuelle session:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>Brug <code>context.directory</code> til sessionens arbejdsmappe.
+Brug <code>context.worktree</code> til git-arbejdstræets rod.</p>
+<hr>
+<h2>Eksempler</h2>
+<h3>Skriv et værktøj i Python</h3>
+<p>Du kan skrive dine værktøjer på et hvilket som helst sprog, du ønsker. Her er et eksempel, der tilføjer til tal ved hjælp af Python.</p>
+<p>Først skal du oprette værktøjet som et Python-script:</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>Opret derefter værktøjsdefinitionen, der kalder den:</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>Her bruger vi <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a>-værktøjet til at køre Python-scriptet.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

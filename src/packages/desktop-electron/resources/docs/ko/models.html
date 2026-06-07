@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>모델 — vanilla-closedcode docs</title>
+  <meta name="description" content="LLM 공급자 및 모델 구성.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html" selected>한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>모델</h1>
+      <p class="lede">LLM 공급자 및 모델 구성.</p>
+      <p>closedcode는 <a href="https://ai-sdk.dev/">AI SDK</a> 및 <a href="https://models.dev">Models.dev</a>를 사용하여 <strong>75+ LLM 제공 업체</strong>를 지원하며 로컬 모델을 실행합니다.</p>
+<hr>
+<h2>공급자</h2>
+<p>가장 인기 있는 공급자는 기본적으로 미리 로드되어 있습니다. <code>/connect</code> 명령을 통해 공급자를위한 자격 증명을 추가하면 closedcode를 시작할 때 사용할 수 있습니다.</p>
+<p>자세히 알아보기 <a href="/docs/providers">providers</a>.</p>
+<hr>
+<h2>모델 선택</h2>
+<p>공급자를 구성하면 입력하여 원하는 모델을 선택할 수 있습니다.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>추천 모델</h2>
+<p>수많은 모델이 있으며, 매주 새로운 모델이 출시됩니다.</p>
+<aside class="aside aside-tip">
+우리가 추천하는 모델 중 하나를 사용하여 고려하십시오.
+</aside>
+하지만 코드 작성과 도구 호출 모두에서 뛰어난 성능을 보이는 모델들이 있습니다.
+
+<p>특별한 순서는 없습니다. (이 목록은 전체 목록이 아니며 최신 상태가 아닐 수 있습니다):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>기본값 설정</h2>
+<p>기본 모델로 설정하려면 <code>model</code> 키를 설정할 수 있습니다.
+closedcode 설정.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>전체 ID는 <code>provider_id/model_id</code>입니다. 예를 들어, Ollama을 사용한다면, GPT-OSS 20B에 <code>ollama/gpt-oss:20b</code>를 사용할 수 있습니다.</p>
+<p><a href="/docs/providers#custom">custom Provider</a>를 구성하면 <code>provider_id</code>는 구성의 <code>provider</code> 부분에서 키이며 <code>model_id</code>는 <code>provider.models</code>에서 키입니다.</p>
+<hr>
+<h2>모델 구성</h2>
+<p>config를 통해 모델의 옵션을 구성할 수 있습니다.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>여기서는 두 개의 내장 모델에 대한 전역 설정을 구성합니다: <code>gpt-5</code>를 통해 액세스 할 때 <code>openai</code> 공급자 및 <code>claude-sonnet-4-20250514</code>는 <code>anthropic</code> 공급자를 통해 액세스 할 때.
+내장 공급자 및 모델 이름은 <a href="https://models.dev">Models.dev</a>에서 찾을 수 있습니다.</p>
+<p>사용중인 에이전트에 이러한 옵션을 구성할 수 있습니다. 에이전트 구성은 여기에 모든 글로벌 옵션을 overrides. <a href="/docs/agents/#additional">더 알아보기</a>.</p>
+<p>내장 된 것을 확장하는 사용자 정의 변형을 정의 할 수 있습니다. Variants는 중복 항목 생성 없이 동일한 모델을 위한 다른 설정을 구성할 수 있습니다:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>변형</h2>
+<p>많은 모델이 다양한 구성의 변형(variant)을 지원합니다. closedcode는 인기있는 공급자를위한 기본 변형으로 배송됩니다.</p>
+<h2>내장 변형</h2>
+<p>closedcode는 많은 공급자를 위한 기본 변종으로 발송합니다:</p>
+<p><strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - 높은 생각(Thinking) 예산 (기본)</li>
+<li><code>max</code> - 최대 생각 예산</li>
+</ul>
+<p>** OpenAI **:</p>
+<p>모델에 따라 다릅니다.</p>
+<ul>
+<li><code>none</code> - 추론(Reasoning) 없음</li>
+<li><code>minimal</code> - 최소 추론 노력</li>
+<li><code>low</code> - 낮은 이유 노력</li>
+<li><code>medium</code> - 중간 이유 노력</li>
+<li><code>high</code> - 높은 이유 노력</li>
+<li><code>xhigh</code> - 추가 높은 이유 노력</li>
+</ul>
+<p>** 구글 **:</p>
+<ul>
+<li><code>low</code> - 더 낮은 노력/토큰 예산</li>
+<li><code>high</code> - 더 높은 노력 / 토큰 예산</li>
+</ul>
+<aside class="aside aside-tip">
+이 목록은 포괄적이지 않습니다. 다른 많은 공급자는 기본적으로 내장되어 있습니다.
+</aside>
+### 사용자 정의 변형
+
+<p>기존의 변형을 과도하게 할 수 있거나 자신에게 추가 할 수 있습니다.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h2>변형 순환</h2>
+<p>keybind <code>variant_cycle</code>를 사용하여 변형 사이 신속하게 전환합니다. <a href="/docs/keybinds">더 알아보기</a>.</p>
+<hr>
+<h2>모델 로딩 순서</h2>
+<p>closedcode가 시작될 때, 다음의 우선순위 순서에 있는 모형을 검사합니다:</p>
+<ol>
+<li><p><code>--model</code> 또는 <code>-m</code> 명령 선 깃발. 형식은 구성 파일과 동일합니다. <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>closedcode config의 모델 목록.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+</li>
+</ol>
+<p>여기에 형식은 <code>provider/model</code>입니다.</p>
+<ol start="3">
+<li><p>마지막 사용된 모형.</p>
+</li>
+<li><p>내부 우선 순위를 사용하는 첫 번째 모델.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

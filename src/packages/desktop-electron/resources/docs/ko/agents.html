@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agents — vanilla-closedcode docs</title>
+  <meta name="description" content="Configure and use specialized agents.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html" selected>한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Agents</h1>
+      <p class="lede">Configure and use specialized agents.</p>
+      <p>agent는 특정 작업과 워크플로에 맞게 설정할 수 있는 전문 AI assistant입니다. custom prompt, model, tool 접근 권한을 조합해 목적에 맞는 agent를 만들 수 있습니다.</p>
+<aside class="aside aside-tip">
+코드를 수정하지 않고 분석과 제안 검토만 하고 싶다면 plan agent를 사용하세요.
+</aside>
+세션 중에 agent를 전환하거나 `@` mention으로 호출할 수 있습니다.
+
+<hr>
+<h2>유형</h2>
+<p>vanilla-closedcode의 agent는 primary agent와 subagent, 두 가지 유형으로 나뉩니다.</p>
+<hr>
+<h3>Primary agents</h3>
+<p>primary agent는 사용자가 직접 상호작용하는 메인 assistant입니다. <strong>Tab</strong> 키 또는 설정한 <code>switch_agent</code> keybind로 순환 전환할 수 있습니다. primary agent는 메인 대화를 처리하며, tool 접근은 permission으로 제어합니다. 예를 들어 Build는 모든 tool이 활성화되어 있고 Plan은 제한되어 있습니다.</p>
+<aside class="aside aside-tip">
+세션 중 **Tab** 키로 primary agent를 빠르게 전환할 수 있습니다.
+</aside>
+vanilla-closedcode에는 기본 제공 primary agent인 **Build**와 **Plan**이 포함되어 있습니다. 아래에서 각각 살펴보겠습니다.
+
+<hr>
+<h3>Subagents</h3>
+<p>subagent는 primary agent가 특정 작업을 위해 호출하는 전문 assistant입니다. 메시지에서 <strong>@ mention</strong>으로 직접 호출할 수도 있습니다.</p>
+<p>vanilla-closedcode에는 기본 제공 subagent인 <strong>General</strong>과 <strong>Explore</strong>가 포함되어 있습니다. 아래에서 살펴보겠습니다.</p>
+<hr>
+<h2>기본 제공</h2>
+<p>vanilla-closedcode는 기본적으로 primary agent 2개와 subagent 2개를 제공합니다.</p>
+<hr>
+<h3>Use build</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>Build는 모든 tool이 활성화된 <strong>default</strong> primary agent입니다. 파일 작업과 시스템 명령에 대한 전체 접근이 필요한 일반적인 개발 작업에 사용하는 표준 agent입니다.</p>
+<hr>
+<h3>Use plan</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>Plan은 계획과 분석에 특화된 제한형 agent입니다. 더 높은 제어력과 의도치 않은 변경 방지를 위해 permission 시스템을 사용합니다.
+기본값으로 아래 항목은 모두 <code>ask</code>로 설정됩니다.</p>
+<ul>
+<li><code>file edits</code>: 모든 write, patch, edit</li>
+<li><code>bash</code>: 모든 bash 명령</li>
+</ul>
+<p>코드베이스를 실제로 수정하지 않고 LLM 분석, 변경 제안, 계획 수립만 진행하고 싶을 때 유용합니다.</p>
+<hr>
+<h3>Use general</h3>
+<p><em>Mode</em>: <code>subagent</code></p>
+<p>복잡한 질문을 조사하고 다단계 작업을 수행하기 위한 범용 agent입니다. todo를 제외한 모든 tool 접근이 가능하므로 필요하면 파일 수정도 할 수 있습니다. 여러 작업 단위를 병렬로 처리할 때 사용하세요.</p>
+<hr>
+<h3>Use explore</h3>
+<p><em>Mode</em>: <code>subagent</code></p>
+<p>코드베이스 탐색에 최적화된 빠른 읽기 전용 agent입니다. 파일을 수정할 수 없습니다. 패턴 기반 파일 탐색, 키워드 검색, 코드베이스 관련 질의 응답을 빠르게 처리할 때 사용하세요.</p>
+<hr>
+<h3>Use compaction</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>긴 context를 더 짧은 요약으로 압축하는 숨겨진 시스템 agent입니다. 필요할 때 자동으로 실행되며 UI에서 직접 선택할 수 없습니다.</p>
+<hr>
+<h3>Use title</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>짧은 세션 제목을 생성하는 숨겨진 시스템 agent입니다. 자동으로 실행되며 UI에서 직접 선택할 수 없습니다.</p>
+<hr>
+<h3>Use summary</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>세션 요약을 생성하는 숨겨진 시스템 agent입니다. 자동으로 실행되며 UI에서 직접 선택할 수 없습니다.</p>
+<hr>
+<h2>사용법</h2>
+<ol>
+<li><p>primary agent는 세션 중 <strong>Tab</strong> 키로 순환 전환할 수 있습니다. 설정한 <code>switch_agent</code> keybind를 사용할 수도 있습니다.</p>
+</li>
+<li><p>subagent 호출 방법:</p>
+<ul>
+<li><p><strong>Automatically</strong>: primary agent가 설명(description)을 바탕으로 특화 작업에 자동 호출합니다.</p>
+</li>
+<li><p>수동 호출: 메시지에서 subagent를 <strong>@ mention</strong>하여 호출합니다. 예:</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>세션 간 이동</strong>: subagent가 child session을 만들면 아래 키로 parent session과 child session 사이를 이동할 수 있습니다.</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (또는 설정한 <code>session_child_cycle</code> keybind): parent → child1 → child2 → ... → parent 순방향 순환</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (또는 설정한 <code>session_child_cycle_reverse</code> keybind): parent ← child1 ← child2 ← ... ← parent 역방향 순환</li>
+</ul>
+<p>이를 통해 메인 대화와 특화 subagent 작업 사이를 자연스럽게 오갈 수 있습니다.</p>
+</li>
+</ol>
+<hr>
+<h2>구성</h2>
+<p>기본 제공 agent를 커스터마이즈하거나 config를 통해 직접 agent를 만들 수 있습니다. agent는 두 가지 방식으로 설정합니다.</p>
+<hr>
+<h3>JSON</h3>
+<p><code>closedcode.json</code> config 파일에서 agent를 설정합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Markdown 파일로도 agent를 정의할 수 있습니다. 다음 위치에 두세요.</p>
+<ul>
+<li>Global: <code>~/.config/closedcode/agents/</code></li>
+<li>Per-project: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Markdown 파일명은 agent 이름이 됩니다. 예를 들어 <code>review.md</code>는 <code>review</code> agent를 만듭니다.</p>
+<hr>
+<h2>옵션</h2>
+<p>각 config 옵션을 자세히 살펴보겠습니다.</p>
+<hr>
+<h3>Description</h3>
+<p><code>description</code> 옵션으로 agent의 역할과 사용 시점을 간단히 설명하세요.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>이 옵션은 <strong>필수</strong> config 항목입니다.</p>
+<hr>
+<h3>Temperature</h3>
+<p><code>temperature</code> config로 LLM 응답의 무작위성과 창의성을 제어합니다.</p>
+<p>값이 낮을수록 응답이 더 집중되고 결정적이며, 값이 높을수록 창의성과 다양성이 커집니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>Temperature 값은 일반적으로 0.0~1.0 범위를 사용합니다.</p>
+<ul>
+<li><strong>0.0-0.2</strong>: 매우 집중되고 결정적인 응답, 코드 분석/계획에 적합</li>
+<li><strong>0.3-0.5</strong>: 적당한 창의성이 섞인 균형형 응답, 일반 개발 작업에 적합</li>
+<li><strong>0.6-1.0</strong>: 더 창의적이고 다양한 응답, 브레인스토밍/탐색에 유용</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>temperature를 지정하지 않으면 vanilla-closedcode는 model별 기본값을 사용합니다. 일반적으로 대부분의 model은 0, Qwen model은 0.55를 사용합니다.</p>
+<hr>
+<h3>Max steps</h3>
+<p>agent가 텍스트 응답만 하도록 강제되기 전까지 수행할 수 있는 agentic iteration의 최대 횟수를 제어합니다. 비용을 관리하려는 사용자에게 agentic action 제한을 제공하기 위한 옵션입니다.</p>
+<p>이 값을 설정하지 않으면 model이 중단을 선택하거나 사용자가 세션을 중단할 때까지 agent는 계속 반복합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>제한에 도달하면 agent는 작업 요약과 남은 권장 작업을 응답하도록 지시하는 특수 시스템 prompt를 받습니다.</p>
+<aside class="aside aside-caution">
+레거시 `maxSteps` 필드는 deprecated입니다. 대신 `steps`를 사용하세요.
+</aside>
+---
+
+<h3>Disable</h3>
+<p><code>true</code>로 설정하면 agent를 비활성화합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Prompt</h3>
+<p><code>prompt</code> config로 해당 agent의 custom 시스템 prompt 파일을 지정합니다. prompt 파일에는 agent 목적에 맞는 지시사항을 작성하세요.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>이 경로는 config 파일 위치 기준의 상대 경로입니다. 따라서 전역 vanilla-closedcode config와 프로젝트별 config 모두에서 동일하게 동작합니다.</p>
+<hr>
+<h3>Model</h3>
+<p><code>model</code> config로 해당 agent의 model을 override할 수 있습니다. 작업 특성에 맞춰 model을 달리 쓸 때 유용합니다. 예를 들어 계획에는 더 빠른 model, 구현에는 더 강력한 model을 사용할 수 있습니다.</p>
+<aside class="aside aside-tip">
+model을 지정하지 않으면 primary agent는 [전역으로 설정한 model](/docs/config#models)을 사용하고, subagent는 해당 subagent를 호출한 primary agent의 model을 사용합니다.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>vanilla-closedcode config의 model ID는 <code>provider/model-id</code> 형식을 사용합니다. 예를 들어 Ollama을 사용한다면 GPT-OSS 20B에 <code>ollama/gpt-oss:20b</code>를 사용합니다.</p>
+<hr>
+<h3>Tools</h3>
+<p><code>tools</code> config로 agent에서 사용할 tool을 제어합니다. 각 tool을 <code>true</code> 또는 <code>false</code>로 설정해 활성화/비활성화할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+agent별 config는 전역 config를 override합니다.
+</aside>
+와일드카드를 사용하면 여러 tool을 한 번에 제어할 수 있습니다. 예를 들어 MCP 서버의 모든 tool을 비활성화하려면 다음과 같이 설정합니다.
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">tool에 대해 더 알아보기</a>.</p>
+<hr>
+<h3>Permissions</h3>
+<p>permission을 설정해 agent가 수행할 수 있는 action을 제어할 수 있습니다. 현재 <code>edit</code>, <code>bash</code>, <code>webfetch</code> tool의 permission은 다음 값으로 설정할 수 있습니다.</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — tool 실행 전에 승인 요청</li>
+<li><code>&quot;allow&quot;</code> — 승인 없이 모든 작업 허용</li>
+<li><code>&quot;deny&quot;</code> — tool 비활성화</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>이 permission은 agent별로 override할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Markdown agent에서도 permission을 설정할 수 있습니다.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>특정 bash 명령에 대해서도 permission을 설정할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>여기에는 glob 패턴을 사용할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>또한 <code>*</code> 와일드카드로 모든 명령의 permission을 제어할 수 있습니다.
+마지막으로 일치한 규칙이 우선하므로 <code>*</code> 와일드카드를 먼저 두고, 구체적인 규칙을 뒤에 두세요.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">permission에 대해 더 알아보기</a>.</p>
+<hr>
+<h3>Mode</h3>
+<p><code>mode</code> config로 agent 모드를 제어합니다. <code>mode</code> 옵션은 agent를 어떤 방식으로 사용할지 결정합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p><code>mode</code>는 <code>primary</code>, <code>subagent</code>, <code>all</code> 중 하나로 설정할 수 있습니다. 설정하지 않으면 기본값은 <code>all</code>입니다.</p>
+<hr>
+<h3>Hidden</h3>
+<p><code>hidden: true</code>를 설정하면 <code>@</code> 자동완성 메뉴에서 subagent를 숨길 수 있습니다. 다른 agent가 Task tool을 통해 programmatic으로만 호출해야 하는 내부 subagent에 유용합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>이 설정은 자동완성 메뉴에서의 사용자 가시성에만 영향을 줍니다. permission이 허용되면 hidden agent도 모델이 Task tool을 통해 호출할 수 있습니다.</p>
+<aside class="aside aside-note">
+`mode: subagent` agent에만 적용됩니다.
+</aside>
+---
+
+<h3>Task permissions</h3>
+<p><code>permission.task</code>로 Task tool을 통해 해당 agent가 호출할 수 있는 subagent 범위를 제어합니다. 유연한 매칭을 위해 glob 패턴을 사용합니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>deny</code>로 설정되면 해당 subagent는 Task tool 설명에서 완전히 제거되므로 모델이 호출을 시도하지 않습니다.</p>
+<aside class="aside aside-tip">
+규칙은 선언 순서대로 평가되며, **마지막으로 일치한 규칙이 승리합니다**. 위 예시에서 `orchestrator-planner`는 `*`(deny)와 `orchestrator-*`(allow) 모두에 일치하지만, `orchestrator-*`가 뒤에 있으므로 결과는 `allow`입니다.
+</aside>
+<aside class="aside aside-tip">
+사용자는 agent의 task permission이 deny여도 `@` 자동완성 메뉴를 통해 어떤 subagent든 직접 호출할 수 있습니다.
+</aside>
+---
+
+<h3>Color</h3>
+<p><code>color</code> 옵션으로 UI에서 agent의 시각 스타일을 지정할 수 있습니다. 인터페이스에서 agent가 표시되는 방식에 영향을 줍니다.</p>
+<p>유효한 hex 색상(예: <code>#FF5733</code>) 또는 theme 색상(<code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code>)을 사용하세요.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p><code>top_p</code> 옵션으로 응답 다양성을 제어합니다. 무작위성을 제어하는 Temperature의 대안입니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>값 범위는 0.0~1.0입니다. 값이 낮을수록 집중되고, 높을수록 다양해집니다.</p>
+<hr>
+<h3>Additional</h3>
+<p>agent config에 지정한 나머지 옵션은 모델 옵션으로 provider에 <strong>그대로 전달(pass through)</strong> 됩니다. 이를 통해 provider별 기능과 파라미터를 활용할 수 있습니다.</p>
+<p>예를 들어 OpenAI reasoning model에서는 reasoning effort를 제어할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>이 추가 옵션은 model 및 provider마다 다릅니다. 사용 가능한 파라미터는 provider 문서를 확인하세요.</p>
+<aside class="aside aside-tip">
+사용 가능한 model 목록은 `closedcode models` 명령으로 확인할 수 있습니다.
+</aside>
+---
+
+<h2>에이전트 생성</h2>
+<p>아래 명령으로 새 agent를 만들 수 있습니다.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>이 인터랙티브 명령은 다음을 수행합니다.</p>
+<ol>
+<li>agent 저장 위치를 묻습니다(전역/프로젝트).</li>
+<li>agent가 수행할 작업의 설명을 받습니다.</li>
+<li>적절한 시스템 prompt와 식별자를 생성합니다.</li>
+<li>agent가 접근할 tool을 선택하게 합니다.</li>
+<li>마지막으로 agent config가 담긴 Markdown 파일을 생성합니다.</li>
+</ol>
+<hr>
+<h2>사용 사례</h2>
+<p>서로 다른 agent의 대표적인 사용 사례는 다음과 같습니다.</p>
+<ul>
+<li><strong>Build agent</strong>: 모든 tool을 활성화한 전체 개발 작업</li>
+<li><strong>Plan agent</strong>: 코드 변경 없이 분석과 계획 수행</li>
+<li><strong>Review agent</strong>: 읽기 전용 접근 + 문서화 tool 기반 코드 리뷰</li>
+<li><strong>Debug agent</strong>: bash/read tool 중심의 조사 작업</li>
+<li><strong>Docs agent</strong>: 파일 작업은 가능하지만 시스템 명령은 없는 문서 작성 작업</li>
+</ul>
+<hr>
+<h2>예시</h2>
+<p>실제로 유용하게 쓸 수 있는 예시 agent를 소개합니다.</p>
+<aside class="aside aside-tip">
+공유하고 싶은 agent가 있나요? [PR 제출하기](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>Documentation agent</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Security auditor</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

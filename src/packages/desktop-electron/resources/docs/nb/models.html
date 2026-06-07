@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modeller — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurere en LLM leverandør og modell.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html" selected>Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Modeller</h1>
+      <p class="lede">Konfigurere en LLM leverandør og modell.</p>
+      <p>vanilla-closedcode bruker <a href="https://ai-sdk.dev/">AI SDK</a> og <a href="https://models.dev">Models.dev</a> for å støtte <strong>75+ LLM leverandører</strong> og den støtter kjøring av lokale modeller.</p>
+<hr>
+<h2>Leverandører</h2>
+<p>De fleste populære leverandørene er forhåndslastet som standard. Hvis du har lagt til legitimasjonen for en leverandør gjennom kommandoen <code>/connect</code>, vil den være tilgjengelig når du starter vanilla-closedcode.</p>
+<p>Finn ut mer om <a href="/docs/providers">leverandører</a>.</p>
+<hr>
+<h2>Velge en modell</h2>
+<p>Når du har konfigurert leverandøren din, kan du velge modellen du ønsker ved å skrive inn:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>Anbefalte modeller</h2>
+<p>Det er mange modeller der ute, med nye modeller som kommer ut hver uke.</p>
+<aside class="aside aside-tip">
+Vurder å bruke en av modellene vi anbefaler.
+</aside>
+Imidlertid er det bare noen få av dem som er gode til både å generere kode og verktøykalling.
+
+<p>Her er flere modeller som fungerer godt med vanilla-closedcode, uten spesiell rekkefølge. (Dette er ikke en uttømmende liste og er heller ikke nødvendigvis oppdatert):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>Angi en standard</h2>
+<p>For å angi en av disse som standardmodell, kan du angi <code>model</code>-tasten i din
+vanilla-closedcode-konfigurasjon.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>Her er hele ID <code>provider_id/model_id</code>. For eksempel, hvis du bruker Ollama, vil du bruke <code>ollama/gpt-oss:20b</code> for GPT-OSS 20B.</p>
+<p>Hvis du har konfigurert en <a href="/docs/providers#custom">egendefinert leverandør</a>, er <code>provider_id</code> nøkkelen fra <code>provider</code>-delen av konfigurasjonen din, og <code>model_id</code> er nøkkelen fra <code>provider.models</code>.</p>
+<hr>
+<h2>Konfigurer modeller</h2>
+<p>Du kan konfigurere en modells alternativer globalt gjennom konfigurasjonen.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>Her konfigurerer vi globale innstillinger for to innebygde modeller: <code>gpt-5</code> når de åpnes via <code>openai</code>-leverandøren, og <code>claude-sonnet-4-20250514</code> når de åpnes via <code>anthropic</code>-leverandøren.
+De innebygde leverandør- og modellnavnene finnes på <a href="https://models.dev">Models.dev</a>.</p>
+<p>Du kan også konfigurere disse alternativene for alle agenter du bruker. Agentkonfigurasjonen overstyrer alle globale alternativer her. <a href="/docs/agents/#additional">Finn ut mer</a>.</p>
+<p>Du kan også definere tilpassede varianter som utvider de innebygde. Varianter lar deg konfigurere forskjellige innstillinger for samme modell uten å opprette dupliserte oppføringer:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Varianter</h2>
+<p>Mange modeller støtter flere varianter med forskjellige konfigurasjoner. closedcode leveres med innebygde standardvarianter for populære leverandører.</p>
+<h3>Innebygde varianter</h3>
+<p>vanilla-closedcode leveres med standardvarianter for mange leverandører:</p>
+<p><strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - Høyt tenkebudsjett (standard)</li>
+<li><code>max</code> - Maksimalt tenkebudsjett</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>Varierer etter modell, men omtrent:</p>
+<ul>
+<li><code>none</code> - Ingen resonnement</li>
+<li><code>minimal</code> - Minimal resonnementinnsats</li>
+<li><code>low</code> - Lav resonnementinnsats</li>
+<li><code>medium</code> - Middels resonnementinnsats</li>
+<li><code>high</code> - Høy resonnementinnsats</li>
+<li><code>xhigh</code> - Ekstra høy resonnementinnsats</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> - Lavere innsats/tokenbudsjett</li>
+<li><code>high</code> - Høyere innsats/tokenbudsjett</li>
+</ul>
+<aside class="aside aside-tip">
+Denne listen er ikke uttømmende. Mange andre leverandører har også innebygde standardinnstillinger.
+</aside>
+### Egendefinerte varianter
+
+<p>Du kan overstyre eksisterende varianter eller legge til dine egne:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>Bytt varianter</h3>
+<p>Bruk tastebindingen <code>variant_cycle</code> for raskt å bytte mellom varianter. <a href="/docs/keybinds">Finn ut mer</a>.</p>
+<hr>
+<h2>Lasting av modeller</h2>
+<p>Når vanilla-closedcode starter opp, ser den etter modeller i følgende prioriterte rekkefølge:</p>
+<ol>
+<li><p>Kommandolinjeflagget <code>--model</code> eller <code>-m</code>. Formatet er det samme som i konfigurasjonsfilen: <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>Modelllisten i vanilla-closedcode-konfigurasjonen.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>Formatet her er <code>provider/model</code>.</p>
+</li>
+<li><p>Den sist brukte modellen.</p>
+</li>
+<li><p>Den første modellen bruker en intern prioritet.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

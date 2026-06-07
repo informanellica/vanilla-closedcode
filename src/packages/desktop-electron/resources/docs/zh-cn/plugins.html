@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>插件 — vanilla-closedcode docs</title>
+  <meta name="description" content="编写自己的插件来扩展 vanilla-closedcode。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html" selected>简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>插件</h1>
+      <p class="lede">编写自己的插件来扩展 vanilla-closedcode。</p>
+      <p>插件允许你通过挂钩各种事件和自定义行为来扩展 vanilla-closedcode。你可以创建插件来添加新功能、集成外部服务，或修改 vanilla-closedcode 的默认行为。</p>
+<p>如需了解示例，请查看社区创建的<a href="/docs/ecosystem#plugins">插件</a>。</p>
+<hr>
+<h2>使用插件</h2>
+<p>有两种方式加载插件。</p>
+<hr>
+<h3>从本地文件加载</h3>
+<p>将 JavaScript 或 TypeScript 文件放置在插件目录中。</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - 项目级插件</li>
+<li><code>~/.config/closedcode/plugins/</code> - 全局插件</li>
+</ul>
+<p>这些目录中的文件会在启动时自动加载。</p>
+<hr>
+<h3>从 npm 加载</h3>
+<p>在配置文件中指定 npm 包。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>支持常规和带作用域的 npm 包。</p>
+<p>浏览<a href="/docs/ecosystem#plugins">生态系统</a>中的可用插件。</p>
+<hr>
+<h3>插件的安装方式</h3>
+<p><strong>npm 插件</strong>在启动时使用 npm 自动安装。包及其依赖项会缓存在 <code>~/.cache/closedcode/node_modules/</code> 中。</p>
+<p><strong>本地插件</strong>直接从插件目录加载。如果需要使用外部包，你必须在配置目录中创建 <code>package.json</code>（参见<a href="#dependencies">依赖项</a>），或者将插件发布到 npm 并<a href="/docs/config#plugins">将其添加到配置中</a>。</p>
+<hr>
+<h3>加载顺序</h3>
+<p>插件从所有来源加载，所有钩子按顺序执行。加载顺序为：</p>
+<ol>
+<li>全局配置 (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>项目配置 (<code>closedcode.json</code>)</li>
+<li>全局插件目录 (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>项目插件目录 (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>名称和版本相同的重复 npm 包只会加载一次。但本地插件和名称相似的 npm 插件会分别独立加载。</p>
+<hr>
+<h2>创建插件</h2>
+<p>插件是一个 <strong>JavaScript/TypeScript 模块</strong>，它导出一个或多个插件函数。每个函数接收一个上下文对象，并返回一个钩子对象。</p>
+<hr>
+<h3>依赖项</h3>
+<p>本地插件和自定义工具可以使用外部 npm 包。在配置目录中添加一个 <code>package.json</code>，列出所需的依赖项。</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode 会在启动时运行 <code>npm install</code> 来安装这些依赖项。之后你的插件和工具就可以导入它们了。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>基本结构</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>插件函数接收以下参数：</p>
+<ul>
+<li><code>project</code>：当前项目信息。</li>
+<li><code>directory</code>：当前工作目录。</li>
+<li><code>worktree</code>：git 工作树路径。</li>
+<li><code>client</code>：用于与 AI 交互的 vanilla-closedcode SDK 客户端。</li>
+</ul>
+<hr>
+<h3>TypeScript 支持</h3>
+<p>对于 TypeScript 插件，你可以从插件包中导入类型：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>事件</h3>
+<p>插件可以订阅事件，如下方示例部分所示。以下是所有可用事件的列表。</p>
+<h4>命令事件</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>文件事件</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>安装事件</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP 事件</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>消息事件</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>权限事件</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>服务器事件</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>会话事件</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>待办事项事件</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Shell 事件</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>工具事件</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI 事件</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>示例</h2>
+<p>以下是一些可用于扩展 vanilla-closedcode 的插件示例。</p>
+<hr>
+<h3>发送通知</h3>
+<p>在特定事件发生时发送通知：</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>这里使用 <code>osascript</code> 在 macOS 上运行 AppleScript 来发送通知。</p>
+<aside class="aside aside-note">
+如果你使用 vanilla-closedcode 桌面应用，它可以在响应就绪或会话出错时自动发送系统通知。
+</aside>
+---
+
+<h3>.env 保护</h3>
+<p>阻止 vanilla-closedcode 读取 <code>.env</code> 文件：</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>注入环境变量</h3>
+<p>将环境变量注入所有 Shell 执行（AI 工具和用户终端）：</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>自定义工具</h3>
+<p>插件还可以为 vanilla-closedcode 添加自定义工具：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code> 辅助函数用于创建 vanilla-closedcode 可调用的自定义工具。它接受一个 Zod schema 函数，并返回一个工具定义，包含：</p>
+<ul>
+<li><code>description</code>：工具的功能描述</li>
+<li><code>args</code>：工具参数的 Zod schema</li>
+<li><code>execute</code>：工具被调用时执行的函数</li>
+</ul>
+<p>你的自定义工具将与内置工具一起在 vanilla-closedcode 中可用。</p>
+<aside class="aside aside-note">
+如果插件工具与内置工具使用相同的名称，则优先使用插件工具。
+</aside>
+---
+
+<h3>日志记录</h3>
+<p>使用 <code>client.app.log()</code> 代替 <code>console.log</code> 进行结构化日志记录：</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>日志级别：<code>debug</code>、<code>info</code>、<code>warn</code>、<code>error</code>。详情请参阅 SDK 文档。</p>
+<hr>
+<h3>压缩钩子</h3>
+<p>自定义会话压缩时包含的上下文：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> 钩子在 LLM 生成续接摘要之前触发。使用它来注入默认压缩提示词可能遗漏的领域特定上下文。</p>
+<p>你还可以通过设置 <code>output.prompt</code> 来完全替换压缩提示词：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>当设置了 <code>output.prompt</code> 时，它会完全替换默认的压缩提示词。在这种情况下，<code>output.context</code> 数组将被忽略。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

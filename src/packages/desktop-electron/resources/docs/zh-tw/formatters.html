@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>格式化器 — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode 使用特定語言的格式化器。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html">العربية</option>
+      <option value="../bs/formatters.html">Bosanski</option>
+      <option value="../da/formatters.html">Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html">Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html">ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>格式化器</h1>
+      <p class="lede">vanilla-closedcode 使用特定語言的格式化器。</p>
+      <p>vanilla-closedcode 會在檔案寫入或編輯後，自動使用特定語言的格式化器對其進行格式化。這確保了生成的程式碼遵循您專案的程式碼風格。</p>
+<hr>
+<h2>內建格式化器</h2>
+<p>vanilla-closedcode 內建了多種適用於主流語言和框架的格式化器。下表列出了各格式化器、支援的副檔名以及所需的指令或設定選項。</p>
+<table>
+<thead>
+<tr>
+<th>格式化器</th>
+<th>副檔名</th>
+<th>要求</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>air</td>
+<td>.R</td>
+<td><code>air</code> 指令可用</td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml 及<a href="https://biomejs.dev/">更多</a></td>
+<td><code>biome.json(c)</code> 設定檔</td>
+</tr>
+<tr>
+<td>cargofmt</td>
+<td>.rs</td>
+<td><code>cargo fmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>.c, .cpp, .h, .hpp, .ino 及<a href="https://clang.llvm.org/docs/ClangFormat.html">更多</a></td>
+<td><code>.clang-format</code> 設定檔</td>
+</tr>
+<tr>
+<td>cljfmt</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td><code>cljfmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> 指令可用</td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td><code>dfmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td><code>gleam</code> 指令可用</td>
+</tr>
+<tr>
+<td>gofmt</td>
+<td>.go</td>
+<td><code>gofmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb, .html.erb</td>
+<td><code>htmlbeautifier</code> 指令可用</td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt, .kts</td>
+<td><code>ktlint</code> 指令可用</td>
+</tr>
+<tr>
+<td>mix</td>
+<td>.ex, .exs, .eex, .heex, .leex, .neex, .sface</td>
+<td><code>mix</code> 指令可用</td>
+</tr>
+<tr>
+<td>nixfmt</td>
+<td>.nix</td>
+<td><code>nixfmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml, .mli</td>
+<td><code>ocamlformat</code> 指令可用且存在 <code>.ocamlformat</code> 設定檔</td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td><code>ormolu</code> 指令可用</td>
+</tr>
+<tr>
+<td>oxfmt (Experimental)</td>
+<td>.js, .jsx, .ts, .tsx</td>
+<td><code>package.json</code> 中有 <code>oxfmt</code> 相依套件，且設定了<a href="/docs/cli/#experimental">實驗性環境變數旗標</a></td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td><code>composer.json</code> 中有 <code>laravel/pint</code> 相依套件</td>
+</tr>
+<tr>
+<td>prettier</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml 及<a href="https://prettier.io/docs/en/index.html">更多</a></td>
+<td><code>package.json</code> 中有 <code>prettier</code> 相依套件</td>
+</tr>
+<tr>
+<td>rubocop</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>rubocop</code> 指令可用</td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py, .pyi</td>
+<td><code>ruff</code> 指令可用且有相應設定</td>
+</tr>
+<tr>
+<td>rustfmt</td>
+<td>.rs</td>
+<td><code>rustfmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh, .bash</td>
+<td><code>shfmt</code> 指令可用</td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>standardrb</code> 指令可用</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td><code>terraform</code> 指令可用</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py, .pyi</td>
+<td><code>uv</code> 指令可用</td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> 指令可用</td>
+</tr>
+</tbody></table>
+<p>因此，如果您的專案 <code>package.json</code> 中包含 <code>prettier</code>，vanilla-closedcode 會自動使用它進行格式化。</p>
+<hr>
+<h2>工作原理</h2>
+<p>當 vanilla-closedcode 寫入或編輯檔案時，它會：</p>
+<ol>
+<li>根據所有已啟用的格式化器檢查副檔名。</li>
+<li>對檔案執行相應的格式化指令。</li>
+<li>自動套用格式化變更。</li>
+</ol>
+<p>整個過程在背景完成，無需任何手動操作即可保持程式碼風格的一致性。</p>
+<hr>
+<h2>設定</h2>
+<p>您可以透過 vanilla-closedcode 設定中的 <code>formatter</code> 部分自訂格式化器。</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>每個格式化器的設定支援以下屬性：</p>
+<table>
+<thead>
+<tr>
+<th>屬性</th>
+<th>型別</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>設為 <code>true</code> 可停用該格式化器</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>執行格式化的指令</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>object</td>
+<td>執行格式化器時設定的環境變數</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>該格式化器處理的副檔名</td>
+</tr>
+</tbody></table>
+<p>下面來看一些範例。</p>
+<hr>
+<h3>停用格式化器</h3>
+<p>要全域停用<strong>所有</strong>格式化器，將 <code>formatter</code> 設為 <code>false</code>：</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>要停用<strong>特定</strong>格式化器，將 <code>disabled</code> 設為 <code>true</code>：</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>自訂格式化器</h3>
+<p>您可以透過指定指令、環境變數和副檔名來覆寫內建格式化器或新增新的格式化器：</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p>指令中的 <strong><code>$FILE</code> 佔位符</strong>會被替換為待格式化檔案的路徑。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

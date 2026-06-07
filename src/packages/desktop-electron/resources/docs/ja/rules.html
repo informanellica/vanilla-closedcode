@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ルール — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode のカスタム命令を設定します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/rules.html">English</option>
+      <option value="../ar/rules.html">العربية</option>
+      <option value="../bs/rules.html">Bosanski</option>
+      <option value="../da/rules.html">Dansk</option>
+      <option value="../de/rules.html">Deutsch</option>
+      <option value="../es/rules.html">Español</option>
+      <option value="../fr/rules.html">Français</option>
+      <option value="../it/rules.html">Italiano</option>
+      <option value="../ja/rules.html" selected>日本語</option>
+      <option value="../ko/rules.html">한국어</option>
+      <option value="../nb/rules.html">Norsk</option>
+      <option value="../pl/rules.html">Polski</option>
+      <option value="../pt-br/rules.html">Português (BR)</option>
+      <option value="../ru/rules.html">Русский</option>
+      <option value="../th/rules.html">ไทย</option>
+      <option value="../tr/rules.html">Türkçe</option>
+      <option value="../zh-cn/rules.html">简体中文</option>
+      <option value="../zh-tw/rules.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li class="active"><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>ルール</h1>
+      <p class="lede">vanilla-closedcode のカスタム命令を設定します。</p>
+      <p><code>AGENTS.md</code> ファイルを作成することで、vanilla-closedcode にカスタム命令を提供できます。これは Cursor のルールと似ています。これには、特定のプロジェクトに合わせて LLM の動作をカスタマイズするために LLM のコンテキストに含まれる命令が含まれています。</p>
+<hr>
+<h2>初期化</h2>
+<p>新しい <code>AGENTS.md</code> ファイルを作成するには、vanilla-closedcode で <code>/init</code> コマンドを実行します。</p>
+<aside class="aside aside-tip">
+プロジェクトの `AGENTS.md` ファイルを Git にコミットする必要があります。
+</aside>
+`AGENTS.md` ファイルが生成されます。これは、vanilla-closedcode がプロジェクトをより適切にナビゲートするのに役立ちます。
+
+<p>既存の <code>AGENTS.md</code> ファイルがある場合、これはそれに追加しようとします。</p>
+<hr>
+<h2>例</h2>
+<p>このファイルを手動で作成することもできます。以下は、<code>AGENTS.md</code> ファイルに含めることができるいくつかの例です。</p>
+<pre><code class="language-markdown"># SST v3 Monorepo Project
+
+This is an SST v3 monorepo with TypeScript. The project uses npm workspaces for package management.
+
+## Project Structure
+
+- `packages/` - Contains all workspace packages (functions, core, web, etc.)
+- `infra/` - Infrastructure definitions split by service (storage.ts, api.ts, web.ts)
+- `sst.config.ts` - Main SST configuration with dynamic imports
+
+## Code Standards
+
+- Use TypeScript with strict mode enabled
+- Shared code goes in `packages/core/` with proper exports configuration
+- Functions go in `packages/functions/`
+- Infrastructure should be split into logical files in `infra/`
+
+## Monorepo Conventions
+
+- Import shared modules using workspace names: `@my-app/core/example`
+</code></pre>
+<p>ここにプロジェクト固有の手順を追加します。これはチーム全体で共有されます。</p>
+<hr>
+<h2>種類</h2>
+<p>vanilla-closedcode は、複数の場所からの <code>AGENTS.md</code> ファイルの読み取りもサポートしています。そして、これはさまざまな目的に役立ちます。</p>
+<h3>プロジェクト</h3>
+<p>プロジェクト固有のルールのために、プロジェクトルートに <code>AGENTS.md</code> を配置します。これらは、このディレクトリまたはそのサブディレクトリで作業している場合にのみ適用されます。</p>
+<h3>グローバル</h3>
+<p><code>~/.config/closedcode/AGENTS.md</code> ファイルにグローバルルールを含めることもできます。これは、すべての vanilla-closedcode セッションに適用されます。</p>
+<p>これは Git にコミットされておらず、チームと共有されていないため、LLM が従うべき個人ルールを指定するためにこれを使用することをお勧めします。</p>
+<h3>Claude Code 互換性</h3>
+<p>Claude Code から移行するユーザーのために、vanilla-closedcode はフォールバックとして Claude Code のファイル規則をサポートしています。</p>
+<ul>
+<li><strong>プロジェクトルール</strong>: プロジェクトディレクトリ内の <code>CLAUDE.md</code> (<code>AGENTS.md</code> が存在しない場合に使用されます)</li>
+<li><strong>グローバルルール</strong>: <code>~/.claude/CLAUDE.md</code> (<code>~/.config/closedcode/AGENTS.md</code> が存在しない場合に使用)</li>
+<li><strong>スキル</strong>: <code>~/.claude/skills/</code> — 詳細については、<a href="/docs/skills/">エージェントスキル</a> を参照してください。</li>
+</ul>
+<p>Claude Code の互換性を無効にするには、次の環境変数のいずれかを設定します。</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<hr>
+<h2>優先順位</h2>
+<p>vanilla-closedcode が開始されると、次の順序でルールファイルが検索されます。</p>
+<ol>
+<li><strong>ローカルファイル</strong> (現在のディレクトリから上に移動) (<code>AGENTS.md</code>、<code>CLAUDE.md</code>)</li>
+<li><strong>グローバルファイル</strong> (<code>~/.config/closedcode/AGENTS.md</code>)</li>
+<li><strong>Claude Code ファイル</strong> (<code>~/.claude/CLAUDE.md</code> にあります) (無効になっていない限り)</li>
+</ol>
+<p>最初に一致したファイルが各カテゴリで優先されます。たとえば、<code>AGENTS.md</code> と <code>CLAUDE.md</code> の両方がある場合、<code>AGENTS.md</code> のみが使用されます。同様に、<code>~/.config/closedcode/AGENTS.md</code> は <code>~/.claude/CLAUDE.md</code> よりも優先されます。</p>
+<hr>
+<h2>カスタム指示</h2>
+<p><code>closedcode.json</code> またはグローバル <code>~/.config/closedcode/closedcode.json</code> でカスタム命令ファイルを指定できます。これにより、あなたとあなたのチームは、既存のルールを AGENTS.md に複製するのではなく、再利用することができます。</p>
+<p>例：</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>リモート URL を使用して Web から命令をロードすることもできます。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;https://raw.githubusercontent.com/my-org/shared-rules/main/style.md&quot;]
+}
+</code></pre>
+<p>リモート命令は 5 秒のタイムアウトでフェッチされます。</p>
+<p>すべての命令ファイルは <code>AGENTS.md</code> ファイルと結合されます。</p>
+<hr>
+<h2>外部ファイル参照</h2>
+<p>vanilla-closedcode は <code>AGENTS.md</code> のファイル参照を自動的に解析しませんが、次の 2 つの方法で同様の機能を実現できます。</p>
+<h3><code>closedcode.json</code> の使用</h3>
+<p>推奨されるアプローチは、<code>instructions</code> の <code>closedcode.json</code> フィールドを使用することです。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;docs/development-standards.md&quot;, &quot;test/testing-guidelines.md&quot;, &quot;packages/*/AGENTS.md&quot;]
+}
+</code></pre>
+<h3>AGENTS.md の手動指示</h3>
+<p><code>AGENTS.md</code> で明示的な命令を指定することで、vanilla-closedcode に外部ファイルを読み取るように教えることができます。実際の例を次に示します。</p>
+<pre><code class="language-markdown"># TypeScript Project Rules
+
+## External File Loading
+
+CRITICAL: When you encounter a file reference (e.g., @rules/general.md), use your Read tool to load it on a need-to-know basis. They&#39;re relevant to the SPECIFIC task at hand.
+
+Instructions:
+
+- Do NOT preemptively load all references - use lazy loading based on actual need
+- When loaded, treat content as mandatory instructions that override defaults
+- Follow references recursively when needed
+
+## Development Guidelines
+
+For TypeScript code style and best practices: @docs/typescript-guidelines.md
+For React component architecture and hooks patterns: @docs/react-patterns.md
+For REST API design and error handling: @docs/api-standards.md
+For testing strategies and coverage requirements: @test/testing-guidelines.md
+
+## General Guidelines
+
+Read the following file immediately as it&#39;s relevant to all workflows: @rules/general-guidelines.md.
+</code></pre>
+<p>このアプローチにより、次のことが可能になります。</p>
+<ul>
+<li>モジュール式の再利用可能なルールファイルを作成する</li>
+<li>シンボリックリンクまたは git サブモジュールを介してプロジェクト間でルールを共有する</li>
+<li>詳細なガイドラインを参照しながら、AGENTS.md を簡潔に保ちます</li>
+<li>vanilla-closedcode が特定のタスクに必要な場合にのみファイルをロードするようにする</li>
+</ul>
+<aside class="aside aside-tip">
+モノリポジトリまたは共有標準を使用するプロジェクトの場合、グロブパターン (`closedcode.json` など) で `packages/*/AGENTS.md` を使用する方が、手動で指示するよりも保守しやすくなります。
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

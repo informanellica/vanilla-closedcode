@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formattatori — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode usa formattatori specifici per linguaggio.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html">العربية</option>
+      <option value="../bs/formatters.html">Bosanski</option>
+      <option value="../da/formatters.html">Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html" selected>Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html">ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Italiano</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Formattatori</h1>
+      <p class="lede">vanilla-closedcode usa formattatori specifici per linguaggio.</p>
+      <p>vanilla-closedcode formatta automaticamente i file dopo che vengono scritti o modificati usando formattatori specifici per linguaggio. Questo assicura che il codice generato segua lo stile del tuo progetto.</p>
+<hr>
+<h2>Integrati</h2>
+<p>vanilla-closedcode include diversi formattatori integrati per linguaggi e framework popolari. Qui sotto trovi la lista dei formattatori, delle estensioni supportate e dei comandi o opzioni di config richiesti.</p>
+<table>
+<thead>
+<tr>
+<th>Formattatore</th>
+<th>Estensioni</th>
+<th>Requisiti</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>air</td>
+<td>.R</td>
+<td>comando <code>air</code> disponibile</td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml, and <a href="https://biomejs.dev/">more</a></td>
+<td>file di configurazione <code>biome.json(c)</code></td>
+</tr>
+<tr>
+<td>cargofmt</td>
+<td>.rs</td>
+<td>comando <code>cargo fmt</code> disponibile</td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>.c, .cpp, .h, .hpp, .ino, and <a href="https://clang.llvm.org/docs/ClangFormat.html">more</a></td>
+<td>file di configurazione <code>.clang-format</code></td>
+</tr>
+<tr>
+<td>cljfmt</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td>comando <code>cljfmt</code> disponibile</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td>comando <code>dart</code> disponibile</td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td>comando <code>dfmt</code> disponibile</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td>comando <code>gleam</code> disponibile</td>
+</tr>
+<tr>
+<td>gofmt</td>
+<td>.go</td>
+<td>comando <code>gofmt</code> disponibile</td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb, .html.erb</td>
+<td>comando <code>htmlbeautifier</code> disponibile</td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt, .kts</td>
+<td>comando <code>ktlint</code> disponibile</td>
+</tr>
+<tr>
+<td>mix</td>
+<td>.ex, .exs, .eex, .heex, .leex, .neex, .sface</td>
+<td>comando <code>mix</code> disponibile</td>
+</tr>
+<tr>
+<td>nixfmt</td>
+<td>.nix</td>
+<td>comando <code>nixfmt</code> disponibile</td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml, .mli</td>
+<td>comando <code>ocamlformat</code> disponibile e file di configurazione <code>.ocamlformat</code></td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td>comando <code>ormolu</code> disponibile</td>
+</tr>
+<tr>
+<td>oxfmt (Experimental)</td>
+<td>.js, .jsx, .ts, .tsx</td>
+<td>dipendenza <code>oxfmt</code> in <code>package.json</code> e una <a href="/docs/cli/#experimental">flag variabile d&#39;ambiente sperimentale</a></td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td>dipendenza <code>laravel/pint</code> in <code>composer.json</code></td>
+</tr>
+<tr>
+<td>prettier</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml, and <a href="https://prettier.io/docs/en/index.html">more</a></td>
+<td>dipendenza <code>prettier</code> in <code>package.json</code></td>
+</tr>
+<tr>
+<td>rubocop</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>comando <code>rubocop</code> disponibile</td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py, .pyi</td>
+<td>comando <code>ruff</code> disponibile con config</td>
+</tr>
+<tr>
+<td>rustfmt</td>
+<td>.rs</td>
+<td>comando <code>rustfmt</code> disponibile</td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh, .bash</td>
+<td>comando <code>shfmt</code> disponibile</td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>comando <code>standardrb</code> disponibile</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>comando <code>terraform</code> disponibile</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py, .pyi</td>
+<td>comando <code>uv</code> disponibile</td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig, .zon</td>
+<td>comando <code>zig</code> disponibile</td>
+</tr>
+</tbody></table>
+<p>Quindi, se il progetto ha <code>prettier</code> in <code>package.json</code>, vanilla-closedcode lo usera automaticamente.</p>
+<hr>
+<h2>Come funziona</h2>
+<p>Quando vanilla-closedcode scrive o modifica un file:</p>
+<ol>
+<li>Controlla l&#39;estensione del file rispetto a tutti i formattatori abilitati.</li>
+<li>Esegue il comando del formattatore appropriato sul file.</li>
+<li>Applica automaticamente le modifiche di formattazione.</li>
+</ol>
+<p>Questo processo avviene in background, mantenendo lo stile del codice senza passaggi manuali.</p>
+<hr>
+<h2>Configurazione</h2>
+<p>Puoi personalizzare i formattatori nella sezione <code>formatter</code> della config di vanilla-closedcode.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>Ogni configurazione di formattatore supporta:</p>
+<table>
+<thead>
+<tr>
+<th>Proprieta</th>
+<th>Tipo</th>
+<th>Descrizione</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>Impostalo a <code>true</code> per disabilitare il formattatore</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>Il comando da eseguire per la formattazione</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>object</td>
+<td>Variabili d&#39;ambiente da impostare quando si esegue</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>Estensioni file gestite da questo formattatore</td>
+</tr>
+</tbody></table>
+<p>Vediamo alcuni esempi.</p>
+<hr>
+<h3>Disabilitare i formattatori</h3>
+<p>Per disabilitare <strong>tutti</strong> i formattatori globalmente, imposta <code>formatter</code> a <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>Per disabilitare un formattatore <strong>specifico</strong>, imposta <code>disabled</code> a <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Formattatori personalizzati</h3>
+<p>Puoi sovrascrivere i formattatori integrati o aggiungerne di nuovi specificando comando, variabili d&#39;ambiente ed estensioni file:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p>Il <strong>placeholder <code>$FILE</code></strong> nel comando viene sostituito con il percorso del file in fase di formattazione.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

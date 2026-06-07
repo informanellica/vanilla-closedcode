@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>外掛 — vanilla-closedcode docs</title>
+  <meta name="description" content="編寫自己的外掛來擴展 vanilla-closedcode。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>外掛</h1>
+      <p class="lede">編寫自己的外掛來擴展 vanilla-closedcode。</p>
+      <p>外掛允許您透過掛鉤各種事件和自訂行為來擴展 vanilla-closedcode。您可以建立外掛來新增新功能、整合外部服務，或修改 vanilla-closedcode 的預設行為。</p>
+<p>如需了解範例，請查看社群建立的<a href="/docs/ecosystem#plugins">外掛</a>。</p>
+<hr>
+<h2>使用外掛</h2>
+<p>有兩種方式載入外掛。</p>
+<hr>
+<h3>從本地檔案載入</h3>
+<p>將 JavaScript 或 TypeScript 檔案放置在外掛目錄中。</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - 專案級外掛</li>
+<li><code>~/.config/closedcode/plugins/</code> - 全域外掛</li>
+</ul>
+<p>這些目錄中的檔案會在啟動時自動載入。</p>
+<hr>
+<h3>從 npm 載入</h3>
+<p>在設定檔中指定 npm 套件。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>支援常規和帶作用域的 npm 套件。</p>
+<p>瀏覽<a href="/docs/ecosystem#plugins">生態系統</a>中的可用外掛。</p>
+<hr>
+<h3>外掛的安裝方式</h3>
+<p><strong>npm 外掛</strong>在啟動時使用 npm 自動安裝。套件及其相依套件會快取在 <code>~/.cache/closedcode/node_modules/</code> 中。</p>
+<p><strong>本地外掛</strong>直接從外掛目錄載入。如果需要使用外部套件，您必須在設定目錄中建立 <code>package.json</code>（參見<a href="#dependencies">相依套件</a>），或者將外掛發布到 npm 並<a href="/docs/config#plugins">將其新增到設定中</a>。</p>
+<hr>
+<h3>載入順序</h3>
+<p>外掛從所有來源載入，所有鉤子按順序執行。載入順序為：</p>
+<ol>
+<li>全域設定 (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>專案設定 (<code>closedcode.json</code>)</li>
+<li>全域外掛目錄 (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>專案外掛目錄 (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>名稱和版本相同的重複 npm 套件只會載入一次。但本地外掛和名稱相似的 npm 外掛會分別獨立載入。</p>
+<hr>
+<h2>建立外掛</h2>
+<p>外掛是一個 <strong>JavaScript/TypeScript 模組</strong>，它匯出一個或多個外掛函式。每個函式接收一個上下文物件，並回傳一個鉤子物件。</p>
+<hr>
+<h3>相依套件</h3>
+<p>本地外掛和自訂工具可以使用外部 npm 套件。在設定目錄中新增一個 <code>package.json</code>，列出所需的相依套件。</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode 會在啟動時執行 <code>npm install</code> 來安裝這些相依套件。之後您的外掛和工具就可以匯入它們了。</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>基本結構</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>外掛函式接收以下參數：</p>
+<ul>
+<li><code>project</code>：當前專案資訊。</li>
+<li><code>directory</code>：當前工作目錄。</li>
+<li><code>worktree</code>：git 工作樹路徑。</li>
+<li><code>client</code>：用於與 AI 互動的 vanilla-closedcode SDK 用戶端。</li>
+</ul>
+<hr>
+<h3>TypeScript 支援</h3>
+<p>對於 TypeScript 外掛，您可以從外掛套件中匯入類型：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>事件</h3>
+<p>外掛可以訂閱事件，如下方範例部分所示。以下是所有可用事件的列表。</p>
+<h4>指令事件</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>檔案事件</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>安裝事件</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP 事件</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>訊息事件</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>權限事件</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>伺服器事件</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>工作階段事件</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>待辦事項事件</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Shell 事件</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>工具事件</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI 事件</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>範例</h2>
+<p>以下是一些可用於擴展 vanilla-closedcode 的外掛範例。</p>
+<hr>
+<h3>傳送通知</h3>
+<p>在特定事件發生時傳送通知：</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>這裡使用 <code>osascript</code> 在 macOS 上執行 AppleScript 來傳送通知。</p>
+<aside class="aside aside-note">
+如果您使用 vanilla-closedcode 桌面應用程式，它可以在回應就緒或工作階段出錯時自動傳送系統通知。
+</aside>
+---
+
+<h3>.env 保護</h3>
+<p>阻止 vanilla-closedcode 讀取 <code>.env</code> 檔案：</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>注入環境變數</h3>
+<p>將環境變數注入所有 Shell 執行（AI 工具和使用者終端機）：</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>自訂工具</h3>
+<p>外掛還可以為 vanilla-closedcode 新增自訂工具：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code> 輔助函式用於建立 vanilla-closedcode 可呼叫的自訂工具。它接受一個 Zod schema 函式，並回傳一個工具定義，包含：</p>
+<ul>
+<li><code>description</code>：工具的功能描述</li>
+<li><code>args</code>：工具參數的 Zod schema</li>
+<li><code>execute</code>：工具被呼叫時執行的函式</li>
+</ul>
+<p>您的自訂工具將與內建工具一起在 vanilla-closedcode 中可用。</p>
+<aside class="aside aside-note">
+如果外掛工具使用與內建工具相同的名稱，則外掛工具具有優先權。
+</aside>
+---
+
+<h3>日誌記錄</h3>
+<p>使用 <code>client.app.log()</code> 代替 <code>console.log</code> 進行結構化日誌記錄：</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>日誌層級：<code>debug</code>、<code>info</code>、<code>warn</code>、<code>error</code>。詳情請參閱 SDK 文件。</p>
+<hr>
+<h3>壓縮鉤子</h3>
+<p>自訂工作階段壓縮時包含的上下文：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> 鉤子在 LLM 生成續接摘要之前觸發。使用它來注入預設壓縮提示詞可能遺漏的領域特定上下文。</p>
+<p>您還可以透過設定 <code>output.prompt</code> 來完全替換壓縮提示詞：</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>當設定了 <code>output.prompt</code> 時，它會完全替換預設的壓縮提示詞。在這種情況下，<code>output.context</code> 陣列將被忽略。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

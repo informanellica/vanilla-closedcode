@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modeller — vanilla-closedcode docs</title>
+  <meta name="description" content="LLM sağlayıcılarını ve model seçimlerini yapılandırın.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html" selected>Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Modeller</h1>
+      <p class="lede">LLM sağlayıcılarını ve model seçimlerini yapılandırın.</p>
+      <p>closedcode, <strong>75+ LLM sağlayıcısını</strong> desteklemek için <a href="https://ai-sdk.dev/">AI SDK</a> ve <a href="https://models.dev">Models.dev</a> kullanır ve yerel modellerin çalıştırılmasını destekler.</p>
+<hr>
+<h2>Sağlayıcılar</h2>
+<p>Çoğu popüler sağlayıcı varsayılan olarak önceden yüklenmiştir. Bir sağlayıcının kimlik bilgilerini <code>/connect</code> komutu aracılığıyla eklediyseniz, bunlar closedcode&#39;u başlattığınızda kullanılabilir olacaktır.</p>
+<p><a href="/docs/providers">Sağlayıcılar</a> hakkında daha fazla bilgi edinin.</p>
+<hr>
+<h2>Model seçimi</h2>
+<p>Sağlayıcınızı yapılandırdıktan sonra aşağıdaki komutu yazarak istediğiniz modeli seçebilirsiniz:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>Önerilen modeller</h2>
+<p>Piyasada pek çok model var ve her hafta yeni modeller çıkıyor.</p>
+<aside class="aside aside-tip">
+Önerdiğimiz modellerden birini kullanmayı düşünün.
+</aside>
+Ancak, hem kod oluşturmada hem de araç çağırmada iyi olan yalnızca birkaçı var.
+
+<p>Burada, closedcode ile belirli bir sıraya göre iyi çalışan birkaç model yer almaktadır. (Bu kapsamlı bir liste değildir ve mutlaka güncel olması da gerekmez):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>Varsayılan ayarlama</h2>
+<p>Bunlardan birini varsayılan model olarak ayarlamak için <code>model</code> anahtarınızı telefonunuzudan ayarlayabilirsiniz.
+closedcode yapılandırması</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>Burada tam kimlik <code>provider_id/model_id</code>&#39;dir. Örneğin, Ollama kullanıyorsanız, GPT-OSS 20B için <code>ollama/gpt-oss:20b</code> kullanırsınız.</p>
+<p>Bir <a href="/docs/providers#custom">custom provider</a> yapılandırılmışsa, <code>provider_id</code>, performansınızın <code>provider</code> bölümünden gelen anahtardır ve <code>model_id</code>, <code>provider.models</code>&#39;den gelen anahtardır.</p>
+<hr>
+<h2>Model yapılandırma</h2>
+<p>Bir modelin seçeneklerini genel olarak yapılandırma aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>Burada iki yerleşik model için genel ayarları yapılandırıyoruz: <code>gpt-5</code> sağlayıcısı aracılığıyla erişildiğinde <code>openai</code> ve <code>claude-sonnet-4-20250514</code> sağlayıcısı aracılığıyla erişildiğinde <code>anthropic</code>.
+Yerleşik sağlayıcı ve model adları <a href="https://models.dev">Models.dev</a> adresinde bulunabilir.</p>
+<p>Bu seçenekleri kullandığınız tüm aracılar için de yapılandırabilirsiniz. Aracı yapılandırması burada tüm genel seçenekleri geçersiz kılar. <a href="/docs/agents/#additional">Daha fazla bilgi</a>.</p>
+<p>Ayrıca yerleşik çeşitleri genişleten özel varyantlar da tanımlayabilirsiniz. Varyantlar, yinelenen girişler oluşturmadan aynı model için farklı ayarları yapılandırmanıza olanak tanır:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Varyantlar</h2>
+<p>Birçok model, farklı konfigürasyonlara sahip birden fazla kapasiteye sahip. closedcode, popüler sağlayıcılar için sunulan değişkenlerle birlikte gelir.</p>
+<h3>Yerleşik çeşitler</h3>
+<p>closedcode birçok sağlayıcı için varsayılan değişkenlerle birlikte gelir:</p>
+<p><strong>Antropik</strong>:</p>
+<ul>
+<li><code>high</code> - Yüksek düşünme bütçesi (varsayılan)</li>
+<li><code>max</code> - Maksimum düşünme bütçesi</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>Modele göre değişir ancak kabaca:</p>
+<ul>
+<li><code>none</code> - Gerekçe yok</li>
+<li><code>minimal</code> - Minimum akıl yürütme çabası</li>
+<li><code>low</code> - Düşük muhakeme çabası</li>
+<li><code>medium</code> - Orta düzey muhakeme çabası</li>
+<li><code>high</code> - Yüksek akıl yürütme çabası</li>
+<li><code>xhigh</code> - Ekstra yüksek muhakeme çabası</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> - Daha düşük effort/token bütçesi</li>
+<li><code>high</code> - Daha yüksek effort/token bütçesi</li>
+</ul>
+<aside class="aside aside-tip">
+Bu liste kapsamlı değildir. Diğer birçok sağlayıcının da yerleşik varsayılanları vardır.
+</aside>
+### Özel çeşitler
+
+<p>Mevcut varyantları geçersiz kılabilir veya kendinizinkini ekleyebilirsiniz:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>Döngü çeşitleri</h3>
+<p>Çeşitler arasında hızlı geçiş yapmak için <code>variant_cycle</code> tuş atamasını kullanın. <a href="/docs/keybinds">Daha fazla bilgi</a>.</p>
+<hr>
+<h2>Modelleri yükleme</h2>
+<p>closedcode başlatıldığında modelleri aşağıdaki öncelik sırasına göre kontrol eder:</p>
+<ol>
+<li><p><code>--model</code> veya <code>-m</code> komut satırı bayrağı. Biçim, yapılandırma dosyasındakiyle aynıdır: <code>provider_id/model_id</code>.</p>
+</li>
+<li><p>closedcode yapılandırmasındaki model listesi.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>Buradaki format <code>provider/model</code>&#39;dır.</p>
+</li>
+<li><p>En son kullanılan model.</p>
+</li>
+<li><p>Dahili öncelik kullanan ilk model.</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

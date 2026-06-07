@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>مهارات الوكيل — vanilla-closedcode docs</title>
+  <meta name="description" content="عرّف سلوكاً قابلاً لإعادة الاستخدام عبر تعريفات SKILL.md">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html" selected>العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>مهارات الوكيل</h1>
+      <p class="lede">عرّف سلوكاً قابلاً لإعادة الاستخدام عبر تعريفات SKILL.md</p>
+      <p>تتيح مهارات الوكيل لـ vanilla-closedcode اكتشاف تعليمات قابلة لإعادة الاستخدام من مستودعك أو من دليل المنزل.
+تُحمَّل المهارات عند الطلب عبر أداة <code>skill</code> المدمجة — يرى الوكلاء المهارات المتاحة ويمكنهم تحميل المحتوى الكامل عند الحاجة.</p>
+<hr>
+<h2>وضع الملفات</h2>
+<p>أنشئ مجلداً واحداً لكل اسم مهارة وضع بداخله ملف <code>SKILL.md</code>.
+يبحث vanilla-closedcode في هذه المواقع:</p>
+<ul>
+<li>إعدادات المشروع: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>إعدادات عامة: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>مشروع متوافق مع Claude: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>عام متوافق مع Claude: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>مشروع متوافق مع الوكلاء: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>عام متوافق مع الوكلاء: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>فهم الاكتشاف</h2>
+<p>بالنسبة لمسارات المشروع المحلية، يتدرج vanilla-closedcode صعوداً من دليل العمل الحالي حتى يصل إلى <code>git worktree</code>.
+ويحمّل أي ملفات مطابقة لـ <code>skills/*/SKILL.md</code> داخل <code>.closedcode/</code> وأي ملفات مطابقة لـ <code>.claude/skills/*/SKILL.md</code> أو <code>.agents/skills/*/SKILL.md</code> على طول الطريق.</p>
+<p>كما تُحمَّل التعريفات العامة أيضاً من <code>~/.config/closedcode/skills/*/SKILL.md</code> و <code>~/.claude/skills/*/SKILL.md</code> و <code>~/.agents/skills/*/SKILL.md</code>.</p>
+<hr>
+<h2>كتابة بيانات <code>frontmatter</code></h2>
+<p>يجب أن يبدأ كل ملف <code>SKILL.md</code> بـ <code>frontmatter</code> بتنسيق YAML.
+لا يتم التعرف إلا على الحقول التالية:</p>
+<ul>
+<li><code>name</code> (مطلوب)</li>
+<li><code>description</code> (مطلوب)</li>
+<li><code>license</code> (اختياري)</li>
+<li><code>compatibility</code> (اختياري)</li>
+<li><code>metadata</code> (اختياري، خريطة من سلسلة إلى سلسلة)</li>
+</ul>
+<p>يتم تجاهل أي حقول <code>frontmatter</code> غير معروفة.</p>
+<hr>
+<h2>التحقق من الأسماء</h2>
+<p>يجب أن يكون <code>name</code>:</p>
+<ul>
+<li>بطول 1–64 حرفاً</li>
+<li>أحرفاً وأرقاماً بحروف صغيرة مع فواصل شرطة مفردة</li>
+<li>لا يبدأ ولا ينتهي بـ <code>-</code></li>
+<li>لا يحتوي على <code>--</code> متتالية</li>
+<li>يطابق اسم الدليل الذي يحتوي على <code>SKILL.md</code></li>
+</ul>
+<p>التعبير النمطي المكافئ:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>اتباع قواعد الطول</h2>
+<p>يجب أن يكون <code>description</code> بطول 1-1024 حرفاً.
+اجعله محدداً بما يكفي كي يختار الوكيل بشكل صحيح.</p>
+<hr>
+<h2>استخدم مثالاً</h2>
+<p>أنشئ <code>.closedcode/skills/git-release/SKILL.md</code> بهذا الشكل:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>التعرّف على وصف الأداة</h2>
+<p>يعرض vanilla-closedcode المهارات المتاحة في وصف أداة <code>skill</code>.
+يتضمن كل إدخال اسم المهارة ووصفها:</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>يقوم الوكيل بتحميل مهارة عبر استدعاء الأداة:</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>تهيئة الصلاحيات</h2>
+<p>تحكم في المهارات التي يمكن للوكلاء الوصول إليها باستخدام صلاحيات مبنية على أنماط داخل <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>الصلاحية</th>
+<th>السلوك</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>تُحمَّل المهارة فوراً</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>تُخفى المهارة عن الوكيل ويُرفض الوصول</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>يُطلب من المستخدم الموافقة قبل التحميل</td>
+</tr>
+</tbody></table>
+<p>تدعم الأنماط أحرف البدل: يطابق <code>internal-*</code> كلاً من <code>internal-docs</code> و <code>internal-tools</code> وغير ذلك.</p>
+<hr>
+<h2>تجاوز الإعدادات لكل وكيل</h2>
+<p>امنح وكلاء محددين صلاحيات مختلفة عن الإعدادات الافتراضية العامة.</p>
+<p><strong>للوكلاء المخصصين</strong> (في <code>frontmatter</code> الخاص بالوكيل):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>للوكلاء المدمجين</strong> (في <code>closedcode.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>تعطيل أداة skill</h2>
+<p>عطّل المهارات بالكامل للوكلاء الذين لا ينبغي أن يستخدموها:</p>
+<p><strong>للوكلاء المخصصين</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>للوكلاء المدمجين</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>عند تعطيلها، يتم حذف قسم <code>&lt;available_skills&gt;</code> بالكامل.</p>
+<hr>
+<h2>استكشاف أخطاء التحميل</h2>
+<p>إذا لم تظهر مهارة:</p>
+<ol>
+<li>تحقّق من أن <code>SKILL.md</code> مكتوب بأحرف كبيرة بالكامل</li>
+<li>تحقّق من أن <code>frontmatter</code> تتضمن <code>name</code> و <code>description</code></li>
+<li>تأكد من أن أسماء المهارات فريدة عبر جميع المواقع</li>
+<li>تحقّق من الصلاحيات — المهارات ذات <code>deny</code> تكون مخفية عن الوكلاء</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Skills — vanilla-closedcode docs</title>
+  <meta name="description" content="Define reusable behavior via SKILL.md definitions">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html" selected>English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">English</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Agent Skills</h1>
+      <p class="lede">Define reusable behavior via SKILL.md definitions</p>
+      <p>Agent skills let vanilla-closedcode discover reusable instructions from your repo or home directory.
+Skills are loaded on-demand via the native <code>skill</code> tool—agents see available skills and can load the full content when needed.</p>
+<hr>
+<h2>Place files</h2>
+<p>Create one folder per skill name and put a <code>SKILL.md</code> inside it.
+vanilla-closedcode searches these locations:</p>
+<ul>
+<li>Project config: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global config: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Project Claude-compatible: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global Claude-compatible: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Project agent-compatible: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global agent-compatible: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>Understand discovery</h2>
+<p>For project-local paths, vanilla-closedcode walks up from your current working directory until it reaches the git worktree.
+It loads any matching <code>skills/*/SKILL.md</code> in <code>.closedcode/</code> and any matching <code>.claude/skills/*/SKILL.md</code> or <code>.agents/skills/*/SKILL.md</code> along the way.</p>
+<p>Global definitions are also loaded from <code>~/.config/closedcode/skills/*/SKILL.md</code>, <code>~/.claude/skills/*/SKILL.md</code>, and <code>~/.agents/skills/*/SKILL.md</code>.</p>
+<hr>
+<h2>Write frontmatter</h2>
+<p>Each <code>SKILL.md</code> must start with YAML frontmatter.
+Only these fields are recognized:</p>
+<ul>
+<li><code>name</code> (required)</li>
+<li><code>description</code> (required)</li>
+<li><code>license</code> (optional)</li>
+<li><code>compatibility</code> (optional)</li>
+<li><code>metadata</code> (optional, string-to-string map)</li>
+</ul>
+<p>Unknown frontmatter fields are ignored.</p>
+<hr>
+<h2>Validate names</h2>
+<p><code>name</code> must:</p>
+<ul>
+<li>Be 1–64 characters</li>
+<li>Be lowercase alphanumeric with single hyphen separators</li>
+<li>Not start or end with <code>-</code></li>
+<li>Not contain consecutive <code>--</code></li>
+<li>Match the directory name that contains <code>SKILL.md</code></li>
+</ul>
+<p>Equivalent regex:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>Follow length rules</h2>
+<p><code>description</code> must be 1-1024 characters.
+Keep it specific enough for the agent to choose correctly.</p>
+<hr>
+<h2>Use an example</h2>
+<p>Create <code>.closedcode/skills/git-release/SKILL.md</code> like this:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>Recognize tool description</h2>
+<p>vanilla-closedcode lists available skills in the <code>skill</code> tool description.
+Each entry includes the skill name and description:</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>The agent loads a skill by calling the tool:</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>Configure permissions</h2>
+<p>Control which skills agents can access using pattern-based permissions in <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>Skill loads immediately</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>Skill hidden from agent, access rejected</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>User prompted for approval before loading</td>
+</tr>
+</tbody></table>
+<p>Patterns support wildcards: <code>internal-*</code> matches <code>internal-docs</code>, <code>internal-tools</code>, etc.</p>
+<hr>
+<h2>Override per agent</h2>
+<p>Give specific agents different permissions than the global defaults.</p>
+<p><strong>For custom agents</strong> (in agent frontmatter):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>For built-in agents</strong> (in <code>closedcode.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Disable the skill tool</h2>
+<p>Completely disable skills for agents that shouldn&#39;t use them:</p>
+<p><strong>For custom agents</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>For built-in agents</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>When disabled, the <code>&lt;available_skills&gt;</code> section is omitted entirely.</p>
+<hr>
+<h2>Troubleshoot loading</h2>
+<p>If a skill does not show up:</p>
+<ol>
+<li>Verify <code>SKILL.md</code> is spelled in all caps</li>
+<li>Check that frontmatter includes <code>name</code> and <code>description</code></li>
+<li>Ensure skill names are unique across all locations</li>
+<li>Check permissions—skills with <code>deny</code> are hidden from agents</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

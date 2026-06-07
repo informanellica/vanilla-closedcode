@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pravila — vanilla-closedcode docs</title>
+  <meta name="description" content="Postavite prilagodena uputstva za closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/rules.html">English</option>
+      <option value="../ar/rules.html">العربية</option>
+      <option value="../bs/rules.html" selected>Bosanski</option>
+      <option value="../da/rules.html">Dansk</option>
+      <option value="../de/rules.html">Deutsch</option>
+      <option value="../es/rules.html">Español</option>
+      <option value="../fr/rules.html">Français</option>
+      <option value="../it/rules.html">Italiano</option>
+      <option value="../ja/rules.html">日本語</option>
+      <option value="../ko/rules.html">한국어</option>
+      <option value="../nb/rules.html">Norsk</option>
+      <option value="../pl/rules.html">Polski</option>
+      <option value="../pt-br/rules.html">Português (BR)</option>
+      <option value="../ru/rules.html">Русский</option>
+      <option value="../th/rules.html">ไทย</option>
+      <option value="../tr/rules.html">Türkçe</option>
+      <option value="../zh-cn/rules.html">简体中文</option>
+      <option value="../zh-tw/rules.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li class="active"><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Pravila</h1>
+      <p class="lede">Postavite prilagodena uputstva za closedcode.</p>
+      <p>Mozete dodati prilagodena uputstva za closedcode tako sto kreirate <code>AGENTS.md</code> datoteku. Ovo je slicno pravilima u Cursor-u. Sadrzi uputstva koja se ubacuju u LLM kontekst da prilagode ponasanje za vas projekat.</p>
+<hr>
+<h2>Inicijalizacija</h2>
+<p>Da kreirate novu <code>AGENTS.md</code> datoteku, pokrenite <code>/init</code> komandu u closedcode.</p>
+<aside class="aside aside-tip">
+Preporuceno je da `AGENTS.md` iz projekta commitujete u Git.
+</aside>
+Ovo skenira projekat i njegov sadrzaj, razumije cemu projekat sluzi i generise `AGENTS.md`. Tako closedcode bolje navigira kroz kod.
+
+<p>Ako vec imate <code>AGENTS.md</code>, komanda ce pokusati da ga dopuni.</p>
+<hr>
+<h2>Primjer</h2>
+<p>Datoteku mozete napraviti i rucno. Evo primjera sta mozete staviti u <code>AGENTS.md</code>.</p>
+<pre><code class="language-markdown"># SST v3 Monorepo Project
+
+This is an SST v3 monorepo with TypeScript. The project uses npm workspaces for package management.
+
+## Project Structure
+
+- `packages/` - Contains all workspace packages (functions, core, web, etc.)
+- `infra/` - Infrastructure definitions split by service (storage.ts, api.ts, web.ts)
+- `sst.config.ts` - Main SST configuration with dynamic imports
+
+## Code Standards
+
+- Use TypeScript with strict mode enabled
+- Shared code goes in `packages/core/` with proper exports configuration
+- Functions go in `packages/functions/`
+- Infrastructure should be split into logical files in `infra/`
+
+## Monorepo Conventions
+
+- Import shared modules using workspace names: `@my-app/core/example`
+</code></pre>
+<p>Ovdje dodajete uputstva specificna za projekat koja se dijele sa timom.</p>
+<hr>
+<h2>Tipovi</h2>
+<p>closedcode podrzava citanje <code>AGENTS.md</code> datoteke sa vise lokacija. Svaka lokacija ima drugu svrhu.</p>
+<h3>Projekat</h3>
+<p>Stavite <code>AGENTS.md</code> u korijen projekta za pravila specificna za taj projekat. Primjenjuju se samo kada radite u tom direktoriju ili poddirektorijima.</p>
+<h3>Globalno</h3>
+<p>Mozete imati i globalna pravila u <code>~/.config/closedcode/AGENTS.md</code>. Ona se primjenjuju u svim closedcode sesijama.</p>
+<p>Posto se ovo ne commituje u Git niti dijeli s timom, najbolje je da ovdje cuvate licna pravila koja LLM treba pratiti.</p>
+<h3>Kompatibilnost s Claude Code</h3>
+<p>Za korisnike koji prelaze sa Claude Code, vanilla-closedcode podrzava i Claude konvencije datoteka kao rezervu:</p>
+<ul>
+<li><strong>Pravila projekta</strong>: <code>CLAUDE.md</code> u direktoriju projekta (koristi se ako ne postoji <code>AGENTS.md</code>)</li>
+<li><strong>Globalna pravila</strong>: <code>~/.claude/CLAUDE.md</code> (koristi se ako ne postoji <code>~/.config/closedcode/AGENTS.md</code>)</li>
+<li><strong>Skills</strong>: <code>~/.claude/skills/</code> — pogledajte <a href="/docs/skills/">Agent Skills</a> za detalje</li>
+</ul>
+<p>Da iskljucite kompatibilnost sa Claude Code, postavite jednu od ovih varijabli okruzenja:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<hr>
+<h2>Prioritet</h2>
+<p>Kada se closedcode pokrene, trazi datoteke pravila ovim redoslijedom:</p>
+<ol>
+<li><strong>Lokalne datoteke</strong> pretrazivanjem prema gore od trenutnog direktorija (<code>AGENTS.md</code>, <code>CLAUDE.md</code>)</li>
+<li><strong>Globalna datoteka</strong> na <code>~/.config/closedcode/AGENTS.md</code></li>
+<li><strong>Claude Code datoteka</strong> na <code>~/.claude/CLAUDE.md</code> (osim ako je iskljucena)</li>
+</ol>
+<p>Prva pronadena datoteka pobjeduje u svakoj kategoriji. Na primjer, ako imate i <code>AGENTS.md</code> i <code>CLAUDE.md</code>, koristi se samo <code>AGENTS.md</code>. Isto tako, <code>~/.config/closedcode/AGENTS.md</code> ima prednost nad <code>~/.claude/CLAUDE.md</code>.</p>
+<hr>
+<h2>Prilagođena uputstva</h2>
+<p>Mozete navesti prilagodene datoteke uputstava u <code>closedcode.json</code> ili globalnom <code>~/.config/closedcode/closedcode.json</code>. Tako vi i tim ponovo koristite postojeca pravila bez dupliranja u AGENTS.md.</p>
+<p>Primjer:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Mozete koristiti i udaljene URL-ove za ucitavanje uputstava sa weba.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;https://raw.githubusercontent.com/my-org/shared-rules/main/style.md&quot;]
+}
+</code></pre>
+<p>Udaljena uputstva se preuzimaju uz timeout od 5 sekundi.</p>
+<p>Sve datoteke uputstava se kombinuju sa vasim <code>AGENTS.md</code> datotekama.</p>
+<hr>
+<h2>Referenciranje eksternih datoteka</h2>
+<p>Iako closedcode ne parsira automatski reference datoteka u <code>AGENTS.md</code>, slicno ponasanje mozete dobiti na dva nacina:</p>
+<h3>Korištenje closedcode.json</h3>
+<p>Preporuceni pristup je da koristite <code>instructions</code> polje u <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;docs/development-standards.md&quot;, &quot;test/testing-guidelines.md&quot;, &quot;packages/*/AGENTS.md&quot;]
+}
+</code></pre>
+<h3>Ručna uputstva u AGENTS.md</h3>
+<p>Mozete nauciti closedcode da cita eksterne datoteke tako sto cete dati eksplicitna uputstva u <code>AGENTS.md</code>. Evo prakticnog primjera:</p>
+<pre><code class="language-markdown"># TypeScript Project Rules
+
+## External File Loading
+
+CRITICAL: When you encounter a file reference (e.g., @rules/general.md), use your Read tool to load it on a need-to-know basis. They&#39;re relevant to the SPECIFIC task at hand.
+
+Instructions:
+
+- Do NOT preemptively load all references - use lazy loading based on actual need
+- When loaded, treat content as mandatory instructions that override defaults
+- Follow references recursively when needed
+
+## Development Guidelines
+
+For TypeScript code style and best practices: @docs/typescript-guidelines.md
+For React component architecture and hooks patterns: @docs/react-patterns.md
+For REST API design and error handling: @docs/api-standards.md
+For testing strategies and coverage requirements: @test/testing-guidelines.md
+
+## General Guidelines
+
+Read the following file immediately as it&#39;s relevant to all workflows: @rules/general-guidelines.md.
+</code></pre>
+<p>Ovaj pristup vam omogucava da:</p>
+<ul>
+<li>Kreirate modularne datoteke pravila koje se mogu ponovo koristiti</li>
+<li>Dijelite pravila izmedu projekata kroz symlinkove ili git submodule</li>
+<li>Drzite AGENTS.md kratkim dok upucujete na detaljne smjernice</li>
+<li>Osigurate da closedcode ucitava datoteke samo kad su potrebne za konkretan zadatak</li>
+</ul>
+<aside class="aside aside-tip">
+Za monorepo projekte ili projekte sa zajednickim standardima, odrzivije je koristiti `closedcode.json` sa glob obrascima (npr. `packages/*/AGENTS.md`) nego rucna uputstva.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

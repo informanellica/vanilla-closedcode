@@ -1,0 +1,907 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="Opciones y comandos de la CLI de vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html" selected>Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Español</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">Opciones y comandos de la CLI de vanilla-closedcode.</p>
+      <p>La CLI de vanilla-closedcode de forma predeterminada inicia el <a href="/docs/tui">TUI</a> cuando se ejecuta sin ningún argumento.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Pero también acepta comandos como se documenta en esta página. Esto le permite interactuar con vanilla-closedcode mediante programación.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>Inicie la interfaz de usuario del terminal vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Continuar la última sesión</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID de sesión para continuar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Bifurcar la sesión al continuar (usar con <code>--continue</code> o <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>Aviso de uso</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Modelo a utilizar en forma de proveedor/modelo</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agente a utilizar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Puerto para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>Nombre de host para escuchar</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Comandos</h2>
+<p>La CLI de vanilla-closedcode también tiene los siguientes comandos.</p>
+<hr>
+<h3>agent</h3>
+<p>Administrar agentes para vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>Conecte una terminal a un servidor backend vanilla-closedcode que ya se esté ejecutando y iniciado mediante los comandos <code>serve</code> o <code>web</code>.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>Esto permite usar TUI con un backend remoto vanilla-closedcode. Por ejemplo:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Directorio de trabajo para iniciar TUI en</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Continuar la última sesión</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID de sesión para continuar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Bifurcar la sesión al continuar (usar con <code>--continue</code> o <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Contraseña de autenticación básica (predeterminada: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Usuario de autenticación básica (predeterminado: <code>CLOSEDCODE_SERVER_USERNAME</code> u <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>Cree un nuevo agente con configuración personalizada.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Este comando lo guiará en la creación de un nuevo agente con un mensaje del sistema personalizado y una configuración de herramientas.</p>
+<hr>
+<h4>list</h4>
+<p>Enumere todos los agentes disponibles.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>Comando para administrar credenciales e iniciar sesión para proveedores.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode funciona con la lista de proveedores en <a href="https://models.dev">Models.dev</a>, por lo que puede usar <code>closedcode auth login</code> para configurar las claves API para cualquier proveedor que desee utilizar. Esto se almacena en <code>~/.local/share/closedcode/auth.json</code>.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>Cuando se inicia vanilla-closedcode, carga los proveedores desde el archivo de credenciales. Y si hay claves definidas en sus entornos o un archivo <code>.env</code> en su proyecto.</p>
+<hr>
+<h4>list</h4>
+<p>Enumera todos los proveedores autenticados tal como están almacenados en el archivo de credenciales.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>O la versión corta.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Cierra tu sesión de un proveedor eliminándolo del archivo de credenciales.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>Administre el agente GitHub para la automatización del repositorio.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>Instale el agente GitHub en su repositorio.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>Esto configura el flujo de trabajo de acciones GitHub necesario y lo guía a través del proceso de configuración. <a href="/docs/github">Más información</a>.</p>
+<hr>
+<h4>run</h4>
+<p>Ejecute el agente GitHub. Esto se usa normalmente en acciones GitHub.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>Opciones</h5>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>GitHub evento simulado para ejecutar el agente</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub token de acceso personal</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>Administrar servidores de protocolo de contexto modelo.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>Agregue un servidor MCP a su configuración.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>Este comando lo guiará para agregar un servidor MCP local o remoto.</p>
+<hr>
+<h4>list</h4>
+<p>Enumere todos los servidores MCP configurados y su estado de conexión.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>O utilice la versión corta.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>Autentíquese con un servidor MCP habilitado para OAuth.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>Si no proporciona un nombre de servidor, se le pedirá que seleccione entre los servidores compatibles con OAuth disponibles.</p>
+<p>También puede enumerar los servidores compatibles con OAuth y su estado de autenticación.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>O utilice la versión corta.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Elimine las credenciales OAuth para un servidor MCP.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>Depurar problemas de conexión OAuth para un servidor MCP.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>Enumere todos los modelos disponibles de los proveedores configurados.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>Este comando muestra todos los modelos disponibles en sus proveedores configurados en el formato <code>provider/model</code>.</p>
+<p>Esto es útil para determinar el nombre exacto del modelo que se usará en <a href="/docs/config/">su configuración</a>.</p>
+<p>Opcionalmente, puede pasar un ID de proveedor para filtrar modelos por ese proveedor.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>Actualizar la caché de modelos desde models.dev</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>Utilice una salida del modelo más detallada (incluye metadatos como costos)</td>
+</tr>
+</tbody></table>
+<p>Utilice el indicador <code>--refresh</code> para actualizar la lista de modelos almacenados en caché. Esto es útil cuando se han agregado nuevos modelos a un proveedor y desea verlos en vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>Ejecute closedcode en modo no interactivo pasando un mensaje directamente.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>Esto es útil para secuencias de comandos, automatización o cuando desea una respuesta rápida sin iniciar el TUI completo. Por ejemplo.</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>También puede conectarse a una instancia <code>closedcode serve</code> en ejecución para evitar tiempos de arranque en frío del servidor MCP en cada ejecución:</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>El comando a ejecutar, use mensaje para args</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Continuar la última sesión</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID de sesión para continuar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Bifurcar la sesión al continuar (usar con <code>--continue</code> o <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>Comparte la sesión</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Modelo a utilizar en forma de proveedor/modelo</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agente a utilizar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Archivo(s) para adjuntar al mensaje</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Formato: predeterminado (formateado) o json (eventos JSON sin formato)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>Título de la sesión (utiliza un mensaje truncado si no se proporciona ningún valor)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>Adjuntar a un servidor closedcode en ejecución (por ejemplo, <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Contraseña de autenticación básica (predeterminada: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Usuario de autenticación básica (predeterminado: <code>CLOSEDCODE_SERVER_USERNAME</code> u <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Directorio de ejecución, o ruta en el servidor remoto al adjuntar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>Variante del modelo (esfuerzo de razonamiento específico del proveedor)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>Mostrar bloques de pensamiento</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Puerto para el servidor local (el puerto predeterminado es aleatorio)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>Inicie un servidor vanilla-closedcode sin cabeza para acceso API. Consulte los <a href="/docs/server">documentos del servidor</a> para conocer la interfaz HTTP completa.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>Esto inicia un servidor HTTP que proporciona acceso API a la funcionalidad closedcode sin la interfaz TUI. Configure <code>CLOSEDCODE_SERVER_PASSWORD</code> para habilitar la autenticación básica HTTP (el nombre de usuario predeterminado es <code>closedcode</code>).</p>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Puerto para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Nombre de host para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Habilitar el descubrimiento de mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Orígenes de navegador adicionales para permitir CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>Administrar vanilla-closedcode sesiones.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>Enumere todas las sesiones vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>Opciones</h5>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>Limitar a N sesiones más recientes</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Formato de salida: tabla o json (tabla)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>Muestre el uso de tokens y las estadísticas de costos para sus sesiones vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>Mostrar estadísticas de los últimos N días (todo el tiempo)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>Número de herramientas para mostrar (todas)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>Mostrar el desglose del uso del modelo (oculto de forma predeterminada). Pase un número para mostrar la parte superior N</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>Filtrar por proyecto (todos los proyectos, cadena vacía: proyecto actual)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>Exportar datos de la sesión como JSON.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>Si no proporciona una ID de sesión, se le pedirá que seleccione entre las sesiones disponibles.</p>
+<hr>
+<h3>import</h3>
+<p>Importe datos de sesión desde un archivo JSON o una URL compartida vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>Puede importar desde un archivo local o una URL compartida vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>Inicie un servidor vanilla-closedcode sin cabeza con una interfaz web.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>Esto inicia un servidor HTTP y abre un navegador web para acceder a vanilla-closedcode a través de una interfaz web. Configure <code>CLOSEDCODE_SERVER_PASSWORD</code> para habilitar la autenticación básica HTTP (el nombre de usuario predeterminado es <code>closedcode</code>).</p>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Puerto para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Nombre de host para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Habilitar el descubrimiento de mDNS</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Orígenes de navegador adicionales para permitir CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>Inicie un servidor ACP (Agent Client Protocol).</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>Este comando inicia un servidor ACP que se comunica a través de stdin/stdout usando nd-JSON.</p>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>Directorio de trabajo</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Puerto para escuchar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Nombre de host para escuchar</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>Desinstale vanilla-closedcode y elimine todos los archivos relacionados.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Mantener archivos de configuración</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>Conservar datos de sesión e instantáneas</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>Mostrar lo que se eliminaría sin eliminar</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Saltar mensajes de confirmación</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>Actualiza closedcode a la última versión o a una versión específica.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>Para actualizar a la última versión.</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>Para actualizar a una versión específica.</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>Opciones</h4>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>El método de instalación que se utilizó; curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Opciones globales</h2>
+<p>La CLI de vanilla-closedcode toma las siguientes banderas globales.</p>
+<table>
+<thead>
+<tr>
+<th>Opción</th>
+<th>Corta</th>
+<th>Descripción</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>Mostrar ayuda</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>Número de versión de impresión</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>Imprimir registros en stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>Nivel de registro (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Variables de entorno</h2>
+<p>vanilla-closedcode se puede configurar mediante variables de entorno.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>booleano</td>
+<td>Compartir sesiones automáticamente</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>cadena</td>
+<td>Ruta al ejecutable de Git Bash en Windows</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>cadena</td>
+<td>Ruta al archivo de configuración</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>cadena</td>
+<td>Ruta al directorio de configuración</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>cadena</td>
+<td>Contenido de configuración json en línea</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>booleano</td>
+<td>Deshabilitar las comprobaciones automáticas de actualizaciones</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>booleano</td>
+<td>Deshabilitar la poda de datos antiguos</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>booleano</td>
+<td>Deshabilitar las actualizaciones automáticas de títulos de terminal</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>cadena</td>
+<td>Configuración de permisos json incorporados</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>booleano</td>
+<td>Deshabilitar complementos predeterminados</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>booleano</td>
+<td>Deshabilitar las descargas automáticas del servidor LSP</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>booleano</td>
+<td>Habilitar modelos experimentales</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>booleano</td>
+<td>Deshabilitar la compactación automática de contexto</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>booleano</td>
+<td>Deshabilitar la lectura desde <code>.claude</code> (mensaje + habilidades)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>booleano</td>
+<td>Desactivar lectura <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>booleano</td>
+<td>Deshabilitar la carga <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>booleano</td>
+<td>Deshabilitar la recuperación de modelos desde fuentes remotas</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>cadena</td>
+<td>Proveedor de VCS falso para fines de prueba</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>cadena</td>
+<td>Identificador de cliente (por defecto <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>booleano</td>
+<td>Habilitar las herramientas de búsqueda web de Exa</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>cadena</td>
+<td>Habilite la autenticación básica para <code>serve</code>/<code>web</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>cadena</td>
+<td>Anular el nombre de usuario de autenticación básica (predeterminado <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>cadena</td>
+<td>URL personalizada para buscar la configuración de modelos</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Experimental</h3>
+<p>Estas variables de entorno habilitan funciones experimentales que pueden cambiar o eliminarse.</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>booleano</td>
+<td>Habilitar todas las funciones experimentales</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>booleano</td>
+<td>Habilitar descubrimiento de íconos</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>booleano</td>
+<td>Deshabilitar copia al seleccionar en TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>número</td>
+<td>Tiempo de espera predeterminado para comandos bash en ms</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>número</td>
+<td>Tokens de salida máximos para respuestas LLM</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>booleano</td>
+<td>Habilite el observador de archivos para todo el directorio</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>booleano</td>
+<td>Habilitar el formateador oxfmt</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>booleano</td>
+<td>Habilitar herramienta experimental LSP</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>booleano</td>
+<td>Deshabilitar el observador de archivos</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>booleano</td>
+<td>Habilitar funciones experimentales de Exa</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>booleano</td>
+<td>Habilitar Habilitar TY LSP para archivos python</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>booleano</td>
+<td>Habilitar funciones de Markdown experimentales</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>booleano</td>
+<td>Habilitar modo de plan</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>การกำหนดค่า — vanilla-closedcode docs</title>
+  <meta name="description" content="การใช้การกำหนดค่า vanilla-closedcode JSON">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html" selected>ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>การกำหนดค่า</h1>
+      <p class="lede">การใช้การกำหนดค่า vanilla-closedcode JSON</p>
+      <p>คุณสามารถกำหนดค่า vanilla-closedcode ได้โดยใช้ไฟล์กำหนดค่า JSON</p>
+<hr>
+<h2>รูปแบบ</h2>
+<p>vanilla-closedcode รองรับทั้งรูปแบบ <strong>JSON</strong> และ <strong>JSONC</strong> (JSON พร้อมความคิดเห็น)</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>สถานที่</h2>
+<p>คุณสามารถวางการกำหนดค่าของคุณในสถานที่ต่าง ๆ สองสามแห่งและมี
+ลำดับความสำคัญที่แตกต่างกัน</p>
+<aside class="aside aside-note">
+ไฟล์การกำหนดค่า **ถูกรวมเข้าด้วยกัน** โดยไม่มีการแทนที่
+</aside>
+ไฟล์การกำหนดค่าจะถูกรวมเข้าด้วยกัน โดยไม่มีการแทนที่ การตั้งค่าจากตำแหน่งการกำหนดค่าต่อไปนี้จะรวมกัน การกำหนดค่าในภายหลังจะแทนที่การกำหนดค่าก่อนหน้าสำหรับคีย์ที่ขัดแย้งกันเท่านั้น การตั้งค่าที่ไม่ขัดแย้งจากการกำหนดค่าทั้งหมดจะยังคงอยู่
+
+<p>ตัวอย่างเช่น หากการกำหนดค่าส่วนกลางของคุณตั้งค่า <code>autoupdate: true</code> และการกำหนดค่าโปรเจ็กต์ของคุณตั้งค่า <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code> การกำหนดค่าสุดท้ายจะรวมการตั้งค่าทั้งสองรายการไว้ด้วย</p>
+<hr>
+<h3>ลำดับความสำคัญ</h3>
+<p>แหล่งที่มาของการกำหนดค่าถูกโหลดตามลำดับนี้ (แหล่งที่มาภายหลังจะแทนที่แหล่งที่มาก่อนหน้า):</p>
+<ol>
+<li><strong>การกำหนดค่าสากล</strong> (<code>~/.config/closedcode/closedcode.json</code>) - การตั้งค่าของผู้ใช้</li>
+<li><strong>การกำหนดค่าแบบกำหนดเอง</strong> (<code>CLOSEDCODE_CONFIG</code> env var) - การแทนที่แบบกำหนดเอง</li>
+<li><strong>การกำหนดค่าโครงการ</strong> (<code>closedcode.json</code> ในโครงการ) - การตั้งค่าเฉพาะโครงการ</li>
+<li><strong><code>.closedcode</code> ไดเรกทอรี</strong> - ตัวแทน คำสั่ง ปลั๊กอิน</li>
+<li><strong>การกำหนดค่าแบบอินไลน์</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> env var) - การแทนที่รันไทม์</li>
+</ol>
+<p>ซึ่งหมายความว่าการกำหนดค่าโปรเจ็กต์สามารถแทนที่ค่าเริ่มต้นส่วนกลางได้ และการกำหนดค่าส่วนกลางสามารถแทนที่ค่าเริ่มต้นขององค์กรระยะไกลได้</p>
+<aside class="aside aside-note">
+ไดเรกทอรี `.closedcode` และ `~/.config/closedcode` ใช้ **ชื่อพหูพจน์** สำหรับไดเรกทอรีย่อย: `agents/`, `commands/`, `modes/`, `plugins/`, `skills/`, `tools/` และ `themes/` ชื่อเอกพจน์ (เช่น `agent/`) ยังรองรับความเข้ากันได้แบบย้อนหลังด้วย
+</aside>
+---
+
+
+<h3>ทั่วโลก</h3>
+<p>วางการกำหนดค่า vanilla-closedcode ส่วนกลางของคุณใน <code>~/.config/closedcode/closedcode.json</code> ใช้การกำหนดค่าส่วนกลางสำหรับการตั้งค่าทั้งผู้ใช้ เช่น ผู้ให้บริการ รุ่น และสิทธิ์</p>
+<p>สำหรับการตั้งค่าเฉพาะ TUI ให้ใช้ <code>~/.config/closedcode/tui.json</code></p>
+<p>การกำหนดค่าส่วนกลางจะแทนที่ค่าเริ่มต้นขององค์กรระยะไกล</p>
+<hr>
+<h3>ต่อโครงการ</h3>
+<p>เพิ่ม <code>closedcode.json</code> ในรูทโปรเจ็กต์ของคุณ การกำหนดค่าโปรเจ็กต์มีความสำคัญสูงสุดในบรรดาไฟล์กำหนดค่ามาตรฐาน โดยจะแทนที่การกำหนดค่าทั้งส่วนกลางและระยะไกล</p>
+<p>สำหรับการตั้งค่า TUI เฉพาะโครงการ ให้เพิ่ม <code>tui.json</code> ควบคู่ไปกับมัน</p>
+<aside class="aside aside-tip">
+วางการกำหนดค่าเฉพาะโปรเจ็กต์ไว้ที่รากของโปรเจ็กต์ของคุณ
+</aside>
+เมื่อ vanilla-closedcode เริ่มต้นระบบ จะค้นหาไฟล์กำหนดค่าในไดเร็กทอรีปัจจุบันหรือข้ามไปยังไดเร็กทอรี Git ที่ใกล้ที่สุด
+
+<p>นอกจากนี้ยังปลอดภัยที่จะตรวจสอบใน Git และใช้สคีมาเดียวกันกับสคีมาระดับโลก</p>
+<hr>
+<h3>เส้นทางที่กำหนดเอง</h3>
+<p>ระบุเส้นทางไฟล์กำหนดค่าที่กำหนดเองโดยใช้ตัวแปรสภาพแวดล้อม <code>CLOSEDCODE_CONFIG</code></p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>มีการโหลดการกำหนดค่าแบบกำหนดเองระหว่างการกำหนดค่าส่วนกลางและโครงการตามลำดับความสำคัญ</p>
+<hr>
+<h3>ไดเรกทอรีที่กำหนดเอง</h3>
+<p>ระบุไดเร็กทอรีการกำหนดค่าที่กำหนดเองโดยใช้ <code>CLOSEDCODE_CONFIG_DIR</code>
+ตัวแปรสภาพแวดล้อม ไดเร็กทอรีนี้จะถูกค้นหาตัวแทน, คำสั่ง,
+โหมดและปลั๊กอินเหมือนกับไดเร็กทอรี <code>.closedcode</code> มาตรฐานและควร
+เป็นไปตามโครงสร้างเดียวกัน</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>ไดเร็กทอรีที่กำหนดเองถูกโหลดหลังจากไดเร็กทอรี config ส่วนกลางและ <code>.closedcode</code> ดังนั้นจึง <strong>สามารถแทนที่</strong> การตั้งค่าได้</p>
+<hr>
+<h2>สคีมา</h2>
+<p>ไฟล์กำหนดค่ามีสคีมาที่กำหนดไว้ใน <strong><code>config.json</code></strong></p>
+<p>การกำหนดค่า TUI ใช้ <strong><code>tui.json</code></strong></p>
+<p>ผู้แก้ไขของคุณควรสามารถตรวจสอบและเติมข้อความอัตโนมัติตามสคีมาได้</p>
+<hr>
+<h3>TUI</h3>
+<p>ใช้ไฟล์ <code>tui.json</code> (หรือ <code>tui.jsonc</code>) เฉพาะสำหรับการตั้งค่าเฉพาะ TUI</p>
+<pre><code class="language-json">{
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>ใช้ <code>CLOSEDCODE_TUI_CONFIG</code> เพื่อชี้ไปยังไฟล์กำหนดค่า TUI ที่กำหนดเอง</p>
+<p>คีย์ <code>theme</code>, <code>keybinds</code> และ <code>tui</code> แบบเดิมใน <code>closedcode.json</code> เลิกใช้แล้วและจะถูกย้ายโดยอัตโนมัติเมื่อเป็นไปได้</p>
+<p><a href="/docs/tui#configure">เรียนรู้เพิ่มเติมเกี่ยวกับการใช้ TUI ที่นี่</a></p>
+<hr>
+<h3>เซิร์ฟเวอร์</h3>
+<p>คุณสามารถกำหนดการตั้งค่าเซิร์ฟเวอร์สำหรับคำสั่ง <code>closedcode serve</code> และ <code>closedcode web</code> ผ่านตัวเลือก <code>server</code></p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>ตัวเลือกที่มี:</p>
+<ul>
+<li><code>port</code> - ​​พอร์ตสำหรับฟัง</li>
+<li><code>hostname</code> - ​​ชื่อโฮสต์ที่จะฟัง เมื่อเปิดใช้งาน <code>mdns</code> และไม่ได้ตั้งชื่อโฮสต์ ค่าเริ่มต้นจะเป็น <code>0.0.0.0</code></li>
+<li><code>mdns</code> - ​​เปิดใช้งานการค้นหาบริการ mDNS ซึ่งช่วยให้อุปกรณ์อื่นๆ บนเครือข่ายค้นพบเซิร์ฟเวอร์ vanilla-closedcode ของคุณได้</li>
+<li><code>mdnsDomain</code> - ​​ชื่อโดเมนที่กำหนดเองสำหรับบริการ mDNS ค่าเริ่มต้นเป็น <code>closedcode.local</code> มีประโยชน์สำหรับการเรียกใช้หลายอินสแตนซ์บนเครือข่ายเดียวกัน</li>
+<li><code>cors</code> - ​​ต้นกำเนิดเพิ่มเติมเพื่ออนุญาต CORS เมื่อใช้เซิร์ฟเวอร์ HTTP จากไคลเอนต์ที่ใช้เบราว์เซอร์ ค่าจะต้องเป็นต้นกำเนิดแบบเต็ม (สคีมา + โฮสต์ + พอร์ตเสริม) เช่น <code>https://app.example.com</code></li>
+</ul>
+<p><a href="/docs/server">เรียนรู้เพิ่มเติมเกี่ยวกับเซิร์ฟเวอร์ที่นี่</a></p>
+<hr>
+<h3>เครื่องมือ</h3>
+<p>คุณสามารถจัดการเครื่องมือที่ LLM สามารถใช้ได้ผ่านตัวเลือก <code>tools</code></p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">เรียนรู้เพิ่มเติมเกี่ยวกับเครื่องมือที่นี่</a></p>
+<hr>
+<h3>Models</h3>
+<p>คุณสามารถกำหนดค่าผู้ให้บริการและรุ่นที่คุณต้องการใช้ในการกำหนดค่า vanilla-closedcode ของคุณได้ผ่านตัวเลือก <code>provider</code>, <code>model</code> และ <code>small_model</code></p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p>ตัวเลือก <code>small_model</code> จะกำหนดค่าโมเดลแยกต่างหากสำหรับงานที่ไม่ซับซ้อน เช่น การสร้างชื่อเรื่อง ตามค่าเริ่มต้น vanilla-closedcode จะพยายามใช้โมเดลที่ถูกกว่าหากมีให้บริการจากผู้ให้บริการของคุณ ไม่เช่นนั้นโมเดลจะกลับไปเป็นโมเดลหลักของคุณ</p>
+<p>ตัวเลือกผู้ให้บริการอาจรวมถึง <code>timeout</code> และ <code>setCacheKey</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - ​​คำขอหมดเวลาเป็นมิลลิวินาที (ค่าเริ่มต้น: 300000) ตั้งค่าเป็น <code>false</code> เพื่อปิดใช้งาน</li>
+<li><code>setCacheKey</code> - ​​ตรวจสอบให้แน่ใจว่าได้ตั้งค่าคีย์แคชสำหรับผู้ให้บริการที่กำหนดเสมอ</li>
+</ul>
+<p>คุณยังสามารถกำหนดค่า <a href="/docs/models#local">รุ่นท้องถิ่น</a> ได้ <a href="/docs/models">เรียนรู้เพิ่มเติม</a></p>
+<hr>
+<h4>ตัวเลือกเฉพาะของผู้ให้บริการ</h4>
+<p>ผู้ให้บริการบางรายรองรับตัวเลือกการกำหนดค่าเพิ่มเติมนอกเหนือจากการตั้งค่า <code>timeout</code> และ <code>apiKey</code> ทั่วไป</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock รองรับ AWS-การกำหนดค่าเฉพาะ:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - ​​AWS ภูมิภาคสำหรับ Bedrock (ค่าเริ่มต้นเป็น <code>AWS_REGION</code> env var หรือ <code>us-east-1</code>)</li>
+<li><code>profile</code> - ​​AWS ตั้งชื่อโปรไฟล์จาก <code>~/.aws/credentials</code> (ค่าเริ่มต้นเป็น <code>AWS_PROFILE</code> env var)</li>
+<li><code>endpoint</code> - ​​จุดสิ้นสุดที่กำหนดเอง URL สำหรับจุดสิ้นสุด VPC นี่เป็นนามแฝงสำหรับตัวเลือก <code>baseURL</code> ทั่วไปโดยใช้คำศัพท์เฉพาะ AWS หากระบุทั้งสองรายการ <code>endpoint</code> จะมีความสำคัญกว่า</li>
+</ul>
+<aside class="aside aside-note">
+Bearer Token (`AWS_BEARER_TOKEN_BEDROCK` หรือ `/connect`) มีความสำคัญมากกว่าการตรวจสอบสิทธิ์ตามโปรไฟล์ ดู [ลำดับความสำคัญในการรับรองความถูกต้อง](/docs/providers#การรับรองความถูกต้อง-เหนือกว่า) สำหรับรายละเอียด
+</aside>
+[เรียนรู้เพิ่มเติมเกี่ยวกับการกำหนดค่า Amazon Bedrock](/docs/providers#amazon-bedrock)
+
+<hr>
+<h3>Themes</h3>
+<p>ตั้งค่าธีม UI ของคุณใน <code>tui.json</code></p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>Agents</h3>
+<p>คุณสามารถกำหนดค่าตัวแทนเฉพาะสำหรับงานเฉพาะผ่านตัวเลือก <code>agent</code></p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>คุณยังสามารถกำหนดตัวแทนโดยใช้ไฟล์ Markdown ใน <code>~/.config/closedcode/agents/</code> หรือ <code>.closedcode/agents/</code> <a href="/docs/agents">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>Default Agent</h3>
+<p>คุณสามารถตั้งค่าตัวแทนเริ่มต้นได้โดยใช้ตัวเลือก <code>default_agent</code> ซึ่งจะกำหนดว่าเอเจนต์ใดที่จะใช้เมื่อไม่มีการระบุอย่างชัดเจน</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>ตัวแทนเริ่มต้นจะต้องเป็นตัวแทนหลัก (ไม่ใช่ตัวแทนย่อย) ซึ่งอาจเป็นตัวแทนในตัว เช่น <code>&quot;build&quot;</code> หรือ <code>&quot;plan&quot;</code> หรือ <a href="/docs/agents">ตัวแทนที่กำหนดเอง</a> ที่คุณกำหนดไว้ หากไม่มีตัวแทนที่ระบุหรือเป็นตัวแทนย่อย vanilla-closedcode จะถอยกลับไปที่ <code>&quot;build&quot;</code> พร้อมคำเตือน</p>
+<p>การตั้งค่านี้ใช้กับอินเทอร์เฟซทั้งหมด: TUI, CLI (<code>closedcode run</code>) แอปเดสก์ท็อป และ GitHub Action</p>
+<hr>
+<h3>Sharing</h3>
+<p>คุณสามารถกำหนดค่าคุณสมบัติ <a href="/docs/share">แบ่งปัน</a> ได้ผ่านทางตัวเลือก <code>share</code></p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>ใช้เวลา:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - ​​อนุญาตให้แชร์ด้วยตนเองผ่านคำสั่ง (ค่าเริ่มต้น)</li>
+<li><code>&quot;auto&quot;</code> - ​​แบ่งปันการสนทนาใหม่โดยอัตโนมัติ</li>
+<li><code>&quot;disabled&quot;</code> - ​​ปิดการใช้งานการแชร์ทั้งหมด</li>
+</ul>
+<p>ตามค่าเริ่มต้น การแชร์จะถูกตั้งค่าเป็นโหมดกำหนดเอง ซึ่งคุณต้องแชร์การสนทนาอย่างชัดเจนโดยใช้คำสั่ง <code>/share</code></p>
+<hr>
+<h3>คำสั่ง</h3>
+<p>คุณสามารถกำหนดค่าคำสั่งที่กำหนดเองสำหรับงานซ้ำๆ ได้ผ่านตัวเลือก <code>command</code></p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>คุณยังสามารถกำหนดคำสั่งโดยใช้ไฟล์ Markdown ใน <code>~/.config/closedcode/commands/</code> หรือ <code>.closedcode/commands/</code> <a href="/docs/commands">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>คีย์ลัด</h3>
+<p>ปรับแต่งปุ่มลัดใน <code>tui.json</code></p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>อัปเดตอัตโนมัติ</h3>
+<p>vanilla-closedcode จะดาวน์โหลดการอัปเดตใหม่โดยอัตโนมัติเมื่อเริ่มต้นระบบ คุณสามารถปิดการใช้งานนี้ได้โดยใช้ตัวเลือก <code>autoupdate</code></p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>หากคุณไม่ต้องการการอัปเดตแต่ต้องการรับการแจ้งเตือนเมื่อมีเวอร์ชันใหม่ ให้ตั้งค่า <code>autoupdate</code> เป็น <code>&quot;notify&quot;</code>
+โปรดสังเกตว่าสิ่งนี้ใช้ได้เฉพาะเมื่อไม่ได้ติดตั้งโดยใช้ตัวจัดการแพ็คเกจเช่น Homebrew</p>
+<hr>
+<h3>ตัวจัดรูปแบบ</h3>
+<p>คุณสามารถกำหนดค่าตัวจัดรูปแบบโค้ดผ่านตัวเลือก <code>formatter</code></p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">เรียนรู้เพิ่มเติมเกี่ยวกับฟอร์แมตเตอร์ที่นี่</a></p>
+<hr>
+<h3>การอนุญาต</h3>
+<p>ตามค่าเริ่มต้น closedcode <strong>อนุญาตการดำเนินการทั้งหมด</strong> โดยไม่ต้องมีการอนุมัติอย่างชัดเจน คุณสามารถเปลี่ยนสิ่งนี้ได้โดยใช้ตัวเลือก <code>permission</code></p>
+<p>ตัวอย่างเช่น เพื่อให้แน่ใจว่าเครื่องมือ <code>edit</code> และ <code>bash</code> ต้องได้รับการอนุมัติจากผู้ใช้:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">เรียนรู้เพิ่มเติมเกี่ยวกับการอนุญาตที่นี่</a></p>
+<hr>
+<h3>การบีบอัด</h3>
+<p>คุณสามารถควบคุมลักษณะการทำงานของการบีบอัดบริบทได้โดยใช้ตัวเลือก <code>compaction</code></p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - ​​กระชับเซสชันโดยอัตโนมัติเมื่อบริบทเต็ม (ค่าเริ่มต้น: <code>true</code>)</li>
+<li><code>prune</code> - ​​ลบเอาท์พุตเครื่องมือเก่าเพื่อบันทึก tokens (ค่าเริ่มต้น: <code>true</code>)</li>
+<li><code>reserved</code> - บัฟเฟอร์โทเค็นสำหรับการบีบอัด ให้หน้าต่างเพียงพอเพื่อหลีกเลี่ยงการล้นระหว่างการบีบอัด</li>
+</ul>
+<hr>
+<h3>ตัวเฝ้าดู</h3>
+<p>คุณสามารถกำหนดค่ารูปแบบการละเว้นตัวเฝ้าดูไฟล์ได้ผ่านตัวเลือก <code>watcher</code></p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>รูปแบบเป็นไปตามไวยากรณ์ glob ใช้ตัวเลือกนี้เพื่อยกเว้นไดเร็กทอรีที่มีเสียงดังจากการดูไฟล์</p>
+<hr>
+<h3>MCP Servers</h3>
+<p>คุณสามารถกำหนดค่าเซิร์ฟเวอร์ MCP ที่คุณต้องการใช้ผ่านตัวเลือก <code>mcp</code></p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>ปลั๊กอิน</h3>
+<p><a href="/docs/plugins">ปลั๊กอิน</a> ขยาย vanilla-closedcode ด้วยเครื่องมือที่กำหนดเอง hooks และการผสานรวม</p>
+<p>วางไฟล์ปลั๊กอินใน <code>.closedcode/plugins/</code> หรือ <code>~/.config/closedcode/plugins/</code> คุณยังสามารถโหลดปลั๊กอินจาก npm ผ่านตัวเลือก <code>plugin</code></p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">เรียนรู้เพิ่มเติมที่นี่</a></p>
+<hr>
+<h3>คำแนะนำ</h3>
+<p>คุณสามารถกำหนดค่าคำแนะนำสำหรับรุ่นที่คุณใช้ผ่านตัวเลือก <code>instructions</code></p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>สิ่งนี้จะนำอาร์เรย์ของเส้นทางและรูปแบบ glob ไปยังไฟล์คำสั่ง <a href="/docs/rules">เรียนรู้เพิ่มเติม
+เกี่ยวกับกฎที่นี่</a></p>
+<hr>
+<h3>Disabled Providers</h3>
+<p>คุณสามารถปิดการใช้งานผู้ให้บริการที่โหลดโดยอัตโนมัติผ่านตัวเลือก <code>disabled_providers</code> สิ่งนี้มีประโยชน์เมื่อคุณต้องการป้องกันไม่ให้โหลดผู้ให้บริการบางรายแม้ว่าจะมีข้อมูลประจำตัวอยู่ก็ตาม</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` มีลำดับความสำคัญมากกว่า `enabled_providers`
+</aside>
+ตัวเลือก `disabled_providers` ยอมรับอาร์เรย์ของรหัสผู้ให้บริการ เมื่อผู้ให้บริการถูกปิดใช้งาน:
+
+<ul>
+<li>มันจะไม่ถูกโหลดแม้ว่าจะมีการตั้งค่าตัวแปรสภาพแวดล้อมก็ตาม</li>
+<li>มันจะไม่ถูกโหลดแม้ว่าจะมีการกำหนดค่าคีย์ API ผ่านคำสั่ง <code>/connect</code></li>
+<li>รุ่นของผู้ให้บริการจะไม่ปรากฏในรายการการเลือกรุ่น</li>
+</ul>
+<hr>
+<h3>Enabled Providers</h3>
+<p>คุณสามารถระบุรายชื่อผู้ให้บริการที่อนุญาตได้ผ่านตัวเลือก <code>enabled_providers</code> เมื่อตั้งค่าแล้ว เฉพาะผู้ให้บริการที่ระบุเท่านั้นที่จะเปิดใช้งาน และผู้ให้บริการอื่นๆ ทั้งหมดจะถูกละเว้น</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>สิ่งนี้มีประโยชน์เมื่อคุณต้องการจำกัด vanilla-closedcode ให้ใช้เฉพาะผู้ให้บริการบางราย แทนที่จะปิดการใช้งานทีละราย</p>
+<aside class="aside aside-note">
+`disabled_providers` มีลำดับความสำคัญมากกว่า `enabled_providers`
+</aside>
+หากผู้ให้บริการปรากฏทั้ง `enabled_providers` และ `disabled_providers` `disabled_providers` จะมีลำดับความสำคัญสำหรับความเข้ากันได้แบบย้อนหลัง
+
+<hr>
+<h3>ขั้นทดลอง</h3>
+<p>ปุ่ม <code>experimental</code> มีตัวเลือกที่อยู่ระหว่างการพัฒนา</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+ตัวเลือกการทดลองไม่เสถียร อาจมีการเปลี่ยนแปลงหรือลบออกโดยไม่ต้องแจ้งให้ทราบล่วงหน้า
+</aside>
+---
+
+<h2>ตัวแปร</h2>
+<p>คุณสามารถใช้การทดแทนตัวแปรในไฟล์กำหนดค่าของคุณเพื่ออ้างอิงตัวแปรสภาพแวดล้อมและเนื้อหาไฟล์ได้</p>
+<hr>
+<h3>ตัวแปร Env</h3>
+<p>ใช้ <code>{env:VARIABLE_NAME}</code> เพื่อทดแทนตัวแปรสภาพแวดล้อม:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>หากไม่ได้ตั้งค่าตัวแปรสภาพแวดล้อม ตัวแปรนั้นจะถูกแทนที่ด้วยสตริงว่าง</p>
+<hr>
+<h3>ไฟล์</h3>
+<p>ใช้ <code>{file:path/to/file}</code> เพื่อทดแทนเนื้อหาของไฟล์:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>เส้นทางไฟล์อาจเป็น:</p>
+<ul>
+<li>สัมพันธ์กับไดเร็กทอรีไฟล์ปรับแต่ง</li>
+<li>หรือเส้นทางที่แน่นอนเริ่มต้นด้วย <code>/</code> หรือ <code>~</code></li>
+</ul>
+<p>สิ่งเหล่านี้มีประโยชน์สำหรับ:</p>
+<ul>
+<li>เก็บข้อมูลที่ละเอียดอ่อนเช่นคีย์ API ไว้ในไฟล์แยกกัน</li>
+<li>รวมไฟล์คำสั่งขนาดใหญ่โดยไม่ทำให้การกำหนดค่าของคุณเกะกะ</li>
+<li>การแชร์ข้อมูลโค้ดการกำหนดค่าทั่วไปในไฟล์กำหนดค่าหลายไฟล์</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

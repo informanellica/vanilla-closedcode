@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uprawnienia — vanilla-closedcode docs</title>
+  <meta name="description" content="Kontroluj, które Akcje wymagają zatwierdzenia do uruchomienia.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html" selected>Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Uprawnienia</h1>
+      <p class="lede">Kontroluj, które Akcje wymagają zatwierdzenia do uruchomienia.</p>
+      <p>closedcode używa <code>permission</code>, aby uniknąć, czy dana akcja została wykonana automatycznie, zachowana monit lub została zablokowana.</p>
+<p>Od <code>v1.1.1</code> starsza stworzona logiczna <code>tools</code> jest przestarzała i została stworzona scalona z <code>permission</code>. Stara wersja <code>tools</code> jest nadal obsługiwana w celu zapewnienia zgodności wstecznej.</p>
+<hr>
+<h2>Działania</h2>
+<p>Każda reguła uprawnień skutkuje jedną z:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — uruchamiany bez zgody</li>
+<li><code>&quot;ask&quot;</code> — monit o zatwierdzenie</li>
+<li><code>&quot;deny&quot;</code> — zablokuj akcję</li>
+</ul>
+<hr>
+<h2>Konfiguracja</h2>
+<p>Możesz zainstalować uprawnienia globalnie (za pomocą <code>*</code>) i znajdującego się w nim narzędzia.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Możesz także zainstalować wszystkie uprawnienia na raz:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Szczegółowe reguły (składnia obiektu)</h2>
+<p>Można skorzystać z różnych działań, które zależą od danych użytkowych.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Reguły są zalecane na podstawie odpowiedniego wzorca, przy czym <strong>ostatnia wynikaca reguła wygrywa</strong>. Powszechnym wzorcem jest umieszczenie na pierwszym miejscu odpowiedniego catch-all <code>&quot;*&quot;</code>, a po bardziej szczegółowe zasady.</p>
+<h3>Symbole wieloznaczne</h3>
+<p>Wzorce uprawnień z prostych dopasowywania symboli wieloznacznych:</p>
+<ul>
+<li><code>*</code> dopasowuje zero lub więcej dowolnego znaku</li>
+<li><code>?</code> odpowiada dokładnie jednemu znakowi</li>
+<li>Wszystkie pozostałe znaki pasują dosłownie</li>
+</ul>
+<h3>Rozszerzenie katalogu domowego</h3>
+<p>Możesz używać <code>~</code> lub <code>$HOME</code> na początku wzorca, aby zastosować się do swojego katalogu domowego. Jest to szczególnie szczególne w przypadku reguły <a href="#external-directories"><code>external_directory</code></a>.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Katalogi zewnętrzne</h3>
+<p>Użycie <code>external_directory</code>, aby zezwolić na wywołanie narzędzia, które obsługuje obsługę poza katalogiem roboczym, z uruchomieniem closedcode. Dotyczy każdego narzędzia, które jako dane wejściowe zostało przyjęte (na przykład <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> i wiele założycieli <code>bash</code>).</p>
+<p>Rozszerzenie domu (jak <code>~/...</code>) wpływa tylko na sposób za zwyczajowy wzorca. Nie powoduje to, że strategie zewnętrzne stają się stosowane przez <code>external_directory</code>.</p>
+<p>Na przykład umożliwia dostęp do wszystkiego pod <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Każdy dopuszczony tutaj katalog jest dziedziczy tych samych ustawień, co dostęp do obszaru roboczego. Ponieważ <a href="#defaults"><code>read</code> ma wartość domyślną <code>allow</code></a>, odczyty są również dostępne dla wpisów poniżej <code>external_directory</code>, chyba że zagłębione. Dodaj dodatkowe rozwiązanie, kiedy narzędzie powinno być rozwiązaniem w tych ścieżkach, np. blokowanie edycji przy zachowaniu odczytów:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Skoncentruj listę na zaufanych ścieżkach i dodaj dodatkowe zezwolenie lub odmowę, jeśli jest potrzebne w innych narzędziach (na przykład <code>bash</code>).</p>
+<hr>
+<h2>Dostępne uprawnienia</h2>
+<p>Uprawnienia closedcode są określane na podstawie nazwy narzędzia i kilku zabezpieczeń:</p>
+<ul>
+<li><code>read</code> — odczyt pliku (odpowiada ścieżce pliku)</li>
+<li><code>edit</code> — wszystkie modyfikacje plików (obejmuje <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — maglowanie plików (pasuje do wzorców globowania)</li>
+<li><code>grep</code> — wyszukiwanie treści (pasuje do wzorca regularnego)</li>
+<li><code>bash</code> — uruchamianie poleceń shell (pasuje do poleceń przeanalizowanych, takich jak <code>git status --porcelain</code>)</li>
+<li><code>task</code> — uruchamianie podagentów (odpowiada typowi podagenta)</li>
+<li><code>skill</code> — ładowanie umiejętności (pasuje do nazwy umiejętności)</li>
+<li><code>lsp</code> — uruchamianie zapytań LSP (obecnie nieszczegółowych)</li>
+<li><code>webfetch</code> — pobieranie adresu URL (pasuje do adresu URL)</li>
+<li><code>websearch</code> — wyszukiwanie sieci (pasuje do zapytań)</li>
+<li><code>external_directory</code> — wywoływacz, gdy narzędzie jest dostępne poza katalogiem roboczym projektu</li>
+<li><code>doom_loop</code> — wyzwalane, gdy samo wywołanie narzędzia zostanie powtórzone 3 razy z tymi samymi danymi podstawowymi</li>
+</ul>
+<hr>
+<h2>Domyślne</h2>
+<p>Jeżeli nic nie jest określone, closedcode zostanie uruchomione od dopuszczalnych rozwiązań diagnostycznych:</p>
+<ul>
+<li>Dostępne uprawnienia ma wartość domyślną <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> i <code>external_directory</code> zamek ma wartość <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> do <code>&quot;allow&quot;</code>, ale pliki <code>.env</code> są odrzucane:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Co robi „Zapytaj”.</h2>
+<p>Gdy closedcode poprosi o zatwierdzenie, interfejs użytkownika oferujący trzy wyniki:</p>
+<ul>
+<li><code>once</code> — zatwierdź tylko tę prośbę</li>
+<li><code>always</code> — zastosowanie, które następuje po zastosowaniu sugerowanych wzorców (przez następczą bieżącą sesję closedcode)</li>
+<li><code>reject</code> — odrzucić</li>
+</ul>
+<p>Zestaw wzorców, które <code>always</code> zatwierdziłby, jest udostępniony przez narzędzie (na przykładzie zatwierdzenia bash zazwyczaj umieszczają na częstotliwości bezpiecznej prefiksy polecenia, takie jak <code>git status*</code>).</p>
+<hr>
+<h2>Agenci</h2>
+<p>Można uzyskać dostęp do poszczególnych agentów. Uprawnienia agenta są skalowane z konfiguracją globalną, a następnie agenta ma pierwszeństwo. <a href="/docs/agents#permissions">Dowiedz się więcej</a> o prawach agenta.</p>
+<aside class="aside aside-note">
+Bardziej szczegółowe przykłady dopasowywania wzorców można znaleźć w sekcji [Reguły szczegółowe (składnia obiektu) (#granular-rules-object-syntax) powyżej.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Możesz także mieć pozwolenie na agenta w Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+zastosowanie dopasowywania wzorców dla pierwotnych z argumentami. `"grep *"` pozwala na `grep pattern file.txt`, podczas gdy sam `"grep"` blokuje to. Polecenia takie jak `git status` w przypadku postępowania dyscyplinarnego, ale ostatecznego zastosowania (np. `"git status *"`) podczas stosowania argumentów.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

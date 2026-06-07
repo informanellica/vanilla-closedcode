@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Сервер — vanilla-closedcode docs</title>
+  <meta name="description" content="Взаимодействуйте с сервером closedcode через HTTP.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html" selected>Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Сервер</h1>
+      <p class="lede">Взаимодействуйте с сервером closedcode через HTTP.</p>
+      <p>Команда <code>closedcode serve</code> запускает автономный HTTP-сервер, который предоставляет конечную точку OpenAPI, которую может использовать клиент с открытым кодом.</p>
+<hr>
+<h3>Использование</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>Параметры</h4>
+<table>
+<thead>
+<tr>
+<th>Флаг</th>
+<th>Описание</th>
+<th>По умолчанию</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>Порт для прослушивания</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>Имя хоста для прослушивания</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>Включить обнаружение mDNS</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>Пользовательское доменное имя для mDNS</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>Разрешенные дополнительные источники (CORS)</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> можно передать несколько раз:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>Аутентификация</h3>
+<p>Установите <code>CLOSEDCODE_SERVER_PASSWORD</code>, чтобы защитить сервер с помощью базовой аутентификации HTTP. Имя пользователя по умолчанию — <code>closedcode</code> или установите <code>CLOSEDCODE_SERVER_USERNAME</code>, чтобы переопределить его. Это относится как к <code>closedcode serve</code>, так и к <code>closedcode web</code>.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>Как это работает</h3>
+<p>Когда вы запускаете <code>closedcode</code>, он запускает TUI и сервер. Где находится TUI
+клиент, который общается с сервером. Сервер предоставляет спецификацию OpenAPI 3.1.
+конечная точка. Эта конечная точка также используется для создания файла <a href="/docs/sdk">SDK</a>.</p>
+<aside class="aside aside-tip">
+Используйте сервер closedcode для программного взаимодействия с открытым кодом.
+</aside>
+Эта архитектура позволяет открытому коду поддерживать несколько клиентов и позволяет программно взаимодействовать с открытым кодом.
+
+<p>Вы можете запустить <code>closedcode serve</code>, чтобы запустить автономный сервер. Если у вас есть
+TUI с открытым кодом запущен, <code>closedcode serve</code> запустит новый сервер.</p>
+<hr>
+<h4>Подключиться к существующему серверу</h4>
+<p>Когда вы запускаете TUI, он случайным образом назначает порт и имя хоста. Вместо этого вы можете передать <code>--hostname</code> и <code>--port</code> <a href="/docs/cli">flags</a>. Затем используйте это для подключения к его серверу.</p>
+<p>Конечную точку <a href="#tui"><code>/tui</code></a> можно использовать для управления TUI через сервер. Например, вы можете предварительно заполнить или запустить подсказку. Эта настройка используется плагинами closedcode <a href="/docs/ide">IDE</a>.</p>
+<hr>
+<h2>Спецификация</h2>
+<p>Сервер публикует спецификацию OpenAPI 3.1, которую можно просмотреть по адресу:</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>For example, <code>http://localhost:4096/doc</code>. Use the spec to generate clients or inspect request and response types. Or view it in a Swagger explorer.</p>
+<hr>
+<h2>API</h2>
+<p>Сервер closedcode предоставляет следующие API.</p>
+<hr>
+<h3>Глобальный</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>Получить состояние и версию сервера</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>Получить глобальные события (поток SSE)</td>
+<td>Поток событий</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Проект</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>Список всех проектов</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>Получить текущий проект</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Путь и система контроля версий</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>Получить текущий путь</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>Получить информацию о VCS для текущего проекта</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Экземпляр</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>Удалить текущий экземпляр</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Конфигурация</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>Получить информацию о конфигурации</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>Обновить конфигурацию</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>Список провайдеров и моделей по умолчанию</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Поставщик</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>Список всех провайдеров</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>Получить методы аутентификации провайдера</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>Авторизация провайдера через OAuth</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>Обработка callback OAuth для провайдера</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Сессии</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Примечания</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>Список всех сессий</td>
+<td>Возвращает <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>Создать новую сессию</td>
+<td>body: <code>{ parentID?, title? }</code>, возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>Получить статус всех сессий</td>
+<td>Возвращает <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>Получить детали сессии</td>
+<td>Возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>Удалить сессию и все её данные</td>
+<td>Возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>Обновить свойства сессии</td>
+<td>body: <code>{ title? }</code>, возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>Получить дочерние сессии</td>
+<td>Возвращает <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>Получить список задач для сессии</td>
+<td>Возвращает <a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>Анализ приложения и создание <code>AGENTS.md</code></td>
+<td>body: <code>{ messageID, providerID, modelID }</code>, возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>Ответвление сессии от сообщения</td>
+<td>body: <code>{ messageID? }</code>, возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>Прервать запущенную сессию</td>
+<td>Возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Поделиться сессией</td>
+<td>Возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Отменить общий доступ к сессии</td>
+<td>Возвращает <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>Получить diff для этой сессии</td>
+<td>query: <code>messageID?</code>, возвращает <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>Суммировать сессию</td>
+<td>body: <code>{ providerID, modelID }</code>, возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>Отменить сообщение</td>
+<td>body: <code>{ messageID, partID? }</code>, возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>Восстановить все отмененные сообщения</td>
+<td>Возвращает <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>Ответить на запрос разрешения</td>
+<td>body: <code>{ response, remember? }</code>, возвращает <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Сообщения</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Примечания</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Список сообщений в сессии</td>
+<td>query: <code>limit?</code>, возвращает <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Отправить сообщение и ждать ответа</td>
+<td>body: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>, возвращает <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>Получить детали сообщения</td>
+<td>Возвращает <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>Отправить сообщение асинхронно (без ожидания)</td>
+<td>body: как в <code>/session/:id/message</code>, возвращает <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>Выполнить слэш-команду</td>
+<td>body: <code>{ messageID?, agent?, model?, command, arguments }</code>, возвращает <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>Запустить команду оболочки</td>
+<td>body: <code>{ agent, model?, command }</code>, возвращает <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Команды</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>Список всех команд</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Файлы</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>Поиск текста в файлах</td>
+<td>Массив объектов совпадения с <code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>Поиск файлов и директорий по имени</td>
+<td><code>string[]</code> (пути)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>Поиск символов рабочего пространства</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>Список файлов и директорий</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>Прочитать файл</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>Получить статус отслеживаемых файлов</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> параметры запроса</h4>
+<ul>
+<li><code>query</code> (обязательно) — строка поиска (нечеткое совпадение)</li>
+<li><code>type</code> (необязательно) — ограничить результаты <code>&quot;file&quot;</code> или <code>&quot;directory&quot;</code>.</li>
+<li><code>directory</code> (необязательно) — переопределить корень проекта для поиска.</li>
+<li><code>limit</code> (необязательно) — максимальное количество результатов (1–200)</li>
+<li><code>dirs</code> (необязательно) — устаревший флаг (<code>&quot;false&quot;</code> возвращает только файлы)</li>
+</ul>
+<hr>
+<h3>Инструменты (Экспериментальные)</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>Список всех идентификаторов инструментов</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>Список инструментов со схемами JSON для модели</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, форматтеры и MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>Получить статус сервера LSP</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>Получить статус форматера</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>Получить статус сервера MCP</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>Добавить сервер MCP динамически</td>
+<td>body: <code>{ name, config }</code>, возвращает статус объекта MCP</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Агенты</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>Список всех доступных агентов</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Ведение журнала</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>Записать запись в журнал. Body: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>Добавить текст в подсказку</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>Открыть диалог помощи</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>Открыть селектор сессий</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>Открыть селектор тем</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>Открыть селектор моделей</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>Отправить текущую подсказку</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>Очистить подсказку</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>Выполнить команду (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>Показать уведомление (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>Ожидание следующего запроса управления</td>
+<td>Объект запроса управления</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>Ответить на запрос управления (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Авторизация</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>Установить учетные данные аутентификации. Body должен соответствовать схеме провайдера</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>События</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>Поток событий, отправляемых сервером. Первое событие — <code>server.connected</code>, затем события шины</td>
+<td>Поток событий, отправляемых сервером</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Документы</h3>
+<table>
+<thead>
+<tr>
+<th>Метод</th>
+<th>Путь</th>
+<th>Описание</th>
+<th>Ответ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>Спецификация OpenAPI 3.1</td>
+<td>HTML-страница со спецификацией OpenAPI</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

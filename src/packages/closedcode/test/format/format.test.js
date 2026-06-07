@@ -1,0 +1,177 @@
+
+import {  NodeFileSystem  } from "@effect/platform-node"
+import {  Effect, Layer  } from "effect"
+import {  provideTmpdirInstance  } from "../fixture/fixture.js"
+import {  testEffect  } from "../lib/effect.js"
+import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
+import {  Format  } from "../../src/format/index.js"
+import * as Formatter from "../../src/format/formatter.js";
+import {  describe, expect, beforeAll  } from "@jest/globals"
+import { readText, sleep, writeFile } from "../lib/io.js";
+
+const it = testEffect(Layer.mergeAll(Format.defaultLayer, CrossSpawnSpawner.defaultLayer, NodeFileSystem.layer));
+describe("Format", () => {
+  it.live("status() returns empty list when no formatters are configured", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    expect(yield* fmt.status()).toEqual([]);
+  }))));
+  it.live("status() returns built-in formatters when formatter is true", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    const statuses = yield* fmt.status();
+    const gofmt = statuses.find(item => item.name === "gofmt");
+    expect(gofmt).toBeDefined();
+    expect(gofmt.extensions).toContain(".go");
+  })), {
+    config: {
+      formatter: true
+    }
+  }));
+  it.live("status() keeps built-in formatters when config object is provided", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    const statuses = yield* fmt.status();
+    const gofmt = statuses.find(item => item.name === "gofmt");
+    const mix = statuses.find(item => item.name === "mix");
+    expect(gofmt).toBeDefined();
+    expect(gofmt.extensions).toContain(".go");
+    expect(mix).toBeDefined();
+  })), {
+    config: {
+      formatter: {
+        gofmt: {}
+      }
+    }
+  }));
+  it.live("status() excludes formatters marked as disabled in config", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    const statuses = yield* fmt.status();
+    const gofmt = statuses.find(item => item.name === "gofmt");
+    const mix = statuses.find(item => item.name === "mix");
+    expect(gofmt).toBeUndefined();
+    expect(mix).toBeDefined();
+  })), {
+    config: {
+      formatter: {
+        gofmt: {
+          disabled: true
+        }
+      }
+    }
+  }));
+  it.live("status() excludes uv when ruff is disabled", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    const statuses = yield* fmt.status();
+    expect(statuses.find(item => item.name === "ruff")).toBeUndefined();
+    expect(statuses.find(item => item.name === "uv")).toBeUndefined();
+  })), {
+    config: {
+      formatter: {
+        ruff: {
+          disabled: true
+        }
+      }
+    }
+  }));
+  it.live("status() excludes ruff when uv is disabled", () => provideTmpdirInstance(() => Format.Service.use(fmt => Effect.gen(function* () {
+    const statuses = yield* fmt.status();
+    expect(statuses.find(item => item.name === "ruff")).toBeUndefined();
+    expect(statuses.find(item => item.name === "uv")).toBeUndefined();
+  })), {
+    config: {
+      formatter: {
+        uv: {
+          disabled: true
+        }
+      }
+    }
+  }));
+  it.live("service initializes without error", () => provideTmpdirInstance(() => Format.Service.use(() => Effect.void)));
+  it.live("file() returns false when no formatter runs", () => provideTmpdirInstance(dir => Effect.gen(function* () {
+    const file = `${dir}/test.txt`;
+    yield* Effect.promise(() => writeFile(file, "x"));
+    const formatted = yield* Format.Service.use(fmt => fmt.file(file));
+    expect(formatted).toBe(false);
+  }), {
+    config: {
+      formatter: false
+    }
+  }));
+  it.live("status() initializes formatter state per directory", () => Effect.gen(function* () {
+    const a = yield* provideTmpdirInstance(() => Format.Service.use(fmt => fmt.status()), {
+      config: {
+        formatter: false
+      }
+    });
+    const b = yield* provideTmpdirInstance(() => Format.Service.use(fmt => fmt.status()), {
+      config: {
+        formatter: true
+      }
+    });
+    expect(a).toEqual([]);
+    expect(b.find(item => item.name === "gofmt")).toBeDefined();
+  }));
+  it.live("runs enabled checks for matching formatters in parallel", () => provideTmpdirInstance(path => Effect.gen(function* () {
+    const file = `${path}/test.parallel`;
+    yield* Effect.promise(() => writeFile(file, "x"));
+    const one = {
+      extensions: Formatter.gofmt.extensions,
+      enabled: Formatter.gofmt.enabled
+    };
+    const two = {
+      extensions: Formatter.mix.extensions,
+      enabled: Formatter.mix.enabled
+    };
+    let active = 0;
+    let max = 0;
+    yield* Effect.acquireUseRelease(Effect.sync(() => {
+      Formatter.gofmt.extensions = [".parallel"];
+      Formatter.mix.extensions = [".parallel"];
+      Formatter.gofmt.enabled = async () => {
+        active++;
+        max = Math.max(max, active);
+        await sleep(20);
+        active--;
+        return ["sh", "-c", "true"];
+      };
+      Formatter.mix.enabled = async () => {
+        active++;
+        max = Math.max(max, active);
+        await sleep(20);
+        active--;
+        return ["sh", "-c", "true"];
+      };
+    }), () => Format.Service.use(fmt => Effect.gen(function* () {
+      yield* fmt.init();
+      yield* fmt.file(file);
+    })), () => Effect.sync(() => {
+      Formatter.gofmt.extensions = one.extensions;
+      Formatter.gofmt.enabled = one.enabled;
+      Formatter.mix.extensions = two.extensions;
+      Formatter.mix.enabled = two.enabled;
+    }));
+    expect(max).toBe(2);
+  }), {
+    config: {
+      formatter: {
+        gofmt: {},
+        mix: {}
+      }
+    }
+  }));
+  it.live("runs matching formatters sequentially for the same file", () => provideTmpdirInstance(path => Effect.gen(function* () {
+    const file = `${path}/test.seq`;
+    yield* Effect.promise(() => writeFile(file, "x"));
+    yield* Format.Service.use(fmt => Effect.gen(function* () {
+      yield* fmt.init();
+      expect(yield* fmt.file(file)).toBe(true);
+    }));
+    expect(yield* Effect.promise(() => readText(file))).toBe("xAB");
+  }), {
+    config: {
+      formatter: {
+        first: {
+          command: ["node", "-e", "const fs = require('fs'); const file = process.argv[1]; fs.writeFileSync(file, fs.readFileSync(file, 'utf8') + 'A')", "$FILE"],
+          extensions: [".seq"]
+        },
+        second: {
+          command: ["node", "-e", "const fs = require('fs'); const file = process.argv[1]; fs.writeFileSync(file, fs.readFileSync(file, 'utf8') + 'B')", "$FILE"],
+          extensions: [".seq"]
+        }
+      }
+    }
+  }));
+});

@@ -1,0 +1,1960 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ผู้ให้บริการ — vanilla-closedcode docs</title>
+  <meta name="description" content="ใช้ผู้ให้บริการ LLM ใน vanilla-closedcode">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/providers.html">English</option>
+      <option value="../ar/providers.html">العربية</option>
+      <option value="../bs/providers.html">Bosanski</option>
+      <option value="../da/providers.html">Dansk</option>
+      <option value="../de/providers.html">Deutsch</option>
+      <option value="../es/providers.html">Español</option>
+      <option value="../fr/providers.html">Français</option>
+      <option value="../it/providers.html">Italiano</option>
+      <option value="../ja/providers.html">日本語</option>
+      <option value="../ko/providers.html">한국어</option>
+      <option value="../nb/providers.html">Norsk</option>
+      <option value="../pl/providers.html">Polski</option>
+      <option value="../pt-br/providers.html">Português (BR)</option>
+      <option value="../ru/providers.html">Русский</option>
+      <option value="../th/providers.html" selected>ไทย</option>
+      <option value="../tr/providers.html">Türkçe</option>
+      <option value="../zh-cn/providers.html">简体中文</option>
+      <option value="../zh-tw/providers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li class="active"><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>ผู้ให้บริการ</h1>
+      <p class="lede">ใช้ผู้ให้บริการ LLM ใน vanilla-closedcode</p>
+      <p>vanilla-closedcode ใช้ <a href="https://ai-sdk.dev/">AI SDK</a> และ <a href="https://models.dev">Models.dev</a> เพื่อรองรับผู้ให้บริการ <strong>75+ LLM</strong> และรองรับการใช้งานโมเดลท้องถิ่น</p>
+<p>หากต้องการเพิ่มผู้ให้บริการ คุณต้อง:</p>
+<ol>
+<li>เพิ่มคีย์ API สำหรับผู้ให้บริการโดยใช้คำสั่ง <code>/connect</code></li>
+<li>กำหนดค่าผู้ให้บริการในการกำหนดค่า vanilla-closedcode ของคุณ</li>
+</ol>
+<hr>
+<h3>ข้อมูลรับรอง</h3>
+<p>เมื่อคุณเพิ่มคีย์ API ของผู้ให้บริการด้วยคำสั่ง <code>/connect</code> คีย์เหล่านั้นจะถูกเก็บไว้
+ใน <code>~/.local/share/closedcode/auth.json</code>.</p>
+<hr>
+<h3>การกำหนดค่า</h3>
+<p>คุณสามารถปรับแต่งผู้ให้บริการได้ผ่านทางส่วน <code>provider</code> ใน vanilla-closedcode ของคุณ
+กำหนดค่า</p>
+<hr>
+<h4>Base URL (URL พื้นฐาน)</h4>
+<p>คุณสามารถปรับแต่งฐาน URL สำหรับผู้ให้บริการรายใดก็ได้โดยตั้งค่าตัวเลือก <code>baseURL</code> สิ่งนี้มีประโยชน์เมื่อใช้บริการพร็อกซีหรือจุดสิ้นสุดแบบกำหนดเอง</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.anthropic.com/v1&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>ไดเรกทอรี</h2>
+<p>มาดูรายละเอียดผู้ให้บริการบางรายกัน หากคุณต้องการเพิ่มผู้ให้บริการให้กับ
+รายการอย่าลังเลที่จะเปิดประชาสัมพันธ์</p>
+<aside class="aside aside-note">
+ไม่เห็นผู้ให้บริการที่นี่ใช่ไหม ส่งพีอาร์.
+</aside>
+---
+
+<h3>302.AI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://302.ai/">302.AI console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>302.AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ 302.AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Amazon Bedrock</h3>
+<p>วิธีใช้ Amazon Bedrock กับ vanilla-closedcode:</p>
+<ol>
+<li><p>ไปที่ <strong>แค็ตตาล็อกโมเดล</strong> ในคอนโซล Amazon Bedrock และขอ
+เข้าถึงโมเดลที่คุณต้องการ</p>
+<p>:::tip
+คุณต้องมีสิทธิ์เข้าถึงโมเดลที่คุณต้องการใน Amazon Bedrock
+:::</p>
+</li>
+<li><p><strong>กำหนดค่าการตรวจสอบสิทธิ์</strong> โดยใช้วิธีใดวิธีหนึ่งต่อไปนี้:</p>
+<h4>ตัวแปรสภาพแวดล้อม (เริ่มต้นอย่างรวดเร็ว)</h4>
+<p>ตั้งค่าหนึ่งในตัวแปรสภาพแวดล้อมเหล่านี้ขณะเรียกใช้ closedcode:</p>
+<pre><code class="language-bash"># Option 1: Using AWS access keys
+AWS_ACCESS_KEY_ID=XXX AWS_SECRET_ACCESS_KEY=YYY closedcode
+
+# Option 2: Using named AWS profile
+AWS_PROFILE=my-profile closedcode
+
+# Option 3: Using Bedrock bearer token
+AWS_BEARER_TOKEN_BEDROCK=XXX closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">export AWS_PROFILE=my-dev-profile
+export AWS_REGION=us-east-1
+</code></pre>
+<h4>ไฟล์การกำหนดค่า (แนะนำ)</h4>
+<p>สำหรับการกำหนดค่าเฉพาะโครงการหรือแบบถาวร ให้ใช้ <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>ตัวเลือกที่มี:</strong></p>
+<ul>
+<li><code>region</code> - ​​AWS ภูมิภาค (เช่น <code>us-east-1</code>, <code>eu-west-1</code>)</li>
+<li><code>profile</code> - ​​AWS ตั้งชื่อโปรไฟล์จาก <code>~/.aws/credentials</code></li>
+<li><code>endpoint</code> - ​​จุดสิ้นสุดที่กำหนดเอง URL สำหรับ VPC จุดสิ้นสุด (นามแฝงสำหรับตัวเลือก <code>baseURL</code> ทั่วไป)</li>
+</ul>
+<p>:::tip
+ตัวเลือกไฟล์การกำหนดค่ามีความสำคัญเหนือกว่าตัวแปรสภาพแวดล้อม
+:::</p>
+<h4>ขั้นสูง: VPC จุดสิ้นสุด</h4>
+<p>หากคุณใช้จุดสิ้นสุด VPC สำหรับ Bedrock:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;production&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>:::note
+ตัวเลือก <code>endpoint</code> เป็นนามแฝงสำหรับตัวเลือก <code>baseURL</code> ทั่วไป โดยใช้คำศัพท์เฉพาะ AWS หากมีการระบุทั้ง <code>endpoint</code> และ <code>baseURL</code> <code>endpoint</code> จะมีความสำคัญเหนือกว่า
+:::</p>
+<h4>วิธีการรับรองความถูกต้อง</h4>
+<ul>
+<li><strong><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code></strong>: สร้างผู้ใช้ IAM และสร้างคีย์การเข้าถึงในคอนโซล AWS</li>
+<li><strong><code>AWS_PROFILE</code></strong>: ใช้โปรไฟล์ที่มีชื่อจาก <code>~/.aws/credentials</code> ขั้นแรกให้กำหนดค่าด้วย <code>aws configure --profile my-profile</code> หรือ <code>aws sso login</code></li>
+<li><strong><code>AWS_BEARER_TOKEN_BEDROCK</code></strong>: สร้างคีย์ API ระยะยาวจากคอนโซล Amazon Bedrock</li>
+<li><strong><code>AWS_WEB_IDENTITY_TOKEN_FILE</code> / <code>AWS_ROLE_ARN</code></strong>: สำหรับ EKS IRSA (IAM บทบาทสำหรับบัญชีบริการ) หรือสภาพแวดล้อม Kubernetes อื่นๆ ที่มีการเชื่อมโยง OIDC Kubernetes แทรกตัวแปรสภาพแวดล้อมเหล่านี้โดยอัตโนมัติเมื่อใช้คำอธิบายประกอบของบัญชีบริการ</li>
+</ul>
+<h4>ลำดับความสำคัญของการรับรองความถูกต้อง</h4>
+<p>Amazon Bedrock ใช้ลำดับความสำคัญในการรับรองความถูกต้องต่อไปนี้:</p>
+<ol>
+<li><strong>Bearer Token</strong> - <code>AWS_BEARER_TOKEN_BEDROCK</code> ตัวแปรสภาพแวดล้อมหรือโทเค็นจากคำสั่ง <code>/connect</code></li>
+<li><strong>AWS Credential Chain</strong> - โปรไฟล์, คีย์การเข้าถึง, ข้อมูลประจำตัวที่แชร์, บทบาท IAM, โทเค็นข้อมูลประจำตัวของเว็บ (EKS IRSA), ข้อมูลเมตาของอินสแตนซ์</li>
+</ol>
+<p>:::note
+เมื่อตั้งค่าBearer Token (ผ่าน <code>/connect</code> หรือ <code>AWS_BEARER_TOKEN_BEDROCK</code>) โทเค็นนั้นจะมีความสำคัญเหนือกว่าวิธีการข้อมูลประจำตัว AWS ทั้งหมด รวมถึงโปรไฟล์ที่กำหนดค่าไว้
+:::</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นที่ต้องการ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-note">
+สำหรับโปรไฟล์การอนุมานแบบกำหนดเอง ให้ใช้ชื่อรุ่นและผู้ให้บริการในคีย์และตั้งค่าคุณสมบัติ `id` เป็น arn สิ่งนี้ทำให้มั่นใจได้ว่าแคชถูกต้อง:
+
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      // ...
+      &quot;models&quot;: {
+        &quot;anthropic-claude-sonnet-4.5&quot;: {
+          &quot;id&quot;: &quot;arn:aws:bedrock:us-east-1:xxx:application-inference-profile/yyy&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</aside>
+---
+
+<h3>Anthropic</h3>
+<ol>
+<li><p>เมื่อคุณสมัครแล้ว ให้รันคำสั่ง <code>/connect</code> และเลือก Anthropic</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ที่นี่คุณสามารถเลือกตัวเลือก <strong>Claude Pro/Max</strong> และมันจะเปิดเบราว์เซอร์ของคุณ
+และขอให้คุณตรวจสอบสิทธิ์</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ Claude Pro/Max
+│ Create an API Key
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>ตอนนี้โมเดล Anthropic ทั้งหมดควรจะพร้อมใช้งานเมื่อคุณใช้คำสั่ง <code>/models</code></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>:::info
+การใช้การสมัครสมาชิก Claude Pro/Max ใน vanilla-closedcode ไม่ได้รับการสนับสนุนอย่างเป็นทางการจาก <a href="https://anthropic.com">Anthropic</a>
+:::</p>
+<h5>การใช้ API Key</h5>
+<p>คุณยังสามารถเลือก <strong>สร้าง API คีย์</strong> หากคุณไม่มีการสมัครสมาชิก Pro/Max นอกจากนี้ยังจะเปิดเบราว์เซอร์ของคุณและขอให้คุณเข้าสู่ระบบ Anthropic และให้รหัสที่คุณสามารถวางใน terminal ของคุณ</p>
+<p>หรือหากคุณมีคีย์ API อยู่แล้ว คุณสามารถเลือก <strong>ป้อนคีย์ API ด้วยตนเอง</strong> และวางลงใน terminal ของคุณ</p>
+<hr>
+<h3>Atomic Chat</h3>
+<p>คุณสามารถกำหนดค่า closedcode ให้ใช้โมเดลท้องถิ่นผ่าน <a href="https://atomic.chat">Atomic Chat</a> ซึ่งเป็นแอปพลิเคชันเดสก์ท็อปที่เรียกใช้ LLM ในเครื่องภายใต้เซิร์ฟเวอร์ API ที่เข้ากันได้กับ OpenAI (ปลายทางเริ่มต้น <code>http://127.0.0.1:1337/v1</code>)</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;atomic-chat&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Atomic Chat (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1337/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;&lt;your-model-id&gt;&quot;: {
+          &quot;name&quot;: &quot;&lt;your-model-name&gt;&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ในตัวอย่างนี้:</p>
+<ul>
+<li><code>atomic-chat</code> คือรหัสผู้ให้บริการที่กำหนดเอง สามารถเป็นสตริงใดก็ได้ที่คุณต้องการ</li>
+<li><code>npm</code> ระบุแพ็กเกจที่จะใช้สำหรับผู้ให้บริการนี้ ที่นี่ใช้ <code>@ai-sdk/openai-compatible</code> สำหรับ API ใดๆ ที่เข้ากันได้กับ OpenAI</li>
+<li><code>name</code> คือชื่อแสดงของผู้ให้บริการในอินเทอร์เฟซ</li>
+<li><code>options.baseURL</code> คือปลายทางของเซิร์ฟเวอร์ท้องถิ่น เปลี่ยนโฮสต์และพอร์ตให้ตรงกับการตั้งค่า Atomic Chat ของคุณ</li>
+<li><code>models</code> คือแผนที่ระหว่างรหัสโมเดลกับชื่อแสดง แต่ละรหัสต้องตรงกับ <code>id</code> ที่ส่งคืนโดย <code>GET /v1/models</code> — รัน <code>curl http://127.0.0.1:1337/v1/models</code> เพื่อแสดงรายการรหัสที่โหลดอยู่ใน Atomic Chat</li>
+</ul>
+<aside class="aside aside-tip">
+หากการเรียกเครื่องมือทำงานได้ไม่ดี ให้เลือกโมเดลที่โหลดแล้วซึ่งรองรับ tool calling ได้ดี (ตัวอย่างเช่น รุ่น Qwen-Coder หรือ DeepSeek-Coder)
+</aside>
+---
+
+<h3>Azure OpenAI</h3>
+<aside class="aside aside-note">
+หากคุณพบข้อผิดพลาด "ฉันขอโทษ แต่ฉันไม่สามารถช่วยเหลือคำขอนั้นได้" ให้ลองเปลี่ยนตัวกรองเนื้อหาจาก **DefaultV2** เป็น **Default** ในทรัพยากร Azure ของคุณ
+</aside>
+1. ไปที่ [พอร์ทัล Azure](https://portal.azure.com/) และสร้างทรัพยากร **Azure OpenAI** คุณจะต้องการ:
+   - **ชื่อทรัพยากร**: นี่จะกลายเป็นส่วนหนึ่งของจุดสิ้นสุด API ของคุณ (`https://RESOURCE_NAME.openai.azure.com/`)
+   - **API key**: `KEY 1` หรือ `KEY 2` จากทรัพยากรของคุณ
+
+<ol start="2">
+<li><p>ไปที่ <a href="https://ai.azure.com/">Azure AI Foundry</a> และปรับใช้โมเดล</p>
+<p>:::note
+ชื่อการปรับใช้จะต้องตรงกับชื่อรุ่นเพื่อให้ closedcode ทำงานได้อย่างถูกต้อง
+:::</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Azure</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อน API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>ตั้งชื่อทรัพยากรของคุณเป็นตัวแปรสภาพแวดล้อม:</p>
+<pre><code class="language-bash">AZURE_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">export AZURE_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลที่ปรับใช้ของคุณ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Azure Cognitive Services</h3>
+<ol>
+<li><p>ไปที่ <a href="https://portal.azure.com/">พอร์ทัล Azure</a> และสร้างทรัพยากร <strong>Azure OpenAI</strong> คุณจะต้องการ:</p>
+<ul>
+<li><strong>ชื่อทรัพยากร</strong>: นี่จะกลายเป็นส่วนหนึ่งของจุดสิ้นสุด API ของคุณ (<code>https://AZURE_COGNITIVE_SERVICES_RESOURCE_NAME.cognitiveservices.azure.com/</code>)</li>
+<li><strong>API key</strong>: <code>KEY 1</code> หรือ <code>KEY 2</code> จากทรัพยากรของคุณ</li>
+</ul>
+</li>
+<li><p>ไปที่ <a href="https://ai.azure.com/">Azure AI Foundry</a> และปรับใช้โมเดล</p>
+<p>:::note
+ชื่อการปรับใช้จะต้องตรงกับชื่อรุ่นเพื่อให้ closedcode ทำงานได้อย่างถูกต้อง
+:::</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Azure Cognitive Services</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อน API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>ตั้งชื่อทรัพยากรของคุณเป็นตัวแปรสภาพแวดล้อม:</p>
+<pre><code class="language-bash">AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">export AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลที่ปรับใช้ของคุณ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Baseten</h3>
+<ol>
+<li><p>ไปที่ <a href="https://app.baseten.co/">Baseten</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Baseten</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Baseten API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cerebras</h3>
+<ol>
+<li><p>ไปที่ <a href="https://inference.cerebras.ai/">คอนโซล Cerebras</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Cerebras</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Cerebras API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นเช่น <em>Qwen 3 Coder 480B</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cloudflare AI Gateway</h3>
+<p>Cloudflare AI Gateway ช่วยให้คุณเข้าถึงโมเดลจาก OpenAI, Anthropic, Workers AI และอื่นๆ อีกมากมายผ่านตำแหน่งข้อมูลแบบรวม ด้วย <a href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/">การเรียกเก็บเงินแบบรวม</a> คุณไม่จำเป็นต้องใช้คีย์ API แยกต่างหากสำหรับผู้ให้บริการแต่ละราย</p>
+<ol>
+<li><p>ไปที่ <a href="https://dash.cloudflare.com/">แดชบอร์ด Cloudflare</a> ไปที่ <strong>AI</strong> &gt; <strong>AI Gateway</strong> และสร้างเกตเวย์ใหม่</p>
+</li>
+<li><p>ตั้งค่ารหัสบัญชีและรหัสเกตเวย์ของคุณเป็นตัวแปรสภาพแวดล้อม</p>
+<pre><code class="language-bash">export CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+export CLOUDFLARE_GATEWAY_ID=your-gateway-id
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Cloudflare AI Gateway</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อน Cloudflare API Token ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+<p>หรือตั้งเป็นตัวแปรสภาพแวดล้อม</p>
+<pre><code class="language-bash">export CLOUDFLARE_API_TOKEN=your-api-token
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>คุณยังสามารถเพิ่มโมเดลผ่านการกำหนดค่า closedcode ของคุณได้</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;cloudflare-ai-gateway&quot;: {
+      &quot;models&quot;: {
+        &quot;openai/gpt-4o&quot;: {},
+        &quot;anthropic/claude-sonnet-4&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cortecs</h3>
+<ol>
+<li><p>ไปที่ <a href="https://cortecs.ai/">คอนโซล Cortecs</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Cortecs</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Cortecs API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Kimi K2 Instruct</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>DeepSeek</h3>
+<ol>
+<li><p>ไปที่ <a href="https://platform.deepseek.com/">คอนโซล DeepSeek</a> สร้างบัญชี แล้วคลิก <strong>สร้างคีย์ API ใหม่</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>DeepSeek</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ DeepSeek API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดล DeepSeek เช่น <em>DeepSeek V4 Pro</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Deep Infra</h3>
+<ol>
+<li><p>ไปที่ <a href="https://deepinfra.com/dash">แดชบอร์ด Deep Infra</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Deep Infra</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Deep Infra API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Firmware</h3>
+<ol>
+<li><p>ไปที่ <a href="https://app.firmware.ai/signup">แดชบอร์ด Firmware</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Firmware</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Firmware API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Fireworks AI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://app.fireworks.ai/">คอนโซล Fireworks AI</a> สร้างบัญชี แล้วคลิก <strong>Create API Key</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Fireworks AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Fireworks AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Kimi K2 Instruct</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>GitLab Duo</h3>
+<p>GitLab Duo ให้การแชทแบบเอเจนต์ที่ขับเคลื่อนด้วย AI พร้อมความสามารถในการเรียกใช้เครื่องมือแบบเนทีฟผ่านพร็อกซี Anthropic ของ GitLab</p>
+<ol>
+<li><p>รันคำสั่ง <code>/connect</code> และเลือก GitLab</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>เลือกวิธีการรับรองความถูกต้องของคุณ:</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ OAuth (Recommended)
+│ Personal Access Token
+└
+</code></pre>
+<h4>การใช้ OAuth (แนะนำ)</h4>
+<p>เลือก <strong>OAuth</strong> และเบราว์เซอร์ของคุณจะเปิดขึ้นเพื่อรับสิทธิ์</p>
+</li>
+</ol>
+<h4>การใช้ Personal Access Token</h4>
+<ol>
+<li><p>ไปที่ <a href="https://gitlab.com/-/user_settings/personal_access_tokens">GitLab User Settings &gt; Access Tokens</a></p>
+</li>
+<li><p>คลิก <strong>เพิ่มโทเค็นใหม่</strong></p>
+</li>
+<li><p>ชื่อ: <code>vanilla-closedcode</code>, ขอบเขต: <code>api</code></p>
+</li>
+<li><p>คัดลอกโทเค็น (เริ่มต้นด้วย <code>glpat-</code>)</p>
+</li>
+<li><p>ป้อนลงใน terminal</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อดูรุ่นที่มีจำหน่าย</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>มีโมเดลที่ใช้ Claude สามรุ่นให้เลือก:</p>
+<ul>
+<li><strong>duo-chat-haiku-4-5</strong> (ค่าเริ่มต้น) - ตอบสนองรวดเร็วสำหรับงานด่วน</li>
+<li><strong>duo-chat-sonnet-4-5</strong> - ประสิทธิภาพที่สมดุลสำหรับขั้นตอนการทำงานส่วนใหญ่</li>
+<li><strong>duo-chat-opus-4-5</strong> - มีความสามารถมากที่สุดสำหรับการวิเคราะห์ที่ซับซ้อน</li>
+</ul>
+</li>
+</ol>
+<aside class="aside aside-note">
+คุณยังสามารถระบุตัวแปรสภาพแวดล้อม 'GITLAB_TOKEN' ได้หากคุณไม่ต้องการ
+เพื่อจัดเก็บโทเค็นในที่เก็บข้อมูลการรับรองความถูกต้องของ closedcode
+</aside>
+##### GitLab ที่โฮสต์เอง
+
+<aside class="aside aside-note">
+<p class="aside-label">บันทึกการปฏิบัติตาม</p>
+vanilla-closedcode uses a small model for some AI tasks like generating the session title. To keep these tasks on your own GitLab-hosted instance, set <code>small_model</code> in your <code>closedcode.json</code> and disable session sharing:
+
+<pre><code class="language-json">{
+  &quot;small_model&quot;: &quot;gitlab/duo-chat-haiku-4-5&quot;,
+  &quot;share&quot;: &quot;disabled&quot;
+}
+</code></pre>
+</aside>
+สำหรับอินสแตนซ์ GitLab ที่โฮสต์เอง:
+
+<pre><code class="language-bash">
+</code></pre>
+<p>หากอินสแตนซ์ของคุณใช้งาน AI Gateway แบบกำหนดเอง:</p>
+<pre><code class="language-bash">GITLAB_AI_GATEWAY_URL=https://ai-gateway.company.com
+</code></pre>
+<p>หรือเพิ่มในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<aside class="aside aside-note">
+ผู้ดูแลระบบ GitLab ของคุณต้องเปิดใช้งานสิ่งต่อไปนี้:
+
+<ol>
+<li><a href="https://docs.gitlab.com/user/duo_agent_platform/turn_on_off/">Duo Agent Platform</a> สำหรับผู้ใช้ กลุ่ม หรืออินสแตนซ์</li>
+<li>แฟล็กคุณลักษณะ (ผ่านคอนโซล Rails):<ul>
+<li><code>agent_platform_claude_code</code></li>
+<li><code>third_party_agents_enabled</code>
+:::</li>
+</ul>
+</li>
+</ol>
+<h5>OAuth สำหรับอินสแตนซ์ที่โฮสต์เอง</h5>
+<p>คุณต้องสร้างเพื่อให้ Oauth ทำงานกับอินสแตนซ์ที่โฮสต์เองได้
+แอพพลิเคชั่นใหม่ (Settings → Applications) ด้วย
+โทรกลับ URL <code>http://127.0.0.1:8080/callback</code> และขอบเขตต่อไปนี้:</p>
+<ul>
+<li>api (เข้าถึง API ในนามของคุณ)</li>
+<li>read_user (อ่านข้อมูลส่วนตัวของคุณ)</li>
+<li>read_repository (อนุญาตให้เข้าถึงที่เก็บแบบอ่านอย่างเดียว)</li>
+</ul>
+<p>จากนั้นเปิดเผย ID แอปพลิเคชันเป็นตัวแปรสภาพแวดล้อม:</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>เอกสารประกอบเพิ่มเติมเกี่ยวกับหน้าแรกของ <a href="https://www.npmjs.com/package/opencode-gitlab-auth">opencode-gitlab-auth</a></p>
+<h5>การกำหนดค่า</h5>
+<p>ปรับแต่งผ่าน <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;gitlab&quot;: {
+      &quot;options&quot;: {
+        &quot;instanceUrl&quot;: &quot;https://gitlab.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h5>GitLab API Tools (เป็นทางเลือก แต่แนะนำเป็นอย่างยิ่ง)</h5>
+<p>วิธีเข้าถึงเครื่องมือ GitLab (รวมคำขอ ปัญหา ไปป์ไลน์ CI/CD ฯลฯ):</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-gitlab-plugin&quot;]
+}
+</code></pre>
+<p>ปลั๊กอินนี้มอบความสามารถในการจัดการพื้นที่เก็บข้อมูล GitLab ที่ครอบคลุม รวมถึงการตรวจสอบ MR การติดตามปัญหา การตรวจสอบไปป์ไลน์ และอื่นๆ</p>
+<hr>
+<h3>GitHub Copilot</h3>
+<p>วิธีใช้การสมัครสมาชิก GitHub Copilot ด้วย closedcode:</p>
+<p>:::note
+บางรุ่นอาจต้องมี <a href="https://github.com/features/copilot/plans">Pro+
+subscription</a> เพื่อใช้งาน</p>
+<p>บางรุ่นจำเป็นต้องเปิดใช้งานด้วยตนเองใน <a href="https://docs.github.com/en/copilot/how-tos/use-ai-models/configure-access-to-ai-models#setup-for-individual-use">การตั้งค่า GitHub Copilot</a></p>
+</aside>
+1. รันคำสั่ง `/connect` และค้นหา GitHub Copilot
+
+<pre><code class="language-txt">/connect
+</code></pre>
+<ol start="2">
+<li><p>ไปที่ <a href="https://github.com/login/device">github.com/login/device</a> และป้อนรหัส</p>
+<pre><code class="language-txt">┌ Login with GitHub Copilot
+│
+│ https://github.com/login/device
+│
+│ Enter code: 8F43-6FCF
+│
+│ Waiting for authorization...
+</code></pre>
+</li>
+<li><p>ตอนนี้รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นที่คุณต้องการ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Google Vertex AI</h3>
+<p>วิธีใช้ Google Vertex AI กับ vanilla-closedcode:</p>
+<ol>
+<li><p>ไปที่ <strong>Model Garden</strong> ใน Google Cloud Console แล้วตรวจสอบ
+รุ่นที่มีในภูมิภาคของคุณ</p>
+<p>:::note
+คุณต้องมีโปรเจ็กต์ Google Cloud ที่เปิดใช้งาน Vertex AI API
+:::</p>
+</li>
+<li><p>ตั้งค่าตัวแปรสภาพแวดล้อมที่ต้องการ:</p>
+<ul>
+<li><code>GOOGLE_CLOUD_PROJECT</code>: รหัสโครงการ Google Cloud ของคุณ</li>
+<li><code>VERTEX_LOCATION</code> (เป็นทางเลือก): ภูมิภาคสำหรับ Vertex AI (ค่าเริ่มต้นคือ <code>global</code>)</li>
+<li>การรับรองความถูกต้อง (เลือกหนึ่งรายการ):<ul>
+<li><code>GOOGLE_APPLICATION_CREDENTIALS</code>: เส้นทางไปยังบัญชีบริการของคุณ JSON ไฟล์คีย์</li>
+<li>ตรวจสอบสิทธิ์โดยใช้ gcloud CLI: <code>gcloud auth application-default login</code></li>
+</ul>
+</li>
+</ul>
+<p>ตั้งค่าในขณะที่เรียกใช้ closedcode</p>
+<pre><code class="language-bash">GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json GOOGLE_CLOUD_PROJECT=your-project-id closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ</p>
+<pre><code class="language-bash">export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export VERTEX_LOCATION=global
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-tip">
+ภูมิภาค `global` ปรับปรุงความพร้อมใช้งานและลดข้อผิดพลาดโดยไม่มีค่าใช้จ่ายเพิ่มเติม ใช้ตำแหน่งข้อมูลระดับภูมิภาค (เช่น `us-central1`) สำหรับข้อกำหนดด้านถิ่นที่อยู่ของข้อมูล [เรียนรู้เพิ่มเติม](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models#regional_and_global_endpoints)
+</aside>
+3. รันคำสั่ง `/models` เพื่อเลือกรุ่นที่ต้องการ
+
+<pre><code class="language-txt">/models
+</code></pre>
+<hr>
+<h3>Groq</h3>
+<ol>
+<li><p>ไปที่ <a href="https://console.groq.com/">Groq console</a> คลิก <strong>Create API Key</strong> และคัดลอกคีย์</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา Groq</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ API สำหรับผู้ให้บริการ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกคำสั่งที่คุณต้องการ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Hugging Face</h3>
+<p><a href="https://huggingface.co/docs/inference-providers">ผู้ให้บริการการอนุมาน Hugging Face</a> ช่วยให้สามารถเข้าถึงโมเดลแบบเปิดที่รองรับโดยผู้ให้บริการมากกว่า 17 ราย</p>
+<ol>
+<li><p>ไปที่ <a href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained">การตั้งค่า Hugging Face</a> เพื่อสร้างโทเค็นที่มีสิทธิ์ในการโทรไปยังผู้ให้บริการการอนุมาน</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Hugging Face</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อน Hugging Face Token ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดล เช่น <em>Kimi-K2-Instruct</em> หรือ <em>GLM-4.6</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a> เป็นแพลตฟอร์มการติดตาม LLM ที่ให้การบันทึก การตรวจสอบ และการวิเคราะห์สำหรับแอปพลิเคชัน AI ของคุณ Helicone AI Gateway กำหนดเส้นทางคำขอของคุณไปยังผู้ให้บริการที่เหมาะสมโดยอัตโนมัติตามรุ่น</p>
+<ol>
+<li><p>ไปที่ <a href="https://helicone.ai">Helicone</a> สร้างบัญชี และสร้างคีย์ API จากแดชบอร์ดของคุณ</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Helicone</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Helicone API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>หากต้องการทราบผู้ให้บริการเพิ่มเติมและฟีเจอร์ขั้นสูง เช่น การแคชและการจำกัดอัตรา โปรดตรวจสอบ <a href="https://docs.helicone.ai">เอกสารประกอบของ Helicone</a></p>
+<h4>การกำหนดค่าเพิ่มเติม</h4>
+<p>ในกรณีที่คุณเห็นคุณสมบัติหรือรุ่นจาก Helicone ที่ไม่ได้กำหนดค่าโดยอัตโนมัติผ่าน closedcode คุณสามารถกำหนดค่าด้วยตนเองได้ตลอดเวลา</p>
+<p>นี่คือ <a href="https://helicone.ai/models">Helicone&#39;s Model Directory</a> คุณจะต้องใช้สิ่งนี้เพื่อรับ ID ของโมเดลที่คุณต้องการเพิ่ม</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>ส่วนหัวที่กำหนดเอง</h4>
+<p>Helicone รองรับส่วนหัวแบบกำหนดเองสำหรับฟีเจอร์ต่างๆ เช่น การแคช การติดตามผู้ใช้ และการจัดการเซสชัน เพิ่มลงในการกำหนดค่าผู้ให้บริการของคุณโดยใช้ <code>options.headers</code>:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>การติดตามเซสชัน</h5>
+<p>คุณลักษณะ <a href="https://docs.helicone.ai/features/sessions">เซสชัน</a> ของ Helicone ช่วยให้คุณสามารถจัดกลุ่มคำขอ LLM ที่เกี่ยวข้องเข้าด้วยกันได้ ใช้ปลั๊กอิน <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a> เพื่อบันทึกการสนทนา vanilla-closedcode แต่ละรายการเป็นเซสชันใน Helicone โดยอัตโนมัติ</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>เพิ่มลงในการกำหนดค่าของคุณ</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>ปลั๊กอินจะแทรกส่วนหัว <code>Helicone-Session-Id</code> และ <code>Helicone-Session-Name</code> ลงในคำขอของคุณ ในหน้าเซสชันของ Helicone คุณจะเห็นการสนทนา vanilla-closedcode แต่ละรายการแยกเป็นเซสชันแยกกัน</p>
+<h5>ส่วนหัวของ Helicone ทั่วไป</h5>
+<table>
+<thead>
+<tr>
+<th>ส่วนหัว</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>เปิดใช้งานการแคชการตอบกลับ (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>ติดตามตัวชี้วัดตามผู้ใช้</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>เพิ่มคุณสมบัติที่กำหนดเอง (เช่น <code>Helicone-Property-Environment</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>เชื่อมโยงคำขอกับเวอร์ชันพร้อมท์</td>
+</tr>
+</tbody></table>
+<p>ดู <a href="https://docs.helicone.ai/helicone-headers/header-directory">Helicone Header Directory</a> สำหรับส่วนหัวที่มีอยู่ทั้งหมด</p>
+<hr>
+<h3>llama.cpp</h3>
+<p>คุณสามารถกำหนดค่า closedcode เพื่อใช้โมเดลท้องถิ่นผ่านยูทิลิตี้ <a href="https://github.com/ggml-org/llama.cpp">llama.cpp&#39;s</a> llama-server</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;llama.cpp&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;llama-server (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:8080/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;qwen3-coder:a3b&quot;: {
+          &quot;name&quot;: &quot;Qwen3-Coder: a3b-30b (local)&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 128000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ในตัวอย่างนี้:</p>
+<ul>
+<li><code>llama.cpp</code> คือ ID ผู้ให้บริการที่กำหนดเอง นี่อาจเป็นสตริงใดก็ได้ที่คุณต้องการ</li>
+<li><code>npm</code> ระบุแพ็คเกจที่จะใช้สำหรับผู้ให้บริการรายนี้ ในที่นี้ <code>@ai-sdk/openai-compatible</code> ใช้สำหรับ API ที่เข้ากันได้กับ OpenAI</li>
+<li><code>name</code> คือชื่อที่แสดงของผู้ให้บริการใน UI</li>
+<li><code>options.baseURL</code> เป็นจุดสิ้นสุดสำหรับเซิร์ฟเวอร์ภายในเครื่อง</li>
+<li><code>models</code> คือแมปของ ID โมเดลกับการกำหนดค่า ชื่อรุ่นจะปรากฏในรายการเลือกรุ่น</li>
+</ul>
+<hr>
+<h3>IO.NET</h3>
+<p>IO.NET มี 17 โมเดลที่ได้รับการปรับให้เหมาะกับการใช้งานที่หลากหลาย:</p>
+<ol>
+<li><p>ไปที่ <a href="https://ai.io.net/">IO.NET console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>IO.NET</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ IO.NET API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>LM Studio</h3>
+<p>คุณสามารถกำหนดค่า closedcode เพื่อใช้โมเดลท้องถิ่นผ่าน LM Studio</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;lmstudio&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;LM Studio (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1234/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;google/gemma-3n-e4b&quot;: {
+          &quot;name&quot;: &quot;Gemma 3n-e4b (local)&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ในตัวอย่างนี้:</p>
+<ul>
+<li><code>lmstudio</code> คือ ID ผู้ให้บริการที่กำหนดเอง นี่อาจเป็นสตริงใดก็ได้ที่คุณต้องการ</li>
+<li><code>npm</code> ระบุแพ็คเกจที่จะใช้สำหรับผู้ให้บริการรายนี้ ในที่นี้ <code>@ai-sdk/openai-compatible</code> ใช้สำหรับ API ที่เข้ากันได้กับ OpenAI</li>
+<li><code>name</code> คือชื่อที่แสดงของผู้ให้บริการใน UI</li>
+<li><code>options.baseURL</code> เป็นจุดสิ้นสุดสำหรับเซิร์ฟเวอร์ภายในเครื่อง</li>
+<li><code>models</code> คือแมปของ ID โมเดลกับการกำหนดค่า ชื่อรุ่นจะปรากฏในรายการเลือกรุ่น</li>
+</ul>
+<hr>
+<h3>Moonshot AI</h3>
+<p>วิธีใช้ Kimi K2 จาก Moonshot AI:</p>
+<ol>
+<li><p>ไปที่ <a href="https://platform.moonshot.ai/console">Moonshot AI console</a> สร้างบัญชี แล้วคลิก <strong>Create API Key</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Moonshot AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Moonshot API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือก <em>Kimi K2</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>MiniMax</h3>
+<ol>
+<li><p>ไปที่ <a href="https://platform.minimax.io/login">MiniMax API Console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>MiniMax</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ MiniMax API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นเช่น <em>M2.1</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Nebius Token Factory</h3>
+<ol>
+<li><p>ไปที่ <a href="https://tokenfactory.nebius.com/">คอนโซล Nebius Token Factory</a> สร้างบัญชี แล้วคลิก <strong>Add key</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Nebius Token Factory</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Nebius Token Factory API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Kimi K2 Instruct</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Ollama</h3>
+<p>คุณสามารถกำหนดค่า closedcode เพื่อใช้โมเดลท้องถิ่นผ่าน Ollama</p>
+<aside class="aside aside-tip">
+Ollama สามารถกำหนดค่าตัวเองสำหรับ vanilla-closedcode ได้โดยอัตโนมัติ ดู [เอกสารการบูรณาการ Ollama](https://docs.ollama.com/integrations/opencode) เพื่อดูรายละเอียด
+</aside>
+```json title="closedcode.json" "ollama" {5, 6, 8, 10-14}
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "llama2": {
+          "name": "Llama 2"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>ในตัวอย่างนี้:</p>
+<ul>
+<li><code>ollama</code> คือ ID ผู้ให้บริการที่กำหนดเอง นี่อาจเป็นสตริงใดก็ได้ที่คุณต้องการ</li>
+<li><code>npm</code> ระบุแพ็คเกจที่จะใช้สำหรับผู้ให้บริการรายนี้ ในที่นี้ <code>@ai-sdk/openai-compatible</code> ใช้สำหรับ API ที่เข้ากันได้กับ OpenAI</li>
+<li><code>name</code> คือชื่อที่แสดงของผู้ให้บริการใน UI</li>
+<li><code>options.baseURL</code> เป็นจุดสิ้นสุดสำหรับเซิร์ฟเวอร์ภายในเครื่อง</li>
+<li><code>models</code> คือแมปของ ID โมเดลกับการกำหนดค่า ชื่อรุ่นจะปรากฏในรายการเลือกรุ่น</li>
+</ul>
+<aside class="aside aside-tip">
+หากการเรียกใช้เครื่องมือไม่ทำงาน ให้ลองเพิ่ม `num_ctx` ใน Ollama เริ่มต้นประมาณ 16,000 - 32,000
+</aside>
+---
+
+<h3>Ollama Cloud</h3>
+<p>วิธีใช้ Ollama Cloud กับ vanilla-closedcode:</p>
+<ol>
+<li><p>ไปที่ <a href="https://ollama.com/">https://ollama.com/</a> แล้วลงชื่อเข้าใช้หรือสร้างบัญชี</p>
+</li>
+<li><p>ไปที่ <strong>Settings</strong> &gt; <strong>Keys</strong> แล้วคลิก <strong>Add API Key</strong> เพื่อสร้างคีย์ API ใหม่</p>
+</li>
+<li><p>คัดลอกคีย์ API เพื่อใช้ใน vanilla-closedcode</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Ollama Cloud</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Ollama Cloud API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><strong>สำคัญ</strong>: ก่อนที่จะใช้โมเดลคลาวด์ใน vanilla-closedcode คุณต้องดึงข้อมูลโมเดลในเครื่อง:</p>
+<pre><code class="language-bash">ollama pull gpt-oss:20b-cloud
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดล Ollama Cloud ของคุณ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OpenAI</h3>
+<p>เราขอแนะนำให้สมัคร <a href="https://chatgpt.com/pricing">ChatGPT Plus หรือ Pro</a></p>
+<ol>
+<li><p>เมื่อคุณสมัครแล้ว ให้รันคำสั่ง <code>/connect</code> และเลือก OpenAI</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ที่นี่คุณสามารถเลือกตัวเลือก <strong>ChatGPT Plus/Pro</strong> จากนั้นเบราว์เซอร์จะเปิดขึ้นมา
+และขอให้คุณตรวจสอบสิทธิ์</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ ChatGPT Plus/Pro
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>ตอนนี้โมเดล OpenAI ทั้งหมดควรจะพร้อมใช้งานเมื่อคุณใช้คำสั่ง <code>/models</code></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<h5>การใช้ API Key</h5>
+<p>หากคุณมีคีย์ API อยู่แล้ว คุณสามารถเลือก <strong>Manually enter API Key</strong> และวางลงใน terminal ของคุณ</p>
+<hr>
+<h3>OpenRouter</h3>
+<ol>
+<li><p>ไปที่ <a href="https://openrouter.ai/settings/keys">OpenRouter dashboard</a> คลิก <strong>Create API Key</strong> และคัดลอกคีย์</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา OpenRouter</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ API สำหรับผู้ให้บริการ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>โมเดล OpenRouter จำนวนมากถูกโหลดไว้ล่วงหน้าตามค่าเริ่มต้น รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลที่คุณต้องการ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>คุณยังสามารถเพิ่มโมเดลเพิ่มเติมผ่านการกำหนดค่า closedcode ของคุณได้</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>คุณยังสามารถปรับแต่งได้ผ่านการกำหนดค่า closedcode ของคุณ นี่คือตัวอย่างการระบุผู้ให้บริการ</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP AI Core</h3>
+<p>SAP AI Core ให้การเข้าถึงโมเดลมากกว่า 40 รุ่นจาก OpenAI, Anthropic, Google, Amazon, Meta, Mistral และ AI21 ผ่านแพลตฟอร์มเดียว</p>
+<ol>
+<li><p>ไปที่ <a href="https://account.hana.ondemand.com/">SAP BTP Cockpit</a> ของคุณ ไปที่อินสแตนซ์บริการ SAP AI Core และสร้างคีย์บริการ</p>
+<p>:::tip
+คีย์บริการคือวัตถุ JSON ที่มี <code>clientid</code>, <code>clientsecret</code>, <code>url</code> และ <code>serviceurls.AI_API_URL</code> คุณสามารถค้นหาอินสแตนซ์ AI Core ของคุณได้ภายใต้ <strong>Services</strong> &gt; <strong>Instances and Subscriptions</strong> ใน BTP Cockpit
+:::</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>SAP AI Core</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อน JSON คีย์บริการของคุณ</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>หรือตั้งค่าตัวแปรสภาพแวดล้อม <code>AICORE_SERVICE_KEY</code>:</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>เลือกตั้งค่ารหัสการปรับใช้และกลุ่มทรัพยากร:</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+การตั้งค่าเหล่านี้เป็นทางเลือกและควรกำหนดค่าตามการตั้งค่า SAP AI Core ของคุณ
+:::</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกจาก 40+ รุ่นที่มีอยู่</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>STACKIT</h3>
+<p>STACKIT AI Model Serving มอบสภาพแวดล้อมการโฮสต์ที่มีการจัดการเต็มรูปแบบสำหรับโมเดล AI โดยเน้นที่ LLM เช่น Llama, Mistral และ Qwen โดยมีอธิปไตยของข้อมูลสูงสุดบนโครงสร้างพื้นฐานยุโรป</p>
+<ol>
+<li><p>ไปที่ <a href="https://portal.stackit.cloud">STACKIT Portal</a> ไปที่ <strong>AI Model Serving</strong> และสร้างโทเค็นการตรวจสอบสิทธิ์สำหรับโครงการของคุณ</p>
+<p>:::tip
+คุณต้องมีบัญชีลูกค้า STACKIT บัญชีผู้ใช้ และโครงการก่อนสร้างโทเค็นการตรวจสอบสิทธิ์
+:::</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>STACKIT</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนโทเค็นการตรวจสอบสิทธิ์ STACKIT AI Model Serving ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกจากโมเดลที่มีอยู่ เช่น <em>Qwen3-VL 235B</em> หรือ <em>Llama 3.3 70B</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OVHcloud AI Endpoints</h3>
+<ol>
+<li><p>ไปที่ <a href="https://ovh.com/manager">OVHcloud panel</a> ไปที่ส่วน <code>Public Cloud</code>, <code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code> และในแท็บ <code>API Keys</code> ให้คลิก <strong>Create a new API key</strong></p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>OVHcloud AI Endpoints</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ API OVHcloud AI Endpoints ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>gpt-oss-120b</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Scaleway</h3>
+<p>วิธีใช้ <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative APIs</a> กับ Opencode:</p>
+<ol>
+<li><p>ไปที่ <a href="https://console.scaleway.com/iam/api-keys">Scaleway Console IAM settings</a> เพื่อสร้างคีย์ API ใหม่</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Scaleway</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Scaleway API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>devstral-2-123b-instruct-2512</em> หรือ <em>gpt-oss-120b</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Together AI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://api.together.ai">Together AI console</a> สร้างบัญชี และคลิก <strong>Add Key</strong></p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Together AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Together AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Kimi K2 Instruct</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Venice AI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://venice.ai">Venice AI console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Venice AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Venice AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Llama 3.3 70B</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Vercel AI Gateway</h3>
+<p>Vercel AI Gateway ช่วยให้คุณเข้าถึงโมเดลจาก OpenAI, Anthropic, Google, xAI และอื่นๆ อีกมากมายผ่านจุดสิ้นสุดแบบรวม โมเดลถูกนำเสนอในราคาปลีกโดยไม่มีการบวกเพิ่ม</p>
+<ol>
+<li><p>ไปที่ <a href="https://vercel.com/">Vercel dashboard</a> ไปที่แท็บ <strong>AI Gateway</strong> และคลิก <strong>API keys</strong> เพื่อสร้างคีย์ API ใหม่</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Vercel AI Gateway</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Vercel AI Gateway API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>คุณยังสามารถปรับแต่งโมเดลผ่านการกำหนดค่า closedcode ของคุณได้ นี่คือตัวอย่างการระบุลำดับการกำหนดเส้นทางผู้ให้บริการ</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ตัวเลือกการกำหนดเส้นทางที่มีประโยชน์บางประการ:</p>
+<table>
+<thead>
+<tr>
+<th>ตัวเลือก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>ลำดับผู้ให้บริการที่จะลอง</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>จำกัดเฉพาะผู้ให้บริการที่ระบุ</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>ใช้เฉพาะผู้ให้บริการที่มีนโยบายการเก็บรักษาข้อมูลเป็นศูนย์</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://console.x.ai/">xAI console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>xAI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ xAI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Grok Beta</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Z.AI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://z.ai/manage-apikey/apikey-list">Z.AI API console</a> สร้างบัญชี และคลิก <strong>Create a new API key</strong></p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Z.AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p>หากคุณสมัครรับ <strong>GLM Coding Plan</strong> ให้เลือก <strong>Z.AI Coding Plan</strong></p>
+</li>
+<li><p>ป้อนคีย์ Z.AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>GLM-4.7</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>ผู้ให้บริการที่กำหนดเอง</h2>
+<p>หากต้องการเพิ่มผู้ให้บริการที่ <strong>เข้ากันได้กับ OpenAI</strong> ใดๆ ที่ไม่มีรายชื่ออยู่ในคำสั่ง <code>/connect</code>:</p>
+<aside class="aside aside-tip">
+คุณสามารถใช้ผู้ให้บริการที่เข้ากันได้กับ OpenAI กับ closedcode ได้ ผู้ให้บริการ AI สมัยใหม่ส่วนใหญ่เสนอ API ที่เข้ากันได้กับ OpenAI
+</aside>
+1. เรียกใช้คำสั่ง `/connect` และเลื่อนลงไปที่ **Other**
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>ป้อน ID เฉพาะสำหรับผู้ให้บริการ</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::note
+เลือก ID ที่น่าจดจำ คุณจะใช้ ID นี้ในไฟล์กำหนดค่าของคุณ
+:::</p>
+</li>
+<li><p>ป้อนคีย์ API สำหรับผู้ให้บริการ</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>สร้างหรืออัปเดตไฟล์ <code>closedcode.json</code> ของคุณในไดเร็กทอรีโครงการของคุณ:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>นี่คือตัวเลือกการกำหนดค่า:</p>
+<ul>
+<li><strong>npm</strong>: แพ็คเกจ AI SDK ที่จะใช้ <code>@ai-sdk/openai-compatible</code> สำหรับผู้ให้บริการที่เข้ากันได้กับ OpenAI</li>
+<li><strong>name</strong>: ชื่อที่แสดงใน UI</li>
+<li><strong>models</strong>: โมเดลที่มีจำหน่าย</li>
+<li><strong>options.baseURL</strong>: URL จุดสิ้นสุด API</li>
+<li><strong>options.apiKey</strong>: ตั้งค่าคีย์ API ทางเลือก หากไม่ได้ใช้การรับรองความถูกต้อง</li>
+<li><strong>options.headers</strong>: ตั้งค่าส่วนหัวที่กำหนดเองได้ตามต้องการ</li>
+</ul>
+<p>ข้อมูลเพิ่มเติมเกี่ยวกับตัวเลือกขั้นสูงในตัวอย่างด้านล่าง</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> และผู้ให้บริการและโมเดลที่คุณกำหนดเองจะปรากฏในรายการตัวเลือก</p>
+</li>
+</ol>
+<hr>
+<h5>ตัวอย่าง</h5>
+<p>นี่คือตัวอย่างการตั้งค่าตัวเลือก <code>apiKey</code>, <code>headers</code> และรุ่น <code>limit</code></p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>รายละเอียดการกำหนดค่า:</p>
+<ul>
+<li><strong>apiKey</strong>: ตั้งค่าโดยใช้ไวยากรณ์ตัวแปร <code>env</code> <a href="/docs/config#env-vars">เรียนรู้เพิ่มเติม</a></li>
+<li><strong>headers</strong>: ส่วนหัวที่กำหนดเองที่ส่งไปกับแต่ละคำขอ</li>
+<li><strong>limit.context</strong>: โทเค็นอินพุตสูงสุดที่โมเดลยอมรับ</li>
+<li><strong>limit.output</strong>: โทเค็นสูงสุดที่โมเดลสามารถสร้างได้</li>
+</ul>
+<p>ฟิลด์ <code>limit</code> ช่วยให้ vanilla-closedcode เข้าใจว่าคุณมีบริบทเหลืออยู่เท่าใด ผู้ให้บริการมาตรฐานจะดึงข้อมูลเหล่านี้จาก models.dev โดยอัตโนมัติ</p>
+<hr>
+<h2>การแก้ไขปัญหา</h2>
+<p>หากคุณประสบปัญหาในการกำหนดค่าผู้ให้บริการ ให้ตรวจสอบสิ่งต่อไปนี้:</p>
+<ol>
+<li><p><strong>ตรวจสอบการตั้งค่าการรับรองความถูกต้อง</strong>: รัน <code>closedcode auth list</code> เพื่อดูว่ามีการเพิ่มข้อมูลรับรอง
+สำหรับผู้ให้บริการในการกำหนดค่าของคุณหรือไม่</p>
+<p>สิ่งนี้ใช้ไม่ได้กับผู้ให้บริการเช่น Amazon Bedrock ซึ่งอาศัยตัวแปรสภาพแวดล้อมสำหรับการตรวจสอบสิทธิ์</p>
+</li>
+<li><p>สำหรับผู้ให้บริการที่กำหนดเอง ให้ตรวจสอบการกำหนดค่า closedcode และ:</p>
+<ul>
+<li>ตรวจสอบให้แน่ใจว่า ID ผู้ให้บริการที่ใช้ในคำสั่ง <code>/connect</code> ตรงกับ ID ในการกำหนดค่า closedcode ของคุณ</li>
+<li>ใช้แพ็คเกจ npm ที่ถูกต้องสำหรับผู้ให้บริการ ตัวอย่างเช่น ใช้ <code>@ai-sdk/cerebras</code> สำหรับ Cerebras และสำหรับผู้ให้บริการอื่นๆ ที่เข้ากันได้กับ OpenAI ให้ใช้ <code>@ai-sdk/openai-compatible</code></li>
+<li>ตรวจสอบว่าใช้จุดสิ้นสุด API ที่ถูกต้องในฟิลด์ <code>options.baseURL</code></li>
+</ul>
+</li>
+<li><p>ป้อนคีย์ vanilla-closedcode API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นเช่น <em>Qwen 3 Coder 480B</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>เปิดเราเตอร์</h3>
+<ol>
+<li><p>ไปที่ <a href="https://openrouter.ai/settings/keys">แดชบอร์ด OpenRouter</a> คลิก <strong>สร้าง API คีย์</strong> และคัดลอกคีย์</p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา OpenRouter</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ API สำหรับผู้ให้บริการ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>OpenRouter หลายรุ่นถูกโหลดไว้ล่วงหน้าตามค่าเริ่มต้น ให้รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่นที่คุณต้องการ</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>คุณยังสามารถเพิ่มโมเดลเพิ่มเติมผ่านการกำหนดค่า closedcode ของคุณ</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>คุณยังสามารถปรับแต่งได้ผ่านการกำหนดค่า closedcode ของคุณ นี่คือตัวอย่างการระบุผู้ให้บริการ</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP เอไอคอร์</h3>
+<p>SAP AI Core ให้การเข้าถึงโมเดลมากกว่า 40 โมเดลจาก OpenAI, Anthropic, Google, Amazon, Meta, Mistral และ AI21 ผ่านแพลตฟอร์มแบบครบวงจร</p>
+<ol>
+<li><p>ไปที่ห้องนักบิน <a href="https://account.hana.ondemand.com/">SAP BTP</a> นำทางไปยังอินสแตนซ์บริการ SAP AI Core ของคุณ และสร้างรหัสบริการ</p>
+<p>:::tip
+รหัสบริการคือวัตถุ JSON ที่ประกอบด้วย <code>clientid</code>, <code>clientsecret</code>, <code>url</code> และ <code>serviceurls.AI_API_URL</code> คุณสามารถค้นหาอินสแตนซ์ AI Core ของคุณได้ภายใต้ <strong>บริการ</strong> &gt; <strong>อินสแตนซ์และการสมัครสมาชิก</strong> ในห้องควบคุม BTP
+:::</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>SAP AI Core</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนรหัสบริการของคุณ JSON</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>หรือตั้งค่าตัวแปรสภาพแวดล้อม <code>AICORE_SERVICE_KEY</code>:</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>หรือเพิ่มลงในโปรไฟล์ทุบตีของคุณ:</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>ตั้งค่า ID การนำไปใช้งานและกลุ่มทรัพยากรเพิ่มเติม:</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+การตั้งค่าเหล่านี้เป็นทางเลือกและควรกำหนดค่าตามการตั้งค่า SAP AI Core ของคุณ
+:::</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกจากรุ่นที่มีให้เลือกมากกว่า 40 รุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>ตำแหน่งข้อมูล AI ของ OVHcloud</h3>
+<ol>
+<li><p>ไปที่ <a href="https://ovh.com/manager">แผง OVHcloud</a> ไปที่ส่วน <code>Public Cloud</code> <code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code> และในแท็บ <code>API Keys</code> คลิก <strong>สร้างคีย์ API ใหม่</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>OVHcloud AI Endpoints</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ OVHcloud AI Endpoints API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>gpt-oss-120b</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>สเกลเวย์</h3>
+<p>วิธีใช้ <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative API</a> กับ Opencode:</p>
+<ol>
+<li><p>ไปที่ <a href="https://console.scaleway.com/iam/api-keys">การตั้งค่า Scaleway Console IAM</a> เพื่อสร้างคีย์ API ใหม่</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Scaleway</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Scaleway API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดล เช่น <em>devstral-2-123b-instruct-2512</em> หรือ <em>gpt-oss-120b</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>ร่วมกันเอไอ</h3>
+<ol>
+<li><p>ไปที่ <a href="https://api.together.ai">Together AI console</a> สร้างบัญชี แล้วคลิก <strong>เพิ่มรหัส</strong></p>
+</li>
+<li><p>เรียกใช้คำสั่ง <code>/connect</code> และค้นหา <strong>Together AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Together AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Kimi K2 Instruct</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>เวนิส เอไอ</h3>
+<ol>
+<li><p>ไปที่ <a href="https://venice.ai">คอนโซล AI ของเวนิส</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Venice AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Venice AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Llama 3.3 70B</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>เกตเวย์ AI ของ Vercel</h3>
+<p>Vercel AI Gateway ช่วยให้คุณเข้าถึงโมเดลจาก OpenAI, Anthropic, Google, xAI และอื่นๆ อีกมากมายผ่านจุดสิ้นสุดแบบรวม โมเดลมีจำหน่ายในราคาปลีกโดยไม่มีส่วนเพิ่ม</p>
+<ol>
+<li><p>ไปที่ <a href="https://vercel.com/">แดชบอร์ด Vercel</a> ไปที่แท็บ <strong>เกตเวย์ AI</strong> และคลิก <strong>API คีย์</strong> เพื่อสร้างคีย์ API ใหม่</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Vercel AI Gateway</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ Vercel AI Gateway API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกรุ่น</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>คุณยังสามารถปรับแต่งโมเดลผ่านการกำหนดค่า closedcode ของคุณได้อีกด้วย นี่คือตัวอย่างการระบุลำดับการกำหนดเส้นทางของผู้ให้บริการ</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ตัวเลือกการกำหนดเส้นทางที่มีประโยชน์:</p>
+<table>
+<thead>
+<tr>
+<th>ตัวเลือก</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>ลำดับผู้ให้บริการที่จะลอง</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>จำกัดเฉพาะผู้ให้บริการบางราย</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>ใช้ผู้ให้บริการที่ไม่มีนโยบายการเก็บรักษาข้อมูลเท่านั้น</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p>ไปที่ <a href="https://console.x.ai/">xAI console</a> สร้างบัญชี และสร้างคีย์ API</p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>xAI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>ป้อนคีย์ xAI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>Grok Beta</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>ซี.เอ.ไอ</h3>
+<ol>
+<li><p>ไปที่ <a href="https://z.ai/manage-apikey/apikey-list">Z.AI API console</a> สร้างบัญชี และคลิก <strong>สร้างคีย์ API ใหม่</strong></p>
+</li>
+<li><p>รันคำสั่ง <code>/connect</code> และค้นหา <strong>Z.AI</strong></p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p>หากคุณสมัครสมาชิก <strong>GLM Coding Plan</strong> ให้เลือก <strong>Z.AI Coding Plan</strong></p>
+</li>
+<li><p>ป้อนคีย์ Z.AI API ของคุณ</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> เพื่อเลือกโมเดลเช่น <em>GLM-4.7</em></p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>ผู้ให้บริการที่กำหนดเอง</h2>
+<p>หากต้องการเพิ่มผู้ให้บริการ <strong>รองรับ OpenAI</strong> ที่ไม่อยู่ในคำสั่ง <code>/connect</code>:</p>
+<aside class="aside aside-tip">
+คุณสามารถใช้ผู้ให้บริการที่เข้ากันได้กับ OpenAI ด้วย closedcode ผู้ให้บริการ AI สมัยใหม่ส่วนใหญ่เสนอ API ที่เข้ากันได้กับ OpenAI
+</aside>
+1. เรียกใช้คำสั่ง `/connect` และเลื่อนลงไปที่ **อื่นๆ**
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>ป้อนรหัสเฉพาะสำหรับผู้ให้บริการ</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::note
+เลือก ID ที่น่าจดจำ คุณจะใช้รหัสนี้ในไฟล์กำหนดค่าของคุณ
+:::</p>
+</li>
+<li><p>ป้อนรหัส API ของคุณสำหรับผู้ให้บริการ</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>สร้างหรืออัปเดตไฟล์ <code>closedcode.json</code> ในไดเรกทอรีโครงการของคุณ:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>นี่คือตัวเลือกการกำหนดค่า:</p>
+<ul>
+<li><strong>npm</strong>: แพ็คเกจ AI SDK ที่จะใช้ <code>@ai-sdk/openai-compatible</code> สำหรับผู้ให้บริการที่เข้ากันได้กับ OpenAI</li>
+<li><strong>ชื่อ</strong>: ชื่อที่แสดงใน UI</li>
+<li><strong>รุ่น</strong>: รุ่นที่มีจำหน่าย</li>
+<li><strong>options.baseURL</strong>: API ปลายทาง URL</li>
+<li><strong>options.apiKey</strong>: ตั้งค่าคีย์ API หรือไม่ก็ได้ หากไม่ได้ใช้การตรวจสอบสิทธิ์</li>
+<li><strong>options.headers</strong>: ตั้งค่าส่วนหัวที่กำหนดเองหรือไม่ก็ได้</li>
+</ul>
+<p>ข้อมูลเพิ่มเติมเกี่ยวกับตัวเลือกขั้นสูงในตัวอย่างด้านล่าง</p>
+</li>
+<li><p>รันคำสั่ง <code>/models</code> จากนั้นผู้ให้บริการและโมเดลที่คุณกำหนดเองจะปรากฏในรายการตัวเลือก</p>
+</li>
+</ol>
+<hr>
+<h5>ตัวอย่าง</h5>
+<p>นี่คือตัวอย่างการตั้งค่าตัวเลือก <code>apiKey</code>, <code>headers</code> และโมเดล <code>limit</code></p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>รายละเอียดการกำหนดค่า:</p>
+<ul>
+<li><strong>apiKey</strong>: ตั้งค่าโดยใช้ไวยากรณ์ของตัวแปร <code>env</code> <a href="/docs/config#env-vars">เรียนรู้เพิ่มเติม</a></li>
+<li><strong>ส่วนหัว</strong>: ส่วนหัวที่กำหนดเองส่งไปพร้อมกับคำขอแต่ละรายการ</li>
+<li><strong>limit.context</strong>: Input Tokens สูงสุดที่โมเดลยอมรับ</li>
+<li><strong>limit.output</strong>: Output Tokens สูงสุดที่โมเดลสามารถสร้างได้</li>
+</ul>
+<p>ช่อง <code>limit</code> ช่วยให้ vanilla-closedcode เข้าใจบริบทที่คุณเหลืออยู่ ผู้ให้บริการมาตรฐานจะดึงข้อมูลเหล่านี้จาก models.dev โดยอัตโนมัติ</p>
+<hr>
+<h2>การแก้ไขปัญหา</h2>
+<p>หากคุณประสบปัญหาในการกำหนดค่าผู้ให้บริการ ให้ตรวจสอบสิ่งต่อไปนี้:</p>
+<ol>
+<li><p><strong>ตรวจสอบการตั้งค่าการรับรองความถูกต้อง</strong>: เรียกใช้ <code>closedcode auth list</code> เพื่อดูว่ามีข้อมูลรับรองหรือไม่
+สำหรับผู้ให้บริการจะถูกเพิ่มในการกำหนดค่าของคุณ</p>
+<p>สิ่งนี้ใช้ไม่ได้กับผู้ให้บริการอย่าง Amazon Bedrock ที่ต้องอาศัยตัวแปรสภาพแวดล้อมสำหรับการตรวจสอบสิทธิ์</p>
+</li>
+<li><p>สำหรับผู้ให้บริการแบบกำหนดเอง ให้ตรวจสอบการกำหนดค่า closedcode และ:</p>
+<ul>
+<li>ตรวจสอบให้แน่ใจว่า ID ผู้ให้บริการที่ใช้ในคำสั่ง <code>/connect</code> ตรงกับ ID ในการกำหนดค่า closedcode ของคุณ</li>
+<li>มีการใช้แพ็คเกจ npm ที่ถูกต้องสำหรับผู้ให้บริการ ตัวอย่างเช่น ใช้ <code>@ai-sdk/cerebras</code> สำหรับ Cerebras และสำหรับผู้ให้บริการรายอื่นที่เข้ากันได้กับ OpenAI ให้ใช้ <code>@ai-sdk/openai-compatible</code></li>
+<li>ตรวจสอบว่ามีการใช้จุดสิ้นสุด API ที่ถูกต้องในช่อง <code>options.baseURL</code></li>
+</ul>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="Brug af vanilla-closedcode-terminalbrugergrænsefladen.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html" selected>Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">Brug af vanilla-closedcode-terminalbrugergrænsefladen.</p>
+      <p>vanilla-closedcode giver en interaktiv terminalgrænseflade eller TUI til at arbejde med dine projekter med en LLM.</p>
+<p>At køre vanilla-closedcode starter TUI for den nuværende mappe.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Eller du kan starte den for en bestemt arbejdsmappe.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>Når du er i TUI, kan du spørge den med en besked.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>Filreferencer</h2>
+<p>Du kan referere til filer i dine beskeder med <code>@</code>. Det laver en fuzzy filsøgning i den nuværende arbejdsmappe.</p>
+<aside class="aside aside-tip">
+Du kan også bruge `@` til at referere til filer i dine beskeder.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>Indholdet i filen tilføjes automatisk til samtalen.</p>
+<hr>
+<h2>Bash-kommandoer</h2>
+<p>Start en besked med <code>!</code> for at køre en shell-kommando.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>Outputtet fra kommandoen tilføjes til samtalen som et værktøjsresultat.</p>
+<hr>
+<h2>Kommandoer</h2>
+<p>Når du bruger vanilla-closedcode TUI, kan du skrive <code>/</code> efterfulgt af et kommandonavn for hurtigt at udføre handlinger. For eksempel:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>De fleste kommandoer har også genvejstaster som bruger <code>ctrl+x</code> som Leader-tast, hvor <code>ctrl+x</code> er standard Leader-tast. <a href="/docs/keybinds">Læs mere</a>.</p>
+<p>Her er alle tilgængelige skråstregskommandoer:</p>
+<hr>
+<h3>connect</h3>
+<p>Tilføj en udbyder til vanilla-closedcode. Lader dig vælge fra tilgængelige udbydere og tilføje deres API-nøgler.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>Komprimer nuværende session. <em>Alias</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>Skift visning af værktøjsudførelsesdetaljer.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>Åbn eksternt redigeringsprogram for at skrive beskeder. Bruger redigeringsprogrammet i miljøvariablen <code>EDITOR</code>. <a href="#editor-setup">Læs mere</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>Afslut vanilla-closedcode. <em>Aliaser</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>Eksporter nuværende samtale til Markdown og åbn i standardredigeringsprogrammet. Bruger redigeringsprogrammet i miljøvariablen <code>EDITOR</code>. <a href="#editor-setup">Læs mere</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>Vis hjælpedialogen.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p>Opret eller opdater <code>AGENTS.md</code>-fil. <a href="/docs/rules">Læs mere</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>Liste over tilgængelige modeller.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>Start en ny session. <em>Alias</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>Gentag en tidligere fortrudt besked. Kun tilgængelig efter brug af <code>/undo</code>.</p>
+<aside class="aside aside-tip">
+Eventuelle filændringer vil også blive genoprettet.
+</aside>
+Internt bruger dette Git til at administrere filændringerne. Så dit projekt **skal være et Git-depot**.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>List og skift mellem sessioner. <em>Aliaser</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>Del nuværende session. <a href="/docs/share">Læs mere</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>Liste over tilgængelige temaer.</p>
+<pre><code class="language-bash">/theme
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>Skift synligheden af tænke-/ræsonneringsblokke i samtalen. Når den er aktiveret, kan du se modellens ræsonneringsproces for modeller, som understøtter udvidet tænkning.</p>
+<aside class="aside aside-note">
+Denne kommando kontrollerer bare om tænkeblokke **vises** - den aktiverer eller deaktiverer ikke modellens ræsonneringsmuligheder. For at skifte mellem faktiske ræsonneringsmuligheder, brug `ctrl+t` for at bladre gennem modelvarianter.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>Fortryd sidste besked i samtalen. Fjerner den sidste brugerbesked, alle efterfølgende svar og eventuelle filændringer.</p>
+<aside class="aside aside-tip">
+Eventuelle filændringer vil også blive nulstillet.
+</aside>
+Internt bruger dette Git til at administrere filændringerne. Så dit projekt **skal være et Git-depot**.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>Genvejstast:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>Ophæv deling af nuværende session. <a href="/docs/share#un-sharing">Læs mere</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>Opsætning af editor</h2>
+<p>Både kommandoerne <code>/editor</code> og <code>/export</code> bruger editoren som er specificeret i miljøvariablen <code>EDITOR</code>.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+For at gøre det permanent, tilføj dette til din shellprofil;
+`~/.bashrc`, `~/.zshrc` osv.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+For at gøre det permanent, brug **Systemegenskaber** &gt; **Miljøvariabler**.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+For at gøre det permanent, tilføj dette til din PowerShell-profil.
+</code></pre>
+</div>
+</div>
+
+<p>Populære redigeringsalternativer inkluderer:</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim-editor</li>
+<li><code>vim</code> - Vim editor</li>
+<li><code>nano</code> - Nano-editor</li>
+<li><code>notepad</code> - Windows Notesblok</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+Nogle editorer som VS Code skal startes med flaget `--wait`.
+</aside>
+Nogle editorer kræver kommandolinjeargumenter for at køre i blokeringstilstand. `--wait`-flaget gør at redigeringsprocessen blokeres indtil den lukkes.
+
+<hr>
+<h2>Konfigurer</h2>
+<p>Du kan tilpasse TUI-adfærd gennem <code>tui.json</code> (eller <code>tui.jsonc</code>).</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Dette er adskilt fra <code>closedcode.json</code>, som konfigurerer server-/kørselstidsadfærd.</p>
+<h3>Indstillinger</h3>
+<ul>
+<li><code>theme</code> - Indstiller dit brugergrænsefladetema. <a href="/docs/themes">Læs mere</a>.</li>
+<li><code>keybinds</code> - Tilpasser tastaturgenveje. <a href="/docs/keybinds">Læs mere</a>.</li>
+<li><code>scroll_acceleration.enabled</code> - Aktiver rulleacceleration i macOS-stil for jævn, naturlig rulning. Når aktiveret, øger rullehastigheden med hurtige rullebevægelser og forbliver præcis for langsommere bevægelser. <strong>Denne indstilling har forrang over <code>scroll_speed</code> og tilsidesætter den, når den er aktiveret.</strong></li>
+<li><code>scroll_speed</code> - Styrer hvor hurtigt TUI ruller, når du bruger rullekommandoer (minimum: <code>0.001</code>, understøtter decimalværdier). Standard er <code>3</code>. <strong>Bemærk: Dette ignoreres hvis <code>scroll_acceleration.enabled</code> er sat til <code>true</code>.</strong></li>
+<li><code>diff_style</code> - Styrer diff-gengivelse. <code>&quot;auto&quot;</code> tilpasser sig terminalbredde, <code>&quot;stacked&quot;</code> viser altid et enkeltkolonne-layout.</li>
+</ul>
+<p>Brug <code>CLOSEDCODE_TUI_CONFIG</code> til at indlæse en brugerdefineret TUI-konfigurationssti.</p>
+<hr>
+<h2>Tilpasning</h2>
+<p>Du kan tilpasse forskellige aspekter af TUI-visningen ved at bruge kommandopaletten (<code>ctrl+x h</code> eller <code>/help</code>). Disse indstillinger gemmes ved genstart.</p>
+<hr>
+<h4>Visning af brugernavn</h4>
+<p>Skift om dit brugernavn vises i chat-beskeder. Få adgang til dette gennem:</p>
+<ul>
+<li>Kommandopalet: Søg efter &quot;brugernavn&quot; eller &quot;skjul brugernavn&quot;</li>
+<li>Indstillingen gemmes automatisk og vil blive husket over TUI-sessioner</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

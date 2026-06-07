@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>工具 — vanilla-closedcode docs</title>
+  <meta name="description" content="管理 LLM 可以使用的工具。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tools.html">English</option>
+      <option value="../ar/tools.html">العربية</option>
+      <option value="../bs/tools.html">Bosanski</option>
+      <option value="../da/tools.html">Dansk</option>
+      <option value="../de/tools.html">Deutsch</option>
+      <option value="../es/tools.html">Español</option>
+      <option value="../fr/tools.html">Français</option>
+      <option value="../it/tools.html">Italiano</option>
+      <option value="../ja/tools.html">日本語</option>
+      <option value="../ko/tools.html">한국어</option>
+      <option value="../nb/tools.html">Norsk</option>
+      <option value="../pl/tools.html">Polski</option>
+      <option value="../pt-br/tools.html">Português (BR)</option>
+      <option value="../ru/tools.html">Русский</option>
+      <option value="../th/tools.html">ไทย</option>
+      <option value="../tr/tools.html">Türkçe</option>
+      <option value="../zh-cn/tools.html" selected>简体中文</option>
+      <option value="../zh-tw/tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li class="active"><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>工具</h1>
+      <p class="lede">管理 LLM 可以使用的工具。</p>
+      <p>工具允许 LLM 在您的代码库中执行操作。vanilla-closedcode 自带一组内置工具，您也可以通过<a href="/docs/custom-tools">自定义工具</a>或 <a href="/docs/mcp-servers">MCP 服务器</a>来扩展它。</p>
+<p>默认情况下，所有工具都是<strong>启用</strong>的，且无需权限即可运行。您可以通过<a href="/docs/permissions">权限</a>来控制工具的行为。</p>
+<hr>
+<h2>配置</h2>
+<p>使用 <code>permission</code> 字段来控制工具行为。您可以对每个工具设置允许、拒绝或需要审批。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;,
+    &quot;bash&quot;: &quot;ask&quot;,
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>您还可以使用通配符同时控制多个工具。例如，要求某个 MCP 服务器的所有工具都需要审批：</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;mymcp_*&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">了解更多</a>关于配置权限的内容。</p>
+<hr>
+<h2>内置工具</h2>
+<p>以下是 vanilla-closedcode 中所有可用的内置工具。</p>
+<hr>
+<h3>bash</h3>
+<p>在项目环境中执行 shell 命令。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>该工具允许 LLM 运行终端命令，例如 <code>npm install</code>、<code>git status</code> 或其他任何 shell 命令。</p>
+<hr>
+<h3>edit</h3>
+<p>通过精确的字符串替换来修改现有文件。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>该工具通过替换精确匹配的文本来对文件进行编辑。这是 LLM 修改代码的主要方式。</p>
+<hr>
+<h3>write</h3>
+<p>创建新文件或覆盖现有文件。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>使用此工具允许 LLM 创建新文件。如果文件已存在，则会覆盖现有文件。</p>
+<aside class="aside aside-note">
+`write` 工具由 `edit` 权限控制，该权限涵盖所有文件修改操作（`edit`、`write`、`patch`）。
+</aside>
+---
+
+<h3>read</h3>
+<p>读取代码库中的文件内容。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>该工具读取文件并返回其内容。它支持对大文件读取指定行范围。</p>
+<hr>
+<h3>grep</h3>
+<p>使用正则表达式搜索文件内容。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;grep&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>在代码库中快速搜索内容。支持完整的正则表达式语法和文件模式过滤。</p>
+<hr>
+<h3>glob</h3>
+<p>通过模式匹配查找文件。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;glob&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>使用 <code>**/*.js</code> 或 <code>src/**/*.ts</code> 等 glob 模式搜索文件。返回按修改时间排序的匹配文件路径。</p>
+<hr>
+<h3>lsp（实验性）</h3>
+<p>与已配置的 LSP 服务器交互，获取代码智能功能，如定义跳转、引用查找、悬停信息和调用层次结构。</p>
+<aside class="aside aside-note">
+该工具仅在设置 `CLOSEDCODE_EXPERIMENTAL_LSP_TOOL=true`（或 `CLOSEDCODE_EXPERIMENTAL=true`）时可用。
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "lsp": "allow"
+  }
+}
+```
+
+<p>支持的操作包括 <code>goToDefinition</code>、<code>findReferences</code>、<code>hover</code>、<code>documentSymbol</code>、<code>workspaceSymbol</code>、<code>goToImplementation</code>、<code>prepareCallHierarchy</code>、<code>incomingCalls</code> 和 <code>outgoingCalls</code>。</p>
+<p>要配置项目可用的 LSP 服务器，请参阅 <a href="/docs/lsp">LSP 服务器</a>。</p>
+<hr>
+<h3>patch</h3>
+<p>对文件应用补丁。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>该工具将补丁文件应用到您的代码库中。适用于应用来自各种来源的 diff 和补丁。</p>
+<aside class="aside aside-note">
+`patch` 工具由 `edit` 权限控制，该权限涵盖所有文件修改操作（`edit`、`write`、`patch`）。
+</aside>
+---
+
+<h3>skill</h3>
+<p>加载一个<a href="/docs/skills">技能</a>（即 <code>SKILL.md</code> 文件）并在对话中返回其内容。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<hr>
+<h3>todowrite</h3>
+<p>在编码会话中管理待办事项列表。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;todowrite&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>创建和更新任务列表以跟踪复杂操作的进度。LLM 使用此工具来组织多步骤任务。</p>
+<aside class="aside aside-note">
+该工具默认对子代理禁用，但您可以手动启用。[了解更多](/docs/agents/#permissions)
+</aside>
+---
+
+<h3>webfetch</h3>
+<p>获取网页内容。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>允许 LLM 获取并读取网页内容。适用于查阅文档或研究在线资源。</p>
+<hr>
+<h3>websearch</h3>
+<p>在网络上搜索信息。</p>
+<aside class="aside aside-note">
+该工具仅在使用 vanilla-closedcode 提供商时，或当 `CLOSEDCODE_ENABLE_EXA` 环境变量设置为任意真值（例如 `true` 或 `1`）时可用。
+
+<p>在启动 vanilla-closedcode 时启用：</p>
+<pre><code class="language-bash">CLOSEDCODE_ENABLE_EXA=1 closedcode
+</code></pre>
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "websearch": "allow"
+  }
+}
+```
+
+<p>使用 Exa AI 进行网络搜索以查找相关信息。适用于研究主题、了解时事动态或获取超出训练数据截止日期的信息。</p>
+<p>无需 API 密钥——该工具无需身份验证即可直接连接到 Exa AI 的托管 MCP 服务。</p>
+<aside class="aside aside-tip">
+当您需要查找信息（发现）时使用 `websearch`，当您需要从特定 URL 获取内容（检索）时使用 `webfetch`。
+</aside>
+---
+
+<h3>question</h3>
+<p>在执行过程中向用户提问。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;question&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>该工具允许 LLM 在执行任务期间向用户提问。适用于以下场景：</p>
+<ul>
+<li>收集用户偏好或需求</li>
+<li>澄清模糊的指令</li>
+<li>获取实现方案的决策</li>
+<li>提供方向选择的选项</li>
+</ul>
+<p>每个问题包含标题、问题正文和选项列表。用户可以从提供的选项中选择，也可以输入自定义答案。当有多个问题时，用户可以在提交所有答案之前在各问题之间切换浏览。</p>
+<hr>
+<h2>自定义工具</h2>
+<p>自定义工具允许您定义 LLM 可以调用的自定义函数。这些函数在您的配置文件中定义，可以执行任意代码。</p>
+<p><a href="/docs/custom-tools">了解更多</a>关于创建自定义工具的内容。</p>
+<hr>
+<h2>MCP 服务器</h2>
+<p>MCP（Model Context Protocol）服务器允许您集成外部工具和服务，包括数据库访问、API 集成和第三方服务。</p>
+<p><a href="/docs/mcp-servers">了解更多</a>关于配置 MCP 服务器的内容。</p>
+<hr>
+<h2>内部机制</h2>
+<p>在内部，<code>grep</code> 和 <code>glob</code> 等工具底层使用 <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a>。默认情况下，ripgrep 遵循 <code>.gitignore</code> 中的模式，这意味着 <code>.gitignore</code> 中列出的文件和目录将被排除在搜索和列表结果之外。</p>
+<hr>
+<h3>忽略模式</h3>
+<p>要包含通常会被忽略的文件，请在项目根目录下创建一个 <code>.ignore</code> 文件。该文件可以显式允许某些路径。</p>
+<pre><code class="language-text">!node_modules/
+!dist/
+!build/
+</code></pre>
+<p>例如，这个 <code>.ignore</code> 文件允许 ripgrep 在 <code>node_modules/</code>、<code>dist/</code> 和 <code>build/</code> 目录中进行搜索，即使它们已在 <code>.gitignore</code> 中列出。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

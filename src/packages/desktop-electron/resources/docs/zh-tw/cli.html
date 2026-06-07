@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode CLI 選項和指令。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">vanilla-closedcode CLI 選項和指令。</p>
+      <p>vanilla-closedcode CLI 在不帶任何參數執行時，預設啟動 <a href="/docs/tui">TUI</a>。</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>但它也接受本頁面中記錄的指令，使您可以透過程式方式與 vanilla-closedcode 進行互動。</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>啟動 vanilla-closedcode 終端機使用者介面。</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>繼續上一個工作階段</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>要繼續的工作階段 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>繼續時分岔工作階段（與 <code>--continue</code> 或 <code>--session</code> 搭配使用）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>要使用的提示詞</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>要使用的模型，格式為 provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>要使用的代理</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>監聽連接埠</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>監聽主機名稱</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>指令</h2>
+<p>vanilla-closedcode CLI 還提供以下指令。</p>
+<hr>
+<h3>agent</h3>
+<p>管理 vanilla-closedcode 的代理。</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>將終端機連接到已透過 <code>serve</code> 或 <code>web</code> 指令啟動的 vanilla-closedcode 後端伺服器。</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>這允許將 TUI 與遠端 vanilla-closedcode 後端搭配使用。例如：</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>啟動 TUI 的工作目錄</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>繼續上一個工作階段</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>要繼續的工作階段 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>繼續時分支工作階段（與 <code>--continue</code> 或 <code>--session</code> 一起使用）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>基本驗證密碼（預設使用 <code>CLOSEDCODE_SERVER_PASSWORD</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>基本驗證使用者名稱（預設使用 <code>CLOSEDCODE_SERVER_USERNAME</code> 或 <code>closedcode</code>）</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>使用自訂設定建立新的代理。</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>此指令將引導您使用自訂系統提示詞和工具設定來建立新的代理。</p>
+<hr>
+<h4>list</h4>
+<p>列出所有可用的代理。</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>管理供應商的憑證和登入資訊的指令。</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode 基於 <a href="https://models.dev">Models.dev</a> 的供應商列表運作，因此您可以使用 <code>closedcode auth login</code> 為任何想要使用的供應商設定 API 金鑰。金鑰儲存在 <code>~/.local/share/closedcode/auth.json</code> 中。</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>vanilla-closedcode 啟動時會從憑證檔案載入供應商資訊，同時也會載入環境變數或專案中 <code>.env</code> 檔案中定義的金鑰。</p>
+<hr>
+<h4>list</h4>
+<p>列出憑證檔案中儲存的所有已認證供應商。</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>或使用簡寫版本。</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>從憑證檔案中清除供應商資訊以完成登出。</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>管理用於儲存庫自動化的 GitHub 代理。</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>在您的儲存庫中安裝 GitHub 代理。</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>此指令會設定必要的 GitHub Actions 工作流程並引導您完成設定過程。<a href="/docs/github">了解更多</a>。</p>
+<hr>
+<h4>run</h4>
+<p>執行 GitHub 代理。通常在 GitHub Actions 中使用。</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>旗標</h5>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>用於執行代理的 GitHub 模擬事件</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub 個人存取權杖</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>管理 Model Context Protocol 伺服器。</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>將 MCP 伺服器新增到您的設定中。</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>此指令將引導您新增本地或遠端 MCP 伺服器。</p>
+<hr>
+<h4>list</h4>
+<p>列出所有已設定的 MCP 伺服器及其連線狀態。</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>或使用簡寫版本。</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>對支援 OAuth 的 MCP 伺服器進行認證。</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>如果您不提供伺服器名稱，系統將提示您從可用的支援 OAuth 的伺服器中進行選擇。</p>
+<p>您還可以列出支援 OAuth 的伺服器及其認證狀態。</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>或使用簡寫版本。</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>移除 MCP 伺服器的 OAuth 憑證。</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>偵錯 MCP 伺服器的 OAuth 連線問題。</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>列出已設定供應商的所有可用模型。</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>此指令以 <code>provider/model</code> 的格式顯示所有已設定供應商中可用的模型。</p>
+<p>這對於確定在<a href="/docs/config/">設定檔</a>中使用的確切模型名稱非常有用。</p>
+<p>您可以選擇傳入供應商 ID 來按供應商篩選模型。</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>從 models.dev 重新整理模型快取</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>使用更詳細的模型輸出（包含費用等中繼資料）</td>
+</tr>
+</tbody></table>
+<p>使用 <code>--refresh</code> 旗標可以更新快取的模型列表。當供應商新增了模型並且您希望在 vanilla-closedcode 中看到它們時，此功能非常有用。</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>以非互動模式執行 vanilla-closedcode，直接傳入提示詞。</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>這對於指令碼編寫、自動化或無需啟動完整 TUI 即可快速取得答案的情境非常有用。例如：</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>您還可以連接到正在執行的 <code>closedcode serve</code> 實例，以避免每次執行時 MCP 伺服器的冷啟動時間：</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>要執行的指令，使用 message 作為參數</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>繼續上一個工作階段</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>要繼續的工作階段 ID</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>繼續時分岔工作階段（與 <code>--continue</code> 或 <code>--session</code> 搭配使用）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>分享工作階段</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>要使用的模型，格式為 provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>要使用的代理</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>附加到訊息的檔案</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>格式：default（格式化輸出）或 json（原始 JSON 事件）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>工作階段標題（未提供值時使用截斷的提示詞）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>連接到正在執行的 closedcode 伺服器（例如 <a href="http://localhost:4096%EF%BC%89">http://localhost:4096）</a></td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>基本驗證密碼（預設使用 <code>CLOSEDCODE_SERVER_PASSWORD</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>基本驗證使用者名稱（預設使用 <code>CLOSEDCODE_SERVER_USERNAME</code> 或 <code>closedcode</code>）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>執行目錄，或附加時遠端伺服器上的路徑</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>模型變體（特定於提供者的推理級別）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>顯示思考區塊</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>本地伺服器連接埠（預設為隨機連接埠）</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>啟動無介面的 vanilla-closedcode 伺服器以提供 API 存取。查看<a href="/docs/server">伺服器文件</a>了解完整的 HTTP 介面。</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>此指令啟動一個 HTTP 伺服器，提供對 vanilla-closedcode 功能的 API 存取，無需 TUI 介面。設定 <code>CLOSEDCODE_SERVER_PASSWORD</code> 可啟用 HTTP 基本認證（使用者名稱預設為 <code>closedcode</code>）。</p>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>監聽連接埠</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>監聽主機名稱</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>啟用 mDNS 探索</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>允許 CORS 的額外瀏覽器來源</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>管理 vanilla-closedcode 工作階段。</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>列出所有 vanilla-closedcode 工作階段。</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>旗標</h5>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>限制為最近 N 個工作階段</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>輸出格式：table 或 json（預設 table）</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>顯示 vanilla-closedcode 工作階段的 Token 用量和費用統計資訊。</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>顯示最近 N 天的統計資訊（預設為所有時間）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>顯示的工具數量（預設為全部）</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>顯示模型用量明細（預設隱藏）。傳入數字可顯示前 N 個</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>按專案篩選（預設為所有專案，傳入空字串表示當前專案）</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>將工作階段資料匯出為 JSON。</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>如果您不提供工作階段 ID，系統將提示您從可用的工作階段中進行選擇。</p>
+<hr>
+<h3>import</h3>
+<p>從 JSON 檔案或 vanilla-closedcode 分享連結匯入工作階段資料。</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>您可以從本地檔案或 vanilla-closedcode 分享連結匯入。</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>啟動帶有 Web 介面的無介面 vanilla-closedcode 伺服器。</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>此指令啟動一個 HTTP 伺服器並開啟瀏覽器，透過 Web 介面存取 vanilla-closedcode。設定 <code>CLOSEDCODE_SERVER_PASSWORD</code> 可啟用 HTTP 基本認證（使用者名稱預設為 <code>closedcode</code>）。</p>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>監聽連接埠</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>監聽主機名稱</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>啟用 mDNS 探索</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>允許 CORS 的額外瀏覽器來源</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>啟動 ACP（Agent Client Protocol）伺服器。</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>此指令啟動一個透過 stdin/stdout 使用 nd-JSON 進行通訊的 ACP 伺服器。</p>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>工作目錄</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>監聽連接埠</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>監聽主機名稱</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>解除安裝 vanilla-closedcode 並刪除所有相關檔案。</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>保留設定檔</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>保留工作階段資料和快照</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>顯示將被刪除的內容但不實際刪除</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>跳過確認提示</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>將 vanilla-closedcode 更新到最新版本或指定版本。</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>更新到最新版本。</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>更新到指定版本。</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>旗標</h4>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>使用的安裝方式：curl、npm、pnpm、bun、brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>全域旗標</h2>
+<p>vanilla-closedcode CLI 接受以下全域旗標。</p>
+<table>
+<thead>
+<tr>
+<th>旗標</th>
+<th>簡寫</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>顯示說明資訊</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>印出版本號</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>將日誌輸出到 stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>日誌等級（DEBUG、INFO、WARN、ERROR）</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>環境變數</h2>
+<p>vanilla-closedcode 可以透過環境變數進行設定。</p>
+<table>
+<thead>
+<tr>
+<th>變數</th>
+<th>類型</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>自動分享工作階段</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>Windows 上 Git Bash 可執行檔的路徑</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>設定檔路徑</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_TUI_CONFIG</code></td>
+<td>string</td>
+<td>TUI 設定檔路徑</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>設定目錄路徑</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>內嵌 JSON 設定內容</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>停用自動更新檢查</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>停用舊資料清理</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>停用自動終端機標題更新</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>內嵌 JSON 權限設定</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>停用預設外掛程式</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>停用 LSP 伺服器自動下載</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>啟用實驗性模型</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>停用自動上下文壓縮</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td>停用讀取 <code>.claude</code>（提示詞 + 技能）</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td>停用讀取 <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td>停用載入 <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>停用從遠端來源擷取模型</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>用於測試目的的模擬 VCS 供應商</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>用戶端識別碼（預設為 <code>cli</code>）</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>啟用 Exa 網路搜尋工具</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td>為 <code>serve</code>/<code>web</code> 啟用基本認證</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>覆寫基本認證使用者名稱（預設為 <code>closedcode</code>）</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>自訂模型設定擷取 URL</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>實驗性功能</h3>
+<p>這些環境變數用於啟用可能會變更或移除的實驗性功能。</p>
+<table>
+<thead>
+<tr>
+<th>變數</th>
+<th>類型</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>啟用所有實驗性功能</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>啟用圖示探索</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>停用 TUI 中的選取即複製</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>number</td>
+<td>bash 指令的預設逾時時間（毫秒）</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>number</td>
+<td>LLM 回應的最大輸出 Token 數</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>啟用整個目錄的檔案監看器</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>啟用 oxfmt 格式化器</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>啟用實驗性 LSP 工具</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>停用檔案監看器</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>啟用實驗性 Exa 功能</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>為 python 檔案啟用 TY LSP</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>啟用實驗性 Markdown 功能</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>啟用計畫模式</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

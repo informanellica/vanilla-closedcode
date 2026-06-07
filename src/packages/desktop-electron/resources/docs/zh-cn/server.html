@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>服务器 — vanilla-closedcode docs</title>
+  <meta name="description" content="通过 HTTP 与 closedcode 服务器交互。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html" selected>简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>服务器</h1>
+      <p class="lede">通过 HTTP 与 closedcode 服务器交互。</p>
+      <p><code>closedcode serve</code> 命令运行一个无界面的 HTTP 服务器，暴露一个 OpenAPI 端点供 closedcode 客户端使用。</p>
+<hr>
+<h3>用法</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>选项</h4>
+<table>
+<thead>
+<tr>
+<th>标志</th>
+<th>描述</th>
+<th>默认值</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>监听端口</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>监听的主机名</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>启用 mDNS 发现</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>mDNS 服务的自定义域名</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>额外允许的浏览器来源</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> 可以多次传递：</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>认证</h3>
+<p>设置 <code>CLOSEDCODE_SERVER_PASSWORD</code> 以使用 HTTP 基本认证保护服务器。用户名默认为 <code>closedcode</code>，也可以设置 <code>CLOSEDCODE_SERVER_USERNAME</code> 来覆盖它。这适用于 <code>closedcode serve</code> 和 <code>closedcode web</code>。</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>工作原理</h3>
+<p>当你运行 <code>closedcode</code> 时，它会启动一个 TUI 和一个服务器。TUI 是与服务器通信的客户端。服务器暴露一个 OpenAPI 3.1 规范端点。该端点也用于生成 <a href="/docs/sdk">SDK</a>。</p>
+<aside class="aside aside-tip">
+使用 closedcode 服务器以编程方式与 closedcode 交互。
+</aside>
+这种架构让 closedcode 支持多个客户端，并允许你以编程方式与 closedcode 交互。
+
+<p>你可以运行 <code>closedcode serve</code> 来启动一个独立的服务器。如果你已经在运行 closedcode TUI，<code>closedcode serve</code> 会启动一个新的服务器。</p>
+<hr>
+<h4>连接到现有服务器</h4>
+<p>当你启动 TUI 时，它会随机分配端口和主机名。你也可以传入 <code>--hostname</code> 和 <code>--port</code> <a href="/docs/cli">标志</a>，然后用它来连接对应的服务器。</p>
+<p><a href="#tui"><code>/tui</code></a> 端点可用于通过服务器驱动 TUI。例如，你可以预填充或运行一个提示词。此方式被 vanilla-closedcode <a href="/docs/ide">IDE</a> 插件所使用。</p>
+<hr>
+<h2>规范</h2>
+<p>服务器发布了一个 OpenAPI 3.1 规范，可在以下地址查看：</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>例如，<code>http://localhost:4096/doc</code>。使用该规范可以生成客户端或检查请求和响应类型，也可以在 Swagger 浏览器中查看。</p>
+<hr>
+<h2>API</h2>
+<p>closedcode 服务器暴露以下 API。</p>
+<hr>
+<h3>全局</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>获取服务器健康状态和版本</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>获取全局事件（SSE 流）</td>
+<td>事件流</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>项目</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>列出所有项目</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>获取当前项目</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>路径和 VCS</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>获取当前路径</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>获取当前项目的 VCS 信息</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>实例</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>销毁当前实例</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>配置</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>获取配置信息</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>更新配置</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>列出提供商和默认模型</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>提供商</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>列出所有提供商</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>获取提供商认证方式</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>使用 OAuth 授权提供商</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>处理提供商的 OAuth 回调</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>会话</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>列出所有会话</td>
+<td>返回 <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>创建新会话</td>
+<td>请求体：<code>{ parentID?, title? }</code>，返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>获取所有会话的状态</td>
+<td>返回 <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>获取会话详情</td>
+<td>返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>删除会话及其所有数据</td>
+<td>返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>更新会话属性</td>
+<td>请求体：<code>{ title? }</code>，返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>获取会话的子会话</td>
+<td>返回 <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>获取会话的待办事项列表</td>
+<td>返回 <a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>分析应用并创建 <code>AGENTS.md</code></td>
+<td>请求体：<code>{ messageID, providerID, modelID }</code>，返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>在某条消息处分叉现有会话</td>
+<td>请求体：<code>{ messageID? }</code>，返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>中止正在运行的会话</td>
+<td>返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>分享会话</td>
+<td>返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>取消分享会话</td>
+<td>返回 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>获取本次会话的差异</td>
+<td>查询参数：<code>messageID?</code>，返回 <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>总结会话</td>
+<td>请求体：<code>{ providerID, modelID }</code>，返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>回退消息</td>
+<td>请求体：<code>{ messageID, partID? }</code>，返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>恢复所有已回退的消息</td>
+<td>返回 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>响应权限请求</td>
+<td>请求体：<code>{ response, remember? }</code>，返回 <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>消息</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>列出会话中的消息</td>
+<td>查询参数：<code>limit?</code>，返回 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>发送消息并等待响应</td>
+<td>请求体：<code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>，返回 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>获取消息详情</td>
+<td>返回 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>异步发送消息（不等待响应）</td>
+<td>请求体：与 <code>/session/:id/message</code> 相同，返回 <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>执行斜杠命令</td>
+<td>请求体：<code>{ messageID?, agent?, model?, command, arguments }</code>，返回 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>运行 shell 命令</td>
+<td>请求体：<code>{ agent, model?, command }</code>，返回 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>命令</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>列出所有命令</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>文件</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>在文件中搜索文本</td>
+<td>包含 <code>path</code>、<code>lines</code>、<code>line_number</code>、<code>absolute_offset</code>、<code>submatches</code> 的匹配对象数组</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>按名称查找文件和目录</td>
+<td><code>string[]</code>（路径）</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>查找工作区符号</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>列出文件和目录</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>读取文件</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>获取已跟踪文件的状态</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> 查询参数</h4>
+<ul>
+<li><code>query</code>（必需）— 搜索字符串（模糊匹配）</li>
+<li><code>type</code>（可选）— 将结果限制为 <code>&quot;file&quot;</code> 或 <code>&quot;directory&quot;</code></li>
+<li><code>directory</code>（可选）— 覆盖搜索的项目根目录</li>
+<li><code>limit</code>（可选）— 最大结果数（1–200）</li>
+<li><code>dirs</code>（可选）— 旧版标志（<code>&quot;false&quot;</code> 仅返回文件）</li>
+</ul>
+<hr>
+<h3>工具（实验性）</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>列出所有工具 ID</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>列出指定模型的工具及其 JSON Schema</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP、格式化器和 MCP</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>获取 LSP 服务器状态</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>获取格式化器状态</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>获取 MCP 服务器状态</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>动态添加 MCP 服务器</td>
+<td>请求体：<code>{ name, config }</code>，返回 MCP 状态对象</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>代理</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>列出所有可用的代理</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>日志</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>写入日志条目。请求体：<code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>向提示词追加文本</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>打开帮助对话框</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>打开会话选择器</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>打开主题选择器</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>打开模型选择器</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>提交当前提示词</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>清除提示词</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>执行命令（<code>{ command }</code>）</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>显示提示消息（<code>{ title?, message, variant }</code>）</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>等待下一个控制请求</td>
+<td>控制请求对象</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>响应控制请求（<code>{ body }</code>）</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>认证</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>设置认证凭据。请求体必须匹配提供商的数据结构</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>事件</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>服务器发送事件流。第一个事件是 <code>server.connected</code>，之后是总线事件</td>
+<td>服务器发送事件流</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>文档</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>路径</th>
+<th>描述</th>
+<th>响应</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>OpenAPI 3.1 规范</td>
+<td>包含 OpenAPI 规范的 HTML 页面</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

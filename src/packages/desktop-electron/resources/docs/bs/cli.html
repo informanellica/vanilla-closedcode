@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode CLI opcije i naredbe.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html" selected>Bosanski</option>
+      <option value="../da/cli.html">Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">vanilla-closedcode CLI opcije i naredbe.</p>
+      <p>vanilla-closedcode CLI po defaultu pokreće <a href="/docs/tui">TUI</a> kada se pokrene bez ikakvih argumenata.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Ali takođe prihvata naredbe kao što je dokumentovano na ovoj stranici. Ovo vam omogućava programsku interakciju sa vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>Pokrenite vanilla-closedcode terminalski korisnički interfejs.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Nastavite posljednju sesiju</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID sesije za nastavak</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forkujte sesiju pri nastavku (koristiti sa <code>--continue</code> ili <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>Prompt za upotrebu</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Model za korištenje u obliku provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agent za korištenje</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Port na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>Hostname na kojem treba slušati</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Naredbe</h2>
+<p>vanilla-closedcode CLI takođe ima sljedeće naredbe.</p>
+<hr>
+<h3>agent</h3>
+<p>Upravljajte vanilla-closedcode agentima.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>Priključite terminal na već pokrenut vanilla-closedcode backend server pokrenut putem <code>serve</code> ili <code>web</code> naredbi.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>Ovo omogućava korištenje TUI-ja sa udaljenim vanilla-closedcode backend-om. Na primjer:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Radni direktorij za pokretanje TUI-a</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Nastavi posljednju sesiju</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID sesije za nastavak</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forkuj sesiju prilikom nastavka (koristite sa <code>--continue</code> ili <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Lozinka za osnovnu autentifikaciju (zadano: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Korisničko ime za osnovnu autentifikaciju (zadano: <code>CLOSEDCODE_SERVER_USERNAME</code> ili <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>Kreirajte novog agenta s prilagođenom konfiguracijom.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Ova naredba će vas voditi kroz kreiranje novog agenta sa prilagođenim sistemskim promptom i konfiguracijom alata.</p>
+<hr>
+<h4>list</h4>
+<p>Navedite sve dostupne agente.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>Naredba za upravljanje vjerodajnicama i prijavom za provajdere.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode pokreće lista provajdera na <a href="https://models.dev">Models.dev</a>, tako da možete koristiti <code>closedcode auth login</code> da konfigurirate API ključeve za bilo kojeg provajdera kojeg želite koristiti. Ovo je pohranjeno u <code>~/.local/share/closedcode/auth.json</code>.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>Kada se vanilla-closedcode pokrene, učitava dobavljače iz datoteke vjerodajnica. I ako postoje neki ključevi definirani u vašim okruženjima ili <code>.env</code> fajl u vašem projektu.</p>
+<hr>
+<h4>list</h4>
+<p>Navodi sve autentifikovane dobavljače pohranjene u datoteci vjerodajnica.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>Ili kratka verzija.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Odjavljuje vas s provajdera tako što ga briše iz datoteke vjerodajnica.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>Upravljajte GitHub agentom za automatizaciju repozitorija.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>Instalirajte GitHub agenta u svoj repozitorij.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>Ovo postavlja neophodni tok rada GitHub Actions i vodi vas kroz proces konfiguracije. <a href="/docs/github">Saznajte više</a>.</p>
+<hr>
+<h4>run</h4>
+<p>Pokrenite GitHub agent. Ovo se obično koristi u GitHub Actions.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>Opcije</h5>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>GitHub mock event za pokretanje agenta</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub Personal Access Token</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>Upravljajte Model Context Protocol (MCP) serverima.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>Dodajte MCP server svojoj konfiguraciji.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>Ova naredba će vas voditi kroz dodavanje lokalnog ili udaljenog MCP servera.</p>
+<hr>
+<h4>list</h4>
+<p>Navedite sve konfigurirane MCP servere i njihov status veze.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Ili koristite kratku verziju.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>Autentifikujte se sa MCP serverom koji je omogućen za OAuth.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>Ako ne navedete ime servera, od vas će biti zatraženo da izaberete neki od dostupnih servera koji podržavaju OAuth.
+Također možete navesti servere koji podržavaju OAuth i njihov status autentifikacije.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>Ili koristite kratku verziju.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Uklonite OAuth vjerodajnice za MCP server.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>Otklanjanje grešaka (debug) OAuth veze sa MCP serverom.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>Navedite sve dostupne modele konfiguriranih provajdera.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>Ova naredba prikazuje sve modele dostupne kod vaših konfiguriranih provajdera u formatu <code>provider/model</code>.
+Ovo je korisno za pronalaženje tačnog naziva modela za korištenje u <a href="/docs/config/">vašoj konfiguraciji</a>.
+Opciono možete proslijediti ID provajdera za filtriranje modela po tom dobavljaču.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>Osvježite keš modela sa models.dev</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>Koristite detaljniji izlaz modela (uključuje metapodatke poput troškova)</td>
+</tr>
+</tbody></table>
+<p>Koristite <code>--refresh</code> zastavicu da ažurirate keširanu listu modela. Ovo je korisno kada su novi modeli dodani provajderu i želite da ih vidite u vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>Pokrenite vanilla-closedcode u neinteraktivnom modu tako što ćete direktno proslijediti prompt.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>Ovo je korisno za skriptiranje, automatizaciju ili kada želite brz odgovor bez pokretanja punog TUI-ja. Na primjer:</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>Također možete priključiti pokrenutu <code>closedcode serve</code> instancu kako biste izbjegli vrijeme hladnog pokretanja MCP servera pri svakom pokretanju:</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>Naredba za pokretanje, koristite poruku za argumente</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Nastavite posljednju sesiju</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>ID sesije za nastavak</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forkujte sesiju pri nastavku (koristiti sa <code>--continue</code> ili <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>Podijelite sesiju</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Model za korištenje u obliku provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agent za korištenje</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Fajlovi koje treba priložiti poruci</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Format: default (formatiran) ili json (sirovi JSON događaji)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>Naslov sesije (koristi skraćeni prompt ako nije navedena vrijednost)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>Priključite na pokrenuti vanilla-closedcode server (npr. <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Lozinka za osnovnu autentifikaciju (zadano: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Korisničko ime za osnovnu autentifikaciju (zadano: <code>CLOSEDCODE_SERVER_USERNAME</code> ili <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Direktorij za pokretanje, ili putanja na udaljenom serveru pri spajanju</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>Varijanta modela (napor zaključivanja specifičan za provajdera)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>Prikaži blokove razmišljanja</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Port za lokalni server (zadano na nasumični port)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>Pokrenite vanilla-closedcode headless server za API pristup. Pogledajte <a href="/docs/server">server docs</a> za kompletan HTTP interfejs.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>Ovo pokreće HTTP server koji pruža API pristup funkcionalnosti vanilla-closedcode-a bez TUI interfejsa. Postavite <code>CLOSEDCODE_SERVER_PASSWORD</code> da omogućite HTTP osnovnu auth (korisničko ime je zadano na <code>closedcode</code>).</p>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Hostname na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Omogući mDNS otkrivanje</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Dodatni origin(i) pretraživača koji dozvoljavaju CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>Upravljajte vanilla-closedcode sesijama.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>Navedite sve vanilla-closedcode sesije.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>Opcije</h5>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>Ograničenje na N najnovijih sesija</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Izlazni format: table ili json (table)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>Prikaži statistiku upotrebe tokena i troškova za vaše vanilla-closedcode sesije.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>Prikaži statistiku za zadnjih N dana (sva vremena)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>Broj alata za prikaz (svi)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>Prikaži raščlambu korištenja modela (skriveno prema zadanim postavkama). Proslijedite broj za prikaz top N</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>Filtriraj po projektu (svi projekti, prazan niz: trenutni projekt)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>Izvezite podatke sesije kao JSON.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>Ako ne unesete ID sesije, od vas će biti zatraženo da odaberete neku od dostupnih sesija.</p>
+<hr>
+<h3>import</h3>
+<p>Uvezite podatke sesije iz JSON datoteke ili vanilla-closedcode dijeljenog URL-a.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>Možete uvesti iz lokalne datoteke ili vanilla-closedcode dijeljenog URL-a.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>Pokrenite vanilla-closedcode headless server sa web interfejsom.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>Ovo pokreće HTTP server i otvara web pretraživač za pristup vanilla-closedcode-u preko web interfejsa. Postavite <code>CLOSEDCODE_SERVER_PASSWORD</code> da omogućite HTTP osnovnu auth (korisničko ime je zadano na <code>closedcode</code>).</p>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Hostname na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Omogući mDNS otkrivanje</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Dodatni origin(i) pretraživača koji dozvoljavaju CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>Pokrenite ACP (Agent Client Protocol) server.</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>Ova naredba pokreće ACP server koji komunicira preko stdin/stdout koristeći nd-JSON.</p>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>Radni direktorij</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port na kojem treba slušati</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Hostname na kojem slušati</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>Deinstalirajte vanilla-closedcode i uklonite sve povezane datoteke.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Sačuvajte konfiguracijske datoteke</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>Sačuvajte podatke i snimke sesije</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>Pokažite šta bi bilo uklonjeno bez uklanjanja</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Preskoči upite za potvrdu</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>Ažurira vanilla-closedcode na najnoviju verziju ili određenu verziju.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>Za nadogradnju na najnoviju verziju.</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>Za nadogradnju na određenu verziju.</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Korišteni način instalacije; curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Globalne opcije</h2>
+<p>vanilla-closedcode CLI prihvata sljedeće globalne zastavice.</p>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Kratko</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>Prikaži pomoć</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>Ispiši broj verzije</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>Ispis logova u stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>Nivo logovanja (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Varijable okruženja</h2>
+<p>vanilla-closedcode se može konfigurirati pomoću varijabli okruženja.</p>
+<table>
+<thead>
+<tr>
+<th>Varijabla</th>
+<th>Tip</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>Automatski dijeli sesije</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>Putanja do Git Bash izvršne datoteke na Windows-u</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>Putanja do konfiguracijskog fajla</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_TUI_CONFIG</code></td>
+<td>string</td>
+<td>Putanja do TUI konfiguracijskog fajla</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>Putanja do konfiguracijskog direktorija</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>Inline json konfiguracijski sadržaj</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>Onemogući automatske provjere ažuriranja</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>Onemogući brisanje (pruning) starih podataka</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>Onemogući automatsko ažuriranje naslova terminala</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>Inline json konfiguracija dozvola</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>Onemogući podrazumijevane dodatke (plugins)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>Onemogući automatsko preuzimanje LSP servera</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>Omogući eksperimentalne modele</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>Onemogući automatsko sažimanje konteksta</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td>Onemogući čitanje iz <code>.claude</code> (prompt + vještine)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td>Onemogući čitanje <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td>Onemogući učitavanje <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>Onemogući dohvaćanje modela iz udaljenih izvora</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>Lažni VCS provajder za potrebe testiranja</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>Identifikator klijenta (zadano na <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>Omogući Exa alate za web pretraživanje</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td>Omogući osnovnu autentifikaciju za <code>serve</code>/<code>web</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>Poništi osnovno korisničko ime autentifikacije (zadano <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>Prilagođeni URL za dohvaćanje konfiguracije modela</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Eksperimentalno</h3>
+<p>Ove varijable okruženja omogućavaju eksperimentalne karakteristike koje se mogu promijeniti ili ukloniti.</p>
+<table>
+<thead>
+<tr>
+<th>Varijabla</th>
+<th>Tip</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>Omogući sve eksperimentalne funkcije</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>Omogući otkrivanje ikona</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>Onemogući kopiranje pri odabiru u TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>number</td>
+<td>Zadano vremensko ograničenje za bash naredbe u ms</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>number</td>
+<td>Maksimalni izlazni tokeni za LLM odgovore</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Omogući praćenje datoteka za cijeli direktorij</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>Omogući oxfmt formatter</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>Omogući eksperimentalni LSP alat</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Onemogući praćenje datoteka</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>Omogući eksperimentalne Exa funkcije</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>Omogući TY LSP za python datoteke</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>Omogući eksperimentalne Markdown funkcije</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>Omogući Plan mod</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

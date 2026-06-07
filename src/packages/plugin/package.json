@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "plugin",
+  "version": "1.14.33",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo 'typecheck disabled'"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./tool": "./src/tool.js",
+    "./tui": "./src/tui.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "sdk": "file:../sdk/js",
+    "effect": "4.0.0-beta.59",
+    "zod": "4.1.8"
+  },
+  "peerDependencies": {
+    "@opentui/core": ">=0.2.2",
+    "@opentui/solid": ">=0.2.2"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/core": {
+      "optional": true
+    },
+    "@opentui/solid": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@opentui/core": "0.2.2",
+    "@opentui/solid": "0.2.2",
+    "script": "file:../script"
+  }
+}

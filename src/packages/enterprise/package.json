@@ -1,0 +1,36 @@
+{
+  "name": "enterprise",
+  "version": "1.14.33",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "echo \"dev disabled (vite removed)\"",
+    "build": "echo \"build disabled (vite removed)\"",
+    "build:cloudflare": "echo \"build:cloudflare disabled (vite removed)\"",
+    "start": "echo \"start disabled (vite removed)\"",
+    "shell-prod": "sst shell --target Teams --stage production"
+  },
+  "dependencies": {
+    "core": "file:../core",
+    "ui": "file:../ui",
+    "aws4fetch": "^1.0.20",
+    "@pierre/diffs": "1.1.0-beta.18",
+    "@solidjs/router": "0.15.4",
+    "@solidjs/meta": "0.29.4",
+    "hono": "4.10.7",
+    "hono-openapi": "1.1.2",
+    "js-base64": "3.7.7",
+    "luxon": "3.6.1",
+    "nitro": "3.0.1-alpha.1",
+    "solid-js": "1.9.10",
+    "zod": "4.1.8"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "4.20251008.0",
+    "tailwindcss": "4.1.11"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

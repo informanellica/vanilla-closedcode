@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>서버 — vanilla-closedcode docs</title>
+  <meta name="description" content="HTTP를 통해 vanilla-closedcode 서버와 상호 작용합니다.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html" selected>한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>서버</h1>
+      <p class="lede">HTTP를 통해 vanilla-closedcode 서버와 상호 작용합니다.</p>
+      <p><code>closedcode serve</code> 명령은 closedcode 클라이언트가 사용할 수 있는 OpenAPI 엔드포인트를 노출하는 headless HTTP 서버를 실행합니다.</p>
+<hr>
+<h3>사용법</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>옵션</h4>
+<table>
+<thead>
+<tr>
+<th>플래그</th>
+<th>설명</th>
+<th>기본값</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>수신 대기할 포트</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>수신 대기할 호스트명</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>mDNS 탐지 활성화</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>mDNS 서비스의 사용자 지정 도메인 이름</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>허용할 추가 브라우저 origin</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code>는 다수 시간을 통과될 수 있습니다:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>인증</h3>
+<p><code>CLOSEDCODE_SERVER_PASSWORD</code>를 설정하여 서버를 HTTP Basic auth로 보호합니다. <code>closedcode</code> 또는 <code>CLOSEDCODE_SERVER_USERNAME</code>를 오버라이드로 설정하는 사용자의 기본값. 이것은 <code>closedcode serve</code>와 <code>closedcode web</code> 둘 다에 적용합니다.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>작동 방식</h3>
+<p><code>closedcode</code>를 실행하면 TUI와 서버를 시작합니다. TUI는 어디에 있습니까?
+서버와 대화하는 클라이언트. 서버는 OpenAPI 3.1 spec을 노출
+끝점. 이 엔드포인트는 <a href="/docs/sdk">SDK</a>을 생성하는 데도 사용됩니다.</p>
+<aside class="aside aside-tip">
+closedcode 서버를 사용하여 closedcode programmatically와 상호 작용합니다.
+</aside>
+이 아키텍처는 closedcode 지원 여러 클라이언트를 허용하고 closedcode programmatically와 상호 작용 할 수 있습니다.
+
+<p>독립 서버를 시작하려면 <code>closedcode serve</code>를 실행할 수 있습니다. 당신이 있는 경우에
+closedcode TUI 실행, <code>closedcode serve</code> 새로운 서버를 시작합니다.</p>
+<hr>
+<h4>기존 서버에 연결</h4>
+<p>TUI를 시작하면 무작위로 포트와 호스트 이름을 할당합니다. 대신 <code>--hostname</code>와 <code>--port</code> <a href="/docs/cli">flags</a>에서 전달할 수 있습니다. 그런 다음 서버에 연결하십시오.</p>
+<p><a href="#tui"><code>/tui</code></a> 엔드포인트는 서버를 통해 TUI를 구동하는 데 사용될 수 있습니다. 예를 들어 미리 작성하거나 프롬프트를 실행할 수 있습니다. 이 설정은 closedcode <a href="/docs/ide">IDE</a> 플러그인에 의해 사용됩니다.</p>
+<hr>
+<h2>사양</h2>
+<p>서버는 OpenAPI 3.1 spec을 게시합니다.</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>예를 들어, <code>http://localhost:4096/doc</code>. 클라이언트를 생성하거나 요청 및 응답 유형을 검사하는 spec를 사용하십시오. 또는 Swagger 탐험가에서 볼 수 있습니다.</p>
+<hr>
+<h2>API</h2>
+<p>closedcode 서버는 다음과 같은 API를 노출합니다.</p>
+<hr>
+<h2>글로벌</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>서버 건강 및 버전</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>글로벌 이벤트(SSE 스트림)</td>
+<td>이벤트 스트림</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>프로젝트</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>모든 프로젝트 보기</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>현재 프로젝트 가져 오기</td>
+<td><a href={typesUrl}><code>프로젝트</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>경로 &amp; VCS</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>현재 경로 받기</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>현재 프로젝트의 VCS 정보 받기</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>인스턴스</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>현재 인스턴스를 해제</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>구성</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>구성정보</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>업데이트 구성</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>목록 제공업체 및 기본 모델</td>
+<td><code>{ providers: </code><a href={typesUrl}> 사이트 맵</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>공급자</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>모든 공급자 목록</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>공급자 인증 메서드 가져오기</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>OAuth를 사용한 공급자 허가</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>공급자를 위한 OAuth 콜백</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>세션</h2>
+<table>
+<thead>
+<tr>
+<th>메서드</th>
+<th>경로</th>
+<th>설명</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>모든 세션 일람표</td>
+<td>반환 <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>새 세션 만들기</td>
+<td>몸: <code>{ parentID?, title? }</code>, 반환 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>모든 세션의 세션 상태를 가져옵니다</td>
+<td><code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>세션 상세보기</td>
+<td>반품 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>세션 삭제 및 모든 데이터</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>업데이트 세션 속성</td>
+<td>본체: <code>{ title? }</code>, 반환 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>세션의 하위 세션</td>
+<td>리턴 <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>세션의 할 일(Todo) 목록 받기</td>
+<td><a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>앱 초기화 및 <code>AGENTS.md</code> 분석</td>
+<td>몸: <code>{ messageID, providerID, modelID }</code>, 반환 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>메시지의 기존 세션</td>
+<td>몸: <code>{ messageID? }</code>, 반환 <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>운영 중인 세션</td>
+<td>반품 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>세션 공유</td>
+<td><a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>세션 공유</td>
+<td><a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td><code>/session/:id/diff</code></td>
+<td><code>messageID?</code>, 반환 <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>세션을 요약</td>
+<td>본체: <code>{ providerID, modelID }</code>, <code>boolean</code> 반환</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>메시지 재생</td>
+<td>몸: <code>{ messageID, partID? }</code>, 반환 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>메시지 되돌리기 취소</td>
+<td>반품 <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>허가 요청 대응</td>
+<td>본체: <code>{ response, remember? }</code>, <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>메시지</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>주</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>세션의 목록 메시지</td>
+<td>쿼리: <code>limit?</code>, <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>응답을 위해 메시지를 보내고 기다립니다</td>
+<td>몸: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>, 반환 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>메시지 보내기</td>
+<td><code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>비동기적으로 메시지 보내기</td>
+<td>몸: <code>/session/:id/message</code>와 동일, <code>204 No Content</code>를 반환</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>슬래시 명령어 실행</td>
+<td>본체: <code>{ messageID?, agent?, model?, command, arguments }</code>, 반환 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>shell 명령 실행</td>
+<td>체: <code>{ agent, model?, command }</code>, 반환 <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>명령</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>모든 명령</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>파일</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>파일에서 텍스트 검색</td>
+<td><code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code>가 포함된 일치 객체 배열</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>이름으로 파일/디렉터리 찾기</td>
+<td><code>string[]</code> (경로)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>워크스페이스 심볼 찾기</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>파일 및 디렉터리 목록</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>파일 읽기</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>추적 중인 파일 상태 가져오기</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> 쿼리 매개 변수</h4>
+<ul>
+<li><code>query</code> (required) - 검색 문자열 (fuzzy 일치)</li>
+<li><code>type</code> (선택 사항) - <code>&quot;file&quot;</code> 또는 <code>&quot;directory&quot;</code>에 제한 결과</li>
+<li><code>directory</code> (선택 사항) - 검색에 대한 프로젝트 루트를 무시</li>
+<li>(선택) <code>limit</code> - 최대 결과 (1-200)</li>
+<li><code>dirs</code> (옵션) - 레거시 플래그 (<code>&quot;false&quot;</code>는 파일만 반환)</li>
+</ul>
+<hr>
+<h2>도구 (실험적)</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>모든 도구 ID</td>
+<td><a href={typesUrl}><code>도구</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>모델용 JSON 스키마 목록</td>
+<td><a href={typesUrl}><code>도구 목록</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, 포매터 &amp; MCP</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>LSP 서버 상태</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>형식의 상태를 확인</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>MCP 서버 상태를 얻는다</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>MCP 서버가 동적</td>
+<td>본체: <code>{ name, config }</code>, MCP 상태 객체를 반환</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>에이전트</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>이용 가능한 모든 에이전트</td>
+<td><a href={typesUrl}><code> 에이전트[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>로깅</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>로그 입력 바디: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>프롬프트에 텍스트를 부여</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>도움말 대화 열기</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>세션 선택 안내</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>테마 선택 안내</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>모델 선택 안내</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>현재 프롬프트 제출</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>시프트 클리어</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>명령어 실행(<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>쇼 토스트(<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>다음 컨트롤 요청 시 기다리고</td>
+<td>제어 요청 개체</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>통제 요청(<code>{ body }</code>) 대응</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>인증</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>인증 자격 증명 몸은 공급자 스키마를 일치해야 합니다</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>이벤트</h2>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>서버 전송 이벤트 스트림. 첫 번째 이벤트는 <code>server.connected</code>, 그 후 버스 이벤트</td>
+<td>Server-sent event stream</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>문서</h3>
+<table>
+<thead>
+<tr>
+<th>방법</th>
+<th>경로</th>
+<th>설명</th>
+<th>응답</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>OpenAPI 3.1 사양</td>
+<td>HTML 페이지 OpenAPI 사양</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

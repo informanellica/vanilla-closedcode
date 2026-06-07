@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formateri — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode koristi formatere specifične za jezik.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html">العربية</option>
+      <option value="../bs/formatters.html" selected>Bosanski</option>
+      <option value="../da/formatters.html">Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html">Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html">ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Formateri</h1>
+      <p class="lede">vanilla-closedcode koristi formatere specifične za jezik.</p>
+      <p>vanilla-closedcode automatski formatira datoteke nakon što su napisane ili uređene pomoću formatera specifičnih za jezik. Ovo osigurava da kod koji se generira prati stilove koda vašeg projekta.</p>
+<hr>
+<h2>Ugrađeni</h2>
+<p>vanilla-closedcode dolazi sa nekoliko ugrađenih formatera za popularne jezike i okvire. Ispod je lista formatera, podržanih ekstenzija datoteka i naredbi ili opcija konfiguracije koje su mu potrebne.</p>
+<table>
+<thead>
+<tr>
+<th>Formatter</th>
+<th>Ekstenzije</th>
+<th>Zahtjevi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gofmt</td>
+<td>.go</td>
+<td><code>gofmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>mix</td>
+<td>.ex, .exs, .eex, .heex, .leex, .neex, .sface</td>
+<td><code>mix</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>prettier</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml i <a href="https://prettier.io/docs/en/index.html">više</a></td>
+<td><code>prettier</code> zavisnost u <code>package.json</code></td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml i <a href="https://biomejs.dev/">više</a></td>
+<td><code>biome.json(c)</code> konfiguracijski fajl</td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>.c, .cpp, .h, .hpp, .ino i <a href="https://clang.llvm.org/docs/ClangFormat.html">više</a></td>
+<td><code>.clang-format</code> konfiguracijski fajl</td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt, .kts</td>
+<td><code>ktlint</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py, .pyi</td>
+<td><code>ruff</code> komanda dostupna sa konfiguracijom</td>
+</tr>
+<tr>
+<td>rustfmt</td>
+<td>.rs</td>
+<td><code>rustfmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>cargofmt</td>
+<td>.rs</td>
+<td><code>cargo fmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py, .pyi</td>
+<td><code>uv</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>standardrb</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb, .html.erb</td>
+<td><code>htmlbeautifier</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>air</td>
+<td>.R</td>
+<td><code>air</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td><code>dfmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml, .mli</td>
+<td><code>ocamlformat</code> komanda dostupna i <code>.ocamlformat</code> konfiguracioni fajl</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td><code>terraform</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.bleam</td>
+<td><code>gleam</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>nixfmt</td>
+<td>.nix</td>
+<td><code>nixfmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh, .bash</td>
+<td><code>shfmt</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td><code>laravel/pint</code> zavisnost u <code>composer.json</code></td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td><code>ormolu</code> komanda dostupna</td>
+</tr>
+<tr>
+<td>Dakle, ako vaš projekat ima <code>prettier</code> u vašem <code>package.json</code>, vanilla-closedcode će ga automatski koristiti.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Kako radi</h2>
+<p>Kada vanilla-closedcode piše ili uređuje datoteku, on:</p>
+<ol>
+<li>Provjerava ekstenziju datoteke prema svim omogućenim formaterima.</li>
+<li>Pokreće odgovarajuću naredbu za formatiranje na datoteci.</li>
+<li>Automatski primjenjuje promjene formatiranja.
+Ovaj proces se događa u pozadini, osiguravajući da se vaši stilovi koda održavaju bez ikakvih ručnih koraka.</li>
+</ol>
+<hr>
+<h2>Konfiguracija</h2>
+<p>Možete prilagoditi formatere kroz <code>formatter</code> odjeljak u vašoj vanilla-closedcode konfiguraciji.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>Svaka konfiguracija formatera podržava sljedeće:</p>
+<table>
+<thead>
+<tr>
+<th>Svojstvo</th>
+<th>Vrsta</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>Postavite ovo na <code>true</code> da onemogućite formater</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>Naredba za pokretanje za formatiranje</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>objekt</td>
+<td>Varijable okruženja koje treba postaviti prilikom pokretanja formatera</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>Ekstenzije datoteka koje ovaj formater treba da obrađuje</td>
+</tr>
+<tr>
+<td>Pogledajmo neke primjere.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Onemogućavanje formatera</h3>
+<p>Da onemogućite <strong>sve</strong> formatere globalno, postavite <code>formatter</code> na <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>Da onemogućite <strong>specifični</strong> formater, postavite <code>disabled</code> na <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Prilagođeni formateri</h3>
+<p>Možete nadjačati ugrađene formatere ili dodati nove navođenjem naredbe, varijabli okruženja i ekstenzija datoteke:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p><strong><code>$FILE</code> čuvar mjesta</strong> u naredbi će biti zamijenjen putanjom do datoteke koja se formatira.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

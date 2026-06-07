@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rješavanje problema — vanilla-closedcode docs</title>
+  <meta name="description" content="Uobičajeni problemi i kako ih riješiti.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html" selected>Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Rješavanje problema</h1>
+      <p class="lede">Uobičajeni problemi i kako ih riješiti.</p>
+      <p>Da biste otklonili probleme s vanilla-closedcode, počnite provjeravanjem dnevnika i lokalnih podataka koje pohranjuje na disku.</p>
+<hr>
+<h2>Dnevnici</h2>
+<p>Log fajlovi se pišu na:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> i zalijepite <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>Datoteke evidencije se imenuju vremenskim oznakama (npr. <code>2025-01-09T123456.log</code>) i čuvaju se najnovijih 10 datoteka dnevnika.</p>
+<p>Možete postaviti nivo dnevnika pomoću opcije komandne linije <code>--log-level</code> da biste dobili detaljnije informacije o otklanjanju grešaka. Na primjer, <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>Pohrana</h2>
+<p>vanilla-closedcode pohranjuje podatke o sesiji i druge podatke aplikacije na disku na:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> i zalijepite <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>Ovaj direktorij sadrži:</p>
+<ul>
+<li><code>auth.json</code> - ​​Podaci o autentifikaciji kao što su API ključevi, OAuth tokeni</li>
+<li><code>log/</code> - ​​Dnevnici aplikacije</li>
+<li><code>project/</code> - ​​Podaci specifični za projekat kao što su podaci o sesiji i poruci<ul>
+<li>Ako je projekat unutar Git repo-a, on je pohranjen u <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>Ako nije Git repo, pohranjuje se u <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Desktop aplikacija</h2>
+<p>vanilla-closedcode Desktop pokreće lokalni vanilla-closedcode server (<code>closedcode-cli</code> sidecar) u pozadini. Većina problema je uzrokovana nedostatkom dodatka, oštećenom keš memorijom ili lošim postavkama servera.</p>
+<h3>Brze provjere</h3>
+<ul>
+<li>Potpuno zatvorite i ponovo pokrenite aplikaciju.</li>
+<li>Ako aplikacija prikaže ekran s greškom, kliknite na <strong>Restart</strong> i kopirajte detalje o grešci.</li>
+<li>samo za macOS: <code>vanilla-closedcode</code> meni -&gt; <strong>Ponovo učitaj Webview</strong> (pomaže ako je korisnički interfejs prazan/zamrznut).</li>
+</ul>
+<hr>
+<h3>Onemogućavanje dodataka</h3>
+<p>Ako se desktop aplikacija ruši pri pokretanju, visi ili se čudno ponaša, počnite s onemogućavanjem dodataka.</p>
+<h4>Provjerite globalnu konfiguraciju</h4>
+<p>Otvorite svoju globalnu konfiguracijsku datoteku i potražite ključ <code>plugin</code>.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (ili <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (starije instalacije): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> i zalijepite <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>Ako imate konfigurirane dodatke, privremeno ih onemogućite uklanjanjem ključa ili postavljanjem na prazan niz:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>Provjera direktorija dodataka</h4>
+<p>vanilla-closedcode također može učitati lokalne dodatke s diska. Privremeno ih maknite s puta (ili preimenujte folder) i ponovo pokrenite desktop aplikaciju:</p>
+<ul>
+<li><strong>Globalni dodaci</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> i zalijepite <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>Projektni dodaci</strong> (samo ako koristite konfiguraciju po projektu)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>Ako aplikacija ponovo počne raditi, ponovo omogućite dodatke jedan po jedan kako biste otkrili koji od njih uzrokuje problem.</p>
+<hr>
+<h3>Brisanje keš memorije</h3>
+<p>Ako onemogućavanje dodataka ne pomogne (ili se instalacija dodatka zaglavila), obrišite keš memoriju kako bi ga vanilla-closedcode mogao ponovo izgraditi.</p>
+<ol>
+<li>Potpuno zatvorite vanilla-closedcode Desktop.</li>
+<li>Izbrišite keš direktorij:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; zalijepi <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: obrišite <code>~/.cache/closedcode</code> (ili pokrenite <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> i zalijepite <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>Ponovo pokrenite vanilla-closedcode Desktop.</li>
+</ol>
+<hr>
+<h3>Rješavanje problema sa vezom na serveru</h3>
+<p>vanilla-closedcode Desktop može ili pokrenuti svoj lokalni server (podrazumevano) ili se povezati na URL servera koji ste konfigurisali.</p>
+<p>Ako vidite dijaloški okvir <strong>&quot;Povezivanje nije uspjelo&quot;</strong> (ili aplikacija nikada ne prođe kroz početni ekran), provjerite da li postoji prilagođeni URL servera.</p>
+<h4>Obrišite zadani URL servera radne površine</h4>
+<p>Na početnom ekranu kliknite na ime servera (sa tačkom statusa) da otvorite birač servera. U odjeljku <strong>Podrazumevani server</strong> kliknite na <strong>Obriši</strong>.</p>
+<h4>Uklonite <code>server.port</code> / <code>server.hostname</code> iz vaše konfiguracije</h4>
+<p>Ako vaš <code>closedcode.json(c)</code> sadrži odjeljak <code>server</code>, privremeno ga uklonite i ponovo pokrenite desktop aplikaciju.</p>
+<h4>Provjerite varijable okruženja</h4>
+<p>Ako ste postavili <code>CLOSEDCODE_PORT</code> u svom okruženju, desktop aplikacija će pokušati da koristi taj port za lokalni server.</p>
+<ul>
+<li>Poništite <code>CLOSEDCODE_PORT</code> (ili odaberite slobodan port) i ponovo pokrenite.</li>
+</ul>
+<hr>
+<h3>Linux: Wayland / X11 problemi</h3>
+<p>Na Linuxu, neka podešavanja Waylanda mogu uzrokovati prazne prozore ili greške sastavljača.</p>
+<ul>
+<li>Ako ste na Waylandu, a aplikacija je prazna/ispada, pokušajte pokrenuti sa <code>OC_ALLOW_WAYLAND=1</code>.</li>
+<li>Ako to pogorša stvari, uklonite ga i pokušajte pokrenuti pod X11 sesijom umjesto toga.</li>
+</ul>
+<hr>
+<h3>Windows: WebView2 izvršno okruženje</h3>
+<p>Na Windows-u, vanilla-closedcode Desktop zahtijeva Microsoft Edge <strong>WebView2 Runtime</strong>. Ako se aplikacija otvori u praznom prozoru ili se ne pokrene, instalirajte/ažurirajte WebView2 i pokušajte ponovo.</p>
+<hr>
+<h3>Windows: Opšti problemi sa performansama</h3>
+<p>Ako imate spore performanse, probleme s pristupom datotekama ili probleme s terminalom na Windows-u, pokušajte koristiti <a href="/docs/windows-wsl">WSL (Windows podsistem za Linux)</a>. WSL pruža Linux okruženje koje radi neprimetnije sa vanilla-closedcode karakteristikama.</p>
+<hr>
+<h3>Obavještenja se ne prikazuju</h3>
+<p>vanilla-closedcode Desktop prikazuje sistemska obavještenja samo kada:</p>
+<ul>
+<li>obavještenja su omogućena za vanilla-closedcode u postavkama vašeg OS-a, i</li>
+<li>prozor aplikacije nije fokusiran.</li>
+</ul>
+<hr>
+<h3>Resetovanje pohrane desktop aplikacije</h3>
+<p>Ako se aplikacija ne pokrene i ne možete izbrisati postavke unutar korisničkog sučelja, resetirajte spremljeno stanje desktop aplikacije.</p>
+<ol>
+<li>Zatvorite vanilla-closedcode Desktop.</li>
+<li>Pronađite i izbrišite ove datoteke (oni žive u direktoriju podataka vanilla-closedcode Desktop aplikacije):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (URL zadanog servera za desktop)</li>
+<li><code>closedcode.global.dat</code> i <code>closedcode.workspace.*.dat</code> (stanje korisničkog interfejsa poput nedavnih servera/projekata)</li>
+</ul>
+<p>Da brzo pronađete direktorij:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (onda potražite nazive fajlova iznad)</li>
+<li><strong>Linux</strong>: potražite nazive fajlova iznad pod <code>~/.local/share</code></li>
+<li><strong>Windows</strong>: Pritisnite <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (zatim potražite nazive fajlova iznad)</li>
+</ul>
+<hr>
+<h2>Traženje pomoći</h2>
+<p>Ako imate problema s vanilla-closedcode:</p>
+<ol>
+<li><p><strong>Prijavite probleme na GitHub</strong></p>
+<p>Najbolji način da prijavite greške ili zatražite funkcije je putem našeg GitHub spremišta:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>Prije kreiranja novog problema, pretražite postojeće probleme da vidite je li vaš problem već prijavljen.</p>
+</li>
+<li><p><strong>Pridružite se našem Discordu</strong></p>
+<p>Za pomoć u stvarnom vremenu i diskusiju u zajednici, pridružite se našem Discord serveru:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>Uobičajeni problemi</h2>
+<p>Evo nekih uobičajenih problema i kako ih riješiti.</p>
+<hr>
+<h3>vanilla-closedcode se ne pokreće</h3>
+<ol>
+<li>Provjerite dnevnike za poruke o greškama</li>
+<li>Pokušajte pokrenuti sa <code>--print-logs</code> da vidite izlaz u terminalu</li>
+<li>Uvjerite se da imate najnoviju verziju sa <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>Problemi s autentifikacijom</h3>
+<ol>
+<li>Pokušajte ponovo autentifikovati sa naredbom <code>/connect</code> u TUI</li>
+<li>Provjerite da li su vaši API ključevi važeći</li>
+<li>Uvjerite se da vaša mreža dozvoljava veze s API-jem provajdera</li>
+</ol>
+<hr>
+<h3>Model nije dostupan</h3>
+<ol>
+<li>Provjerite jeste li se autentifikovali kod provajdera</li>
+<li>Provjerite je li naziv modela u vašoj konfiguraciji tačan</li>
+<li>Neki modeli mogu zahtijevati poseban pristup ili pretplate</li>
+</ol>
+<p>Ako naiđete na <code>ProviderModelNotFoundError</code> najvjerovatnije niste u pravu
+referenciranje modela negdje.
+Modele treba referencirati ovako: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>primjeri:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>Da saznate kojim modelima imate pristup, pokrenite <code>closedcode models</code></p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>Ako naiđete na grešku ProviderInitError, vjerovatno imate nevažeću ili oštećenu konfiguraciju.</p>
+<p>Da biste ovo riješili:</p>
+<ol>
+<li>Prvo provjerite da li je vaš provajder ispravno postavljen slijedeći <a href="/docs/providers">vodič za pružatelje</a></li>
+<li>Ako se problem nastavi, pokušajte obrisati pohranjenu konfiguraciju:</li>
+</ol>
+<pre><code class="language-bash">   rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>Na Windows-u pritisnite <code>WIN+R</code> i izbrišite: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+<ol start="3">
+<li>Ponovo izvršite autentifikaciju kod svog provajdera koristeći naredbu <code>/connect</code> u TUI.</li>
+</ol>
+<hr>
+<h3>AI_APICallError i problemi sa paketom dobavljača</h3>
+<p>Ako naiđete na greške API poziva, to može biti zbog zastarjelih paketa dobavljača. vanilla-closedcode dinamički instalira pakete dobavljača (OpenAI, Anthropic, Google, itd.) po potrebi i kešira ih lokalno.</p>
+<p>Da biste riješili probleme s paketom dobavljača:</p>
+<ol>
+<li>Obrišite keš paketa provajdera:</li>
+</ol>
+<pre><code class="language-bash">   rm -rf ~/.cache/closedcode
+</code></pre>
+<p>Na Windows-u pritisnite <code>WIN+R</code> i izbrišite: <code>%USERPROFILE%\.cache\closedcode</code></p>
+<ol start="2">
+<li>Ponovo pokrenite vanilla-closedcode da ponovo instalirate najnovije pakete dobavljača</li>
+</ol>
+<p>Ovo će prisiliti vanilla-closedcode da preuzme najnovije verzije paketa dobavljača, što često rješava probleme kompatibilnosti s parametrima modela i promjenama API-ja.</p>
+<hr>
+<h3>Copy/paste ne radi na Linuxu</h3>
+<p>Korisnici Linuxa moraju imati instaliran jedan od sljedećih uslužnih programa međuspremnika da bi funkcionirala funkcionalnost kopiranja/lijepljenja:</p>
+<p><strong>Za X11 sisteme:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>Za Wayland sisteme:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>Za okruženja bez glave:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>vanilla-closedcode će otkriti da li koristite Wayland i preferirate <code>wl-clipboard</code>, u suprotnom će pokušati pronaći alate međuspremnika po redoslijedu: <code>xclip</code> i <code>xsel</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,1537 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>공급자 — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode에서 LLM 공급자를 사용합니다.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/providers.html">English</option>
+      <option value="../ar/providers.html">العربية</option>
+      <option value="../bs/providers.html">Bosanski</option>
+      <option value="../da/providers.html">Dansk</option>
+      <option value="../de/providers.html">Deutsch</option>
+      <option value="../es/providers.html">Español</option>
+      <option value="../fr/providers.html">Français</option>
+      <option value="../it/providers.html">Italiano</option>
+      <option value="../ja/providers.html">日本語</option>
+      <option value="../ko/providers.html" selected>한국어</option>
+      <option value="../nb/providers.html">Norsk</option>
+      <option value="../pl/providers.html">Polski</option>
+      <option value="../pt-br/providers.html">Português (BR)</option>
+      <option value="../ru/providers.html">Русский</option>
+      <option value="../th/providers.html">ไทย</option>
+      <option value="../tr/providers.html">Türkçe</option>
+      <option value="../zh-cn/providers.html">简体中文</option>
+      <option value="../zh-tw/providers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li class="active"><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>공급자</h1>
+      <p class="lede">vanilla-closedcode에서 LLM 공급자를 사용합니다.</p>
+      <p>vanilla-closedcode는 <a href="https://ai-sdk.dev/">AI SDK</a> 및 <a href="https://models.dev">Models.dev</a>를 사용하여 <strong>75개 이상의 LLM 공급자</strong>를 지원하며 로컬 모델도 실행할 수 있습니다.</p>
+<p>필요한 공급자를 추가하려면:</p>
+<ol>
+<li><code>/connect</code> 명령을 사용하여 공급자의 API 키를 추가하십시오.</li>
+<li>vanilla-closedcode 구성에서 공급자를 구성하십시오.</li>
+</ol>
+<hr>
+<h3>자격 증명</h3>
+<p><code>/connect</code> 명령으로 공급자의 API 키를 추가하면 다음 위치에 저장됩니다:
+<code>~/.local/share/closedcode/auth.json</code></p>
+<hr>
+<h3>구성</h3>
+<p>vanilla-closedcode 설정의 <code>provider</code> 섹션을 통해 공급자를 사용자 정의할 수 있습니다.</p>
+<hr>
+<h4>기본 URL</h4>
+<p><code>baseURL</code> 옵션을 설정하여 모든 공급자를 위한 기본 URL을 사용자 정의할 수 있습니다. 프록시 서비스 또는 사용자 정의 엔드포인트를 사용할 때 유용합니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.anthropic.com/v1&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>디렉토리</h2>
+<p>공급자 세부 정보를 확인하세요. 목록에 공급자를 추가하려면 PR을 열어주세요.</p>
+<aside class="aside aside-note">
+원하는 공급자가 없나요? PR을 제출해 주세요.
+</aside>
+---
+
+<h3>302.AI</h3>
+<ol>
+<li><p><a href="https://302.ai/">302.AI 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>302.AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>302.AI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Amazon Bedrock</h3>
+<p>vanilla-closedcode로 Amazon Bedrock을 사용하려면:</p>
+<ol>
+<li><p>Amazon Bedrock 콘솔의 <strong>Model catalog</strong>로 이동하여 원하는 모델에 대한 액세스를 요청합니다.</p>
+<p>:::tip
+Amazon Bedrock에서 원하는 모델에 대한 액세스 권한이 있어야 합니다.
+:::</p>
+</li>
+<li><p>다음 방법 중 하나를 사용하여 <strong>인증을 구성</strong>합니다:</p>
+<hr>
+<h4>환경 변수 (빠른 시작)</h4>
+<p>vanilla-closedcode를 실행하는 동안 다음 환경 변수 중 하나를 설정합니다:</p>
+<pre><code class="language-bash"># Option 1: Using AWS access keys
+AWS_ACCESS_KEY_ID=XXX AWS_SECRET_ACCESS_KEY=YYY closedcode
+
+# Option 2: Using named AWS profile
+AWS_PROFILE=my-profile closedcode
+
+# Option 3: Using Bedrock bearer token
+AWS_BEARER_TOKEN_BEDROCK=XXX closedcode
+</code></pre>
+<p>또는 bash 프로필에 추가합니다:</p>
+<pre><code class="language-bash">export AWS_PROFILE=my-dev-profile
+export AWS_REGION=us-east-1
+</code></pre>
+<hr>
+<h4>구성 파일 (권장)</h4>
+<p>프로젝트별 또는 영구 구성을 위해 <code>closedcode.json</code>을 사용하십시오:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>유효한 옵션:</strong></p>
+<ul>
+<li><code>region</code> - AWS 리전 (예: <code>us-east-1</code>, <code>eu-west-1</code>)</li>
+<li><code>profile</code> - <code>~/.aws/credentials</code>의 AWS 프로필 이름</li>
+<li><code>endpoint</code> - VPC 엔드포인트 등을 위한 사용자 정의 엔드포인트 URL (일반 <code>baseURL</code> 옵션의 별칭)</li>
+</ul>
+<p>:::tip
+구성 파일 옵션은 환경 변수보다 우선 순위가 높습니다.
+:::</p>
+<hr>
+<h4>고급: VPC 엔드포인트</h4>
+<p>Bedrock의 VPC 엔드포인트를 사용하는 경우:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;production&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>:::note
+<code>endpoint</code> 옵션은 일반적인 <code>baseURL</code> 옵션의 별칭입니다. <code>endpoint</code>와 <code>baseURL</code> 둘 다 지정된 경우 <code>endpoint</code>가 우선합니다.
+:::</p>
+<hr>
+<h4>인증 방법</h4>
+<ul>
+<li><strong><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code></strong>: IAM 사용자 및 AWS 콘솔에서 액세스 키 생성</li>
+<li><strong><code>AWS_PROFILE</code></strong>: <code>~/.aws/credentials</code>의 프로필 이름을 사용합니다. <code>aws configure --profile my-profile</code> 또는 <code>aws sso login</code>으로 먼저 구성하십시오.</li>
+<li><strong><code>AWS_BEARER_TOKEN_BEDROCK</code></strong>: Amazon Bedrock 콘솔에서 임시 API 키 생성</li>
+<li><strong><code>AWS_WEB_IDENTITY_TOKEN_FILE</code> / <code>AWS_ROLE_ARN</code></strong>: EKS IRSA (서비스 계정용 IAM 역할) 또는 다른 Kubernetes 환경의 OIDC 연동. 이 환경 변수는 서비스 계정을 사용할 때 Kubernetes에 의해 자동으로 주입됩니다.</li>
+</ul>
+<hr>
+<h4>인증 우선 순위</h4>
+<p>Amazon Bedrock은 다음과 같은 인증 우선 순위를 사용합니다.</p>
+<ol>
+<li><strong>Bearer Token</strong> - <code>AWS_BEARER_TOKEN_BEDROCK</code> 환경 변수 또는 <code>/connect</code> 명령의 토큰</li>
+<li><strong>AWS Credential Chain</strong> - 프로필, 액세스 키, 공유 자격 증명, IAM 역할, 웹 ID 토큰 (EKS IRSA), 인스턴스 메타데이터</li>
+</ol>
+<p>:::note
+Bearer 토큰을 설정할 때 (<code>/connect</code> 또는 <code>AWS_BEARER_TOKEN_BEDROCK</code>를 통해), 구성된 프로필을 포함한 모든 AWS 자격 증명 방법보다 우선 순위가 높습니다.
+:::</p>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 원하는 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-note">
+사용자 정의 추론 프로필(custom inference profiles)의 경우, 키에 모델과 공급자 이름을 사용하고 `id` 속성에 ARN을 설정하십시오. 이렇게 하면 올바른 캐싱이 보장됩니다.
+</aside>
+```json title="closedcode.json"
+{
+  "provider": {
+    "amazon-bedrock": {
+      // ...
+      "models": {
+        "anthropic-claude-sonnet-4.5": {
+          "id": "arn:aws:bedrock:us-east-1:xxx:application-inference-profile/yyy"
+        }
+      }
+    }
+  }
+}
+```
+
+<hr>
+<h3>Anthropic</h3>
+<ol>
+<li><p>가입 후 <code>/connect</code> 명령을 실행하고 <strong>Anthropic</strong>을 선택합니다.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p><strong>Claude Pro/Max</strong> 옵션을 선택하면 브라우저가 열리고 인증을 요청합니다.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ Claude Pro/Max
+│ Create an API Key
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>이제 <code>/models</code> 명령을 사용할 때 모든 Anthropic 모델을 사용할 수 있습니다.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>:::info
+vanilla-closedcode에서 Claude Pro/Max 구독을 사용하는 것은 <a href="https://anthropic.com">Anthropic</a>에서 공식적으로 지원하지 않습니다.
+:::</p>
+<h5>API 키 사용</h5>
+<p>Pro/Max 구독이 없는 경우 <strong>Create an API Key</strong>를 선택할 수 있습니다. 브라우저가 열리고 Anthropic에 로그인한 후 터미널에 붙여넣을 수 있는 코드를 제공합니다.</p>
+<p>또는 이미 API 키가 있다면, <strong>Manually enter API Key</strong>를 선택하고 터미널에 붙여넣을 수 있습니다.</p>
+<hr>
+<h3>Atomic Chat</h3>
+<p>OpenAI 호환 API 서버 뒤에서 로컬 LLM을 실행하는 데스크톱 애플리케이션인 <a href="https://atomic.chat">Atomic Chat</a>을 통해 로컬 모델을 사용하도록 closedcode를 구성할 수 있습니다(기본 엔드포인트 <code>http://127.0.0.1:1337/v1</code>).</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;atomic-chat&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Atomic Chat (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1337/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;&lt;your-model-id&gt;&quot;: {
+          &quot;name&quot;: &quot;&lt;your-model-name&gt;&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>이 예시에서:</p>
+<ul>
+<li><code>atomic-chat</code>은 사용자 지정 공급자 ID입니다. 원하는 어떤 문자열이든 사용할 수 있습니다.</li>
+<li><code>npm</code>은 이 공급자에 사용할 패키지를 지정합니다. 여기서는 모든 OpenAI 호환 API에 <code>@ai-sdk/openai-compatible</code>이 사용됩니다.</li>
+<li><code>name</code>은 UI에 표시되는 공급자의 이름입니다.</li>
+<li><code>options.baseURL</code>은 로컬 서버의 엔드포인트입니다. Atomic Chat 설정에 맞게 호스트와 포트를 변경하세요.</li>
+<li><code>models</code>는 모델 ID와 해당 표시 이름의 맵입니다. 각 ID는 <code>GET /v1/models</code>가 반환하는 <code>id</code>와 일치해야 하며, 현재 Atomic Chat에 로드된 ID 목록을 확인하려면 <code>curl http://127.0.0.1:1337/v1/models</code>를 실행하세요.</li>
+</ul>
+<aside class="aside aside-tip">
+도구 호출이 잘 작동하지 않는 경우, 도구 호출을 잘 지원하는 로드된 모델(예: Qwen-Coder 또는 DeepSeek-Coder 변형)을 선택하세요.
+</aside>
+---
+
+<h3>Azure OpenAI</h3>
+<aside class="aside aside-note">
+"I'm sorry, but I cannot assist with that request" 오류가 발생하면, Azure 리소스의 콘텐츠 필터를 **DefaultV2**에서 **Default**로 변경해 보세요.
+</aside>
+1. [Azure 포털](https://portal.azure.com/)로 이동하여 **Azure OpenAI** 리소스를 만듭니다. 다음이 필요합니다:
+   - **리소스 이름**: API 엔드포인트의 일부가 됩니다 (`https://RESOURCE_NAME.openai.azure.com/`)
+   - **API 키**: 리소스의 `KEY 1` 또는 `KEY 2`
+
+<ol start="2">
+<li><p><a href="https://ai.azure.com/">Azure AI Foundry</a>로 이동하여 모델을 배포합니다.</p>
+<p>:::note
+배포 이름은 제대로 작동하려면 vanilla-closedcode의 모델 이름과 일치해야 합니다.
+:::</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Azure</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>리소스 이름을 환경 변수로 설정:</p>
+<pre><code class="language-bash">AZURE_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>또는 bash 프로필에 추가:</p>
+<pre><code class="language-bash">export AZURE_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 배포된 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Azure Cognitive Services</h3>
+<ol>
+<li><p><a href="https://portal.azure.com/">Azure 포털</a>로 이동하여 <strong>Azure OpenAI</strong> 리소스를 만듭니다. 다음이 필요합니다:</p>
+<ul>
+<li><strong>리소스 이름</strong>: API 엔드포인트의 일부가 됩니다 (<code>https://AZURE_COGNITIVE_SERVICES_RESOURCE_NAME.cognitiveservices.azure.com/</code>)</li>
+<li><strong>API 키</strong>: 리소스의 <code>KEY 1</code> 또는 <code>KEY 2</code></li>
+</ul>
+</li>
+<li><p><a href="https://ai.azure.com/">Azure AI Foundry</a>로 이동하여 모델을 배포합니다.</p>
+<p>:::note
+배포 이름은 제대로 작동하려면 vanilla-closedcode의 모델 이름과 일치해야 합니다.
+:::</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Azure Cognitive Services</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>리소스 이름을 환경 변수로 설정:</p>
+<pre><code class="language-bash">AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>또는 bash 프로필에 추가:</p>
+<pre><code class="language-bash">export AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 배포된 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Baseten</h3>
+<ol>
+<li><p><a href="https://app.baseten.co/">Baseten</a>으로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Baseten</strong>을 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Baseten API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cerebras</h3>
+<ol>
+<li><p><a href="https://inference.cerebras.ai/">Cerebras 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Cerebras</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Cerebras API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Qwen 3 Coder 480B</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cloudflare AI Gateway</h3>
+<p>Cloudflare AI Gateway는 OpenAI, Anthropic, Workers AI 등의 모델에 액세스할 수 있으며, 통합된 엔드포인트를 통해 더 많은 기능을 제공합니다. <a href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/">Unified Billing</a>을 사용하면 각 공급자의 별도 API 키가 필요하지 않습니다.</p>
+<ol>
+<li><p><a href="https://dash.cloudflare.com/">Cloudflare 대시보드</a>로 이동하여, <strong>AI</strong> &gt; <strong>AI Gateway</strong>로 가서 새로운 게이트웨이를 만듭니다.</p>
+</li>
+<li><p>계정 ID 및 Gateway ID를 환경 변수로 설정하십시오.</p>
+<pre><code class="language-bash">export CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+export CLOUDFLARE_GATEWAY_ID=your-gateway-id
+</code></pre>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Cloudflare AI Gateway</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Cloudflare API 토큰을 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+<p>또는 환경 변수로 설정합니다.</p>
+<pre><code class="language-bash">export CLOUDFLARE_API_TOKEN=your-api-token
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>vanilla-closedcode 구성을 통해 모델을 추가할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;cloudflare-ai-gateway&quot;: {
+      &quot;models&quot;: {
+        &quot;openai/gpt-4o&quot;: {},
+        &quot;anthropic/claude-sonnet-4&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cortecs</h3>
+<ol>
+<li><p><a href="https://cortecs.ai/">Cortecs 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Cortecs</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Cortecs API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Kimi K2 Instruct</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>DeepSeek</h3>
+<ol>
+<li><p><a href="https://platform.deepseek.com/">DeepSeek 콘솔</a>로 이동하여 계정을 만들고 <strong>API Keys</strong>를 클릭하여 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>DeepSeek</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>DeepSeek API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 DeepSeek 모델(예: <em>DeepSeek V4 Pro</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Deep Infra</h3>
+<ol>
+<li><p><a href="https://deepinfra.com/dash">Deep Infra 대시보드</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Deep Infra</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Deep Infra API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Firmware</h3>
+<ol>
+<li><p><a href="https://app.firmware.ai/signup">Firmware 대시보드</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Firmware</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Firmware API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Fireworks AI</h3>
+<ol>
+<li><p><a href="https://app.fireworks.ai/">Fireworks AI 콘솔</a>로 이동하여 계정을 만들고 <strong>API Keys</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Fireworks AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Fireworks AI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Kimi K2 Instruct</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>GitLab Duo</h3>
+<p>GitLab Duo는 GitLab의 Anthropic 프록시를 통해 기본 도구 호출 기능을 갖춘 AI 기반 에이전트 채팅을 제공합니다.</p>
+<ol>
+<li><p><code>/connect</code> 명령을 실행하고 GitLab을 선택합니다.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>인증 방법을 선택하십시오:</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ OAuth (Recommended)
+│ Personal Access Token
+└
+</code></pre>
+<h4>OAuth 사용 (권장)</h4>
+<p><strong>OAuth</strong>를 선택하면 브라우저가 열리고 인증을 요청합니다.</p>
+<h4>개인 액세스 토큰 사용</h4>
+<ol>
+<li><a href="https://gitlab.com/-/user_settings/personal_access_tokens">GitLab User Settings &gt; Access Tokens</a>로 이동</li>
+<li><strong>Add new token</strong> 클릭</li>
+<li>이름: <code>vanilla-closedcode</code>, 범위: <code>api</code></li>
+<li>토큰 복사 (<code>glpat-</code>로 시작)</li>
+<li>터미널에 입력</li>
+</ol>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 사용 가능한 모델을 확인하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>세 가지 Claude 기반 모델을 사용할 수 있습니다:</p>
+<ul>
+<li><strong>duo-chat-haiku-4-5</strong> (기본값) - 빠른 작업을 위한 빠른 응답</li>
+<li><strong>duo-chat-sonnet-4-5</strong> - 대부분의 워크플로우에 균형 잡힌 성능</li>
+<li><strong>duo-chat-opus-4-5</strong> - 복잡한 분석에 적합</li>
+</ul>
+</li>
+</ol>
+<aside class="aside aside-note">
+`GITLAB_TOKEN` 환경 변수를 지정하여 토큰을 저장하지 않고 사용할 수도 있습니다.
+</aside>
+#### 셀프 호스팅 GitLab
+
+<aside class="aside aside-note">
+<p class="aside-label">규정 준수 참고 사항</p>
+vanilla-closedcode uses a small model for some AI tasks like generating the session title. To keep these tasks on your own GitLab-hosted instance, set <code>small_model</code> in your <code>closedcode.json</code> and disable session sharing:
+
+<pre><code class="language-json">{
+  &quot;small_model&quot;: &quot;gitlab/duo-chat-haiku-4-5&quot;,
+  &quot;share&quot;: &quot;disabled&quot;
+}
+</code></pre>
+</aside>
+자체 호스팅 GitLab 인스턴스의 경우:
+
+<pre><code class="language-bash">
+</code></pre>
+<p>인스턴스가 사용자 정의 AI Gateway를 실행하는 경우:</p>
+<pre><code class="language-bash">GITLAB_AI_GATEWAY_URL=https://ai-gateway.company.com
+</code></pre>
+<p>또는 bash 프로필에 추가:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<aside class="aside aside-note">
+GitLab 관리자는 다음을 활성화해야 합니다:
+
+<ol>
+<li><a href="https://docs.gitlab.com/user/duo_agent_platform/turn_on_off/">Duo Agent Platform</a> (사용자, 그룹 또는 인스턴스)</li>
+<li>기능 플래그 (Rails 콘솔을 통해):<ul>
+<li><code>agent_platform_claude_code</code></li>
+<li><code>third_party_agents_enabled</code>
+:::</li>
+</ul>
+</li>
+</ol>
+<h4>셀프 호스팅 인스턴스용 OAuth</h4>
+<p>자체 호스팅 인스턴스에 대해 OAuth를 작동시키려면 새로운 애플리케이션(Settings → Applications)을 만들어야 합니다.
+콜백 URL <code>http://127.0.0.1:8080/callback</code> 및 다음 범위가 필요합니다:</p>
+<ul>
+<li>api (사용자 대신 API 액세스)</li>
+<li>read_user (개인 정보 읽기)</li>
+<li>read_repository (리포지토리 읽기 전용 액세스)</li>
+</ul>
+<p>그런 다음 애플리케이션 ID를 환경 변수로 노출하십시오:</p>
+<pre><code class="language-bash">
+</code></pre>
+<p><a href="https://www.npmjs.com/package/opencode-gitlab-auth">opencode-gitlab-auth</a> 홈페이지에 추가 문서가 있습니다.</p>
+<h4>구성</h4>
+<p><code>closedcode.json</code>을 통해 사용자 정의:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;gitlab&quot;: {
+      &quot;options&quot;: {
+        &quot;instanceUrl&quot;: &quot;https://gitlab.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h4>GitLab API 도구 (선택 사항이지만 강력 권장)</h4>
+<p>GitLab 도구(병합 요청, 이슈, 파이프라인, CI/CD 등)에 액세스하려면:</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-gitlab-plugin&quot;]
+}
+</code></pre>
+<p>이 플러그인은 MR 리뷰, 이슈 추적, 파이프라인 모니터링 등을 포함한 포괄적인 GitLab 리포지토리 관리 기능을 제공합니다.</p>
+<hr>
+<h3>GitHub Copilot</h3>
+<p>vanilla-closedcode에서 GitHub Copilot 구독을 사용하려면:</p>
+<p>:::note
+일부 모델은 <a href="https://github.com/features/copilot/plans">Pro+ 구독</a>이 필요할 수 있습니다.</p>
+</aside>
+1. `/connect` 명령을 실행하고 GitHub Copilot을 검색하십시오.
+
+<pre><code class="language-txt">/connect
+</code></pre>
+<ol start="2">
+<li><p><a href="https://github.com/login/device">github.com/login/device</a>로 이동하여 코드를 입력합니다.</p>
+<pre><code class="language-txt">┌ Login with GitHub Copilot
+│
+│ https://github.com/login/device
+│
+│ Enter code: 8F43-6FCF
+│
+│ Waiting for authorization...
+└
+</code></pre>
+</li>
+<li><p>이제 원하는 모델을 선택하기 위해 <code>/models</code> 명령을 실행합니다.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Google Vertex AI</h3>
+<p>vanilla-closedcode로 Google Vertex AI를 사용하려면:</p>
+<ol>
+<li><p>Google Cloud Console의 <strong>Model Garden</strong>으로 이동하여 해당 리전에서 사용 가능한 모델을 확인하십시오.</p>
+<p>:::note
+Vertex AI API가 활성화된 Google Cloud 프로젝트가 있어야 합니다.
+:::</p>
+</li>
+<li><p>필요한 환경 변수를 설정:</p>
+<ul>
+<li><code>GOOGLE_CLOUD_PROJECT</code>: 구글 클라우드 프로젝트 ID</li>
+<li><code>VERTEX_LOCATION</code> (선택): Vertex AI 리전 (기본값: <code>global</code>)</li>
+<li>인증 (하나 선택):<ul>
+<li><code>GOOGLE_APPLICATION_CREDENTIALS</code>: 서비스 계정 JSON 키 파일 경로</li>
+<li>gcloud CLI 사용: <code>gcloud auth application-default login</code></li>
+</ul>
+</li>
+</ul>
+<p>vanilla-closedcode를 실행할 때 설정:</p>
+<pre><code class="language-bash">GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json GOOGLE_CLOUD_PROJECT=your-project-id closedcode
+</code></pre>
+<p>또는 bash 프로필에 추가:</p>
+<pre><code class="language-bash">export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export VERTEX_LOCATION=global
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-tip">
+`global` 리전은 가용성을 높이고 오류를 줄이며 추가 비용이 없습니다. 데이터 거주 요건이 있는 경우 지역 엔드포인트(예: `us-central1`)를 사용하십시오. [더 알아보기](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models#regional_and_global_endpoints)
+</aside>
+3. `/models` 명령을 실행하여 원하는 모델을 선택하십시오.
+
+<pre><code class="language-txt">/models
+</code></pre>
+<hr>
+<h3>Groq</h3>
+<ol>
+<li><p><a href="https://console.groq.com/">Groq 콘솔</a>로 이동하여 <strong>Create API Key</strong>를 클릭하고 키를 복사합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 Groq를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 원하는 모델을 선택합니다.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Hugging Face</h3>
+<p><a href="https://huggingface.co/docs/inference-providers">Hugging Face Inference Providers</a>는 17개 이상의 공급자가 지원하는 오픈 모델에 대한 액세스를 제공합니다.</p>
+<ol>
+<li><p><a href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained">Hugging Face settings</a>로 이동하여 Inference Providers에 호출할 권한이 있는 토큰을 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Hugging Face</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Hugging Face 토큰을 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Kimi-K2-Instruct</em> 또는 <em>GLM-4.6</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a>는 AI 애플리케이션을 위한 로깅, 모니터링 및 분석 기능을 제공하는 LLM 관찰 가능성(Observability) 플랫폼입니다. Helicone AI Gateway는 모델을 기반으로 적절한 공급자에게 요청을 자동으로 라우팅합니다.</p>
+<ol>
+<li><p><a href="https://helicone.ai">Helicone</a>로 이동하여 계정을 만들고 대시보드에서 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Helicone</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Helicone API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>캐싱 및 속도 제한과 같은 더 많은 공급자와 고급 기능은 <a href="https://docs.helicone.ai">Helicone 문서</a>를 확인하십시오.</p>
+<h4>선택적 구성</h4>
+<p>vanilla-closedcode를 통해 자동으로 구성되지 않는 Helicone의 기능이나 모델이 있는 경우 직접 구성할 수 있습니다.</p>
+<p><a href="https://helicone.ai/models">Helicone의 모델 디렉토리</a>에서 추가하려는 모델의 ID를 확인하십시오.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>사용자 정의 헤더</h4>
+<p>Helicone는 캐싱, 사용자 추적 및 세션 관리와 같은 기능을 위한 사용자 정의 헤더를 지원합니다. <code>options.headers</code>를 사용하여 공급자 구성에 추가하십시오:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>세션 추적</h5>
+<p>Helicone의 <a href="https://docs.helicone.ai/features/sessions">Sessions</a> 기능을 사용하면 관련 LLM 요청을 그룹화할 수 있습니다. <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a> 플러그인을 사용하여 각 vanilla-closedcode 대화를 Helicone 세션으로 자동 기록하십시오.</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>설정에 추가하십시오.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>이 플러그인은 <code>Helicone-Session-Id</code> 및 <code>Helicone-Session-Name</code> 헤더를 요청에 주입합니다. Helicone의 세션 페이지에서 각 vanilla-closedcode 대화가 별도의 세션으로 나열되는 것을 볼 수 있습니다.</p>
+<h5>공통 Helicone 헤더</h5>
+<table>
+<thead>
+<tr>
+<th>헤더</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>응답 캐싱 활성화 (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>사용자별 지표 추적</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>사용자 정의 속성 추가(예: <code>Helicone-Property-Environment</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>요청을 프롬프트 버전과 연관</td>
+</tr>
+</tbody></table>
+<p>사용 가능한 모든 헤더는 <a href="https://docs.helicone.ai/helicone-headers/header-directory">Helicone Header Directory</a>를 참조하십시오.</p>
+<hr>
+<h3>llama.cpp</h3>
+<p><a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a>의 llama-server 유틸리티를 통해 로컬 모델을 사용하도록 구성할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;llama.cpp&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;llama-server (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:8080/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;qwen3-coder:a3b&quot;: {
+          &quot;name&quot;: &quot;Qwen3-Coder: a3b-30b (local)&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 128000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>이 예제에서:</p>
+<ul>
+<li><code>llama.cpp</code>는 사용자 정의 공급자 ID입니다. 원하는 문자열로 지정할 수 있습니다.</li>
+<li><code>npm</code>은 이 공급자에 사용할 패키지를 지정합니다. 여기서는 OpenAI 호환 API를 위해 <code>@ai-sdk/openai-compatible</code>을 사용합니다.</li>
+<li><code>name</code>은 UI에 표시될 공급자 이름입니다.</li>
+<li><code>options.baseURL</code>은 로컬 서버의 엔드포인트입니다.</li>
+<li><code>models</code>는 모델 ID와 해당 구성을 매핑합니다. 모델 이름은 모델 선택 목록에 표시됩니다.</li>
+</ul>
+<hr>
+<h3>IO.NET</h3>
+<p>IO.NET은 다양한 사용 사례에 최적화된 17개의 모델을 제공합니다:</p>
+<ol>
+<li><p><a href="https://ai.io.net/">IO.NET 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>IO.NET</strong>을 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>IO.NET API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>모델을 선택하려면 <code>/models</code> 명령을 실행하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>LM Studio</h3>
+<p>LM Studio를 통해 로컬 모델을 사용하도록 구성할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;lmstudio&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;LM Studio (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1234/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;google/gemma-3n-e4b&quot;: {
+          &quot;name&quot;: &quot;Gemma 3n-e4b (local)&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>이 예제에서:</p>
+<ul>
+<li><code>lmstudio</code>는 사용자 정의 공급자 ID입니다. 원하는 문자열로 지정할 수 있습니다.</li>
+<li><code>npm</code>은 이 공급자에 사용할 패키지를 지정합니다. 여기서는 OpenAI 호환 API를 위해 <code>@ai-sdk/openai-compatible</code>을 사용합니다.</li>
+<li><code>name</code>은 UI에 표시될 공급자 이름입니다.</li>
+<li><code>options.baseURL</code>은 로컬 서버의 엔드포인트입니다.</li>
+<li><code>models</code>는 모델 ID와 해당 구성을 매핑합니다. 모델 이름은 모델 선택 목록에 표시됩니다.</li>
+</ul>
+<hr>
+<h3>Moonshot AI</h3>
+<p>Moonshot AI에서 Kimi K2를 사용하려면:</p>
+<ol>
+<li><p><a href="https://platform.moonshot.ai/console">Moonshot AI 콘솔</a>로 이동하여 계정을 만들고 <strong>Create API key</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Moonshot AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Moonshot API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 <em>Kimi K2</em>를 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>MiniMax</h3>
+<ol>
+<li><p><a href="https://platform.minimax.io/login">MiniMax API 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>MiniMax</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>MiniMax API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>M2.1</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Nebius Token Factory</h3>
+<ol>
+<li><p><a href="https://tokenfactory.nebius.com/">Nebius Token Factory 콘솔</a>로 이동하여 계정을 만들고 <strong>Add Key</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Nebius Token Factory</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Nebius Token Factory API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Kimi K2 Instruct</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Ollama</h3>
+<p>Ollama를 통해 로컬 모델을 사용하도록 구성할 수 있습니다.</p>
+<aside class="aside aside-tip">
+Ollama는 vanilla-closedcode에 대해 자동으로 구성될 수 있습니다. 자세한 내용은 [Ollama 통합 문서](https://docs.ollama.com/integrations/opencode)를 참조하십시오.
+</aside>
+```json title="closedcode.json" "ollama" {5, 6, 8, 10-14}
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "llama2": {
+          "name": "Llama 2"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>이 예제에서:</p>
+<ul>
+<li><code>ollama</code>는 사용자 정의 공급자 ID입니다. 원하는 문자열로 지정할 수 있습니다.</li>
+<li><code>npm</code>은 이 공급자에 사용할 패키지를 지정합니다. 여기서는 OpenAI 호환 API를 위해 <code>@ai-sdk/openai-compatible</code>을 사용합니다.</li>
+<li><code>name</code>은 UI에 표시될 공급자 이름입니다.</li>
+<li><code>options.baseURL</code>은 로컬 서버의 엔드포인트입니다.</li>
+<li><code>models</code>는 모델 ID와 해당 구성을 매핑합니다. 모델 이름은 모델 선택 목록에 표시됩니다.</li>
+</ul>
+<aside class="aside aside-tip">
+도구 호출이 작동하지 않는 경우, Ollama에서 `num_ctx`를 늘려보십시오. 16k - 32k 정도에서 시작하십시오.
+</aside>
+---
+
+<h3>Ollama Cloud</h3>
+<p>vanilla-closedcode로 Ollama Cloud를 사용하려면:</p>
+<ol>
+<li><p><a href="https://ollama.com/">https://ollama.com/</a>으로 이동하여 로그인하거나 계정을 만듭니다.</p>
+</li>
+<li><p><strong>Settings</strong> &gt; <strong>Keys</strong>로 이동하여 <strong>Add API Key</strong>를 클릭해 새 API 키를 생성합니다.</p>
+</li>
+<li><p>vanilla-closedcode에서 사용할 API 키를 복사합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Ollama Cloud</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Ollama Cloud API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><strong>중요</strong>: vanilla-closedcode에서 클라우드 모델을 사용하기 전에, 로컬에서 모델 정보를 가져와야 합니다:</p>
+<pre><code class="language-bash">ollama pull gpt-oss:20b-cloud
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 Ollama Cloud 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OpenAI</h3>
+<p><a href="https://chatgpt.com/pricing">ChatGPT Plus 또는 Pro</a>에 가입하는 것이 좋습니다.</p>
+<ol>
+<li><p>가입 후 <code>/connect</code> 명령을 실행하고 OpenAI를 선택하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p><strong>ChatGPT Plus/Pro</strong> 옵션을 선택하면 브라우저가 열리고 인증을 요청합니다.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ ChatGPT Plus/Pro
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>이제 <code>/models</code> 명령을 사용할 때 모든 OpenAI 모델을 사용할 수 있습니다.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<h5>API 키 사용</h5>
+<p>이미 API 키가 있다면 <strong>Manually enter API Key</strong>를 선택하고 터미널에 붙여넣을 수 있습니다.</p>
+<hr>
+<h3>OpenRouter</h3>
+<ol>
+<li><p><a href="https://openrouter.ai/settings/keys">OpenRouter 대시보드</a>로 이동하여 <strong>Create API Key</strong>를 클릭하고 키를 복사합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 OpenRouter를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>많은 OpenRouter 모델은 기본적으로 미리 로드되어 있으므로 <code>/models</code> 명령을 실행하여 원하는 것을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>vanilla-closedcode 구성을 통해 모델을 추가할 수도 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>또한 vanilla-closedcode 구성을 통해 사용자 정의할 수도 있습니다. 다음은 공급자 순서를 지정하는 예입니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP AI Core</h3>
+<p>SAP AI Core는 OpenAI, Anthropic, Google, Amazon, Meta, Mistral 및 AI21의 40개 이상의 모델에 대한 액세스를 제공합니다.</p>
+<ol>
+<li><p><a href="https://account.hana.ondemand.com/">SAP BTP Cockpit</a>으로 이동하여 SAP AI Core 서비스 인스턴스로 이동하고 서비스 키를 만듭니다.</p>
+<p>:::tip
+서비스 키는 <code>clientid</code>, <code>clientsecret</code>, <code>url</code> 및 <code>serviceurls.AI_API_URL</code>을 포함하는 JSON 객체입니다. <strong>Services</strong> &gt; <strong>Instances and Subscriptions</strong> 아래에서 AI Core 인스턴스를 찾을 수 있습니다.
+:::</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>SAP AI Core</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>서비스 키 JSON을 입력하십시오.</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>또는 <code>AICORE_SERVICE_KEY</code> 환경 변수를 설정합니다:</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>또는 bash 프로필에 추가합니다:</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>선택적으로 배포 ID 및 리소스 그룹을 설정합니다:</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+이 설정은 선택 사항이며 SAP AI Core 설정에 따라 구성해야 합니다.
+:::</p>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 40개 이상의 사용 가능한 모델 중에서 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>STACKIT</h3>
+<p>STACKIT AI Model Serving은 Llama, Mistral, Qwen과 같은 LLM에 초점을 맞추고 유럽 인프라에서 데이터 주권을 최대한 보장하는 완전 관리형 AI 모델 호스팅 환경을 제공합니다.</p>
+<ol>
+<li><p><a href="https://portal.stackit.cloud">STACKIT Portal</a>로 이동하여 <strong>AI Model Serving</strong>으로 이동한 다음 프로젝트의 인증 토큰을 만듭니다.</p>
+<p>:::tip
+인증 토큰을 만들기 전에 STACKIT 고객 계정, 사용자 계정 및 프로젝트가 필요합니다.
+:::</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>STACKIT</strong>을 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>STACKIT AI Model Serving 인증 토큰을 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 <em>Qwen3-VL 235B</em> 또는 <em>Llama 3.3 70B</em>와 같은 사용 가능한 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OVHcloud AI Endpoints</h3>
+<ol>
+<li><p><a href="https://ovh.com/manager">OVHcloud 패널</a>로 이동합니다. <code>Public Cloud</code> 섹션으로 이동하여 <code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code>로 간 뒤 <code>API Keys</code> 탭에서 <strong>Create a new API key</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>OVHcloud AI Endpoints</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>OVHcloud AI Endpoints API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>gpt-oss-120b</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Scaleway</h3>
+<p>vanilla-closedcode로 <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative APIs</a>를 사용하려면:</p>
+<ol>
+<li><p><a href="https://console.scaleway.com/iam/api-keys">Scaleway Console IAM 설정</a>에서 새 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Scaleway</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Scaleway API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>devstral-2-123b-instruct-2512</em> 또는 <em>gpt-oss-120b</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Together AI</h3>
+<ol>
+<li><p><a href="https://api.together.ai">Together AI 콘솔</a>로 이동하여 계정을 만들고 <strong>Add Key</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Together AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Together AI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Kimi K2 Instruct</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Venice AI</h3>
+<ol>
+<li><p><a href="https://venice.ai">Venice AI 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Venice AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Venice AI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Llama 3.3 70B</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Vercel AI Gateway</h3>
+<p>Vercel AI Gateway는 OpenAI, Anthropic, Google, xAI 등의 모델에 액세스할 수 있으며, 통합된 엔드포인트를 통해 더 많은 기능을 제공합니다. 모델은 마크업 없이 정가로 제공됩니다.</p>
+<ol>
+<li><p><a href="https://vercel.com/">Vercel 대시보드</a>로 이동하여 <strong>AI Gateway</strong> 탭으로 간 뒤, <strong>API keys</strong>를 클릭하여 새 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Vercel AI Gateway</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Vercel AI Gateway API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>vanilla-closedcode 구성을 통해 모델을 사용자 정의할 수도 있습니다. 다음은 공급자 라우팅 순서를 지정하는 예입니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>몇 가지 유용한 라우팅 옵션:</p>
+<table>
+<thead>
+<tr>
+<th>옵션</th>
+<th>설명</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>시도할 공급자 순서</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>특정 공급자로 제한</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>데이터 보유 정책이 없는 곳만 사용</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p><a href="https://console.x.ai/">xAI 콘솔</a>로 이동하여 계정을 만들고 API 키를 생성합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>xAI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>xAI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>Grok Beta</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Z.AI</h3>
+<ol>
+<li><p><a href="https://z.ai/manage-apikey/apikey-list">Z.AI API 콘솔</a>로 이동하여 계정을 만들고 <strong>Create a new API key</strong>를 클릭합니다.</p>
+</li>
+<li><p><code>/connect</code> 명령을 실행하고 <strong>Z.AI</strong>를 검색하십시오.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p><strong>GLM Coding Plan</strong>에 가입했다면 <strong>Z.AI Coding Plan</strong>을 선택하십시오.</p>
+</li>
+<li><p>Z.AI API 키를 입력하십시오.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><code>/models</code> 명령을 실행하여 모델(예: <em>GLM-4.7</em>)을 선택하십시오.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>사용자 정의 공급자</h2>
+<p><code>/connect</code> 명령에 나열되지 않은 <strong>OpenAI 호환</strong> 공급자를 추가하려면:</p>
+<aside class="aside aside-tip">
+vanilla-closedcode에서 모든 OpenAI 호환 공급자를 사용할 수 있습니다. 대부분의 최신 AI 공급자는 OpenAI 호환 API를 제공합니다.
+</aside>
+1. `/connect` 명령을 실행하고 **Other**로 스크롤하십시오.
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>공급자를 위한 고유한 ID를 입력하십시오.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::note
+기억하기 쉬운 ID를 선택하십시오. 구성 파일에서 이 ID를 사용하게 됩니다.
+:::</p>
+</li>
+<li><p>공급자의 API 키를 입력하십시오.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>프로젝트 디렉토리에 <code>closedcode.json</code> 파일을 만들거나 업데이트하십시오.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>구성 옵션은 다음과 같습니다:</p>
+<ul>
+<li><strong>npm</strong>: 사용할 AI SDK 패키지. OpenAI 호환 공급자의 경우 <code>@ai-sdk/openai-compatible</code></li>
+<li><strong>name</strong>: UI에 표시될 이름</li>
+<li><strong>models</strong>: 사용 가능한 모델</li>
+<li><strong>options.baseURL</strong>: API 엔드포인트 URL</li>
+<li><strong>options.apiKey</strong>: 인증을 사용하지 않는 경우 선택적으로 API 키 설정</li>
+<li><strong>options.headers</strong>: 선택적으로 사용자 정의 헤더 설정</li>
+</ul>
+<p>고급 옵션에 대한 자세한 내용은 아래 예제를 참조하십시오.</p>
+</li>
+<li><p><code>/models</code> 명령을 실행하면 사용자 정의 공급자와 모델이 선택 목록에 나타납니다.</p>
+</li>
+</ol>
+<hr>
+<h5>예제</h5>
+<p>다음은 <code>apiKey</code>, <code>headers</code> 및 모델 <code>limit</code> 옵션을 설정하는 예입니다.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>구성 세부 사항:</p>
+<ul>
+<li><strong>apiKey</strong>: <code>env</code> 변수 구문을 사용하여 설정, <a href="/docs/config#env-vars">더 알아보기</a>.</li>
+<li><strong>headers</strong>: 각 요청과 함께 전송되는 사용자 정의 헤더.</li>
+<li><strong>limit.context</strong>: 모델이 허용하는 최대 입력 토큰.</li>
+<li><strong>limit.output</strong>: 모델이 생성할 수 있는 최대 출력 토큰.</li>
+</ul>
+<p><code>limit</code> 필드를 사용하면 vanilla-closedcode가 남은 컨텍스트 양을 파악할 수 있습니다. 표준 공급자는 models.dev에서 자동으로 이를 가져옵니다.</p>
+<hr>
+<h2>문제 해결</h2>
+<p>공급자 구성에 문제가 있는 경우 다음을 확인하십시오.</p>
+<ol>
+<li><p><strong>인증 설정 확인</strong>: <code>closedcode auth list</code>를 실행하여 공급자의 자격 증명이 구성에 추가되었는지 확인하십시오.</p>
+<p>Amazon Bedrock과 같이 인증을 위해 환경 변수에 의존하는 공급자에는 적용되지 않습니다.</p>
+</li>
+<li><p>사용자 정의 공급자의 경우, vanilla-closedcode 구성을 확인하고 다음을 수행하십시오:</p>
+<ul>
+<li><code>/connect</code> 명령에 사용된 공급자 ID가 vanilla-closedcode 구성의 ID와 일치하는지 확인하십시오.</li>
+<li>공급자에 올바른 npm 패키지가 사용되었는지 확인하십시오. 예를 들어 Cerebras에는 <code>@ai-sdk/cerebras</code>를 사용하고, 다른 모든 OpenAI 호환 공급자에는 <code>@ai-sdk/openai-compatible</code>을 사용하십시오.</li>
+<li><code>options.baseURL</code> 필드에 올바른 API 엔드포인트가 사용되었는지 확인하십시오.</li>
+</ul>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

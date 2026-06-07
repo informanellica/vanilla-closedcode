@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode 터미널 사용자 인터페이스 사용.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html" selected>한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">vanilla-closedcode 터미널 사용자 인터페이스 사용.</p>
+      <p>vanilla-closedcode는 LLM과 함께 프로젝트 작업을 하기 위한 대화형 터미널 인터페이스(TUI)를 제공합니다.</p>
+<p>vanilla-closedcode를 실행하면 현재 디렉토리에서 TUI가 시작됩니다.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>또는 특정 작업 디렉토리에 대해 시작할 수 있습니다.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>TUI에 들어가면 메시지를 입력하여 프롬프트할 수 있습니다.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>파일 참조</h2>
+<p><code>@</code>를 사용하여 메시지에서 파일을 참조할 수 있습니다. 이것은 현재 작업 디렉토리에서 퍼지(fuzzy) 파일 검색을 수행합니다.</p>
+<aside class="aside aside-tip">
+`@`를 사용하여 메시지에서 파일을 참조할 수 있습니다.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>파일의 내용이 자동으로 대화에 추가됩니다.</p>
+<hr>
+<h2>Bash 명령</h2>
+<p><code>!</code>로 메시지를 시작하여 셸 명령을 실행합니다.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>명령의 출력은 도구 결과로 대화에 추가됩니다.</p>
+<hr>
+<h2>명령</h2>
+<p>vanilla-closedcode TUI를 사용할 때 <code>/</code> 뒤에 명령 이름을 입력하여 작업을 빠르게 실행할 수 있습니다. 예를 들어:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>대부분의 명령에는 기본 리더 키인 <code>ctrl+x</code>를 사용하는 키바인드도 있습니다. <a href="/docs/keybinds">더 알아보기</a>.</p>
+<p>사용 가능한 모든 슬래시 명령은 다음과 같습니다:</p>
+<hr>
+<h3>connect</h3>
+<p>vanilla-closedcode에 공급자를 추가합니다. 사용 가능한 공급자 중에서 선택하고 API 키를 추가할 수 있습니다.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>현재 세션을 압축합니다. <em>별칭</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>도구 실행 세부 정보 토글.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>메시지 작성을 위한 외부 편집기를 엽니다. <code>EDITOR</code> 환경 변수에 설정된 편집기를 사용합니다. <a href="#editor-setup">더 알아보기</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>vanilla-closedcode를 종료합니다. <em>별칭</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>현재 대화를 Markdown으로 내보내고 기본 편집기에서 엽니다. <code>EDITOR</code> 환경 변수에 설정된 편집기를 사용합니다. <a href="#editor-setup">더 알아보기</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>도움말 대화 상자를 표시합니다.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p><code>AGENTS.md</code> 파일을 생성하거나 업데이트합니다. <a href="/docs/rules">더 알아보기</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>사용 가능한 모델 목록을 표시합니다.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>새 세션을 시작합니다. <em>별칭</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>이전에 실행 취소한 메시지를 다시 실행합니다. <code>/undo</code>를 사용한 후에만 사용할 수 있습니다.</p>
+<aside class="aside aside-tip">
+모든 파일 변경 사항도 복원됩니다.
+</aside>
+내부적으로 Git을 사용하여 파일 변경 사항을 관리합니다. 따라서 프로젝트가 **Git 저장소**여야 합니다.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>세션 목록을 표시하고 세션 간을 전환합니다. <em>별칭</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>현재 세션을 공유합니다. <a href="/docs/share">더 알아보기</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>사용 가능한 테마 목록을 표시합니다.</p>
+<pre><code class="language-bash">/themes
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>대화에서 생각/추론 블록의 가시성을 토글합니다. 활성화하면 확장된 사고를 지원하는 모델의 추론 과정을 볼 수 있습니다.</p>
+<aside class="aside aside-note">
+이 명령은 생각 블록이 **표시되는지 여부만 제어**하며 모델의 추론 기능을 활성화하거나 비활성화하지 않습니다. 실제 추론 기능을 토글하려면 `ctrl+t`를 사용하여 모델 변형을 순환하십시오.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>대화의 마지막 메시지를 실행 취소합니다. 가장 최근의 사용자 메시지, 모든 후속 응답 및 모든 파일 변경 사항을 제거합니다.</p>
+<aside class="aside aside-tip">
+모든 파일 변경 사항도 되돌려집니다.
+</aside>
+내부적으로 Git을 사용하여 파일 변경 사항을 관리합니다. 따라서 프로젝트가 **Git 저장소**여야 합니다.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>키바인드:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>현재 세션 공유를 취소합니다. <a href="/docs/share#un-sharing">더 알아보기</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>Editor setup</h2>
+<p><code>/editor</code>와 <code>/export</code> 명령 모두 <code>EDITOR</code> 환경 변수에 지정된 편집기를 사용합니다.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+영구적으로 설정하려면 셸 프로필(`~/.bashrc`, `~/.zshrc` 등)에 추가하십시오.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+영구적으로 설정하려면 **시스템 속성** &gt; **환경 변수**를 사용하십시오.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+영구적으로 설정하려면 PowerShell 프로필에 추가하십시오.
+</code></pre>
+</div>
+</div>
+
+<p>인기 있는 편집기 옵션은 다음과 같습니다:</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim editor</li>
+<li><code>vim</code> - Vim editor</li>
+<li><code>nano</code> - Nano editor</li>
+<li><code>notepad</code> - Windows Notepad</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+VS Code와 같은 일부 편집기는 `--wait` 플래그와 함께 시작해야 합니다.
+</aside>
+일부 편집기는 차단 모드에서 실행하려면 명령줄 인수가 필요합니다. `--wait` 플래그는 편집기 프로세스가 닫힐 때까지 차단되도록 합니다.
+
+<hr>
+<h2>구성</h2>
+<p><code>tui.json</code> (또는 <code>tui.jsonc</code>) 파일을 통해 TUI 동작을 사용자 정의할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>이는 서버/런타임 동작을 구성하는 <code>closedcode.json</code>과는 별개입니다.</p>
+<h3>옵션</h3>
+<ul>
+<li><code>theme</code> - UI 테마를 설정합니다. <a href="/docs/themes">더 알아보기</a>.</li>
+<li><code>keybinds</code> - 키보드 단축키를 사용자 정의합니다. <a href="/docs/keybinds">더 알아보기</a>.</li>
+<li><code>scroll_acceleration.enabled</code> - 부드럽고 자연스러운 스크롤을 위해 macOS 스타일의 스크롤 가속을 활성화합니다. 활성화하면 빠른 스크롤 제스처로 스크롤 속도가 증가하고 느린 움직임에서는 정밀하게 유지됩니다. <strong>이 설정은 <code>scroll_speed</code>보다 우선하며 활성화 시 이를 덮어씁니다.</strong></li>
+<li><code>scroll_speed</code> - 스크롤 명령을 사용할 때 TUI 스크롤 속도를 제어합니다 (최소: <code>0.001</code>, 소수점 값 지원). 기본값은 <code>3</code>입니다. <strong>참고: <code>scroll_acceleration.enabled</code>가 <code>true</code>로 설정되면 무시됩니다.</strong></li>
+<li><code>diff_style</code> - diff 렌더링 방식을 제어합니다. <code>&quot;auto&quot;</code>는 터미널 너비에 적응하고, <code>&quot;stacked&quot;</code>는 항상 단일 열 레이아웃을 표시합니다.</li>
+</ul>
+<p><code>CLOSEDCODE_TUI_CONFIG</code>를 사용하여 사용자 정의 TUI 설정 경로를 로드할 수 있습니다.</p>
+<hr>
+<h2>사용자 정의</h2>
+<p>명령 팔레트(<code>ctrl+x h</code> 또는 <code>/help</code>)를 사용하여 TUI 보기의 다양한 측면을 사용자 정의할 수 있습니다. 설정은 다시 시작해도 유지됩니다.</p>
+<hr>
+<h4>사용자 이름 표시</h4>
+<p>채팅 메시지에 사용자 이름이 표시되는지 여부를 토글합니다. 다음을 통해 액세스:</p>
+<ul>
+<li>명령 팔레트: &quot;username&quot; 또는 &quot;hide username&quot; 검색</li>
+<li>설정은 자동으로 유지되며 TUI 세션 간에 기억됩니다.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

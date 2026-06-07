@@ -1,0 +1,169 @@
+import { EOL } from "os";
+import { basename } from "path";
+import { Effect } from "effect";
+import { Agent } from "../../../agent/agent.js";
+import { Provider } from "@/provider/provider.js";
+import { Session } from "@/session/session.js";
+import { MessageID, PartID } from "../../../session/schema.js";
+import { ToolRegistry } from "@/tool/registry.js";
+import { Permission } from "../../../permission/index.js";
+import { iife } from "../../../util/iife.js";
+import { effectCmd, fail } from "../../effect-cmd.js";
+import { InstanceRef } from "@/effect/instance-ref.js";
+export const AgentCommand = effectCmd({
+  command: "agent <name>",
+  describe: "show agent configuration details",
+  builder: yargs => yargs.positional("name", {
+    type: "string",
+    demandOption: true,
+    description: "Agent name"
+  }).option("tool", {
+    type: "string",
+    description: "Tool id to execute"
+  }).option("params", {
+    type: "string",
+    description: "Tool params as JSON or a JS object literal"
+  }),
+  handler: Effect.fn("Cli.debug.agent")(function* (args) {
+    const ctx = yield* InstanceRef;
+    if (!ctx) return;
+    return yield* run(args, ctx);
+  })
+});
+const run = Effect.fn("Cli.debug.agent.body")(function* (args, ctx) {
+  const agentName = args.name;
+  const agent = yield* Agent.Service.use(svc => svc.get(agentName));
+  if (!agent) {
+    process.stderr.write(`Agent ${agentName} not found, run '${basename(process.execPath)} agent list' to get an agent list` + EOL);
+    return yield* fail("", 1);
+  }
+  const availableTools = yield* getAvailableTools(agent);
+  const resolvedTools = resolveTools(agent, availableTools);
+  const toolID = args.tool;
+  if (toolID) {
+    const tool = availableTools.find(item => item.id === toolID);
+    if (!tool) {
+      process.stderr.write(`Tool ${toolID} not found for agent ${agentName}` + EOL);
+      return yield* fail("", 1);
+    }
+    if (resolvedTools[toolID] === false) {
+      process.stderr.write(`Tool ${toolID} is disabled for agent ${agentName}` + EOL);
+      return yield* fail("", 1);
+    }
+    const params = parseToolParams(args.params);
+    const toolCtx = yield* createToolContext(agent, ctx);
+    const result = yield* tool.execute(params, toolCtx);
+    process.stdout.write(JSON.stringify({
+      tool: toolID,
+      input: params,
+      result
+    }, null, 2) + EOL);
+    return;
+  }
+  const output = {
+    ...agent,
+    tools: resolvedTools
+  };
+  process.stdout.write(JSON.stringify(output, null, 2) + EOL);
+});
+const getAvailableTools = Effect.fn("Cli.debug.agent.getAvailableTools")(function* (agent) {
+  const provider = yield* Provider.Service;
+  const registry = yield* ToolRegistry.Service;
+  const model = agent.model ?? (yield* provider.defaultModel());
+  return yield* registry.tools({
+    ...model,
+    agent
+  });
+});
+function resolveTools(agent, availableTools) {
+  const disabled = Permission.disabled(availableTools.map(tool => tool.id), agent.permission);
+  const resolved = {};
+  for (const tool of availableTools) {
+    resolved[tool.id] = !disabled.has(tool.id);
+  }
+  return resolved;
+}
+function parseToolParams(input) {
+  if (!input) return {};
+  const trimmed = input.trim();
+  if (trimmed.length === 0) return {};
+  const parsed = iife(() => {
+    try {
+      return JSON.parse(trimmed);
+    } catch (jsonError) {
+      try {
+        return new Function(`return (${trimmed})`)();
+      } catch (evalError) {
+        throw new Error(`Failed to parse --params. Use JSON or a JS object literal. JSON error: ${jsonError}. Eval error: ${evalError}.`, {
+          cause: evalError
+        });
+      }
+    }
+  });
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    throw new Error("Tool params must be an object.");
+  }
+  return parsed;
+}
+const createToolContext = Effect.fn("Cli.debug.agent.createToolContext")(function* (agent, ctx) {
+  const sessionSvc = yield* Session.Service;
+  const session = yield* sessionSvc.create({
+    title: `Debug tool run (${agent.name})`
+  });
+  const messageID = MessageID.ascending();
+  const model = agent.model ? agent.model : yield* Effect.gen(function* () {
+    const provider = yield* Provider.Service;
+    return yield* provider.defaultModel();
+  });
+  const now = Date.now();
+  const message = {
+    id: messageID,
+    sessionID: session.id,
+    role: "assistant",
+    time: {
+      created: now
+    },
+    parentID: messageID,
+    modelID: model.modelID,
+    providerID: model.providerID,
+    mode: "debug",
+    agent: agent.name,
+    path: {
+      cwd: ctx.directory,
+      root: ctx.worktree
+    },
+    cost: 0,
+    tokens: {
+      input: 0,
+      output: 0,
+      reasoning: 0,
+      cache: {
+        read: 0,
+        write: 0
+      }
+    }
+  };
+  yield* sessionSvc.updateMessage(message);
+  const ruleset = Permission.merge(agent.permission, session.permission ?? []);
+  return {
+    sessionID: session.id,
+    messageID,
+    callID: PartID.ascending(),
+    agent: agent.name,
+    abort: new AbortController().signal,
+    messages: [],
+    metadata: () => Effect.void,
+    ask(req) {
+      return Effect.sync(() => {
+        for (const pattern of req.patterns) {
+          const rule = Permission.evaluate(req.permission, pattern, ruleset);
+          if (rule.action === "deny") {
+            throw new Permission.DeniedError({
+              ruleset
+            });
+          }
+        }
+      });
+    }
+  };
+});

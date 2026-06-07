@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en" data-title-key="page_title">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>vanilla-closedcode — a local-LLM-only desktop coding assistant</title>
+  <meta name="description" data-i18n-content="meta_desc" content="vanilla-closedcode — a local-LLM-only desktop coding assistant. Your code and prompts never leave your machine.">
+  <link rel="icon" href="./assets/img/icon.png">
+  <link href="./assets/vendor/bootstrap/bootstrap.min.css" rel="stylesheet">
+  <link href="./assets/vendor/bootstrap/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="./assets/css/landing.css" rel="stylesheet">
+  <style>
+    /* Terminal-style mock (screenshot placeholder) */
+    .term-mock {
+      background: #1e1e2e;
+      border-radius: 8px;
+      box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .35);
+      overflow: hidden;
+      font-family: "Cascadia Code", "Consolas", ui-monospace, monospace;
+    }
+    .term-mock .term-bar {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .5rem .75rem;
+      background: #2a2a3c;
+    }
+    .term-mock .term-bar .dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; }
+    .term-mock .term-bar .dot-r { background: #ff5f56; }
+    .term-mock .term-bar .dot-y { background: #ffbd2e; }
+    .term-mock .term-bar .dot-g { background: #27c93f; }
+    .term-mock .term-bar .term-title { color: #9aa0b5; font-size: .8rem; margin-left: .5rem; }
+    .term-mock .term-body { padding: 1rem 1.1rem; color: #cdd6f4; font-size: .9rem; line-height: 1.6; }
+    .term-mock .term-body .p { color: #89dceb; }
+    .term-mock .term-body .u { color: #a6e3a1; }
+    .term-mock .term-body .c { color: #f9e2af; }
+    .term-mock .term-body .m { color: #94a3b8; }
+    .term-mock .term-body .cur { background: #cdd6f4; color: #1e1e2e; }
+  </style>
+</head>
+
+<body>
+<header>
+  <div class="navbar navbar-dark bg-dark shadow-sm">
+    <div class="container">
+      <a href="./" class="navbar-brand d-flex align-items-center">
+        <img src="./assets/img/icon.png" alt="" width="22" height="22" class="me-2">
+        <strong>vanilla-closedcode</strong>
+      </a>
+      <div class="d-flex align-items-center">
+        <span id="lang-switcher" class="me-3"></span>
+        <a href="./src/en/" class="text-light text-decoration-none small me-3">
+          <i class="bi bi-file-code me-1"></i><span data-i18n="nav_apidocs">API Docs</span>
+        </a>
+        <a href="https://github.com/informanellica/vanilla-closedcode/releases" class="text-light text-decoration-none small me-3">
+          <i class="bi bi-clock-history me-1"></i><span data-i18n="nav_releases">Releases</span>
+        </a>
+        <a href="https://discord.gg/6bvnqcH3" class="text-light text-decoration-none small me-3">
+          <i class="bi bi-discord me-1"></i>Discord
+        </a>
+        <a href="https://github.com/informanellica/vanilla-closedcode" class="text-light text-decoration-none small">
+          <i class="bi bi-github me-1"></i>GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="py-5 bg-body-tertiary border-bottom">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div class="d-flex align-items-center mb-3">
+          <img src="./assets/img/icon.png" alt="" width="56" height="56" class="me-3">
+          <div>
+            <h1 class="mb-0">vanilla-closedcode</h1>
+            <p class="text-body-secondary mb-0" data-i18n="hero_tagline">
+              a local-LLM-only desktop coding assistant
+            </p>
+          </div>
+        </div>
+        <p class="lead" data-i18n-html="hero_lead">
+          vanilla-closedcode is a desktop coding assistant that runs entirely against
+          your <strong>local LLM</strong>. Your code, prompts, and project context never
+          leave your machine — no cloud API keys, no remote inference, no telemetry.
+        </p>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="https://github.com/informanellica/vanilla-closedcode/releases"
+             class="btn btn-primary btn-lg">
+            <i class="bi bi-download me-1"></i><span data-i18n="btn_download">Download</span>
+          </a>
+          <a href="./src/en/" class="btn btn-outline-secondary btn-lg">
+            <i class="bi bi-file-code me-1"></i><span data-i18n="btn_apidocs">API Documentation</span>
+          </a>
+        </div>
+        <p class="text-body-secondary small mt-2 mb-0" data-i18n-html="hero_badges">
+          <i class="bi bi-shield-lock me-1"></i>100% local inference
+          <span class="mx-1">/</span>
+          <i class="bi bi-laptop me-1"></i>Desktop app + CLI
+        </p>
+      </div>
+      <div class="col-lg-6 mt-4 mt-lg-0">
+        <img src="./assets/img/editor-chat.png"
+             alt="vanilla-closedcode desktop app: file explorer, code editor, an AI chat driven by a local model (gpt-oss), and a git changes panel"
+             class="img-fluid rounded shadow-sm border">
+      </div>
+    </div>
+
+    <!-- Share -->
+    <section class="share-row mt-4">
+      <span class="share-label">Share this page</span>
+      <a id="share-x" class="share-btn share-x" target="_blank" rel="noopener" title="Share on X (Twitter)" aria-label="Share on X">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865z"/>
+        </svg>
+      </a>
+      <a id="share-fb" class="share-btn share-fb" target="_blank" rel="noopener" title="Share on Facebook" aria-label="Share on Facebook">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M16 8.049c0-4.446-3.582-8.05-8-8.05C3.58 0-.002 3.603-.002 8.05c0 4.017 2.926 7.347 6.75 7.951v-5.625h-2.03V8.05H6.75V6.275c0-2.017 1.195-3.131 3.022-3.131.876 0 1.791.157 1.791.157v1.98h-1.009c-.993 0-1.303.621-1.303 1.258v1.51h2.218l-.354 2.326H9.25V16c3.824-.604 6.75-3.934 6.75-7.951"/>
+        </svg>
+      </a>
+      <a id="share-line" class="share-btn share-line" target="_blank" rel="noopener" title="Share on LINE" aria-label="Share on LINE">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M8 0c4.411 0 8 2.912 8 6.492 0 1.433-.555 2.723-1.715 3.994-1.678 1.932-5.431 4.285-6.285 4.645-.83.35-.734-.197-.696-.413l.003-.018.114-.685c.027-.204.055-.521-.026-.723-.09-.223-.444-.339-.704-.395C2.846 12.39 0 9.701 0 6.492 0 2.912 3.59 0 8 0M5.022 7.686H3.497V4.918a.156.156 0 0 0-.155-.156H2.78a.156.156 0 0 0-.156.156v3.486c0 .041.017.08.044.107v.001l.002.002.002.002a.15.15 0 0 0 .108.043h2.242c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157m.791-2.924a.156.156 0 0 0-.156.156v3.486c0 .086.07.155.156.155h.562c.086 0 .155-.07.155-.155V4.918a.156.156 0 0 0-.155-.156zm3.863 0a.156.156 0 0 0-.156.156v2.07L7.923 4.832l-.013-.015v-.001l-.01-.01-.003-.003-.011-.009h-.001L7.88 4.79l-.003-.002-.005-.003-.008-.005h-.002l-.003-.002-.01-.004-.004-.002-.01-.003h-.002l-.003-.001-.009-.002h-.006l-.003-.001h-.004l-.002-.001h-.574a.156.156 0 0 0-.156.155v3.486c0 .086.07.155.156.155h.56c.087 0 .157-.07.157-.155v-2.07l1.6 2.16a.2.2 0 0 0 .039.038l.001.001.01.006.004.002.008.004.007.003.005.002.01.003h.003a.2.2 0 0 0 .04.006h.56c.087 0 .157-.07.157-.155V4.918a.156.156 0 0 0-.156-.156zm3.815.717v-.56a.156.156 0 0 0-.155-.157h-2.242a.16.16 0 0 0-.108.044h-.001l-.001.002-.002.003a.16.16 0 0 0-.044.107v3.486c0 .041.017.08.044.107l.002.003.002.002a.16.16 0 0 0 .108.043h2.242c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157H11.81v-.589h1.525c.086 0 .155-.07.155-.156v-.56a.156.156 0 0 0-.155-.157H11.81v-.589h1.525c.086 0 .155-.07.155-.156Z"/>
+        </svg>
+      </a>
+      <a id="share-email" class="share-btn share-email" title="Share by email" aria-label="Share by email">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M.05 3.555A2 2 0 0 1 2 2h12a2 2 0 0 1 1.95 1.555L8 8.414zM0 4.697v7.104l5.803-3.558zM6.761 8.83l-6.57 4.027A2 2 0 0 0 2 14h12a2 2 0 0 0 1.808-1.144l-6.57-4.027L8 9.586zm3.436-.586L16 11.801V4.697z"/>
+        </svg>
+      </a>
+      <button id="share-copy" class="share-btn share-copy" type="button" title="Copy URL" aria-label="Copy URL">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
+          <path d="M4 1.5H3a2 2 0 0 0-2 2V14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V3.5a2 2 0 0 0-2-2h-1v1h1a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1h1z"/>
+          <path d="M9.5 1a.5.5 0 0 1 .5.5v1a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1-.5-.5v-1a.5.5 0 0 1 .5-.5zm-3-1A1.5 1.5 0 0 0 5 1.5v1A1.5 1.5 0 0 0 6.5 4h3A1.5 1.5 0 0 0 11 2.5v-1A1.5 1.5 0 0 0 9.5 0z"/>
+        </svg>
+      </button>
+    </section>
+  </div>
+</section>
+
+<main class="container py-5 doc-body">
+
+  <h2 data-i18n="sec_highlights">Highlights</h2>
+  <div class="row g-3 mt-3">
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-shield-lock fs-3 text-primary me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl1_t">Local-LLM-only by design</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n="hl1_d">
+            All inference runs against a model on your own machine or LAN. No cloud
+            providers, no API keys, no telemetry of your code or prompts.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-window-stack fs-3 text-warning me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl2_t">Desktop app + CLI</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n-html="hl2_d">
+            Use the <code>closedcode</code> command-line agent or the desktop app —
+            both share the same core engine.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-pencil-square fs-3 text-success me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl3_t">Edits, runs, and reviews code</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n="hl3_d">
+            Reads your project, proposes and applies edits across files, and runs
+            tools — with you in the loop for every change.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-diagram-3 fs-3 text-danger me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl4_t">Modular monorepo</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n="hl4_d">
+            Built as composable packages (core, SDK, app, CLI) so you can embed or
+            extend the agent in your own tooling.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-plug fs-3 text-info me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl5_t">Bring your own model</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n="hl5_d">
+            Point it at any OpenAI-compatible endpoint — Ollama, LM Studio,
+            llama.cpp, or your own server. No vendor lock-in.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="d-flex">
+        <i class="bi bi-translate fs-3 text-secondary me-3"></i>
+        <div>
+          <h5 class="mb-1" data-i18n="hl6_t">English / Japanese docs</h5>
+          <p class="text-body-secondary mb-0 small" data-i18n-html="hl6_d">
+            API documentation is published in both
+            <a href="./src/en/">English</a> and <a href="./src/ja/">Japanese</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 data-i18n="sec_download">Download</h2>
+  <p data-i18n="dl_p">
+    Builds are published on the GitHub Releases page. Grab the installer for your
+    platform from the latest release.
+  </p>
+  <p>
+    <a href="https://github.com/informanellica/vanilla-closedcode/releases"
+       class="btn btn-primary">
+      <i class="bi bi-download me-1"></i><span data-i18n="btn_releases">Go to Releases</span>
+    </a>
+  </p>
+  <ul>
+    <li data-i18n-html="dl_li1"><strong>Windows</strong> (64-bit) — installer <code>.exe</code> — available now (preview).</li>
+    <li data-i18n-html="dl_li2"><strong>macOS</strong> (Apple Silicon / arm64) — <code>.dmg</code> — included in this preview.</li>
+    <li data-i18n="dl_li3">A local LLM runtime (for example an Ollama / llama.cpp compatible endpoint) is required for inference.</li>
+  </ul>
+
+  <h2 data-i18n="sec_getstarted">Getting started</h2>
+  <ol>
+    <li data-i18n-html="gs1">Download and install vanilla-closedcode from the
+        <a href="https://github.com/informanellica/vanilla-closedcode/releases">Releases page</a>.</li>
+    <li data-i18n="gs2">Point it at your local model endpoint in the settings (no cloud keys needed).</li>
+    <li data-i18n-html="gs3">Open your project folder, then chat with the agent or run the
+        <code>closedcode</code> CLI from a terminal.</li>
+    <li data-i18n="gs4">Review and accept the proposed edits — nothing is sent to a remote server.</li>
+  </ol>
+
+  <h2 data-i18n="sec_docs">Documentation</h2>
+  <p data-i18n="docs_p">
+    JSDoc-generated API documentation for the source is published in two languages:
+  </p>
+  <ul>
+    <li data-i18n-html="docs_li1"><a href="./src/en/">API documentation (English)</a></li>
+    <li data-i18n-html="docs_li2"><a href="./src/ja/">API documentation (Japanese)</a></li>
+  </ul>
+  <p data-i18n-html="docs_manual">
+    See the <a href="./manual.html">user manual</a> for usage guides and configuration.
+  </p>
+
+  <h2 data-i18n="sec_support">Support</h2>
+  <p data-i18n-html="support_p">
+    Join the <a href="https://discord.gg/6bvnqcH3">community Discord</a> for help and discussion.
+    Questions, bug reports, and feature requests are also welcome on the
+    <a href="https://github.com/informanellica/vanilla-closedcode/issues">GitHub issue tracker</a>,
+    or contact <a href="mailto:support@informanellica.com">support@informanellica.com</a>.
+  </p>
+
+</main>
+
+<footer class="text-body-secondary py-4 border-top mt-5">
+  <div class="container small">
+    <p class="mb-1">© Informanellica</p>
+    <p class="mb-0">
+      <a href="https://informanellica.github.io/" class="text-body-secondary" data-i18n="footer_album">← Software Album</a>
+      ・<a href="./src/en/" class="text-body-secondary" data-i18n="footer_apidocs">API Docs</a>
+      ・<a href="mailto:support@informanellica.com" class="text-body-secondary" data-i18n="footer_support">Support</a>
+    </p>
+  </div>
+</footer>
+
+<script src="./assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
+<script src="./assets/js/i18n.js"></script>
+<script>
+  // Share link setup
+  (function () {
+    var url = location.href;
+    var shareText = 'vanilla-closedcode — a local-LLM-only desktop coding assistant\nYour code and prompts never leave your machine.';
+    var x = document.getElementById('share-x');
+    var fb = document.getElementById('share-fb');
+    var line = document.getElementById('share-line');
+    var email = document.getElementById('share-email');
+    var copyBtn = document.getElementById('share-copy');
+    if (x) x.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText) + '&url=' + encodeURIComponent(url);
+    if (fb) fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+    if (line) line.href = 'https://social-plugins.line.me/lineit/share?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(shareText);
+    if (email) email.href = 'mailto:?subject=' + encodeURIComponent('vanilla-closedcode') + '&body=' + encodeURIComponent(shareText + '\n\n' + url + '\n');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function () {
+        var done = function () {
+          var orig = copyBtn.title;
+          copyBtn.classList.add('copied');
+          copyBtn.title = 'Copied';
+          setTimeout(function () {
+            copyBtn.classList.remove('copied');
+            copyBtn.title = orig;
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(done, done);
+        } else {
+          done();
+        }
+      });
+    }
+  })();
+</script>
+</body>
+</html>

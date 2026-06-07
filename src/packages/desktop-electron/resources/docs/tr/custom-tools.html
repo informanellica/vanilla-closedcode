@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Özel Araçlar — vanilla-closedcode docs</title>
+  <meta name="description" content="LLM&#39;un closedcode&#39;da çağırabileceği araçları birleştirebilir.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html" selected>Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Özel Araçlar</h1>
+      <p class="lede">LLM&#39;un closedcode&#39;da çağırabileceği araçları birleştirebilir.</p>
+      <p>Özel araçlar, LLM&#39;un konuşmalar sırasında arayabileceği, oluşturduğunuz işlevlerdir. closedcode&#39;un <a href="/docs/tools">built-in tools</a> ile birlikte <code>read</code>, <code>write</code> ve <code>bash</code> gibi çalışırlar.</p>
+<hr>
+<h2>Araç oluşturma</h2>
+<p>Araçlar <strong>TypeScript</strong> veya <strong>JavaScript</strong> dosyaları olarak tanımlanır. Ancak araç tanımı <strong>herhangi bir dilde</strong> yazılmış komut dosyalarını çağırabilir; TypeScript veya JavaScript yalnızca araç tanımının kendisi için kullanılır.</p>
+<hr>
+<h3>Konum</h3>
+<p>Bunlar tanımlanabilir:</p>
+<ul>
+<li>Yerel olarak bunları projenizin <code>.closedcode/tools/</code> dizinine yerleştirerek.</li>
+<li>Veya küresel olarak bunları <code>~/.config/closedcode/tools/</code> içine yerleştirerek.</li>
+</ul>
+<hr>
+<h3>Yapı</h3>
+<p>Araç oluşturmanın en kolay yolu, tür güvenliği ve doğrulama sağlayan <code>tool()</code> yardımcısını kullanmaktır.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p><strong>dosya adı</strong>, <strong>araç adı</strong> olur. Yukarıdakiler bir <code>database</code> aracı oluşturur.</p>
+<hr>
+<h4>Dosya başına birden fazla araç</h4>
+<p>Ayrıca tek bir dosyadan birden fazla aracı dışa aktarabilirsiniz. Her dışa aktarma, <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong> adıyla <strong>ayrı bir araç</strong> haline gelir:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>Bu iki araç oluşturur: <code>math_add</code> ve <code>math_multiply</code>.</p>
+<hr>
+<h4>Yerleşik araçlarla ad çakışmaları</h4>
+<p>Özel araçlar, araç adına göre anahtarlanır. Özel bir araç yerleşik bir araçla aynı adı kullanıyorsa, özel araç önceliklidir.</p>
+<p>Örneğin, bu dosya yerleşik <code>bash</code> aracının yerini alır:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+Kasıtlı olarak yerleşik bir aracı değiştirmek istemiyorsanız benzersiz adları tercih edin. Yerleşik bir aracı devre dışı bırakmak ancak geçersiz kılmak istemiyorsanız [izinleri](/docs/permissions) kullanın.
+</aside>
+---
+
+<h3>Argümanlar</h3>
+<p>Bağımsız değişken türlerini tanımlamak için yalnızca <a href="https://zod.dev">Zod</a> olan <code>tool.schema</code> öğesini kullanabilirsiniz.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>Ayrıca <a href="https://zod.dev">Zod</a> öğesini doğrudan içe aktarabilir ve düz bir nesne döndürebilirsiniz:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Bağlam</h3>
+<p>Araçlar geçerli oturumla ilgili bağlamı alır:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>Oturum çalışma dizisi için <code>context.directory</code> kullanın.
+Git çalışma ağacı kökü için <code>context.worktree</code> kullanın.</p>
+<hr>
+<h2>Örnekler</h2>
+<h3>Python ile araç yazma</h3>
+<p>Araçlarınızı dilediğiniz dilde yazabilirsiniz. İşte Python kullanarak iki sayıyı toplayan bir örnek.</p>
+<p>Öncelikle aracı bir Python betiği olarak oluşturun:</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>Ardından onu çağıran araç tanımını oluşturun:</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>Burada Python betiğini çalıştırmak için <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> yardımcı programını kullanıyoruz.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

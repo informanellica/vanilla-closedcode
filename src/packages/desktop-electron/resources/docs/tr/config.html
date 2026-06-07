@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Yapılandırma — vanilla-closedcode docs</title>
+  <meta name="description" content="closedcode JSON yapılandırması kullanır.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html" selected>Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Yapılandırma</h1>
+      <p class="lede">closedcode JSON yapılandırması kullanır.</p>
+      <p>closedcode&#39;u JSON yapılandırma dosyası kullanarak yapılandırabilirsiniz.</p>
+<hr>
+<h2>Format</h2>
+<p>closedcode hem <strong>JSON</strong> hem de <strong>JSONC</strong> (JSON Yorumlarla birlikte) formatlarını destekler.</p>
+<pre><code class="language-jsonc">{
+  // Theme configuration
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+}
+</code></pre>
+<hr>
+<h2>Konumlar</h2>
+<p>Yapılandırmanızı birkaç farklı konuma yerleştirebilirsiniz ve bunların
+farklı öncelik sırası vardır.</p>
+<aside class="aside aside-note">
+Yapılandırma dosyaları **birleştirilir**, değiştirilmez.
+</aside>
+Yapılandırma dosyaları değiştirilmez, birleştirilir. Aşağıdaki yapılandırma konumlarındaki ayarlar birleştirilir. Daha sonraki yapılandırmalar, yalnızca çakışan anahtarlar için önceki yapılandırmaları geçersiz kılar. Tüm yapılandırmalardaki çakışmayan ayarlar korunur.
+
+<p>Örneğin, genel ayarınız <code>theme: &quot;closedcode&quot;</code> ve <code>autoupdate: true</code>&#39;yi ayarlıyorsa ve proje ayarlarınız <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>&#39;yi ayarlıyorsa, nihai yapılandırma üç ayarı da içerecektir.</p>
+<hr>
+<h3>Öncelik sırası</h3>
+<p>Yapılandırma kaynakları bu sırayla yüklenir (sonraki kaynaklar öncekileri geçersiz kılar):</p>
+<ol>
+<li><strong>Genel yapılandırma</strong> (<code>~/.config/closedcode/closedcode.json</code>) - kullanıcı tercihleri</li>
+<li><strong>Özel yapılandırma</strong> (<code>CLOSEDCODE_CONFIG</code> env var) - özel geçersiz kılmalar</li>
+<li><strong>Proje yapılandırması</strong> (projedeki <code>closedcode.json</code>) - projeye özgü ayarlar</li>
+<li><strong><code>.closedcode</code> dizinleri</strong> - agent&#39;lar, komutlar, eklentiler</li>
+<li><strong>Satır içi yapılandırma</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> env var) - çalışma zamanı geçersiz kılmaları</li>
+</ol>
+<p>Bu, proje yapılandırmalarının genel varsayılanları geçersiz kılabileceği ve genel yapılandırmaların uzak organizasyonel varsayılanları geçersiz kılabileceği anlamına gelir.</p>
+<aside class="aside aside-note">
+`.closedcode` ve `~/.config/closedcode` dizinleri alt dizinler için **çoğul adlar** kullanır: `agents/`, `commands/`, `modes/`, `plugins/`, `skills/`, `tools/` ve `themes/`. Tekil adlar (örneğin, `agent/`) da geriye dönük uyumluluk açısından desteklenir.
+</aside>
+---
+
+
+<h3>Global</h3>
+<p>Global closedcode yapılandırmanızı <code>~/.config/closedcode/closedcode.json</code> içine yerleştirin. Temalar, sağlayıcılar veya tuş atamaları gibi kullanıcı çapındaki tercihler için genel yapılandırmayı kullanın.</p>
+<p>Genel yapılandırma, uzak kurumsal varsayılanları geçersiz kılar.</p>
+<hr>
+<h3>Proje başına</h3>
+<p>Proje kökünüze <code>closedcode.json</code> ekleyin. Proje yapılandırması, standart yapılandırma dosyaları arasında en yüksek önceliğe sahiptir; hem genel hem de uzak yapılandırmaları geçersiz kılar.</p>
+<aside class="aside aside-tip">
+Projeye özel yapılandırmayı projenizin köküne yerleştirin.
+</aside>
+closedcode başlatıldığında geçerli dizinde bir yapılandırma dosyası arar veya en yakın Git dizinine gider.
+
+<p>Bunun Git&#39;te kontrol edilmesi de güvenlidir ve global olanla aynı şemayı kullanır.</p>
+<hr>
+<h3>Özel yol</h3>
+<p><code>CLOSEDCODE_CONFIG</code> ortam değişkenini kullanarak özel bir yapılandırma dosyası yolu belirtin.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Özel yapılandırma genel ve proje yapılandırmaları arasında öncelik sırasına göre yüklenir.</p>
+<hr>
+<h3>Özel dizin</h3>
+<p><code>CLOSEDCODE_CONFIG_DIR</code> kullanarak özel bir yapılandırma dizini belirtin
+ortam değişkeni. Bu dizin agent&#39;lar, komutlar için aranacaktır.
+modlar ve eklentiler tıpkı standart <code>.closedcode</code> dizini gibi olmalıdır ve
+aynı yapıyı takip edin.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Özel dizin, genel yapılandırma ve <code>.closedcode</code> dizinlerinden sonra yüklenir, böylece bunların ayarlarını <strong>geçersiz kılabilir</strong>.</p>
+<hr>
+<h2>Şema</h2>
+<p>Yapılandırma dosyası <strong><code>config.json</code></strong>&#39;da tanımlanan bir şemaya sahiptir.</p>
+<p>Editörünüz şemaya göre doğrulama ve otomatik tamamlama yapabilmelidir.</p>
+<hr>
+<h3>TUI</h3>
+<p>TUI&#39;ye özgü ayarları <code>tui</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    },
+    &quot;diff_style&quot;: &quot;auto&quot;
+  }
+}
+</code></pre>
+<p>Mevcut seçenekler:</p>
+<ul>
+<li><code>scroll_acceleration.enabled</code> - MacOS tarzı kaydırma hızlandırmayı etkinleştirin. <strong><code>scroll_speed</code>&#39;ye göre önceliklidir.</strong></li>
+<li><code>scroll_speed</code> - Özel kaydırma hızı çarpanı (varsayılan: <code>3</code>, minimum: <code>1</code>). <code>scroll_acceleration.enabled</code> <code>true</code> ise dikkate alınmaz.</li>
+<li><code>diff_style</code> - Fark oluşturmayı kontrol edin. <code>&quot;auto&quot;</code> terminal genişliğine uyum sağlar, <code>&quot;stacked&quot;</code> her zaman tek sütunu gösterir.</li>
+</ul>
+<p><a href="/docs/tui">TUI kullanımı hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>Sunucu</h3>
+<p><code>closedcode serve</code> ve <code>closedcode web</code> komutları için sunucu ayarlarını <code>server</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>Mevcut seçenekler:</p>
+<ul>
+<li><code>port</code> - Dinlenecek port.</li>
+<li><code>hostname</code> - Dinlenecek ana bilgisayar adı. <code>mdns</code> etkinleştirildiğinde ve hiçbir ana bilgisayar adı ayarlanmadığında, varsayılan değer <code>0.0.0.0</code> olur.</li>
+<li><code>mdns</code> - mDNS hizmet bulmayı etkinleştirin. Bu, ağdaki diğer cihazların closedcode sunucunuzu keşfetmesine olanak tanır.</li>
+<li><code>mdnsDomain</code> - mDNS hizmeti için özel alan adı. Varsayılan olarak <code>closedcode.local</code> şeklindedir. Aynı ağda birden fazla örneği çalıştırmak için kullanışlıdır.</li>
+<li><code>cors</code> - Tarayıcı tabanlı bir istemciden HTTP sunucusunu kullanırken CORS&#39;ye izin verecek ek kaynaklar. Değerler tam kaynaklar olmalıdır (şema + ana bilgisayar + isteğe bağlı bağlantı noktası), örneğin <code>https://app.example.com</code>.</li>
+</ul>
+<p><a href="/docs/server">Sunucu hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>Araçlar</h3>
+<p>Bir LLM&#39;nin kullanabileceği araçları <code>tools</code> seçeneği aracılığıyla yönetebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Araçlar hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>Modeller</h3>
+<p>closedcode yapılandırmanızda kullanmak istediğiniz sağlayıcıları ve modelleri <code>provider</code>, <code>model</code> ve <code>small_model</code> seçenekleri aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p><code>small_model</code> seçeneği, başlık oluşturma gibi hafif görevler için ayrı bir model yapılandırır. Varsayılan olarak closedcode, sağlayıcınızda mevcutsa daha ucuz bir model kullanmaya çalışır, aksi takdirde ana modelinize geri döner.</p>
+<p>Sağlayıcı seçenekleri <code>timeout</code> ve <code>setCacheKey</code> içerebilir:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - Milisaniye cinsinden istek zaman aşımı (varsayılan: 300000). Devre dışı bırakmak için <code>false</code> olarak ayarlayın.</li>
+<li><code>setCacheKey</code> - Belirlenen sağlayıcı için her zaman bir önbellek anahtarının ayarlandığından emin olun.</li>
+</ul>
+<p>Ayrıca <a href="/docs/models#local">local models</a> ayarlayabilirsiniz. <a href="/docs/models">Daha fazla bilgi</a>.</p>
+<hr>
+<h4>Sağlayıcıya Özel Seçenekler</h4>
+<p>Bazı sağlayıcılar genel <code>timeout</code> ve <code>apiKey</code> ayarlarının ötesinde ek yapılandırma seçeneklerini destekler.</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock, AWS&#39;a özgü yapılandırmayı destekler:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - Bedrock için AWS bölgesi (varsayılanı <code>AWS_REGION</code> env var veya <code>us-east-1</code>&#39;dir)</li>
+<li><code>profile</code> - <code>~/.aws/credentials</code>&#39;den AWS adlı profil (varsayılanı <code>AWS_PROFILE</code> env var&#39;dır)</li>
+<li><code>endpoint</code> - VPC uç noktaları için özel uç nokta URL. Bu, AWS&#39;e özgü terminolojiyi kullanan genel <code>baseURL</code> seçeneğinin takma adıdır. Her ikisi de belirtilirse <code>endpoint</code> öncelikli olur.</li>
+</ul>
+<aside class="aside aside-note">
+Taşıyıcı belirteçleri (`AWS_BEARER_TOKEN_BEDROCK` veya `/connect`) profil tabanlı kimlik doğrulamaya göre önceliklidir. Ayrıntılar için [authentication precedence](/docs/providers#authentication-precedence)'ye bakın.
+</aside>
+[Amazon Bedrock yapılandırması hakkında daha fazla bilgi](/docs/providers#amazon-bedrock).
+
+<hr>
+<h3>Temalar</h3>
+<p>closedcode yapılandırmanızda kullanmak istediğiniz temayı <code>theme</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Agent&#39;lar</h3>
+<p><code>agent</code> seçeneği aracılığıyla özel görevlere yönelik özel agent&#39;ları yapılandırabilirsiniz.</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: true,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Agent&#39;ları <code>~/.config/closedcode/agents/</code> veya <code>.closedcode/agents/</code> içindeki Markdown dosyalarıyla da tanımlayabilirsiniz. <a href="/docs/agents">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Varsayılan agent</h3>
+<p><code>default_agent</code> seçeneğini kullanarak varsayılan agent&#39;ı ayarlayabilirsiniz. Bu, hiçbiri açıkça belirtilmediğinde hangi agent&#39;ın kullanılacağını belirler.</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>Varsayılan agent, birincil agent olmalıdır (alt agent değil). Bu, <code>&quot;build&quot;</code> veya <code>&quot;plan&quot;</code> gibi yerleşik bir agent ya da tanımladığınız bir <a href="/docs/agents">özel agent</a> olabilir. Belirtilen agent mevcut değilse veya bir alt agent ise, closedcode bir uyarıyla birlikte <code>&quot;build&quot;</code>&#39;ye geri döner.</p>
+<p>Bu ayar tüm arayüzler için geçerlidir: TUI, CLI (<code>closedcode run</code>), masaüstü uygulaması ve GitHub Action.</p>
+<hr>
+<h3>Paylaşma</h3>
+<p><a href="/docs/share">share</a> özelliğini <code>share</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>Bu şunları gerektirir:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - Komutlar aracılığıyla manuel paylaşıma izin ver (varsayılan)</li>
+<li><code>&quot;auto&quot;</code> - Yeni konuşmaları otomatik olarak paylaş</li>
+<li><code>&quot;disabled&quot;</code> - Paylaşımı tamamen devre dışı bırak</li>
+</ul>
+<p>Varsayılan olarak paylaşım, <code>/share</code> komutunu kullanarak konuşmaları açıkça paylaşmanız gereken manuel moda ayarlanmıştır.</p>
+<hr>
+<h3>Komutlar</h3>
+<p><code>command</code> seçeneği aracılığıyla tekrarlanan görevler için özel komutlar yapılandırabilirsiniz.</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>Komutları <code>~/.config/closedcode/commands/</code> veya <code>.closedcode/commands/</code> içindeki Markdown dosyalarıyla da tanımlayabilirsiniz. <a href="/docs/commands">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Tuş atamaları</h3>
+<p>Tuş atamalarınızı <code>keybinds</code> seçeneği aracılığıyla özelleştirebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Otomatik Güncelleme</h3>
+<p>closedcode başlatıldığında yeni güncellemeleri otomatik olarak indirecektir. Bunu <code>autoupdate</code> seçeneğiyle devre dışı bırakabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>Güncelleme istemiyor ancak yeni bir sürüm mevcut olduğunda bilgilendirilmek istiyorsanız <code>autoupdate</code> öğesini <code>&quot;notify&quot;</code> olarak ayarlayın.
+Bunun yalnızca Homebrew gibi bir paket yöneticisi kullanılarak yüklenmemişse işe yaradığına dikkat edin.</p>
+<hr>
+<h3>Biçimlendiriciler</h3>
+<p>Kod formatlayıcılarını <code>formatter</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">Formatter&#39;lar hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>İzinler</h3>
+<p>Varsayılan olarak, closedcode açık bir onay gerektirmeden <strong>tüm işlemlere izin verir</strong>. <code>permission</code> seçeneğini kullanarak bunu değiştirebilirsiniz.</p>
+<p>Örneğin, <code>edit</code> ve <code>bash</code> araçlarının kullanıcı onayı gerektirdiğinden emin olmak için:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">İzinler hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>Sıkıştırma</h3>
+<p>Bağlam sıkıştırma davranışını <code>compaction</code> seçeneği aracılığıyla kontrol edebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - Bağlam dolduğunda oturumu otomatik olarak sıkıştırır (varsayılan: <code>true</code>).</li>
+<li><code>prune</code> - Belirteçleri kaydetmek için eski araç çıktılarını kaldırın (varsayılan: <code>true</code>).</li>
+<li><code>reserved</code> - Sıkıştırma için belirteç tamponu. Sıkıştırma sırasında taşmayı önlemek için yeterli pencere bırakır.</li>
+</ul>
+<hr>
+<h3>İzleyici</h3>
+<p>Dosya izleyicinin yok sayma kalıplarını <code>watcher</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>Desenler glob sözdizimini takip eder. Gürültülü dizinleri dosya izlemenin dışında bırakmak için bunu kullanın.</p>
+<hr>
+<h3>MCP sunucuları</h3>
+<p>Kullanmak istediğiniz MCP sunucularını <code>mcp</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Eklentiler</h3>
+<p><a href="/docs/plugins">Eklentiler</a> closedcode&#39;u özel araçlar, kancalar ve entegrasyonlarla genişletin.</p>
+<p>Eklenti dosyalarını <code>.closedcode/plugins/</code> veya <code>~/.config/closedcode/plugins/</code> içine yerleştirin. Ayrıca eklentileri <code>plugin</code> seçeneği aracılığıyla npm&#39;den de yükleyebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Talimatlar</h3>
+<p>Kullandığınız modele ilişkin talimatları <code>instructions</code> seçeneği aracılığıyla yapılandırabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Bu, talimat dosyalarına giden bir dizi yolu ve glob desenini alır. <a href="/docs/rules">Kurallar hakkında daha fazla bilgiyi buradan edinin</a>.</p>
+<hr>
+<h3>Devre dışı bırakılan sağlayıcılar</h3>
+<p><code>disabled_providers</code> seçeneği aracılığıyla otomatik olarak yüklenen sağlayıcıları devre dışı bırakabilirsiniz. Bu, belirli sağlayıcıların kimlik bilgileri mevcut olsa bile yüklenmesini engellemek istediğinizde kullanışlıdır.</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers`, `enabled_providers`'ye göre önceliklidir.
+</aside>
+`disabled_providers` seçeneği bir dizi sağlayıcı kimliğini kabul eder. Bir sağlayıcı devre dışı bırakıldığında:
+
+<ul>
+<li>Ortam değişkenleri ayarlanmış olsa bile yüklenmez.</li>
+<li>API anahtarları <code>/connect</code> komutu aracılığıyla yapılandırılsa bile yüklenmeyecektir.</li>
+<li>Sağlayıcının modelleri, model seçim listesinde görünmez.</li>
+</ul>
+<hr>
+<h3>Etkin sağlayıcılar</h3>
+<p><code>enabled_providers</code> seçeneğini kullanarak sağlayıcıların izin verilenler listesini belirtebilirsiniz. Ayarlandığında yalnızca belirtilen sağlayıcılar etkinleştirilecek ve diğerleri göz ardı edilecektir.</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>Bu, closedcode&#39;u tek tek devre dışı bırakmak yerine yalnızca belirli sağlayıcıları kullanacak şekilde kısıtlamak istediğinizde kullanışlıdır.</p>
+<aside class="aside aside-note">
+`disabled_providers`, `enabled_providers`'ye göre önceliklidir.
+</aside>
+Bir sağlayıcı hem `enabled_providers` hem de `disabled_providers`'de görünüyorsa, geriye dönük uyumluluk için `disabled_providers` önceliğe sahiptir.
+
+<hr>
+<h3>Deneysel</h3>
+<p><code>experimental</code> anahtarı aktif olarak geliştirilmekte olan seçenekleri içerir.</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+Deneysel seçenekler kararlı değildir. Bildirim yapılmaksızın değişebilir veya kaldırılabilirler.
+</aside>
+---
+
+<h2>Değişkenler</h2>
+<p>Ortam değişkenlerine ve dosya içeriklerine referans vermek için yapılandırma dosyalarınızda değişken değiştirmeyi kullanabilirsiniz.</p>
+<hr>
+<h3>Ortam değişkenleri</h3>
+<p>Ortam değişkenlerini değiştirmek için <code>{env:VARIABLE_NAME}</code> kullanın:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ortam değişkeni ayarlanmamışsa boş bir dizeyle değiştirilecektir.</p>
+<hr>
+<h3>Dosyalar</h3>
+<p>Bir dosyanın biçimini değiştirmek için <code>{file:path/to/file}</code> kullanın:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Dosya yolları şunlar olabilir:</p>
+<ul>
+<li>Yapılandırma dosyası dizinine göre</li>
+<li>Veya <code>/</code> veya <code>~</code> ile başlayan mutlak yollar</li>
+</ul>
+<p>Bunlar aşağıdakiler için faydalıdır:</p>
+<ul>
+<li>API anahtarları gibi hassas verileri ayrı dosyalarda tutmak.</li>
+<li>Yapılandırmanızı karmaşıklaştırmadan büyük talimat dosyaları içerir.</li>
+<li>Birden fazla yapılandırma dosyasında ortak yapılandırma parçacıklarının paylaşılması.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

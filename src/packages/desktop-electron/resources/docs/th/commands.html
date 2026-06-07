@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>คำสั่ง — vanilla-closedcode docs</title>
+  <meta name="description" content="คำสั่งที่กำหนดเองสำหรับงานที่ทำซ้ำๆ">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html" selected>ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>คำสั่ง</h1>
+      <p class="lede">คำสั่งที่กำหนดเองสำหรับงานที่ทำซ้ำๆ</p>
+      <p>คำสั่งช่วยให้คุณกำหนดชุดของพรอมต์ที่ใช้บ่อย เพื่อให้สามารถเรียกใช้งานได้อย่างรวดเร็วใน TUI</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>คำสั่งแบบกำหนดเองเป็นส่วนเพิ่มเติมจากคำสั่งในตัว เช่น <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code> <a href="/docs/tui#%E0%B8%84%E0%B8%B3%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87">เรียนรู้เพิ่มเติม</a></p>
+<hr>
+<h2>การสร้างคำสั่ง</h2>
+<p>สร้างไฟล์ Markdown ในไดเร็กทอรี <code>commands/</code> เพื่อกำหนดคำสั่งของคุณ</p>
+<p>สร้าง <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Frontmatter กำหนดคุณสมบัติของคำสั่ง และเนื้อหาคือพรอมต์ที่จะส่งไปยัง LLM</p>
+<p>ใช้คำสั่งโดยพิมพ์ <code>/</code> ตามด้วยชื่อไฟล์ (ไม่รวมนามสกุล) ใน TUI:</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>วิธีการกำหนด</h2>
+<p>คุณสามารถกำหนดคำสั่งได้สองวิธี: ผ่านการกำหนดค่า JSON หรือโดยการสร้างไฟล์ Markdown</p>
+<hr>
+<h3>JSON</h3>
+<p>ใช้ส่วน <code>command</code> ในไฟล์ <a href="/docs/config">config</a> ของ vanilla-closedcode:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>รันคำสั่งนี้ใน TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>หากต้องการกำหนดคำสั่งด้วยไฟล์ Markdown ให้วางไฟล์ไว้ใน:</p>
+<ul>
+<li>ระดับผู้ใช้ (Global): <code>~/.config/closedcode/commands/</code></li>
+<li>ระดับโปรเจ็กต์: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>ชื่อไฟล์ Markdown จะกลายเป็นชื่อคำสั่ง เช่น <code>test.md</code> ให้คุณเรียกใช้:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>อาร์กิวเมนต์และการแทนที่</h2>
+<p>คำสั่งรองรับอาร์กิวเมนต์ตามตำแหน่งและการแทนที่ค่าพิเศษหลายรายการ</p>
+<hr>
+<h3>อาร์กิวเมนต์</h3>
+<p>คุณสามารถส่งผ่านอาร์กิวเมนต์ไปยังคำสั่งของคุณได้โดยใช้ <code>$ARGUMENTS</code></p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>รันคำสั่งพร้อมอาร์กิวเมนต์:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>และ <code>$ARGUMENTS</code> จะถูกแทนที่ด้วย <code>Button</code></p>
+<p>คุณยังสามารถเข้าถึงแต่ละอาร์กิวเมนต์แยกกันได้:</p>
+<ul>
+<li><code>$1</code> - อาร์กิวเมนต์แรก</li>
+<li><code>$2</code> - อาร์กิวเมนต์ที่สอง</li>
+<li><code>$3</code> - อาร์กิวเมนต์ที่สาม</li>
+<li>และอื่นๆ...</li>
+</ul>
+<p>ตัวอย่าง:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>รันคำสั่ง:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>ผลลัพธ์ที่ได้:</p>
+<ul>
+<li><code>$1</code> แทนด้วย <code>config.json</code></li>
+<li><code>$2</code> แทนด้วย <code>src</code></li>
+<li><code>$3</code> แทนด้วย <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>คำสั่ง Shell</h3>
+<p>ใช้ <em>!<code>command</code></em> เพื่อแทรกเอาต์พุตของ <a href="/docs/tui#bash-commands">คำสั่ง bash</a> ใดๆ ลงในพรอมต์ของคุณ</p>
+<p>ตัวอย่างเช่น การรันชุดทดสอบและรวมผลลัพธ์:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>หรือตรวจสอบการเปลี่ยนแปลงล่าสุดใน git:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>คำสั่งจะถูกดำเนินการในไดเร็กทอรีรากของโปรเจ็กต์</p>
+<hr>
+<h3>การอ้างอิงไฟล์</h3>
+<p>คุณสามารถรวมเนื้อหาไฟล์ในคำสั่งของคุณโดยใช้ <code>@</code> นำหน้าชื่อไฟล์</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>เนื้อหาของไฟล์จะถูกอ่านและรวมเข้าไปในพรอมต์ที่ส่งไปยัง LLM</p>
+<hr>
+<h2>ตัวเลือก</h2>
+<p>มาดูรายละเอียดของตัวเลือกการกำหนดค่าต่างๆ</p>
+<hr>
+<h3>Template (เทมเพลต)</h3>
+<p><code>template</code> กำหนดพรอมต์ที่จะถูกส่งไปยัง LLM เมื่อเรียกใช้คำสั่ง</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>ฟิลด์นี้ <strong>จำเป็น</strong> สำหรับการกำหนดค่าแบบ JSON (ใน Markdown คือส่วนเนื้อหา)</p>
+<hr>
+<h3>Description (คำอธิบาย)</h3>
+<p>ใช้ตัวเลือก <code>description</code> เพื่อให้คำอธิบายโดยย่อเกี่ยวกับสิ่งที่คำสั่งทำ</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>คำอธิบายนี้จะแสดงในรายการเติมคำอัตโนมัติของ TUI เมื่อคุณพิมพ์คำสั่ง</p>
+<hr>
+<h3>Agent (เอเจนต์)</h3>
+<p>ใช้ <code>agent</code> เพื่อระบุว่า <a href="/docs/agents">เอเจนต์</a> ใดควรดำเนินการคำสั่งนี้</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>นี่คือ <strong>ทางเลือก</strong> หากไม่ได้ระบุ จะใช้เอเจนต์ปัจจุบันของคุณ</p>
+<hr>
+<h3>Subtask (งานย่อย)</h3>
+<p>ใช้ <code>subtask</code> (บูลีน) เพื่อระบุว่าคำสั่งควรทำงานเป็น <a href="/docs/agents/#subagents">subagent</a> หรือไม่</p>
+<p>การตั้งค่านี้จะป้องกันไม่ให้คำสั่งรบกวนบริบทหลักของเซสชัน และจะ <strong>บังคับ</strong> ให้เอเจนต์ใช้โหมดที่เหมาะสม</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>ส่วนนี้ <strong>ทางเลือก</strong></p>
+<hr>
+<h3>Model (โมเดล)</h3>
+<p>ใช้ <code>model</code> เพื่อกำหนดโมเดลเฉพาะสำหรับคำสั่งนี้</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>ส่วนนี้ <strong>ทางเลือก</strong></p>
+<hr>
+<h3>Built-ins (ในตัว)</h3>
+<p>vanilla-closedcode มีคำสั่งในตัวหลายคำสั่ง เช่น <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code> <a href="/docs/tui#%E0%B8%84%E0%B8%B3%E0%B8%AA%E0%B8%B1%E0%B9%88%E0%B8%87">เรียนรู้เพิ่มเติม</a></p>
+<aside class="aside aside-note">
+คุณสามารถเขียนทับคำสั่งในตัวได้โดยกำหนดคำสั่งที่กำหนดเองด้วยชื่อเดียวกัน
+</aside>
+อย่างไรก็ตาม เราไม่แนะนำให้ทำเช่นนั้น เว้นแต่คุณจะมีเหตุผลที่เฉพาะเจาะจง
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

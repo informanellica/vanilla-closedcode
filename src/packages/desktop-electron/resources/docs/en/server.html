@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Server — vanilla-closedcode docs</title>
+  <meta name="description" content="Interact with closedcode server over HTTP.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html" selected>English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">English</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Server</h1>
+      <p class="lede">Interact with closedcode server over HTTP.</p>
+      <p>The <code>closedcode serve</code> command runs a headless HTTP server that exposes an OpenAPI endpoint that a closedcode client can use.</p>
+<hr>
+<h3>Usage</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>Options</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>Port to listen on</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>Hostname to listen on</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>Enable mDNS discovery</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>Custom domain name for mDNS service</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>Additional browser origins to allow</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> can be passed multiple times:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>Authentication</h3>
+<p>Set <code>CLOSEDCODE_SERVER_PASSWORD</code> to protect the server with HTTP basic auth. The username defaults to <code>closedcode</code>, or set <code>CLOSEDCODE_SERVER_USERNAME</code> to override it. This applies to both <code>closedcode serve</code> and <code>closedcode web</code>.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>How it works</h3>
+<p>When you run <code>closedcode</code> it starts a TUI and a server. Where the TUI is the
+client that talks to the server. The server exposes an OpenAPI 3.1 spec
+endpoint. This endpoint is also used to generate an <a href="/docs/sdk">SDK</a>.</p>
+<aside class="aside aside-tip">
+Use the closedcode server to interact with closedcode programmatically.
+</aside>
+This architecture lets closedcode support multiple clients and allows you to interact with closedcode programmatically.
+
+<p>You can run <code>closedcode serve</code> to start a standalone server. If you have the
+closedcode TUI running, <code>closedcode serve</code> will start a new server.</p>
+<hr>
+<h4>Connect to an existing server</h4>
+<p>When you start the TUI it randomly assigns a port and hostname. You can instead pass in the <code>--hostname</code> and <code>--port</code> <a href="/docs/cli">flags</a>. Then use this to connect to its server.</p>
+<p>The <a href="#tui"><code>/tui</code></a> endpoint can be used to drive the TUI through the server. For example, you can prefill or run a prompt. This setup is used by the vanilla-closedcode <a href="/docs/ide">IDE</a> plugins.</p>
+<hr>
+<h2>Spec</h2>
+<p>The server publishes an OpenAPI 3.1 spec that can be viewed at:</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>For example, <code>http://localhost:4096/doc</code>. Use the spec to generate clients or inspect request and response types. Or view it in a Swagger explorer.</p>
+<hr>
+<h2>APIs</h2>
+<p>The closedcode server exposes the following APIs.</p>
+<hr>
+<h3>Global</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>Get server health and version</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>Get global events (SSE stream)</td>
+<td>Event stream</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Project</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>List all projects</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>Get the current project</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Path &amp; VCS</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>Get the current path</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>Get VCS info for the current project</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Instance</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>Dispose the current instance</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Config</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>Get config info</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>Update config</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>List providers and default models</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Provider</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>List all providers</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>Get provider authentication methods</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>Authorize a provider using OAuth</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>Handle OAuth callback for a provider</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Sessions</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>List all sessions</td>
+<td>Returns <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>Create a new session</td>
+<td>body: <code>{ parentID?, title? }</code>, returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>Get session status for all sessions</td>
+<td>Returns <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>Get session details</td>
+<td>Returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>Delete a session and all its data</td>
+<td>Returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>Update session properties</td>
+<td>body: <code>{ title? }</code>, returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>Get a session&#39;s child sessions</td>
+<td>Returns <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>Get the todo list for a session</td>
+<td>Returns <a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>Analyze app and create <code>AGENTS.md</code></td>
+<td>body: <code>{ messageID, providerID, modelID }</code>, returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>Fork an existing session at a message</td>
+<td>body: <code>{ messageID? }</code>, returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>Abort a running session</td>
+<td>Returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Share a session</td>
+<td>Returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Unshare a session</td>
+<td>Returns <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>Get the diff for this session</td>
+<td>query: <code>messageID?</code>, returns <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>Summarize the session</td>
+<td>body: <code>{ providerID, modelID }</code>, returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>Revert a message</td>
+<td>body: <code>{ messageID, partID? }</code>, returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>Restore all reverted messages</td>
+<td>Returns <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>Respond to a permission request</td>
+<td>body: <code>{ response, remember? }</code>, returns <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Messages</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>List messages in a session</td>
+<td>query: <code>limit?</code>, returns <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Send a message and wait for response</td>
+<td>body: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>, returns <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>Get message details</td>
+<td>Returns <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>Send a message asynchronously (no wait)</td>
+<td>body: same as <code>/session/:id/message</code>, returns <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>Execute a slash command</td>
+<td>body: <code>{ messageID?, agent?, model?, command, arguments }</code>, returns <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>Run a shell command</td>
+<td>body: <code>{ agent, model?, command }</code>, returns <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Commands</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>List all commands</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Files</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>Search for text in files</td>
+<td>Array of match objects with <code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>Find files and directories by name</td>
+<td><code>string[]</code> (paths)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>Find workspace symbols</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>List files and directories</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>Read a file</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>Get status for tracked files</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> query parameters</h4>
+<ul>
+<li><code>query</code> (required) — search string (fuzzy match)</li>
+<li><code>type</code> (optional) — limit results to <code>&quot;file&quot;</code> or <code>&quot;directory&quot;</code></li>
+<li><code>directory</code> (optional) — override the project root for the search</li>
+<li><code>limit</code> (optional) — max results (1–200)</li>
+<li><code>dirs</code> (optional) — legacy flag (<code>&quot;false&quot;</code> returns only files)</li>
+</ul>
+<hr>
+<h3>Tools (Experimental)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>List all tool IDs</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>List tools with JSON schemas for a model</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, Formatters &amp; MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>Get LSP server status</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>Get formatter status</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>Get MCP server status</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>Add MCP server dynamically</td>
+<td>body: <code>{ name, config }</code>, returns MCP status object</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Agents</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>List all available agents</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Logging</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>Write log entry. Body: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>Append text to the prompt</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>Open the help dialog</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>Open the session selector</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>Open the theme selector</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>Open the model selector</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>Submit the current prompt</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>Clear the prompt</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>Execute a command (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>Show toast (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>Wait for the next control request</td>
+<td>Control request object</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>Respond to a control request (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Auth</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>Set authentication credentials. Body must match provider schema</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Events</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>Server-sent events stream. First event is <code>server.connected</code>, then bus events</td>
+<td>Server-sent events stream</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Docs</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>OpenAPI 3.1 specification</td>
+<td>HTML page with OpenAPI spec</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

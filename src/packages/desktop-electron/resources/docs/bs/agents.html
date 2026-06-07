@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agenti — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfigurirajte i koristite specijalizirane agente.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html" selected>Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Agenti</h1>
+      <p class="lede">Konfigurirajte i koristite specijalizirane agente.</p>
+      <p>Agenti su specijalizirani AI asistenti koji se mogu konfigurirati za specifične zadatke i tokove posla. Oni vam omogućavaju da kreirate fokusirane alate sa prilagođenim upitima, modelima i pristupom alatima.</p>
+<aside class="aside aside-tip">
+Koristite agenta plana za analizu koda i pregled prijedloga bez ikakvih promjena koda.
+</aside>
+Možete se prebacivati ​​između agenata tokom sesije ili ih pozvati spominjanjem `@`.
+
+<hr>
+<h2>Vrste</h2>
+<p>Postoje dvije vrste agenata u vanilla-closedcode: primarni agenti i podagenti.</p>
+<hr>
+<h3>Primarni agenti</h3>
+<p>Primarni agenti su glavni pomoćnici s kojima direktno komunicirate. Možete se kretati kroz njih pomoću tipke <strong>Tab</strong> ili vašeg konfigurisanog povezivanja tipki <code>switch_agent</code>. Ovi agenti vode vaš glavni razgovor. Pristup alatima se konfiguriše putem dozvola — na primjer, Build ima omogućene sve alate dok je Plan ograničen.</p>
+<aside class="aside aside-tip">
+Možete koristiti tipku **Tab** za prebacivanje između primarnih agenata tokom sesije.
+</aside>
+vanilla-closedcode dolazi sa dva ugrađena primarna agenta, **Build** i **Plan**. Pogledat ćemo ih u nastavku.
+
+<hr>
+<h3>Subagenti</h3>
+<p>Subagenti su specijalizovani pomoćnici koje primarni agenti mogu pozvati za određene zadatke. Možete ih i ručno pozvati <strong>@ spominjanjem</strong> u svojim porukama.</p>
+<p>vanilla-closedcode dolazi sa dva ugrađena subagenta, <strong>General</strong> i <strong>Explore</strong>. Ovo ćemo pogledati u nastavku.</p>
+<hr>
+<h2>Ugrađeni</h2>
+<p>vanilla-closedcode dolazi sa dva ugrađena primarna agenta i dva ugrađena subagenta.</p>
+<hr>
+<h3>Build agent</h3>
+<p><em>Režim</em>: <code>primary</code></p>
+<p>Build je <strong>podrazumevani</strong> primarni agent sa svim omogućenim alatima. Ovo je standardni agent za razvojni rad gdje vam je potreban pun pristup operacijama datoteka i sistemskim komandama.</p>
+<hr>
+<h3>Plan agent</h3>
+<p><em>Režim</em>: <code>primary</code></p>
+<p>Ograničeni agent dizajniran za planiranje i analizu. Koristimo sistem dozvola kako bismo vam pružili veću kontrolu i spriječili neželjene promjene.
+Prema zadanim postavkama, sve sljedeće je postavljeno na <code>ask</code>:</p>
+<ul>
+<li><code>file edits</code>: Sva upisivanja, zakrpe i uređivanja</li>
+<li><code>bash</code>: Sve bash komande</li>
+</ul>
+<p>Ovaj agent je koristan kada želite da LLM analizira kod, predloži promjene ili kreira planove bez stvarnih modifikacija vaše baze koda.</p>
+<hr>
+<h3>General agent</h3>
+<p><em>Režim</em>: <code>subagent</code></p>
+<p>Agent opće namjene za istraživanje složenih pitanja i izvršavanje zadataka u više koraka. Ima potpuni pristup alatima (osim todo), tako da može mijenjati fajlove kada je to potrebno. Koristite ovo za paralelno pokretanje više jedinica rada.</p>
+<hr>
+<h3>Explore agent</h3>
+<p><em>Režim</em>: <code>subagent</code></p>
+<p>Brzi agent samo za čitanje za istraživanje kodnih baza. Nije moguće mijenjati fajlove. Koristite ovo kada trebate brzo pronaći datoteke po uzorku, pretražiti kod za ključne riječi ili odgovoriti na pitanja o bazi kodova.</p>
+<hr>
+<h3>Compaction agent</h3>
+<p><em>Režim</em>: <code>primary</code></p>
+<p>Skriveni sistemski agent koji sažima dugi kontekst u manji sažetak. Pokreće se automatski kada je potrebno i ne može se odabrati u korisničkom interfejsu.</p>
+<hr>
+<h3>Title agent</h3>
+<p><em>Režim</em>: <code>primary</code></p>
+<p>Skriveni sistemski agent koji generiše kratke naslove sesija. Pokreće se automatski i ne može se odabrati u korisničkom interfejsu.</p>
+<hr>
+<h3>Summary agent</h3>
+<p><em>Režim</em>: <code>primary</code></p>
+<p>Skriveni sistemski agent koji kreira sažetke sesije. Pokreće se automatski i ne može se odabrati u korisničkom interfejsu.</p>
+<hr>
+<h2>Korištenje</h2>
+<ol>
+<li><p>Za primarne agente, koristite taster <strong>Tab</strong> za kretanje kroz njih tokom sesije. Također možete koristiti svoju konfiguriranu vezu tipke <code>switch_agent</code>.</p>
+</li>
+<li><p>Subagenti se mogu pozvati:</p>
+<ul>
+<li><p><strong>Automatski</strong> od strane primarnih agenata za specijalizovane zadatke na osnovu njihovih opisa.</p>
+</li>
+<li><p>Ručno <strong>@ spominjanjem</strong> subagenta u vašoj poruci. Na primjer.</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>Navigacija između sesija</strong>: Kada subagenti kreiraju vlastite podređene sesije, možete se kretati između roditeljske sesije i svih podređenih sesija koristeći:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (ili vaša konfigurirana <code>session_child_cycle</code> veza) za kretanje naprijed kroz roditelj → dijete1 → dijete2 → ... → roditelj</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (ili vaše konfigurirano povezivanje tipki <code>session_child_cycle_reverse</code>) za kretanje unazad kroz roditelj ← dijete1 ← dijete2 ← ... ← roditelj</li>
+</ul>
+<p>Ovo vam omogućava neprimetno prebacivanje između glavnog razgovora i rada specijalizovanog podagenta.</p>
+</li>
+</ol>
+<hr>
+<h2>Konfiguracija</h2>
+<p>Možete prilagoditi ugrađene agente ili kreirati vlastite kroz konfiguraciju. Agenti se mogu konfigurisati na dva načina:</p>
+<hr>
+<h3>JSON</h3>
+<p>Konfigurirajte agente u svom konfiguracijskom fajlu <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Također možete definirati agente koristeći markdown datoteke. Stavite ih u:</p>
+<ul>
+<li>Globalno: <code>~/.config/closedcode/agents/</code></li>
+<li>Po projektu: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Ime markdown datoteke postaje ime agenta. Na primjer, <code>review.md</code> kreira <code>review</code> agenta.</p>
+<hr>
+<h2>Opcije</h2>
+<p>Pogledajmo ove opcije konfiguracije detaljno.</p>
+<hr>
+<h3>Opis</h3>
+<p>Koristite opciju <code>description</code> da pružite kratak opis onoga što agent radi i kada ga koristiti.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ovo je <strong>obavezna</strong> opcija konfiguracije.</p>
+<hr>
+<h3>Temperatura</h3>
+<p>Kontrolišite slučajnost i kreativnost odgovora LLM-a pomoću <code>temperature</code> konfiguracije.</p>
+<p>Niže vrijednosti čine odgovore fokusiranijim i determinističkim, dok više vrijednosti povećavaju kreativnost i varijabilnost.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>Vrijednosti temperature se obično kreću od 0.0 do 1.0:</p>
+<ul>
+<li><strong>0.0-0.2</strong>: Vrlo fokusirani i deterministički odgovori, idealni za analizu i planiranje koda</li>
+<li><strong>0.3-0.5</strong>: Uravnoteženi odgovori sa malo kreativnosti, dobro za opšte razvojne zadatke</li>
+<li><strong>0.6-1.0</strong>: Kreativniji i raznovrsniji odgovori, korisni za razmišljanje i istraživanje</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ako temperatura nije navedena, vanilla-closedcode koristi standardne postavke specifične za model; obično 0 za većinu modela, 0.55 za Qwen modele.</p>
+<hr>
+<h3>Maksimalan broj koraka</h3>
+<p>Kontrolirajte maksimalni broj iteracija agenta koje agent može izvesti prije nego što bude prisiljen da odgovori samo tekstom. Ovo omogućava korisnicima koji žele kontrolirati troškove da postave ograničenje na akcije agenta.</p>
+<p>Ako ovo nije postavljeno, agent će nastaviti iterirati sve dok model ne odluči da se zaustavi ili korisnik ne prekine sesiju.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>Kada se dostigne ograničenje, agent prima poseban sistemski prompt koji ga upućuje da odgovori sa rezimeom svog rada i preporučenim preostalim zadacima.</p>
+<aside class="aside aside-caution">
+Naslijeđeno polje `maxSteps` je zastarjelo. Umjesto toga koristite `steps`.
+</aside>
+---
+
+<h3>Onemogućavanje</h3>
+<p>Postavite na <code>true</code> da onemogućite agenta.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Upit</h3>
+<p>Navedite prilagođenu sistemsku prompt datoteku za ovog agenta sa <code>prompt</code> konfiguracijom. Datoteka s promptom treba da sadrži upute specifične za svrhu agenta.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ova putanja je relativna u odnosu na mjesto gdje se nalazi konfiguracijski fajl. Dakle, ovo radi i za globalnu vanilla-closedcode konfiguraciju i za konfiguraciju specifične za projekat.</p>
+<hr>
+<h3>Model</h3>
+<p>Koristite <code>model</code> konfiguraciju da nadjačate model za ovog agenta. Korisno za korištenje različitih modela optimiziranih za različite zadatke. Na primjer, brži model za planiranje, sposobniji model za implementaciju.</p>
+<aside class="aside aside-tip">
+Ako ne navedete model, primarni agenti koriste [model globalno konfiguriran](/docs/config#models) dok će podagenti koristiti model primarnog agenta koji je pozvao subagenta.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>ID modela u vašoj vanilla-closedcode konfiguraciji koristi format <code>provider/model-id</code>. Na primjer, ako koristite Ollama, koristili biste <code>ollama/gpt-oss:20b</code> za GPT-OSS 20B.</p>
+<hr>
+<h3>Alati</h3>
+<p>Kontrolirajte koji su alati dostupni u ovom agentu koristeći konfiguraciju <code>tools</code>. Možete omogućiti ili onemogućiti određene alate tako što ćete ih postaviti na <code>true</code> ili <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+Konfiguracija specifična za agenta poništava globalnu konfiguraciju.
+</aside>
+Također možete koristiti zamjenske znakove za kontrolu više alata odjednom. Na primjer, da onemogućite sve alate sa MCP servera:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Saznajte više o alatima</a>.</p>
+<hr>
+<h3>Dozvole</h3>
+<p>Možete konfigurirati dozvole za upravljanje radnjama koje agent može poduzeti. Trenutno se dozvole za alate <code>edit</code>, <code>bash</code> i <code>webfetch</code> mogu konfigurirati na:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — Zatražite odobrenje prije pokretanja alata</li>
+<li><code>&quot;allow&quot;</code> — Dozvoli sve operacije bez odobrenja</li>
+<li><code>&quot;deny&quot;</code> — Onemogućite alat</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Možete nadjačati ove dozvole po agentu.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Također možete postaviti dozvole u Markdown agentima.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>Možete postaviti dozvole za određene bash komande.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ovo može koristiti glob uzorak.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Također možete koristiti zamjenski znak <code>*</code> za kontrolu dozvola za sve komande.
+Budući da posljednje podudarno pravilo ima prednost, prvo postavite zamjenski znak <code>*</code>, a zatim navedena pravila.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Saznajte više o dozvolama</a>.</p>
+<hr>
+<h3>Način rada</h3>
+<p>Kontrolirajte način rada agenta koristeći konfiguraciju <code>mode</code>. Opcija <code>mode</code> se koristi da specificira kako se agent može koristiti.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p>Opcija <code>mode</code> se može postaviti na <code>primary</code>, <code>subagent</code> ili <code>all</code>. Ako <code>mode</code> nije specificirano, podrazumevano je <code>all</code>.</p>
+<hr>
+<h3>Skriveno</h3>
+<p>Sakrij podagenta iz <code>@</code> menija za automatsko dovršavanje sa <code>hidden: true</code>. Korisno za interne podagente koje bi drugi agenti trebali programski pozvati samo preko Task alata.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Ovo utiče samo na vidljivost korisnika u meniju za automatsko dovršavanje. Skriveni agenti se i dalje mogu pozvati od strane modela putem alata Task ako dozvole to dozvoljavaju.</p>
+<aside class="aside aside-note">
+Odnosi se samo na `mode: subagent` agente.
+</aside>
+---
+
+<h3>Dozvole zadataka</h3>
+<p>Kontrolirajte koje podagente agent može pozvati preko Task alata sa <code>permission.task</code>. Koristi glob uzorke za fleksibilno uparivanje.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Kada se postavi na <code>deny</code>, subagent se u potpunosti uklanja iz opisa alata za zadatak, tako da ga model neće pokušati pozvati.</p>
+<aside class="aside aside-tip">
+Pravila se procjenjuju po redoslijedu i **posljednje odgovarajuće pravilo pobjeđuje**. U gornjem primjeru, `orchestrator-planner` odgovara i `*` (deny) i `orchestrator-*` (allow), ali pošto `orchestrator-*` dolazi nakon `*`, rezultat je `allow`.
+</aside>
+<aside class="aside aside-tip">
+Korisnici uvijek mogu pozvati bilo kojeg subagenta direktno preko `@` menija za autodovršavanje, čak i ako bi dozvole za zadatak agenta to uskratile.
+</aside>
+---
+
+<h3>Boja</h3>
+<p>Prilagodite vizualni izgled agenta u korisničkom sučelju s opcijom <code>color</code>. Ovo utiče na to kako se agent pojavljuje u interfejsu.</p>
+<p>Koristite važeću heksadecimalnu boju (npr. <code>#FF5733</code>) ili boju teme: <code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code>.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>Kontrolirajte raznolikost odgovora s opcijom <code>top_p</code>. Alternativa temperaturi za kontrolu nasumice.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>Vrijednosti se kreću od 0.0 do 1.0. Niže vrijednosti su više fokusirane, više vrijednosti raznovrsnije.</p>
+<hr>
+<h3>Dodatno</h3>
+<p>Sve druge opcije koje navedete u konfiguraciji agenta će biti <strong>direktno proslijeđene</strong> dobavljaču kao opcije modela. Ovo vam omogućava da koristite karakteristike i parametre specifične za provajdera.</p>
+<p>Na primjer, sa OpenAI-jevim modelima rezonovanja, možete kontrolisati napor rasuđivanja:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ove dodatne opcije su specifične za model i dobavljača. U dokumentaciji vašeg provajdera provjerite dostupne parametre.</p>
+<aside class="aside aside-tip">
+Pokrenite `closedcode models` da vidite listu dostupnih modela.
+</aside>
+---
+
+<h2>Kreiranje agenata</h2>
+<p>Možete kreirati nove agente koristeći sljedeću naredbu:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Ova interaktivna komanda će:</p>
+<ol>
+<li>Pitajte gdje da sačuvate agenta; globalno ili specifično za projekat.</li>
+<li>Opis onoga što agent treba da uradi.</li>
+<li>Generirajte odgovarajući sistemski prompt i identifikator.</li>
+<li>Omogućite vam da odaberete kojim alatima agent može pristupiti.</li>
+<li>Konačno, kreirajte markdown datoteku s konfiguracijom agenta.</li>
+</ol>
+<hr>
+<h2>Primjeri upotrebe</h2>
+<p>Evo nekoliko uobičajenih slučajeva upotrebe različitih agenata.</p>
+<ul>
+<li><strong>Build agent</strong>: Potpuni razvojni rad sa svim omogućenim alatima</li>
+<li><strong>Plan agent</strong>: Analiza i planiranje bez unošenja promjena</li>
+<li><strong>Review agent</strong>: Code review sa pristupom samo za čitanje plus alati za dokumentaciju</li>
+<li><strong>Debug agent</strong>: Fokusiran na istragu sa omogućenim bash i alatima za čitanje</li>
+<li><strong>Docs agent</strong>: Pisanje dokumentacije sa operacijama datoteka, ali bez sistemskih naredbi</li>
+</ul>
+<hr>
+<h2>Primjeri</h2>
+<p>Evo nekoliko primjera agenata koji bi vam mogli biti korisni.</p>
+<aside class="aside aside-tip">
+Imate li agenta kojeg biste željeli podijeliti? [Pošalji PR](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>Agent za dokumentaciju</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Sigurnosni revizor</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

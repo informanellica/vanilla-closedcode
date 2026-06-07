@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ปลั๊กอิน — vanilla-closedcode docs</title>
+  <meta name="description" content="เขียนปลั๊กอินของคุณเองเพื่อขยาย vanilla-closedcode">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html" selected>ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>ปลั๊กอิน</h1>
+      <p class="lede">เขียนปลั๊กอินของคุณเองเพื่อขยาย vanilla-closedcode</p>
+      <p>ปลั๊กอินช่วยให้คุณสามารถขยาย vanilla-closedcode ได้โดยเชื่อมโยงกับเหตุการณ์ต่างๆ และปรับแต่งลักษณะการทำงาน คุณสามารถสร้างปลั๊กอินเพื่อเพิ่มคุณสมบัติใหม่ บูรณาการกับบริการภายนอก หรือแก้ไขการทำงานเริ่มต้นของ vanilla-closedcode</p>
+<p>ตัวอย่างเช่น ลองดู <a href="/docs/ecosystem#%E0%B8%9B%E0%B8%A5%E0%B8%B1%E0%B9%8A%E0%B8%81%E0%B8%AD%E0%B8%B4%E0%B8%99">ปลั๊กอิน</a> ที่สร้างโดยชุมชน</p>
+<hr>
+<h2>ใช้ปลั๊กอิน</h2>
+<p>มีสองวิธีในการโหลดปลั๊กอิน</p>
+<hr>
+<h3>จากไฟล์ในเครื่อง</h3>
+<p>วางไฟล์ JavaScript หรือ TypeScript ในไดเร็กทอรีปลั๊กอิน</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - ​​ปลั๊กอินระดับโครงการ</li>
+<li><code>~/.config/closedcode/plugins/</code> - ​​ปลั๊กอินทั่วโลก</li>
+</ul>
+<p>ไฟล์ในไดเร็กทอรีเหล่านี้จะถูกโหลดโดยอัตโนมัติเมื่อเริ่มต้นระบบ</p>
+<hr>
+<h3>จาก npm</h3>
+<p>ระบุแพ็คเกจ npm ในไฟล์ปรับแต่งของคุณ</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>รองรับแพ็คเกจ npm ทั้งแบบปกติและแบบกำหนดขอบเขต</p>
+<p>เรียกดูปลั๊กอินที่มีอยู่ใน <a href="/docs/ecosystem#plugins">ระบบนิเวศ</a></p>
+<hr>
+<h3>วิธีการติดตั้งปลั๊กอิน</h3>
+<p><strong>ปลั๊กอิน npm</strong> ได้รับการติดตั้งโดยอัตโนมัติโดยใช้ npm เมื่อเริ่มต้น แพ็คเกจและการขึ้นต่อกันถูกแคชไว้ใน <code>~/.cache/closedcode/node_modules/</code></p>
+<p><strong>ปลั๊กอินท้องถิ่น</strong> โหลดโดยตรงจากไดเร็กทอรีปลั๊กอิน หากต้องการใช้แพ็คเกจภายนอก คุณต้องสร้าง <code>package.json</code> ภายในไดเร็กทอรีการกำหนดค่าของคุณ (ดู <a href="#dependencies">การพึ่งพา</a>) หรือเผยแพร่ปลั๊กอินไปที่ npm และ <a href="/docs/config#plugins">เพิ่มลงในการกำหนดค่าของคุณ</a></p>
+<hr>
+<h3>โหลดออเดอร์</h3>
+<p>ปลั๊กอินถูกโหลดจากทุกแหล่งและ hooks ทั้งหมดทำงานตามลำดับ ลำดับการโหลดคือ:</p>
+<ol>
+<li>การกำหนดค่าส่วนกลาง (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>การกำหนดค่าโครงการ (<code>closedcode.json</code>)</li>
+<li>ไดเร็กทอรีปลั๊กอินสากล (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>ไดเรกทอรีปลั๊กอินโครงการ (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>แพ็กเกจ npm ที่ซ้ำกันซึ่งมีชื่อและเวอร์ชันเดียวกันจะถูกโหลดหนึ่งครั้ง อย่างไรก็ตาม ทั้งปลั๊กอินในเครื่องและปลั๊กอิน npm ที่มีชื่อคล้ายกันจะโหลดแยกกัน</p>
+<hr>
+<h2>สร้างปลั๊กอิน</h2>
+<p>ปลั๊กอินคือ <strong>JavaScript/TypeScript module</strong> ที่ส่งออกปลั๊กอินอย่างน้อยหนึ่งรายการ
+ฟังก์ชั่น แต่ละฟังก์ชันได้รับวัตถุบริบทและส่งกลับวัตถุ hooks</p>
+<hr>
+<h3>การพึ่งพาอาศัยกัน</h3>
+<p>ปลั๊กอินท้องถิ่นและเครื่องมือแบบกำหนดเองสามารถใช้แพ็คเกจ npm ภายนอกได้ เพิ่ม <code>package.json</code> ลงในไดเร็กทอรี config ของคุณด้วยการอ้างอิงที่คุณต้องการ</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode รัน <code>npm install</code> เมื่อเริ่มต้นเพื่อติดตั้งสิ่งเหล่านี้ ปลั๊กอินและเครื่องมือของคุณสามารถนำเข้าได้</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>โครงสร้างพื้นฐาน</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>ฟังก์ชั่นปลั๊กอินได้รับ:</p>
+<ul>
+<li><code>project</code>: ข้อมูลโครงการปัจจุบัน</li>
+<li><code>directory</code>: ไดเร็กทอรีการทำงานปัจจุบัน</li>
+<li><code>worktree</code>: เส้นทางเวิร์กทรีคอมไพล์</li>
+<li><code>client</code>: ไคลเอนต์ closedcode SDK สำหรับการโต้ตอบกับ AI</li>
+</ul>
+<hr>
+<h3>รองรับ TypeScript</h3>
+<p>สำหรับปลั๊กอิน TypeScript คุณสามารถนำเข้าประเภทจากแพ็คเกจปลั๊กอินได้:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>กิจกรรม</h3>
+<p>ปลั๊กอินสามารถสมัครรับกิจกรรมได้ดังที่แสดงด้านล่างในส่วนตัวอย่าง นี่คือรายการกิจกรรมต่างๆ ที่มี</p>
+<h4>เหตุการณ์คำสั่ง</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>ไฟล์เหตุการณ์</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>เหตุการณ์การติดตั้ง</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP กิจกรรม</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>เหตุการณ์ข้อความ</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>เหตุการณ์การอนุญาต</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>เหตุการณ์เซิร์ฟเวอร์</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>กิจกรรมเซสชั่น</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>เหตุการณ์ที่ต้องทำ</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>กิจกรรมของ shell</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>เหตุการณ์เครื่องมือ</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI กิจกรรม</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>ตัวอย่าง</h2>
+<p>นี่คือตัวอย่างบางส่วนของปลั๊กอินที่คุณสามารถใช้เพื่อขยาย closedcode</p>
+<hr>
+<h3>ส่งการแจ้งเตือน</h3>
+<p>ส่งการแจ้งเตือนเมื่อมีเหตุการณ์บางอย่างเกิดขึ้น:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>เรากำลังใช้ <code>osascript</code> เพื่อเรียกใช้ AppleScript บน macOS ที่นี่เราใช้มันเพื่อส่งการแจ้งเตือน</p>
+<aside class="aside aside-note">
+หากคุณใช้แอปเดสก์ท็อป vanilla-closedcode แอปสามารถส่งการแจ้งเตือนของระบบโดยอัตโนมัติเมื่อมีการตอบกลับพร้อมหรือเมื่อเซสชันเกิดข้อผิดพลาด
+</aside>
+---
+
+<h3>การป้องกัน .env</h3>
+<p>ป้องกันไม่ให้ closedcode อ่านไฟล์ <code>.env</code>:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>ฉีดตัวแปรสภาพแวดล้อม</h3>
+<p>แทรกตัวแปรสภาพแวดล้อมลงในการดำเนินการ shell ทั้งหมด (เครื่องมือ AI และ terminal ผู้ใช้):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>เครื่องมือที่กำหนดเอง</h3>
+<p>ปลั๊กอินยังสามารถเพิ่มเครื่องมือที่กำหนดเองให้กับ closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>ตัวช่วย <code>tool</code> สร้างเครื่องมือแบบกำหนดเองที่สามารถเรียกใช้ closedcode ได้ ใช้ฟังก์ชัน Zod schema และส่งกลับคำจำกัดความของเครื่องมือด้วย:</p>
+<ul>
+<li><code>description</code>: เครื่องมือนี้ทำอะไร</li>
+<li><code>args</code>: Zod schema สำหรับข้อโต้แย้งของเครื่องมือ</li>
+<li><code>execute</code>: ฟังก์ชั่นที่ทำงานเมื่อมีการเรียกใช้เครื่องมือ</li>
+</ul>
+<p>เครื่องมือที่คุณกำหนดเองจะพร้อมใช้งานสำหรับ closedcode ควบคู่ไปกับเครื่องมือในตัว</p>
+<aside class="aside aside-note">
+หากเครื่องมือปลั๊กอินใช้ชื่อเดียวกับเครื่องมือในตัว เครื่องมือปลั๊กอินจะมีความสำคัญเหนือกว่า
+</aside>
+---
+
+<h3>การบันทึก</h3>
+<p>ใช้ <code>client.app.log()</code> แทน <code>console.log</code> สำหรับการบันทึกแบบมีโครงสร้าง:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>ระดับ: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code> ดูSDKเอกสารประกอบสำหรับรายละเอียด</p>
+<hr>
+<h3>Hooks สำหรับการกระชับข้อมูล</h3>
+<p>ปรับแต่งบริบทที่รวมไว้เมื่อมีการกระชับเซสชัน:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> hook เริ่มทำงานก่อนที่ LLM จะสร้างข้อมูลสรุปต่อเนื่อง ใช้เพื่อแทรกบริบทเฉพาะโดเมนที่พรอมต์การบีบอัดข้อมูลเริ่มต้นอาจพลาดไป</p>
+<p>คุณยังสามารถแทนที่พรอมต์การกระชับข้อมูลทั้งหมดได้โดยตั้งค่า <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>เมื่อตั้งค่า <code>output.prompt</code> มันจะแทนที่พร้อมท์การกระชับค่าเริ่มต้นโดยสมบูรณ์ อาร์เรย์ <code>output.context</code> จะถูกละเว้นในกรณีนี้</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

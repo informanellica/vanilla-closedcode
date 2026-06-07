@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fejlfinding — vanilla-closedcode docs</title>
+  <meta name="description" content="Almindelige problemer, og hvordan de løses.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html" selected>Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Fejlfinding</h1>
+      <p class="lede">Almindelige problemer, og hvordan de løses.</p>
+      <p>For at fejlfinde problemer med vanilla-closedcode, start med at tjekke logfilerne og de lokale data, den gemmer på disken.</p>
+<hr>
+<h2>Logfiler</h2>
+<p>Logfiler skrives til:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> og indsæt <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>Logfiler navngives med tidsstempler (f.eks. <code>2025-01-09T123456.log</code>) og de sidste 10 logfiler beholdes.</p>
+<p>Du kan angive logniveauet med kommandolinjeflaget <code>--log-level</code> for at få mere detaljeret fejlfindingsinformation. For eksempel <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>Lagring</h2>
+<p>closedcode gemmer sessionsdata og andre applikationsdata på disken på:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> og indsæt <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>Denne mappe indeholder:</p>
+<ul>
+<li><code>auth.json</code> - Godkendelsesdata som API-nøgler, OAuth-tokens</li>
+<li><code>log/</code> - Applikationslogs</li>
+<li><code>project/</code> - Projektspecifikke data som sessions- og beskeddata<ul>
+<li>Hvis projektet er inden for et Git-repo, gemmes det i <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>Hvis det ikke er et Git-repo, gemmes det i <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Desktop-app</h2>
+<p>vanilla-closedcode Desktop kører en lokal vanilla-closedcode-server (<code>closedcode-cli</code> sidevognen) i baggrunden. De fleste problemer er forårsaget af et plugin, der fungerer dårligt, en ødelagt cache eller en dårlig serverindstilling.</p>
+<h3>Hurtige tjek</h3>
+<ul>
+<li>Afslut og start appen på ny.</li>
+<li>Hvis appen viser en fejlskærm, klikker du på <strong>Start på ny</strong> og kopierer fejldetaljerne.</li>
+<li>Kun macOS: <code>vanilla-closedcode</code>-menu -&gt; <strong>Genindlæs webvisning</strong> (hjælper hvis UI er tom/frosset).</li>
+</ul>
+<hr>
+<h3>Deaktiver plugins</h3>
+<p>Hvis skrivebordsappen går ned ved opstart, hænger eller opfører sig mærkeligt, start med at deaktivere plugins.</p>
+<h4>Tjek den globale konfiguration</h4>
+<p>Åbn den globale konfigurationsfil og se efter en <code>plugin</code>-nøgle.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (eller <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (ældre installationer): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> og indsæt <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>Hvis du har konfigureret plugins, deaktiver dem midlertidigt ved at fjerne nøglen eller sætte den til et tomt array:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>Tjek plugin-mapper</h4>
+<p>vanilla-closedcode kan også indlæse lokale plugins fra disken. Flyt disse midlertidigt væk (eller giv mappen nyt navn) og start skrivebordsappen på ny:</p>
+<ul>
+<li><strong>Globale plugins</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> og indsæt <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>Projektplugins</strong> (kun hvis du bruger konfiguration per projekt)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>Hvis appen begynder at fungere igen, aktiverer du plugins én ad gangen for at finde ud af, hvilken som forårsager problemet.</p>
+<hr>
+<h3>Ryd cachen</h3>
+<p>Hvis deaktivering af plugins ikke hjælper (eller en plugin-installation sidder fast), tøm cachen så vanilla-closedcode kan genopbygge den.</p>
+<ol>
+<li>Afslut vanilla-closedcode Desktop helt.</li>
+<li>Slet cache-mappen:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; indsæt <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: slet <code>~/.cache/closedcode</code> (eller kør <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> og indsæt <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>Start vanilla-closedcode Desktop på ny.</li>
+</ol>
+<hr>
+<h3>Løs problemer med serverforbindelse</h3>
+<p>vanilla-closedcode Desktop kan enten starte sin egen lokale server (standard) eller forbinde til en server URL, du har konfigureret.</p>
+<p>Hvis du ser en <strong>&quot;Forbindelse mislykkedes&quot;</strong>-dialogboks (eller appen kommer aldrig forbi splash-skærmen), se efter en brugerdefineret server URL.</p>
+<h4>Slet standardserveren for skrivebordet URL</h4>
+<p>Fra startskærmen klikker du på servernavnet (med statusprikken) for at åbne servervælgeren. I delen <strong>Standardserver</strong> klikker du på <strong>Slet</strong>.</p>
+<h4>Fjern <code>server.port</code> / <code>server.hostname</code> fra din konfiguration</h4>
+<p>Hvis <code>closedcode.json(c)</code> indeholder en <code>server</code>-del, fjern den midlertidigt og start skrivebordsappen på ny.</p>
+<h4>Tjek miljøvariabler</h4>
+<p>Hvis du har <code>CLOSEDCODE_PORT</code> sat i dit miljø, vil skrivebordsappen prøve at bruge den port for den lokale server.</p>
+<ul>
+<li>Deaktiver <code>CLOSEDCODE_PORT</code> (eller vælg en ledig port) og start på ny.</li>
+</ul>
+<hr>
+<h3>Linux: Wayland / X11-problemer</h3>
+<p>På Linux kan nogle Wayland-opsætninger forårsage tomme vinduer eller kompositorfejl.</p>
+<ul>
+<li>Hvis du er på Wayland og appen er tom/crasher, prøv at starte med <code>OC_ALLOW_WAYLAND=1</code>.</li>
+<li>Hvis det gør ting værre, fjern det og prøv at starte under en X11-session i stedet.</li>
+</ul>
+<hr>
+<h3>Windows: WebView2-runtime</h3>
+<p>På Windows kræver vanilla-closedcode Desktop Microsoft Edge <strong>WebView2 Runtime</strong>. Hvis appen åbnes i et tomt vindue eller ikke starter, installer/opdater WebView2 og prøv igen.</p>
+<hr>
+<h3>Windows: Generelle ydeevneproblemer</h3>
+<p>Hvis du oplever langsom ydeevne, problemer med filadgang eller terminalproblemer på Windows, kan du prøve at bruge <a href="/docs/windows-wsl">WSL (Windows Subsystem for Linux)</a>. WSL giver et Linux-miljø som fungerer mere sømløst med funktionerne i vanilla-closedcode.</p>
+<hr>
+<h3>Meddelelser vises ikke</h3>
+<p>vanilla-closedcode Desktop viser kun systemvarsler når:</p>
+<ul>
+<li>varsler er aktiveret for vanilla-closedcode i dine OS-indstillinger, og</li>
+<li>appvinduet ikke er fokuseret.</li>
+</ul>
+<hr>
+<h3>Nulstil desktop-applagring (sidste udvej)</h3>
+<p>Hvis appen ikke starter og du ikke kan slette indstillingerne fra UI, nulstil skrivebordsappens gemte tilstand.</p>
+<ol>
+<li>Afslut vanilla-closedcode Desktop.</li>
+<li>Find og slet disse filer (de findes i vanilla-closedcode Desktop-appens datamappe):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (skrivebordsstandardserver URL)</li>
+<li><code>closedcode.global.dat</code> og <code>closedcode.workspace.*.dat</code> (UI tilstand som nylige servere/projekter)</li>
+</ul>
+<p>Sådan finder du mappen hurtigt:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (søg derefter efter filnavnene ovenfor)</li>
+<li><strong>Linux</strong>: søg under <code>~/.local/share</code> efter filnavnene ovenfor</li>
+<li><strong>Windows</strong>: Tryk <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (søg derefter efter filnavnene ovenfor)</li>
+</ul>
+<hr>
+<h2>Få hjælp</h2>
+<p>Hvis du oplever problemer med vanilla-closedcode:</p>
+<ol>
+<li><p><strong>Rapporter problemer på GitHub</strong></p>
+<p>Den bedste måde at rapportere fejl eller bede om funktioner på er gennem vores GitHub-repo:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>Før du opretter et nyt issue, søg i eksisterende issues for at se om dit problem allerede er rapporteret.</p>
+</li>
+<li><p><strong>Bliv en del af vores Discord</strong></p>
+<p>For hjælp i realtid og fællesskabsdiskussion, bliv en del af vores Discord-server:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>Almindelige problemer</h2>
+<p>Her er nogle almindelige problemer og hvordan du kan løse dem.</p>
+<hr>
+<h3>vanilla-closedcode vil ikke starte</h3>
+<ol>
+<li>Tjek logfilerne for fejlmeddelelser</li>
+<li>Prøv at køre med <code>--print-logs</code> for at se output i terminalen</li>
+<li>Sørg for at du har den nyeste version med <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>Godkendelsesproblemer</h3>
+<ol>
+<li>Prøv at godkende på ny med kommandoen <code>/connect</code> i TUI</li>
+<li>Tjek at dine API-nøgler er gyldige</li>
+<li>Sørg for at dit netværk tillader forbindelser til udbyderens API</li>
+</ol>
+<hr>
+<h3>Modellen er ikke tilgængelig</h3>
+<ol>
+<li>Tjek at du har godkendt dig med udbyderen</li>
+<li>Kontroller at modelnavnet i konfigurationen er rigtigt</li>
+<li>Nogle modeller kan kræve specifik adgang eller abonnement</li>
+</ol>
+<p>Hvis du støder på <code>ProviderModelNotFoundError</code> refererer du mest sandsynligt forkert
+til en model et sted.
+Modeller skal refereres sådan: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>Eksempler:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>For at finde ud af hvilke modeller du har adgang til, kør <code>closedcode models</code></p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>Hvis du støder på en ProviderInitError, har du sandsynligvis en ugyldig eller ødelagt konfiguration.</p>
+<p>For at løse dette:</p>
+<ol>
+<li><p>Kontroller først at din udbyder er rigtigt konfigureret ved at følge <a href="/docs/providers">udbydervejledningen</a></p>
+</li>
+<li><p>Hvis problemet vedvarer, prøv at tømme den gemte konfiguration:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>På Windows, tryk <code>WIN+R</code> og slet: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>Godkend på ny med din udbyder ved at bruge kommandoen <code>/connect</code> i TUI.</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError og udbyderpakkeproblemer</h3>
+<p>Hvis du støder på API-kaldsfejl, kan dette skyldes forældede udbyderpakker. closedcode installerer dynamisk udbyderpakker (OpenAI, Anthropic, Google, etc.) efter behov og cacher dem lokalt.</p>
+<p>For at løse problemer med udbyderpakke:</p>
+<ol>
+<li><p>Tøm udbyderens pakkecache:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>På Windows, tryk <code>WIN+R</code> og slet: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>Start closedcode på ny for at installere de nyeste udbyderpakker på ny</p>
+</li>
+</ol>
+<p>Dette vil tvinge closedcode til at downloade de nyeste versioner af udbyderpakkerne, som ofte løser kompatibilitetsproblemer med modelparametre og API-ændringer.</p>
+<hr>
+<h3>Kopier/indsæt virker ikke på Linux</h3>
+<p>Linux-brugere skal have et af følgende udklipsholderværktøjer installeret for at kopier/indsæt-funktionalitet skal fungere:</p>
+<p><strong>For X11-systemer:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>For Wayland-systemer:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>For hovedløse miljøer:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>closedcode vil opdage om du bruger Wayland og foretrække <code>wl-clipboard</code>, ellers vil den prøve at finde udklipsholderværktøjer i rækkefølgen: <code>xclip</code> og <code>xsel</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Araçlar — vanilla-closedcode docs</title>
+  <meta name="description" content="LLM&#39;in kullanabileceği araçları yönetin.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tools.html">English</option>
+      <option value="../ar/tools.html">العربية</option>
+      <option value="../bs/tools.html">Bosanski</option>
+      <option value="../da/tools.html">Dansk</option>
+      <option value="../de/tools.html">Deutsch</option>
+      <option value="../es/tools.html">Español</option>
+      <option value="../fr/tools.html">Français</option>
+      <option value="../it/tools.html">Italiano</option>
+      <option value="../ja/tools.html">日本語</option>
+      <option value="../ko/tools.html">한국어</option>
+      <option value="../nb/tools.html">Norsk</option>
+      <option value="../pl/tools.html">Polski</option>
+      <option value="../pt-br/tools.html">Português (BR)</option>
+      <option value="../ru/tools.html">Русский</option>
+      <option value="../th/tools.html">ไทย</option>
+      <option value="../tr/tools.html" selected>Türkçe</option>
+      <option value="../zh-cn/tools.html">简体中文</option>
+      <option value="../zh-tw/tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li class="active"><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Araçlar</h1>
+      <p class="lede">LLM&#39;in kullanabileceği araçları yönetin.</p>
+      <p>Araçlar, LLM&#39;in kod tabanınızda eylem gerçekleştirmesini sağlar. closedcode yerleşik bir araç setiyle gelir, ancak bunu <a href="/docs/custom-tools">özel araçlarla</a> veya <a href="/docs/mcp-servers">MCP sunucularıyla</a> genişletebilirsiniz.</p>
+<p>Varsayılan olarak tüm araçlar <strong>etkindir</strong> ve çalışmak için izin istemez. Araç davranışını <a href="/docs/permissions">izinler</a> üzerinden kontrol edebilirsiniz.</p>
+<hr>
+<h2>Yapılandırma</h2>
+<p>Araç davranışını kontrol etmek için <code>permission</code> alanını kullanın. Her araç için izin verebilir, reddedebilir veya onay isteyebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;,
+    &quot;bash&quot;: &quot;ask&quot;,
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Birden fazla aracı aynı anda kontrol etmek için joker karakterler de kullanabilirsiniz. Örneğin, bir MCP sunucusundan gelen tüm araçlar için onay istemek:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;mymcp_*&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p>İzin yapılandırması için <a href="/docs/permissions">daha fazla bilgi alın</a>.</p>
+<hr>
+<h2>Yerleşik</h2>
+<p>closedcode içinde bulunan tüm yerleşik araçlar aşağıdadır.</p>
+<hr>
+<h3>bash</h3>
+<p>Proje ortamınızda kabuk komutları çalıştırır.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bu araç LLM&#39;in <code>npm install</code>, <code>git status</code> gibi terminal komutlarını veya diğer kabuk komutlarını çalıştırmasını sağlar.</p>
+<hr>
+<h3>edit</h3>
+<p>Birebir metin değiştirme ile mevcut dosyaları düzenler.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bu araç dosyalarda kesin metin eşleşmelerini değiştirerek hassas düzenleme yapar. LLM&#39;in kodu değiştirmek için kullandığı temel yöntemdir.</p>
+<hr>
+<h3>write</h3>
+<p>Yeni dosyalar oluşturur veya mevcut dosyaları üzerine yazar.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>LLM&#39;in yeni dosya oluşturmasına izin vermek için bunu kullanın. Dosya zaten varsa üzerine yazar.</p>
+<aside class="aside aside-note">
+`write` aracı `edit` izniyle kontrol edilir; bu izin tüm dosya değişikliklerini kapsar (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>read</h3>
+<p>Kod tabanınızdan dosya içeriği okur.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bu araç dosyaları okur ve içeriklerini döndürür. Büyük dosyalar için belirli satır aralıklarını okuma desteği vardır.</p>
+<hr>
+<h3>grep</h3>
+<p>Düzenli ifadelerle dosya içeriğinde arama yapar.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;grep&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Kod tabanında hızlı içerik araması sunar. Tam regex sözdizimini ve dosya desen filtrelerini destekler.</p>
+<hr>
+<h3>glob</h3>
+<p>Desen eşleştirme ile dosya bulur.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;glob&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p><code>**/*.js</code> veya <code>src/**/*.ts</code> gibi glob desenleriyle dosya arar. Eşleşen dosya yollarını değişim zamanına göre sıralar.</p>
+<hr>
+<h3>lsp (deneysel)</h3>
+<p>Tanım, referans, hover bilgisi ve çağrılar hiyerarşisi gibi kod zekası özellikleri için yapılandırdığınız LSP sunucularıyla etkileşir.</p>
+<aside class="aside aside-note">
+Bu araç yalnızca `CLOSEDCODE_EXPERIMENTAL_LSP_TOOL=true` (veya `CLOSEDCODE_EXPERIMENTAL=true`) olduğunda kullanılabilir.
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "lsp": "allow"
+  }
+}
+```
+
+<p>Desteklenen işlemler: <code>goToDefinition</code>, <code>findReferences</code>, <code>hover</code>, <code>documentSymbol</code>, <code>workspaceSymbol</code>, <code>goToImplementation</code>, <code>prepareCallHierarchy</code>, <code>incomingCalls</code>, <code>outgoingCalls</code>.</p>
+<p>Projeniz için kullanılabilir LSP sunucularını ayarlamak için <a href="/docs/lsp">LSP Sunucuları</a> sayfasına bakın.</p>
+<hr>
+<h3>patch</h3>
+<p>Dosyalara patch uygular.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bu araç patch dosyalarını kod tabanınıza uygular. Farklı kaynaklardan gelen diff ve patch&#39;leri uygulamak için kullanışlıdır.</p>
+<aside class="aside aside-note">
+`patch` aracı `edit` izniyle kontrol edilir; bu izin tüm dosya değişikliklerini kapsar (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>skill</h3>
+<p>Bir <a href="/docs/skills">skill</a> (<code>SKILL.md</code> dosyası) yükler ve içeriğini konuşmaya döndürür.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<hr>
+<h3>todowrite</h3>
+<p>Kodlama oturumlarında yapılacaklar listesini yönetir.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;todowrite&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Karmaşık işlemlerde ilerlemeyi takip etmek için görev listeleri oluşturur ve günceller. LLM bunu çok adımlı görevleri düzenlemek için kullanır.</p>
+<aside class="aside aside-note">
+Bu araç alt agent'lar için varsayılan olarak devre dışıdır, ama manuel etkinleştirebilirsiniz. [Daha fazla bilgi](/docs/agents/#permissions)
+</aside>
+---
+
+<h3>webfetch</h3>
+<p>Web içeriği getirir.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>LLM&#39;in web sayfalarını getirip okumasını sağlar. Dokümantasyon aramak veya çevrimiçi kaynakları incelemek için kullanışlıdır.</p>
+<hr>
+<h3>websearch</h3>
+<p>Web&#39;de bilgi arar.</p>
+<aside class="aside aside-note">
+Bu araç yalnızca closedcode provider kullanılırken veya `CLOSEDCODE_ENABLE_EXA` ortam değişkeni doğru değerlerden birine ayarlandığında (örneğin `true` ya da `1`) kullanılabilir.
+
+<p>closedcode başlatırken etkinleştirmek için:</p>
+<pre><code class="language-bash">CLOSEDCODE_ENABLE_EXA=1 closedcode
+</code></pre>
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "websearch": "allow"
+  }
+}
+```
+
+<p>Exa AI ile web araması yaparak ilgili bilgileri bulur. Eğitim verisi kesim tarihinin ötesindeki konuları araştırmak, güncel olayları bulmak veya genel araştırma yapmak için kullanışlıdır.</p>
+<p>API anahtarı gerekmez - araç Exa AI&#39;nin barındırılan MCP hizmetine doğrudan kimlik doğrulaması olmadan bağlanır.</p>
+<aside class="aside aside-tip">
+Bilgi keşfetmeniz gerekiyorsa `websearch`, belirli bir URL'den içerik çekmeniz gerekiyorsa `webfetch` kullanın.
+</aside>
+---
+
+<h3>question</h3>
+<p>Çalışma sırasında kullanıcıya soru sorar.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;question&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bu araç LLM&#39;in görev sırasında kullanıcıya soru sormasını sağlar. Şunlar için kullanışlıdır:</p>
+<ul>
+<li>Kullanıcı tercihleri veya gereksinimleri toplamak</li>
+<li>Belirsiz talimatları netleştirmek</li>
+<li>Uygulama seçeneklerinde karar almak</li>
+<li>Hangi yöne gidileceğine dair seçenek sunmak</li>
+</ul>
+<p>Her soru bir başlık, soru metni ve seçenek listesi içerir. Kullanıcılar seçeneklerden birini seçebilir veya özel yanıt yazabilir. Birden fazla soru varsa tüm yanıtları göndermeden önce sorular arasında gezebilirler.</p>
+<hr>
+<h2>Özel araçlar</h2>
+<p>Özel araçlar, LLM&#39;in çağırabileceği kendi fonksiyonlarınızı tanımlamanızı sağlar. Bunlar config dosyanızda tanımlanır ve keyfi kod çalıştırabilir.</p>
+<p>Özel araç oluşturma için <a href="/docs/custom-tools">daha fazla bilgi alın</a>.</p>
+<hr>
+<h2>MCP sunucuları</h2>
+<p>MCP (Model Context Protocol) sunucuları, harici araçları ve servisleri entegre etmenizi sağlar. Buna veritabanı erişimi, API entegrasyonları ve üçüncü taraf servisler dahildir.</p>
+<p>MCP sunucularını yapılandırma için <a href="/docs/mcp-servers">daha fazla bilgi alın</a>.</p>
+<hr>
+<h2>Dahili detaylar</h2>
+<p>Dahilde <code>grep</code> ve <code>glob</code> gibi araçlar <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a> kullanır. Varsayılan olarak ripgrep <code>.gitignore</code> desenlerine uyar; yani <code>.gitignore</code> içindeki dosya ve dizinler arama ve listeleme sonucuna dahil edilmez.</p>
+<hr>
+<h3>Yoksayma desenleri</h3>
+<p>Normalde yok sayılan dosyaları dahil etmek için proje kökünde bir <code>.ignore</code> dosyası oluşturun. Bu dosya belirli yolları açıkça izinli yapabilir.</p>
+<pre><code class="language-text">!node_modules/
+!dist/
+!build/
+</code></pre>
+<p>Örneğin bu <code>.ignore</code> dosyası, <code>node_modules/</code> içinde olsalar bile ripgrep&#39;in <code>dist/</code>, <code>build/</code> ve <code>.gitignore</code> dizinlerinde arama yapmasına izin verir.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

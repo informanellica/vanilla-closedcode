@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDE — vanilla-closedcode docs</title>
+  <meta name="description" content="VS Code、Cursor、およびその他の IDE 用の vanilla-closedcode 拡張機能">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/ide.html">English</option>
+      <option value="../ar/ide.html">العربية</option>
+      <option value="../bs/ide.html">Bosanski</option>
+      <option value="../da/ide.html">Dansk</option>
+      <option value="../de/ide.html">Deutsch</option>
+      <option value="../es/ide.html">Español</option>
+      <option value="../fr/ide.html">Français</option>
+      <option value="../it/ide.html">Italiano</option>
+      <option value="../ja/ide.html" selected>日本語</option>
+      <option value="../ko/ide.html">한국어</option>
+      <option value="../nb/ide.html">Norsk</option>
+      <option value="../pl/ide.html">Polski</option>
+      <option value="../pt-br/ide.html">Português (BR)</option>
+      <option value="../ru/ide.html">Русский</option>
+      <option value="../th/ide.html">ไทย</option>
+      <option value="../tr/ide.html">Türkçe</option>
+      <option value="../zh-cn/ide.html">简体中文</option>
+      <option value="../zh-tw/ide.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li class="active"><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>IDE</h1>
+      <p class="lede">VS Code、Cursor、およびその他の IDE 用の vanilla-closedcode 拡張機能</p>
+      <p>vanilla-closedcode は、VS Code、Cursor、またはターミナルをサポートする任意の IDE と統合します。開始するには、ターミナルで <code>closedcode</code> を実行するだけです。</p>
+<hr>
+<h2>使用法</h2>
+<ul>
+<li><strong>クイック起動</strong>: <code>Cmd+Esc</code> (Mac) または <code>Ctrl+Esc</code> (Windows/Linux) を使用して、分割ターミナルビューで vanilla-closedcode を開くか、既存のターミナルセッションが既に実行されている場合はそれにフォーカスします。</li>
+<li><strong>新しいセッション</strong>: すでに開いている場合でも、<code>Cmd+Shift+Esc</code> (Mac) または <code>Ctrl+Shift+Esc</code> (Windows/Linux) を使用して、新しい vanilla-closedcode ターミナルセッションを開始します。 UI の [vanilla-closedcode] ボタンをクリックすることもできます。</li>
+<li><strong>コンテキスト認識</strong>: 現在の選択またはタブを vanilla-closedcode と自動的に共有します。</li>
+<li><strong>ファイル参照のショートカット</strong>: ファイル参照を挿入するには、<code>Cmd+Option+K</code> (Mac) または <code>Alt+Ctrl+K</code> (Linux/Windows) を使用します。たとえば、<code>@File#L37-42</code>。</li>
+</ul>
+<hr>
+<h2>インストール</h2>
+<p>vanilla-closedcode を VS Code および Cursor、Windsurf、VSCodium などの一般的なフォークにインストールするには:</p>
+<ol>
+<li>VS Code を開く</li>
+<li>統合ターミナルを開きます</li>
+<li><code>closedcode</code> を実行します - 拡張機能は自動的にインストールされます</li>
+</ol>
+<p>一方、TUI から <code>/editor</code> または <code>/export</code> を実行するときに独自の IDE を使用したい場合は、<code>export EDITOR=&quot;code --wait&quot;</code> を設定する必要があります。 <a href="/docs/tui/#editor-setup">詳細はこちら</a>。</p>
+<hr>
+<h3>手動インストール</h3>
+<p>Extension Marketplace で <strong>vanilla-closedcode</strong> を検索し、<strong>インストール</strong> をクリックします。</p>
+<hr>
+<h3>トラブルシューティング</h3>
+<p>拡張機能が自動的にインストールされない場合:</p>
+<ul>
+<li>統合ターミナルで <code>closedcode</code> を実行していることを確認してください。</li>
+<li>IDE の CLI がインストールされていることを確認します。<ul>
+<li>VS Code の場合: <code>code</code> コマンド</li>
+<li>Cursor の場合: <code>cursor</code> コマンド</li>
+<li>Windsurf の場合: <code>windsurf</code> コマンド</li>
+<li>VSCodium の場合: <code>codium</code> コマンド</li>
+<li>そうでない場合は、<code>Cmd+Shift+P</code> (Mac) または <code>Ctrl+Shift+P</code> (Windows/Linux) を実行し、「Shell Command: Install &#39;code&#39; command in PATH」(または IDE の同等のコマンド) を検索します。</li>
+</ul>
+</li>
+<li>VS Code に拡張機能をインストールする権限があることを確認してください</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

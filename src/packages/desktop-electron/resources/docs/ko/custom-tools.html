@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Custom Tools — vanilla-closedcode docs</title>
+  <meta name="description" content="Create tools the LLM can call in vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html" selected>한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Custom Tools</h1>
+      <p class="lede">Create tools the LLM can call in vanilla-closedcode.</p>
+      <p>custom tool은 대화 중 LLM이 호출할 수 있도록 사용자가 직접 만든 함수입니다. <code>read</code>, <code>write</code>, <code>bash</code> 같은 vanilla-closedcode의 <a href="/docs/tools">built-in tools</a>와 함께 동작합니다.</p>
+<hr>
+<h2>도구 만들기</h2>
+<p>tool은 <strong>TypeScript</strong> 또는 <strong>JavaScript</strong> 파일로 정의합니다. 다만 tool 정의에서 호출하는 스크립트는 <strong>어떤 언어든</strong> 사용할 수 있습니다. 즉, TypeScript/JavaScript는 tool 정의 자체에만 필요합니다.</p>
+<hr>
+<h3>위치</h3>
+<p>tool은 다음 위치에 둘 수 있습니다.</p>
+<ul>
+<li>프로젝트의 <code>.closedcode/tools/</code> 디렉토리(로컬)</li>
+<li><code>~/.config/closedcode/tools/</code> 디렉토리(전역)</li>
+</ul>
+<hr>
+<h3>구조</h3>
+<p>tool을 가장 쉽게 만드는 방법은 타입 안정성과 validation을 제공하는 <code>tool()</code> helper를 사용하는 것입니다.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p><strong>파일 이름</strong>이 <strong>tool 이름</strong>이 됩니다. 위 예시는 <code>database</code> tool을 생성합니다.</p>
+<hr>
+<h4>파일 하나에 여러 tool 정의</h4>
+<p>하나의 파일에서 여러 tool을 export할 수도 있습니다. 각 export는 <strong>별도의 tool</strong>이 되며 이름은 <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong> 형식을 사용합니다.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>이 경우 <code>math_add</code>, <code>math_multiply</code> 두 tool이 생성됩니다.</p>
+<hr>
+<h4>기본 도구와 이름 충돌</h4>
+<p>커스텀 도구는 도구 이름으로 식별됩니다. 커스텀 도구가 기본 도구와 같은 이름을 사용하면 커스텀 도구가 우선순위를 갖습니다.</p>
+<p>예를 들어, 이 파일은 기본 <code>bash</code> 도구를 대체합니다:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+의도적으로 기본 도구를 대체하려는 경우가 아니라면 고유한 이름을 사용하는 것이 좋습니다. 도구를 오버라이드하지 않고 비활성화만 하려면 [permissions](/docs/permissions)를 사용하세요.
+</aside>
+---
+
+<h3>인자</h3>
+<p>인자 타입은 <code>tool.schema</code>로 정의할 수 있습니다. <code>tool.schema</code>는 <a href="https://zod.dev">Zod</a> 기반입니다.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p><a href="https://zod.dev">Zod</a>를 직접 import해서 일반 객체를 반환하는 방식도 사용할 수 있습니다.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Context</h3>
+<p>tool은 현재 세션의 context 정보를 전달받습니다.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>세션 작업 디렉토리는 <code>context.directory</code>를 사용하세요.
+git worktree 루트는 <code>context.worktree</code>를 사용하세요.</p>
+<hr>
+<h2>예시</h2>
+<h3>Python으로 tool 작성</h3>
+<p>tool은 원하는 언어로 작성할 수 있습니다. 아래는 Python으로 두 숫자를 더하는 예시입니다.</p>
+<p>먼저 Python 스크립트로 tool을 만듭니다.</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>그다음 이 스크립트를 호출하는 tool 정의를 만듭니다.</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>여기서는 Python 스크립트를 실행하기 위해 <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> 유틸리티를 사용합니다.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

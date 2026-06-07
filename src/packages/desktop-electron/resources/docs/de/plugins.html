@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugins — vanilla-closedcode docs</title>
+  <meta name="description" content="Schreiben Sie Ihre eigenen Plugins, um vanilla-closedcode zu erweitern.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html" selected>Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Deutsch</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Plugins</h1>
+      <p class="lede">Schreiben Sie Ihre eigenen Plugins, um vanilla-closedcode zu erweitern.</p>
+      <p>Mit Plugins können Sie vanilla-closedcode erweitern, indem Sie verschiedene Ereignisse einbinden und das Verhalten anpassen. Sie können Plugins erstellen, um neue Funktionen hinzuzufügen, externe Dienste zu integrieren oder das Standardverhalten von vanilla-closedcode zu ändern.</p>
+<p>Beispiele finden Sie im von der Community erstellten <a href="/docs/ecosystem#plugins">plugins</a>.</p>
+<hr>
+<h2>Plugins verwenden</h2>
+<p>Es gibt zwei Möglichkeiten, Plugins zu laden.</p>
+<hr>
+<h3>Aus lokalen Dateien</h3>
+<p>Platzieren Sie JavaScript- oder TypeScript-Dateien im Plugin-Verzeichnis.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> – Plugins auf Projektebene</li>
+<li><code>~/.config/closedcode/plugins/</code> – Globale Plugins</li>
+</ul>
+<p>Dateien in diesen Verzeichnissen werden beim Start automatisch geladen.</p>
+<hr>
+<h3>Von npm</h3>
+<p>Geben Sie npm-Pakete in Ihrer Konfigurationsdatei an.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Es werden sowohl reguläre als auch bereichsbezogene NPM-Pakete unterstützt.</p>
+<p>Durchsuchen Sie die verfügbaren Plugins im <a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>Plugin-Installation</h3>
+<p><strong>NPM-Plugins</strong> werden beim Start automatisch mit npm installiert. Pakete und ihre Abhängigkeiten werden in <code>~/.cache/closedcode/node_modules/</code> zwischengespeichert.</p>
+<p><strong>Lokale Plugins</strong> werden direkt aus dem Plugin-Verzeichnis geladen. Um externe Pakete zu verwenden, müssen Sie ein <code>package.json</code> in Ihrem Konfigurationsverzeichnis erstellen (siehe <a href="#dependencies">Dependencies</a>) oder das Plugin auf npm und <a href="/docs/config#plugins">add it to your config</a> veröffentlichen.</p>
+<hr>
+<h3>Ladereihenfolge</h3>
+<p>Plugins werden aus allen Quellen geladen und alle Hooks werden nacheinander ausgeführt. Die Ladereihenfolge lautet:</p>
+<ol>
+<li>Globale Konfiguration (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Projektkonfiguration (<code>closedcode.json</code>)</li>
+<li>Globales Plugin-Verzeichnis (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Projekt-Plugin-Verzeichnis (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Doppelte npm-Pakete mit demselben Namen und derselben Version werden einmal geladen. Allerdings werden ein lokales Plugin und ein NPM-Plugin mit ähnlichen Namen beide separat geladen.</p>
+<hr>
+<h2>Plugins erstellen</h2>
+<p>Ein Plugin ist ein <strong>JavaScript/TypeScript-Modul</strong>, das eine oder mehrere Plugin-Funktionen exportiert. Jede Funktion empfängt ein Kontextobjekt und gibt ein Hooks-Objekt zurück.</p>
+<hr>
+<h3>Abhängigkeiten</h3>
+<p>Lokale Plugins und benutzerdefinierte Tools können externe npm-Pakete verwenden. Fügen Sie Ihrem Konfigurationsverzeichnis ein <code>package.json</code> mit den benötigten Abhängigkeiten hinzu.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode führt beim Start <code>npm install</code> aus, um diese zu installieren. Ihre Plugins und Tools können sie dann importieren.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Grundstruktur</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Die Plugin-Funktion erhält:</p>
+<ul>
+<li><code>project</code>: Die aktuellen Projektinformationen.</li>
+<li><code>directory</code>: Das aktuelle Arbeitsverzeichnis.</li>
+<li><code>worktree</code>: Der Git-Worktree-Pfad.</li>
+<li><code>client</code>: Ein vanilla-closedcode-SDK-Client für die Interaktion mit AI.</li>
+</ul>
+<hr>
+<h3>TypeScript-Unterstützung</h3>
+<p>Für TypeScript-Plugins können Sie Typen aus dem Plugin-Paket importieren:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Ereignisse</h3>
+<p>Plugins können Ereignisse abonnieren, wie unten im Abschnitt „Beispiele“ gezeigt. Hier finden Sie eine Liste der verschiedenen verfügbaren Veranstaltungen.</p>
+<h4>Befehlsereignisse</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Dateiereignisse</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Installationsereignisse</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP-Ereignisse</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Nachrichtenereignisse</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>Berechtigungsereignisse</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Serverereignisse</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Sitzungsereignisse</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Todo-Ereignisse</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Shell-Ereignisse</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Tool-Ereignisse</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI-Ereignisse</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Beispiele</h2>
+<p>Hier sind einige Beispiele für Plugins, mit denen Sie vanilla-closedcode erweitern können.</p>
+<hr>
+<h3>Benachrichtigungen senden</h3>
+<p>Senden Sie Benachrichtigungen, wenn bestimmte Ereignisse eintreten:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Wir verwenden <code>osascript</code>, um AppleScript unter macOS auszuführen. Hier verwenden wir es zum Versenden von Benachrichtigungen.</p>
+<aside class="aside aside-note">
+Wenn Sie die vanilla-closedcode-Desktop-App verwenden, kann diese automatisch Systembenachrichtigungen senden, wenn eine Antwort bereit ist oder wenn in einer Sitzung ein Fehler auftritt.
+</aside>
+---
+
+<h3>.env-Schutz</h3>
+<p>Verhindern Sie, dass vanilla-closedcode <code>.env</code>-Dateien liest:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Umgebungsvariablen einfügen</h3>
+<p>Fügen Sie Umgebungsvariablen in alle Shell-Ausführungen ein (AI-Tools und Benutzerterminals):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Benutzerdefinierte Tools</h3>
+<p>Plugins können vanilla-closedcode auch benutzerdefinierte Tools hinzufügen:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>Der <code>tool</code>-Helfer erstellt ein benutzerdefiniertes Tool, das vanilla-closedcode aufrufen kann. Es verwendet eine Zod-Schemafunktion und gibt eine Tooldefinition zurück mit:</p>
+<ul>
+<li><code>description</code>: Was das Tool macht</li>
+<li><code>args</code>: Zod-Schema für die Argumente des Tools</li>
+<li><code>execute</code>: Funktion, die ausgeführt wird, wenn das Tool aufgerufen wird</li>
+</ul>
+<p>Ihre benutzerdefinierten Tools stehen neben den integrierten Tools für vanilla-closedcode zur Verfügung.</p>
+<hr>
+<h3>Protokollierung</h3>
+<p>Verwenden Sie <code>client.app.log()</code> anstelle von <code>console.log</code> für die strukturierte Protokollierung:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Ebenen: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Weitere Informationen finden Sie unter <a href="https://github.com/informanellica/vanilla-closedcode">SDK documentation</a>.</p>
+<hr>
+<h3>Compaction-Hooks</h3>
+<p>Passen Sie den Kontext an, der beim Komprimieren einer Sitzung einbezogen wird:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p>Der Hook <code>experimental.session.compacting</code> wird ausgelöst, bevor der Hook LLM eine Fortsetzungszusammenfassung generiert. Verwenden Sie es, um domänenspezifischen Kontext einzufügen, der der standardmäßigen Komprimierungsaufforderung entgehen würde.</p>
+<p>Sie können die Komprimierungsaufforderung auch vollständig ersetzen, indem Sie <code>output.prompt</code> festlegen:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Wenn <code>output.prompt</code> festgelegt ist, ersetzt es die standardmäßige Komprimierungsaufforderung vollständig. Das Array <code>output.context</code> wird in diesem Fall ignoriert.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

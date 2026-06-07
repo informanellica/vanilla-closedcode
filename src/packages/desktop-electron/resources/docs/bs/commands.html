@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Komande — vanilla-closedcode docs</title>
+  <meta name="description" content="Kreirajte prilagođene komande za zadatke koji se ponavljaju.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html" selected>Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Komande</h1>
+      <p class="lede">Kreirajte prilagođene komande za zadatke koji se ponavljaju.</p>
+      <p>Prilagođene komande vam omogućavaju da odredite prompt koji želite da pokrenete kada se ta naredba izvrši u TUI-ju.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Prilagođene komande su dodatak ugrađenim komandama kao što su <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Saznajte više</a>.</p>
+<hr>
+<h2>Kreiranje datoteka naredbi</h2>
+<p>Kreirajte markdown fajlove u direktorijumu <code>commands/</code> da definišete prilagođene komande.
+Kreiraj <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Frontmatter definira svojstva komande. Sadržaj postaje predložak.
+Koristite komandu tako što ćete upisati <code>/</code> nakon čega slijedi naziv komande.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Konfiguracija</h2>
+<p>Možete dodati prilagođene komande kroz vanilla-closedcode konfiguraciju ili kreiranjem markdown datoteka u direktoriju <code>commands/</code>.</p>
+<hr>
+<h3>JSON</h3>
+<p>Koristite opciju <code>command</code> u svom vanilla-closedcode <a href="/docs/config">config</a>:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Sada možete pokrenuti ovu naredbu u TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Također možete definirati komande koristeći markdown datoteke. Stavite ih u:</p>
+<ul>
+<li>Globalno: <code>~/.config/closedcode/commands/</code></li>
+<li>Po projektu: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Ime markdown datoteke postaje ime naredbe. Na primjer, <code>test.md</code> vam omogućava da pokrenete:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Konfiguracija upita</h2>
+<p>Promptovi za prilagođene komande podržavaju nekoliko posebnih čuvara mjesta i sintakse.</p>
+<hr>
+<h3>Argumenti</h3>
+<p>Proslijedite argumente naredbama koristeći čuvar mjesta <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Pokrenite naredbu s argumentima:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>I <code>$ARGUMENTS</code> će biti zamijenjen sa <code>Button</code>.
+Također možete pristupiti pojedinačnim argumentima koristeći pozicione parametre:</p>
+<ul>
+<li><code>$1</code> - Prvi argument</li>
+<li><code>$2</code> - Drugi argument</li>
+<li><code>$3</code> - Treći argument</li>
+<li>I tako dalje...</li>
+</ul>
+<p>Na primjer:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Pokrenite naredbu:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Ovo zamjenjuje:</p>
+<ul>
+<li><code>$1</code> do <code>config.json</code></li>
+<li><code>$2</code> do <code>src</code></li>
+<li><code>$3</code> do <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Shell izlaz</h3>
+<p>Koristite <em>!<code>command</code></em> da ubacite izlaz <a href="/docs/tui#bash-commands">bash command</a> u svoj prompt.
+Na primjer, da kreirate prilagođenu naredbu koja analizira pokrivenost testom:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Ili da vidite nedavne promjene:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Naredbe se pokreću u korijenskom direktoriju vašeg projekta i njihov izlaz postaje dio prompta.</p>
+<hr>
+<h3>Reference datoteka</h3>
+<p>Uključite datoteke u svoju naredbu koristeći <code>@</code> nakon čega slijedi naziv datoteke.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Sadržaj datoteke se automatski uključuje u prompt.</p>
+<hr>
+<h2>Opcije</h2>
+<p>Pogledajmo detaljno opcije konfiguracije.</p>
+<hr>
+<h3>Šablon</h3>
+<p>Opcija <code>template</code> definira prompt koji će biti poslan LLM-u kada se naredba izvrši.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ovo je <strong>obavezna</strong> opcija konfiguracije.</p>
+<hr>
+<h3>Opis</h3>
+<p>Koristite opciju <code>description</code> da pružite kratak opis onoga što naredba radi.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ovo se prikazuje kao opis u TUI-u kada unesete naredbu.</p>
+<hr>
+<h3>Agent</h3>
+<p>Koristite <code>agent</code> konfiguraciju da opciono odredite koji <a href="/docs/agents">agent</a> treba da izvrši ovu naredbu.
+Ako je ovo <a href="/docs/agents/#subagents">subagent</a> naredba će po defaultu pokrenuti pozivanje subagenta.
+Da onemogućite ovo ponašanje, postavite <code>subtask</code> na <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ovo je <strong>opciona</strong> opcija konfiguracije. Ako nije navedeno, podrazumevano je vaš trenutni agent.</p>
+<hr>
+<h3>Podzadatak</h3>
+<p>Koristite <code>subtask</code> boolean da prisilite naredbu da pokrene <a href="/docs/agents/#subagents">subagent</a> pozivanje.
+Ovo je korisno ako želite da naredba ne zagađuje vaš primarni kontekst i da će <strong>primorati</strong> agenta da djeluje kao subagent,
+čak i ako je <code>mode</code> postavljeno na <code>primary</code> u konfiguraciji <a href="/docs/agents">agent</a>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Ovo je <strong>opciona</strong> opcija konfiguracije.</p>
+<hr>
+<h3>Model</h3>
+<p>Koristite <code>model</code> konfiguraciju da nadjačate zadani model za ovu naredbu.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ovo je <strong>opciona</strong> opcija konfiguracije.</p>
+<hr>
+<h2>Ugrađene naredbe</h2>
+<p>vanilla-closedcode uključuje nekoliko ugrađenih naredbi kao što su <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">saznaj više</a>.</p>
+<aside class="aside aside-note">
+Prilagođene komande mogu nadjačati ugrađene komande.
+</aside>
+Ako definirate prilagođenu naredbu s istim imenom, ona će nadjačati ugrađenu naredbu.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

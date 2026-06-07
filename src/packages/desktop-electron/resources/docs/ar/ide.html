@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDE — vanilla-closedcode docs</title>
+  <meta name="description" content="امتداد vanilla-closedcode لـ VS Code و Cursor وغيرها من بيئات التطوير">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/ide.html">English</option>
+      <option value="../ar/ide.html" selected>العربية</option>
+      <option value="../bs/ide.html">Bosanski</option>
+      <option value="../da/ide.html">Dansk</option>
+      <option value="../de/ide.html">Deutsch</option>
+      <option value="../es/ide.html">Español</option>
+      <option value="../fr/ide.html">Français</option>
+      <option value="../it/ide.html">Italiano</option>
+      <option value="../ja/ide.html">日本語</option>
+      <option value="../ko/ide.html">한국어</option>
+      <option value="../nb/ide.html">Norsk</option>
+      <option value="../pl/ide.html">Polski</option>
+      <option value="../pt-br/ide.html">Português (BR)</option>
+      <option value="../ru/ide.html">Русский</option>
+      <option value="../th/ide.html">ไทย</option>
+      <option value="../tr/ide.html">Türkçe</option>
+      <option value="../zh-cn/ide.html">简体中文</option>
+      <option value="../zh-tw/ide.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li class="active"><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>IDE</h1>
+      <p class="lede">امتداد vanilla-closedcode لـ VS Code و Cursor وغيرها من بيئات التطوير</p>
+      <p>يتكامل vanilla-closedcode مع VS Code و Cursor أو أي IDE يدعم terminal. ما عليك سوى تشغيل <code>closedcode</code> في terminal للبدء.</p>
+<hr>
+<h2>الاستخدام</h2>
+<ul>
+<li><strong>تشغيل سريع</strong>: استخدم <code>Cmd+Esc</code> (Mac) أو <code>Ctrl+Esc</code> (Windows/Linux) لفتح vanilla-closedcode في عرض terminal مقسّم، أو للتركيز على جلسة terminal موجودة إذا كانت قيد التشغيل بالفعل.</li>
+<li><strong>جلسة جديدة</strong>: استخدم <code>Cmd+Shift+Esc</code> (Mac) أو <code>Ctrl+Shift+Esc</code> (Windows/Linux) لبدء جلسة terminal جديدة لـ vanilla-closedcode حتى لو كانت هناك جلسة مفتوحة. يمكنك أيضا النقر على زر vanilla-closedcode في واجهة المستخدم.</li>
+<li><strong>وعي بالسياق</strong>: شارك تلقائيا تحديدك الحالي أو تبويبك مع vanilla-closedcode.</li>
+<li><strong>اختصارات الإشارة إلى الملفات</strong>: استخدم <code>Cmd+Option+K</code> (Mac) أو <code>Alt+Ctrl+K</code> (Linux/Windows) لإدراج مراجع الملفات. مثلا: <code>@File#L37-42</code>.</li>
+</ul>
+<hr>
+<h2>التثبيت</h2>
+<p>لتثبيت vanilla-closedcode على VS Code والتفرعات الشائعة مثل Cursor و Windsurf و VSCodium:</p>
+<ol>
+<li>افتح VS Code</li>
+<li>افتح terminal المدمجة</li>
+<li>شغّل <code>closedcode</code> - سيتم تثبيت الامتداد تلقائيا</li>
+</ol>
+<p>أما إذا كنت تريد استخدام IDE الخاص بك عند تشغيل <code>/editor</code> أو <code>/export</code> من واجهة TUI، فستحتاج إلى ضبط <code>export EDITOR=&quot;code --wait&quot;</code>. <a href="/docs/tui/#editor-setup">اعرف المزيد</a>.</p>
+<hr>
+<h3>التثبيت اليدوي</h3>
+<p>ابحث عن <strong>vanilla-closedcode</strong> في Extension Marketplace وانقر <strong>Install</strong>.</p>
+<hr>
+<h3>استكشاف الأخطاء وإصلاحها</h3>
+<p>إذا فشل تثبيت الامتداد تلقائيا:</p>
+<ul>
+<li>تأكد من أنك تشغّل <code>closedcode</code> داخل terminal المدمجة.</li>
+<li>تأكد من تثبيت CLI الخاصة بـ IDE لديك:<ul>
+<li>لـ VS Code: أمر <code>code</code></li>
+<li>لـ Cursor: أمر <code>cursor</code></li>
+<li>لـ Windsurf: أمر <code>windsurf</code></li>
+<li>لـ VSCodium: أمر <code>codium</code></li>
+<li>إذا لم تكن مثبتة، شغّل <code>Cmd+Shift+P</code> (Mac) أو <code>Ctrl+Shift+P</code> (Windows/Linux) وابحث عن &quot;Shell Command: Install &#39;code&#39; command in PATH&quot; (أو ما يعادله في IDE لديك)</li>
+</ul>
+</li>
+<li>تأكد من أن VS Code لديه الصلاحية لتثبيت الامتدادات</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

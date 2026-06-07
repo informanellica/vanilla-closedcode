@@ -1,0 +1,46 @@
+[data-component="icon"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  /* resize: both; */
+  aspect-ratio: 1/1;
+  color: var(--icon-base);
+  line-height: 1;
+
+  &[data-size="small"] {
+    width: 16px;
+    height: 16px;
+    font-size: 16px;
+  }
+
+  &[data-size="normal"] {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  &[data-size="medium"] {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+  }
+
+  &[data-size="large"] {
+    width: 24px;
+    height: 24px;
+    font-size: 24px;
+  }
+
+  /* Bootstrap Icons render as a font glyph in an ::before pseudo-element;
+     make it fill the sized box exactly. */
+  &::before {
+    line-height: 1;
+  }
+
+  /* Legacy SVG child support (kept for any non-migrated callers). */
+  [data-slot="icon-svg"] {
+    width: 100%;
+    height: auto;
+  }
+}

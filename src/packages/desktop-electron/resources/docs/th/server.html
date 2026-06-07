@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เซิร์ฟเวอร์ — vanilla-closedcode docs</title>
+  <meta name="description" content="โต้ตอบกับเซิร์ฟเวอร์ closedcode ผ่าน HTTP">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html" selected>ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>เซิร์ฟเวอร์</h1>
+      <p class="lede">โต้ตอบกับเซิร์ฟเวอร์ closedcode ผ่าน HTTP</p>
+      <p>คำสั่ง <code>closedcode serve</code> รันเซิร์ฟเวอร์ HTTP ที่ไม่มีหัวซึ่งเปิดเผยตำแหน่งข้อมูล OpenAPI ที่ไคลเอนต์ closedcode สามารถใช้ได้</p>
+<hr>
+<h3>การใช้งาน</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>ตัวเลือก</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>คำอธิบาย</th>
+<th>ค่าเริ่มต้น</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>พอร์ตที่จะฟัง</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>ชื่อโฮสต์ที่จะฟัง</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>เปิดใช้งานการค้นพบ mDNS</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>ชื่อโดเมนที่กำหนดเองสำหรับบริการ mDNS</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>ต้นกำเนิดเบราว์เซอร์เพิ่มเติมที่จะอนุญาต</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> สามารถส่งผ่านได้หลายครั้ง:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>การรับรองความถูกต้อง</h3>
+<p>ตั้งค่า <code>CLOSEDCODE_SERVER_PASSWORD</code> เพื่อปกป้องเซิร์ฟเวอร์ด้วย HTTP การตรวจสอบสิทธิ์ขั้นพื้นฐาน ชื่อผู้ใช้มีค่าเริ่มต้นเป็น <code>closedcode</code> หรือตั้งค่า <code>CLOSEDCODE_SERVER_USERNAME</code> เพื่อแทนที่ชื่อผู้ใช้ สิ่งนี้ใช้ได้กับทั้ง <code>closedcode serve</code> และ <code>closedcode web</code></p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>มันทำงานอย่างไร</h3>
+<p>เมื่อคุณรัน <code>closedcode</code> มันจะเริ่มต้น TUI และเซิร์ฟเวอร์ โดยที่ TUI คือ
+ลูกค้าที่พูดคุยกับเซิร์ฟเวอร์ เซิร์ฟเวอร์เปิดเผยข้อมูลจำเพาะของ OpenAPI 3.1
+จุดสิ้นสุด ตำแหน่งข้อมูลนี้ยังใช้เพื่อสร้าง <a href="/docs/sdk">SDK</a></p>
+<aside class="aside aside-tip">
+ใช้เซิร์ฟเวอร์ closedcode เพื่อโต้ตอบกับ closedcode โดยทางโปรแกรม
+</aside>
+สถาปัตยกรรมนี้ช่วยให้ closedcode รองรับไคลเอนต์หลายตัว และช่วยให้คุณสามารถโต้ตอบกับ closedcode โดยทางโปรแกรมได้
+
+<p>คุณสามารถเรียกใช้ <code>closedcode serve</code> เพื่อเริ่มเซิร์ฟเวอร์แบบสแตนด์อโลน ถ้าคุณมี
+closedcode TUI ทำงาน <code>closedcode serve</code> จะเริ่มเซิร์ฟเวอร์ใหม่</p>
+<hr>
+<h4>เชื่อมต่อกับเซิร์ฟเวอร์ที่มีอยู่</h4>
+<p>เมื่อคุณเริ่ม TUI มันจะสุ่มกำหนดพอร์ตและชื่อโฮสต์ คุณสามารถผ่าน <code>--hostname</code> และ <code>--port</code> <a href="/docs/cli">ธง</a> แทนได้ จากนั้นใช้สิ่งนี้เพื่อเชื่อมต่อกับเซิร์ฟเวอร์</p>
+<p>ตำแหน่งข้อมูล <a href="#tui"><code>/tui</code></a> สามารถใช้เพื่อขับเคลื่อน TUI ผ่านเซิร์ฟเวอร์ ตัวอย่างเช่น คุณสามารถกรอกข้อมูลล่วงหน้าหรือเรียกใช้พร้อมท์ได้ การตั้งค่านี้ถูกใช้โดยปลั๊กอิน vanilla-closedcode <a href="/docs/ide">IDE</a></p>
+<hr>
+<h2>ข้อมูลจำเพาะ</h2>
+<p>เซิร์ฟเวอร์เผยแพร่ข้อมูลจำเพาะ OpenAPI 3.1 ที่สามารถดูได้ที่:</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>ตัวอย่างเช่น <code>http://localhost:4096/doc</code> ใช้ข้อมูลจำเพาะเพื่อสร้างไคลเอ็นต์หรือตรวจสอบคำขอและประเภทการตอบกลับ หรือดูใน Swagger explorer</p>
+<hr>
+<h2>API</h2>
+<p>เซิร์ฟเวอร์ closedcode เปิดเผย API ต่อไปนี้</p>
+<hr>
+<h3>ทั่วโลก</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>รับสถานะและเวอร์ชันของเซิร์ฟเวอร์</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>รับกิจกรรมระดับโลก (SSE สตรีม)</td>
+<td>สตรีมกิจกรรม</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>โครงการ</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>แสดงรายการโครงการทั้งหมด</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>รับโครงการปัจจุบัน</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>เส้นทาง &amp; VCS</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>รับเส้นทางปัจจุบัน</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>รับข้อมูล VCS สำหรับโครงการปัจจุบัน</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ตัวอย่าง</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>กำจัดอินสแตนซ์ปัจจุบัน</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>การกำหนดค่า</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>รับข้อมูลการกำหนดค่า</td>
+<td><a href={typesUrl}><code>กำหนดค่า</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>อัปเดตการกำหนดค่า</td>
+<td><a href={typesUrl}><code>กำหนดค่า</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>ผู้ให้บริการรายชื่อและโมเดลเริ่มต้น</td>
+<td><code>{ providers: </code><a href={typesUrl}>ผู้ให้บริการ[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ผู้ให้บริการ</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>รายชื่อผู้ให้บริการทั้งหมด</td>
+<td><code>{ all: </code><a href={typesUrl}>ผู้ให้บริการ[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>รับวิธีการตรวจสอบความถูกต้องของผู้ให้บริการ</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>ให้สิทธิ์ผู้ให้บริการโดยใช้ OAuth</td>
+<td><a href={typesUrl}><code>การอนุญาตของผู้ให้บริการ</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>จัดการการโทรกลับ OAuth สำหรับผู้ให้บริการ</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>เซสชัน</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>หมายเหตุ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>แสดงรายการเซสชันทั้งหมด</td>
+<td>ส่งคืน <a href={typesUrl}><code>เซสชัน[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>สร้างเซสชันใหม่</td>
+<td>body: <code>{ parentID?, title? }</code> ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>รับสถานะเซสชันสำหรับเซสชันทั้งหมด</td>
+<td>ส่งคืน <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>รับรายละเอียดเซสชั่น</td>
+<td>ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>ลบเซสชันและข้อมูลทั้งหมด</td>
+<td>ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>อัปเดตคุณสมบัติเซสชัน</td>
+<td>body: <code>{ title? }</code> ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>รับเซสชันย่อยของเซสชัน</td>
+<td>ส่งคืน <a href={typesUrl}><code>เซสชัน[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>รับรายการสิ่งที่ต้องทำสำหรับเซสชัน</td>
+<td>ส่งคืน <a href={typesUrl}><code>สิ่งที่ต้องทำ[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>วิเคราะห์แอปและสร้าง <code>AGENTS.md</code></td>
+<td>เนื้อความ: <code>{ messageID, providerID, modelID }</code> ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>แยกเซสชันที่มีอยู่ไปที่ข้อความ</td>
+<td>body: <code>{ messageID? }</code> ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>ยกเลิกเซสชันที่ทำงานอยู่</td>
+<td>ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>แบ่งปันเซสชั่น</td>
+<td>ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>ยกเลิกการแชร์เซสชัน</td>
+<td>ส่งคืน <a href={typesUrl}><code>เซสชัน</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>รับความแตกต่างสำหรับเซสชั่นนี้</td>
+<td>ข้อความค้นหา: <code>messageID?</code> ส่งคืน <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>สรุปเซสชัน</td>
+<td>เนื้อความ: <code>{ providerID, modelID }</code> ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>คืนค่าข้อความ</td>
+<td>เนื้อความ: <code>{ messageID, partID? }</code> ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>กู้คืนข้อความที่เปลี่ยนกลับทั้งหมด</td>
+<td>ส่งคืน <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>ตอบสนองต่อการร้องขอการอนุญาต</td>
+<td>เนื้อความ: <code>{ response, remember? }</code> ส่งคืน <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ข้อความ</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>หมายเหตุ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>แสดงรายการข้อความในเซสชัน</td>
+<td>ข้อความค้นหา: <code>limit?</code> ส่งคืน <code>{ info: </code><a href={typesUrl}>ข้อความ</a><code>, parts: </code><a href={typesUrl}>ส่วน[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>ส่งข้อความและรอการตอบกลับ</td>
+<td>เนื้อความ: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code> ส่งคืน <code>{ info: </code><a href={typesUrl}>ข้อความ</a><code>, parts: </code><a href={typesUrl}>ส่วน[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>รับรายละเอียดข้อความ</td>
+<td>ส่งคืน <code>{ info: </code><a href={typesUrl}>ข้อความ</a><code>, parts: </code><a href={typesUrl}>ส่วนหนึ่ง[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>ส่งข้อความแบบอะซิงโครนัส (ไม่ต้องรอ)</td>
+<td>เนื้อความ: เหมือนกับ <code>/session/:id/message</code> ส่งคืน <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>ดำเนินการคำสั่งเครื่องหมายทับ</td>
+<td>เนื้อความ: <code>{ messageID?, agent?, model?, command, arguments }</code> ส่งคืน <code>{ info: </code><a href={typesUrl}>ข้อความ</a><code>, parts: </code><a href={typesUrl}>ส่วน[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>รันคำสั่ง shell</td>
+<td>เนื้อความ: <code>{ agent, model?, command }</code> ส่งคืน <code>{ info: </code><a href={typesUrl}>ข้อความ</a><code>, parts: </code><a href={typesUrl}>ส่วน[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>คำสั่ง</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>แสดงรายการคำสั่งทั้งหมด</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ไฟล์</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>ค้นหาข้อความในไฟล์</td>
+<td>อาร์เรย์ของวัตถุที่ตรงกับ <code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>ค้นหาไฟล์และไดเร็กทอรีตามชื่อ</td>
+<td><code>string[]</code> (paths)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>ค้นหาสัญลักษณ์พื้นที่ทำงาน</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>แสดงรายการไฟล์และไดเร็กทอรี</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>อ่านไฟล์</td>
+<td><a href={typesUrl}><code>เนื้อหาไฟล์</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>รับสถานะสำหรับไฟล์ที่ถูกติดตาม</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4><code>/find/file</code> พารามิเตอร์การสืบค้น</h4>
+<ul>
+<li><code>query</code> (จำเป็น) — สตริงการค้นหา (การจับคู่แบบคลุมเครือ)</li>
+<li><code>type</code> (ไม่บังคับ) — จำกัดผลลัพธ์ไว้ที่ <code>&quot;file&quot;</code> หรือ <code>&quot;directory&quot;</code></li>
+<li><code>directory</code> (เป็นทางเลือก) — แทนที่รูทโปรเจ็กต์สำหรับการค้นหา</li>
+<li><code>limit</code> (ไม่บังคับ) — ผลลัพธ์สูงสุด (1–200)</li>
+<li><code>dirs</code> (ไม่บังคับ) — แฟล็กดั้งเดิม (<code>&quot;false&quot;</code> ส่งคืนเฉพาะไฟล์)</li>
+</ul>
+<hr>
+<h3>เครื่องมือ (ขั้นทดลอง)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>แสดงรายการรหัสเครื่องมือทั้งหมด</td>
+<td><a href={typesUrl}><code>รหัสเครื่องมือ</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>แสดงรายการเครื่องมือที่มีสกีมา JSON สำหรับโมเดล</td>
+<td><a href={typesUrl}><code>รายการเครื่องมือ</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, ฟอร์แมตเตอร์ &amp; MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>รับ LSP สถานะเซิร์ฟเวอร์</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>รับสถานะฟอร์แมตเตอร์</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>รับ MCP สถานะเซิร์ฟเวอร์</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>เพิ่มเซิร์ฟเวอร์ MCP แบบไดนามิก</td>
+<td>body: <code>{ name, config }</code> ส่งคืนออบเจ็กต์สถานะ MCP</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>ตัวแทน</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>รายชื่อตัวแทนที่มีอยู่ทั้งหมด</td>
+<td><a href={typesUrl}><code>ตัวแทน[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>การบันทึก</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>เขียนรายการบันทึก เนื้อความ: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>เพิ่มข้อความต่อท้ายข้อความแจ้ง</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>เปิดกล่องโต้ตอบความช่วยเหลือ</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>เปิดตัวเลือกเซสชัน</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>เปิดตัวเลือกธีม</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>เปิดตัวเลือกรุ่น</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>ส่งข้อความแจ้งปัจจุบัน</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>ล้างข้อความแจ้ง</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>ดำเนินการคำสั่ง (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>โชว์ขนมปังปิ้ง (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>รอคำขอควบคุมถัดไป</td>
+<td>วัตถุคำขอควบคุม</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>ตอบสนองต่อคำขอควบคุม (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>การรับรองความถูกต้อง</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>ตั้งค่าข้อมูลประจำตัวการรับรองความถูกต้อง เนื้อความต้องตรงกับสคีมาของผู้ให้บริการ</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>กิจกรรม</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>สตรีมเหตุการณ์ที่เซิร์ฟเวอร์ส่ง งานแรกคือ <code>server.connected</code> จากนั้นงานรถบัส</td>
+<td>สตรีมเหตุการณ์ที่เซิร์ฟเวอร์ส่ง</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>เอกสาร</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>เส้นทาง</th>
+<th>คำอธิบาย</th>
+<th>การตอบสนอง</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>ข้อมูลจำเพาะของ OpenAPI 3.1</td>
+<td>HTML หน้าพร้อมข้อมูลจำเพาะ OpenAPI</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

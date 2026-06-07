@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="استخدام واجهة المستخدم TUI في vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html" selected>العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">استخدام واجهة المستخدم TUI في vanilla-closedcode.</p>
+      <p>يوفّر vanilla-closedcode واجهة terminal تفاعلية (TUI) للعمل على مشاريعك باستخدام LLM.</p>
+<p>يؤدي تشغيل vanilla-closedcode إلى بدء واجهة TUI للدليل الحالي.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>أو يمكنك تشغيلها لدليل عمل محدد.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>بعد الدخول إلى واجهة TUI، يمكنك إرسال رسالة كطلب.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>مراجع الملفات</h2>
+<p>يمكنك الإشارة إلى الملفات في رسائلك باستخدام <code>@</code>. يُجري ذلك بحثا ضبابيا عن الملفات ضمن دليل العمل الحالي.</p>
+<aside class="aside aside-tip">
+يمكنك أيضا استخدام `@` للإشارة إلى الملفات في رسائلك.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>تُضاف محتويات الملف إلى المحادثة تلقائيا.</p>
+<hr>
+<h2>أوامر Bash</h2>
+<p>ابدأ الرسالة بـ <code>!</code> لتشغيل أمر في shell.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>يُضاف خرج الأمر إلى المحادثة كنتيجة أداة.</p>
+<hr>
+<h2>الأوامر</h2>
+<p>عند استخدام واجهة vanilla-closedcode في terminal، يمكنك كتابة <code>/</code> متبوعة باسم أمر لتنفيذ الإجراءات بسرعة. مثلا:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>تملك معظم الأوامر أيضا اختصارا باستخدام <code>ctrl+x</code> كمفتاح قائد، حيث إن <code>ctrl+x</code> هو المفتاح القائد الافتراضي. <a href="/docs/keybinds">اعرف المزيد</a>.</p>
+<p>فيما يلي جميع أوامر الشرطة المائلة المتاحة:</p>
+<hr>
+<h3>connect</h3>
+<p>أضف موفّرا إلى vanilla-closedcode. يتيح لك اختيار أحد الموفّرين المتاحين وإضافة مفاتيح API الخاصة بهم.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>قم بضغط الجلسة الحالية. <em>الاسم المستعار</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>بدّل عرض تفاصيل تنفيذ الأدوات.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>افتح محررا خارجيا لكتابة الرسائل. يستخدم المحرر المحدد في متغير البيئة <code>EDITOR</code>. <a href="#editor-setup">اعرف المزيد</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>اخرج من vanilla-closedcode. <em>الأسماء المستعارة</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>صدّر المحادثة الحالية إلى Markdown وافتحها في المحرر الافتراضي لديك. يستخدم المحرر المحدد في متغير البيئة <code>EDITOR</code>. <a href="#editor-setup">اعرف المزيد</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>اعرض مربع حوار المساعدة.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p>أنشئ ملف <code>AGENTS.md</code> أو حدّثه. <a href="/docs/rules">اعرف المزيد</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>اعرض النماذج المتاحة.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>ابدأ جلسة جديدة. <em>الاسم المستعار</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>أعِد تنفيذ رسالة تم التراجع عنها سابقا. متاح فقط بعد استخدام <code>/undo</code>.</p>
+<aside class="aside aside-tip">
+ستتم أيضا استعادة أي تغييرات على الملفات.
+</aside>
+داخليا، يستخدم هذا Git لإدارة تغييرات الملفات. لذلك يجب أن يكون مشروعك **مستودع Git**.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>اعرض الجلسات وبدّل بينها. <em>الأسماء المستعارة</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>شارك الجلسة الحالية. <a href="/docs/share">اعرف المزيد</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>اعرض السمات المتاحة.</p>
+<pre><code class="language-bash">/theme
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>بدّل إظهار كتل التفكير/الاستدلال في المحادثة. عند تفعيله، يمكنك رؤية عملية استدلال النموذج للنماذج التي تدعم التفكير الموسّع.</p>
+<aside class="aside aside-note">
+يتحكم هذا الأمر فقط فيما إذا كانت كتل التفكير **تُعرض**؛ ولا يفعّل أو يعطّل قدرات الاستدلال في النموذج. لتبديل قدرات الاستدلال فعليا، استخدم `ctrl+t` للتنقّل بين إصدارات النموذج.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>تراجع عن آخر رسالة في المحادثة. يزيل أحدث رسالة للمستخدم، وكل الردود اللاحقة، وأي تغييرات على الملفات.</p>
+<aside class="aside aside-tip">
+سيتم أيضا التراجع عن أي تغييرات على الملفات.
+</aside>
+داخليا، يستخدم هذا Git لإدارة تغييرات الملفات. لذلك يجب أن يكون مشروعك **مستودع Git**.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>اختصار لوحة المفاتيح:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>ألغِ مشاركة الجلسة الحالية. <a href="/docs/share#un-sharing">اعرف المزيد</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>إعداد المحرر</h2>
+<p>يستخدم الأمران <code>/editor</code> و<code>/export</code> المحرر المحدد في متغير البيئة <code>EDITOR</code>.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# مثال لـ nano أو vim
+export EDITOR=nano
+export EDITOR=vim
+
+# للمحررات الرسومية، VS Code، Cursor، VSCodium، Windsurf، Zed، إلخ.
+# قم بتضمين --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+لجعل ذلك دائما، أضف هذا إلى ملف تهيئة shell لديك؛
+`~/.bashrc`، `~/.zshrc`، إلخ.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# للمحررات الرسومية، VS Code، Cursor، VSCodium، Windsurf، Zed، إلخ.
+# قم بتضمين --wait
+set EDITOR=code --wait
+```
+
+لجعل ذلك دائما، استخدم **System Properties** &gt; **Environment Variables**.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# للمحررات الرسومية، VS Code، Cursor، VSCodium، Windsurf، Zed، إلخ.
+# قم بتضمين --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+لجعل ذلك دائما، أضف هذا إلى ملف تهيئة PowerShell لديك.
+</code></pre>
+</div>
+</div>
+
+<p>تتضمن خيارات المحررات الشائعة ما يلي:</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - محرر Neovim</li>
+<li><code>vim</code> - محرر Vim</li>
+<li><code>nano</code> - محرر Nano</li>
+<li><code>notepad</code> - Windows Notepad</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+تحتاج بعض المحررات مثل VS Code إلى التشغيل مع الخيار `--wait`.
+</aside>
+تحتاج بعض المحررات إلى وسائط CLI لتعمل بوضع الحجب. يجعل الخيار `--wait` عملية المحرر تنتظر حتى يتم إغلاقها.
+
+<hr>
+<h2>الإعداد</h2>
+<p>يمكنك تخصيص سلوك واجهة TUI عبر ملف إعدادات vanilla-closedcode.</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<h3>الخيارات</h3>
+<ul>
+<li><code>scroll_acceleration</code> - فعّل تسارع التمرير على نمط macOS لتمرير سلس وطبيعي. عند تفعيله، تزداد سرعة التمرير مع إيماءات التمرير السريعة وتبقى دقيقة للحركات الأبطأ. <strong>يتقدّم هذا الإعداد على <code>scroll_speed</code> ويستبدله عند تفعيله.</strong></li>
+<li><code>scroll_speed</code> - يتحكم في سرعة تمرير واجهة TUI عند استخدام أوامر التمرير (الحد الأدنى: <code>1</code>). القيمة الافتراضية هي <code>3</code>. <strong>ملاحظة: يتم تجاهل هذا إذا تم ضبط <code>scroll_acceleration.enabled</code> على <code>true</code>.</strong></li>
+<li><code>diff_style</code> - يتحكم في عرض الفروقات (diff). القيمة <code>&quot;auto&quot;</code> تتكيف مع عرض terminal، و<code>&quot;stacked&quot;</code> تعرض عمودًا واحدًا دائمًا.</li>
+</ul>
+<p>استخدم <code>CLOSEDCODE_TUI_CONFIG</code> لتحميل مسار إعدادات TUI مخصص.</p>
+<hr>
+<h2>التخصيص</h2>
+<p>يمكنك تخصيص جوانب مختلفة من عرض واجهة TUI باستخدام لوحة الأوامر (<code>ctrl+x h</code> أو <code>/help</code>). تبقى هذه الإعدادات محفوظة عبر عمليات إعادة التشغيل.</p>
+<hr>
+<h4>عرض اسم المستخدم</h4>
+<p>بدّل ما إذا كان اسم المستخدم يظهر في رسائل الدردشة. يمكنك الوصول إلى هذا عبر:</p>
+<ul>
+<li>لوحة الأوامر: ابحث عن &quot;username&quot; أو &quot;hide username&quot;</li>
+<li>يُحفظ الإعداد تلقائيا وسيتم تذكره عبر جلسات واجهة TUI</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

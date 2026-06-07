@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>การแก้ไขปัญหา — vanilla-closedcode docs</title>
+  <meta name="description" content="ปัญหาทั่วไปและวิธีแก้ปัญหา">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html" selected>ไทย</option>
+      <option value="../tr/troubleshooting.html">Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>การแก้ไขปัญหา</h1>
+      <p class="lede">ปัญหาทั่วไปและวิธีแก้ปัญหา</p>
+      <p>หากต้องการแก้ไขข้อบกพร่องเกี่ยวกับ vanilla-closedcode ให้เริ่มต้นด้วยการตรวจสอบบันทึกและข้อมูลในเครื่องที่จัดเก็บไว้ในดิสก์</p>
+<hr>
+<h2>บันทึก</h2>
+<p>ไฟล์บันทึกถูกเขียนไปที่:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> แล้ววาง <code>%USERPROFILE%\.local\share\closedcode\log</code></li>
+</ul>
+<p>ไฟล์บันทึกจะถูกตั้งชื่อด้วยการประทับเวลา (เช่น <code>2025-01-09T123456.log</code>) และไฟล์บันทึกล่าสุด 10 ไฟล์จะถูกเก็บไว้</p>
+<p>คุณสามารถตั้งค่าระดับการบันทึกด้วยตัวเลือกบรรทัดคำสั่ง <code>--log-level</code> เพื่อรับข้อมูลการแก้ไขข้อบกพร่องโดยละเอียดเพิ่มเติม ตัวอย่างเช่น <code>closedcode --log-level DEBUG</code></p>
+<hr>
+<h2>พื้นที่จัดเก็บ</h2>
+<p>closedcode เก็บข้อมูลเซสชันและข้อมูลแอปพลิเคชันอื่น ๆ ไว้บนดิสก์ที่:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> แล้ววาง <code>%USERPROFILE%\.local\share\closedcode</code></li>
+</ul>
+<p>ไดเรกทอรีนี้ประกอบด้วย:</p>
+<ul>
+<li><code>auth.json</code> - ​​ข้อมูลการตรวจสอบสิทธิ์ เช่น คีย์ API, OAuth Token</li>
+<li><code>log/</code> - ​​บันทึกแอปพลิเคชัน</li>
+<li><code>project/</code> - ​​ข้อมูลเฉพาะโครงการ เช่น ข้อมูลเซสชันและข้อความ<ul>
+<li>หากโปรเจ็กต์อยู่ภายใน repo Git มันจะถูกจัดเก็บไว้ใน <code>./&lt;project-slug&gt;/storage/</code></li>
+<li>หากไม่ใช่ repo Git มันจะถูกเก็บไว้ใน <code>./global/storage/</code></li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>แอปเดสก์ท็อป</h2>
+<p>vanilla-closedcode Desktop รันเซิร์ฟเวอร์ vanilla-closedcode ในเครื่อง (ไฟล์ <code>closedcode-cli</code> sidecar) ในเบื้องหลัง ปัญหาส่วนใหญ่มีสาเหตุมาจากปลั๊กอินที่ทำงานผิดปกติ แคชเสียหาย หรือการตั้งค่าเซิร์ฟเวอร์ไม่ถูกต้อง</p>
+<h3>การตรวจสอบอย่างรวดเร็ว</h3>
+<ul>
+<li>ออกจากระบบโดยสมบูรณ์แล้วเปิดแอปใหม่อีกครั้ง</li>
+<li>หากแอปแสดงหน้าจอข้อผิดพลาด ให้คลิก <strong>รีสตาร์ท</strong> และคัดลอกรายละเอียดข้อผิดพลาด</li>
+<li>macOS เท่านั้น: เมนู <code>vanilla-closedcode</code> -&gt; <strong>โหลด Webview ใหม่</strong> (ช่วยได้หาก UI ว่างเปล่า/frozen)</li>
+</ul>
+<hr>
+<h3>ปิดการใช้งานปลั๊กอิน</h3>
+<p>หากแอปเดสก์ท็อปขัดข้องเมื่อเปิดใช้งาน หยุดทำงาน หรือทำงานผิดปกติ ให้เริ่มต้นด้วยการปิดใช้งานปลั๊กอิน</p>
+<h4>ตรวจสอบการกำหนดค่าส่วนกลาง</h4>
+<p>เปิดไฟล์กำหนดค่าส่วนกลางของคุณแล้วมองหาคีย์ <code>plugin</code></p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (หรือ <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (การติดตั้งเก่ากว่า): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> แล้ววาง <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code></li>
+</ul>
+<p>หากคุณได้กำหนดค่าปลั๊กอินไว้ ให้ปิดการใช้งานชั่วคราวโดยลบคีย์ออกหรือตั้งค่าเป็นอาร์เรย์ว่าง:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>ตรวจสอบไดเร็กทอรีปลั๊กอิน</h4>
+<p>vanilla-closedcode ยังสามารถโหลดปลั๊กอินในเครื่องจากดิสก์ได้ ย้ายสิ่งเหล่านี้ออกไปชั่วคราว (หรือเปลี่ยนชื่อโฟลเดอร์) และรีสตาร์ทแอปเดสก์ท็อป:</p>
+<ul>
+<li><strong>ปลั๊กอินสากล</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> แล้ววาง <code>%USERPROFILE%\.config\closedcode\plugins</code></li>
+</ul>
+</li>
+<li><strong>ปลั๊กอินโครงการ</strong> (เฉพาะในกรณีที่คุณใช้การกำหนดค่าต่อโครงการ)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>หากแอปเริ่มทำงานอีกครั้ง ให้เปิดใช้งานปลั๊กอินอีกครั้งทีละรายการเพื่อดูว่าปลั๊กอินใดเป็นสาเหตุของปัญหา</p>
+<hr>
+<h3>ล้างแคช</h3>
+<p>หากการปิดใช้งานปลั๊กอินไม่ได้ผล (หรือการติดตั้งปลั๊กอินค้าง) ให้ล้างแคชเพื่อให้ vanilla-closedcode สามารถสร้างใหม่ได้</p>
+<ol>
+<li>ออกจาก vanilla-closedcode Desktop โดยสมบูรณ์</li>
+<li>ลบไดเรกทอรีแคช:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: ตัวค้นหา -&gt; <code>Cmd+Shift+G</code> -&gt; วาง <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: ลบ <code>~/.cache/closedcode</code> (หรือรัน <code>rm -rf ~/.cache/closedcode</code>)</li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> แล้ววาง <code>%USERPROFILE%\.cache\closedcode</code></li>
+</ul>
+<ol start="3">
+<li>รีสตาร์ทเดสก์ท็อป vanilla-closedcode</li>
+</ol>
+<hr>
+<h3>แก้ไขปัญหาการเชื่อมต่อเซิร์ฟเวอร์</h3>
+<p>vanilla-closedcode Desktop สามารถเริ่มต้นเซิร์ฟเวอร์ภายในเครื่องของตนเองได้ (ค่าเริ่มต้น) หรือเชื่อมต่อกับเซิร์ฟเวอร์ URL ที่คุณกำหนดค่าไว้</p>
+<p>หากคุณเห็นกล่องโต้ตอบ <strong>&quot;การเชื่อมต่อล้มเหลว&quot;</strong> (หรือแอปไม่เคยผ่านหน้าจอเริ่มต้น) ให้ตรวจสอบเซิร์ฟเวอร์ที่กำหนดเอง URL</p>
+<h4>ล้างเซิร์ฟเวอร์เริ่มต้นของเดสก์ท็อป URL</h4>
+<p>จากหน้าจอหลัก คลิกชื่อเซิร์ฟเวอร์ (ที่มีจุดสถานะ) เพื่อเปิดตัวเลือกเซิร์ฟเวอร์ ในส่วน <strong>เซิร์ฟเวอร์เริ่มต้น</strong> คลิก <strong>ล้าง</strong></p>
+<h4>ลบ <code>server.port</code> / <code>server.hostname</code> ออกจากการกำหนดค่าของคุณ</h4>
+<p>หาก <code>closedcode.json(c)</code> ของคุณมีส่วน <code>server</code> ให้ลบออกชั่วคราวแล้วรีสตาร์ทแอปเดสก์ท็อป</p>
+<h4>ตรวจสอบตัวแปรสภาพแวดล้อม</h4>
+<p>หากคุณตั้งค่า <code>CLOSEDCODE_PORT</code> ในสภาพแวดล้อมของคุณ แอปเดสก์ท็อปจะพยายามใช้พอร์ตนั้นสำหรับเซิร์ฟเวอร์ภายในเครื่อง</p>
+<ul>
+<li>ยกเลิกการตั้งค่า <code>CLOSEDCODE_PORT</code> (หรือเลือกพอร์ตว่าง) แล้วรีสตาร์ท</li>
+</ul>
+<hr>
+<h3>Linux: ปัญหา Wayland / X11</h3>
+<p>บน Linux การตั้งค่า Wayland บางอย่างอาจทำให้เกิดหน้าต่างว่างหรือข้อผิดพลาดของตัวประกอบ</p>
+<ul>
+<li>หากคุณอยู่บน Wayland และแอปว่างเปล่า/crashing ให้ลองเปิดใช้งานด้วย <code>OC_ALLOW_WAYLAND=1</code></li>
+<li>หากสิ่งนั้นทำให้สิ่งต่าง ๆ แย่ลง ให้ลบออกแล้วลองเปิดใช้งานภายใต้เซสชัน X11 แทน</li>
+</ul>
+<hr>
+<h3>Windows: รันไทม์ WebView2</h3>
+<p>บน Windows vanilla-closedcode Desktop ต้องใช้ Microsoft Edge <strong>WebView2 Runtime</strong> หากแอปเปิดเป็นหน้าต่างว่างหรือไม่เริ่มทำงาน ให้ติดตั้ง/update WebView2 แล้วลองอีกครั้ง</p>
+<hr>
+<h3>Windows: ปัญหาด้านประสิทธิภาพทั่วไป</h3>
+<p>หากคุณประสบปัญหาประสิทธิภาพการทำงานช้า ปัญหาการเข้าถึงไฟล์ หรือปัญหา terminal บน Windows ให้ลองใช้ <a href="/docs/windows-wsl">WSL (ระบบย่อย Windows สำหรับ Linux)</a> WSL มอบสภาพแวดล้อม Linux ที่ทำงานร่วมกับคุณสมบัติของ vanilla-closedcode ได้อย่างราบรื่นยิ่งขึ้น</p>
+<hr>
+<h3>การแจ้งเตือนไม่แสดง</h3>
+<p>vanilla-closedcode Desktop จะแสดงการแจ้งเตือนของระบบเฉพาะเมื่อ:</p>
+<ul>
+<li>การแจ้งเตือนเปิดใช้งานสำหรับ vanilla-closedcode ในการตั้งค่าระบบปฏิบัติการของคุณและ</li>
+<li>หน้าต่างแอพไม่ได้โฟกัส</li>
+</ul>
+<hr>
+<h3>รีเซ็ตที่เก็บข้อมูลแอปเดสก์ท็อป (วิธีสุดท้าย)</h3>
+<p>หากแอปไม่เริ่มทำงานและคุณไม่สามารถล้างการตั้งค่าจากภายใน UI ได้ ให้รีเซ็ตสถานะที่บันทึกไว้ของแอปเดสก์ท็อป</p>
+<ol>
+<li>ออกจากเดสก์ท็อป vanilla-closedcode</li>
+<li>ค้นหาและลบไฟล์เหล่านี้ (อยู่ในไดเร็กทอรีข้อมูลแอป vanilla-closedcode Desktop):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (เซิร์ฟเวอร์เริ่มต้นของเดสก์ท็อป URL)</li>
+<li><code>closedcode.global.dat</code> และ <code>closedcode.workspace.*.dat</code> (สถานะ UI เช่น เซิร์ฟเวอร์ล่าสุด/projects)</li>
+</ul>
+<p>หากต้องการค้นหาไดเร็กทอรีอย่างรวดเร็ว:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (จากนั้นค้นหาชื่อไฟล์ด้านบน)</li>
+<li><strong>Linux</strong>: ค้นหาภายใต้ <code>~/.local/share</code> สำหรับชื่อไฟล์ด้านบน</li>
+<li><strong>Windows</strong>: กด <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (จากนั้นค้นหาชื่อไฟล์ด้านบน)</li>
+</ul>
+<hr>
+<h2>การขอความช่วยเหลือ</h2>
+<p>หากคุณประสบปัญหากับ vanilla-closedcode:</p>
+<ol>
+<li><p><strong>รายงานปัญหาเกี่ยวกับ GitHub</strong></p>
+<p>วิธีที่ดีที่สุดในการรายงานจุดบกพร่องหรือขอคุณสมบัติคือผ่านพื้นที่เก็บข้อมูล GitHub ของเรา:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>ก่อนที่จะสร้างปัญหาใหม่ ให้ค้นหาปัญหาที่มีอยู่เพื่อดูว่าปัญหาของคุณได้รับการรายงานแล้วหรือไม่</p>
+</li>
+<li><p><strong>เข้าร่วม Discord ของเรา</strong></p>
+<p>สำหรับความช่วยเหลือแบบเรียลไทม์และการสนทนาในชุมชน เข้าร่วมเซิร์ฟเวอร์ Discord ของเรา:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>ปัญหาทั่วไป</h2>
+<p>ต่อไปนี้เป็นปัญหาทั่วไปบางประการและวิธีแก้ปัญหา</p>
+<hr>
+<h3>vanilla-closedcode จะไม่เริ่มทำงาน</h3>
+<ol>
+<li>ตรวจสอบบันทึกเพื่อดูข้อความแสดงข้อผิดพลาด</li>
+<li>ลองรันด้วย <code>--print-logs</code> เพื่อดูเอาต์พุตใน terminal</li>
+<li>ตรวจสอบให้แน่ใจว่าคุณมีเวอร์ชันล่าสุดด้วย <code>closedcode upgrade</code></li>
+</ol>
+<hr>
+<h3>ปัญหาการรับรองความถูกต้อง</h3>
+<ol>
+<li>ลองตรวจสอบความถูกต้องอีกครั้งด้วยคำสั่ง <code>/connect</code> ใน TUI</li>
+<li>ตรวจสอบว่าคีย์ API ของคุณถูกต้อง</li>
+<li>ตรวจสอบให้แน่ใจว่าเครือข่ายของคุณอนุญาตการเชื่อมต่อกับ API ของผู้ให้บริการ</li>
+</ol>
+<hr>
+<h3>ไม่มีรุ่น</h3>
+<ol>
+<li>ตรวจสอบว่าคุณได้รับการรับรองความถูกต้องกับผู้ให้บริการแล้ว</li>
+<li>ตรวจสอบชื่อรุ่นในการกำหนดค่าของคุณถูกต้อง</li>
+<li>บางรุ่นอาจต้องมีการเข้าถึงหรือสมัครสมาชิกโดยเฉพาะ</li>
+</ol>
+<p>หากคุณพบ <code>ProviderModelNotFoundError</code> เป็นไปได้มากว่าคุณจะคิดผิด
+อ้างอิงแบบจำลองที่ไหนสักแห่ง
+ควรอ้างอิงโมเดลดังนี้: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>ตัวอย่าง:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>หากต้องการทราบว่าคุณมีสิทธิ์เข้าถึงรุ่นใด ให้เรียกใช้ <code>closedcode models</code></p>
+<hr>
+<h3>ProviderInitError</h3>
+<p>หากคุณพบ ProviderInitError คุณอาจมีการกำหนดค่าที่ไม่ถูกต้องหรือเสียหาย</p>
+<p>เพื่อแก้ไขปัญหานี้:</p>
+<ol>
+<li><p>ขั้นแรก ตรวจสอบให้แน่ใจว่าผู้ให้บริการของคุณตั้งค่าอย่างถูกต้องโดยทำตาม <a href="/docs/providers">คู่มือผู้ให้บริการ</a></p>
+</li>
+<li><p>หากปัญหายังคงอยู่ ให้ลองล้างการกำหนดค่าที่เก็บไว้:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>บน Windows กด <code>WIN+R</code> และลบ: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>ตรวจสอบความถูกต้องอีกครั้งกับผู้ให้บริการของคุณโดยใช้คำสั่ง <code>/connect</code> ใน TUI</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError และปัญหาแพ็คเกจผู้ให้บริการ</h3>
+<p>หากคุณพบข้อผิดพลาดในการโทร API อาจเนื่องมาจากแพ็คเกจผู้ให้บริการที่ล้าสมัย closedcode จะติดตั้งแพ็คเกจของผู้ให้บริการแบบไดนามิก (OpenAI, Anthropic, Google ฯลฯ) ตามความจำเป็น และแคชไว้ในเครื่อง</p>
+<p>ในการแก้ไขปัญหาแพ็คเกจผู้ให้บริการ:</p>
+<ol>
+<li><p>ล้างแคชแพ็คเกจผู้ให้บริการ:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>บน Windows กด <code>WIN+R</code> และลบ: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>รีสตาร์ท closedcode เพื่อติดตั้งแพ็คเกจผู้ให้บริการล่าสุดอีกครั้ง</p>
+</li>
+</ol>
+<p>การดำเนินการนี้จะบังคับให้ closedcode ดาวน์โหลดแพ็คเกจผู้ให้บริการเวอร์ชันล่าสุด ซึ่งมักจะแก้ไขปัญหาความเข้ากันได้กับพารามิเตอร์โมเดลและการเปลี่ยนแปลง API</p>
+<hr>
+<h3>Copy/paste ไม่ทำงานบน Linux</h3>
+<p>ผู้ใช้ Linux จำเป็นต้องติดตั้งยูทิลิตี้คลิปบอร์ดตัวใดตัวหนึ่งต่อไปนี้เพื่อให้ฟังก์ชัน copy/paste ทำงาน:</p>
+<p><strong>สำหรับระบบ X11:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>สำหรับระบบ Wayland:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>สำหรับสภาพแวดล้อมที่ไม่มีหัว:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>closedcode จะตรวจพบว่าคุณใช้ Wayland และชอบ <code>wl-clipboard</code> หรือไม่เช่นนั้นจะพยายามค้นหาเครื่องมือคลิปบอร์ดตามลำดับ: <code>xclip</code> และ <code>xsel</code></p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

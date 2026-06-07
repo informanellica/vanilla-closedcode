@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDE — vanilla-closedcode docs</title>
+  <meta name="description" content="VS Code, Cursor ve diğer IDE&#39;ler için closedcode uzantısı">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/ide.html">English</option>
+      <option value="../ar/ide.html">العربية</option>
+      <option value="../bs/ide.html">Bosanski</option>
+      <option value="../da/ide.html">Dansk</option>
+      <option value="../de/ide.html">Deutsch</option>
+      <option value="../es/ide.html">Español</option>
+      <option value="../fr/ide.html">Français</option>
+      <option value="../it/ide.html">Italiano</option>
+      <option value="../ja/ide.html">日本語</option>
+      <option value="../ko/ide.html">한국어</option>
+      <option value="../nb/ide.html">Norsk</option>
+      <option value="../pl/ide.html">Polski</option>
+      <option value="../pt-br/ide.html">Português (BR)</option>
+      <option value="../ru/ide.html">Русский</option>
+      <option value="../th/ide.html">ไทย</option>
+      <option value="../tr/ide.html" selected>Türkçe</option>
+      <option value="../zh-cn/ide.html">简体中文</option>
+      <option value="../zh-tw/ide.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li class="active"><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>IDE</h1>
+      <p class="lede">VS Code, Cursor ve diğer IDE&#39;ler için closedcode uzantısı</p>
+      <p>closedcode, VS Code, Cursor veya bir terminali destekleyen herhangi bir IDE ile entegre olur. Başlamak için terminalde <code>closedcode</code> komutunu çalıştırmanız yeterli.</p>
+<hr>
+<h2>Kullanım</h2>
+<ul>
+<li><strong>Hızlı Başlatma</strong>: closedcode&#39;u bölünmüş terminal görünümünde açmak veya zaten çalışıyorsa mevcut bir terminal oturumuna odaklanmak için <code>Cmd+Esc</code> (Mac) veya <code>Ctrl+Esc</code> (Windows/Linux) kullanın.</li>
+<li><strong>Yeni Oturum</strong>: Zaten açık olsa bile yeni bir closedcode terminal oturumu başlatmak için <code>Cmd+Shift+Esc</code> (Mac) veya <code>Ctrl+Shift+Esc</code> (Windows/Linux) kullanın. Ayrıca kullanıcı arayüzündeki closedcode düğmesini de tıklayabilirsiniz.</li>
+<li><strong>Bağlam Farkındalığı</strong>: Geçerli seçiminizi veya sekmenizi closedcode ile otomatik olarak paylaşın.</li>
+<li><strong>Dosya Referansı Kısayolları</strong>: Dosya referansları eklemek için <code>Cmd+Option+K</code> (Mac) veya <code>Alt+Ctrl+K</code> (Linux/Windows) kullanın. Örneğin, <code>@File#L37-42</code>.</li>
+</ul>
+<hr>
+<h2>Kurulum</h2>
+<p>closedcode&#39;u VS Code&#39;a ve Cursor, Windsurf, VSCodium gibi popüler çatallara yüklemek için:</p>
+<ol>
+<li>VS Code&#39;u Aç</li>
+<li>Entegre terminali açın</li>
+<li><code>closedcode</code> komutunu çalıştırın - uzantı otomatik olarak yüklenir</li>
+</ol>
+<p>TUI içinden <code>/editor</code> veya <code>/export</code> komutlarını çalıştırdığınızda kendi IDE&#39;nizi kullanmak istiyorsanız <code>export EDITOR=&quot;code --wait&quot;</code> ayarlayın. <a href="/docs/tui/#editor-setup">Daha fazla bilgi</a>.</p>
+<hr>
+<h3>Manuel Kurulum</h3>
+<p>Extension Marketplace&#39;te <strong>closedcode</strong>&#39;u arayın ve <strong>Yükle</strong>&#39;ye tıklayın.</p>
+<hr>
+<h3>Sorun giderme</h3>
+<p>Uzantı otomatik olarak yüklenemezse:</p>
+<ul>
+<li>Entegre terminalde <code>closedcode</code> çalıştırdığınızdan emin olun.</li>
+<li>IDE cihazınız için CLI&#39;nin kurulu olduğunu doğrulayın:<ul>
+<li>VS Code için: <code>code</code> komutu</li>
+<li>Cursor için: <code>cursor</code> komutu</li>
+<li>Windsurf için: <code>windsurf</code> komutu</li>
+<li>VSCodium için: <code>codium</code> komutu</li>
+<li>Değilse <code>Cmd+Shift+P</code> (Mac) veya <code>Ctrl+Shift+P</code> (Windows/Linux) çalıştırın ve &quot;Shell Command: Install &#39;code&#39; command in PATH&quot; komutunu seçin (veya IDE&#39;nizdeki eşdeğerini kullanın).</li>
+</ul>
+</li>
+<li>VS Code&#39;un uzantı yükleme iznine sahip olduğundan emin olun</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

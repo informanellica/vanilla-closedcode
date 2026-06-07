@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serveur — vanilla-closedcode docs</title>
+  <meta name="description" content="Interagissez avec le serveur closedcode via HTTP.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html">العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html" selected>Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Français</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Serveur</h1>
+      <p class="lede">Interagissez avec le serveur closedcode via HTTP.</p>
+      <p>La commande <code>closedcode serve</code> exécute un serveur HTTP sans tête qui expose un point de terminaison OpenAPI qu&#39;un client closedcode peut utiliser.</p>
+<hr>
+<h3>Usage</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>Options</h4>
+<table>
+<thead>
+<tr>
+<th>Drapeau</th>
+<th>Descriptif</th>
+<th>Par défaut</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>Port à écouter sur</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>Nom d&#39;hôte sur lequel écouter</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>Activer la découverte mDNS</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>Nom de domaine personnalisé pour le service mDNS</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>Origines de navigateur supplémentaires à autoriser</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p><code>--cors</code> peut être transmis plusieurs fois :</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>Authentification</h3>
+<p>Définissez <code>CLOSEDCODE_SERVER_PASSWORD</code> pour protéger le serveur avec l&#39;authentification de base HTTP. Le nom d&#39;utilisateur est par défaut <code>closedcode</code>, ou définissez <code>CLOSEDCODE_SERVER_USERNAME</code> pour le remplacer. Cela s’applique à la fois à <code>closedcode serve</code> et à <code>closedcode web</code>.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>Comment ça marche</h3>
+<p>Lorsque vous exécutez <code>closedcode</code>, il démarre un TUI et un serveur. Où le TUI est le
+client qui parle au serveur. Le serveur expose une spécification OpenAPI 3.1
+point final. Ce point de terminaison est également utilisé pour générer un <a href="/docs/sdk">SDK</a>.</p>
+<aside class="aside aside-tip">
+Utilisez le serveur closedcode pour interagir avec closedcode par programmation.
+</aside>
+Cette architecture permet à closedcode de prendre en charge plusieurs clients et vous permet d'interagir avec closedcode par programme.
+
+<p>Vous pouvez exécuter <code>closedcode serve</code> pour démarrer un serveur autonome. Si vous avez le
+closedcode TUI en cours d&#39;exécution, <code>closedcode serve</code> démarrera un nouveau serveur.</p>
+<hr>
+<h4>Connectez-vous à un serveur existant</h4>
+<p>Lorsque vous démarrez le TUI, il attribue de manière aléatoire un port et un nom d&#39;hôte. Vous pouvez à la place transmettre les <code>--hostname</code> et <code>--port</code> <a href="/docs/cli">flags</a>. Utilisez-le ensuite pour vous connecter à son serveur.</p>
+<p>Le point de terminaison <a href="#tui"><code>/tui</code></a> peut être utilisé pour piloter le TUI via le serveur. Par exemple, vous pouvez pré-remplir ou exécuter une invite. Cette configuration est utilisée par les plugins vanilla-closedcode <a href="/docs/ide">IDE</a>.</p>
+<hr>
+<h2>Spécification</h2>
+<p>Le serveur publie une spécification OpenAPI 3.1 qui peut être consultée à l&#39;adresse :</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>Par exemple, <code>http://localhost:4096/doc</code>. Utilisez la spécification pour générer des clients ou inspecter les types de requêtes et de réponses. Ou visualisez-le dans un explorateur Swagger.</p>
+<hr>
+<h2>APIs</h2>
+<p>Le serveur closedcode expose les API suivantes.</p>
+<hr>
+<h3>Mondial</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>Obtenir l&#39;état et la version du serveur</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>Obtenez des événements mondiaux (flux SSE)</td>
+<td>Flux d&#39;événements</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Projet</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>Lister tous les projets</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>Obtenez le projet en cours</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Chemin et VCS</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>Obtenir le chemin actuel</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>Obtenir des informations VCS pour le projet en cours</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Exemple</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>Supprimer l&#39;instance actuelle</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Configuration</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>Obtenir des informations de configuration</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>Mettre à jour la configuration</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>Liste des fournisseurs et modèles par défaut</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Fournisseur</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>Liste de tous les fournisseurs</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>Obtenir les méthodes d&#39;authentification du fournisseur</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>Autoriser un fournisseur en utilisant OAuth</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>Gérer le rappel OAuth pour un fournisseur</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Séances</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Remarques</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>Liste toutes les sessions</td>
+<td>Renvoie <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>Créer une nouvelle session</td>
+<td>corps : <code>{ parentID?, title? }</code>, renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>Obtenir l&#39;état de la session pour toutes les sessions</td>
+<td>Renvoie <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>Obtenez les détails de la session</td>
+<td>Renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>Supprimer une session et toutes ses données</td>
+<td>Renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>Mettre à jour les propriétés de la session</td>
+<td>corps : <code>{ title? }</code>, renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>Obtenir les sessions enfants d&#39;une session</td>
+<td>Renvoie <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>Obtenez la liste de tâches pour une session</td>
+<td>Renvoie <a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>Analysez l&#39;application et créez <code>AGENTS.md</code></td>
+<td>corps : <code>{ messageID, providerID, modelID }</code>, renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>Forkez une session existante à un message</td>
+<td>corps : <code>{ messageID? }</code>, renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>Abandonner une session en cours</td>
+<td>Renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Partager une séance</td>
+<td>Renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>Annuler le partage d&#39;une session</td>
+<td>Renvoie <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>Obtenez le diff pour cette session</td>
+<td>requête : <code>messageID?</code>, renvoie <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>Résumer la séance</td>
+<td>corps : <code>{ providerID, modelID }</code>, renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>Rétablir un message</td>
+<td>corps : <code>{ messageID, partID? }</code>, renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>Restaurer tous les messages annulés</td>
+<td>Renvoie <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>Répondre à une demande d&#39;autorisation</td>
+<td>corps : <code>{ response, remember? }</code>, renvoie <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Messages</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Remarques</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Liste des messages dans une session</td>
+<td>requête : <code>limit?</code>, renvoie <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>Envoyer un message et attendre une réponse</td>
+<td>corps : <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>, renvoie <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>Obtenir les détails du message</td>
+<td>Renvoie <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>Envoyer un message de manière asynchrone (pas d&#39;attente)</td>
+<td>body : identique à <code>/session/:id/message</code>, renvoie <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>Exécuter une commande slash</td>
+<td>corps : <code>{ messageID?, agent?, model?, command, arguments }</code>, renvoie <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>Exécuter une commande shell</td>
+<td>corps : <code>{ agent, model?, command }</code>, renvoie <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Commandes</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>Liste toutes les commandes</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Fichiers</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>Rechercher du texte dans des fichiers</td>
+<td>Tableau d&#39;objets correspondant avec <code>path</code>, <code>lines</code>, <code>line_number</code>, <code>absolute_offset</code>, <code>submatches</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>Rechercher des fichiers et des répertoires par nom</td>
+<td><code>string[]</code> (chemins)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>Rechercher des symboles d&#39;espace de travail</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>Liste des fichiers et répertoires</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>Lire un fichier</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>Obtenir le statut des fichiers suivis</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4>Paramètres de requête <code>/find/file</code></h4>
+<ul>
+<li><code>query</code> (obligatoire) — chaîne de recherche (correspondance floue)</li>
+<li><code>type</code> (facultatif) — limiter les résultats à <code>&quot;file&quot;</code> ou <code>&quot;directory&quot;</code></li>
+<li><code>directory</code> (facultatif) — remplace la racine du projet pour la recherche</li>
+<li><code>limit</code> (facultatif) — résultats maximum (1 à 200)</li>
+<li><code>dirs</code> (facultatif) — indicateur hérité (<code>&quot;false&quot;</code> renvoie uniquement les fichiers)</li>
+</ul>
+<hr>
+<h3>Outils (expérimentaux)</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>Répertorier tous les ID d&#39;outils</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>Répertorier les outils avec des schémas JSON pour un modèle</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP, formateurs et MCP</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>Obtenir l&#39;état du serveur LSP</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>Obtenir le statut du formateur</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>Obtenir l&#39;état du serveur MCP</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>Ajouter dynamiquement le serveur MCP</td>
+<td>corps : <code>{ name, config }</code>, renvoie l&#39;objet d&#39;état MCP</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Agents</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>Liste tous les agents disponibles</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Enregistrement</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>Écrire une entrée de journal. Corps : <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>Ajouter du texte à l&#39;invite</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>Ouvrir la boîte de dialogue d&#39;aide</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>Ouvrez le sélecteur de session</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>Ouvrez le sélecteur de thème</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>Ouvrez le sélecteur de modèle</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>Soumettre l&#39;invite actuelle</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>Effacez l&#39;invite</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>Exécuter une commande (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>Afficher le toast (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>Attendre la prochaine demande de contrôle</td>
+<td>Objet de demande de contrôle</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>Répondre à une demande de contrôle (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Authentification</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>Définissez les informations d&#39;authentification. Le corps doit correspondre au schéma du fournisseur</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Événements</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>Flux d’événements envoyés par le serveur. Le premier événement est <code>server.connected</code>, puis les événements de bus</td>
+<td>Flux d&#39;événements envoyés par le serveur</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Documents</h3>
+<table>
+<thead>
+<tr>
+<th>Méthode</th>
+<th>Chemin</th>
+<th>Descriptif</th>
+<th>Réponse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>Spécification OpenAPI 3.1</td>
+<td>Page HTML avec spécification OpenAPI</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

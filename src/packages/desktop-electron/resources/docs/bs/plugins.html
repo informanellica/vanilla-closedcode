@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dodaci — vanilla-closedcode docs</title>
+  <meta name="description" content="Napišite vlastite dodatke za proširenje vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html" selected>Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Dodaci</h1>
+      <p class="lede">Napišite vlastite dodatke za proširenje vanilla-closedcode.</p>
+      <p>Dodaci vam omogućavaju da proširite vanilla-closedcode spajanjem na različite događaje i prilagođavanjem ponašanja. Možete kreirati dodatke za dodavanje novih funkcija, integraciju sa eksternim uslugama ili izmenu zadanog ponašanja vanilla-closedcode.
+Za primjere, pogledajte <a href="/docs/ecosystem#plugins">plugins</a> kreirane od strane zajednice.</p>
+<hr>
+<h2>Korištenje dodatka</h2>
+<p>Postoje dva načina za učitavanje dodataka.</p>
+<h3>Iz lokalnih datoteka</h3>
+<p>Postavite JavaScript ili TypeScript datoteke u direktorij dodataka.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - Dodaci na nivou projekta</li>
+<li><code>~/.config/closedcode/plugins/</code> - Globalni dodaci
+Datoteke u ovim direktorijumima se automatski učitavaju pri pokretanju.</li>
+</ul>
+<hr>
+<h3>Iz npm-a</h3>
+<p>Navedite npm pakete u vašoj konfiguracijskoj datoteci.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Podržani su i regularni i npm paketi sa opsegom.
+Pregledajte dostupne dodatke u <a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>Kako se instaliraju dodaci</h3>
+<p><strong>npm dodaci</strong> se instaliraju automatski pomoću npm pri pokretanju. Paketi i njihove zavisnosti su keširani u <code>~/.cache/closedcode/node_modules/</code>.
+<strong>Lokalni dodaci</strong> se učitavaju direktno iz direktorija dodataka. Da biste koristili vanjske pakete, morate kreirati <code>package.json</code> unutar svog konfiguracijskog direktorija (pogledajte <a href="#dependencies">Zavisnosti</a>) ili objaviti dodatak na npm i <a href="/docs/config#plugins">dodati ga u svoju konfiguraciju</a>.</p>
+<hr>
+<h3>Redoslijed učitavanja</h3>
+<p>Dodaci se učitavaju iz svih izvora i svi zakačnjaci rade u nizu. Redoslijed učitavanja je:</p>
+<ol>
+<li>Globalna konfiguracija (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Konfiguracija projekta (<code>closedcode.json</code>)</li>
+<li>Globalni direktorij dodataka (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Direktorij dodataka projekta (<code>.closedcode/plugins/</code>)
+Duplicirani npm paketi sa istim imenom i verzijom se učitavaju jednom. Međutim, lokalni dodatak i npm dodatak sa sličnim nazivima se učitavaju odvojeno.</li>
+</ol>
+<hr>
+<h2>Kreiranje dodatka</h2>
+<p>Dodatak je <strong>JavaScript/TypeScript modul</strong> koji izvozi jedan ili više dodataka
+funkcije. Svaka funkcija prima objekt konteksta i vraća hooks objekt.</p>
+<hr>
+<h3>Zavisnosti</h3>
+<p>Lokalni dodaci i prilagođeni alati mogu koristiti vanjske npm pakete. Dodajte <code>package.json</code> u svoj konfiguracijski direktorij sa zavisnostima koje su vam potrebne.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode pokreće <code>npm install</code> pri pokretanju da ih instalira. Vaši dodaci i alati ih zatim mogu uvesti.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Osnovna struktura</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Funkcija dodatka prima:</p>
+<ul>
+<li><code>project</code>: Trenutne informacije o projektu.</li>
+<li><code>directory</code>: Trenutni radni direktorij.</li>
+<li><code>worktree</code>: Putanja git radnog stabla.</li>
+<li><code>client</code>: closedcode SDK klijent za interakciju sa AI.</li>
+</ul>
+<hr>
+<h3>Podrška za TypeScript</h3>
+<p>Za TypeScript dodatke, možete uvesti tipove iz paketa dodataka:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Događaji</h3>
+<p>Dodaci se mogu pretplatiti na događaje kao što je prikazano ispod u odjeljku Primjeri. Evo liste različitih dostupnih događaja.</p>
+<h4>Komandni događaji</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Događaji datoteka</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Instalacijski događaji</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP događaji</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Događaji poruka</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>Događaji dozvola</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Serverski događaji</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Događaji sesije</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Todo događaji</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Shell događaji</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Događaji alata</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI događaji</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Primjeri</h2>
+<p>Evo nekoliko primjera dodataka koje možete koristiti za proširenje vanilla-closedcode.</p>
+<h3>Slanje obavještenja</h3>
+<p>Pošaljite obavještenja kada se dogode određeni događaji:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Koristimo <code>osascript</code> za pokretanje AppleScript-a na macOS-u. Ovdje ga koristimo za slanje obavještenja.</p>
+<aside class="aside aside-note">
+Ako alat dodatka koristi isto ime kao ugrađeni alat, alat dodatka ima prednost.
+</aside>
+---
+
+<h3>.env zaštita</h3>
+<p>Spriječite closedcode da čita <code>.env</code> fajlove:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Ubacivanje varijabli okruženja</h3>
+<p>Ubacite varijable okruženja u sva izvršavanja ljuske (AI alati i korisnički terminali):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Prilagođeni alati</h3>
+<p>Dodaci također mogu dodati prilagođene alate u closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>Pomoćnik <code>tool</code> kreira prilagođeni alat koji closedcode može pozvati. Uzima funkciju Zod sheme i vraća definiciju alata sa:</p>
+<ul>
+<li><code>description</code>: Šta alat radi</li>
+<li><code>args</code>: Zod šema za argumente alata</li>
+<li><code>execute</code>: Funkcija koja se pokreće kada se pozove alat
+Vaši prilagođeni alati će biti dostupni za closedcode zajedno sa ugrađenim alatima.</li>
+</ul>
+<hr>
+<h3>Bilježenje</h3>
+<p>Koristite <code>client.app.log()</code> umjesto <code>console.log</code> za strukturirano bilježenje:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Nivoi su: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Pogledajte SDK dokumentaciju za detalje.</p>
+<h3>Kuke za sažimanje</h3>
+<p>Prilagodite kontekst uključen kada se sesija zbije:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> kuka se aktivira prije nego što LLM generira sažetak nastavka. Koristite ga za ubacivanje konteksta specifičnog za domenu koji bi zadani prompt za sažimanje propustio.
+Također možete u potpunosti zamijeniti prompt za sabijanje postavljanjem <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Kada je <code>output.prompt</code> postavljen, on u potpunosti zamjenjuje zadani prompt za sažimanje. Niz <code>output.context</code> se zanemaruje u ovom slučaju.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

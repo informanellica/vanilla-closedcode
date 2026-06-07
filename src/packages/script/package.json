@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json.schemastore.org/package",
+  "name": "script",
+  "type": "module",
+  "license": "MIT",
+  "dependencies": {
+    "semver": "^7.6.3"
+  },
+  "devDependencies": {},
+  "exports": {
+    ".": "./src/index.js",
+    "./shell": "./src/shell.js"
+  }
+}

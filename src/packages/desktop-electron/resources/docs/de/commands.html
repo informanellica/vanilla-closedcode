@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Befehle — vanilla-closedcode docs</title>
+  <meta name="description" content="Erstellen Sie benutzerdefinierte Befehle für sich wiederholende Aufgaben.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html" selected>Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Deutsch</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Befehle</h1>
+      <p class="lede">Erstellen Sie benutzerdefinierte Befehle für sich wiederholende Aufgaben.</p>
+      <p>Mit benutzerdefinierten Befehlen können Sie eine Eingabeaufforderung angeben, die ausgeführt werden soll, wenn dieser Befehl im TUI ausgeführt wird.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Benutzerdefinierte Befehle gibt es zusätzlich zu den integrierten Befehlen wie <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Mehr erfahren</a>.</p>
+<hr>
+<h2>Befehlsdateien erstellen</h2>
+<p>Erstellen Sie Markdown-Dateien im Verzeichnis <code>commands/</code>, um benutzerdefinierte Befehle zu definieren.</p>
+<p>Erstellen Sie <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Der Frontmatter definiert Befehlseigenschaften. Der Inhalt wird zur Vorlage.</p>
+<p>Verwenden Sie den Befehl, indem Sie <code>/</code> folgen vom Befehlsnamen eingeben.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Konfiguration</h2>
+<p>Sie können benutzerdefinierte Befehle über die vanilla-closedcode-Konfiguration hinzufügen oder indem Sie Markdown-Dateien im Verzeichnis <code>commands/</code> erstellen.</p>
+<hr>
+<h3>JSON</h3>
+<p>Verwenden Sie die Option <code>command</code> in Ihrem vanilla-closedcode <a href="/docs/config">config</a>:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Jetzt können Sie diesen Befehl im TUI ausführen:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Sie können Befehle auch mithilfe von Markdown-Dateien definieren. Platzieren Sie sie in:</p>
+<ul>
+<li>Global: <code>~/.config/closedcode/commands/</code></li>
+<li>Pro Projekt: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Der Name der Markdown-Datei wird zum Befehlsnamen. Zum Beispiel <code>test.md</code> lässt
+Du läufst:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Prompt-Konfiguration</h2>
+<p>Die Eingabeaufforderungen für die benutzerdefinierten Befehle unterstützen mehrere spezielle Platzhalter und Syntax.</p>
+<hr>
+<h3>Argumente</h3>
+<p>Übergeben Sie Argumente an Befehle mithilfe des Platzhalters <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Führen Sie den Befehl mit Argumenten aus:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>Und <code>$ARGUMENTS</code> wird durch <code>Button</code> ersetzt.</p>
+<p>Sie können auch über Positionsparameter auf einzelne Argumente zugreifen:</p>
+<ul>
+<li><code>$1</code> – Erstes Argument</li>
+<li><code>$2</code> – Zweites Argument</li>
+<li><code>$3</code> – Drittes Argument</li>
+<li>Und so weiter...</li>
+</ul>
+<p>Zum Beispiel:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Führen Sie den Befehl aus:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Dies ersetzt:</p>
+<ul>
+<li><code>$1</code> mit <code>config.json</code></li>
+<li><code>$2</code> mit <code>src</code></li>
+<li><code>$3</code> mit <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Shell-Ausgabe</h3>
+<p>Verwenden Sie <em>!<code>command</code></em>, um die Ausgabe <a href="/docs/tui#bash-commands">bash command</a> in Ihre Eingabeaufforderung einzufügen.</p>
+<p>So erstellen Sie beispielsweise einen benutzerdefinierten Befehl, der die Testabdeckung analysiert:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Oder um die letzten Änderungen zu überprüfen:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Befehle werden im Stammverzeichnis Ihres Projekts ausgeführt und ihre Ausgabe wird Teil der Eingabeaufforderung.</p>
+<hr>
+<h3>Dateiverweise</h3>
+<p>Fügen Sie Dateien in Ihren Befehl ein, indem Sie <code>@</code> folgend vom Dateinamen verwenden.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Der Dateiinhalt wird automatisch in die Eingabeaufforderung einbezogen.</p>
+<hr>
+<h2>Optionen</h2>
+<p>Schauen wir uns die Konfigurationsmöglichkeiten im Detail an.</p>
+<hr>
+<h3>Template</h3>
+<p>Die Option <code>template</code> die Eingabeaufforderung, die an LLM gesendet wird, wenn der Befehl ausgeführt wird.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dies ist eine <strong>erforderliche</strong> Konfigurationsoption.</p>
+<hr>
+<h3>Description</h3>
+<p>Verwenden Sie die Option <code>description</code>, um eine kurze Beschreibung der Funktion des Befehls bereitzustellen.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dies wird als Beschreibung im TUI angezeigt, wenn Sie den Befehl eingeben.</p>
+<hr>
+<h3>Agent</h3>
+<p>Verwenden Sie die <code>agent</code>-Konfiguration, um optional anzugeben, welche <a href="/docs/agents">agent</a> diesen Befehl ausführen soll.
+Wenn es sich um einen <a href="/docs/agents/#subagents">subagent</a> handelt, löst der Befehl standardmäßig einen Subagentenaufruf aus.
+Um dieses Verhalten zu deaktivieren, setzen Sie <code>subtask</code> auf <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dies ist eine <strong>optionale</strong> Konfigurationsoption. Wenn nicht angegeben, wird standardmäßig Ihr aktueller Agent verwendet.</p>
+<hr>
+<h3>Subtask</h3>
+<p>Verwenden Sie den booleschen Wert <code>subtask</code>, um zu erzwingen, dass der Befehl einen <a href="/docs/agents/#subagents">subagent</a>-Aufruf auslöst.
+Dies ist nützlich, wenn Sie möchten, dass der Befehl Ihren primären Kontext nicht verunreinigt und den Agenten dazu zwingt, als Subagent zu fungieren.
+auch wenn <code>mode</code> in der <a href="/docs/agents">agent</a>-Konfiguration auf <code>primary</code> gesetzt ist.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Dies ist eine <strong>optionale</strong> Konfigurationsoption.</p>
+<hr>
+<h3>Model</h3>
+<p>Verwenden Sie die <code>model</code>-Konfiguration, um das Standardmodell für diesen Befehl zu überschreiben.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Dies ist eine <strong>optionale</strong> Konfigurationsoption.</p>
+<hr>
+<h2>Integriert</h2>
+<p>vanilla-closedcode enthält mehrere integrierte Befehle wie <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">mehr erfahren</a>.</p>
+<aside class="aside aside-note">
+Benutzerdefinierte Befehle können integrierte Befehle überschreiben.
+</aside>
+Wenn Sie einen benutzerdefinierten Befehl mit demselben Namen definieren, überschreibt dieser den integrierten Befehl.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

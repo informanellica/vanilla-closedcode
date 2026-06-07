@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows (WSL) — vanilla-closedcode docs</title>
+  <meta name="description" content="Exécutez vanilla-closedcode sur Windows avec WSL pour une expérience optimale.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/windows-wsl.html">English</option>
+      <option value="../ar/windows-wsl.html">العربية</option>
+      <option value="../bs/windows-wsl.html">Bosanski</option>
+      <option value="../da/windows-wsl.html">Dansk</option>
+      <option value="../de/windows-wsl.html">Deutsch</option>
+      <option value="../es/windows-wsl.html">Español</option>
+      <option value="../fr/windows-wsl.html" selected>Français</option>
+      <option value="../it/windows-wsl.html">Italiano</option>
+      <option value="../ja/windows-wsl.html">日本語</option>
+      <option value="../ko/windows-wsl.html">한국어</option>
+      <option value="../nb/windows-wsl.html">Norsk</option>
+      <option value="../pl/windows-wsl.html">Polski</option>
+      <option value="../pt-br/windows-wsl.html">Português (BR)</option>
+      <option value="../ru/windows-wsl.html">Русский</option>
+      <option value="../th/windows-wsl.html">ไทย</option>
+      <option value="../tr/windows-wsl.html">Türkçe</option>
+      <option value="../zh-cn/windows-wsl.html">简体中文</option>
+      <option value="../zh-tw/windows-wsl.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Français</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li class="active"><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Windows (WSL)</h1>
+      <p class="lede">Exécutez vanilla-closedcode sur Windows avec WSL pour une expérience optimale.</p>
+      <p>Même si vanilla-closedcode peut fonctionner directement sur Windows, nous recommandons d&#39;utiliser <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a> pour la meilleure expérience. WSL fournit un environnement Linux qui s&#39;intègre parfaitement aux fonctionnalités d&#39;vanilla-closedcode.</p>
+<aside class="aside aside-tip">
+<p class="aside-label">Pourquoi WSL?</p>
+WSL offre de meilleures performances du système de fichiers, une prise en charge complète du terminal et la compatibilité avec les outils de développement dont vanilla-closedcode dépend.
+</aside>
+---
+
+<h2>Configuration</h2>
+<div class="steps">
+
+
+<ol>
+<li><p><strong>Installez WSL</strong></p>
+<p>Si ce n&#39;est pas encore fait, <a href="https://learn.microsoft.com/en-us/windows/wsl/install">installez WSL</a> à l&#39;aide du guide officiel Microsoft.</p>
+</li>
+<li><p><strong>Installez vanilla-closedcode dans WSL</strong></p>
+<p>Une fois WSL configuré, ouvrez votre terminal WSL et installez vanilla-closedcode avec l&#39;une des <a href="/docs/">méthodes d&#39;installation</a>.</p>
+<p>Téléchargez la dernière version depuis la page des versions : <a href="https://github.com/informanellica/vanilla-closedcode/releases">github.com/informanellica/vanilla-closedcode/releases</a>.</p>
+</li>
+<li><p><strong>Utilisez vanilla-closedcode depuis WSL</strong></p>
+<p>Allez dans votre dossier de projet (accédez aux fichiers Windows via <code>/mnt/c/</code>, <code>/mnt/d/</code>, etc.) et lancez vanilla-closedcode.</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/project
+closedcode
+</code></pre>
+</li>
+</ol>
+</div>
+
+<hr>
+<h2>Application bureau + serveur WSL</h2>
+<p>Si vous préférez utiliser l&#39;application Desktop vanilla-closedcode tout en exécutant le serveur dans WSL:</p>
+<ol>
+<li><p><strong>Démarrez le serveur dans WSL</strong> avec <code>--hostname 0.0.0.0</code> pour autoriser les connexions externes:</p>
+<pre><code class="language-bash">closedcode serve --hostname 0.0.0.0 --port 4096
+</code></pre>
+</li>
+<li><p><strong>Connectez l&#39;application Desktop</strong> à <code>http://localhost:4096</code></p>
+</li>
+</ol>
+<aside class="aside aside-note">
+Si `localhost` ne fonctionne pas dans votre configuration, utilisez plutôt l'adresse IP WSL (depuis WSL: `hostname -I`) et `http://<wsl-ip>:4096`.
+</aside>
+<aside class="aside aside-caution">
+Lorsque vous utilisez `--hostname 0.0.0.0`, définissez `CLOSEDCODE_SERVER_PASSWORD` pour sécuriser le serveur.
+
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve --hostname 0.0.0.0
+</code></pre>
+</aside>
+---
+
+<h2>Client web + WSL</h2>
+<p>Pour la meilleure expérience web sous Windows:</p>
+<ol>
+<li><p><strong>Exécutez <code>closedcode web</code> dans le terminal WSL</strong> plutôt que dans PowerShell:</p>
+<pre><code class="language-bash">closedcode web --hostname 0.0.0.0
+</code></pre>
+</li>
+<li><p><strong>Accédez-y depuis votre navigateur Windows</strong> à <code>http://localhost:&lt;port&gt;</code> (vanilla-closedcode affiche l&#39;URL)</p>
+</li>
+</ol>
+<p>Lancer <code>closedcode web</code> depuis WSL garantit un accès correct au système de fichiers et une bonne intégration terminal, tout en restant accessible depuis votre navigateur Windows.</p>
+<hr>
+<h2>Accéder aux fichiers Windows</h2>
+<p>WSL peut accéder à tous vos fichiers Windows via le répertoire <code>/mnt/</code>:</p>
+<ul>
+<li>Lecteur <code>C:</code> → <code>/mnt/c/</code></li>
+<li>Lecteur <code>D:</code> → <code>/mnt/d/</code></li>
+<li>Et ainsi de suite...</li>
+</ul>
+<p>Exemple:</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/Documents/project
+closedcode
+</code></pre>
+<aside class="aside aside-tip">
+Pour une expérience plus fluide, vous pouvez cloner/copier votre dépôt dans le système de fichiers WSL (par exemple sous `~/code/`) et y exécuter vanilla-closedcode.
+</aside>
+---
+
+<h2>Conseils</h2>
+<ul>
+<li>Gardez vanilla-closedcode dans WSL pour les projets stockés sur des lecteurs Windows: l&#39;accès aux fichiers est fluide</li>
+<li>Utilisez l&#39;<a href="https://code.visualstudio.com/docs/remote/wsl">extension WSL de VS Code</a> avec vanilla-closedcode pour un flux de travail intégré</li>
+<li>Votre configuration vanilla-closedcode et vos sessions sont stockées dans l&#39;environnement WSL à <code>~/.local/share/closedcode/</code></li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP serveri — vanilla-closedcode docs</title>
+  <meta name="description" content="Dodajte lokalne i udaljene MCP alate.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html" selected>Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCP serveri</h1>
+      <p class="lede">Dodajte lokalne i udaljene MCP alate.</p>
+      <p>Možete dodati vanjske alate u vanilla-closedcode koristeći <em>Model Context Protocol</em>, ili MCP. vanilla-closedcode podržava i lokalne i udaljene servere.
+Jednom dodani, MCP alati su automatski dostupni LLM-u zajedno sa ugrađenim alatima.</p>
+<hr>
+<h4>Upozorenje</h4>
+<p>Kada koristite MCP server, on dodaje u kontekst. Ovo se može brzo zbrojiti ako imate puno alata. Stoga preporučujemo da pazite koje MCP servere koristite.</p>
+<aside class="aside aside-tip">
+MCP serveri dodaju vaš kontekst, tako da želite da budete pažljivi s tim koje ćete omogućiti.
+</aside>
+Određeni MCP serveri, poput GitHub MCP servera, mogu dodati mnogo tokena i lako premašiti limit konteksta.
+
+<h2>Omogućavanje</h2>
+<p>Možete definirati MCP servere u vašoj <a href="./config.html">vanilla-closedcode Config</a> pod <code>mcp</code>. Dodajte svaki MCP sa jedinstvenim imenom. Možete se pozvati na taj MCP po imenu kada tražite LLM.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>Također možete onemogućiti server postavljanjem <code>enabled</code> na <code>false</code>. To je korisno kada ga želite privremeno isključiti bez uklanjanja iz konfiguracije.</p>
+
+<h4>Opcije</h4>
+<p>Ovdje su sve opcije za konfiguriranje lokalnog MCP servera.</p>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Tip</th>
+<th>Obavezno</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Tip veze sa MCP serverom, mora biti <code>&quot;local&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Niz</td>
+<td>Y</td>
+<td>Naredba i argumenti za pokretanje MCP servera.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Objekt</td>
+<td></td>
+<td>Varijable okruženja koje treba postaviti prilikom pokretanja servera.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Omogućite ili onemogućite MCP server pri pokretanju.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Broj</td>
+<td></td>
+<td>Vremensko ograničenje u ms za dohvaćanje alata sa MCP servera. Podrazumevano je 5000 (5 sekundi).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Udaljeno</h2>
+<p>Dodajte udaljene MCP servere postavljanjem <code>type</code> na <code>&quot;remote&quot;</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> je URL udaljenog MCP servera, a kroz opciju <code>headers</code> možete proslijediti listu zaglavlja.</p>
+<h4>Opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Tip</th>
+<th>Obavezno</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>Tip veze sa MCP serverom, mora biti <code>&quot;remote&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>String</td>
+<td>Y</td>
+<td>URL udaljenog MCP servera.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>Omogućite ili onemogućite MCP server pri pokretanju.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Objekt</td>
+<td></td>
+<td>Zaglavlja za slanje uz zahtjev.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Objekt</td>
+<td></td>
+<td>Konfiguracija OAuth provjere autentičnosti. Pogledajte odjeljak <a href="#oauth">OAuth</a> ispod.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Broj</td>
+<td></td>
+<td>Vremensko ograničenje u ms za preuzimanje alata sa MCP servera. Podrazumevano je 5000 (5 sekundi).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>vanilla-closedcode automatski rukuje OAuth autentifikacijom za udaljene MCP servere. Kada server zahtijeva autentifikaciju, vanilla-closedcode će:</p>
+<ol>
+<li>Otkrijte 401 odgovor i pokrenite OAuth tok</li>
+<li>Koristite <strong>Dynamic Client Registration (RFC 7591)</strong> ako podržava server</li>
+<li>Sigurno čuvajte tokene za buduće zahtjeve</li>
+</ol>
+<hr>
+<h3>Automatski</h3>
+<p>Za većinu MCP servera sa omogućenim OAuthom nije potrebna posebna konfiguracija. Samo konfigurirajte udaljeni server:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ako server zahtijeva autentifikaciju, vanilla-closedcode će vas tražiti prijavu pri prvom korištenju. Ako se to ne desi, možete <a href="#authenticating">ručno pokrenuti tok</a> naredbom <code>closedcode mcp auth &lt;server-name&gt;</code>.</p>
+<h3>Prethodno registrirano</h3>
+<p>Ako imate klijentske vjerodajnice od dobavljača MCP servera, možete ih konfigurirati:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Autentifikacija</h3>
+<p>Možete ručno pokrenuti autentifikaciju ili upravljati vjerodajnicama.
+Autentifikacija sa određenim MCP serverom:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>Navedite sve MCP servere i njihov status autentifikacije:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Uklonite pohranjene vjerodajnice:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p>Komanda <code>mcp auth</code> otvara pretraživač za autorizaciju. Nakon odobrenja, vanilla-closedcode sigurno čuva tokene u <code>~/.local/share/closedcode/mcp-auth.json</code>.</p>
+<h4>Onemogućavanje OAuth-a</h4>
+<p>Ako želite onemogućiti automatski OAuth za server (npr. za servere koji umjesto toga koriste API ključeve), postavite <code>oauth</code> na <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth opcije</h4>
+<table>
+<thead>
+<tr>
+<th>Opcija</th>
+<th>Tip</th>
+<th>Opis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Objekt | false</td>
+<td>OAuth konfiguracijski objekt, ili <code>false</code> da onemogućite automatsko otkrivanje OAuth.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>ID OAuth klijenta. Ako nije navedeno, pokušat će se izvršiti dinamička registracija klijenta.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>Tajna OAuth klijenta, ako to zahtijeva autorizacijski server.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>OAuth opseg zahtjeva za vrijeme autorizacije.</td>
+</tr>
+</tbody></table>
+<h4>Otklanjanje grešaka</h4>
+<p>Ako udaljeni MCP server ne uspije u autentifikaciji, možete dijagnosticirati probleme pomoću:</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p>Komanda <code>mcp debug</code> prikazuje trenutni auth status, testira HTTP povezanost i pokušava OAuth discovery flow.</p>
+<h2>Upravljanje</h2>
+<p>Vaši MCP serveri su dostupni kao alati u vanilla-closedcode, zajedno s ugrađenim alatima. Možete njima upravljati kroz vanilla-closedcode konfiguraciju kao i bilo kojim drugim alatom.</p>
+<h3>Globalno</h3>
+<p>To znači da ih možete omogućiti ili onemogućiti globalno.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>Također možemo koristiti glob obrazac da onemogućimo sve odgovarajuće MCP-ove.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>Ovdje koristimo glob obrazac <code>my-mcp*</code> da onemogućimo sve MCP servere.</p>
+<h3>Po agentu</h3>
+<p>Ako imate veliki broj MCP servera, možda ćete želeti da ih omogućite samo po agentu i da ih onemogućite globalno. Da biste to učinili:</p>
+<ol>
+<li>Onemogućite ga kao alat globalno.</li>
+<li>U vašem <a href="/docs/agents#tools">agent config</a>, omogućite MCP server kao alat.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Glob uzorci</h4>
+<p>Uzorak glob koristi jednostavne šablone globbiranja regularnih izraza:</p>
+<ul>
+<li><code>*</code> odgovara nuli ili više bilo kojeg znaka (npr. <code>&quot;my-mcp*&quot;</code> odgovara <code>my-mcp_search</code>, <code>my-mcp_list</code>, itd.)</li>
+<li><code>?</code> odgovara tačno jednom znaku</li>
+<li>Svi ostali likovi se bukvalno podudaraju
+:::note
+MCP serverski alati se registruju sa imenom servera kao prefiksom, tako da onemogućite sve alate za server jednostavno koristite:</li>
+</ul>
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+<p>:::</p>
+<hr>
+<h2>Primjeri</h2>
+<p>Ispod su primjeri uobičajenih MCP servera. Možete poslati PR ako želite dokumentovati druge servere.</p>
+<h3>Sentry</h3>
+<p>Dodajte <a href="https://mcp.sentry.dev">Sentry MCP server</a> za interakciju sa vašim Sentry projektima i problemima.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>Nakon dodavanja konfiguracije, autentifikujte se sa Sentry:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>Ovo će otvoriti prozor pretraživača da završite OAuth tok i povežete vanilla-closedcode sa vašim Sentry nalogom.
+Nakon provjere autentičnosti, možete koristiti Sentry alate u svojim upitima za upite o problemima, projektima i podacima o greškama.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>Dodajte <a href="https://github.com/upstash/context7">Context7 MCP server</a> za pretraživanje dokumenata.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ako ste se prijavili za besplatni račun, možete koristiti svoj API ključ i dobiti viša ograničenja stope.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ovdje pretpostavljamo da imate postavljenu varijablu okruženja <code>CONTEXT7_API_KEY</code>.
+Dodajte <code>use context7</code> vašim upitima za korištenje Context7 MCP servera.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>Alternativno, možete dodati nešto poput ovoga na svoj <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>Dodajte <a href="https://grep.app">Grep by Vercel</a> MCP server za pretraživanje isječaka koda na GitHub.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>Pošto smo naš MCP server nazvali <code>gh_grep</code>, možete dodati <code>use the gh_grep tool</code> u svoje upite da natjerate agenta da ga koristi.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>Alternativno, možete dodati nešto poput ovoga na svoj <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

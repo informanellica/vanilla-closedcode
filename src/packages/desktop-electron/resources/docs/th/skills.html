@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ทักษะของเอเจนต์ — vanilla-closedcode docs</title>
+  <meta name="description" content="กำหนดพฤติกรรมที่นำมาใช้ซ้ำได้ผ่านคำจำกัดความ SKILL.md">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html" selected>ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>ทักษะของเอเจนต์</h1>
+      <p class="lede">กำหนดพฤติกรรมที่นำมาใช้ซ้ำได้ผ่านคำจำกัดความ SKILL.md</p>
+      <p>ทักษะของเจ้าหน้าที่ช่วยให้ vanilla-closedcode ค้นพบคำแนะนำที่ใช้ซ้ำได้จาก repo หรือโฮมไดเร็กทอรีของคุณ
+ทักษะจะถูกโหลดตามความต้องการผ่านเครื่องมือ <code>skill</code> ดั้งเดิม ตัวแทนจะเห็นทักษะที่มีอยู่และสามารถโหลดเนื้อหาทั้งหมดได้เมื่อจำเป็น</p>
+<hr>
+<h2>วางไฟล์</h2>
+<p>สร้างหนึ่งโฟลเดอร์ต่อชื่อทักษะ และใส่ <code>SKILL.md</code> ไว้ข้างใน
+vanilla-closedcode ค้นหาตำแหน่งเหล่านี้:</p>
+<ul>
+<li>การกำหนดค่าโครงการ: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>การกำหนดค่าส่วนกลาง: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>เข้ากันได้กับโครงการ Claude: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>เข้ากันได้กับ Global Claude: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>เข้ากันได้กับตัวแทนโครงการ: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>รองรับตัวแทนทั่วโลก: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>ทำความเข้าใจกับการค้นพบ</h2>
+<p>สำหรับเส้นทางภายในโปรเจ็กต์ vanilla-closedcode จะเดินขึ้นมาจากไดเร็กทอรีการทำงานปัจจุบันของคุณจนกว่าจะถึงแผนผังงาน git
+โดยจะโหลด <code>skills/*/SKILL.md</code> ที่ตรงกันใน <code>.closedcode/</code> และ <code>.claude/skills/*/SKILL.md</code> หรือ <code>.agents/skills/*/SKILL.md</code> ที่ตรงกันตลอดทาง</p>
+<p>คำจำกัดความสากลยังโหลดจาก <code>~/.config/closedcode/skills/*/SKILL.md</code>, <code>~/.claude/skills/*/SKILL.md</code> และ <code>~/.agents/skills/*/SKILL.md</code></p>
+<hr>
+<h2>เขียน frontmatter</h2>
+<p><code>SKILL.md</code> แต่ละอันต้องขึ้นต้นด้วย YAML frontmatter
+เฉพาะฟิลด์เหล่านี้เท่านั้นที่ได้รับการยอมรับ:</p>
+<ul>
+<li><code>name</code> (จำเป็น)</li>
+<li><code>description</code> (จำเป็น)</li>
+<li><code>license</code> (ไม่บังคับ)</li>
+<li><code>compatibility</code> (ไม่บังคับ)</li>
+<li><code>metadata</code> (ตัวเลือก แมปแบบสตริงต่อสตริง)</li>
+</ul>
+<p>ช่อง frontmatter ที่ไม่รู้จักจะถูกละเว้น</p>
+<hr>
+<h2>ตรวจสอบชื่อ</h2>
+<p><code>name</code> ต้อง:</p>
+<ul>
+<li>มีความยาว 1–64 อักขระ</li>
+<li>เป็นตัวพิมพ์เล็กและตัวเลขคละกันที่มีเครื่องหมายยัติภังค์ตัวคั่นเดียว</li>
+<li>ไม่ขึ้นต้นหรือลงท้ายด้วย <code>-</code></li>
+<li>ไม่มี <code>--</code> ติดต่อกัน</li>
+<li>จับคู่ชื่อไดเร็กทอรีที่มี <code>SKILL.md</code></li>
+</ul>
+<p>regex ที่เทียบเท่า:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>ปฏิบัติตามกฎความยาว</h2>
+<p><code>description</code> ต้องมีความยาว 1-1,024 ตัวอักษร
+เจาะจงให้ตัวแทนเลือกได้ถูกต้อง</p>
+<hr>
+<h2>ใช้ตัวอย่าง</h2>
+<p>สร้าง <code>.closedcode/skills/git-release/SKILL.md</code> แบบนี้:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>การค้นพบคำอธิบายเครื่องมือ</h2>
+<p>vanilla-closedcode แสดงรายการทักษะที่มีอยู่ในคำอธิบายเครื่องมือ <code>skill</code>
+แต่ละรายการจะมีชื่อทักษะและคำอธิบาย:</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>ตัวแทนโหลดทักษะโดยการเรียกเครื่องมือ:</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>กำหนดค่าสิทธิ์</h2>
+<p>ควบคุมว่าตัวแทนทักษะใดสามารถเข้าถึงโดยใช้สิทธิ์ตามรูปแบบใน <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>การอนุญาต</th>
+<th>พฤติกรรม</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>โหลดทักษะทันที</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>ทักษะถูกซ่อนไม่ให้ตัวแทน การเข้าถึงถูกปฏิเสธ</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>ผู้ใช้ได้รับแจ้งให้อนุมัติก่อนที่จะโหลด</td>
+</tr>
+</tbody></table>
+<p>รูปแบบที่รองรับไวด์การ์ด: <code>internal-*</code> ตรงกับ <code>internal-docs</code>, <code>internal-tools</code> ฯลฯ</p>
+<hr>
+<h2>แทนที่ต่อเอเจนต์</h2>
+<p>ให้สิทธิ์แก่ตัวแทนเฉพาะเจาะจงที่แตกต่างจากค่าเริ่มต้นทั่วไป</p>
+<p><strong>สำหรับตัวแทนแบบกำหนดเอง</strong> (ในตัวแทนส่วนหน้า):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>สำหรับตัวแทนในตัว</strong> (ใน <code>closedcode.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>ปิดการใช้งานเครื่องมือทักษะ</h2>
+<p>ปิดการใช้งานทักษะโดยสิ้นเชิงสำหรับตัวแทนที่ไม่ควรใช้:</p>
+<p><strong>สำหรับตัวแทนแบบกำหนดเอง</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>สำหรับตัวแทนในตัว</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>เมื่อปิดใช้งาน ส่วน <code>&lt;available_skills&gt;</code> จะถูกละเว้นทั้งหมด</p>
+<hr>
+<h2>แก้ไขปัญหาการโหลด</h2>
+<p>หากทักษะไม่แสดง:</p>
+<ol>
+<li>ตรวจสอบว่า <code>SKILL.md</code> สะกดด้วยตัวพิมพ์ใหญ่ทั้งหมด</li>
+<li>ตรวจสอบว่าส่วนหน้าประกอบด้วย <code>name</code> และ <code>description</code></li>
+<li>ตรวจสอบให้แน่ใจว่าชื่อทักษะไม่ซ้ำกันในทุกสถานที่</li>
+<li>ตรวจสอบการอนุญาต ทักษะที่มี <code>deny</code> ถูกซ่อนไม่ให้ตัวแทนเห็น</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

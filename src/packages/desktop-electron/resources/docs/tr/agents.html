@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent&#39;lar — vanilla-closedcode docs</title>
+  <meta name="description" content="Özel agent&#39;ları yapılandırın ve kullanın.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html" selected>Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Agent&#39;lar</h1>
+      <p class="lede">Özel agent&#39;ları yapılandırın ve kullanın.</p>
+      <p>Agent&#39;lar, belirli görevler ve iş akışları için yapılandırılabilen uzmanlaşmış AI asistanlarıdır. Özel istemler, modeller ve araç erişimiyle odaklanmış araçlar oluşturmanıza olanak tanır.</p>
+<aside class="aside aside-tip">
+Herhangi bir kod değişikliği yapmadan kodu analiz etmek ve önerileri gözden geçirmek için Plan agent'ını kullanın.
+</aside>
+Bir oturum sırasında agent'lar arasında geçiş yapabilir veya onları `@` ifadesi ile çağırabilirsiniz.
+
+<hr>
+<h2>Türler</h2>
+<p>closedcode&#39;da iki tür agent vardır; birincil agent&#39;lar ve alt agent&#39;lar.</p>
+<hr>
+<h3>Birincil agent&#39;lar</h3>
+<p>Birincil agent&#39;lar, doğrudan etkileşim kurduğunuz ana yardımcılardır. <strong>Sekme</strong> tuşunu veya yapılandırılmış <code>switch_agent</code> tuş atamanızı kullanarak bunlar arasında geçiş yapabilirsiniz. Bu agent&#39;lar ana görüşmenizi yönetir. Araç erişimi, izinler aracılığıyla yapılandırılır; örneğin, Build&#39;de tüm araçlar etkindir ancak Plan kısıtlıdır.</p>
+<aside class="aside aside-tip">
+Bir oturum sırasında birincil agent'lar arasında geçiş yapmak için **Sekme** tuşunu kullanabilirsiniz.
+</aside>
+closedcode, **Build** ve **Plan** olmak üzere iki yerleşik birincil agent ile birlikte gelir. Bunlara aşağıda bakacağız.
+
+<hr>
+<h3>Alt agent&#39;lar</h3>
+<p>Alt agent&#39;lar, birincil agent&#39;ların belirli görevler için çağırabileceği uzman yardımcılardır. Ayrıca mesajlarınızda <strong>@ bahsederek</strong> bunları manuel olarak da çağırabilirsiniz.</p>
+<p>closedcode, <strong>General</strong> ve <strong>Explore</strong> olmak üzere iki yerleşik alt agent ile birlikte gelir. Buna aşağıda bakacağız.</p>
+<hr>
+<h2>Yerleşik</h2>
+<p>closedcode iki yerleşik birincil agent ve iki yerleşik alt agent ile birlikte gelir.</p>
+<hr>
+<h3>Build Kullanımı</h3>
+<p><em>Mod</em>: <code>primary</code></p>
+<p>Build, tüm araçların etkin olduğu <strong>varsayılan</strong> birincil agent&#39;tır. Bu, dosya işlemlerine ve sistem komutlarına tam erişime ihtiyaç duyduğunuz geliştirme çalışmaları için standart agent&#39;tır.</p>
+<hr>
+<h3>Plan Kullanımı</h3>
+<p><em>Mod</em>: <code>primary</code></p>
+<p>Planlama ve analiz için tasarlanmış kısıtlı bir agent. Size daha fazla kontrol sağlamak ve istenmeyen değişiklikleri önlemek için bir izin sistemi kullanıyoruz.
+Varsayılan olarak aşağıdakilerin tümü <code>ask</code> olarak ayarlanmıştır:</p>
+<ul>
+<li><code>file edits</code>: Tüm yazmalar, yamalar ve düzenler</li>
+<li><code>bash</code>: Tüm bash komutları</li>
+</ul>
+<p>Bu agent, LLM&#39;in kodu analiz etmesini, değişiklik önermesini veya kod tabanınızda herhangi bir gerçek değişiklik yapmadan plan oluşturmasını istediğinizde kullanışlıdır.</p>
+<hr>
+<h3>General Kullanımı</h3>
+<p><em>Mod</em>: <code>subagent</code></p>
+<p>Karmaşık soruları araştırmak ve çok adımlı görevleri yürütmek için genel amaçlı bir agent. Tam araç erişimine sahiptir (yapılacaklar hariç), böylece gerektiğinde dosya değişiklikleri yapabilir. Birden fazla iş birimini paralel olarak çalıştırmak için bunu kullanın.</p>
+<hr>
+<h3>Explore Kullanımı</h3>
+<p><em>Mod</em>: <code>subagent</code></p>
+<p>Kod tabanlarını keşfetmeye yönelik hızlı, salt okunur bir agent. Dosyalar değiştirilemiyor. Dosyaları kalıplara göre hızla bulmanız, anahtar sözcükler için kod aramanız veya kod tabanıyla ilgili soruları yanıtlamanız gerektiğinde bunu kullanın.</p>
+<hr>
+<h3>Compaction Kullanımı</h3>
+<p><em>Mod</em>: <code>primary</code></p>
+<p>Uzun bağlamı daha küçük bir özete sıkıştıran gizli sistem agent&#39;ı. Gerektiğinde otomatik olarak çalışır ve kullanıcı arayüzünde seçilemez.</p>
+<hr>
+<h3>Title Kullanımı</h3>
+<p><em>Mod</em>: <code>primary</code></p>
+<p>Kısa oturum başlıkları oluşturan gizli sistem agent&#39;ı. Otomatik olarak çalışır ve kullanıcı arayüzünde seçilemez.</p>
+<hr>
+<h3>Summary Kullanımı</h3>
+<p><em>Mod</em>: <code>primary</code></p>
+<p>Oturum özetleri oluşturan gizli sistem agent&#39;ı. Otomatik olarak çalışır ve kullanıcı arayüzünde seçilemez.</p>
+<hr>
+<h2>Kullanım</h2>
+<ol>
+<li><p>Birincil agent&#39;lar için, oturum sırasında bunlar arasında geçiş yapmak için <strong>Sekme</strong> tuşunu kullanın. Yapılandırılmış <code>switch_agent</code> tuş bağınızı da kullanabilirsiniz.</p>
+</li>
+<li><p>Alt agent&#39;lar çağrılabilir:</p>
+<ul>
+<li><p>Açıklamalarına göre özel görevler için birincil agent&#39;lar tarafından <strong>otomatik olarak</strong>.</p>
+</li>
+<li><p>Mesajınızda bir alt agent&#39;tan <strong>@ bahsederek</strong> manuel olarak. Örneğin.</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>Oturumlar arasında gezinme</strong>: Alt agent&#39;lar kendi alt oturumlarını oluşturduğunda, aşağıdakileri kullanarak ana oturum ile tüm alt oturumlar arasında gezinebilirsiniz:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (veya yapılandırılmış <code>session_child_cycle</code> tuş atamanız) ebeveyn → çocuk1 → çocuk2 → ... → ebeveyn arasında ileri doğru geçiş yapmak için</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (veya yapılandırılmış <code>session_child_cycle_reverse</code> tuş atamanız) ebeveyn ← çocuk1 ← çocuk2 ← ... ← ebeveyn arasında geriye doğru geçiş yapmak için</li>
+</ul>
+<p>Bu, ana görüşme ile özel alt agent çalışması arasında sorunsuz bir şekilde geçiş yapmanıza olanak tanır.</p>
+</li>
+</ol>
+<hr>
+<h2>Yapılandırma</h2>
+<p>Yerleşik agent&#39;ları özelleştirebilir veya yapılandırma yoluyla kendinizinkini oluşturabilirsiniz. Agent&#39;lar iki şekilde yapılandırılabilir:</p>
+<hr>
+<h3>JSON</h3>
+<p>Agent&#39;ları <code>closedcode.json</code> yapılandırma dosyanızda yapılandırın:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Ayrıca agent&#39;ları Markdown dosyalarını kullanarak da tanımlayabilirsiniz. Bunları şuraya yerleştirin:</p>
+<ul>
+<li>Global: <code>~/.config/closedcode/agents/</code></li>
+<li>Proje başına: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Markdown dosyasının adı agent&#39;ın adı olur. Örneğin, <code>review.md</code> bir <code>review</code> agent&#39;ı oluşturur.</p>
+<hr>
+<h2>Seçenekler</h2>
+<p>Bu yapılandırma seçeneklerine ayrıntılı olarak bakalım.</p>
+<hr>
+<h3>Açıklama</h3>
+<p>Agent&#39;ın ne yaptığına ve ne zaman kullanılacağına ilişkin kısa bir açıklama sağlamak için <code>description</code> seçeneğini kullanın.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu <strong>gerekli</strong> bir yapılandırma seçeneğidir.</p>
+<hr>
+<h3>Sıcaklık</h3>
+<p>LLM&#39;in yanıtlarının rastgeleliğini ve yaratıcılığını <code>temperature</code> yapılandırmasıyla kontrol edin.</p>
+<p>Düşük değerler yanıtları daha odaklı ve belirleyici hale getirirken, yüksek değerler yaratıcılığı ve değişkenliği artırır.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>Sıcaklık değerleri tipik olarak 0,0 ila 1,0 arasındadır:</p>
+<ul>
+<li><strong>0,0-0,2</strong>: Çok odaklı ve belirleyici yanıtlar, kod analizi ve planlama için idealdir</li>
+<li><strong>0,3-0,5</strong>: Biraz yaratıcılık içeren dengeli yanıtlar, genel gelişim görevleri için iyi</li>
+<li><strong>0,6-1,0</strong>: Daha yaratıcı ve çeşitli yanıtlar, beyin fırtınası ve keşif için yararlı</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Sıcaklık belirtilmezse closedcode modeline özgü varsayılanları kullanır; çoğu model için genellikle 0, Qwen modelleri için 0,55.</p>
+<hr>
+<h3>Maksimum adım</h3>
+<p>Bir agent&#39;ın yalnızca metinle yanıt vermeye zorlanmadan önce gerçekleştirebileceği maksimum agent yineleme sayısını kontrol edin. Bu, maliyetleri kontrol etmek isteyen kullanıcıların agent eylemlerine bir sınır koymasına olanak tanır.</p>
+<p>Bu ayarlanmazsa, model durmayı seçene veya kullanıcı oturumu kesene kadar agent yinelemeye devam edecektir.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>Sınıra ulaşıldığında, agent, işinin özeti ve önerilen kalan görevlerin bir özetiyle yanıt vermesi talimatını veren özel bir sistem prompt&#39;u alır.</p>
+<aside class="aside aside-caution">
+Eski `maxSteps` alanı kullanımdan kaldırıldı. Bunun yerine `steps` kullanın.
+</aside>
+---
+
+<h3>Devre dışı bırakma</h3>
+<p>Agent&#39;ı devre dışı bırakmak için <code>true</code> olarak ayarlayın.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>İstem</h3>
+<p>Bu agent için <code>prompt</code> yapılandırmasıyla özel bir sistem prompt dosyası belirtin. Prompt dosyası, agent&#39;ın amacına özel talimatlar içermelidir.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu yol, yapılandırma dosyasının bulunduğu yere göredir. Yani bu hem global closedcode yapılandırması hem de projeye özel yapılandırma için işe yarar.</p>
+<hr>
+<h3>Model</h3>
+<p>Bu agent&#39;ın modelini geçersiz kılmak için <code>model</code> ayarını kullanın. Farklı bölümler için optimize edilmiş farklı modelleri kullanmak için kullanışlıdır. Örneğin planlama için daha hızlı bir model, uygulama için daha yetenekli bir model.</p>
+<aside class="aside aside-tip">
+Bir model belirtmezseniz, birincil agent'lar [küresel olarak yapılandırılmış modeli](/docs/config#models) kullanırken alt agent'lar, alt agent'ı çağıran birincil agent'ın modelini kullanır.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>closedcode yapılandırmanızdaki model kimliği <code>provider/model-id</code> biçimini kullanır. Örneğin, Ollama kullanıyorsanız, GPT-OSS 20B için <code>ollama/gpt-oss:20b</code> kullanırsınız.</p>
+<hr>
+<h3>Araçlar</h3>
+<p><code>tools</code> yapılandırmasıyla bu agent&#39;ta hangi araçların mevcut olduğunu kontrol edin. Belirli araçları <code>true</code> veya <code>false</code> olarak ayarlayarak etkinleştirebilir veya devre dışı bırakabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+Agent'a özgü yapılandırma, genel yapılandırmayı geçersiz kılar.
+</aside>
+Aynı anda birden fazla aracı kontrol etmek için joker karakterleri de kullanabilirsiniz. Örneğin, bir MCP sunucusundaki tüm araçları devre dışı bırakmak için:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Araçlar hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>İzinler</h3>
+<p>Bir agent&#39;ın gerçekleştirebileceği eylemleri yönetmek için izinleri yapılandırabilirsiniz. Şu anda <code>edit</code>, <code>bash</code> ve <code>webfetch</code> araçlarının izinleri şu şekilde yapılandırılabilir:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — Agent çalıştırmadan önce onay iste</li>
+<li><code>&quot;allow&quot;</code> — Onay olmadan tüm işlemlere izin ver</li>
+<li><code>&quot;deny&quot;</code> — Agent&#39;ı devre dışı bırakır</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Bu izinleri agent başına geçersiz kılabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>İzinleri Markdown agent&#39;larında da ayarlayabilirsiniz.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>Belirli bash komutları için izinleri ayarlayabilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Bu küresel bir desen alabilir.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ayrıca tüm komutların izinlerini yönetmek için <code>*</code> joker karakterini de kullanabilirsiniz.
+Son eşleşen kural öncelikli olduğundan, <code>*</code> joker karakterini ilk sıraya ve belirli kuralları sonraya koyun.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">İzinler hakkında daha fazla bilgi</a>.</p>
+<hr>
+<h3>Mod</h3>
+<p>Agent&#39;ın modunu <code>mode</code> yapılandırmasıyla kontrol edin. <code>mode</code> seçeneği agent&#39;ın nasıl kullanılabileceğini belirlemek için kullanılır.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p><code>mode</code> seçeneği <code>primary</code>, <code>subagent</code> veya <code>all</code> olarak ayarlanabilir. <code>mode</code> belirtilmezse varsayılan olarak <code>all</code> olur.</p>
+<hr>
+<h3>Gizli</h3>
+<p><code>@</code> otomatik tamamlama menüsünden bir alt agent&#39;ı <code>hidden: true</code> ile gizleyin. Yalnızca diğer agent&#39;lar tarafından Task aracı aracılığıyla programlı olarak çağrılması gereken dahili alt agent&#39;lar için kullanışlıdır.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Bu yalnızca otomatik menüdeki görünürlüğü etkiler. İzinler izin verirse, gizli agent&#39;lar model tarafından Task aracı aracılığıyla çağrılmaya devam edilebilir.</p>
+<aside class="aside aside-note">
+Yalnızca `mode: subagent` agent'ları için geçerlidir.
+</aside>
+---
+
+<h3>Görev izinleri</h3>
+<p><code>permission.task</code> ile bir agent&#39;ın Task aracı aracılığıyla hangi alt agent&#39;ları çağırabileceğini kontrol edin. Esnek eşleştirme için küresel desenleri kullanır.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>deny</code> olarak ayarlandığında, alt agent Task aracı açıklamasından tamamen kaldırılır, böylece model onu çağırmaya çalışmaz.</p>
+<aside class="aside aside-tip">
+Kurallar sırayla değerlendirilir ve **son eşleşen kural kazanır**. Yukarıdaki örnekte `orchestrator-planner`, hem `*` (reddet) hem de `orchestrator-*` (izin ver) ile eşleşir, ancak `orchestrator-*`, `*`'den sonra geldiğinden sonuç `allow` olur.
+</aside>
+<aside class="aside aside-tip">
+Kullanıcılar, agent'ın görev izinleri bunu reddetse bile, her zaman herhangi bir alt agent'ı `@` otomatik tamamlama menüsü aracılığıyla doğrudan çağırabilir.
+</aside>
+---
+
+<h3>Renk</h3>
+<p>Agent&#39;ın kullanıcı arayüzündeki görsel görünümünü <code>color</code> seçeneğiyle özelleştirin. Bu, agent&#39;ın arayüzde nasıl göründüğünü etkiler.</p>
+<p>Geçerli bir onaltılık renk (ör. <code>#FF5733</code>) veya tema rengini kullanın: <code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code>.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p><code>top_p</code> seçeneğiyle yanıt çeşitliliğini kontrol edin. Rastgeleliği kontrol etmek için sıcaklığa alternatif.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>Değerler 0,0 ile 1,0 arasında değişir. Düşük değerler daha odaklıdır, yüksek değerler ise daha çeşitlidir.</p>
+<hr>
+<h3>Ek</h3>
+<p>Agent yapılandırmanızdaki diğer seçenekler, model seçenekleri olarak <strong>doğrudan sağlayıcıya</strong> iletilecektir. Bu, sağlayıcıya özgü özelliklerin ve parametrelerin kullanılmasını sağlar.</p>
+<p>Örneğin OpenAI&#39;nin akıl yürütme modelleriyle akıl yürütme çabasını kontrol edebilirsiniz:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>Bu ek seçenekler modele ve sağlayıcıya özeldir. Kullanılabilir parametreler için sağlayıcınızın belgelerine bakın.</p>
+<aside class="aside aside-tip">
+Mevcut modellerin listesini görmek için `closedcode models` komutunu çalıştırın.
+</aside>
+---
+
+<h2>Agent Oluşturma</h2>
+<p>Aşağıdaki komutu kullanarak yeni agent&#39;lar oluşturabilirsiniz:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Bu etkileşimli komut şunları sağlayacaktır:</p>
+<ol>
+<li>Agent&#39;ı nereye kaydedeceğinizi sorar; küresel veya projeye özel.</li>
+<li>Agent&#39;ın ne yapması gerektiğinin açıklamasını ister.</li>
+<li>Uygun bir sistem prompt&#39;u ve tanımlayıcı oluşturur.</li>
+<li>Agent&#39;ın hangi araçlara erişebileceğini seçmenize izin verir.</li>
+<li>Son olarak agent yapılandırmasıyla bir Markdown dosyası oluşturur.</li>
+</ol>
+<hr>
+<h2>Kullanım Senaryoları</h2>
+<p>Farklı agent&#39;lara yönelik bazı yaygın kullanım senaryoları aşağıda verilmiştir.</p>
+<ul>
+<li><strong>Build agent</strong>: Tüm araçların etkinleştirildiği tam geliştirme çalışması</li>
+<li><strong>Plan agent</strong>: Değişiklik yapmadan analiz ve planlama</li>
+<li><strong>Review agent</strong>: Salt okunur erişim ve belgeleme araçlarıyla kod incelemesi</li>
+<li><strong>Debug agent</strong>: Bash ve okuma araçları etkinken araştırmaya odaklanmıştır</li>
+<li><strong>Docs agent</strong>: Dosya işlemleriyle ancak sistem komutları olmadan belge yazma</li>
+</ul>
+<hr>
+<h2>Örnekler</h2>
+<p>Yararlı bulabileceğiniz bazı örnek agent&#39;ları burada bulabilirsiniz.</p>
+<aside class="aside aside-tip">
+Paylaşmak istediğiniz bir agent'ınız var mı? [Submit a PR](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>Dokümantasyon agent&#39;ı</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Güvenlik denetçisi</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konfiguracja — vanilla-closedcode docs</title>
+  <meta name="description" content="Ustawienia vanilla-closedcode w pliku JSON.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html" selected>Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Konfiguracja</h1>
+      <p class="lede">Ustawienia vanilla-closedcode w pliku JSON.</p>
+      <p>Możesz dostosować vanilla-closedcode za pomocą pliku konfiguracyjnego JSON.</p>
+<hr>
+<h2>Format</h2>
+<p>vanilla-closedcode obsługuje formaty <strong>JSON</strong> i <strong>JSONC</strong> (JSON z komentarzami).</p>
+<pre><code class="language-jsonc">{
+  // Theme configuration
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+}
+</code></pre>
+<hr>
+<h2>Lokalizacje</h2>
+<p>Możesz umieścić swoją konfigurację w kilku różnych lokalizacjach, które mają ustaloną kolejność pierwszeństwa.</p>
+<aside class="aside aside-note">
+Pliki konfiguracyjne są **łączone**, a nie nadpisywane.
+</aside>
+Pliki konfiguracyjne są łączone ze sobą. Ustawienia z lokalizacji o wyższym priorytecie nadpisują ustawienia z lokalizacji o niższym priorytecie tylko w przypadku konfliktów kluczy. Ustawienia niekolidujące ze wszystkich źródeł są zachowywane.
+
+<p>Na przykład, jeśli konfiguracja globalna ustawi <code>theme: &quot;closedcode&quot;</code> i <code>autoupdate: true</code>, a konfiguracja projektu ustawi <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>, ostateczna konfiguracja będzie zawierać wszystkie trzy ustawienia.</p>
+<hr>
+<h3>Kolejność pierwszeństwa</h3>
+<p>Źródła konfiguracji są ładowane w następującej kolejności (źródła występujące później mają pierwszeństwo):</p>
+<ol>
+<li><strong>Konfiguracja globalna</strong> (<code>~/.config/closedcode/closedcode.json</code>) – preferencje użytkownika</li>
+<li><strong>Konfiguracja niestandardowa</strong> (zmienna <code>CLOSEDCODE_CONFIG</code>) — jawne nadpisanie</li>
+<li><strong>Konfiguracja projektu</strong> (<code>closedcode.json</code> w projekcie) - ustawienia specyficzne dla projektu</li>
+<li><strong>Katalogi <code>.closedcode</code></strong> - agenci, polecenia, umiejętności</li>
+<li><strong>Konfiguracja wbudowana</strong> (zmienna <code>CLOSEDCODE_CONFIG_CONTENT</code>) — nadpisanie środowiska uruchomieniowego</li>
+</ol>
+<p>Oznacza to, że konfiguracje projektu mogą nadpisywać konfiguracje globalne, a konfiguracje globalne mogą nadpisywać konfiguracje zdalne.</p>
+<aside class="aside aside-note">
+W katalogach `.closedcode` i `~/.config/closedcode` używane są **nazwy w liczbie mnogiej** dla podkatalogów: `agents/`, `commands/`, `modes/`, `plugins/`, `skills/`, `tools/` i `themes/`. Nazwy w liczbie pojedynczej (np. `agent/`) są również obsługiwane dla kompatybilności wstecznej.
+</aside>
+---
+
+
+<h3>Globalna</h3>
+<p>Umieść swoją globalną konfigurację vanilla-closedcode w <code>~/.config/closedcode/closedcode.json</code>. Użyj jej do ustawień ogólnych dla użytkownika, takich jak dostawcy, modele i uprawnienia.</p>
+<p>Dla ustawień specyficznych dla TUI, użyj <code>~/.config/closedcode/tui.json</code>.</p>
+<p>Konfiguracja globalna ma pierwszeństwo przed konfiguracją zdalną.</p>
+<hr>
+<h3>Projekt</h3>
+<p>Dodaj <code>closedcode.json</code> w katalogu głównym projektu. Konfiguracja projektu ma najwyższy priorytet wśród plików konfiguracyjnych — nadpisuje konfiguracje globalne i zdalne.</p>
+<p>Dla ustawień TUI specyficznych dla projektu, dodaj plik <code>tui.json</code> obok niego.</p>
+<aside class="aside aside-tip">
+Umieść konfigurację specyficzną dla projektu w katalogu głównym projektu.
+</aside>
+Kiedy vanilla-closedcode się uruchamia, szuka pliku konfiguracyjnego w katalogu głównym repozytorium Git.
+
+<p>Może on być przechowywany w Git i mieć ten sam schemat, co konfiguracja globalna.</p>
+<hr>
+<h3>Niestandardowa ścieżka</h3>
+<p>Możesz załadować niestandardowy plik konfiguracyjny, ustawiając zmienną środowiskową <code>CLOSEDCODE_CONFIG</code>.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Konfiguracja niestandardowa jest ładowana po konfiguracji globalnej i przed konfiguracją projektu w kolejności priorytetów.</p>
+<hr>
+<h3>Niestandardowy katalog</h3>
+<p>Możesz ustawić niestandardowy katalog konfiguracyjny za pomocą zmiennej środowiskowej <code>CLOSEDCODE_CONFIG_DIR</code>. Katalog ten będzie przeszukiwany pod kątem agentów, poleceń, trybów i wtyczek, tak jak standardowy katalog <code>.closedcode</code> i powinien zachować tę samą strukturę.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Katalog niestandardowy jest ładowany po globalnej konfiguracji i katalogach <code>.closedcode</code>, więc <strong>może być łączony</strong> z ich zawartością.</p>
+<hr>
+<h2>Schemat</h2>
+<p>Plik konfiguracyjny ma schemat JSON dostępny pod adresem <strong><code>config.json</code></strong>.</p>
+<p>Twój edytor powinien zapewniać walidację i autouzupełnianie na podstawie tego schematu.</p>
+<hr>
+<h3>TUI</h3>
+<p>Użyj dedykowanego pliku <code>tui.json</code> (lub <code>tui.jsonc</code>) dla ustawień specyficznych dla TUI.</p>
+<pre><code class="language-json">{
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Użyj <code>CLOSEDCODE_TUI_CONFIG</code>, aby wskazać niestandardowy plik konfiguracyjny TUI.</p>
+<p>Przestarzałe klucze <code>theme</code>, <code>keybinds</code> i <code>tui</code> w <code>closedcode.json</code> są wycofywane i automatycznie migrowane, gdy to możliwe.</p>
+<p><a href="/docs/tui#configure">Dowiedz się więcej o konfiguracji TUI tutaj</a>.</p>
+<hr>
+<h3>Server (Serwer)</h3>
+<p>Możesz skonfigurować serwer dla <code>closedcode serve</code> i <code>closedcode web</code> za pomocą opcji <code>server</code>.</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>Dostępne opcje:</p>
+<ul>
+<li><code>port</code> - Port do nasłuchiwania.</li>
+<li><code>hostname</code> — Nazwa hosta, z którą należy się powiązać. Gdy <code>mdns</code> jest włączone i nie ustawiono innej nazwy hosta, domyślnie jest to <code>0.0.0.0</code>.</li>
+<li><code>mdns</code> - Włącz wykrywanie usług mDNS. Dzięki temu inne urządzenia w sieci mogą łatwo znaleźć Twój serwer vanilla-closedcode.</li>
+<li><code>mdnsDomain</code> - Niestandardowa nazwa domeny dla usług mDNS. Domyślnie <code>closedcode.local</code>. Przydatne do uruchamiania wielu instancji w tej samej sieci.</li>
+<li><code>cors</code> - Dozwolone źródła CORS podczas korzystania z serwera HTTP z przeglądarki. Wartość musi być listą źródeł (schemat + host + opcjonalny port), np. <code>https://app.example.com</code>.</li>
+</ul>
+<p><a href="/docs/server">Dowiedz się więcej o serwerze</a>.</p>
+<hr>
+<h3>Tools (Narzędzia)</h3>
+<p>Kontroluj, które narzędzia są dostępne dla LLM, za pomocą opcji <code>tools</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Dowiedz się więcej o narzędziach</a>.</p>
+<hr>
+<h3>Models (Modele)</h3>
+<p>Możesz skonfigurować dostawców i modele, których chcesz używać, za pomocą opcji <code>provider</code>, <code>model</code> i <code>small_model</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p>Opcja <code>small_model</code> konfiguruje oddzielny model do lżejszych zadań, takich jak generowanie tytułów. Domyślnie vanilla-closedcode wybiera tańszy model od tego samego dostawcy, jeśli jest dostępny, w przeciwnym razie powraca do modelu głównego.</p>
+<p>Opcje dostawcy mogą zawierać <code>timeout</code> i <code>setCacheKey</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - Limit czasu żądania w milisekundach (domyślnie: 300000). Ustaw na <code>false</code>, aby wyłączyć.</li>
+<li><code>setCacheKey</code> — Wymuś ustawienie klucza pamięci podręcznej dla dostawcy.</li>
+</ul>
+<p>Możesz także skonfigurować <a href="/docs/models#local">modele lokalne</a>. <a href="/docs/models">Dowiedz się więcej o modelach</a>.</p>
+<hr>
+<h4>Opcje specyficzne dla dostawców</h4>
+<p>Niektórzy dostawcy obsługują dodatkowe opcje konfiguracji poza <code>timeout</code> i <code>apiKey</code>.</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock umożliwia konfigurację połączenia z AWS:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> — Region AWS dla Bedrock (domyślnie <code>AWS_REGION</code> env var lub <code>us-east-1</code>)</li>
+<li><code>profile</code> - Nazwa profilu AWS z <code>~/.aws/credentials</code> (domyślnie <code>AWS_PROFILE</code> env var)</li>
+<li><code>endpoint</code> — Niestandardowy adres URL punktu końcowego (np. dla punktów końcowych VPC). Jest to alias dla opcji ogólnej <code>baseURL</code> przy użyciu terminologii AWS. Jeśli podano oba, pierwszeństwo ma <code>endpoint</code>.</li>
+</ul>
+<aside class="aside aside-note">
+Token okaziciela (`AWS_BEARER_TOKEN_BEDROCK` lub `/connect`) ma pierwszeństwo przed uwierzytelnianiem opartym na profilu. Aby uzyskać szczegółowe informacje, zobacz [pierwszeństwo uwierzytelniania](/docs/providers#authentication-precedence).
+</aside>
+[Dowiedz się więcej o Amazon Bedrock](/docs/providers#amazon-bedrock).
+
+<hr>
+<h3>Theme (Motyw)</h3>
+<p>Ustaw motyw interfejsu użytkownika w <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">Dowiedz się więcej tutaj</a>.</p>
+<hr>
+<h3>Agents (Agenci)</h3>
+<p>Możesz zdefiniować i skonfigurować agentów za pomocą opcji <code>agent</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Możesz także definiować agentów przy użyciu plików markdown w <code>~/.config/closedcode/agents/</code> lub <code>.closedcode/agents/</code>. <a href="/docs/agents">Dowiedz się więcej o agentach</a>.</p>
+<hr>
+<h3>Default Agent (Domyślny agent)</h3>
+<p>Domyślnego agenta można ustawić za pomocą opcji <code>default_agent</code>. Określa to agenta, który jest używany, jeśli nie wybrano żadnego innego.</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>Agent domyślny musi być agentem typu <code>primary</code> (nie <code>subagent</code>). Może to być agent wbudowany, taki jak <code>&quot;build&quot;</code> lub <code>&quot;plan&quot;</code>, albo zdefiniowany przez Ciebie <a href="/docs/agents">agent niestandardowy</a>. Jeśli agent nie istnieje lub jest subagentem, vanilla-closedcode powróci do <code>&quot;build&quot;</code> z ostrzeżeniem.</p>
+<p>Dotyczy to wszystkich interfejsów: TUI, CLI (<code>closedcode run</code>), aplikacji desktopowej i GitHub Actions.</p>
+<hr>
+<h3>Share (Udostępnianie)</h3>
+<p>Możesz skonfigurować <a href="/docs/share">udostępnianie</a> za pomocą opcji <code>share</code>.</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>Opcje:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> – Zezwalaj na ręczne udostępnianie (domyślnie)</li>
+<li><code>&quot;auto&quot;</code> - Automatycznie udostępniaj nowe rozmowy</li>
+<li><code>&quot;disabled&quot;</code> - Całkowicie wyłącz udostępnianie</li>
+</ul>
+<p>Domyślnie ustawiony jest tryb ręczny, w którym należy jawnie udostępniać rozmowy za pomocą polecenia <code>/share</code>.</p>
+<hr>
+<h3>Commands (Polecenia)</h3>
+<p>Możesz zdefiniować niestandardowe polecenia dla powtarzalnych zadań za pomocą opcji <code>command</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>Możesz także definiować polecenia przy użyciu plików Markdown w <code>~/.config/closedcode/commands/</code> lub <code>.closedcode/commands/</code>. <a href="/docs/commands">Dowiedz się więcej o poleceniach</a>.</p>
+<hr>
+<h3>Keybinds (Skróty klawiszowe)</h3>
+<p>Dostosuj skróty klawiszowe w <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">Dowiedz się więcej tutaj</a>.</p>
+<hr>
+<h3>Autoupdate (Automatyczna aktualizacja)</h3>
+<p>vanilla-closedcode może automatycznie pobierać nowe wersje. Możesz to kontrolować za pomocą opcji <code>autoupdate</code>.</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>Jeśli nie chcesz automatycznych aktualizacji, ale chcesz być powiadamiany o nowych wersjach, ustaw <code>autoupdate</code> na <code>&quot;notify&quot;</code>.
+Działa to tylko wtedy, gdy vanilla-closedcode nie został zainstalowany przez menedżera pakietów, takiego jak Homebrew.</p>
+<hr>
+<h3>Formatters (Formatery)</h3>
+<p>Możesz skonfigurować formatery kodu za pomocą opcji <code>formatter</code>.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">Dowiedz się więcej o formaterach</a>.</p>
+<hr>
+<h3>Permissions (Uprawnienia)</h3>
+<p>Domyślnie vanilla-closedcode <strong>zezwala na wszystkie działania</strong> bez konieczności zatwierdzania. Możesz to zmienić za pomocą opcji <code>permission</code>.</p>
+<p>Na przykład, aby wymagać zatwierdzenia dla narzędzi <code>edit</code> i <code>bash</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Dowiedz się więcej o uprawnieniach</a>.</p>
+<hr>
+<h3>Compaction (Kompaktowanie)</h3>
+<p>Możesz kontrolować zachowanie kompaktowania kontekstu za pomocą opcji <code>compaction</code>.</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - Automatycznie kompaktuj, gdy kontekst jest pełny (domyślnie: <code>true</code>).</li>
+<li><code>prune</code> - Usuń stare wyniki narzędzi, aby zaoszczędzić tokeny (domyślnie: <code>true</code>).</li>
+</ul>
+<hr>
+<h3>Watcher (Obserwator)</h3>
+<p>Skonfiguruj ignorowane wzorce plików dla obserwatora plików za pomocą <code>watcher</code>.</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>Wzorce są zgodne ze składnią glob. Użyj tej opcji, aby wykluczyć często zmieniające się lub duże katalogi z monitorowania.</p>
+<hr>
+<h3>MCP Servers (Serwery MCP)</h3>
+<p>Skonfiguruj serwery MCP, których chcesz używać, za pomocą opcji <code>mcp</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">Dowiedz się więcej o serwerach MCP</a>.</p>
+<hr>
+<h3>Plugins (Wtyczki)</h3>
+<p><a href="/docs/plugins">Wtyczki</a> rozszerzają vanilla-closedcode o niestandardowe narzędzia, hooki i integracje.</p>
+<p>Umieść pliki wtyczek w <code>.closedcode/plugins/</code> lub <code>~/.config/closedcode/plugins/</code>. Możesz także załadować wtyczkę z npm za pomocą opcji <code>plugin</code>.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">Dowiedz się więcej o wtyczkach</a>.</p>
+<hr>
+<h3>Instructions (Instrukcje)</h3>
+<p>Określ pliki instrukcji dla modelu, używając opcji <code>instructions</code>.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Załadowane pliki są dołączane do promptu systemowego. Obsługuje wzorce glob. <a href="/docs/rules">Dowiedz się więcej o zasadach</a>.</p>
+<hr>
+<h3>Disabled Providers (Wyłączeni dostawcy)</h3>
+<p>Zapobiegaj automatycznemu ładowaniu dostawców za pomocą opcji <code>disabled_providers</code>. Jest to przydatne, gdy chcesz wyłączyć niektórych dostawców, nawet jeśli masz dla nich dane uwierzytelniające.</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` ma pierwszeństwo przed `enabled_providers`.
+</aside>
+Opcja `disabled_providers` przyjmuje tablicę identyfikatorów dostawców. Gdy dostawca jest wyłączony:
+
+<ul>
+<li>Nie zostanie załadowany podczas startu.</li>
+<li>Nie zostanie załadowany, nawet jeśli podasz klucz API za pomocą <code>/connect</code>.</li>
+<li>Modele tego dostawcy nie pojawią się na liście wyboru modeli.</li>
+</ul>
+<hr>
+<h3>Enabled Providers (Włączeni dostawcy)</h3>
+<p>Możesz określić listę dozwolonych dostawców za pomocą <code>enabled_providers</code>. Po ustawieniu, tylko wymienieni dostawcy będą ładowani.</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>Jest to przydatne, gdy chcesz ograniczyć użycie vanilla-closedcode tylko do określonych dostawców.</p>
+<aside class="aside aside-note">
+`disabled_providers` ma pierwszeństwo przed `enabled_providers`.
+</aside>
+Jeśli dostawca jest wymieniony zarówno w `enabled_providers`, jak i `disabled_providers`, `disabled_providers` wygrywa.
+
+<hr>
+<h3>Experimental (Eksperymentalne)</h3>
+<p>Klucz <code>experimental</code> zawiera opcje, które są we wczesnej fazie rozwoju.</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+Opcje eksperymentalne nie są stabilne. Mogą ulec zmianie lub zostać usunięte bez ostrzeżenia.
+</aside>
+---
+
+<h2>Zmienne</h2>
+<p>Możesz używać specjalnej składni w plikach konfiguracyjnych, aby odwoływać się do zmiennych środowiskowych i zawartości plików.</p>
+<hr>
+<h3>Env vars (Zmienne środowiskowe)</h3>
+<p>Użyj <code>{env:VARIABLE_NAME}</code>, aby wstawić wartość zmiennej środowiskowej:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Jeśli zmienna środowiskowa nie jest ustawiona, zostanie zastąpiona pustym ciągiem.</p>
+<hr>
+<h3>Files (Pliki)</h3>
+<p>Użyj <code>{file:path/to/file}</code>, aby wstawić zawartość pliku:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ścieżki plików mogą być:</p>
+<ul>
+<li>Względne do pliku konfiguracyjnego</li>
+<li>Lub absolutne, zaczynające się od <code>/</code> lub <code>~</code></li>
+</ul>
+<p>Zalecamy używanie tego do:</p>
+<ul>
+<li>Przechowywania wrażliwych danych, takich jak klucze API, w oddzielnych plikach.</li>
+<li>Ładowania dużych promptów bez zaśmiecania konfiguracji.</li>
+<li>Dzielenia fragmentów konfiguracji między wieloma plikami.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

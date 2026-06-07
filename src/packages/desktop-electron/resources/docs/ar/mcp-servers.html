@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>خوادم MCP — vanilla-closedcode docs</title>
+  <meta name="description" content="أضف أدوات MCP محلية وبعيدة.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html" selected>العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>خوادم MCP</h1>
+      <p class="lede">أضف أدوات MCP محلية وبعيدة.</p>
+      <p>يمكنك إضافة أدوات خارجية إلى vanilla-closedcode باستخدام <em>Model Context Protocol</em>، أو MCP. يدعم vanilla-closedcode خوادم محلية وبعيدة.</p>
+<p>بعد إضافتها، تصبح أدوات MCP متاحة تلقائيا للـ LLM إلى جانب الأدوات المضمنة.</p>
+<hr>
+<h4>تنبيهات</h4>
+<p>عند استخدام خادم MCP فإنه يضيف إلى السياق. وقد يتراكم ذلك بسرعة إذا كان لديك الكثير من الأدوات. لذلك نوصي بالتحلّي بالحذر عند اختيار خوادم MCP التي تستخدمها.</p>
+<aside class="aside aside-tip">
+تضيف خوادم MCP إلى سياقك، لذا احرص على اختيار ما تفعّله منها بعناية.
+</aside>
+تميل بعض خوادم MCP، مثل خادم GitHub MCP، إلى إضافة الكثير من الرموز (tokens) وقد تتجاوز حد السياق بسهولة.
+
+<hr>
+<h2>التمكين</h2>
+<p>يمكنك تعريف خوادم MCP في <a href="./config.html">إعدادات vanilla-closedcode</a> ضمن <code>mcp</code>. أضف كل خادم MCP باسم فريد. ويمكنك الإشارة إلى ذلك الخادم بالاسم عند توجيه الطلب إلى الـ LLM.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>يمكنك أيضا تعطيل خادم عبر ضبط <code>enabled</code> على <code>false</code>. يفيد ذلك إذا أردت تعطيله مؤقتا دون إزالته من إعداداتك.</p>
+<hr>
+
+<h2>محلي</h2>
+<p>أضف خوادم MCP المحلية عبر ضبط <code>type</code> على <code>&quot;local&quot;</code> ضمن كائن <code>mcp</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;npx&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>الأمر <code>command</code> هو الطريقة التي يتم بها تشغيل خادم MCP المحلي. ويمكنك أيضا تمرير قائمة بمتغيرات البيئة.</p>
+<p>على سبيل المثال، إليك كيفية إضافة خادم MCP التجريبي <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a>.</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>ولاستخدامه يمكنني إضافة <code>use the mcp_everything tool</code> إلى طلباتي.</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>الخيارات</h4>
+<p>فيما يلي جميع الخيارات المتاحة لتهيئة خادم MCP محلي.</p>
+<table>
+<thead>
+<tr>
+<th>الخيار</th>
+<th>النوع</th>
+<th>مطلوب</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>نوع اتصال خادم MCP، ويجب أن يكون <code>&quot;local&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>Array</td>
+<td>Y</td>
+<td>الأمر والوسائط اللازمة لتشغيل خادم MCP.</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>Object</td>
+<td></td>
+<td>متغيرات البيئة التي يتم تعيينها عند تشغيل الخادم.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>تفعيل خادم MCP أو تعطيله عند بدء التشغيل.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>المهلة بالمللي ثانية لجلب الأدوات من خادم MCP. القيمة الافتراضية 5000 (5 ثوانٍ).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>بعيد</h2>
+<p>أضف خوادم MCP البعيدة عبر ضبط <code>type</code> على <code>&quot;remote&quot;</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>يمثل <code>url</code> عنوان URL لخادم MCP البعيد، وباستخدام خيار <code>headers</code> يمكنك تمرير قائمة من الرؤوس (headers).</p>
+<hr>
+<h4>الخيارات</h4>
+<table>
+<thead>
+<tr>
+<th>الخيار</th>
+<th>النوع</th>
+<th>مطلوب</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>String</td>
+<td>Y</td>
+<td>نوع اتصال خادم MCP، ويجب أن يكون <code>&quot;remote&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>String</td>
+<td>Y</td>
+<td>عنوان URL لخادم MCP البعيد.</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>Boolean</td>
+<td></td>
+<td>تفعيل خادم MCP أو تعطيله عند بدء التشغيل.</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>Object</td>
+<td></td>
+<td>الرؤوس التي يتم إرسالها مع الطلب.</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>Object</td>
+<td></td>
+<td>إعدادات مصادقة OAuth. راجع قسم <a href="#oauth">OAuth</a> أدناه.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>Number</td>
+<td></td>
+<td>المهلة بالمللي ثانية لجلب الأدوات من خادم MCP. القيمة الافتراضية 5000 (5 ثوانٍ).</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>يتولى vanilla-closedcode تلقائيا معالجة مصادقة OAuth لخوادم MCP البعيدة. عندما يتطلب خادم ما المصادقة، سيقوم vanilla-closedcode بما يلي:</p>
+<ol>
+<li>اكتشاف استجابة 401 وبدء تدفق OAuth</li>
+<li>استخدام <strong>Dynamic Client Registration (RFC 7591)</strong> إذا كان الخادم يدعمه</li>
+<li>تخزين الرموز (tokens) بشكل آمن للطلبات المستقبلية</li>
+</ol>
+<hr>
+<h3>تلقائي</h3>
+<p>بالنسبة لمعظم خوادم MCP التي تدعم OAuth، لا تحتاج إلى إعدادات خاصة. ما عليك سوى تهيئة الخادم البعيد:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>إذا كان الخادم يتطلب المصادقة، فسيطلب منك vanilla-closedcode المصادقة عند أول محاولة لاستخدامه. وإذا لم يحدث ذلك، يمكنك <a href="#authenticating">تشغيل التدفق يدويا</a> باستخدام <code>closedcode mcp auth &lt;server-name&gt;</code>.</p>
+<hr>
+<h3>مُسجَّل مسبقا</h3>
+<p>إذا كانت لديك بيانات اعتماد العميل من موفّر خادم MCP، يمكنك تهيئتها:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>المصادقة</h3>
+<p>يمكنك تشغيل المصادقة يدويا أو إدارة بيانات الاعتماد.</p>
+<p>صادِق مع خادم MCP معيّن:</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>اعرض جميع خوادم MCP وحالة المصادقة الخاصة بها:</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>احذف بيانات الاعتماد المخزنة:</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p>سيفتح أمر <code>mcp auth</code> متصفحك للتفويض. بعد إكمال التفويض، سيخزّن vanilla-closedcode الرموز بشكل آمن في <code>~/.local/share/closedcode/mcp-auth.json</code>.</p>
+<hr>
+<h4>تعطيل OAuth</h4>
+<p>إذا أردت تعطيل OAuth التلقائي لخادم ما (على سبيل المثال، للخوادم التي تستخدم مفاتيح API بدلا من ذلك)، فاضبط <code>oauth</code> على <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>خيارات OAuth</h4>
+<table>
+<thead>
+<tr>
+<th>الخيار</th>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>كائن إعدادات OAuth، أو <code>false</code> لتعطيل الاكتشاف التلقائي لـ OAuth.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>معرّف عميل OAuth. إذا لم يُحدَّد، ستتم محاولة التسجيل الديناميكي للعميل.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>سرّ عميل OAuth، إذا كان مطلوبا من خادم التفويض.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>نطاقات OAuth المطلوبة أثناء التفويض.</td>
+</tr>
+</tbody></table>
+<h4>تصحيح الأخطاء</h4>
+<p>إذا فشل خادم MCP بعيد في المصادقة، يمكنك تشخيص المشكلة باستخدام:</p>
+<pre><code class="language-bash"># عرض حالة المصادقة لجميع الخوادم القادرة على OAuth
+closedcode mcp auth list
+
+# تصحيح الاتصال وتدفق OAuth لخادم محدد
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p>يعرض أمر <code>mcp debug</code> حالة المصادقة الحالية، ويختبر اتصال HTTP، ويحاول تنفيذ تدفق اكتشاف OAuth.</p>
+<hr>
+<h2>الإدارة</h2>
+<p>تتوفر خوادم MCP لديك كأدوات داخل vanilla-closedcode إلى جانب الأدوات المضمنة. لذا يمكنك إدارتها عبر إعدادات vanilla-closedcode مثل أي أداة أخرى.</p>
+<hr>
+<h3>عام</h3>
+<p>هذا يعني أنه يمكنك تفعيلها أو تعطيلها على مستوى عام.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>يمكننا أيضا استخدام نمط glob لتعطيل جميع خوادم MCP المطابقة.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>هنا نستخدم نمط glob <code>my-mcp*</code> لتعطيل جميع خوادم MCP.</p>
+<hr>
+<h3>لكل وكيل</h3>
+<p>إذا كان لديك عدد كبير من خوادم MCP فقد ترغب في تفعيلها لكل وكيل على حدة وتعطيلها على المستوى العام. للقيام بذلك:</p>
+<ol>
+<li>عطّلها كأداة على المستوى العام.</li>
+<li>في <a href="/docs/agents#tools">إعدادات الوكيل</a>، فعّل خادم MCP كأداة.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>أنماط Glob</h4>
+<p>يستخدم نمط glob أنماطا بسيطة من مطابقة glob:</p>
+<ul>
+<li><code>*</code> يطابق صفرا أو أكثر من أي محرف (على سبيل المثال، <code>&quot;my-mcp*&quot;</code> يطابق <code>my-mcp_search</code> و<code>my-mcp_list</code> وغيرها.)</li>
+<li><code>?</code> يطابق محرفا واحدا بالضبط</li>
+<li>جميع المحارف الأخرى تُطابق حرفيا</li>
+</ul>
+<aside class="aside aside-note">
+تُسجَّل أدوات خادم MCP مع اسم الخادم كبادئة، لذا لتعطيل جميع أدوات خادم ما استخدم ببساطة:
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>أمثلة</h2>
+<p>فيما يلي أمثلة لبعض خوادم MCP الشائعة. يمكنك إرسال PR إذا أردت توثيق خوادم أخرى.</p>
+<hr>
+<h3>Sentry</h3>
+<p>أضف <a href="https://mcp.sentry.dev">خادم MCP الخاص بـ Sentry</a> للتفاعل مع مشاريع Sentry والقضايا (issues) الخاصة بك.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>بعد إضافة الإعدادات، قم بالمصادقة مع Sentry:</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>سيؤدي ذلك إلى فتح نافذة متصفح لإكمال تدفق OAuth وربط vanilla-closedcode بحساب Sentry الخاص بك.</p>
+<p>بعد المصادقة، يمكنك استخدام أدوات Sentry في طلباتك للاستعلام عن القضايا والمشاريع وبيانات الأخطاء.</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>أضف <a href="https://github.com/upstash/context7">خادم MCP الخاص بـ Context7</a> للبحث في المستندات.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>إذا كنت قد سجلت للحصول على حساب مجاني، يمكنك استخدام مفتاح API للحصول على حدود أعلى لمعدل الطلبات.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>هنا نفترض أنك عيّنت متغير البيئة <code>CONTEXT7_API_KEY</code>.</p>
+<p>أضف <code>use context7</code> إلى طلباتك لاستخدام خادم MCP الخاص بـ Context7.</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>بدلا من ذلك، يمكنك إضافة شيء مثل هذا إلى <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>أضف خادم MCP الخاص بـ <a href="https://grep.app">Grep by Vercel</a> للبحث في مقتطفات الشيفرة على GitHub.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>وبما أننا سمّينا خادم MCP الخاص بنا <code>gh_grep</code>، يمكنك إضافة <code>use the gh_grep tool</code> إلى طلباتك لجعل الوكيل يستخدمه.</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>بدلا من ذلك، يمكنك إضافة شيء مثل هذا إلى <a href="/docs/rules/">AGENTS.md</a>.</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

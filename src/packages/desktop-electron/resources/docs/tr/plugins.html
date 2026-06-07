@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eklentiler — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode&#39;u genişletmek için kendi eklentilerinizi yazın.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html" selected>Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Eklentiler</h1>
+      <p class="lede">vanilla-closedcode&#39;u genişletmek için kendi eklentilerinizi yazın.</p>
+      <p>Eklentiler, çeşitli olaylara bağlanarak ve davranışı özelleştirerek vanilla-closedcode&#39;u genişletmenize olanak tanır. Yeni özellikler eklemek, harici hizmetlerle entegrasyon sağlamak veya vanilla-closedcode&#39;un varsayılan davranışını değiştirmek için eklentiler oluşturabilirsiniz.</p>
+<p>Örnekler için topluluk tarafından oluşturulan <a href="/docs/ecosystem#plugins">eklentilere</a> göz atın.</p>
+<hr>
+<h2>Eklenti kullanımı</h2>
+<p>Eklentileri yüklemenin iki yolu vardır.</p>
+<hr>
+<h3>Yerel dosyalardan</h3>
+<p>JavaScript veya TypeScript dosyalarını eklenti dizinine yerleştirin.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - Proje düzeyinde eklentiler</li>
+<li><code>~/.config/closedcode/plugins/</code> - Genel eklentiler</li>
+</ul>
+<p>Bu dizinlerdeki dosyalar başlangıçta otomatik olarak yüklenir.</p>
+<hr>
+<h3>npm&#39;den</h3>
+<p>Yapılandırma dosyanızda npm paketlerini belirtin.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Hem normal hem de kapsamlı npm paketleri desteklenir.</p>
+<p><a href="/docs/ecosystem#plugins">Ekosistem</a>&#39;deki mevcut eklentilere göz atın.</p>
+<hr>
+<h3>Eklentiler nasıl kurulur?</h3>
+<p><strong>npm eklentileri</strong> başlangıçta npm kullanılarak otomatik olarak yüklenir. Paketler ve bağımlılıkları <code>~/.cache/closedcode/node_modules/</code>&#39;da önbelleğe alınır.</p>
+<p><strong>Yerel eklentiler</strong> doğrudan eklenti dizininden yüklenir. Harici paketleri kullanmak için, sisteminizin dizininde bir <code>package.json</code> oluşturmanız (bkz. <a href="#dependencies">Bağımlılıklar</a>) veya eklentiyi npm ve <a href="/docs/config#plugins">yapılandırmanıza eklemeniz</a> gerekir.</p>
+<hr>
+<h3>Yükleme sırası</h3>
+<p>Eklentiler tüm kaynaklardan yüklenir ve tüm kancalar sırayla çalışır. Yükleme sırası şöyledir:</p>
+<ol>
+<li>Global config (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Project config (<code>closedcode.json</code>)</li>
+<li>Global eklenti dizini (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Proje eklenti dizini (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Aynı ad ve sürüme sahip yinelenen npm paketleri bir kez yüklenir. Ancak benzer adlara sahip bir yerel eklenti ve bir npm eklentisinin her ikisi de ayrı ayrı yüklenir.</p>
+<hr>
+<h2>Eklenti oluşturma</h2>
+<p>Eklenti, bir veya daha fazla eklenti işlevini dışa aktaran bir <strong>JavaScript/TypeScript modülüdür</strong>. Her işlev bir bağlam nesnesi alır ve bir kanca nesnesi döndürür.</p>
+<hr>
+<h3>Bağımlılıklar</h3>
+<p>Yerel eklentiler ve özel araçlar harici npm paketlerini kullanabilir. İhtiyacınız olan bağımlılıkları içeren config dizininize bir <code>package.json</code> ekleyin.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode bunları yüklemek için başlangıçta <code>npm install</code> komutunu çalıştırır. Eklentileriniz ve araçlarınız daha sonra bunları içe aktarabilir.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Temel yapı</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Eklenti işlevi şunları alır:</p>
+<ul>
+<li><code>project</code>: Mevcut proje bilgisi.</li>
+<li><code>directory</code>: Güncel çalışma dizini.</li>
+<li><code>worktree</code>: Git çalışma ağacı yolu.</li>
+<li><code>client</code>: Yapay zeka ile etkileşim kurmak için bir vanilla-closedcode SDK istemcisi.</li>
+</ul>
+<hr>
+<h3>TypeScript desteği</h3>
+<p>TypeScript eklentileri için türleri eklenti paketinden içe aktarabilirsiniz:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Olaylar</h3>
+<p>Eklentiler aşağıdaki Örnekler bölümünde görüldüğü gibi etkinliklere abone olabilirler. Burada mevcut farklı etkinliklerin bir listesi bulunmaktadır.</p>
+<h4>Komut Olayları</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Dosya Olayları</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Kurulum Olayları</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP Olayları</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Mesaj Olayları</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>İzin Olayları</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Sunucu Olayları</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Oturum Olayları</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Yapılacaklar Olayları</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Kabuk Olayları</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Araç Olayları</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI Olayları</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Örnekler</h2>
+<p>vanilla-closedcode&#39;u genişletmek için kullanabileceğiniz bazı eklenti örneklerini burada bulabilirsiniz.</p>
+<hr>
+<h3>Bildirim Gönderme</h3>
+<p>Belirli olaylar meydana geldiğinde bildirim gönderin:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>macOS&#39;ta AppleScript&#39;i çalıştırmak için <code>osascript</code> kullanıyoruz. Burada bildirim göndermek için kullanıyoruz.</p>
+<aside class="aside aside-note">
+vanilla-closedcode masaüstü uygulamasını kullanıyorsanız yanıt hazır olduğunda veya oturum hataları oluştuğunda otomatik olarak sistem bildirimleri gönderebilir.
+</aside>
+---
+
+<h3>.env Koruması</h3>
+<p>vanilla-closedcode&#39;un <code>.env</code> dosyalarını okumasını önleyin:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Ortam değişkenlerini enjekte etme</h3>
+<p>Ortam değişkenlerini tüm kabuk yürütmeye (AI araçları ve kullanıcı terminalleri) enjekte edin:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Özel araçlar</h3>
+<p>Eklentiler ayrıca vanilla-closedcode&#39;a özel araçlar da ekleyebilir:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code> yardımcısı, vanilla-closedcode&#39;un çağırabileceği özel bir araç oluşturur. Bir Zod şeması işlevini alır ve aşağıdakileri içeren bir araç tanımı döndürür:</p>
+<ul>
+<li><code>description</code>: Araç ne yapar?</li>
+<li><code>args</code>: Aracın argümanları için Zod şeması</li>
+<li><code>execute</code>: Araç çağrıldığında çalışan fonksiyon</li>
+</ul>
+<p>Özel araçlarınız, yerleşik araçların yanı sıra vanilla-closedcode&#39;a da hazır olacaktır.</p>
+<aside class="aside aside-note">
+Eğer bir eklenti aracı yerleşik bir araçla aynı adı kullanırsa, eklenti aracı öncelik kazanır.
+</aside>
+---
+
+<h3>Günlüğe kaydetme</h3>
+<p>Yapılandırılmış günlük kaydı için <code>console.log</code> yerine <code>client.app.log()</code> kullanın:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Seviyeler: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Ayrıntılar için SDK belgelerine bakın.</p>
+<hr>
+<h3>Sıkıştırma kancaları</h3>
+<p>Bir oturum sıkıştırıldığında içerilen bağlamı özelleştirin:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> kancası, LLM bir devam özeti oluşturmadan önce tetiklenir. Varsayılan sıkıştırma isteminin kaçıracağı etki alanına özgü bağlamı enjekte etmek için bunu kullanın.</p>
+<p>Ayrıca <code>output.prompt</code> ayarını yaparak sıkıştırma istemini tamamen değiştirebilirsiniz:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p><code>output.prompt</code> ayarlandığında, varsayılan sıkıştırma isteminin tamamen yerini alır. Bu durumda <code>output.context</code> dizisi dikkate alınmaz.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

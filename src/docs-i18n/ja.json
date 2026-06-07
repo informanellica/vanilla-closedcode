@@ -1,0 +1,14 @@
+{
+  "module:index": {
+    "description": "<p>vanilla-closedcode JS SDK のエントリポイント。ローカル LLM 専用のコーディングアシスタント <code>closedcode</code> サーバーへ接続するためのクライアント／型／ヘルパーをまとめて公開します。</p>"
+  },
+  "module:client": {
+    "description": "<p>closedcode サーバーの HTTP / イベント API を呼び出すための SDK クライアント。セッション・メッセージ・ツール実行・プロバイダ情報などにアクセスします。</p>"
+  },
+  "module:server": {
+    "description": "<p>closedcode サーバーをプログラムから起動・接続するためのヘルパー。ローカルで動作する LLM バックエンドのライフサイクルを管理します。</p>"
+  },
+  "module:process": {
+    "description": "<p>closedcode サーバープロセスの起動と管理を行うユーティリティ。</p>"
+  }
+}

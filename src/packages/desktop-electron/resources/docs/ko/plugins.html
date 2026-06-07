@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>플러그인 — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode를 확장하기 위해 자신만의 플러그인을 작성하세요.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html" selected>한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>플러그인</h1>
+      <p class="lede">vanilla-closedcode를 확장하기 위해 자신만의 플러그인을 작성하세요.</p>
+      <p>플러그인은 다양한 이벤트와 사용자 정의 행동으로 후킹하여 closedcode를 확장 할 수 있습니다. 플러그인을 사용하여 새로운 기능을 추가하거나, 외부 서비스와 통합하거나, closedcode의 기본 동작을 수정할 수 있습니다.</p>
+<p>예를 들어, 커뮤니티에 의해 생성 된 <a href="/docs/ecosystem#plugins">plugins</a>를 확인하십시오.</p>
+<hr>
+<h2>플러그인 사용</h2>
+<p>플러그인을 로드하는 두 가지 방법이 있습니다.</p>
+<hr>
+<h3>로컬 파일에서</h3>
+<p>플러그인 디렉토리에 JavaScript 또는 TypeScript 파일을 배치합니다.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - 프로젝트 레벨 플러그인</li>
+<li><code>~/.config/closedcode/plugins/</code> - 글로벌 플러그인</li>
+</ul>
+<p>이 디렉토리의 파일은 시작 시 자동으로 로드됩니다.</p>
+<hr>
+<h3>npm에서</h3>
+<p>config 파일에 npm 패키지를 지정합니다.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>일반 패키지 및 스코프 npm 패키지 모두 지원됩니다.</p>
+<p><a href="/docs/ecosystem#plugins">ecosystem</a>에서 사용할 수 있는 플러그인을 찾아보세요.</p>
+<hr>
+<h3>플러그인이 설치되는 방법</h3>
+<p><strong>npm 플러그인</strong>은 시작시 npm을 사용하여 자동으로 설치됩니다. 패키지와 그 의존성은 <code>~/.cache/closedcode/node_modules/</code>에 캐시됩니다.</p>
+<p><strong>로컬 플러그인</strong>은 플러그인 디렉토리에서 직접 로드됩니다. 외부 패키지를 사용하려면 구성 디렉토리 내에 <code>package.json</code>을 작성해야 하거나(<a href="#%EC%9D%98%EC%A1%B4%EC%84%B1">의존성</a> 참조), 플러그인을 npm에 게시하고 <a href="/docs/config#plugins">config에 추가</a>해야 합니다.</p>
+<hr>
+<h3>로드 순서</h3>
+<p>플러그인은 모든 소스에서 로드되며 모든 후크는 순서대로 실행됩니다. 로드 순서는 다음과 같습니다:</p>
+<ol>
+<li>글로벌 구성 (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>프로젝트 구성 (<code>closedcode.json</code>)</li>
+<li>글로벌 플러그인 디렉토리 (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>프로젝트 플러그인 디렉토리 (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>중복된 이름과 버전의 npm 패키지는 한 번만 로드됩니다. 하지만 로컬 플러그인과 npm 플러그인의 이름이 비슷하더라도 둘 다 별도로 로드됩니다.</p>
+<hr>
+<h2>플러그인 만들기</h2>
+<p>플러그인은 하나 이상의 플러그인 함수를 내보내는 <strong>JavaScript/TypeScript 모듈</strong>입니다. 각 함수는 context 객체를 수신하고 hooks 객체를 반환합니다.</p>
+<hr>
+<h3>의존성</h3>
+<p>로컬 플러그인 및 사용자 정의 도구는 외부 npm 패키지를 사용할 수 있습니다. config 디렉토리에 <code>package.json</code>을 추가하고 필요한 의존성을 명시하십시오.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>closedcode는 시작 시 <code>npm install</code>을 실행하여 이를 설치합니다. 이후 플러그인 및 도구에서 가져올 수 있습니다.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>기본 구조</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>플러그인 함수가 받는 인자:</p>
+<ul>
+<li><code>project</code>: 현재 프로젝트 정보.</li>
+<li><code>directory</code>: 현재 작업 디렉토리.</li>
+<li><code>worktree</code>: git worktree 경로.</li>
+<li><code>client</code>: AI와 상호 작용을 위한 closedcode SDK 클라이언트.</li>
+</ul>
+<hr>
+<h3>TypeScript 지원</h3>
+<p>TypeScript 플러그인의 경우 플러그인 패키지에서 타입을 가져올 수 있습니다.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>이벤트</h3>
+<p>플러그인은 아래 예제 섹션에서 볼 수 있듯이 이벤트를 구독할 수 있습니다. 사용 가능한 이벤트 목록은 다음과 같습니다.</p>
+<h4>명령어 이벤트</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>파일 이벤트</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>설치 이벤트</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP 이벤트</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>메시지 이벤트</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>권한 이벤트</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>서버 이벤트</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>세션 이벤트</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Todo 이벤트</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>셸 이벤트</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>도구 이벤트</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI 이벤트</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>예제</h2>
+<p>closedcode를 확장하기 위해 사용할 수 있는 플러그인 예제입니다.</p>
+<hr>
+<h3>알림 보내기</h3>
+<p>특정 이벤트가 발생할 때 알림을 전송:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>macOS에서 AppleScript를 실행하기 위해 <code>osascript</code>를 사용하고 있습니다. 여기서는 알림을 보내는 데 사용합니다.</p>
+<aside class="aside aside-note">
+closedcode 데스크톱 앱을 사용하는 경우 응답이 준비되어 있거나 세션 오류가 있을 때 시스템 알림을 자동으로 보낼 수 있습니다.
+</aside>
+---
+
+<h3>.env 보호</h3>
+<p>closedcode가 <code>.env</code> 파일을 읽지 못하도록 방지:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Inject 환경 변수</h3>
+<p>모든 shell 실행(AI 도구 및 사용자 terminal)에 환경 변수 주입:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>사용자 정의 도구</h3>
+<p>플러그인은 closedcode에 사용자 정의 도구를 추가할 수 있습니다:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code> helper는 closedcode가 호출할 수 있는 사용자 정의 도구를 만듭니다. Zod 스키마 함수를 받고 다음을 포함하는 도구 정의를 반환합니다:</p>
+<ul>
+<li><code>description</code>: 도구가 하는 일</li>
+<li><code>args</code>: 도구의 인수에 대한 Zod 스키마</li>
+<li><code>execute</code>: 도구가 호출될 때 실행되는 함수</li>
+</ul>
+<p>사용자 정의 도구는 내장 도구와 함께 closedcode에서 사용할 수 있습니다.</p>
+<aside class="aside aside-note">
+플러그인 도구가 내장 도구와 같은 이름을 사용하면 플러그인 도구가 우선순위를 갖습니다.
+</aside>
+---
+
+<h3>로깅</h3>
+<p>구조화된 로깅을 위해 <code>console.log</code> 대신 <code>client.app.log()</code>를 사용하십시오:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>레벨: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. SDK 문서를 참고하세요.</p>
+<hr>
+<h3>Compaction 훅</h3>
+<p>세션이 압축될 때 포함되는 컨텍스트를 사용자 지정할 수 있습니다:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> 훅은 LLM이 연속 요약을 생성하기 전에 실행됩니다. 기본 압축 프롬프트가 놓칠 수 있는 도메인별 컨텍스트를 주입하는 데 사용하세요.</p>
+<p>또한 <code>output.prompt</code>를 설정하여 압축 프롬프트를 완전히 대체할 수도 있습니다:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p><code>output.prompt</code>가 설정되면 기본 압축 프롬프트를 완전히 대체합니다. 이 경우 <code>output.context</code> 배열은 무시됩니다.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

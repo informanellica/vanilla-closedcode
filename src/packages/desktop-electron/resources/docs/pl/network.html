@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sieć — vanilla-closedcode docs</title>
+  <meta name="description" content="Skonfiguruj serwery proxy i certyfikaty uwierzytelniające.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html">Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html">Norsk</option>
+      <option value="../pl/network.html" selected>Polski</option>
+      <option value="../pt-br/network.html">Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html">ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Sieć</h1>
+      <p class="lede">Skonfiguruj serwery proxy i certyfikaty uwierzytelniające.</p>
+      <p>closedcode obsługa standardowego zmiennego proxy i certyfikatów dla usług sieciowych przedsiębiorstw.</p>
+<hr>
+<h2>Pełnomocnik</h2>
+<p>closedcode respektuje standardowe zmienne środowiskowe proxy.</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+TUI komunikuje się z popularnym serwerem HTTP. Aby zapobiec łączem routingu, należy ominąć serwer proxy dla tego połączenia.
+</aside>
+Możesz pozostawić port serwera i hosta za pomocą [flaga CLI](/docs/cli#run).
+
+<hr>
+<h3>Uwierzytelniać</h3>
+<p>Jeśli Twój serwer proxy wymaga podstawowego uwierzytelniania, dołącz dane uwierzytelniające w adresie URL.</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+Unikaj kodowania haseł na stałe. Użyj testów kontrolnych lub oprogramowania poświadczeń.
+</aside>
+W przypadku serwera proxy zaawansowanego uwierzytelniania, jak NTLM lub Kerberos, dostęp do bram LLM, który umożliwia uwierzytelnianie.
+
+<hr>
+<h2>Certyfikaty niestandardowe</h2>
+<p>Jeśli Twoje przedsiębiorstwo korzysta z niestandardowych usług, urzędów dostępu do HTTPS, skonfiguruj closedcode tak, aby im ufać.</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Działają tylko w przypadku proxy, jak i bezpośredniego dostępu do API.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

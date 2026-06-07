@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>エージェント — vanilla-closedcode docs</title>
+  <meta name="description" content="特殊なエージェントを構成して使用します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html" selected>日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>エージェント</h1>
+      <p class="lede">特殊なエージェントを構成して使用します。</p>
+      <p>エージェントは、特定のタスクやワークフロー向けに構成できる特殊な AI アシスタントです。これらを使用すると、カスタムプロンプト、モデル、ツールアクセスを備えた焦点を絞ったツールを作成できます。</p>
+<aside class="aside aside-tip">
+Plan エージェントを使用すると、コードを変更せずにコードを分析し、提案を確認できます。
+</aside>
+セッション中にエージェントを切り替えたり、`@` メンションでエージェントを呼び出したりできます。
+
+<hr>
+<h2>種類</h2>
+<p>vanilla-closedcode には 2 種類のエージェントがあります。プライマリエージェントとサブエージェント。</p>
+<hr>
+<h3>プライマリエージェント</h3>
+<p>プライマリエージェントは、直接対話する主要なアシスタントです。 <strong>Tab</strong> キー、または設定した <code>switch_agent</code> キーバインドを使用して、それらを切り替えることができます。これらのエージェントが主な会話を処理します。ツールへのアクセスは権限によって構成されます。たとえば、Build ではすべてのツールが有効になっていますが、Plan は制限されています。</p>
+<aside class="aside aside-tip">
+**Tab** キーを使用して、セッション中にプライマリエージェントを切り替えることができます。
+</aside>
+vanilla-closedcode には、**Build** と **Plan** という 2 つの組み込みプライマリエージェントが付属しています。これらについて以下で説明します。
+
+<hr>
+<h3>サブエージェント</h3>
+<p>サブエージェントは、プライマリエージェントが特定のタスクのために呼び出すことができる特殊なアシスタントです。メッセージ内で <strong>@ メンション</strong>することで、手動で呼び出すこともできます。</p>
+<p>vanilla-closedcode には、<strong>General</strong> と <strong>Explore</strong> という 2 つの組み込みサブエージェントが付属しています。これについては以下で見ていきます。</p>
+<hr>
+<h2>組み込み</h2>
+<p>vanilla-closedcode には、2 つの組み込みプライマリエージェントと 2 つの組み込みサブエージェントが付属しています。</p>
+<hr>
+<h3>Build</h3>
+<p><em>モード</em>: <code>primary</code></p>
+<p>Build は、すべてのツールが有効になっている <strong>デフォルト</strong> プライマリエージェントです。これは、ファイル操作やシステムコマンドへの完全なアクセスが必要な開発作業用の標準エージェントです。</p>
+<hr>
+<h3>Plan</h3>
+<p><em>モード</em>: <code>primary</code></p>
+<p>計画と分析のために設計された制限付きエージェント。より詳細な制御を提供し、意図しない変更を防ぐために、許可システムを使用しています。
+デフォルトでは、次のすべてが <code>ask</code> に設定されます。</p>
+<ul>
+<li><code>file edits</code>: すべての書き込み、パッチ、および編集</li>
+<li><code>bash</code>: すべての bash コマンド</li>
+</ul>
+<p>このエージェントは、コードベースに実際の変更を加えずに LLM にコードの分析、変更の提案、または計画の作成を行わせたい場合に役立ちます。</p>
+<hr>
+<h3>General</h3>
+<p><em>モード</em>: <code>subagent</code></p>
+<p>複雑な質問を調査し、複数ステップのタスクを実行するための汎用エージェント。完全なツールアクセス権 (todo を除く) があるため、必要に応じてファイルを変更できます。これを使用して、複数の作業単位を並行して実行します。</p>
+<hr>
+<h3>Explore</h3>
+<p><em>モード</em>: <code>subagent</code></p>
+<p>コードベースを探索するための高速な読み取り専用エージェント。ファイルを変更できません。これは、パターンでファイルをすばやく検索したり、コードでキーワードを検索したり、コードベースに関する質問に答えたりする必要がある場合に使用します。</p>
+<hr>
+<h3>Compact</h3>
+<p><em>モード</em>: <code>primary</code></p>
+<p>長いコンテキストを小さな要約に圧縮する隠しシステムエージェント。これは必要に応じて自動的に実行され、UI では選択できません。</p>
+<hr>
+<h3>Title</h3>
+<p><em>モード</em>: <code>primary</code></p>
+<p>短いセッションタイトルを生成する非表示のシステムエージェント。これは自動的に実行され、UI では選択できません。</p>
+<hr>
+<h3>Summary</h3>
+<p><em>モード</em>: <code>primary</code></p>
+<p>セッション概要を作成する非表示のシステムエージェント。これは自動的に実行され、UI では選択できません。</p>
+<hr>
+<h2>使用法</h2>
+<ol>
+<li><p>プライマリエージェントの場合は、セッション中に <strong>Tab</strong> キーを使用してエージェントを切り替えます。設定した <code>switch_agent</code> キーバインドを使用することもできます。</p>
+</li>
+<li><p>サブエージェントは次のように呼び出すことができます。</p>
+<ul>
+<li><p>プライマリエージェントによって、説明に基づいて特殊なタスクを <strong>自動的に</strong> 実行されます。</p>
+</li>
+<li><p>メッセージ内でサブエージェントを <strong>@ メンション</strong>することで手動で実行できます。例えば。</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>セッション間のナビゲーション</strong>: サブエージェントが独自の子セッションを作成する場合、以下を使用して親セッションとすべての子セッションの間を移動できます。</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (または設定した <code>session_child_cycle</code> キーバインド) で、親 → 子 1 → 子 2 → ... → 親と順に循環します。</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (または設定した <code>session_child_cycle_reverse</code> キーバインド) で、親 ← 子 1 ← 子 2 ← ... ← 親を逆方向に循環します。</li>
+</ul>
+</li>
+</ol>
+<p>これにより、メインの会話と専門的なサブエージェントの作業をシームレスに切り替えることができます。</p>
+<hr>
+<h2>設定</h2>
+<p>組み込みエージェントをカスタマイズしたり、構成を通じて独自のエージェントを作成したりできます。エージェントは次の 2 つの方法で構成できます。</p>
+<hr>
+<h3>JSON</h3>
+<p><code>closedcode.json</code> 設定ファイルでエージェントを構成します。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Markdown ファイルを使用してエージェントを定義することもできます。それらを次の場所に置きます。</p>
+<ul>
+<li>グローバル: <code>~/.config/closedcode/agents/</code></li>
+<li>プロジェクトごと: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Markdown ファイル名がエージェント名になります。たとえば、<code>review.md</code> は <code>review</code> エージェントを作成します。</p>
+<hr>
+<h2>オプション</h2>
+<p>これらの設定オプションを詳しく見てみましょう。</p>
+<hr>
+<h3>説明</h3>
+<p><code>description</code> オプションを使用して、エージェントの機能とそれをいつ使用するかについての簡単な説明を提供します。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>これは<strong>必須</strong>の設定オプションです。</p>
+<hr>
+<h3>温度</h3>
+<p><code>temperature</code> 設定を使用して、LLM の応答のランダム性と創造性を制御します。</p>
+<p>値が低いほど、応答はより集中的かつ決定的になりますが、値が高いほど、創造性と変動性が高まります。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>通常、温度値の範囲は 0.0 ～ 1.0 です。</p>
+<ul>
+<li><strong>0.0-0.2</strong>: 非常に焦点が絞られた決定的な応答。コード分析と計画に最適です。</li>
+<li><strong>0.3-0.5</strong>: 創造性を備えたバランスの取れた応答。一般的な開発タスクに適しています。</li>
+<li><strong>0.6-1.0</strong>: より創造的で多様な応答。ブレーンストーミングや探索に役立ちます。</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>温度が指定されていない場合、vanilla-closedcode はモデル固有のデフォルトを使用します。通常、ほとんどのモデルでは 0、Qwen モデルでは 0.55 です。</p>
+<hr>
+<h3>ステップ数</h3>
+<p>エージェントが強制的にテキストのみで応答するまでに実行できるエージェントの反復の最大数を制御します。これにより、コストを管理したいユーザーは、エージェントのアクションに制限を設定できます。</p>
+<p>これが設定されていない場合、エージェントは、モデルが停止を選択するか、ユーザーがセッションを中断するまで反復を続けます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>制限に達すると、エージェントは、作業の概要と推奨される残りのタスクを応答するように指示する特別なシステムプロンプトを受け取ります。</p>
+<aside class="aside aside-caution">
+従来の `maxSteps` フィールドは非推奨になりました。代わりに `steps` を使用してください。
+</aside>
+---
+
+<h3>無効化</h3>
+<p>エージェントを無効にするには、<code>true</code> に設定します。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>プロンプト</h3>
+<p><code>prompt</code> 設定を使用して、このエージェントのカスタムシステムプロンプトファイルを指定します。プロンプトファイルには、エージェントの目的に固有の指示が含まれている必要があります。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>このパスは、設定ファイルが配置されている場所に対する相対パスです。したがって、これはグローバルな vanilla-closedcode 設定とプロジェクト固有の設定の両方で機能します。</p>
+<hr>
+<h3>モデル</h3>
+<p><code>model</code> 設定を使用して、このエージェントのモデルをオーバーライドします。さまざまなタスクに最適化されたさまざまなモデルを使用する場合に役立ちます。たとえば、計画にはより高速なモデルを、実装にはより有能なモデルを使用します。</p>
+<aside class="aside aside-tip">
+モデルを指定しない場合、プライマリエージェントは [グローバルに設定されたモデル](/docs/config#models) を使用し、サブエージェントはサブエージェントを呼び出したプライマリエージェントのモデルを使用します。
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>vanilla-closedcode 設定内のモデル ID は、<code>provider/model-id</code> という形式を使用します。たとえば、Ollama を使用している場合、GPT-OSS 20B には <code>ollama/gpt-oss:20b</code> を使用します。</p>
+<hr>
+<h3>ツール</h3>
+<p><code>tools</code> 設定を使用して、このエージェントで使用できるツールを制御します。特定のツールを <code>true</code> または <code>false</code> に設定することで、有効または無効にすることができます。</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+エージェント固有の設定はグローバル設定をオーバーライドします。
+</aside>
+MCP サーバーからすべてのツールを無効にするには、次のようにします。
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">ツール</a> について詳しくはこちらをご覧ください。</p>
+<hr>
+<h3>権限</h3>
+<p>権限を設定して、エージェントが実行できるアクションを管理できます。現在、<code>edit</code>、<code>bash</code>、および <code>webfetch</code> ツールの権限は次のように構成できます。</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — ツールを実行する前に承認を求めるプロンプトを表示する</li>
+<li><code>&quot;allow&quot;</code> — 承認なしですべての操作を許可する</li>
+<li><code>&quot;deny&quot;</code> — ツールを無効にする</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>これらの権限はエージェントごとにオーバーライドできます。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Markdown エージェントで権限を設定することもできます。</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>特定の bash コマンドに対するアクセス許可を設定できます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>これにはグロブパターンを使用できます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>また、<code>*</code> ワイルドカードを使用して、すべてのコマンドの権限を管理することもできます。
+最後に一致したルールが優先されるため、<code>*</code> ワイルドカードを最初に置き、特定のルールを後に置きます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">権限</a>について詳しくはこちらをご覧ください。</p>
+<hr>
+<h3>モード</h3>
+<p><code>mode</code> 設定を使用してエージェントのモードを制御します。 <code>mode</code> オプションは、エージェントの使用方法を決定するために使用されます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p><code>mode</code> オプションは、<code>primary</code>、<code>subagent</code>、または <code>all</code> に設定できます。 <code>mode</code> が指定されていない場合、デフォルトは <code>all</code> になります。</p>
+<hr>
+<h3>非表示</h3>
+<p><code>@</code> を使用して、<code>hidden: true</code> オートコンプリートメニューからサブエージェントを非表示にします。他のエージェントによってタスクツールを介してプログラム的にのみ呼び出す必要がある内部サブエージェントに役立ちます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>これは、オートコンプリートメニューでのユーザーの表示にのみ影響します。権限が許可されていれば、非表示のエージェントをタスクツール経由でモデルから呼び出すことができます。</p>
+<aside class="aside aside-note">
+`mode: subagent` エージェントにのみ適用されます。
+</aside>
+---
+
+<h3>タスクの権限</h3>
+<p><code>permission.task</code> を使用して、エージェントがタスクツール経由でどのサブエージェントを呼び出すことができるかを制御します。柔軟なマッチングのためにグロブパターンを使用します。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>deny</code> に設定すると、サブエージェントはタスクツールの説明から完全に削除されるため、モデルはそれを呼び出そうとしません。</p>
+<aside class="aside aside-tip">
+ルールは順番に評価され、**最後に一致したルールが優先されます**。上記の例では、`orchestrator-planner` は `*` (拒否) と `orchestrator-*` (許可) の両方に一致しますが、`orchestrator-*` は `*` の後に来るため、結果は `allow` になります。
+:::tip
+ユーザーは、エージェントのタスク権限が拒否する場合でも、`@` オートコンプリートメニューを介して、いつでもサブエージェントを直接呼び出すことができます。
+</aside>
+---
+
+<h3>色</h3>
+<p><code>color</code> オプションを使用して、UI でのエージェントの外観をカスタマイズします。これは、インターフェイスでのエージェントの表示方法に影響します。</p>
+<p>有効な 16 進カラー (例: <code>#FF5733</code>) またはテーマカラー: <code>primary</code>、<code>secondary</code>、<code>accent</code>、<code>success</code>、<code>warning</code>、<code>error</code>、<code>info</code> を使用します。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p><code>top_p</code> オプションで応答の多様性を制御します。ランダム性を制御するための温度の代替手段。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>値の範囲は 0.0 ～ 1.0 です。値が低いほど集中力が高まり、値が高いほど多様性が高まります。</p>
+<hr>
+<h3>追加オプション</h3>
+<p>エージェント設定で指定したその他のオプションはすべて、モデルオプションとしてプロバイダーに<strong>直接渡されます</strong>。これにより、プロバイダー固有の機能とパラメーターを使用できるようになります。</p>
+<p>たとえば、OpenAI の推論モデルを使用すると、推論の労力を制御できます。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>これらの追加オプションはモデルとプロバイダーに固有です。使用可能なパラメータについては、プロバイダのドキュメントを確認してください。</p>
+<aside class="aside aside-tip">
+`closedcode models` を実行して、利用可能なモデルのリストを表示します。
+</aside>
+---
+
+<h2>エージェントの作成</h2>
+<p>次のコマンドを使用して、新しいエージェントを作成できます。</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>この対話型コマンドは次のことを行います。</p>
+<ol>
+<li>エージェントを保存する場所を尋ねます。グローバルまたはプロジェクト固有。</li>
+<li>エージェントが行うべきことの説明。</li>
+<li>適切なシステムプロンプトと識別子を生成します。</li>
+<li>エージェントがアクセスできるツールを選択できます。</li>
+<li>最後に、エージェント設定を含む Markdown ファイルを作成します。</li>
+</ol>
+<hr>
+<h2>ユースケース</h2>
+<p>さまざまなエージェントの一般的な使用例をいくつか示します。</p>
+<ul>
+<li><strong>ビルドエージェント</strong>: すべてのツールを有効にした完全な開発作業</li>
+<li><strong>計画エージェント</strong>: 変更を加えずに分析および計画を立てる</li>
+<li><strong>レビューエージェント</strong>: 読み取り専用アクセスとドキュメントツールを備えたコードレビュー</li>
+<li><strong>デバッグエージェント</strong>: bash および読み取りツールを有効にして調査に重点を置きます</li>
+<li><strong>ドキュメントエージェント</strong>: ファイル操作を使用してドキュメントを作成しますが、システムコマンドは使用しません</li>
+</ul>
+<hr>
+<h2>例</h2>
+<p>以下に、役立つと思われるエージェントの例をいくつか示します。</p>
+<aside class="aside aside-tip">
+共有したいエージェントはいますか? [PR](https://github.com/informanellica/vanilla-closedcode) を送信します。
+</aside>
+---
+
+<h3>ドキュメント作成エージェント</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>セキュリティ監査エージェント</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

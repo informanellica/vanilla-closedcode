@@ -1,0 +1,395 @@
+/* Uniform sizing for the classic top bar (menu bar + toolbar in one row) so
+   the menu-icon triggers and the toolbar icon-buttons line up at one size. */
+.app-topbar {
+  min-height: 34px;
+}
+.app-topbar .bi {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+.app-topbar .btn,
+.app-topbar .nav-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 0.4rem;
+  border-radius: 0.25rem;
+}
+.app-topbar .navbar-nav {
+  gap: 0;
+}
+.app-topbar .btn-toolbar {
+  flex-wrap: nowrap;
+}
+.app-topbar [data-component="icon"] {
+  width: auto;
+  height: auto;
+}
+/* Toolbar icon buttons use the Bootstrap "ghost" variant (btn-link), which
+   adds a blue link underline. Toolbar buttons aren't links — drop it. */
+.app-topbar .btn-link,
+.app-topbar .btn-link:hover,
+.app-topbar .btn-link:focus {
+  text-decoration: none !important;
+}
+
+/* ═══ IDE Panel Headers ═══
+   Override Bootstrap nav-pills in the file-tree (left) and review (right)
+   panels so tabs look like VSCode section headers: compact, uppercase,
+   underline indicator instead of pill background. */
+
+/* Tab list bar — override vendored tabs.css [data-component="tabs"]
+   which sets flex-direction:column on BOTH TabsRoot and TabsList
+   (they share the same template attribute). Also override the filetree-
+   scope height:48px on [data-slot="tabs-list"]. */
+#file-tree-panel .nav-pills,
+#review-panel .nav-pills {
+  flex-direction: row !important;
+  height: auto !important;
+  min-height: 28px;
+  padding: 0 0.25rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  gap: 0;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  overflow: visible !important;
+}
+
+/* Tab triggers */
+#file-tree-panel .nav-pills .nav-link,
+#review-panel .nav-pills .nav-link {
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0;
+  color: var(--bs-secondary-color);
+  background: transparent;
+  transition: color 0.15s;
+}
+
+#file-tree-panel .nav-pills .nav-link:hover,
+#review-panel .nav-pills .nav-link:hover {
+  color: var(--bs-body-color);
+  background: transparent;
+}
+
+#file-tree-panel .nav-pills .nav-link.active,
+#review-panel .nav-pills .nav-link.active {
+  background: transparent;
+  color: var(--bs-body-color);
+  box-shadow: inset 0 -2px 0 var(--bs-primary);
+}
+
+/* ═══ Panel Backgrounds ═══
+   Sidebars get a subtle tint (tertiary-bg) to differentiate from the
+   main editor surface, matching typical IDE conventions. */
+
+#file-tree-panel {
+  background-color: var(--bs-tertiary-bg);
+}
+#file-tree-panel [data-slot="tabs-content"],
+#review-panel [data-slot="tabs-content"] {
+  background-color: var(--bs-tertiary-bg) !important;
+}
+
+/* ═══ Pane Border Consistency ═══
+   Ensure all pane dividers use the same border color variable. */
+
+#file-tree-panel {
+  border-color: var(--bs-border-color) !important;
+}
+#review-panel > div {
+  border-color: var(--bs-border-color) !important;
+}
+
+/* ═══ File Tree Density ═══
+   Tighter vertical rhythm in the sidebar tree. */
+
+#file-tree-panel [data-component="filetree"] > div {
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+}
+
+/* ═══ Center File Tab Bar ═══
+   File tabs in the editor area: match topbar height, compact styling. */
+
+#root [data-slot="tabs-list"]:not(#file-tree-panel *):not(#review-panel *) {
+  min-height: 28px;
+  gap: 0;
+  flex-wrap: nowrap;
+  justify-content: flex-start !important;
+}
+
+/* ═══ Review Panel (Git) Compactness ═══
+   Tighten the review header to match the 28px panel-header line height. */
+
+#review-panel [data-slot="session-review-header"] {
+  height: 28px;
+  padding: 0 0.5rem;
+  font-size: 0.75rem;
+}
+#review-panel [data-slot="session-review-title"] {
+  font-size: 0.75rem;
+}
+#review-panel [data-slot="session-review-file-info"] {
+  gap: 6px;
+}
+#review-panel [data-slot="session-review-trigger-actions"] {
+  gap: 8px;
+}
+
+/* ═══ Topbar / Panel Tone Unification ═══
+   Topbar already has `border-bottom bg-body-tertiary` via template classes.
+   Panel tab lists share the same tertiary background as the topbar. */
+
+#file-tree-panel .nav-pills,
+#review-panel .nav-pills {
+  background-color: var(--bs-tertiary-bg);
+}
+
+/* Reserve space at the right of the panel tab headers for the hide (×) buttons
+   (top-right of each panel) so they don't overlap the header text/tabs. */
+#file-tree-panel .nav-pills,
+#review-panel .nav-pills {
+  padding-right: 30px !important;
+}
+/* Let the file-tree tabs shrink (min-width:0) and ellipsize instead of wrapping
+   or overflowing when the reserved × space tightens the row. */
+#file-tree-panel .nav-pills .nav-link {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Center Empty State (changed file list) ═══ */
+
+.empty-state-file:hover {
+  background-color: var(--bs-tertiary-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+/* ═══ Right (Git/Review) Pane — Compact ═══
+   Match the left file-explorer density: smaller base font for the whole
+   review panel so changed-file rows / diff text are not oversized. */
+#review-panel {
+  font-size: 0.75rem;
+}
+#review-panel [data-slot="tabs-content"],
+#review-panel [data-component="session-review"],
+#review-panel [data-component="diff-changes"],
+#review-panel diffs-container {
+  font-size: 0.75rem;
+}
+/* Changed-file list rows: tighter, explorer-like. */
+#review-panel [data-slot="session-review-file"],
+#review-panel .list-group-item {
+  padding-top: 0.2rem;
+  padding-bottom: 0.2rem;
+  font-size: 0.75rem;
+}
+/* The filename / directory in each change row carry an explicit large
+   font-size (~28px); force them down to explorer density. */
+#review-panel [data-slot="session-review-filename"],
+#review-panel [data-slot="session-review-directory"],
+#review-panel [data-slot="session-review-title"],
+#review-panel [data-slot="session-review-filename"] *,
+#review-panel [data-slot="session-review-directory"] * {
+  font-size: 0.78rem !important;
+  line-height: 1.3 !important;
+}
+#review-panel [data-slot="session-review-directory"] {
+  opacity: 0.7;
+}
+
+/* ═══ Center editor file-tab bar — keep open-file tabs flush LEFT ═══
+   The (horizontal) tab list was rendering as flex-direction:column, so a
+   single tab got horizontally centered by align-items. Force horizontal tab
+   lists to a left-packed row, and push the trailing sticky "+" to the right. */
+[data-slot="tabs-list"]:not([data-orientation="vertical"]) {
+  flex-direction: row !important;
+  justify-content: flex-start !important;
+}
+[data-slot="tabs-list"]:not([data-orientation="vertical"]) > *:last-child {
+  margin-left: auto !important;
+}
+
+/* (bs/dialog.js now renders a real Bootstrap Modal driven by bootstrap.Modal,
+   so Bootstrap supplies the .modal-backdrop / z-index / focus-trap itself — the
+   old .modal-backdrop-wrap override is no longer needed.) */
+
+/* ═══ Server toolbar button — hidden for now ═══
+   "server" = the closedcode-server backend (local sidecar vs remote), NOT the
+   LLM provider (Ollama etc. → Settings). Local-only usage doesn't need it, and
+   the dialog currently crashes (needs directory-scoped SDK from the app shell).
+   Hidden until reworked. */
+[data-component="icon-button"][data-icon="server"] {
+  display: none !important;
+}
+
+/* ═══ Hover-reveal scrollbars for scrollable panes ═══
+   The panes hide their scrollbars (scrollbar-width:none / no-scrollbar), so a
+   long file tree / chat / diff has no visible slider. Re-enable a thin
+   scrollbar whose thumb is transparent until you hover the pane. Covers the
+   left explorer + right review (.tab-pane), and chat/review (.scroll-view__viewport).
+   The scrollbar only takes space when the content actually overflows. */
+.tab-pane,
+.scroll-view__viewport,
+#file-tree-panel [class*="overflow-y"],
+#review-panel [class*="overflow-y"],
+.modal-content [class*="overflow-y"] {
+  scrollbar-width: auto !important;
+}
+.tab-pane::-webkit-scrollbar,
+.scroll-view__viewport::-webkit-scrollbar,
+#file-tree-panel [class*="overflow-y"]::-webkit-scrollbar,
+#review-panel [class*="overflow-y"]::-webkit-scrollbar {
+  display: block !important;
+  width: 10px;
+  height: 10px;
+}
+.tab-pane::-webkit-scrollbar-track,
+.scroll-view__viewport::-webkit-scrollbar-track,
+#file-tree-panel [class*="overflow-y"]::-webkit-scrollbar-track,
+#review-panel [class*="overflow-y"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tab-pane::-webkit-scrollbar-thumb,
+.scroll-view__viewport::-webkit-scrollbar-thumb,
+#file-tree-panel [class*="overflow-y"]::-webkit-scrollbar-thumb,
+#review-panel [class*="overflow-y"]::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.35);
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-clip: content-box;
+  transition: background-color 0.15s ease-in-out;
+  min-height: 24px;
+}
+/* Emphasize on hover. */
+.tab-pane:hover::-webkit-scrollbar-thumb,
+.scroll-view__viewport:hover::-webkit-scrollbar-thumb,
+#file-tree-panel:hover [class*="overflow-y"]::-webkit-scrollbar-thumb,
+#file-tree-panel [class*="overflow-y"]:hover::-webkit-scrollbar-thumb,
+#review-panel [class*="overflow-y"]:hover::-webkit-scrollbar-thumb {
+  background-color: rgba(128, 128, 128, 0.65);
+}
+
+/* ═══ Workspace sidebar (V-avatar rail) — hidden for now ═══
+   May be replaced later by a Bootstrap sidebar. Hidden here; layout.js zeroes
+   the --main-left offset so the editor/chat fills the freed space. */
+[data-component="sidebar-nav-desktop"],
+[data-component="sidebar-nav-mobile"] {
+  display: none !important;
+}
+
+/* ═══ Composer footer selects (agent/mode "build"/"plan", model) ═══
+   The `truncate` class + the form-select arrow padding can clip the short
+   label (e.g. "build"). Give them room and don't ellipsize the value. */
+select.form-select.truncate {
+  min-width: 6rem;
+  height: 28px;
+  min-height: 28px;
+  padding-top: 0;
+  padding-bottom: 0;
+  line-height: 26px;
+  text-overflow: clip;
+  background-position: right 0.55rem center;
+}
+
+/* Session title inside the bottom chat pane. It is a pane header, not a page
+   hero, so keep it compact enough for an IDE split view. */
+[data-session-title] {
+  min-height: 32px;
+}
+[data-session-title] > div {
+  height: 32px !important;
+  padding-inline: 0.75rem;
+}
+[data-session-title] [data-slot="session-title-child"] {
+  margin: 0;
+  font-size: 0.95rem !important;
+  line-height: 1.3 !important;
+}
+
+/* ═══ Center editor file tabs — compact (match the left explorer tab size) ═══
+   The file tabs were ~40px tall / 16px font; the left explorer tabs are ~27px /
+   11-12px. Shrink the center file-tab list + triggers to match. Scoped to the
+   file tabs via data-value="file:" so panel tabs are unaffected. */
+[data-slot="tabs-list"]:not(#file-tree-panel *):not(#review-panel *) {
+  height: auto !important;
+  min-height: 0 !important;
+}
+[data-slot="tabs-trigger"][data-value^="file:"] {
+  font-size: 12px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+  min-height: 0 !important;
+}
+[data-slot="tabs-trigger"][data-value^="file:"] [data-component="file-icon"],
+[data-slot="tabs-trigger"][data-value^="file:"] [data-component="icon"],
+[data-slot="tabs-trigger"][data-value^="file:"] svg {
+  width: 13px !important;
+  height: 13px !important;
+  font-size: 13px !important;
+}
+
+/* ═══ Session title → replaced by the session tab bar ═══
+   The in-chat session title header is abolished; the session tab bar (at the
+   top of the chat pane) shows the active session + lets you switch. */
+[data-session-title] {
+  display: none !important;
+}
+/* Session tab bar: active tab close button only shows on hover (VSCode-like). */
+[data-component="session-tab-bar"] .session-tab-close {
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+[data-component="session-tab-bar"] .session-tab:hover .session-tab-close,
+[data-component="session-tab-bar"] .session-tab.bg-body .session-tab-close {
+  opacity: 0.7;
+}
+[data-component="session-tab-bar"] .session-tab-close:hover {
+  opacity: 1 !important;
+}
+
+/* ═══ Center editor file tabs — active = white, inactive = gray ═══
+   Match the bottom session tab bar instead of the blue Bootstrap nav-pill:
+   the tab strip sits on the tertiary (gray) surface, inactive tabs are gray
+   text, and the active tab is the body (white) surface with a primary
+   underline indicator. */
+[data-slot="tabs-list"]:not(#file-tree-panel *):not(#review-panel *) {
+  background-color: var(--bs-tertiary-bg);
+  border-bottom: 1px solid var(--bs-border-color);
+}
+[data-slot="tabs-trigger"][data-value^="file:"] {
+  background-color: transparent !important;
+  color: var(--bs-secondary-color) !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  /* Separator between tabs, like the bottom session tab bar (border-end). */
+  border-right: 1px solid var(--bs-border-color) !important;
+}
+[data-slot="tabs-trigger"][data-value^="file:"]:hover {
+  color: var(--bs-body-color) !important;
+}
+[data-slot="tabs-trigger"][data-value^="file:"].active,
+[data-slot="tabs-trigger"][data-value^="file:"][aria-selected="true"] {
+  background-color: var(--bs-body-bg) !important;
+  color: var(--bs-body-color) !important;
+  box-shadow: inset 0 -2px 0 var(--bs-primary) !important;
+}
+
+/* Terminal panel removed from the UI — hide the bottom terminal pane and its
+   header toggle so the empty pane below the chat doesn't show and the vertical
+   space is reclaimed by the chat/session area. (Re-added: was dropped from a
+   later styles.css edit, which brought the empty pane back.) */
+#terminal-panel {
+  display: none !important;
+}
+[aria-controls="terminal-panel"] {
+  display: none !important;
+}

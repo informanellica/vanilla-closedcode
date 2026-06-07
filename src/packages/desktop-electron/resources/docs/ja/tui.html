@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode ターミナルユーザーインターフェイスの使用。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html" selected>日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">vanilla-closedcode ターミナルユーザーインターフェイスの使用。</p>
+      <p>vanilla-closedcode は、LLM を使用してプロジェクトを作業するための対話型ターミナルインターフェイスまたは TUI を提供します。</p>
+<p>vanilla-closedcode を実行すると、現在のディレクトリの TUI が開始されます。</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>または、特定の作業ディレクトリに対して起動することもできます。</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>TUI に入ったら、メッセージを表示することができます。</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>ファイル参照</h2>
+<p><code>@</code> を使用してメッセージ内のファイルを参照できます。これにより、現在の作業ディレクトリ内であいまいなファイル検索が行われます。</p>
+<aside class="aside aside-tip">
+`@` を使用してメッセージ内のファイルを参照することもできます。
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>ファイルの内容は会話に自動的に追加されます。</p>
+<hr>
+<h2>Bash コマンド</h2>
+<p>メッセージを <code>!</code> で開始して、シェルコマンドを実行します。</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>コマンドの出力は、ツールの結果として会話に追加されます。</p>
+<hr>
+<h2>コマンド</h2>
+<p>vanilla-closedcode TUI を使用する場合、「<code>/</code>」に続いてコマンド名を入力すると、アクションをすばやく実行できます。例えば：</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>ほとんどのコマンドには、<code>ctrl+x</code> をリーダーキーとして使用するキーバインドもあります。<code>ctrl+x</code> がデフォルトのリーダーキーです。 <a href="/docs/keybinds">詳細はこちら</a>。</p>
+<p>利用可能なすべてのスラッシュコマンドは次のとおりです。</p>
+<hr>
+<h3>接続</h3>
+<p>vanilla-closedcode にプロバイダーを追加します。利用可能なプロバイダーから選択し、その API キーを追加できます。</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>コンパクト</h3>
+<p>現在のセッションを圧縮します。 <em>別名</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>詳細</h3>
+<p>ツール実行の詳細を切り替えます。</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>エディタ</h3>
+<p>メッセージを作成するために外部エディタを開きます。 <code>EDITOR</code> 環境変数に設定されたエディタを使用します。 <a href="#editor-setup">詳細はこちら</a>。</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>終了</h3>
+<p>vanilla-closedcode を終了します。 <em>エイリアス</em>: <code>/quit</code>、<code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>エクスポート</h3>
+<p>現在の会話を Markdown にエクスポートし、デフォルトのエディターで開きます。 <code>EDITOR</code> 環境変数に設定されたエディタを使用します。 <a href="#editor-setup">詳細はこちら</a>。</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>ヘルプ</h3>
+<p>ヘルプダイアログを表示します。</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>初期化</h3>
+<p><code>AGENTS.md</code> ファイルを作成または更新します。 <a href="/docs/rules">詳細はこちら</a>。</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>モデル</h3>
+<p>利用可能なモデルをリストします。</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>新規セッション</h3>
+<p>新しいセッションを開始します。 <em>別名</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>やり直し</h3>
+<p>以前に取り消したメッセージをやり直します。 <code>/undo</code> を使用した後にのみ使用できます。</p>
+<aside class="aside aside-tip">
+ファイルの変更も復元されます。
+</aside>
+内部的には、`undo` を使用してファイルの変更を管理します。したがって、あなたのプロジェクトは **Git リポジトリ** である必要があります。
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>セッション</h3>
+<p>セッションを一覧表示して切り替えます。 <em>エイリアス</em>: <code>/resume</code>、<code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>共有</h3>
+<p>現在のセッションを共有します。 <a href="/docs/share">詳細はこちら</a>。</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>テーマ</h3>
+<p>利用可能なテーマをリストします。</p>
+<pre><code class="language-bash">/theme
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>思考</h3>
+<p>会話内の思考/推論ブロックの表示を切り替えます。有効にすると、拡張思考をサポートするモデルの推論プロセスを確認できます。</p>
+<aside class="aside aside-note">
+このコマンドは、思考ブロックを**表示**するかどうかのみを制御します。モデルの推論機能を有効または無効にすることはありません。実際の推論機能を切り替えるには、`ctrl+t` を使用してモデルバリアントを循環させます。
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>元に戻す</h3>
+<p>会話の最後のメッセージを元に戻します。最新のユーザーメッセージ、その後のすべての応答、およびファイルの変更を削除します。</p>
+<aside class="aside aside-tip">
+加えられたファイルの変更も元に戻されます。
+</aside>
+内部的には、`undo` を使用してファイルの変更を管理します。したがって、あなたのプロジェクトは **Git リポジトリ** である必要があります。
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>キーバインド:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>共有の解除</h3>
+<p>現在のセッションの共有を解除します。 <a href="/docs/share#un-sharing">詳細はこちら</a>。</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>エディタのセットアップ</h2>
+<p><code>/editor</code> および <code>/export</code> コマンドはどちらも、<code>EDITOR</code> 環境変数で指定されたエディターを使用します。</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+</code></pre>
+<p>これを永続的にするには、これをシェルプロファイルに追加します。
+<code>~/.bashrc</code>、<code>~/.zshrc</code>など</p>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+</code></pre>
+<p>これを永続的にするには、<strong>システムプロパティ</strong> &gt; <strong>環境変数</strong>を使用します。</p>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+</code></pre>
+<p>これを永続的にするには、これを PowerShell プロファイルに追加します。</p>
+</div>
+</div>
+
+<p>一般的なエディターオプションには次のものがあります。</p>
+<ul>
+<li><code>code</code> - VS Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim エディター</li>
+<li><code>vim</code> - Vim エディター</li>
+<li><code>nano</code> - ナノエディター</li>
+<li><code>notepad</code> - Windows メモ帳</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+VS Code などの一部のエディターは、`--wait` フラグを使用して起動する必要があります。
+</aside>
+一部のモードでは実行にコマンドライン引数が必要です。`--wait` フラグを使うと、エディターが閉じるまでプロセスが待機します。
+
+<hr>
+<h2>設定</h2>
+<p><code>tui.json</code> (または <code>tui.jsonc</code>) ファイルを通じて TUI の動作をカスタマイズできます。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>これは、サーバー/ランタイムの動作を構成する <code>closedcode.json</code> とは別です。</p>
+<h3>オプション</h3>
+<ul>
+<li><code>theme</code> - UI テーマを設定します。<a href="/docs/themes">詳細はこちら</a>。</li>
+<li><code>keybinds</code> - キーボードショートカットをカスタマイズします。<a href="/docs/keybinds">詳細はこちら</a>。</li>
+<li><code>scroll_acceleration.enabled</code> - macOS スタイルのスクロールアクセラレーションを有効にして、スムーズで自然なスクロールを実現します。有効にすると、高速スクロールジェスチャではスクロール速度が向上し、ゆっくりとした動きでは正確なままになります。 <strong>この設定は <code>scroll_speed</code> よりも優先され、有効になっている場合は上書きされます。</strong></li>
+<li><code>scroll_speed</code> - スクロールコマンドを使用するときに TUI がスクロールする速度を制御します (最小: <code>0.001</code>、小数をサポート)。デフォルトは <code>3</code> です。 <strong>注: <code>scroll_acceleration.enabled</code> が <code>true</code> に設定されている場合、これは無視されます。</strong></li>
+<li><code>diff_style</code> - 差分レンダリングを制御します。 <code>&quot;auto&quot;</code> はターミナルの幅に適応し、<code>&quot;stacked&quot;</code> は常に 1 列のレイアウトを表示します。</li>
+</ul>
+<p>カスタム TUI 設定パスをロードするには、<code>CLOSEDCODE_TUI_CONFIG</code> を使用します。</p>
+<hr>
+<h2>カスタマイズ</h2>
+<p>コマンドパレット (<code>ctrl+x h</code> または <code>/help</code>) を使用して、TUI ビューのさまざまな側面をカスタマイズできます。これらの設定は再起動後も維持されます。</p>
+<hr>
+<h4>ユーザー名の表示</h4>
+<p>チャットメッセージにユーザー名を表示するかどうかを切り替えます。これには次の方法でアクセスします。</p>
+<ul>
+<li>コマンドパレット:「ユーザー名」または「ユーザー名を隠す」を検索します。</li>
+<li>設定は自動的に保持され、TUI セッション全体で記憶されます。</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

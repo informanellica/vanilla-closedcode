@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เครือข่าย — vanilla-closedcode docs</title>
+  <meta name="description" content="กำหนดค่าพร็อกซีและใบรับรองที่กำหนดเอง">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html">Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html">Norsk</option>
+      <option value="../pl/network.html">Polski</option>
+      <option value="../pt-br/network.html">Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html" selected>ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>เครือข่าย</h1>
+      <p class="lede">กำหนดค่าพร็อกซีและใบรับรองที่กำหนดเอง</p>
+      <p>vanilla-closedcode รองรับตัวแปรสภาพแวดล้อมพร็อกซีมาตรฐานและใบรับรองที่กำหนดเองสำหรับสภาพแวดล้อมเครือข่ายองค์กร</p>
+<hr>
+<h2>พร็อกซี</h2>
+<p>vanilla-closedcode เคารพตัวแปรสภาพแวดล้อมพร็อกซีมาตรฐาน</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+TUI สื่อสารกับเซิร์ฟเวอร์ HTTP ในพื้นที่ คุณต้องข้ามพร็อกซีสำหรับการเชื่อมต่อนี้เพื่อป้องกันการกำหนดเส้นทางวนซ้ำ
+</aside>
+คุณสามารถกำหนดค่าพอร์ตของเซิร์ฟเวอร์และชื่อโฮสต์ได้โดยใช้ [CLI flags](/docs/cli#run)
+
+<hr>
+<h3>การยืนยันตัวตน</h3>
+<p>หากพร็อกซีของคุณต้องการการรับรองความถูกต้องขั้นพื้นฐาน ให้ใส่ข้อมูลรับรองใน URL</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+หลีกเลี่ยงรหัสผ่านฮาร์ดโค้ด ใช้ตัวแปรสภาพแวดล้อมหรือที่จัดเก็บข้อมูลรับรองที่ปลอดภัย
+</aside>
+สำหรับพร็อกซีที่ต้องการการรับรองความถูกต้องขั้นสูง เช่น NTLM หรือ Kerberos ให้พิจารณาใช้เกตเวย์ LLM ที่รองรับวิธีการตรวจสอบความถูกต้องของคุณ
+
+<hr>
+<h2>ใบรับรองที่กำหนดเอง</h2>
+<p>หากองค์กรของคุณใช้ CA แบบกำหนดเองสำหรับการเชื่อมต่อ HTTPS ให้กำหนดค่า vanilla-closedcode ให้เชื่อถือ</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>ซึ่งใช้ได้กับทั้งการเชื่อมต่อพร็อกซีและการเข้าถึง API โดยตรง</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

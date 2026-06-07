@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSP เซิร์ฟเวอร์ — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode ทำงานร่วมกับเซิร์ฟเวอร์ LSP ของคุณ">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/lsp.html">English</option>
+      <option value="../ar/lsp.html">العربية</option>
+      <option value="../bs/lsp.html">Bosanski</option>
+      <option value="../da/lsp.html">Dansk</option>
+      <option value="../de/lsp.html">Deutsch</option>
+      <option value="../es/lsp.html">Español</option>
+      <option value="../fr/lsp.html">Français</option>
+      <option value="../it/lsp.html">Italiano</option>
+      <option value="../ja/lsp.html">日本語</option>
+      <option value="../ko/lsp.html">한국어</option>
+      <option value="../nb/lsp.html">Norsk</option>
+      <option value="../pl/lsp.html">Polski</option>
+      <option value="../pt-br/lsp.html">Português (BR)</option>
+      <option value="../ru/lsp.html">Русский</option>
+      <option value="../th/lsp.html" selected>ไทย</option>
+      <option value="../tr/lsp.html">Türkçe</option>
+      <option value="../zh-cn/lsp.html">简体中文</option>
+      <option value="../zh-tw/lsp.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li class="active"><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>LSP เซิร์ฟเวอร์</h1>
+      <p class="lede">vanilla-closedcode ทำงานร่วมกับเซิร์ฟเวอร์ LSP ของคุณ</p>
+      <p>vanilla-closedcode ทำงานร่วมกับ Language Server Protocol (LSP) เพื่อช่วยให้ LLM โต้ตอบกับโค้ดเบสของคุณ ใช้การวินิจฉัยเพื่อให้ข้อเสนอแนะไปยัง LLM</p>
+<hr>
+<h2>บิวท์อิน</h2>
+<p>vanilla-closedcode มาพร้อมกับเซิร์ฟเวอร์ LSP ในตัวหลายตัวสำหรับภาษายอดนิยม:</p>
+<table>
+<thead>
+<tr>
+<th>LSP เซิร์ฟเวอร์</th>
+<th>ส่วนขยาย</th>
+<th>ความต้องการ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>astro</td>
+<td>.astro</td>
+<td>ติดตั้งอัตโนมัติสำหรับโปรเจ็กต์ Astro</td>
+</tr>
+<tr>
+<td>bash</td>
+<td>.sh, .bash, .zsh, .ksh</td>
+<td>ติดตั้ง bash-Language-Server โดยอัตโนมัติ</td>
+</tr>
+<tr>
+<td>clangd</td>
+<td>.c, .cpp, .cc, .cxx, .c++, .h, .hpp, .hh, .hxx, .h++</td>
+<td>ติดตั้งอัตโนมัติสำหรับโครงการ C/C++</td>
+</tr>
+<tr>
+<td>csharp</td>
+<td>.cs</td>
+<td><code>.NET SDK</code> ติดตั้งแล้ว</td>
+</tr>
+<tr>
+<td>clojure-lsp</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td><code>clojure-lsp</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>deno</td>
+<td>.ts, .tsx, .js, .jsx, .mjs</td>
+<td>มีคำสั่ง <code>deno</code> (ตรวจจับอัตโนมัติ deno.json/deno.jsonc)</td>
+</tr>
+<tr>
+<td>elixir-ls</td>
+<td>.ex, .exs</td>
+<td><code>elixir</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>eslint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue</td>
+<td><code>eslint</code> การพึ่งพาในโครงการ</td>
+</tr>
+<tr>
+<td>fsharp</td>
+<td>.fs, .fsi, .fsx, .fsscript</td>
+<td><code>.NET SDK</code> ติดตั้งแล้ว</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td><code>gleam</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>gopls</td>
+<td>.go</td>
+<td><code>go</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>hls</td>
+<td>.hs, .lhs</td>
+<td><code>haskell-language-server-wrapper</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>jdtls</td>
+<td>.java</td>
+<td><code>Java SDK (version 21+)</code> ติดตั้งแล้ว</td>
+</tr>
+<tr>
+<td>julials</td>
+<td>.jl</td>
+<td>ติดตั้ง <code>julia</code> และ <code>LanguageServer.jl</code> แล้ว</td>
+</tr>
+<tr>
+<td>kotlin-ls</td>
+<td>.kt, .kts</td>
+<td>ติดตั้งอัตโนมัติสำหรับโปรเจ็กต์ Kotlin</td>
+</tr>
+<tr>
+<td>lua-ls</td>
+<td>.lua</td>
+<td>ติดตั้งอัตโนมัติสำหรับโปรเจ็กต์ Lua</td>
+</tr>
+<tr>
+<td>nixd</td>
+<td>.nix</td>
+<td><code>nixd</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>ocaml-lsp</td>
+<td>.ml, .mli</td>
+<td><code>ocamllsp</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>oxlint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue, .astro, .svelte</td>
+<td><code>oxlint</code> การพึ่งพาในโครงการ</td>
+</tr>
+<tr>
+<td>php intelephense</td>
+<td>.php</td>
+<td>ติดตั้งอัตโนมัติสำหรับโครงการ PHP</td>
+</tr>
+<tr>
+<td>prisma</td>
+<td>.prisma</td>
+<td><code>prisma</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>pyright</td>
+<td>.py, .pyi</td>
+<td><code>pyright</code> ติดตั้งการพึ่งพาแล้ว</td>
+</tr>
+<tr>
+<td>ruby-lsp (rubocop)</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>มีคำสั่ง <code>ruby</code> และ <code>gem</code></td>
+</tr>
+<tr>
+<td>rust</td>
+<td>.rs</td>
+<td><code>rust-analyzer</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>sourcekit-lsp</td>
+<td>.swift, .objc, .objcpp</td>
+<td>ติดตั้ง <code>swift</code> (<code>xcode</code> บน macOS)</td>
+</tr>
+<tr>
+<td>svelte</td>
+<td>.svelte</td>
+<td>ติดตั้งอัตโนมัติสำหรับโครงการ Svelte</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>ติดตั้งอัตโนมัติจากรุ่น GitHub</td>
+</tr>
+<tr>
+<td>tinymist</td>
+<td>.typ, .typc</td>
+<td>ติดตั้งอัตโนมัติจากรุ่น GitHub</td>
+</tr>
+<tr>
+<td>typescript</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts</td>
+<td><code>typescript</code> การพึ่งพาในโครงการ</td>
+</tr>
+<tr>
+<td>vue</td>
+<td>.vue</td>
+<td>ติดตั้งอัตโนมัติสำหรับโปรเจ็กต์ Vue</td>
+</tr>
+<tr>
+<td>yaml-ls</td>
+<td>.yaml, .yml</td>
+<td>ติดตั้งเซิร์ฟเวอร์ภาษา Red Hat yaml โดยอัตโนมัติ</td>
+</tr>
+<tr>
+<td>zls</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> คำสั่งใช้ได้</td>
+</tr>
+</tbody></table>
+<p>เซิร์ฟเวอร์ LSP จะถูกเปิดใช้งานโดยอัตโนมัติเมื่อตรวจพบนามสกุลไฟล์ใดนามสกุลหนึ่งข้างต้นและเป็นไปตามข้อกำหนด</p>
+<aside class="aside aside-note">
+คุณสามารถปิดใช้งานการดาวน์โหลดเซิร์ฟเวอร์ LSP อัตโนมัติได้โดยตั้งค่าตัวแปรสภาพแวดล้อม `CLOSEDCODE_DISABLE_LSP_DOWNLOAD` เป็น `true`
+</aside>
+---
+
+<h2>มันทำงานอย่างไร</h2>
+<p>เมื่อ closedcode เปิดไฟล์ มันจะ:</p>
+<ol>
+<li>ตรวจสอบนามสกุลไฟล์กับเซิร์ฟเวอร์ LSP ที่เปิดใช้งานทั้งหมด</li>
+<li>เริ่มเซิร์ฟเวอร์ LSP ที่เหมาะสมหากยังไม่ได้ทำงาน</li>
+</ol>
+<hr>
+<h2>กำหนดค่า</h2>
+<p>You can customize LSP servers through the <code>lsp</code> section in your closedcode config.</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {}
+}
+</code></pre>
+<p>เซิร์ฟเวอร์ LSP แต่ละเซิร์ฟเวอร์รองรับสิ่งต่อไปนี้:</p>
+<table>
+<thead>
+<tr>
+<th>คุณสมบัติ</th>
+<th>พิมพ์</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>บูลีน</td>
+<td>ตั้งค่านี้เป็น <code>true</code> เพื่อปิดการใช้งานเซิร์ฟเวอร์ LSP</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>สตริง[]</td>
+<td>คำสั่งเพื่อเริ่มต้นเซิร์ฟเวอร์ LSP</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>สตริง[]</td>
+<td>นามสกุลไฟล์ที่เซิร์ฟเวอร์ LSP นี้ควรจัดการ</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>วัตถุ</td>
+<td>ตัวแปรสภาพแวดล้อมที่จะตั้งค่าเมื่อเริ่มต้นเซิร์ฟเวอร์</td>
+</tr>
+<tr>
+<td><code>initialization</code></td>
+<td>วัตถุ</td>
+<td>ตัวเลือกการเริ่มต้นที่จะส่งไปยังเซิร์ฟเวอร์ LSP</td>
+</tr>
+</tbody></table>
+<p>ลองดูตัวอย่างบางส่วน</p>
+<hr>
+<h3>ตัวแปรสภาพแวดล้อม</h3>
+<p>ใช้คุณสมบัติ <code>env</code> เพื่อตั้งค่าตัวแปรสภาพแวดล้อมเมื่อเริ่มต้นเซิร์ฟเวอร์ LSP:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;rust&quot;: {
+      &quot;env&quot;: {
+        &quot;RUST_LOG&quot;: &quot;debug&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>ตัวเลือกการเริ่มต้น</h3>
+<p>ใช้คุณสมบัติ <code>initialization</code> เพื่อส่งตัวเลือกการเริ่มต้นไปยังเซิร์ฟเวอร์ LSP นี่คือการตั้งค่าเฉพาะเซิร์ฟเวอร์ที่ส่งระหว่างคำขอ LSP <code>initialize</code>:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;initialization&quot;: {
+        &quot;preferences&quot;: {
+          &quot;importModuleSpecifierPreference&quot;: &quot;relative&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+ตัวเลือกการเริ่มต้นจะแตกต่างกันไปตามเซิร์ฟเวอร์ LSP ตรวจสอบเอกสารประกอบของเซิร์ฟเวอร์ LSP ของคุณเพื่อดูตัวเลือกที่มี
+</aside>
+---
+
+<h3>ปิดการใช้งานเซิร์ฟเวอร์ LSP</h3>
+<p>หากต้องการปิดการใช้งานเซิร์ฟเวอร์ <strong>ทั้งหมด</strong> LSP ทั่วโลก ให้ตั้งค่า <code>lsp</code> เป็น <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: false
+}
+</code></pre>
+<p>หากต้องการปิดการใช้งานเซิร์ฟเวอร์ <strong>เฉพาะ</strong> LSP ให้ตั้งค่า <code>disabled</code> เป็น <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>เซิร์ฟเวอร์ LSP แบบกำหนดเอง</h3>
+<p>คุณสามารถเพิ่มเซิร์ฟเวอร์ LSP แบบกำหนดเองได้โดยระบุคำสั่งและนามสกุลไฟล์:</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;custom-lsp&quot;: {
+      &quot;command&quot;: [&quot;custom-lsp-server&quot;, &quot;--stdio&quot;],
+      &quot;extensions&quot;: [&quot;.custom&quot;]
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>ข้อมูลเพิ่มเติม</h2>
+<h3>PHP อินเทเลฟินส์</h3>
+<p>PHP Intelephense นำเสนอคุณสมบัติระดับพรีเมียมผ่านรหัสลิขสิทธิ์ คุณสามารถระบุรหัสสัญญาอนุญาตได้โดยการวาง (เท่านั้น) รหัสในไฟล์ข้อความที่:</p>
+<ul>
+<li>บน macOS/Linux: <code>$HOME/intelephense/license.txt</code></li>
+<li>บน Windows: <code>%USERPROFILE%/intelephense/license.txt</code></li>
+</ul>
+<p>ไฟล์ควรมีเฉพาะรหัสลิขสิทธิ์โดยไม่มีเนื้อหาเพิ่มเติม</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

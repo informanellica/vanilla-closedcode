@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCP 伺服器 — vanilla-closedcode docs</title>
+  <meta name="description" content="新增本地和遠端 MCP 工具。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html">日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCP 伺服器</h1>
+      <p class="lede">新增本地和遠端 MCP 工具。</p>
+      <p>您可以透過 <em>Model Context Protocol</em>（MCP）為 vanilla-closedcode 新增外部工具。vanilla-closedcode 同時支援本地和遠端伺服器。</p>
+<p>新增後，MCP 工具會自動與內建工具一起提供給 LLM 使用。</p>
+<hr>
+<h4>注意事項</h4>
+<p>使用 MCP 伺服器時，它會佔用上下文空間。如果您啟用了大量工具，上下文消耗會迅速增加。因此，我們建議謹慎選擇要使用的 MCP 伺服器。</p>
+<aside class="aside aside-tip">
+MCP 伺服器會佔用您的上下文空間，所以請謹慎選擇啟用哪些伺服器。
+</aside>
+某些 MCP 伺服器（例如 GitHub MCP 伺服器）往往會消耗大量 Token，很容易超出上下文限制。
+
+<hr>
+<h2>啟用</h2>
+<p>您可以在 <a href="./config.html">vanilla-closedcode 設定</a>的 <code>mcp</code> 欄位下定義 MCP 伺服器。為每個 MCP 指定一個唯一的名稱，在提示詞中可以透過該名稱來參照對應的 MCP。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p>您也可以將 <code>enabled</code> 設定為 <code>false</code> 來停用某個伺服器。當您想臨時停用某個伺服器而不將其從設定中移除時，這個選項非常有用。</p>
+<hr>
+
+<h2>本地</h2>
+<p>透過在 MCP 物件中將 <code>type</code> 設定為 <code>&quot;local&quot;</code> 來新增本地 MCP 伺服器。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p><code>command</code> 用於指定本地 MCP 伺服器的啟動指令。您還可以傳入一組環境變數。</p>
+<p>例如，以下是新增測試用的 <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a> MCP 伺服器的方法。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>要使用它，可以在提示詞中新增 <code>use the mcp_everything tool</code>。</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>選項</h4>
+<p>以下是設定本地 MCP 伺服器的所有選項。</p>
+<table>
+<thead>
+<tr>
+<th>選項</th>
+<th>類型</th>
+<th>必填</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>字串</td>
+<td>是</td>
+<td>MCP 伺服器連線類型，必須為 <code>&quot;local&quot;</code>。</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>陣列</td>
+<td>是</td>
+<td>執行 MCP 伺服器的指令及參數。</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>物件</td>
+<td></td>
+<td>執行伺服器時設定的環境變數。</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>布林值</td>
+<td></td>
+<td>啟動時啟用或停用該 MCP 伺服器。</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>數字</td>
+<td></td>
+<td>從 MCP 伺服器取得工具的逾時時間（毫秒）。預設為 5000（即 5 秒）。</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>遠端</h2>
+<p>透過將 <code>type</code> 設定為 <code>&quot;remote&quot;</code> 來新增遠端 MCP 伺服器。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> 是遠端 MCP 伺服器的位址，透過 <code>headers</code> 選項可以傳入一組請求標頭。</p>
+<hr>
+<h4>選項</h4>
+<table>
+<thead>
+<tr>
+<th>選項</th>
+<th>類型</th>
+<th>必填</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>字串</td>
+<td>是</td>
+<td>MCP 伺服器連線類型，必須為 <code>&quot;remote&quot;</code>。</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>字串</td>
+<td>是</td>
+<td>遠端 MCP 伺服器的 URL。</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>布林值</td>
+<td></td>
+<td>啟動時啟用或停用該 MCP 伺服器。</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>物件</td>
+<td></td>
+<td>隨請求傳送的請求標頭。</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>物件</td>
+<td></td>
+<td>OAuth 身分驗證設定。詳見下方 <a href="#oauth">OAuth</a> 部分。</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>數字</td>
+<td></td>
+<td>從 MCP 伺服器取得工具的逾時時間（毫秒）。預設為 5000（即 5 秒）。</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>vanilla-closedcode 會自動處理遠端 MCP 伺服器的 OAuth 身分驗證。當伺服器需要身分驗證時，vanilla-closedcode 將：</p>
+<ol>
+<li>偵測 401 回應並啟動 OAuth 流程</li>
+<li>在伺服器支援的情況下使用<strong>動態用戶端註冊（RFC 7591）</strong></li>
+<li>安全地儲存 Token 以供後續請求使用</li>
+</ol>
+<hr>
+<h3>自動認證</h3>
+<p>對於大多數支援 OAuth 的 MCP 伺服器，無需特殊設定。只需設定遠端伺服器即可：</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>如果伺服器需要身分驗證，vanilla-closedcode 會在您首次使用時提示您進行認證。您也可以使用 <code>closedcode mcp auth &lt;server-name&gt;</code> <a href="#authenticating">手動觸發認證流程</a>。</p>
+<hr>
+<h3>預先註冊</h3>
+<p>如果您已經從 MCP 伺服器提供商處取得了用戶端憑證，可以直接設定：</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>身分驗證</h3>
+<p>您可以手動觸發身分驗證或管理憑證。</p>
+<p>對特定 MCP 伺服器進行身分驗證：</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>列出所有 MCP 伺服器及其認證狀態：</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>刪除已儲存的憑證：</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p><code>mcp auth</code> 指令會開啟瀏覽器進行授權。授權完成後，vanilla-closedcode 會將 Token 安全地儲存在 <code>~/.local/share/closedcode/mcp-auth.json</code> 中。</p>
+<hr>
+<h4>停用 OAuth</h4>
+<p>如果您想為某個伺服器停用自動 OAuth（例如，該伺服器使用 API 金鑰而非 OAuth），可以將 <code>oauth</code> 設定為 <code>false</code>：</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth 選項</h4>
+<table>
+<thead>
+<tr>
+<th>選項</th>
+<th>類型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>物件 | <code>false</code></td>
+<td>OAuth 設定物件，或設為 <code>false</code> 以停用 OAuth 自動偵測。</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>字串</td>
+<td>OAuth 用戶端 ID。如果未提供，將嘗試動態用戶端註冊。</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>字串</td>
+<td>OAuth 用戶端密鑰（如果授權伺服器要求提供）。</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>字串</td>
+<td>授權時請求的 OAuth 作用域。</td>
+</tr>
+</tbody></table>
+<h4>偵錯</h4>
+<p>如果遠端 MCP 伺服器身分驗證失敗，您可以透過以下方式診斷問題：</p>
+<pre><code class="language-bash"># 查看所有支援 OAuth 的伺服器的認證狀態
+closedcode mcp auth list
+
+# 偵錯特定伺服器的連線和 OAuth 流程
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p><code>mcp debug</code> 指令會顯示當前認證狀態、測試 HTTP 連線，並嘗試執行 OAuth 發現流程。</p>
+<hr>
+<h2>管理</h2>
+<p>您的 MCP 在 vanilla-closedcode 中作為工具使用，與內建工具並列。因此，您可以像管理其他工具一樣，透過 vanilla-closedcode 設定來管理它們。</p>
+<hr>
+<h3>全域</h3>
+<p>您可以全域啟用或停用 MCP 工具。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>也可以使用 glob 模式來停用所有符合條件的 MCP。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>這裡使用 glob 模式 <code>my-mcp*</code> 來停用所有 MCP。</p>
+<hr>
+<h3>按代理設定</h3>
+<p>如果您有大量 MCP 伺服器，可以選擇全域停用它們，然後僅在特定代理中啟用。具體做法：</p>
+<ol>
+<li>全域停用該工具。</li>
+<li>在<a href="/docs/agents#tools">代理設定</a>中，將 MCP 伺服器作為工具啟用。</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;bun&quot;, &quot;x&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>Glob 模式</h4>
+<p>glob 模式使用簡單的正規表示式萬用字元規則：</p>
+<ul>
+<li><code>*</code> 比對零個或多個任意字元（例如，<code>&quot;my-mcp*&quot;</code> 比對 <code>my-mcp_search</code>、<code>my-mcp_list</code> 等）</li>
+<li><code>?</code> 比對恰好一個字元</li>
+<li>其他字元按字面值比對</li>
+</ul>
+<aside class="aside aside-note">
+MCP 伺服器工具在註冊時以伺服器名稱作為前綴，因此要停用某個伺服器的所有工具，只需使用：
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>範例</h2>
+<p>以下是一些常見 MCP 伺服器的設定範例。如果您想記錄其他伺服器的用法，歡迎提交 PR。</p>
+<hr>
+<h3>Sentry</h3>
+<p>新增 <a href="https://mcp.sentry.dev">Sentry MCP 伺服器</a> 以與您的 Sentry 專案和問題進行互動。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>新增設定後，使用 Sentry 進行身分驗證：</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>這會開啟瀏覽器視窗完成 OAuth 流程，將 vanilla-closedcode 連結到您的 Sentry 帳號。</p>
+<p>認證完成後，您可以在提示詞中使用 Sentry 工具來查詢問題、專案和錯誤資料。</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>新增 <a href="https://github.com/upstash/context7">Context7 MCP 伺服器</a> 以搜尋文件。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>如果您註冊了免費帳號，可以使用 API 金鑰來取得更高的速率限制。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>這裡假設您已經設定了 <code>CONTEXT7_API_KEY</code> 環境變數。</p>
+<p>在提示詞中新增 <code>use context7</code> 即可使用 Context7 MCP 伺服器。</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>您也可以在 <a href="/docs/rules/">AGENTS.md</a> 中新增類似的規則。</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>新增 <a href="https://grep.app">Grep by Vercel</a> MCP 伺服器以搜尋 GitHub 上的程式碼片段。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>由於我們將 MCP 伺服器命名為 <code>gh_grep</code>，您可以在提示詞中新增 <code>use the gh_grep tool</code> 來讓代理使用它。</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>您也可以在 <a href="/docs/rules/">AGENTS.md</a> 中新增類似的規則。</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,13 @@
+diff --git a/node_modules/@npmcli/agent/lib/agents.js b/node_modules/@npmcli/agent/lib/agents.js
+index c541b93..3bb0b18 100644
+--- a/node_modules/@npmcli/agent/lib/agents.js
++++ b/node_modules/@npmcli/agent/lib/agents.js
+@@ -32,7 +32,7 @@ module.exports = class Agent extends AgentBase {
+   }
+ 
+   get proxy () {
+-    return this.#proxy ? { url: this.#proxy } : {}
++    return this.#proxy ? { url: this.#proxy.toString() } : {}
+   }
+ 
+   #getProxy (options) {

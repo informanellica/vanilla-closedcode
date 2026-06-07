@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LSP 服务器 — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode 与你的 LSP 服务器集成。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/lsp.html">English</option>
+      <option value="../ar/lsp.html">العربية</option>
+      <option value="../bs/lsp.html">Bosanski</option>
+      <option value="../da/lsp.html">Dansk</option>
+      <option value="../de/lsp.html">Deutsch</option>
+      <option value="../es/lsp.html">Español</option>
+      <option value="../fr/lsp.html">Français</option>
+      <option value="../it/lsp.html">Italiano</option>
+      <option value="../ja/lsp.html">日本語</option>
+      <option value="../ko/lsp.html">한국어</option>
+      <option value="../nb/lsp.html">Norsk</option>
+      <option value="../pl/lsp.html">Polski</option>
+      <option value="../pt-br/lsp.html">Português (BR)</option>
+      <option value="../ru/lsp.html">Русский</option>
+      <option value="../th/lsp.html">ไทย</option>
+      <option value="../tr/lsp.html">Türkçe</option>
+      <option value="../zh-cn/lsp.html" selected>简体中文</option>
+      <option value="../zh-tw/lsp.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li class="active"><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>LSP 服务器</h1>
+      <p class="lede">vanilla-closedcode 与你的 LSP 服务器集成。</p>
+      <p>vanilla-closedcode 与你的语言服务器协议（LSP）集成，帮助 LLM 与你的代码库进行交互。它利用诊断信息向 LLM 提供反馈。</p>
+<hr>
+<h2>内置支持</h2>
+<p>vanilla-closedcode 内置了多种适用于主流语言的 LSP 服务器：</p>
+<table>
+<thead>
+<tr>
+<th>LSP 服务器</th>
+<th>扩展名</th>
+<th>要求</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>astro</td>
+<td>.astro</td>
+<td>为 Astro 项目自动安装</td>
+</tr>
+<tr>
+<td>bash</td>
+<td>.sh, .bash, .zsh, .ksh</td>
+<td>自动安装 bash-language-server</td>
+</tr>
+<tr>
+<td>clangd</td>
+<td>.c, .cpp, .cc, .cxx, .c++, .h, .hpp, .hh, .hxx, .h++</td>
+<td>为 C/C++ 项目自动安装</td>
+</tr>
+<tr>
+<td>csharp</td>
+<td>.cs</td>
+<td>需要已安装 <code>.NET SDK</code></td>
+</tr>
+<tr>
+<td>clojure-lsp</td>
+<td>.clj, .cljs, .cljc, .edn</td>
+<td>需要 <code>clojure-lsp</code> 命令可用</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td>需要 <code>dart</code> 命令可用</td>
+</tr>
+<tr>
+<td>deno</td>
+<td>.ts, .tsx, .js, .jsx, .mjs</td>
+<td>需要 <code>deno</code> 命令可用（自动检测 deno.json/deno.jsonc）</td>
+</tr>
+<tr>
+<td>elixir-ls</td>
+<td>.ex, .exs</td>
+<td>需要 <code>elixir</code> 命令可用</td>
+</tr>
+<tr>
+<td>eslint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue</td>
+<td>项目中需要 <code>eslint</code> 依赖</td>
+</tr>
+<tr>
+<td>fsharp</td>
+<td>.fs, .fsi, .fsx, .fsscript</td>
+<td>需要已安装 <code>.NET SDK</code></td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td>需要 <code>gleam</code> 命令可用</td>
+</tr>
+<tr>
+<td>gopls</td>
+<td>.go</td>
+<td>需要 <code>go</code> 命令可用</td>
+</tr>
+<tr>
+<td>hls</td>
+<td>.hs, .lhs</td>
+<td>需要 <code>haskell-language-server-wrapper</code> 命令可用</td>
+</tr>
+<tr>
+<td>jdtls</td>
+<td>.java</td>
+<td>需要已安装 <code>Java SDK (version 21+)</code></td>
+</tr>
+<tr>
+<td>julials</td>
+<td>.jl</td>
+<td>需要安装 <code>julia</code> and <code>LanguageServer.jl</code></td>
+</tr>
+<tr>
+<td>kotlin-ls</td>
+<td>.kt, .kts</td>
+<td>为 Kotlin 项目自动安装</td>
+</tr>
+<tr>
+<td>lua-ls</td>
+<td>.lua</td>
+<td>为 Lua 项目自动安装</td>
+</tr>
+<tr>
+<td>nixd</td>
+<td>.nix</td>
+<td>需要 <code>nixd</code> 命令可用</td>
+</tr>
+<tr>
+<td>ocaml-lsp</td>
+<td>.ml, .mli</td>
+<td>需要 <code>ocamllsp</code> 命令可用</td>
+</tr>
+<tr>
+<td>oxlint</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts, .vue, .astro, .svelte</td>
+<td>项目中需要 <code>oxlint</code> 依赖</td>
+</tr>
+<tr>
+<td>php intelephense</td>
+<td>.php</td>
+<td>为 PHP 项目自动安装</td>
+</tr>
+<tr>
+<td>prisma</td>
+<td>.prisma</td>
+<td>需要 <code>prisma</code> 命令可用</td>
+</tr>
+<tr>
+<td>pyright</td>
+<td>.py, .pyi</td>
+<td>需要已安装 <code>pyright</code> 依赖</td>
+</tr>
+<tr>
+<td>ruby-lsp (rubocop)</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>需要 <code>ruby</code> 和 <code>gem</code> 命令可用</td>
+</tr>
+<tr>
+<td>rust</td>
+<td>.rs</td>
+<td>需要 <code>rust-analyzer</code> 命令可用</td>
+</tr>
+<tr>
+<td>sourcekit-lsp</td>
+<td>.swift, .objc, .objcpp</td>
+<td>需要已安装 <code>swift</code>（macOS 上为 <code>xcode</code>）</td>
+</tr>
+<tr>
+<td>svelte</td>
+<td>.svelte</td>
+<td>为 Svelte 项目自动安装</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>从 GitHub releases 自动安装</td>
+</tr>
+<tr>
+<td>tinymist</td>
+<td>.typ, .typc</td>
+<td>从 GitHub releases 自动安装</td>
+</tr>
+<tr>
+<td>typescript</td>
+<td>.ts, .tsx, .js, .jsx, .mjs, .cjs, .mts, .cts</td>
+<td>项目中需要 <code>typescript</code> 依赖</td>
+</tr>
+<tr>
+<td>vue</td>
+<td>.vue</td>
+<td>为 Vue 项目自动安装</td>
+</tr>
+<tr>
+<td>yaml-ls</td>
+<td>.yaml, .yml</td>
+<td>自动安装 Red Hat yaml-language-server</td>
+</tr>
+<tr>
+<td>zls</td>
+<td>.zig, .zon</td>
+<td>需要 <code>zig</code> 命令可用</td>
+</tr>
+</tbody></table>
+<p>当检测到上述文件扩展名且满足相应要求时，LSP 服务器会自动启用。</p>
+<aside class="aside aside-note">
+你可以将 `CLOSEDCODE_DISABLE_LSP_DOWNLOAD` 环境变量设置为 `true` 来禁用 LSP 服务器的自动下载。
+</aside>
+---
+
+<h2>工作原理</h2>
+<p>当 closedcode 打开一个文件时，它会：</p>
+<ol>
+<li>将文件扩展名与所有已启用的 LSP 服务器进行匹配。</li>
+<li>如果对应的 LSP 服务器尚未运行，则自动启动它。</li>
+</ol>
+<hr>
+<h2>配置</h2>
+<p>你可以通过 closedcode 配置文件中的 <code>lsp</code> 部分来自定义 LSP 服务器。</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {}
+}
+</code></pre>
+<p>每个 LSP 服务器支持以下配置项：</p>
+<table>
+<thead>
+<tr>
+<th>属性</th>
+<th>类型</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>设置为 <code>true</code> 可禁用该 LSP 服务器</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>启动 LSP 服务器的命令</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>该 LSP 服务器需要处理的文件扩展名</td>
+</tr>
+<tr>
+<td><code>env</code></td>
+<td>object</td>
+<td>启动服务器时设置的环境变量</td>
+</tr>
+<tr>
+<td><code>initialization</code></td>
+<td>object</td>
+<td>发送给 LSP 服务器的初始化选项</td>
+</tr>
+</tbody></table>
+<p>下面来看一些示例。</p>
+<hr>
+<h3>环境变量</h3>
+<p>使用 <code>env</code> 属性在启动 LSP 服务器时设置环境变量：</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;rust&quot;: {
+      &quot;env&quot;: {
+        &quot;RUST_LOG&quot;: &quot;debug&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>初始化选项</h3>
+<p>使用 <code>initialization</code> 属性向 LSP 服务器传递初始化选项。这些是在 LSP <code>initialize</code> 请求期间发送的服务器特定设置：</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;initialization&quot;: {
+        &quot;preferences&quot;: {
+          &quot;importModuleSpecifierPreference&quot;: &quot;relative&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+初始化选项因 LSP 服务器而异。请查阅你所使用的 LSP 服务器的文档以了解可用选项。
+</aside>
+---
+
+<h3>禁用 LSP 服务器</h3>
+<p>要全局禁用<strong>所有</strong> LSP 服务器，将 <code>lsp</code> 设置为 <code>false</code>：</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: false
+}
+</code></pre>
+<p>要禁用<strong>特定的</strong> LSP 服务器，将 <code>disabled</code> 设置为 <code>true</code>：</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;typescript&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>自定义 LSP 服务器</h3>
+<p>你可以通过指定命令和文件扩展名来添加自定义 LSP 服务器：</p>
+<pre><code class="language-json">{
+  &quot;lsp&quot;: {
+    &quot;custom-lsp&quot;: {
+      &quot;command&quot;: [&quot;custom-lsp-server&quot;, &quot;--stdio&quot;],
+      &quot;extensions&quot;: [&quot;.custom&quot;]
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>补充信息</h2>
+<h3>PHP Intelephense</h3>
+<p>PHP Intelephense 通过许可证密钥提供高级功能。你可以将许可证密钥单独放在以下路径的文本文件中：</p>
+<ul>
+<li>macOS/Linux：<code>$HOME/intelephense/license.txt</code></li>
+<li>Windows：<code>%USERPROFILE%/intelephense/license.txt</code></li>
+</ul>
+<p>该文件应仅包含许可证密钥，不要添加其他任何内容。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

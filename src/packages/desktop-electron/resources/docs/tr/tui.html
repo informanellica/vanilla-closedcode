@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode terminal kullanıcı arayüzünü kullanma.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html" selected>Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">vanilla-closedcode terminal kullanıcı arayüzünü kullanma.</p>
+      <p>vanilla-closedcode, projelerinizde LLM ile çalışmak için etkileşimli bir terminal arayüzü (TUI) sunar.</p>
+<p>vanilla-closedcode&#39;u çalıştırdığınızda mevcut dizin için TUI başlar.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>İsterseniz belirli bir çalışma dizini için de başlatabilirsiniz.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>TUI içine girdiğinizde, bir mesajla istem gönderebilirsiniz.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>Dosya referansları</h2>
+<p>Mesajlarınızda <code>@</code> kullanarak dosyalara referans verebilirsiniz. Bu, mevcut çalışma dizininde bulanık dosya araması yapar.</p>
+<aside class="aside aside-tip">
+Mesajlarınızda dosyalara referans vermek için `@` kullanabilirsiniz.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>Dosya içeriği otomatik olarak konuşmaya eklenir.</p>
+<hr>
+<h2>Bash komutları</h2>
+<p>Bir mesajı <code>!</code> ile başlatarak shell komutu çalıştırın.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>Komut çıktısı bir araç sonucu olarak konuşmaya eklenir.</p>
+<hr>
+<h2>Komutlar</h2>
+<p>vanilla-closedcode TUI kullanırken <code>/</code> ve ardından komut adını yazarak hızlı eylemler çalıştırabilirsiniz. Örneğin:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>Komutların çoğu, lider tuşu <code>ctrl+x</code> olan bir kısayola da sahiptir. <a href="/docs/keybinds">Daha fazla bilgi</a>.</p>
+<p>İşte mevcut slash komutlarının tümü:</p>
+<hr>
+<h3>connect</h3>
+<p>vanilla-closedcode&#39;a bir sağlayıcı ekler. Mevcut sağlayıcıları seçip API anahtarları eklemenizi sağlar.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>Mevcut oturumu sıkıştırır. <em>Takma ad</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>Araç çalıştırma detaylarını göster/gizle yapar.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>Mesaj yazmak için harici editör açar. <code>EDITOR</code> ortam değişkeninde ayarlı editörü kullanır. <a href="#editor-setup">Daha fazla bilgi</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>vanilla-closedcode&#39;dan çıkar. <em>Takma adlar</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>Mevcut konuşmayı Markdown olarak dışa aktarır ve varsayılan editörünüzde açar. <code>EDITOR</code> ortam değişkeninde ayarlı editörü kullanır. <a href="#editor-setup">Daha fazla bilgi</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>Yardım penceresini gösterir.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p><code>AGENTS.md</code> dosyasını oluşturur veya günceller. <a href="/docs/rules">Daha fazla bilgi</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>Kullanılabilir modelleri listeler.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>Yeni bir oturum başlatır. <em>Takma ad</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>Geri alınan bir mesajı tekrar uygular. Yalnızca <code>/undo</code> kullanıldıktan sonra kullanılabilir.</p>
+<aside class="aside aside-tip">
+Herhangi bir dosya değişikliği de geri yüklenir.
+</aside>
+Dahili olarak bu işlem dosya değişikliklerini yönetmek için Git kullanır. Bu nedenle projenizin **bir Git deposu olması gerekir**.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>Oturumları listeler ve aralarında geçiş yapar. <em>Takma adlar</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>Mevcut oturumu paylaşır. <a href="/docs/share">Daha fazla bilgi</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>Kullanılabilir temaları listeler.</p>
+<pre><code class="language-bash">/themes
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>Konuşmadaki thinking/reasoning bloklarının görünürlüğünü değiştirir. Etkin olduğunda, genişletilmiş düşünmeyi destekleyen modellerin akıl yürütme sürecini görebilirsiniz.</p>
+<aside class="aside aside-note">
+Bu komut sadece thinking bloklarının **gösterilip gösterilmeyeceğini** kontrol eder - modelin akıl yürütme yeteneklerini etkinleştirmez veya devre dışı bırakmaz. Gerçek akıl yürütme yeteneklerini değiştirmek için `ctrl+t` kullanarak model varyantları arasında geçiş yapın.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>Konuşmadaki son mesajı geri alır. En son kullanıcı mesajını, sonraki tüm yanıtları ve dosya değişikliklerini kaldırır.</p>
+<aside class="aside aside-tip">
+Yapılan tüm dosya değişiklikleri de geri alınır.
+</aside>
+Dahili olarak bu işlem dosya değişikliklerini yönetmek için Git kullanır. Bu nedenle projenizin **bir Git deposu olması gerekir**.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>Kısayol:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>Mevcut oturumun paylaşımını kaldırır. <a href="/docs/share#un-sharing">Daha fazla bilgi</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>Editör kurulumu</h2>
+<p>Hem <code>/editor</code> hem de <code>/export</code> komutları, <code>EDITOR</code> ortam değişkeninde belirtilen editörü kullanır.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+Kalıcı yapmak için bunu kabuk profilinize ekleyin;
+`~/.bashrc`, `~/.zshrc` vb.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+Kalıcı yapmak için **System Properties** &gt; **Environment
+Variables** yolunu kullanın.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+Kalıcı yapmak için bunu PowerShell profilinize ekleyin.
+</code></pre>
+</div>
+</div>
+
+<p>Popüler editör seçenekleri şunları içerir:</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim editörü</li>
+<li><code>vim</code> - Vim editörü</li>
+<li><code>nano</code> - Nano editörü</li>
+<li><code>notepad</code> - Windows Notepad</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+VS Code gibi bazı editörlerin `--wait` bayrağı ile başlatılması gerekir.
+</aside>
+Bazı editörler bloklama modunda çalışmak için komut satırı argümanlarına ihtiyaç duyar. `--wait` bayrağı, editör süreci kapanana kadar işlemin bloklanmasını sağlar.
+
+<hr>
+<h2>Yapılandırma</h2>
+<p>TUI davranışını <code>tui.json</code> (veya <code>tui.jsonc</code>) aracılığıyla özelleştirebilirsiniz.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Bu, sunucu/çalışma zamanı davranışını yapılandıran <code>closedcode.json</code> dosyasından ayrıdır.</p>
+<h3>Seçenekler</h3>
+<ul>
+<li><code>theme</code> - UI temanızı ayarlar. <a href="/docs/themes">Daha fazla bilgi</a>.</li>
+<li><code>keybinds</code> - Klavye kısayollarını özelleştirir. <a href="/docs/keybinds">Daha fazla bilgi</a>.</li>
+<li><code>scroll_acceleration.enabled</code> - Pürüzsüz, doğal kaydırma için macOS tarzı kaydırma ivmesini etkinleştirin. Etkinleştirildiğinde, kaydırma hızı hızlı kaydırma hareketleriyle artar ve daha yavaş hareketler için hassas kalır. <strong>Bu ayar <code>scroll_speed</code> ayarından önceliklidir ve etkinleştirildiğinde onu geçersiz kılar.</strong></li>
+<li><code>scroll_speed</code> - Kaydırma komutlarını kullanırken TUI&#39;nin ne kadar hızlı kaydırılacağını kontrol eder (minimum: <code>0.001</code>, ondalık değerleri destekler). Varsayılan değer <code>3</code>&#39;tür. <strong>Not: <code>scroll_acceleration.enabled</code> <code>true</code> olarak ayarlanmışsa bu yok sayılır.</strong></li>
+<li><code>diff_style</code> - Fark (diff) oluşturmayı kontrol eder. <code>&quot;auto&quot;</code> terminal genişliğine uyum sağlar, <code>&quot;stacked&quot;</code> her zaman tek sütunlu bir düzen gösterir.</li>
+</ul>
+<p>Özel bir TUI yapılandırma yolu yüklemek için <code>CLOSEDCODE_TUI_CONFIG</code> kullanın.</p>
+<hr>
+<h2>Özelleştirme</h2>
+<p>Komut paletini (<code>ctrl+x h</code> veya <code>/help</code>) kullanarak TUI görünümünün çeşitli yönlerini özelleştirebilirsiniz. Bu ayarlar yeniden başlatmalar arasında korunur.</p>
+<hr>
+<h4>Kullanıcı adı görünümü</h4>
+<p>Sohbet mesajlarında kullanıcı adınızın görünüp görünmeyeceğini değiştirin. Buna şuradan erişin:</p>
+<ul>
+<li>Komut paleti: &quot;username&quot; veya &quot;hide username&quot; araması yapın</li>
+<li>Ayar otomatik olarak kalıcı hale gelir ve TUI oturumları arasında hatırlanır</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

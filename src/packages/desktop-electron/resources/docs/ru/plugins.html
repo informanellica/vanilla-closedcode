@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Плагины — vanilla-closedcode docs</title>
+  <meta name="description" content="Напишите свои собственные плагины для расширения closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html">Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html" selected>Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Плагины</h1>
+      <p class="lede">Напишите свои собственные плагины для расширения closedcode.</p>
+      <p>Плагины позволяют расширять closedcode, подключаясь к различным событиям и настраивая поведение. Вы можете создавать плагины для добавления новых функций, интеграции с внешними сервисами или изменения поведения closedcode по умолчанию.</p>
+<p>Для примера ознакомьтесь с <a href="/docs/ecosystem#plugins">plugins</a>, созданными сообществом.</p>
+<hr>
+<h2>Используйте плагин</h2>
+<p>Есть два способа загрузки плагинов.</p>
+<hr>
+<h3>Из локальных файлов</h3>
+<p>Поместите файлы JavaScript или TypeScript в каталог плагина.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> – плагины уровня проекта.</li>
+<li><code>~/.config/closedcode/plugins/</code> — глобальные плагины</li>
+</ul>
+<p>Файлы в этих каталогах автоматически загружаются при запуске.</p>
+<hr>
+<h3>Из npm</h3>
+<p>Укажите пакеты npm в файле конфигурации.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Поддерживаются как обычные, так и ограниченные пакеты npm.</p>
+<p>Просмотрите доступные плагины в папке <a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>Как устанавливаются плагины</h3>
+<p><strong>Плагины npm</strong> устанавливаются автоматически с помощью npm при запуске. Пакеты и их зависимости кэшируются в <code>~/.cache/closedcode/node_modules/</code>.</p>
+<p><strong>Локальные плагины</strong> загружаются непосредственно из каталога плагинов. Чтобы использовать внешние пакеты, вы должны создать <code>package.json</code> в своем каталоге конфигурации (см. <a href="#dependencies">Зависимости</a>) или опубликовать плагин в npm и <a href="/docs/config#plugins">добавить его в свой config</a>.</p>
+<hr>
+<h3>Порядок загрузки</h3>
+<p>Плагины загружаются из всех источников, и все хуки запускаются последовательно. Порядок загрузки следующий:</p>
+<ol>
+<li>Глобальная конфигурация (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Конфигурация проекта (<code>closedcode.json</code>)</li>
+<li>Глобальный каталог плагинов (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Каталог плагинов проекта (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Дубликаты пакетов npm с тем же именем и версией загружаются один раз. Однако локальный плагин и плагин npm со схожими именами загружаются отдельно.</p>
+<hr>
+<h2>Создать плагин</h2>
+<p>Плагин — это <strong>модуль JavaScript/TypeScript</strong>, который экспортирует один или несколько плагинов.
+функции. Каждая функция получает объект контекста и возвращает объект перехватчика.</p>
+<hr>
+<h3>Зависимости</h3>
+<p>Локальные плагины и специальные инструменты могут использовать внешние пакеты npm. Добавьте <code>package.json</code> в каталог конфигурации с необходимыми вам зависимостями.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>closedcode запускает <code>npm install</code> при запуске для их установки. Затем ваши плагины и инструменты смогут импортировать их.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Базовая структура</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Функция плагина получает:</p>
+<ul>
+<li><code>project</code>: Текущая информация о проекте.</li>
+<li><code>directory</code>: текущий рабочий каталог.</li>
+<li><code>worktree</code>: путь к рабочему дереву git.</li>
+<li><code>client</code>: клиент SDK с открытым кодом для взаимодействия с ИИ.</li>
+</ul>
+<hr>
+<h3>Поддержка TypeScript</h3>
+<p>Для плагинов TypeScript вы можете импортировать типы из пакета плагина:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>События</h3>
+<p>Плагины могут подписываться на события, как показано ниже в разделе «Примеры». Вот список различных доступных событий.</p>
+<h4>Командные события</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>События файла</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>События установки</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>События LSP</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>События сообщений</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>События разрешения</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>События сервера</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>События сессии</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>События</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>События shell</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>События инструмента</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>Мероприятия TUI</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Примеры</h2>
+<p>Вот несколько примеров плагинов, которые вы можете использовать для расширения closedcode.</p>
+<hr>
+<h3>Отправлять уведомления</h3>
+<p>Отправляйте уведомления при возникновении определенных событий:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Мы используем <code>osascript</code> для запуска AppleScript на macOS. Здесь мы используем его для отправки уведомлений.</p>
+<aside class="aside aside-note">
+Если вы используете настольное приложение closedcode, оно может автоматически отправлять системные уведомления, когда ответ готов или когда возникает ошибка сеанса.
+</aside>
+---
+
+<h3>Защита .env</h3>
+<p>Запретите открытому коду читать файлы <code>.env</code>:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Внедрение переменных среды</h3>
+<p>Внедряйте переменные среды во все shell-процессы выполнения (инструменты искусственного интеллекта и пользовательские terminal):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Пользовательские инструменты</h3>
+<p>Плагины также могут добавлять в closedcode собственные инструменты:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p>Помощник <code>tool</code> создает собственный инструмент, который может вызывать closedcode. Он принимает функцию схемы Zod и возвращает определение инструмента:</p>
+<ul>
+<li><code>description</code>: Что делает инструмент</li>
+<li><code>args</code>: схема Zod для аргументов инструмента.</li>
+<li><code>execute</code>: функция, которая запускается при вызове инструмента.</li>
+</ul>
+<p>Ваши пользовательские инструменты будут доступны для открытия кода наряду со встроенными инструментами.</p>
+<hr>
+<h3>Ведение журнала</h3>
+<p>Используйте <code>client.app.log()</code> вместо <code>console.log</code> для структурированного ведения журнала:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Уровни: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Подробности см. в документации SDK](./sdk.html).</p>
+<hr>
+<h3>Хуки сжатия</h3>
+<p>Настройте контекст, включаемый при сжатии сеанса:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p>Хук <code>experimental.session.compacting</code> срабатывает до того, как LLM сгенерирует сводку для продолжения. Используйте его для внедрения контекста, специфичного для домена, который будет пропущен при запросе на сжатие по умолчанию.</p>
+<p>Вы также можете полностью заменить запрос на уплотнение, установив <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Если установлен <code>output.prompt</code>, он полностью заменяет приглашение на сжатие по умолчанию. Массив <code>output.context</code> в этом случае игнорируется.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

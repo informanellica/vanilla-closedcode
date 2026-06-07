@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>権限 — vanilla-closedcode docs</title>
+  <meta name="description" content="どのアクションの実行に承認が必要かを制御します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html" selected>日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>権限</h1>
+      <p class="lede">どのアクションの実行に承認が必要かを制御します。</p>
+      <p>vanilla-closedcode は <code>permission</code> 設定を使用して、特定のアクションを自動的に実行するか、プロンプトを表示するか、ブロックするかを決定します。</p>
+<p><code>v1.1.1</code> 現在、従来の <code>tools</code> ブール値設定は非推奨となり、<code>permission</code> にマージされました。古い <code>tools</code> 設定は、下位互換性のために引き続きサポートされています。</p>
+<hr>
+<h2>アクション</h2>
+<p>各権限ルールは次のいずれかに解決されます。</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — 承認なしで実行します</li>
+<li><code>&quot;ask&quot;</code> — 承認を求めるプロンプト</li>
+<li><code>&quot;deny&quot;</code> — アクションをブロックする</li>
+</ul>
+<hr>
+<h2>設定</h2>
+<p>権限をグローバルに (<code>*</code> を使用して) 設定し、特定のツールをオーバーライドできます。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>すべての権限を一度に設定することもできます。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>詳細なルール (オブジェクト構文)</h2>
+<p>ほとんどの権限では、オブジェクトを使用して、ツール入力に基づいてさまざまなアクションを適用できます。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>ルールはパターンマッチによって評価され、<strong>最後に一致したルールが優先されます</strong>。一般的なパターンは、キャッチオール <code>&quot;*&quot;</code> ルールを最初に置き、その後により具体的なルールを置くことです。</p>
+<h3>ワイルドカード</h3>
+<p>許可パターンでは、単純なワイルドカードマッチングを使用します。</p>
+<ul>
+<li><code>*</code> は 0 個以上の任意の文字と一致します</li>
+<li><code>?</code> は 1 つの文字に正確に一致します</li>
+<li>他のすべての文字は文字通り一致します</li>
+</ul>
+<h3>ホームディレクトリの展開</h3>
+<p>パターンの先頭で <code>~</code> または <code>$HOME</code> を使用して、ホームディレクトリを参照できます。これは、<a href="#external-directories"><code>external_directory</code></a> ルールに特に役立ちます。</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>外部ディレクトリ</h3>
+<p><code>external_directory</code> を使用して、vanilla-closedcode が開始された作業ディレクトリの外部のパスに触れるツール呼び出しを許可します。これは、パスを入力として受け取るすべてのツール (<code>read</code>、<code>edit</code>、<code>glob</code>、<code>grep</code>、および多くの <code>bash</code> コマンドなど) に適用されます。</p>
+<p>ホーム展開 (<code>~/...</code> など) は、パターンの記述方法にのみ影響します。外部パスは現在のワークスペースの一部にはならないため、作業ディレクトリの外部のパスも <code>external_directory</code> 経由で許可する必要があります。</p>
+<p>たとえば、これにより、<code>~/projects/personal/</code> の下にあるすべてのものへのアクセスが許可されます。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>ここで許可されるディレクトリはすべて、現在のワークスペースと同じデフォルトを継承します。 <a href="#defaults"><code>read</code> のデフォルトは <code>allow</code></a> であるため、オーバーライドされない限り、<code>external_directory</code> の下のエントリの読み取りも許可されます。読み取りを保持しながら編集をブロックするなど、ツールをこれらのパスで制限する必要がある場合は、明示的なルールを追加します。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>信頼できるパスに重点を置いたリストを維持し、他のツール (<code>bash</code> など) の必要に応じて追加の許可または拒否ルールを追加します。</p>
+<hr>
+<h2>利用可能な権限</h2>
+<p>vanilla-closedcode の権限は、ツール名に加えて、いくつかの安全対策によってキー化されます。</p>
+<ul>
+<li><code>read</code> — ファイルの読み取り (ファイルパスと一致)</li>
+<li><code>edit</code> — すべてのファイル変更 (<code>edit</code>、<code>write</code>、<code>patch</code> をカバー)</li>
+<li><code>glob</code> — ファイルのグロビング (グロブパターンと一致)</li>
+<li><code>grep</code> — コンテンツ検索 (正規表現パターンと一致)</li>
+<li><code>bash</code> — シェルコマンドの実行 (<code>git status --porcelain</code> などの解析されたコマンドと一致します)</li>
+<li><code>task</code> — サブエージェントの起動 (サブエージェントのタイプと一致)</li>
+<li><code>skill</code> — スキルをロードしています（スキル名と一致します）</li>
+<li><code>lsp</code> — LSP クエリの実行 (現在は非細分性)</li>
+<li><code>webfetch</code> — URL を取得します (URL と一致します)</li>
+<li><code>websearch</code> — Web検索 (クエリと一致)</li>
+<li><code>external_directory</code> — ツールがプロジェクトの作業ディレクトリ外のパスにアクセスするとトリガーされます。</li>
+<li><code>doom_loop</code> — 同じ入力で同じツール呼び出しが 3 回繰り返されたときにトリガーされます。</li>
+</ul>
+<hr>
+<h2>デフォルト</h2>
+<p>何も指定しない場合、vanilla-closedcode は許容的なデフォルトから開始します。</p>
+<ul>
+<li>ほとんどの権限はデフォルトで <code>&quot;allow&quot;</code> に設定されます。</li>
+<li><code>doom_loop</code> と <code>external_directory</code> のデフォルトは <code>&quot;ask&quot;</code> です。</li>
+<li><code>read</code> は <code>&quot;allow&quot;</code> ですが、<code>.env</code> ファイルはデフォルトで拒否されます。</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>承認の要求</h2>
+<p>vanilla-closedcode が承認を求めるプロンプトを表示すると、UI は 3 つの結果を提供します。</p>
+<ul>
+<li><code>once</code> — このリクエストのみを承認します</li>
+<li><code>always</code> — 提案されたパターンに一致する今後のリクエストを承認します（現在の vanilla-closedcode セッションの残りの部分）</li>
+<li><code>reject</code> — リクエストを拒否します</li>
+</ul>
+<p><code>always</code> が承認するパターンのセットは、ツールによって提供されます (たとえば、bash の承認では通常、<code>git status*</code> のような安全なコマンドプレフィックスがホワイトリストに登録されます)。</p>
+<hr>
+<h2>エージェント</h2>
+<p>エージェントごとに権限をオーバーライドできます。エージェントの権限はグローバル設定とマージされ、エージェントルールが優先されます。 <a href="/docs/agents#permissions">エージェントの権限について詳しくは、</a> をご覧ください。</p>
+<aside class="aside aside-note">
+パターンマッチングの詳細な例については、上記の[詳細なルール (オブジェクト構文)](#detailed-rules-object-syntax)セクションを参照してください。
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Markdown でエージェントの権限を構成することもできます。</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+引数のあるコマンドにはパターンマッチングを使用します。 `"grep *"` は `grep pattern file.txt` を許可しますが、`"grep"` だけではブロックされます。 `git status` のようなコマンドはデフォルトの動作で機能しますが、引数を渡すときに明示的な許可 (`"git status *"` など) が必要です。
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Markdownでエージェントの権限を構成することもできます。</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+引数のあるコマンドにはパターン マッチングを使用します。 `"grep *"` は `grep pattern file.txt` を許可しますが、`"grep"` だけではブロックされます。 `git status` のようなコマンドはデフォルトの動作で機能しますが、引数を渡すときに明示的な許可 (`"git status *"` など) が必要です。
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

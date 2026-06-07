@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Команды — vanilla-closedcode docs</title>
+  <meta name="description" content="Создавайте собственные команды для повторяющихся задач.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html" selected>Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Команды</h1>
+      <p class="lede">Создавайте собственные команды для повторяющихся задач.</p>
+      <p>Пользовательские команды позволяют указать подсказку, которую вы хотите запускать при выполнении этой команды в TUI.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Пользовательские команды дополняют встроенные команды, такие как <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Подробнее</a>.</p>
+<hr>
+<h2>Создание файлов команд</h2>
+<p>Создайте Markdown файлы в каталоге <code>commands/</code> для определения пользовательских команд.</p>
+<p>Создайте <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Фронтматтер (frontmatter) определяет свойства команды. Содержимое становится шаблоном.</p>
+<p>Используйте команду, набрав <code>/</code>, а затем имя команды.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Настройка</h2>
+<p>Вы можете добавлять собственные команды через конфигурацию closedcode или создав файлы Markdown в каталоге <code>commands/</code>.</p>
+<hr>
+<h3>JSON</h3>
+<p>Используйте опцию <code>command</code> в вашем closedcode <a href="/docs/config">config</a>:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Теперь вы можете запустить эту команду в TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Вы также можете определять команды, используя Markdown файлы. Поместите их в:</p>
+<ul>
+<li>Глобальный: <code>~/.config/closedcode/commands/</code></li>
+<li>Для каждого проекта: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Имя Markdown файла становится именем команды. Например, <code>test.md</code> позволяет
+вам запустить:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Настройка промпта</h2>
+<p>Подсказки для пользовательских команд поддерживают несколько специальных заполнителей и синтаксиса.</p>
+<hr>
+<h3>Аргументы</h3>
+<p>Передавайте аргументы командам, используя заполнитель <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Запустите команду с аргументами:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>И <code>$ARGUMENTS</code> будет заменен на <code>Button</code>.</p>
+<p>Вы также можете получить доступ к отдельным аргументам, используя позиционные параметры:</p>
+<ul>
+<li><code>$1</code> — первый аргумент</li>
+<li><code>$2</code> — Второй аргумент</li>
+<li><code>$3</code> — Третий аргумент</li>
+<li>И так далее...</li>
+</ul>
+<p>Например:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Запустите команду:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Это заменяет:</p>
+<ul>
+<li><code>$1</code> с <code>config.json</code></li>
+<li><code>$2</code> с <code>src</code></li>
+<li><code>$3</code> с <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Вывод shell</h3>
+<p>Используйте <em>!<code>command</code></em>, чтобы ввести вывод команды bash](/docs/tui#bash-commands) в приглашение.</p>
+<p>Например, чтобы создать пользовательскую команду, которая анализирует тестовое покрытие:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Или просмотреть последние изменения:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Команды выполняются в корневом каталоге вашего проекта, и их вывод становится частью приглашения.</p>
+<hr>
+<h3>Ссылки на файлы</h3>
+<p>Включите файлы в свою команду, используя <code>@</code>, за которым следует имя файла.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Содержимое файла автоматически включается в приглашение.</p>
+<hr>
+<h2>Параметры</h2>
+<p>Рассмотрим варианты конфигурации подробнее.</p>
+<hr>
+<h3>Template</h3>
+<p>Параметр <code>template</code> определяет приглашение, которое будет отправлено в LLM при выполнении команды.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Это <strong>обязательный</strong> параметр конфигурации.</p>
+<hr>
+<h3>Описание</h3>
+<p>Используйте опцию <code>description</code>, чтобы предоставить краткое описание того, что делает команда.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Это отображается в виде описания в TUI при вводе команды.</p>
+<hr>
+<h3>Агент</h3>
+<p>Используйте конфигурацию <code>agent</code>, чтобы дополнительно указать, какой <a href="/docs/agents">агент</a> должен выполнить эту команду.
+Если это <a href="/docs/agents/#subagents">subagent</a>, команда по умолчанию инициирует вызов субагента.
+Чтобы отключить это поведение, установите для <code>subtask</code> значение <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Это <strong>необязательный</strong> параметр конфигурации. Если не указано, по умолчанию используется текущий агент.</p>
+<hr>
+<h3>Subtask</h3>
+<p>Используйте логическое значение <code>subtask</code>, чтобы заставить команду инициировать вызов <a href="/docs/agents/#subagents">subagent</a>.
+Это полезно, если вы хотите, чтобы команда не загрязняла ваш основной контекст и <strong>заставляла</strong> агента действовать как субагент.
+даже если для <code>mode</code> установлено значение <code>primary</code> в конфигурации <a href="/docs/agents">agent</a>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Это <strong>необязательный</strong> параметр конфигурации.</p>
+<hr>
+<h3>Модель</h3>
+<p>Используйте конфигурацию <code>model</code>, чтобы переопределить модель по умолчанию для этой команды.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Это <strong>необязательный</strong> параметр конфигурации.</p>
+<hr>
+<h2>Встроенные команды</h2>
+<p>closedcode включает несколько встроенных команд, таких как <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">подробнее</a>.</p>
+<aside class="aside aside-note">
+Пользовательские команды могут переопределять встроенные команды.
+</aside>
+Если вы определите пользовательскую команду с тем же именем, она переопределит встроенную команду.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLI — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode CLI muligheder og kommandoer.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/cli.html">English</option>
+      <option value="../ar/cli.html">العربية</option>
+      <option value="../bs/cli.html">Bosanski</option>
+      <option value="../da/cli.html" selected>Dansk</option>
+      <option value="../de/cli.html">Deutsch</option>
+      <option value="../es/cli.html">Español</option>
+      <option value="../fr/cli.html">Français</option>
+      <option value="../it/cli.html">Italiano</option>
+      <option value="../ja/cli.html">日本語</option>
+      <option value="../ko/cli.html">한국어</option>
+      <option value="../nb/cli.html">Norsk</option>
+      <option value="../pl/cli.html">Polski</option>
+      <option value="../pt-br/cli.html">Português (BR)</option>
+      <option value="../ru/cli.html">Русский</option>
+      <option value="../th/cli.html">ไทย</option>
+      <option value="../tr/cli.html">Türkçe</option>
+      <option value="../zh-cn/cli.html">简体中文</option>
+      <option value="../zh-tw/cli.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li class="active"><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>CLI</h1>
+      <p class="lede">vanilla-closedcode CLI muligheder og kommandoer.</p>
+      <p>vanilla-closedcode CLI starter som standard <a href="/docs/tui">TUI</a>, når den kører uden nogen argumenter.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Men den accepterer også kommandoer som dokumenteret på denne side. Dette giver dig mulighed for at interagere med vanilla-closedcode programmatisk.</p>
+<pre><code class="language-bash">closedcode run &quot;Explain how closures work in JavaScript&quot;
+</code></pre>
+<hr>
+<h3>tui</h3>
+<p>Start vanilla-closedcode terminalbrugergrænsefladen.</p>
+<pre><code class="language-bash">closedcode [project]
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Fortsæt sidste session</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Sessions-id for at fortsætte</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forgren sessionen ved fortsættelse (brug med <code>--continue</code> eller <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--prompt"}</code></nobr></td>
+<td></td>
+<td>Spørg om at bruge</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Model til brug i form af provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agent hos bruge</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Port at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td></td>
+<td>Værtsnavn at lytte på</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Kommandoer</h2>
+<p>vanilla-closedcode CLI har også følgende kommandoer.</p>
+<hr>
+<h3>agent</h3>
+<p>Administrer agenter i vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode agent [command]
+</code></pre>
+<hr>
+<h3>attach</h3>
+<p>Tilslut en terminal til en allerede kørende vanilla-closedcode backend-server startet via <code>serve</code> eller <code>web</code> kommandoer.</p>
+<pre><code class="language-bash">closedcode attach [url]
+</code></pre>
+<p>Dette gør det muligt at bruge TUI med en ekstern vanilla-closedcode backend. For eksempel:</p>
+<pre><code class="language-bash"># Start the backend server for web/mobile access
+closedcode web --port 4096 --hostname 0.0.0.0
+
+# In another terminal, attach the TUI to the running backend
+closedcode attach http://10.20.30.40:4096
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Arbejdsmappe til at starte TUI i</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Fortsæt den seneste session</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Sessions-id for at fortsætte</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forgren sessionen ved fortsættelse (brug med <code>--continue</code> eller <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Adgangskode til basic auth (standard: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Brugernavn til basic auth (standard: <code>CLOSEDCODE_SERVER_USERNAME</code> eller <code>closedcode</code>)</td>
+</tr>
+</tbody></table>
+<hr>
+<h4>create</h4>
+<p>Opret en ny agent med brugerdefineret konfiguration.</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>Denne kommando vil guide dig gennem oprettelse af en ny agent med en brugerdefineret systemprompt og værktøjskonfiguration.</p>
+<hr>
+<h4>list</h4>
+<p>Liste over alle tilgængelige agenter.</p>
+<pre><code class="language-bash">closedcode agent list
+</code></pre>
+<hr>
+<h3>auth</h3>
+<p>Kommando til at administrere legitimationsoplysninger og login for udbydere.</p>
+<pre><code class="language-bash">closedcode auth [command]
+</code></pre>
+<hr>
+<h4>login</h4>
+<p>vanilla-closedcode drives af udbyderlisten på <a href="https://models.dev">Models.dev</a>, så du kan bruge <code>closedcode auth login</code> til at konfigurere API-nøgler for enhver udbyder, du vil bruge. Dette er gemt i <code>~/.local/share/closedcode/auth.json</code>.</p>
+<pre><code class="language-bash">closedcode auth login
+</code></pre>
+<p>Når vanilla-closedcode starter op, indlæser den udbyderne fra legitimationsfilen. Og hvis der er nogen nøgler defineret i dine miljøer eller en <code>.env</code> fil i dit projekt.</p>
+<hr>
+<h4>list</h4>
+<p>Viser alle de godkendte udbydere som gemt i legitimationsfilen.</p>
+<pre><code class="language-bash">closedcode auth list
+</code></pre>
+<p>Eller den korte version.</p>
+<pre><code class="language-bash">closedcode auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Logger dig ud af en udbyder ved at rydde den fra legitimationsfilen.</p>
+<pre><code class="language-bash">closedcode auth logout
+</code></pre>
+<hr>
+<h3>github</h3>
+<p>Administrator GitHub-agenten til lagerautomatisering.</p>
+<pre><code class="language-bash">closedcode github [command]
+</code></pre>
+<hr>
+<h4>install</h4>
+<p>Installatør GitHub-agenten i dit lager.</p>
+<pre><code class="language-bash">closedcode github install
+</code></pre>
+<p>Dette opsætter det nødvendige GitHub Actions workflow og guider dig gennem konfigurationsprocessen. <a href="/docs/github">Learn more</a>.</p>
+<hr>
+<h4>run</h4>
+<p>Kør GitHub-agenten. Dette bruges typisk i GitHub Actions.</p>
+<pre><code class="language-bash">closedcode github run
+</code></pre>
+<h5>Flag</h5>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--event"}</code></nobr></td>
+<td>GitHub mock begivenhed for at køre agenten for</td>
+</tr>
+<tr>
+<td><nobr><code>{"--token"}</code></nobr></td>
+<td>GitHub personlig adgangstoken</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>mcp</h3>
+<p>Administrator Model Context Protocol-servere.</p>
+<pre><code class="language-bash">closedcode mcp [command]
+</code></pre>
+<hr>
+<h4>add</h4>
+<p>Tilføj en MCP-server til din konfiguration.</p>
+<pre><code class="language-bash">closedcode mcp add
+</code></pre>
+<p>Denne kommando vil guide dig gennem tilføjelse af enten en lokal eller ekstern MCP-server.</p>
+<hr>
+<h4>list</h4>
+<p>Liste over alle konfigurerede MCP-servere og deres forbindelsesstatus.</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>Eller brug den korte version.</p>
+<pre><code class="language-bash">closedcode mcp ls
+</code></pre>
+<hr>
+<h4>auth</h4>
+<p>Godkendt med en OAuth-aktiveret MCP-server.</p>
+<pre><code class="language-bash">closedcode mcp auth [name]
+</code></pre>
+<p>Hvis du ikke angiver et servernavn, bliver du bedt om at vælge blandt tilgængelige OAuth-kompatible servere.</p>
+<p>Du kan også angive OAuth-kompatible servere og deres godkendelsesstatus.</p>
+<pre><code class="language-bash">closedcode mcp auth list
+</code></pre>
+<p>Eller brug den korte version.</p>
+<pre><code class="language-bash">closedcode mcp auth ls
+</code></pre>
+<hr>
+<h4>logout</h4>
+<p>Fjern OAuth-legitimationsoplysninger for en MCP-server.</p>
+<pre><code class="language-bash">closedcode mcp logout [name]
+</code></pre>
+<hr>
+<h4>debug</h4>
+<p>Fejlfinding af OAuth-forbindelsesproblemer for en MCP-server.</p>
+<pre><code class="language-bash">closedcode mcp debug &lt;name&gt;
+</code></pre>
+<hr>
+<h3>models</h3>
+<p>Liste over alle tilgængelige modeller fra konfigurerede udbydere.</p>
+<pre><code class="language-bash">closedcode models [provider]
+</code></pre>
+<p>Denne kommando viser alle tilgængelige modeller på tværs af dine konfigurerede udbydere i formatet <code>provider/model</code>.</p>
+<p>Dette er nyttigt til at finde ud af det nøjagtige modelnavn, der skal bruges i <a href="/docs/config/">your config</a>.</p>
+<p>Du kan eventuelt videregive et udbyder-id for at filtrere modeller efter den udbyder.</p>
+<pre><code class="language-bash">closedcode models anthropic
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--refresh"}</code></nobr></td>
+<td>Opdater modelcachen fra models.dev</td>
+</tr>
+<tr>
+<td><nobr><code>{"--verbose"}</code></nobr></td>
+<td>Brug mere detaljeret modeloutput (inkluderer metadata som omkostninger)</td>
+</tr>
+</tbody></table>
+<p>Brug flaget <code>--refresh</code> til at opdatere den cachelagrede modelliste. Dette er nyttigt, når nye modeller er blevet tilføjet til en udbyder, og du vil se dem i vanilla-closedcode.</p>
+<pre><code class="language-bash">closedcode models --refresh
+</code></pre>
+<hr>
+<h3>run</h3>
+<p>Kør closedcode i ikke-interaktiv tilstand ved at sende en prompt direkte.</p>
+<pre><code class="language-bash">closedcode run [message..]
+</code></pre>
+<p>Dette er nyttigt til scripting, automatisering, eller når du vil have et hurtigt svar uden at starte hele TUI. F.eks.</p>
+<pre><code class="language-bash">closedcode run Explain the use of context in Go
+</code></pre>
+<p>Du kan også vedhæfte til en kørende <code>closedcode serve</code>-instans for at undgå MCP serverens kolde opstartstider ved hver kørsel:</p>
+<pre><code class="language-bash"># Start a headless server in one terminal
+closedcode serve
+
+# In another terminal, run commands that attach to it
+closedcode run --attach http://localhost:4096 &quot;Explain async/await in JavaScript&quot;
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--command"}</code></nobr></td>
+<td></td>
+<td>Kommandoen til at køre, brug besked til args</td>
+</tr>
+<tr>
+<td><nobr><code>{"--continue"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Fortsæt sidste session</td>
+</tr>
+<tr>
+<td><nobr><code>{"--session"}</code></nobr></td>
+<td><code>-s</code></td>
+<td>Sessions-id for at fortsætte</td>
+</tr>
+<tr>
+<td><nobr><code>{"--fork"}</code></nobr></td>
+<td></td>
+<td>Forgren sessionen ved fortsættelse (brug med <code>--continue</code> eller <code>--session</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--share"}</code></nobr></td>
+<td></td>
+<td>Del sessionen</td>
+</tr>
+<tr>
+<td><nobr><code>{"--model"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Model til brug i form af provider/model</td>
+</tr>
+<tr>
+<td><nobr><code>{"--agent"}</code></nobr></td>
+<td></td>
+<td>Agent til brug</td>
+</tr>
+<tr>
+<td><nobr><code>{"--file"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Fil(er), der skal vedhæftes til meddelelsen</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Format: standard (formateret) eller json (rå JSON hændelser)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--title"}</code></nobr></td>
+<td></td>
+<td>Titel for sessionen (bruger trunkeret prompt, hvis der ikke er angivet nogen værdi)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--attach"}</code></nobr></td>
+<td></td>
+<td>Tilslut til en kørende closedcode-server (f.eks. <a href="http://localhost:4096">http://localhost:4096</a>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--password"}</code></nobr></td>
+<td><code>-p</code></td>
+<td>Adgangskode til basic auth (standard: <code>CLOSEDCODE_SERVER_PASSWORD</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--username"}</code></nobr></td>
+<td><code>-u</code></td>
+<td>Brugernavn til basic auth (standard: <code>CLOSEDCODE_SERVER_USERNAME</code> eller <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dir"}</code></nobr></td>
+<td></td>
+<td>Mappe at køre i, eller sti på fjernserveren ved tilkobling</td>
+</tr>
+<tr>
+<td><nobr><code>{"--variant"}</code></nobr></td>
+<td></td>
+<td>Modelvariant (udbyder-specifik ræsonneringsindsats)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--thinking"}</code></nobr></td>
+<td></td>
+<td>Vis tænkeblokke</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td></td>
+<td>Port til den lokale server (standard til vilkårlig port)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>serve</h3>
+<p>Start en hovedløs vanilla-closedcode-server til API-adgang. Tjek <a href="/docs/server">server docs</a> for den fulde HTTP-grænseflade.</p>
+<pre><code class="language-bash">closedcode serve
+</code></pre>
+<p>Dette starter en HTTP-server, der giver API-adgang til closedcode-funktionalitet uden TUI-grænsefladen. Indstil <code>CLOSEDCODE_SERVER_PASSWORD</code> for at aktivere HTTP grundlæggende godkendelse (brugernavn er standard til <code>closedcode</code>).</p>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Værtsnavn at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Aktiver mDNS-opdagelse</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Yderligere browseroprindelse til at tillade CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>session</h3>
+<p>Administrator vanilla-closedcode sessionsholder.</p>
+<pre><code class="language-bash">closedcode session [command]
+</code></pre>
+<hr>
+<h4>list</h4>
+<p>Liste over alle vanilla-closedcode sessioner.</p>
+<pre><code class="language-bash">closedcode session list
+</code></pre>
+<h5>Flag</h5>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--max-count"}</code></nobr></td>
+<td><code>-n</code></td>
+<td>Begræns til N seneste sessioner</td>
+</tr>
+<tr>
+<td><nobr><code>{"--format"}</code></nobr></td>
+<td></td>
+<td>Outputformat: tabel eller json (tabel)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>stats</h3>
+<p>Vis tokenbrug og omkostningsstatistikker for dine vanilla-closedcode-sessioner.</p>
+<pre><code class="language-bash">closedcode stats
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--days"}</code></nobr></td>
+<td>Vis statistik for de sidste N dage (hele tiden)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--tools"}</code></nobr></td>
+<td>Antal værktøjer, der skal vises (alle)</td>
+</tr>
+<tr>
+<td><nobr><code>{"--models"}</code></nobr></td>
+<td>Vis modelbrugsopdeling (skjult som standard). Send et tal for at vise top N</td>
+</tr>
+<tr>
+<td><nobr><code>{"--project"}</code></nobr></td>
+<td>Filtre efter projekt (alle projekter, tom streng: nuværende projekt)</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>export</h3>
+<p>Eksporter sessionsdata som JSON.</p>
+<pre><code class="language-bash">closedcode export [sessionID]
+</code></pre>
+<p>Hvis du ikke angiver et sessions-id, bliver du bedt om at vælge mellem tilgængelige sessioner.</p>
+<hr>
+<h3>import</h3>
+<p>Importer sessionsdata fra en JSON fil eller vanilla-closedcode del URL.</p>
+<pre><code class="language-bash">closedcode import &lt;file&gt;
+</code></pre>
+<p>Du kan importere fra en lokal fil eller en vanilla-closedcode share URL.</p>
+<pre><code class="language-bash">closedcode import session.json
+closedcode import https://share.example.com/s/abc123
+</code></pre>
+<hr>
+<h3>web</h3>
+<p>Start en hovedløs vanilla-closedcode-server med en webgrænseflade.</p>
+<pre><code class="language-bash">closedcode web
+</code></pre>
+<p>Dette starter en HTTP-server og åbner en webbrowser for at få adgang til vanilla-closedcode via en webgrænseflade. Indstil <code>CLOSEDCODE_SERVER_PASSWORD</code> for at aktivere HTTP grundlæggende godkendelse (brugernavn er standard til <code>closedcode</code>).</p>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Værtsnavn at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--mdns"}</code></nobr></td>
+<td>Aktiver mDNS-opdagelse</td>
+</tr>
+<tr>
+<td><nobr><code>{"--cors"}</code></nobr></td>
+<td>Yderligere browseroprindelse til at tillade CORS</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>acp</h3>
+<p>Start en ACP-server (Agent Client Protocol).</p>
+<pre><code class="language-bash">closedcode acp
+</code></pre>
+<p>Denne kommando starter en ACP-server, der kommunikerer via stdin/stdout ved hjælp af nd-JSON.</p>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--cwd"}</code></nobr></td>
+<td>Arbejdsmappe</td>
+</tr>
+<tr>
+<td><nobr><code>{"--port"}</code></nobr></td>
+<td>Port at lytte på</td>
+</tr>
+<tr>
+<td><nobr><code>{"--hostname"}</code></nobr></td>
+<td>Værtsnavn at lytte på</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>uninstall</h3>
+<p>Afinstaller vanilla-closedcode og fjern alle relaterede filer.</p>
+<pre><code class="language-bash">closedcode uninstall
+</code></pre>
+<h4>Flag</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--keep-config"}</code></nobr></td>
+<td><code>-c</code></td>
+<td>Se konfigurationsfiler</td>
+</tr>
+<tr>
+<td><nobr><code>{"--keep-data"}</code></nobr></td>
+<td><code>-d</code></td>
+<td>Gem sessionsdata og snapshots</td>
+</tr>
+<tr>
+<td><nobr><code>{"--dry-run"}</code></nobr></td>
+<td></td>
+<td>Vis, hvad der ville blive fjernet uden at fjerne</td>
+</tr>
+<tr>
+<td><nobr><code>{"--force"}</code></nobr></td>
+<td><code>-f</code></td>
+<td>Spring bekræftelsesspørgsmål over</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>upgrade</h3>
+<p>Opdaterer vanilla-closedcode til den nyeste version eller en specifik version.</p>
+<pre><code class="language-bash">closedcode upgrade [target]
+</code></pre>
+<p>For at opgradere til den nyeste version.</p>
+<pre><code class="language-bash">closedcode upgrade
+</code></pre>
+<p>For at opgradere til en bestemt version.</p>
+<pre><code class="language-bash">closedcode upgrade v0.1.48
+</code></pre>
+<h4>upgrade</h4>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--method"}</code></nobr></td>
+<td><code>-m</code></td>
+<td>Installationsmetoden, der blev brugt; curl, npm, pnpm, brew</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Globale flag</h2>
+<p>closedcode CLI tager følgende globale flag.</p>
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Kort</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><nobr><code>{"--help"}</code></nobr></td>
+<td><code>-h</code></td>
+<td>Vis hjælp</td>
+</tr>
+<tr>
+<td><nobr><code>{"--version"}</code></nobr></td>
+<td><code>-v</code></td>
+<td>Udskriftsversionsnummer</td>
+</tr>
+<tr>
+<td><nobr><code>{"--print-logs"}</code></nobr></td>
+<td></td>
+<td>Udskriv logfiler til stderr</td>
+</tr>
+<tr>
+<td><nobr><code>{"--log-level"}</code></nobr></td>
+<td></td>
+<td>Logniveau (DEBUG, INFO, WARN, ERROR)</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Miljøvariabler</h2>
+<p>vanilla-closedcode kan konfigureres ved hjælp af miljøvariabler.</p>
+<table>
+<thead>
+<tr>
+<th>Variabel</th>
+<th>Skriv</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_AUTO_SHARE</code></td>
+<td>boolean</td>
+<td>Del automatisk session</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_GIT_BASH_PATH</code></td>
+<td>string</td>
+<td>Sti til Git Bash eksekverbar på Windows</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG</code></td>
+<td>string</td>
+<td>Sti til konfigurationsfil</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_TUI_CONFIG</code></td>
+<td>string</td>
+<td>Sti til TUI-konfigurationsfil</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_DIR</code></td>
+<td>string</td>
+<td>Sti til konfigurationsmappe</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CONFIG_CONTENT</code></td>
+<td>string</td>
+<td>Indbygget json-konfigurationsindhold</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOUPDATE</code></td>
+<td>boolean</td>
+<td>Deaktiver automatisk opdateringskontrol</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_PRUNE</code></td>
+<td>boolean</td>
+<td>Deaktiver beskæring af gamle data</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_TERMINAL_TITLE</code></td>
+<td>boolean</td>
+<td>Deaktiver automatisk opdatering af terminaltitel</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_PERMISSION</code></td>
+<td>string</td>
+<td>Indbygget json-tilladelseskonfiguration</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_DEFAULT_PLUGINS</code></td>
+<td>boolean</td>
+<td>Deaktiver standard plugins</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_LSP_DOWNLOAD</code></td>
+<td>boolean</td>
+<td>Deaktiver automatisk LSP-serverdownloads</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXPERIMENTAL_MODELS</code></td>
+<td>boolean</td>
+<td>Aktive eksperimentelle modeller</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_AUTOCOMPACT</code></td>
+<td>boolean</td>
+<td>Deaktiver automatisk kontekstkomprimering</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE</code></td>
+<td>boolean</td>
+<td>Deaktiver læsning fra <code>.claude</code> (prompt + færdigheder)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_PROMPT</code></td>
+<td>boolean</td>
+<td>Deaktiver læsning <code>~/.claude/CLAUDE.md</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS</code></td>
+<td>boolean</td>
+<td>Deaktiver indlæsning af <code>.claude/skills</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_DISABLE_MODELS_FETCH</code></td>
+<td>boolean</td>
+<td>Deaktivering af modeller fra eksterne kilder</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_FAKE_VCS</code></td>
+<td>string</td>
+<td>Falsk VCS-udbyder til testformål</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_CLIENT</code></td>
+<td>string</td>
+<td>Klient-id (standard til <code>cli</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_ENABLE_EXA</code></td>
+<td>boolean</td>
+<td>Aktiver Exa-websøgeværktøjer</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_PASSWORD</code></td>
+<td>string</td>
+<td>Aktiver grundlæggende godkendelse for <code>serve</code>/<code>web</code></td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_SERVER_USERNAME</code></td>
+<td>string</td>
+<td>Tilsidesæt grundlæggende godkendelsesbrugernavn (standard <code>closedcode</code>)</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_MODELS_URL</code></td>
+<td>string</td>
+<td>Brugerdefineret URL til hentning af modelkonfiguration</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>Eksperimentel</h3>
+<p>Disse miljøvariabler muliggør eksperimentelle funktioner, der kan ændres eller fjernes.</p>
+<table>
+<thead>
+<tr>
+<th>Variabel</th>
+<th>Skriv</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL</code></td>
+<td>boolean</td>
+<td>Aktiver alle eksperimentelle funktioner</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_ICON_DISCOVERY</code></td>
+<td>boolean</td>
+<td>Aktiver ikonopdagelse</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT</code></td>
+<td>boolean</td>
+<td>Deaktiver kopi ved valg i TUI</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_BASH_DEFAULT_TIMEOUT_MS</code></td>
+<td>nummer</td>
+<td>Standard timeout for bash-kommandoer i ms</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OUTPUT_TOKEN_MAX</code></td>
+<td>nummer</td>
+<td>Maks. output-tokens for LLM-svar</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Aktiver filovervågning for hele dir</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_OXFMT</code></td>
+<td>boolean</td>
+<td>Aktiver oxfmt formatter</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TOOL</code></td>
+<td>boolean</td>
+<td>Aktive eksperimenter LSP værktøj</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_DISABLE_FILEWATCHER</code></td>
+<td>boolean</td>
+<td>Deaktiver filovervågning</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_EXA</code></td>
+<td>boolean</td>
+<td>Aktive eksperimenter Exa-funktioner</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_LSP_TY</code></td>
+<td>boolean</td>
+<td>Aktiver TY LSP for python-filer</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_MARKDOWN</code></td>
+<td>boolean</td>
+<td>Aktive eksperimentelle markdown-funktioner</td>
+</tr>
+<tr>
+<td><code>CLOSEDCODE_EXPERIMENTAL_PLAN_MODE</code></td>
+<td>boolean</td>
+<td>Aktiver plantilstand</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

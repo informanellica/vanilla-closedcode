@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الخادم — vanilla-closedcode docs</title>
+  <meta name="description" content="تفاعل مع خادم closedcode عبر HTTP.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/server.html">English</option>
+      <option value="../ar/server.html" selected>العربية</option>
+      <option value="../bs/server.html">Bosanski</option>
+      <option value="../da/server.html">Dansk</option>
+      <option value="../de/server.html">Deutsch</option>
+      <option value="../es/server.html">Español</option>
+      <option value="../fr/server.html">Français</option>
+      <option value="../it/server.html">Italiano</option>
+      <option value="../ja/server.html">日本語</option>
+      <option value="../ko/server.html">한국어</option>
+      <option value="../nb/server.html">Norsk</option>
+      <option value="../pl/server.html">Polski</option>
+      <option value="../pt-br/server.html">Português (BR)</option>
+      <option value="../ru/server.html">Русский</option>
+      <option value="../th/server.html">ไทย</option>
+      <option value="../tr/server.html">Türkçe</option>
+      <option value="../zh-cn/server.html">简体中文</option>
+      <option value="../zh-tw/server.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li class="active"><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الخادم</h1>
+      <p class="lede">تفاعل مع خادم closedcode عبر HTTP.</p>
+      <p>يشغّل الأمر <code>closedcode serve</code> خادما HTTP دون واجهة ويعرض نقطة نهاية OpenAPI يمكن لعميل closedcode استخدامها.</p>
+<hr>
+<h3>الاستخدام</h3>
+<pre><code class="language-bash">closedcode serve [--port &lt;number&gt;] [--hostname &lt;string&gt;] [--cors &lt;origin&gt;]
+</code></pre>
+<h4>الخيارات</h4>
+<table>
+<thead>
+<tr>
+<th>الخيار</th>
+<th>الوصف</th>
+<th>الافتراضي</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>--port</code></td>
+<td>المنفذ الذي يستمع عليه</td>
+<td><code>4096</code></td>
+</tr>
+<tr>
+<td><code>--hostname</code></td>
+<td>اسم المضيف الذي يستمع عليه</td>
+<td><code>127.0.0.1</code></td>
+</tr>
+<tr>
+<td><code>--mdns</code></td>
+<td>تفعيل اكتشاف mDNS</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>--mdns-domain</code></td>
+<td>اسم نطاق مخصص لخدمة mDNS</td>
+<td><code>closedcode.local</code></td>
+</tr>
+<tr>
+<td><code>--cors</code></td>
+<td>أصول (Origins) متصفح إضافية مسموح بها</td>
+<td><code>[]</code></td>
+</tr>
+</tbody></table>
+<p>يمكن تمرير <code>--cors</code> عدة مرات:</p>
+<pre><code class="language-bash">closedcode serve --cors http://localhost:5173 --cors https://app.example.com
+</code></pre>
+<hr>
+<h3>المصادقة</h3>
+<p>عيّن <code>CLOSEDCODE_SERVER_PASSWORD</code> لحماية الخادم باستخدام مصادقة HTTP الأساسية. اسم المستخدم افتراضيا هو <code>closedcode</code>، أو عيّن <code>CLOSEDCODE_SERVER_USERNAME</code> لتغييره. ينطبق ذلك على كل من <code>closedcode serve</code> و <code>closedcode web</code>.</p>
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve
+</code></pre>
+<hr>
+<h3>كيف يعمل</h3>
+<p>عند تشغيل <code>closedcode</code> يبدأ تشغيل واجهة terminal تفاعلية (TUI) وخادما. تكون الـ TUI هي
+العميل الذي يتحدث إلى الخادم. يوفّر الخادم نقطة نهاية لمواصفة OpenAPI 3.1.
+وتُستخدم هذه النقطة أيضا لتوليد <a href="/docs/sdk">SDK</a>.</p>
+<aside class="aside aside-tip">
+استخدم خادم closedcode للتفاعل مع closedcode برمجيا.
+</aside>
+تتيح هذه البنية لـ closedcode دعم عدة عملاء وتمكّنك من التفاعل مع closedcode برمجيا.
+
+<p>يمكنك تشغيل <code>closedcode serve</code> لبدء خادم مستقل. إذا كانت واجهة closedcode في terminal (TUI)
+قيد التشغيل، فسيبدأ <code>closedcode serve</code> خادما جديدا.</p>
+<hr>
+<h4>الاتصال بخادم موجود</h4>
+<p>عند بدء الـ TUI تقوم بتعيين منفذ واسم مضيف عشوائيا. يمكنك بدلا من ذلك تمرير <a href="/docs/cli">الخيارات</a> <code>--hostname</code> و <code>--port</code>، ثم استخدامهما للاتصال بخادمها.</p>
+<p>يمكن استخدام نقطة النهاية <a href="#tui"><code>/tui</code></a> للتحكم في الـ TUI عبر الخادم. على سبيل المثال، يمكنك تعبئة الموجّه مسبقا أو تشغيله. يُستخدم هذا الإعداد بواسطة ملحقات vanilla-closedcode لـ <a href="/docs/ide">IDE</a>.</p>
+<hr>
+<h2>المواصفات</h2>
+<p>ينشر الخادم مواصفة OpenAPI 3.1 ويمكن عرضها على:</p>
+<pre><code>http://&lt;hostname&gt;:&lt;port&gt;/doc
+</code></pre>
+<p>على سبيل المثال: <code>http://localhost:4096/doc</code>. استخدم المواصفة لتوليد عملاء أو لفحص أنواع الطلبات والاستجابات. أو اعرضها في مستكشف Swagger.</p>
+<hr>
+<h2>واجهات API</h2>
+<p>يعرض خادم closedcode واجهات API التالية.</p>
+<hr>
+<h3>عام</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/global/health</code></td>
+<td>الحصول على صحة الخادم وإصداره</td>
+<td><code>{ healthy: true, version: string }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/global/event</code></td>
+<td>الحصول على الأحداث العامة (تدفق SSE)</td>
+<td>تدفق أحداث</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>المشروع</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/project</code></td>
+<td>سرد جميع المشاريع</td>
+<td><a href={typesUrl}><code>Project[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/project/current</code></td>
+<td>الحصول على المشروع الحالي</td>
+<td><a href={typesUrl}><code>Project</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>المسار و VCS</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/path</code></td>
+<td>الحصول على المسار الحالي</td>
+<td><a href={typesUrl}><code>Path</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/vcs</code></td>
+<td>الحصول على معلومات VCS للمشروع الحالي</td>
+<td><a href={typesUrl}><code>VcsInfo</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>المثيل</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/instance/dispose</code></td>
+<td>التخلص من المثيل الحالي</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الإعدادات</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/config</code></td>
+<td>الحصول على معلومات الإعدادات</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/config</code></td>
+<td>تحديث الإعدادات</td>
+<td><a href={typesUrl}><code>Config</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/config/providers</code></td>
+<td>سرد المزوّدين والنماذج الافتراضية</td>
+<td><code>{ providers: </code><a href={typesUrl}>Provider[]</a><code>, default: { [key: string]: string } }</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>المزوّد</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/provider</code></td>
+<td>سرد جميع المزوّدين</td>
+<td><code>{ all: </code><a href={typesUrl}>Provider[]</a><code>, default: {...}, connected: string[] }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/provider/auth</code></td>
+<td>الحصول على طرق مصادقة المزوّد</td>
+<td><code>{ [providerID: string]: </code><a href={typesUrl}>ProviderAuthMethod[]</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/authorize</code></td>
+<td>تفويض مزوّد باستخدام OAuth</td>
+<td><a href={typesUrl}><code>ProviderAuthAuthorization</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/provider/{id}/oauth/callback</code></td>
+<td>معالجة رد نداء OAuth لمزوّد</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الجلسات</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الملاحظات</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session</code></td>
+<td>سرد جميع الجلسات</td>
+<td>يعيد <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session</code></td>
+<td>إنشاء جلسة جديدة</td>
+<td>المتن: <code>{ parentID?, title? }</code>، يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/status</code></td>
+<td>الحصول على حالة الجلسات جميعها</td>
+<td>يعيد <code>{ [sessionID: string]: </code><a href={typesUrl}>SessionStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id</code></td>
+<td>الحصول على تفاصيل الجلسة</td>
+<td>يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id</code></td>
+<td>حذف جلسة وجميع بياناتها</td>
+<td>يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td><code>/session/:id</code></td>
+<td>تحديث خصائص الجلسة</td>
+<td>المتن: <code>{ title? }</code>، يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/children</code></td>
+<td>الحصول على الجلسات الفرعية لجلسة</td>
+<td>يعيد <a href={typesUrl}><code>Session[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/todo</code></td>
+<td>الحصول على قائمة المهام (todo) للجلسة</td>
+<td>يعيد <a href={typesUrl}><code>Todo[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/init</code></td>
+<td>تحليل التطبيق وإنشاء <code>AGENTS.md</code></td>
+<td>المتن: <code>{ messageID, providerID, modelID }</code>، يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/fork</code></td>
+<td>تفريع جلسة موجودة عند رسالة</td>
+<td>المتن: <code>{ messageID? }</code>، يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/abort</code></td>
+<td>إلغاء جلسة قيد التشغيل</td>
+<td>يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/share</code></td>
+<td>مشاركة جلسة</td>
+<td>يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>/session/:id/share</code></td>
+<td>إلغاء مشاركة جلسة</td>
+<td>يعيد <a href={typesUrl}><code>Session</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/diff</code></td>
+<td>الحصول على diff لهذه الجلسة</td>
+<td>الاستعلام: <code>messageID?</code>، يعيد <a href={typesUrl}><code>FileDiff[]</code></a></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/summarize</code></td>
+<td>تلخيص الجلسة</td>
+<td>المتن: <code>{ providerID, modelID }</code>، يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/revert</code></td>
+<td>التراجع عن رسالة</td>
+<td>المتن: <code>{ messageID, partID? }</code>، يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/unrevert</code></td>
+<td>استعادة جميع الرسائل المتراجع عنها</td>
+<td>يعيد <code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/permissions/:permissionID</code></td>
+<td>الرد على طلب إذن</td>
+<td>المتن: <code>{ response, remember? }</code>، يعيد <code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الرسائل</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الملاحظات</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message</code></td>
+<td>سرد رسائل جلسة</td>
+<td>الاستعلام: <code>limit?</code>، يعيد <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}[]</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/message</code></td>
+<td>إرسال رسالة والانتظار للحصول على رد</td>
+<td>المتن: <code>{ messageID?, model?, agent?, noReply?, system?, tools?, parts }</code>، يعيد <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/session/:id/message/:messageID</code></td>
+<td>الحصول على تفاصيل الرسالة</td>
+<td>يعيد <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/prompt_async</code></td>
+<td>إرسال رسالة بشكل غير متزامن (بدون انتظار)</td>
+<td>المتن: مثل <code>/session/:id/message</code>، يعيد <code>204 No Content</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/command</code></td>
+<td>تنفيذ أمر شرطة مائلة (slash)</td>
+<td>المتن: <code>{ messageID?, agent?, model?, command, arguments }</code>، يعيد <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/session/:id/shell</code></td>
+<td>تشغيل أمر في shell</td>
+<td>المتن: <code>{ agent, model?, command }</code>، يعيد <code>{ info: </code><a href={typesUrl}>Message</a><code>, parts: </code><a href={typesUrl}>Part[]</a><code>}</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الأوامر</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/command</code></td>
+<td>سرد جميع الأوامر</td>
+<td><a href={typesUrl}><code>Command[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الملفات</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/find?pattern=&lt;pat&gt;</code></td>
+<td>البحث عن نص داخل الملفات</td>
+<td>مصفوفة من كائنات المطابقة تحتوي على <code>path</code> و<code>lines</code> و<code>line_number</code> و<code>absolute_offset</code> و<code>submatches</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/file?query=&lt;q&gt;</code></td>
+<td>العثور على الملفات والمجلدات بالاسم</td>
+<td><code>string[]</code> (مسارات)</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/find/symbol?query=&lt;q&gt;</code></td>
+<td>العثور على رموز مساحة العمل</td>
+<td><a href={typesUrl}><code>Symbol[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file?path=&lt;path&gt;</code></td>
+<td>سرد الملفات والمجلدات</td>
+<td><a href={typesUrl}><code>FileNode[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/content?path=&lt;p&gt;</code></td>
+<td>قراءة ملف</td>
+<td><a href={typesUrl}><code>FileContent</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/file/status</code></td>
+<td>الحصول على حالة الملفات المتعقّبة</td>
+<td><a href={typesUrl}><code>File[]</code></a></td>
+</tr>
+</tbody></table>
+<h4>معلمات الاستعلام لـ <code>/find/file</code></h4>
+<ul>
+<li><code>query</code> (مطلوب) — سلسلة البحث (مطابقة ضبابية)</li>
+<li><code>type</code> (اختياري) — حصر النتائج في <code>&quot;file&quot;</code> أو <code>&quot;directory&quot;</code></li>
+<li><code>directory</code> (اختياري) — تجاوز جذر المشروع لأجل البحث</li>
+<li><code>limit</code> (اختياري) — الحد الأقصى للنتائج (1–200)</li>
+<li><code>dirs</code> (اختياري) — خيار قديم (إرجاع <code>&quot;false&quot;</code> يعيد الملفات فقط)</li>
+</ul>
+<hr>
+<h3>الأدوات (تجريبية)</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool/ids</code></td>
+<td>سرد جميع معرّفات الأدوات</td>
+<td><a href={typesUrl}><code>ToolIDs</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/experimental/tool?provider=&lt;p&gt;&amp;model=&lt;m&gt;</code></td>
+<td>سرد الأدوات مع مخططات JSON لنموذج</td>
+<td><a href={typesUrl}><code>ToolList</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>LSP والمنسّقات و MCP</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/lsp</code></td>
+<td>الحصول على حالة خادم LSP</td>
+<td><a href={typesUrl}><code>LSPStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/formatter</code></td>
+<td>الحصول على حالة المنسّقات</td>
+<td><a href={typesUrl}><code>FormatterStatus[]</code></a></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/mcp</code></td>
+<td>الحصول على حالة خادم MCP</td>
+<td><code>{ [name: string]: </code><a href={typesUrl}>MCPStatus</a><code> }</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/mcp</code></td>
+<td>إضافة خادم MCP ديناميكيا</td>
+<td>المتن: <code>{ name, config }</code>، يعيد كائن حالة MCP</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الوكلاء</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/agent</code></td>
+<td>سرد جميع الوكلاء المتاحين</td>
+<td><a href={typesUrl}><code>Agent[]</code></a></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>التسجيل</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/log</code></td>
+<td>كتابة إدخال سجل. المتن: <code>{ service, level, message, extra? }</code></td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>TUI</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>POST</code></td>
+<td><code>/tui/append-prompt</code></td>
+<td>إلحاق نص بالموجّه</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-help</code></td>
+<td>فتح مربع حوار المساعدة</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-sessions</code></td>
+<td>فتح محدد الجلسات</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-themes</code></td>
+<td>فتح محدد السمات</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/open-models</code></td>
+<td>فتح محدد النماذج</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/submit-prompt</code></td>
+<td>إرسال الموجّه الحالي</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/clear-prompt</code></td>
+<td>مسح الموجّه</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/execute-command</code></td>
+<td>تنفيذ أمر (<code>{ command }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/show-toast</code></td>
+<td>عرض toast (<code>{ title?, message, variant }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/tui/control/next</code></td>
+<td>الانتظار لطلب التحكم التالي</td>
+<td>كائن طلب تحكم</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/tui/control/response</code></td>
+<td>الاستجابة لطلب تحكم (<code>{ body }</code>)</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>المصادقة</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUT</code></td>
+<td><code>/auth/:id</code></td>
+<td>تعيين بيانات اعتماد المصادقة. يجب أن يطابق المتن مخطط المزوّد</td>
+<td><code>boolean</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h3>الأحداث</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/event</code></td>
+<td>تدفق أحداث مرسلة من الخادم (SSE). أول حدث هو <code>server.connected</code> ثم أحداث الحافلة</td>
+<td>تدفق أحداث مرسلة من الخادم</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>التوثيق</h3>
+<table>
+<thead>
+<tr>
+<th>الطريقة</th>
+<th>المسار</th>
+<th>الوصف</th>
+<th>الاستجابة</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>GET</code></td>
+<td><code>/doc</code></td>
+<td>مواصفة OpenAPI 3.1</td>
+<td>صفحة HTML تتضمن مواصفة OpenAPI</td>
+</tr>
+</tbody></table>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

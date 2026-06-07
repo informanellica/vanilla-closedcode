@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="Korištenje korisničkog interfejsa vanilla-closedcode terminala.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html" selected>Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html">Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">Korištenje korisničkog interfejsa vanilla-closedcode terminala.</p>
+      <p>vanilla-closedcode pruža interaktivni terminalski interfejs ili TUI za rad na vašim projektima sa LLM.</p>
+<p>Pokretanje vanilla-closedcode pokreće TUI za trenutni direktorij.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Ili ga možete pokrenuti za određeni radni direktorij.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>Kada uđete u TUI, možete to zatražiti porukom.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>Reference datoteka</h2>
+<p>Možete referencirati datoteke u svojim porukama koristeći <code>@</code>. Ovo vrši nejasnu pretragu datoteka u trenutnom radnom direktoriju.</p>
+<aside class="aside aside-tip">
+Također možete koristiti `@` da referencirate datoteke u svojim porukama.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>Sadržaj datoteke se automatski dodaje u razgovor.</p>
+<hr>
+<h2>Bash naredbe</h2>
+<p>Započnite poruku sa <code>!</code> da pokrenete komandu ljuske.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>Izlaz naredbe se dodaje u razgovor kao rezultat alata.</p>
+<hr>
+<h2>Naredbe</h2>
+<p>Kada koristite vanilla-closedcode TUI, možete upisati <code>/</code> nakon čega slijedi ime komande da biste brzo izvršili radnje. na primjer:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>Većina naredbi također ima vezu pomoću <code>ctrl+x</code> kao vodeće tipke, gdje je <code>ctrl+x</code> zadani vodeći ključ. <a href="/docs/keybinds">Saznajte više</a>.</p>
+<p>Ovdje su sve dostupne komande kose crte:</p>
+<hr>
+<h3>connect</h3>
+<p>Dodajte provajdera u vanilla-closedcode. Omogućava vam da odaberete između dostupnih provajdera i dodate njihove API ključeve.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>Sažimanje trenutne sesije. <em>Alias</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>Prebacite detalje o izvršavanju alata.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>Otvorite vanjski uređivač za sastavljanje poruka. Koristi editor postavljen u vašoj varijabli okruženja <code>EDITOR</code>. <a href="#editor-setup">Saznajte više</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>Izađite iz vanilla-closedcode. <em>Aliases</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>Izvezite trenutni razgovor u Markdown i otvorite ga u zadanom uređivaču. Koristi editor postavljen u vašoj varijabli okruženja <code>EDITOR</code>. <a href="#editor-setup">Saznajte više</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>Prikaži dijalog pomoći.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p>Kreirajte ili ažurirajte datoteku <code>AGENTS.md</code>. <a href="/docs/rules">Saznajte više</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>Navedite dostupne modele.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>Započnite novu sesiju. <em>Alias</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>Ponovite prethodno poništenu poruku. Dostupno samo nakon korištenja <code>/undo</code>.</p>
+<aside class="aside aside-tip">
+Sve promjene fajla će također biti vraćene.
+</aside>
+Interno, ovo koristi Git za upravljanje promjenama datoteke. Dakle, vaš projekat **treba
+biti Git spremište**.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>Listanje i prebacivanje između sesija. <em>Aliases</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>Podijelite trenutnu sesiju. <a href="/docs/share">Saznajte više</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>Navedite dostupne teme.</p>
+<pre><code class="language-bash">/themes
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>Uključite/isključite vidljivost blokova razmišljanja/rezoniranja u razgovoru. Kada je omogućeno, možete vidjeti proces rezonovanja modela za modele koji podržavaju prošireno razmišljanje.</p>
+<aside class="aside aside-note">
+Ova naredba samo kontrolira da li se blokovi razmišljanja **prikažu** - ne omogućava niti onemogućuje mogućnosti razmišljanja modela. Da biste uključili stvarne mogućnosti zaključivanja, koristite `ctrl+t` za kretanje kroz varijante modela.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>Poništi posljednju poruku u razgovoru. Uklanja najnoviju korisničku poruku, sve naknadne odgovore i sve promjene datoteke.</p>
+<aside class="aside aside-tip">
+Sve promjene u fajlu će također biti poništene.
+</aside>
+Interno, ovo koristi Git za upravljanje promjenama datoteke. Dakle, vaš projekat **treba
+biti Git spremište**.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>Tastatura:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>Poništi dijeljenje trenutne sesije. <a href="/docs/share#un-sharing">Saznajte više</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>Podešavanje uređivača</h2>
+<p>Obje naredbe <code>/editor</code> i <code>/export</code> koriste editor specificiran u vašoj varijabli okruženja <code>EDITOR</code>.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+Da biste ga učinili trajnim, dodajte ovo u svoj shell profil;
+`~/.bashrc`, `~/.zshrc`, itd.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+Da biste ga učinili trajnim, koristite **Svojstva sistema** &gt; **Okruženje
+Varijable**.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+Da biste ga učinili trajnim, dodajte ovo u svoj PowerShell profil.
+</code></pre>
+</div>
+</div>
+
+<p>Popularne opcije uređivača uključuju:</p>
+<ul>
+<li><code>code</code> - ​​Visual Studio Code</li>
+<li><code>cursor</code> - ​​Cursor</li>
+<li><code>windsurf</code> - ​​Windsurf</li>
+<li><code>nvim</code> - ​​Neovim editorom</li>
+<li><code>vim</code> - ​​Vim editor</li>
+<li><code>nano</code> - ​​Nano editor</li>
+<li><code>notepad</code> - ​​Windows Notepad</li>
+<li><code>subl</code> - ​​Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+Neki uređivači kao što je VS Code moraju biti pokrenuti sa `--wait` zastavicom.
+</aside>
+Nekim uređivačima su potrebni argumenti komandne linije da bi se pokrenuli u načinu blokiranja. Oznaka `--wait` blokira proces uređivača dok se ne zatvori.
+
+<hr>
+<h2>Konfiguracija</h2>
+<p>Možete prilagoditi TUI ponašanje putem <code>tui.json</code> (ili <code>tui.jsonc</code>).</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Ovo je odvojeno od <code>closedcode.json</code>, koji konfiguriše ponašanje servera/izvršavanja.</p>
+<h3>Opcije</h3>
+<ul>
+<li><code>theme</code> - Postavlja vašu UI temu. <a href="/docs/themes">Saznajte više</a>.</li>
+<li><code>keybinds</code> - Prilagođava prečice na tastaturi. <a href="/docs/keybinds">Saznajte više</a>.</li>
+<li><code>scroll_acceleration.enabled</code> - ​​Omogućite ubrzanje pomicanja u macOS stilu za glatko, prirodno pomicanje. Kada je omogućeno, brzina pomicanja se povećava brzim pokretima pomicanja i ostaje precizna za sporije pokrete. <strong>Ova postavka ima prednost nad <code>scroll_speed</code> i nadjačava je kada je omogućena.</strong></li>
+<li><code>scroll_speed</code> - ​​Kontrolira koliko brzo TUI skroluje kada se koriste komande za pomeranje (minimum: <code>0.001</code>, podržava decimalne vrijednosti). Podrazumevano je <code>3</code>. <strong>Napomena: Ovo se zanemaruje ako je <code>scroll_acceleration.enabled</code> postavljeno na <code>true</code>.</strong></li>
+<li><code>diff_style</code> - Kontrolira prikazivanje razlike. <code>&quot;auto&quot;</code> se prilagođava širini terminala, <code>&quot;stacked&quot;</code> uvijek prikazuje raspored u jednoj koloni.</li>
+</ul>
+<p>Koristite <code>CLOSEDCODE_TUI_CONFIG</code> da učitate prilagođenu putanju TUI konfiguracije.</p>
+<hr>
+<h2>Prilagođavanje</h2>
+<p>Možete prilagoditi različite aspekte TUI prikaza koristeći paletu komandi (<code>ctrl+x h</code> ili <code>/help</code>). Ove postavke traju i nakon ponovnog pokretanja.</p>
+<hr>
+<h4>Prikaz korisničkog imena</h4>
+<p>Uključite da li se vaše korisničko ime pojavljuje u porukama za ćaskanje. Pristupite ovome putem:</p>
+<ul>
+<li>Paleta naredbi: Potražite &quot;korisničko ime&quot; ili &quot;sakrij korisničko ime&quot;</li>
+<li>Postavka se automatski nastavlja i pamtit će se tijekom TUI sesija</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

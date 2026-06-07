@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorun giderme — vanilla-closedcode docs</title>
+  <meta name="description" content="Yaygin sorunlar ve cozum adimlari.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/troubleshooting.html">English</option>
+      <option value="../ar/troubleshooting.html">العربية</option>
+      <option value="../bs/troubleshooting.html">Bosanski</option>
+      <option value="../da/troubleshooting.html">Dansk</option>
+      <option value="../de/troubleshooting.html">Deutsch</option>
+      <option value="../es/troubleshooting.html">Español</option>
+      <option value="../fr/troubleshooting.html">Français</option>
+      <option value="../it/troubleshooting.html">Italiano</option>
+      <option value="../ja/troubleshooting.html">日本語</option>
+      <option value="../ko/troubleshooting.html">한국어</option>
+      <option value="../nb/troubleshooting.html">Norsk</option>
+      <option value="../pl/troubleshooting.html">Polski</option>
+      <option value="../pt-br/troubleshooting.html">Português (BR)</option>
+      <option value="../ru/troubleshooting.html">Русский</option>
+      <option value="../th/troubleshooting.html">ไทย</option>
+      <option value="../tr/troubleshooting.html" selected>Türkçe</option>
+      <option value="../zh-cn/troubleshooting.html">简体中文</option>
+      <option value="../zh-tw/troubleshooting.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li class="active"><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Sorun giderme</h1>
+      <p class="lede">Yaygin sorunlar ve cozum adimlari.</p>
+      <p>closedcode ile ilgili bir sorunu ayiklamak icin once loglari ve diskte tuttugu yerel verileri kontrol edin.</p>
+<hr>
+<h2>Loglar</h2>
+<p>Log dosyalari su konuma yazilir:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/log/</code></li>
+<li><strong>Windows</strong>: <code>WIN+R</code> tuslayip <code>%USERPROFILE%\.local\share\closedcode\log</code> yapistirin</li>
+</ul>
+<p>Log dosyalari zaman damgasiyla adlandirilir (ornegin <code>2025-01-09T123456.log</code>) ve en yeni 10 log dosyasi tutulur.</p>
+<p>Daha ayrintili ayiklama bilgisi icin <code>--log-level</code> komut satiri secenegini kullanabilirsiniz. Ornek: <code>closedcode --log-level DEBUG</code>.</p>
+<hr>
+<h2>Depolama</h2>
+<p>closedcode, oturum verilerini ve diger uygulama verilerini diskte su konumda saklar:</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.local/share/closedcode/</code></li>
+<li><strong>Windows</strong>: <code>WIN+R</code> tuslayip <code>%USERPROFILE%\.local\share\closedcode</code> yapistirin</li>
+</ul>
+<p>Bu dizin sunlari icerir:</p>
+<ul>
+<li><code>auth.json</code> - API anahtarlari, OAuth tokenlari gibi kimlik dogrulama verileri</li>
+<li><code>log/</code> - Uygulama loglari</li>
+<li><code>project/</code> - Oturum ve mesaj verileri gibi projeye ozel veriler<ul>
+<li>Proje bir Git deposundaysa <code>./&lt;project-slug&gt;/storage/</code> altinda saklanir</li>
+<li>Git deposu degilse <code>./global/storage/</code> altinda saklanir</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h2>Masaüstü uygulaması</h2>
+<p>closedcode Desktop arka planda yerel bir closedcode sunucusu (<code>closedcode-cli</code> sidecar) calistirir. Sorunlarin cogu bozuk bir plugin, hasarli cache veya hatali sunucu ayarindan kaynaklanir.</p>
+<h3>Hızlı kontroller</h3>
+<ul>
+<li>Uygulamayi tamamen kapatip yeniden acin</li>
+<li>Uygulama hata ekrani gosteriyorsa <strong>Restart</strong>&#39;a tiklayip hata detaylarini kopyalayin</li>
+<li>Yalnizca macOS: <code>closedcode</code> menusu -&gt; <strong>Reload Webview</strong> (arayuz bos/donukse yardimci olur)</li>
+</ul>
+<hr>
+<h3>Eklentileri devre dışı bırakın</h3>
+<p>Desktop uygulamasi acilista cokuyorsa, takiliyorsa veya garip davranislar gosteriyorsa once pluginleri devre disi birakin.</p>
+<h4>Global config&#39;i kontrol edin</h4>
+<p>Global config dosyanizi acin ve <code>plugin</code> anahtarini arayin.</p>
+<ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/closedcode.jsonc</code> (veya <code>~/.config/closedcode/closedcode.json</code>)</li>
+<li><strong>macOS/Linux</strong> (eski kurulumlar): <code>~/.local/share/closedcode/closedcode.jsonc</code></li>
+<li><strong>Windows</strong>: <code>WIN+R</code> tuslayip <code>%USERPROFILE%\.config\closedcode\closedcode.jsonc</code> yapistirin</li>
+</ul>
+<p>Plugin tanimliysa anahtari kaldirarak veya bos bir diziye cekerek gecici olarak devre disi birakin:</p>
+<pre><code class="language-jsonc">{
+  &quot;plugin&quot;: [],
+}
+</code></pre>
+<h4>Eklenti dizinlerini kontrol edin</h4>
+<p>closedcode diskten yerel plugin de yukleyebilir. Bu dizinleri gecici olarak tasiyin (veya klasoru yeniden adlandirin) ve uygulamayi yeniden baslatin:</p>
+<ul>
+<li><strong>Global plugins</strong><ul>
+<li><strong>macOS/Linux</strong>: <code>~/.config/closedcode/plugins/</code></li>
+<li><strong>Windows</strong>: <code>WIN+R</code> tuslayip <code>%USERPROFILE%\.config\closedcode\plugins</code> yapistirin</li>
+</ul>
+</li>
+<li><strong>Project plugins</strong> (sadece proje bazli config kullaniyorsaniz)<ul>
+<li><code>&lt;your-project&gt;/.closedcode/plugins/</code></li>
+</ul>
+</li>
+</ul>
+<p>Uygulama duzelirse soruna neden olan plugini bulmak icin pluginleri tek tek yeniden etkinlestirin.</p>
+<hr>
+<h3>Cache&#39;i temizleyin</h3>
+<p>Pluginleri kapatmak ise yaramazsa (veya plugin kurulumu takili kaldiysa), closedcode&#39;un cache&#39;i yeniden olusturmasi icin cache&#39;i temizleyin.</p>
+<ol>
+<li>closedcode Desktop&#39;u tamamen kapatin</li>
+<li>Cache dizinini silin:</li>
+</ol>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/.cache/closedcode</code></li>
+<li><strong>Linux</strong>: <code>~/.cache/closedcode</code> dizinini silin (veya <code>rm -rf ~/.cache/closedcode</code> calistirin)</li>
+<li><strong>Windows</strong>: <code>WIN+R</code> tuslayip <code>%USERPROFILE%\.cache\closedcode</code> yapistirin</li>
+</ul>
+<ol start="3">
+<li>closedcode Desktop&#39;u yeniden baslatin</li>
+</ol>
+<hr>
+<h3>Sunucu bağlantı sorunlarını düzeltin</h3>
+<p>closedcode Desktop ya kendi yerel sunucusunu baslatir (varsayilan) ya da sizin tanimladiginiz bir sunucu URL&#39;sine baglanir.</p>
+<p><strong>&quot;Connection Failed&quot;</strong> penceresi goruyorsaniz (veya uygulama acilis ekranini gecemiyorsa), ozel bir sunucu URL&#39;si olup olmadigini kontrol edin.</p>
+<h4>Desktop varsayilan sunucu URL&#39;sini temizleyin</h4>
+<p>Ana ekranda sunucu adina (durum noktali) tiklayarak Server secicisini acin. <strong>Default server</strong> bolumunde <strong>Clear</strong>&#39;a tiklayin.</p>
+<h4>Config&#39;ten <code>server.port</code> / <code>server.hostname</code> kaldirin</h4>
+<p><code>closedcode.json(c)</code> dosyanizda <code>server</code> bolumu varsa gecici olarak kaldirin ve desktop uygulamasini yeniden baslatin.</p>
+<h4>Ortam degiskenlerini kontrol edin</h4>
+<p>Ortamda <code>CLOSEDCODE_PORT</code> ayarliysa desktop uygulamasi yerel sunucu icin o portu kullanmaya calisir.</p>
+<ul>
+<li><code>CLOSEDCODE_PORT</code> degerini kaldirin (veya bos bir port secin) ve yeniden baslatin</li>
+</ul>
+<hr>
+<h3>Linux: Wayland / X11 sorunları</h3>
+<p>Linux&#39;ta bazi Wayland kurulumlari bos pencere veya compositor hatalarina yol acabilir.</p>
+<ul>
+<li>Wayland kullaniyorsaniz ve uygulama bos/acilmiyorsa <code>OC_ALLOW_WAYLAND=1</code> ile baslatin</li>
+<li>Bu daha kotu olursa kaldirip X11 oturumunda baslatmayi deneyin</li>
+</ul>
+<hr>
+<h3>Windows: WebView2 Çalışma Zamanı</h3>
+<p>Windows&#39;ta closedcode Desktop, Microsoft Edge <strong>WebView2 Runtime</strong> gerektirir. Uygulama bos pencereyle aciliyorsa veya hic baslamiyorsa WebView2&#39;yi kurup/guncelleyip tekrar deneyin.</p>
+<hr>
+<h3>Windows: Genel performans sorunları</h3>
+<p>Windows&#39;ta yavaslik, dosya erisim sorunlari veya terminal problemleri yasiyorsaniz <a href="/docs/windows-wsl">WSL (Windows Subsystem for Linux)</a> kullanmayi deneyin. WSL, closedcode ozellikleriyle daha sorunsuz calisan bir Linux ortami saglar.</p>
+<hr>
+<h3>Bildirimler görünmüyor</h3>
+<p>closedcode Desktop sistem bildirimlerini yalnizca su durumlarda gosterir:</p>
+<ul>
+<li>Isletim sistemi ayarlarinizda closedcode icin bildirimler etkinse</li>
+<li>Uygulama penceresi odakta degilse</li>
+</ul>
+<hr>
+<h3>Desktop depolamasını sıfırlayın (son çare)</h3>
+<p>Uygulama acilmiyorsa ve ayarlari arayuz icinden temizleyemiyorsaniz, desktop uygulamasinin kayitli durumunu sifirlayin.</p>
+<ol>
+<li>closedcode Desktop&#39;u kapatin</li>
+<li>Su dosyalari bulun ve silin (closedcode Desktop uygulama veri dizininde yer alirlar):</li>
+</ol>
+<ul>
+<li><code>closedcode.settings.dat</code> (desktop varsayilan sunucu URL&#39;si)</li>
+<li><code>closedcode.global.dat</code> ve <code>closedcode.workspace.*.dat</code> (son sunucular/projeler gibi UI durumu)</li>
+</ul>
+<p>Dizini hizlica bulmak icin:</p>
+<ul>
+<li><strong>macOS</strong>: Finder -&gt; <code>Cmd+Shift+G</code> -&gt; <code>~/Library/Application Support</code> (ardindan yukaridaki dosya adlarini aratin)</li>
+<li><strong>Linux</strong>: <code>~/.local/share</code> altinda bu dosya adlarini aratin</li>
+<li><strong>Windows</strong>: <code>WIN+R</code> -&gt; <code>%APPDATA%</code> (ardindan bu dosya adlarini aratin)</li>
+</ul>
+<hr>
+<h2>Yardım alın</h2>
+<p>closedcode ile ilgili bir sorun yasiyorsaniz:</p>
+<ol>
+<li><p><strong>GitHub&#39;da issue acin</strong></p>
+<p>Hata bildirmek veya ozellik talep etmek icin en iyi yol GitHub depomuzdur:</p>
+<p><a href="https://github.com/informanellica/vanilla-closedcode/issues"><strong>github.com/informanellica/vanilla-closedcode/issues</strong></a></p>
+<p>Yeni issue acmadan once sorununuzun daha once raporlanip raporlanmadigini kontrol edin.</p>
+</li>
+<li><p><strong>Discord&#39;a katilin</strong></p>
+<p>Gercek zamanli yardim ve topluluk sohbeti icin Discord sunucumuza katilin:</p>
+<p><a href="https://discord.gg/6bvnqcH3"><strong>discord.gg/6bvnqcH3</strong></a></p>
+</li>
+</ol>
+<hr>
+<h2>Yaygın sorunlar</h2>
+<p>Asagida yaygin sorunlar ve cozumleri yer aliyor.</p>
+<hr>
+<h3>closedcode başlamıyor</h3>
+<ol>
+<li>Hata mesaji icin loglari kontrol edin</li>
+<li>Terminalde cikti gormek icin <code>--print-logs</code> ile calistirin</li>
+<li><code>closedcode upgrade</code> ile en guncel surumu kullandiginizdan emin olun</li>
+</ol>
+<hr>
+<h3>Kimlik doğrulama sorunları</h3>
+<ol>
+<li>TUI&#39;da <code>/connect</code> komutuyla yeniden kimlik dogrulamasi yapin</li>
+<li>API anahtarlarinizin gecerli oldugunu kontrol edin</li>
+<li>Aginizin provider API baglantilarina izin verdiginden emin olun</li>
+</ol>
+<hr>
+<h3>Model kullanılamıyor</h3>
+<ol>
+<li>Provider ile kimlik dogrulamasi yaptiginizi kontrol edin</li>
+<li>Config&#39;teki model adinin dogru oldugunu dogrulayin</li>
+<li>Bazi modeller ozel erisim veya abonelik gerektirebilir</li>
+</ol>
+<p><code>ProviderModelNotFoundError</code> aliyorsaniz buyuk olasilikla bir yerde model referansi yanlistir.
+Model referansi su formatta olmalidir: <code>&lt;providerId&gt;/&lt;modelId&gt;</code></p>
+<p>Ornekler:</p>
+<ul>
+<li><code>openai/gpt-4.1</code></li>
+<li><code>openrouter/google/gemini-2.5-flash</code></li>
+<li><code>opencode/kimi-k2</code></li>
+</ul>
+<p>Erisiminiz olan modelleri gormek icin <code>closedcode models</code> calistirin.</p>
+<hr>
+<h3>ProviderInitError</h3>
+<p><code>ProviderInitError</code> aliyorsaniz buyuk olasilikla config&#39;iniz gecersiz veya bozulmustur.</p>
+<p>Cozum adimlari:</p>
+<ol>
+<li><p>Once <a href="/docs/providers">providers rehberini</a> izleyerek provider kurulumunun dogru oldugunu dogrulayin</p>
+</li>
+<li><p>Sorun surerse kayitli konfigurasyonu temizlemeyi deneyin:</p>
+<pre><code class="language-bash">rm -rf ~/.local/share/closedcode
+</code></pre>
+<p>Windows&#39;ta <code>WIN+R</code> tuslayip su konumu silin: <code>%USERPROFILE%\.local\share\closedcode</code></p>
+</li>
+<li><p>TUI&#39;da <code>/connect</code> komutuyla provider kimlik dogrulamasini tekrar yapin</p>
+</li>
+</ol>
+<hr>
+<h3>AI_APICallError ve provider paket sorunlari</h3>
+<p>API cagrisi hatalari aliyorsaniz bunun nedeni guncel olmayan provider paketleri olabilir. closedcode, provider paketlerini (OpenAI, Anthropic, Google vb.) gerektikce dinamik yukler ve yerelde onbellekler.</p>
+<p>Provider paket sorunlarini gidermek icin:</p>
+<ol>
+<li><p>Provider paket cache&#39;ini temizleyin:</p>
+<pre><code class="language-bash">rm -rf ~/.cache/closedcode
+</code></pre>
+<p>Windows&#39;ta <code>WIN+R</code> tuslayip su konumu silin: <code>%USERPROFILE%\.cache\closedcode</code></p>
+</li>
+<li><p>En guncel provider paketlerini yeniden kurmak icin closedcode&#39;u yeniden baslatin</p>
+</li>
+</ol>
+<p>Bu, closedcode&#39;un en yeni provider paket surumlerini indirmesini zorlar ve model parametresi/API degisikliklerinden kaynakli uyumsuzluklari cogu zaman cozer.</p>
+<hr>
+<h3>Linux&#39;ta kopyala/yapıştır çalışmıyor</h3>
+<p>Linux kullanicilarinin kopyala/yapistir ozelliginin calismasi icin asagidaki pano araclarindan en az birini kurmasi gerekir:</p>
+<p><strong>X11 sistemleri icin:</strong></p>
+<pre><code class="language-bash">apt install -y xclip
+# or
+apt install -y xsel
+</code></pre>
+<p><strong>Wayland sistemleri icin:</strong></p>
+<pre><code class="language-bash">apt install -y wl-clipboard
+</code></pre>
+<p><strong>Headless ortamlar icin:</strong></p>
+<pre><code class="language-bash">apt install -y xvfb
+# and run:
+Xvfb :99 -screen 0 1024x768x24 &gt; /dev/null 2&gt;&amp;1 &amp;
+</code></pre>
+<p>closedcode, Wayland kullandiginizi algilarsa <code>wl-clipboard</code> tercihi yapar. Aksi halde sirayla <code>xclip</code> ve <code>xsel</code> araclarini arar.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

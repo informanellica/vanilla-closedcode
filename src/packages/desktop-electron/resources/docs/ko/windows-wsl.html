@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windows (WSL) — vanilla-closedcode docs</title>
+  <meta name="description" content="WSL로 Windows에서 closedcode를 더 편하게 사용하세요.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/windows-wsl.html">English</option>
+      <option value="../ar/windows-wsl.html">العربية</option>
+      <option value="../bs/windows-wsl.html">Bosanski</option>
+      <option value="../da/windows-wsl.html">Dansk</option>
+      <option value="../de/windows-wsl.html">Deutsch</option>
+      <option value="../es/windows-wsl.html">Español</option>
+      <option value="../fr/windows-wsl.html">Français</option>
+      <option value="../it/windows-wsl.html">Italiano</option>
+      <option value="../ja/windows-wsl.html">日本語</option>
+      <option value="../ko/windows-wsl.html" selected>한국어</option>
+      <option value="../nb/windows-wsl.html">Norsk</option>
+      <option value="../pl/windows-wsl.html">Polski</option>
+      <option value="../pt-br/windows-wsl.html">Português (BR)</option>
+      <option value="../ru/windows-wsl.html">Русский</option>
+      <option value="../th/windows-wsl.html">ไทย</option>
+      <option value="../tr/windows-wsl.html">Türkçe</option>
+      <option value="../zh-cn/windows-wsl.html">简体中文</option>
+      <option value="../zh-tw/windows-wsl.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li class="active"><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Windows (WSL)</h1>
+      <p class="lede">WSL로 Windows에서 closedcode를 더 편하게 사용하세요.</p>
+      <p>closedcode는 Windows에서 직접 실행할 수 있지만, 가장 좋은 사용 경험을 위해 <a href="https://learn.microsoft.com/en-us/windows/wsl/install">Windows Subsystem for Linux (WSL)</a> 사용을 권장합니다. WSL은 closedcode 기능과 자연스럽게 동작하는 Linux 환경을 제공합니다.</p>
+<aside class="aside aside-tip">
+<p class="aside-label">왜 WSL인가요?</p>
+WSL은 더 나은 파일 시스템 성능, 완전한 terminal 지원, 그리고 closedcode가 의존하는 개발 도구와의 호환성을 제공합니다.
+</aside>
+---
+
+<h2>설정</h2>
+<div class="steps">
+
+
+<ol>
+<li><p><strong>WSL 설치하기</strong></p>
+<p>아직 설치하지 않았다면 Microsoft 공식 가이드를 따라 <a href="https://learn.microsoft.com/en-us/windows/wsl/install">WSL을 설치</a>하세요.</p>
+</li>
+<li><p><strong>WSL에 closedcode 설치하기</strong></p>
+<p>WSL 설정이 끝나면 WSL terminal을 열고 <a href="/docs/">설치 방법</a> 중 하나로 closedcode를 설치하세요.</p>
+<p>Releases 페이지에서 빌드를 내려받아 설치하세요: <a href="https://github.com/informanellica/vanilla-closedcode/releases">github.com/informanellica/vanilla-closedcode/releases</a></p>
+</li>
+<li><p><strong>WSL에서 closedcode 실행하기</strong></p>
+<p>프로젝트 디렉터리로 이동한 뒤(closedcode에서 Windows 파일은 <code>/mnt/c/</code>, <code>/mnt/d/</code> 등으로 접근) closedcode를 실행하세요.</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/project
+closedcode
+</code></pre>
+</li>
+</ol>
+</div>
+
+<hr>
+<h2>데스크톱 앱 + WSL 서버</h2>
+<p>closedcode 데스크톱 앱을 쓰면서 서버는 WSL에서 실행하고 싶다면 다음처럼 진행하세요.</p>
+<ol>
+<li><p><strong>WSL에서 서버 시작하기</strong></p>
+<p>외부 연결을 허용하려면 <code>--hostname 0.0.0.0</code> 옵션을 사용하세요.</p>
+<pre><code class="language-bash">closedcode serve --hostname 0.0.0.0 --port 4096
+</code></pre>
+</li>
+<li><p><strong>데스크톱 앱 연결하기</strong></p>
+<p><code>http://localhost:4096</code>로 연결하세요.</p>
+</li>
+</ol>
+<aside class="aside aside-note">
+환경에 따라 `localhost`가 동작하지 않으면 WSL의 IP 주소를 사용하세요(WSL에서 `hostname -I` 실행). 이후 `http://<wsl-ip>:4096`로 접속하면 됩니다.
+</aside>
+<aside class="aside aside-caution">
+`--hostname 0.0.0.0`을 사용할 때는 `CLOSEDCODE_SERVER_PASSWORD`를 설정해 서버를 보호하세요.
+
+<pre><code class="language-bash">CLOSEDCODE_SERVER_PASSWORD=your-password closedcode serve --hostname 0.0.0.0
+</code></pre>
+</aside>
+---
+
+<h2>웹 클라이언트 + WSL</h2>
+<p>Windows에서 웹 사용 경험을 가장 좋게 하려면:</p>
+<ol>
+<li><p><strong>PowerShell 대신 WSL terminal에서 <code>closedcode web</code> 실행하기</strong></p>
+<pre><code class="language-bash">closedcode web --hostname 0.0.0.0
+</code></pre>
+</li>
+<li><p><strong>Windows 브라우저에서 접속하기</strong></p>
+<p><code>http://localhost:&lt;port&gt;</code>로 접속하세요(closedcode가 URL을 출력합니다).</p>
+</li>
+</ol>
+<p>WSL에서 <code>closedcode web</code>를 실행하면 올바른 파일 시스템 접근과 terminal 통합을 유지하면서도 Windows 브라우저에서 바로 사용할 수 있습니다.</p>
+<hr>
+<h2>Windows 파일 접근</h2>
+<p>WSL에서는 <code>/mnt/</code> 디렉터리를 통해 Windows 파일 전체에 접근할 수 있습니다.</p>
+<ul>
+<li><code>C:</code> drive → <code>/mnt/c/</code></li>
+<li><code>D:</code> drive → <code>/mnt/d/</code></li>
+<li>다른 드라이브도 같은 방식입니다</li>
+</ul>
+<p>예시:</p>
+<pre><code class="language-bash">cd /mnt/c/Users/YourName/Documents/project
+closedcode
+</code></pre>
+<aside class="aside aside-tip">
+가장 매끄러운 경험을 원한다면 저장소를 WSL 파일시스템(예: `~/code/`)으로 복제하거나 복사한 뒤 그 위치에서 closedcode를 실행해 보세요.
+</aside>
+---
+
+<h2>팁</h2>
+<ul>
+<li>Windows 드라이브에 있는 프로젝트라도 closedcode는 WSL에서 실행하면 파일 접근이 더 자연스럽습니다</li>
+<li>통합된 개발 워크플로를 위해 closedcode와 함께 VS Code의 <a href="https://code.visualstudio.com/docs/remote/wsl">WSL 확장</a>을 사용해 보세요</li>
+<li>closedcode 설정과 세션은 WSL 환경의 <code>~/.local/share/closedcode/</code>에 저장됩니다</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

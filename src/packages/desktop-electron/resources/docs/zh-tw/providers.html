@@ -1,0 +1,1530 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>提供商 — vanilla-closedcode docs</title>
+  <meta name="description" content="在 vanilla-closedcode 中使用任意 LLM 提供商。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/providers.html">English</option>
+      <option value="../ar/providers.html">العربية</option>
+      <option value="../bs/providers.html">Bosanski</option>
+      <option value="../da/providers.html">Dansk</option>
+      <option value="../de/providers.html">Deutsch</option>
+      <option value="../es/providers.html">Español</option>
+      <option value="../fr/providers.html">Français</option>
+      <option value="../it/providers.html">Italiano</option>
+      <option value="../ja/providers.html">日本語</option>
+      <option value="../ko/providers.html">한국어</option>
+      <option value="../nb/providers.html">Norsk</option>
+      <option value="../pl/providers.html">Polski</option>
+      <option value="../pt-br/providers.html">Português (BR)</option>
+      <option value="../ru/providers.html">Русский</option>
+      <option value="../th/providers.html">ไทย</option>
+      <option value="../tr/providers.html">Türkçe</option>
+      <option value="../zh-cn/providers.html">简体中文</option>
+      <option value="../zh-tw/providers.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li class="active"><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>提供商</h1>
+      <p class="lede">在 vanilla-closedcode 中使用任意 LLM 提供商。</p>
+      <p>vanilla-closedcode 使用 <a href="https://ai-sdk.dev/">AI SDK</a> 和 <a href="https://models.dev">Models.dev</a>，支援 <strong>75+ LLM 提供商</strong>，同時也支援執行本地模型。</p>
+<p>要新增提供商，您需要：</p>
+<ol>
+<li>使用 <code>/connect</code> 指令新增提供商的 API 金鑰。</li>
+<li>在 vanilla-closedcode 設定中設定該提供商。</li>
+</ol>
+<hr>
+<h3>憑證</h3>
+<p>使用 <code>/connect</code> 指令新增提供商的 API 金鑰後，憑證會儲存在
+<code>~/.local/share/closedcode/auth.json</code> 中。</p>
+<hr>
+<h3>設定</h3>
+<p>您可以透過 vanilla-closedcode 設定中的 <code>provider</code> 部分來自訂提供商。</p>
+<hr>
+<h4>自訂 Base URL</h4>
+<p>您可以透過設定 <code>baseURL</code> 選項來自訂任何提供商的 Base URL。這在使用代理服務或自訂端點時非常有用。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.anthropic.com/v1&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>目錄</h2>
+<p>下面我們來詳細了解一些提供商。如果您想將某個提供商新增到列表中，歡迎提交 PR。</p>
+<aside class="aside aside-note">
+沒有看到您想要的提供商？歡迎提交 PR。
+</aside>
+---
+
+<h3>302.AI</h3>
+<ol>
+<li><p>前往 <a href="https://302.ai/">302.AI 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>302.AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 302.AI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Amazon Bedrock</h3>
+<p>要在 vanilla-closedcode 中使用 Amazon Bedrock：</p>
+<ol>
+<li><p>前往 Amazon Bedrock 控制台中的<strong>模型目錄</strong>，申請存取您想要使用的模型。</p>
+<p>:::tip
+您需要先在 Amazon Bedrock 中取得對目標模型的存取權限。
+:::</p>
+</li>
+<li><p>使用以下方法之一<strong>設定身分驗證</strong>：</p>
+<h4>環境變數（快速上手）</h4>
+<p>執行 closedcode 時設定以下環境變數之一：</p>
+<pre><code class="language-bash"># Option 1: Using AWS access keys
+AWS_ACCESS_KEY_ID=XXX AWS_SECRET_ACCESS_KEY=YYY closedcode
+
+# Option 2: Using named AWS profile
+AWS_PROFILE=my-profile closedcode
+
+# Option 3: Using Bedrock bearer token
+AWS_BEARER_TOKEN_BEDROCK=XXX closedcode
+</code></pre>
+<p>或者將它們新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">export AWS_PROFILE=my-dev-profile
+export AWS_REGION=us-east-1
+</code></pre>
+<h4>設定檔（推薦）</h4>
+<p>如需專案級別或持久化的設定，請使用 <code>closedcode.json</code>：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>可用選項：</strong></p>
+<ul>
+<li><code>region</code> - AWS 區域（例如 <code>us-east-1</code>、<code>eu-west-1</code>）</li>
+<li><code>profile</code> - <code>~/.aws/credentials</code> 中的 AWS 命名設定檔</li>
+<li><code>endpoint</code> - VPC 端點的自訂端點 URL（通用 <code>baseURL</code> 選項的別名）</li>
+</ul>
+<p>:::tip
+設定檔中的選項優先順序高於環境變數。
+:::</p>
+<h4>進階：VPC 端點</h4>
+<p>如果您使用 Bedrock 的 VPC 端點：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;production&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>:::note
+<code>endpoint</code> 選項是通用 <code>baseURL</code> 選項的別名，使用了 AWS 特有的術語。如果同時指定了 <code>endpoint</code> 和 <code>baseURL</code>，則 <code>endpoint</code> 優先。
+:::</p>
+<h4>認證方式</h4>
+<ul>
+<li><strong><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code></strong>：在 AWS 控制台中建立 IAM 使用者並產生存取金鑰</li>
+<li><strong><code>AWS_PROFILE</code></strong>：使用 <code>~/.aws/credentials</code> 中的命名設定檔。需要先透過 <code>aws configure --profile my-profile</code> 或 <code>aws sso login</code> 進行設定</li>
+<li><strong><code>AWS_BEARER_TOKEN_BEDROCK</code></strong>：從 Amazon Bedrock 控制台產生長期 API 金鑰</li>
+<li><strong><code>AWS_WEB_IDENTITY_TOKEN_FILE</code> / <code>AWS_ROLE_ARN</code></strong>：適用於 EKS IRSA（服務帳號的 IAM 角色）或其他支援 OIDC 聯合的 Kubernetes 環境。使用服務帳號註解時，Kubernetes 會自動注入這些環境變數。</li>
+</ul>
+<h4>認證優先順序</h4>
+<p>Amazon Bedrock 使用以下認證優先順序：</p>
+<ol>
+<li><strong>Bearer Token</strong> - <code>AWS_BEARER_TOKEN_BEDROCK</code> 環境變數或透過 <code>/connect</code> 指令取得的 Token</li>
+<li><strong>AWS 憑證鏈</strong> - 設定檔、存取金鑰、共享憑證、IAM 角色、Web Identity Token（EKS IRSA）、執行個體中繼資料</li>
+</ol>
+<p>:::note
+當設定了 Bearer Token（透過 <code>/connect</code> 或 <code>AWS_BEARER_TOKEN_BEDROCK</code>）時，它的優先順序高於所有 AWS 憑證方式，包括已設定的設定檔。
+:::</p>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇您想要的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-note">
+對於自訂推理設定檔，請在 key 中使用模型名稱和提供商名稱，並將 `id` 屬性設定為 ARN。這可以確保正確的快取行為：
+
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      // ...
+      &quot;models&quot;: {
+        &quot;anthropic-claude-sonnet-4.5&quot;: {
+          &quot;id&quot;: &quot;arn:aws:bedrock:us-east-1:xxx:application-inference-profile/yyy&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</aside>
+---
+
+<h3>Anthropic</h3>
+<ol>
+<li><p>註冊完成後，執行 <code>/connect</code> 指令並選擇 Anthropic。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>您可以選擇 <strong>Claude Pro/Max</strong> 選項，瀏覽器會自動開啟並要求您進行身分驗證。</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ Claude Pro/Max
+│ Create an API Key
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>現在使用 <code>/models</code> 指令即可看到所有 Anthropic 模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>:::info
+在 vanilla-closedcode 中使用 Claude Pro/Max 訂閱不是 <a href="https://anthropic.com">Anthropic</a> 官方支援的用法。
+:::</p>
+<h5>使用 API 金鑰</h5>
+<p>如果您沒有 Pro/Max 訂閱，也可以選擇 <strong>Create an API Key</strong>。瀏覽器會自動開啟並要求您登入 Anthropic，然後會提供一個代碼供您貼上到終端機中。</p>
+<p>如果您已經有 API 金鑰，可以選擇 <strong>Manually enter API Key</strong> 並將其貼上到終端機中。</p>
+<hr>
+<h3>Atomic Chat</h3>
+<p>你可以透過 <a href="https://atomic.chat">Atomic Chat</a> 設定 closedcode 以使用本地模型。Atomic Chat 是一款桌面應用程式，它在 OpenAI 相容的 API 伺服器後方執行本地 LLM（預設端點 <code>http://127.0.0.1:1337/v1</code>）。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;atomic-chat&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Atomic Chat (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1337/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;&lt;your-model-id&gt;&quot;: {
+          &quot;name&quot;: &quot;&lt;your-model-name&gt;&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>在此範例中：</p>
+<ul>
+<li><code>atomic-chat</code> 是自訂的提供者 ID。可以是任何你想要的字串。</li>
+<li><code>npm</code> 指定此提供者所使用的套件。這裡使用 <code>@ai-sdk/openai-compatible</code> 來連接任何 OpenAI 相容的 API。</li>
+<li><code>name</code> 是提供者在介面中顯示的名稱。</li>
+<li><code>options.baseURL</code> 是本地伺服器的端點。請根據你的 Atomic Chat 設定修改主機與連接埠。</li>
+<li><code>models</code> 是模型 ID 到其顯示名稱的對應表。每個 ID 必須與 <code>GET /v1/models</code> 所回傳的 <code>id</code> 相符——執行 <code>curl http://127.0.0.1:1337/v1/models</code> 可列出 Atomic Chat 目前載入的 ID。</li>
+</ul>
+<aside class="aside aside-tip">
+如果工具呼叫運作不佳，請選擇一個對 tool calling 支援較好的已載入模型（例如 Qwen-Coder 或 DeepSeek-Coder 的變體）。
+</aside>
+---
+
+<h3>Azure OpenAI</h3>
+<aside class="aside aside-note">
+如果遇到 "I'm sorry, but I cannot assist with that request" 錯誤，請嘗試將 Azure 資源中的內容篩選器從 **DefaultV2** 更改為 **Default**。
+</aside>
+1. 前往 [Azure 入口網站](https://portal.azure.com/)並建立 **Azure OpenAI** 資源。您需要：
+   - **資源名稱**：這會成為您的 API 端點的一部分（`https://RESOURCE_NAME.openai.azure.com/`）
+   - **API 金鑰**：資源中的 `KEY 1` 或 `KEY 2`
+
+<ol start="2">
+<li><p>前往 <a href="https://ai.azure.com/">Azure AI Foundry</a> 並部署一個模型。</p>
+<p>:::note
+部署名稱必須與模型名稱一致，vanilla-closedcode 才能正常運作。
+:::</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Azure</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>將資源名稱設定為環境變數：</p>
+<pre><code class="language-bash">AZURE_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>或者新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">export AZURE_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇您已部署的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Azure Cognitive Services</h3>
+<ol>
+<li><p>前往 <a href="https://portal.azure.com/">Azure 入口網站</a>並建立 <strong>Azure OpenAI</strong> 資源。您需要：</p>
+<ul>
+<li><strong>資源名稱</strong>：這會成為您的 API 端點的一部分（<code>https://AZURE_COGNITIVE_SERVICES_RESOURCE_NAME.cognitiveservices.azure.com/</code>）</li>
+<li><strong>API 金鑰</strong>：資源中的 <code>KEY 1</code> 或 <code>KEY 2</code></li>
+</ul>
+</li>
+<li><p>前往 <a href="https://ai.azure.com/">Azure AI Foundry</a> 並部署一個模型。</p>
+<p>:::note
+部署名稱必須與模型名稱一致，vanilla-closedcode 才能正常運作。
+:::</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Azure Cognitive Services</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>將資源名稱設定為環境變數：</p>
+<pre><code class="language-bash">AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>或者新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">export AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇您已部署的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Baseten</h3>
+<ol>
+<li><p>前往 <a href="https://app.baseten.co/">Baseten</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Baseten</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Baseten API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cerebras</h3>
+<ol>
+<li><p>前往 <a href="https://inference.cerebras.ai/">Cerebras 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Cerebras</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Cerebras API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Qwen 3 Coder 480B</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cloudflare AI Gateway</h3>
+<p>Cloudflare AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、Workers AI 等提供商的模型。透過 <a href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/">Unified Billing</a>，您無需為每個提供商單獨準備 API 金鑰。</p>
+<ol>
+<li><p>前往 <a href="https://dash.cloudflare.com/">Cloudflare 儀表板</a>，導覽到 <strong>AI</strong> &gt; <strong>AI Gateway</strong>，建立一個新的閘道。</p>
+</li>
+<li><p>將您的 Account ID 和 Gateway ID 設定為環境變數。</p>
+<pre><code class="language-bash">export CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+export CLOUDFLARE_GATEWAY_ID=your-gateway-id
+</code></pre>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Cloudflare AI Gateway</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Cloudflare API Token。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+<p>或者將其設定為環境變數。</p>
+<pre><code class="language-bash">export CLOUDFLARE_API_TOKEN=your-api-token
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>您也可以透過 vanilla-closedcode 設定新增模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;cloudflare-ai-gateway&quot;: {
+      &quot;models&quot;: {
+        &quot;openai/gpt-4o&quot;: {},
+        &quot;anthropic/claude-sonnet-4&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cortecs</h3>
+<ol>
+<li><p>前往 <a href="https://cortecs.ai/">Cortecs 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Cortecs</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Cortecs API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Kimi K2 Instruct</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>DeepSeek</h3>
+<ol>
+<li><p>前往 <a href="https://platform.deepseek.com/">DeepSeek 控制台</a>，建立帳號並點擊 <strong>Create new API key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>DeepSeek</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 DeepSeek API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇 DeepSeek 模型，例如 <em>DeepSeek V4 Pro</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Deep Infra</h3>
+<ol>
+<li><p>前往 <a href="https://deepinfra.com/dash">Deep Infra 儀表板</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Deep Infra</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Deep Infra API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Firmware</h3>
+<ol>
+<li><p>前往 <a href="https://app.firmware.ai/signup">Firmware 儀表板</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Firmware</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Firmware API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Fireworks AI</h3>
+<ol>
+<li><p>前往 <a href="https://app.fireworks.ai/">Fireworks AI 控制台</a>，建立帳號並點擊 <strong>Create API Key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Fireworks AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Fireworks AI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Kimi K2 Instruct</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>GitLab Duo</h3>
+<p>GitLab Duo 透過 GitLab 的 Anthropic 代理提供具有原生工具呼叫能力的 AI 驅動代理聊天。</p>
+<ol>
+<li><p>執行 <code>/connect</code> 指令並選擇 GitLab。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>選擇您的身分驗證方式：</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ OAuth (Recommended)
+│ Personal Access Token
+└
+</code></pre>
+<h4>使用 OAuth（推薦）</h4>
+<p>選擇 <strong>OAuth</strong>，瀏覽器會自動開啟進行授權。</p>
+<h4>使用個人存取權杖</h4>
+<ol>
+<li>前往 <a href="https://gitlab.com/-/user_settings/personal_access_tokens">GitLab 使用者設定 &gt; Access Tokens</a></li>
+<li>點擊 <strong>Add new token</strong></li>
+<li>名稱填寫 <code>vanilla-closedcode</code>，範圍選擇 <code>api</code></li>
+<li>複製權杖（以 <code>glpat-</code> 開頭）</li>
+<li>在終端機中輸入該權杖</li>
+</ol>
+</li>
+<li><p>執行 <code>/models</code> 指令查看可用模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>提供三個基於 Claude 的模型：</p>
+<ul>
+<li><strong>duo-chat-haiku-4-5</strong>（預設）- 快速回應，適合簡單任務</li>
+<li><strong>duo-chat-sonnet-4-5</strong> - 效能均衡，適合大多數工作流程</li>
+<li><strong>duo-chat-opus-4-5</strong> - 最強大，適合複雜分析</li>
+</ul>
+</li>
+</ol>
+<aside class="aside aside-note">
+您也可以透過指定 `GITLAB_TOKEN` 環境變數來避免將權杖儲存在 vanilla-closedcode 的認證儲存中。
+</aside>
+##### 自架 GitLab
+
+<aside class="aside aside-note">
+<p class="aside-label">合規說明</p>
+vanilla-closedcode uses a small model for some AI tasks like generating the session title. To keep these tasks on your own GitLab-hosted instance, set <code>small_model</code> in your <code>closedcode.json</code> and disable session sharing:
+
+<pre><code class="language-json">{
+  &quot;small_model&quot;: &quot;gitlab/duo-chat-haiku-4-5&quot;,
+  &quot;share&quot;: &quot;disabled&quot;
+}
+</code></pre>
+</aside>
+對於自架 GitLab 實例：
+
+<pre><code class="language-bash">
+</code></pre>
+<p>如果您的實例執行了自訂 AI Gateway：</p>
+<pre><code class="language-bash">GITLAB_AI_GATEWAY_URL=https://ai-gateway.company.com
+</code></pre>
+<p>或者新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<aside class="aside aside-note">
+您的 GitLab 管理員必須啟用以下功能：
+
+<ol>
+<li>為使用者、群組或實例啟用 <a href="https://docs.gitlab.com/user/duo_agent_platform/turn_on_off/">Duo Agent Platform</a></li>
+<li>功能旗標（透過 Rails 控制台）：<ul>
+<li><code>agent_platform_claude_code</code></li>
+<li><code>third_party_agents_enabled</code>
+:::</li>
+</ul>
+</li>
+</ol>
+<h5>自架實例的 OAuth</h5>
+<p>要在自架實例上使用 OAuth，您需要建立一個新應用程式（設定 → 應用程式），回呼 URL 設定為 <code>http://127.0.0.1:8080/callback</code>，並選擇以下範圍：</p>
+<ul>
+<li>api（代表您存取 API）</li>
+<li>read_user（讀取您的個人資訊）</li>
+<li>read_repository（允許對儲存庫進行唯讀存取）</li>
+</ul>
+<p>然後將應用程式 ID 匯出為環境變數：</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>更多文件請參閱 <a href="https://www.npmjs.com/package/opencode-gitlab-auth">opencode-gitlab-auth</a> 首頁。</p>
+<h5>設定</h5>
+<p>透過 <code>closedcode.json</code> 進行自訂設定：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;gitlab&quot;: {
+      &quot;options&quot;: {
+        &quot;instanceUrl&quot;: &quot;https://gitlab.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h5>GitLab API 工具（可選，但強烈推薦）</h5>
+<p>要存取 GitLab 工具（合併請求、Issue、流水線、CI/CD 等）：</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-gitlab-plugin&quot;]
+}
+</code></pre>
+<p>該外掛提供全面的 GitLab 儲存庫管理功能，包括 MR 審查、Issue 追蹤、流水線監控等。</p>
+<hr>
+<h3>GitHub Copilot</h3>
+<p>要在 vanilla-closedcode 中使用您的 GitHub Copilot 訂閱：</p>
+<p>:::note
+部分模型可能需要 <a href="https://github.com/features/copilot/plans">Pro+ 訂閱</a>才能使用。</p>
+</aside>
+1. 執行 `/connect` 指令並搜尋 GitHub Copilot。
+
+<pre><code class="language-txt">/connect
+</code></pre>
+<ol start="2">
+<li><p>前往 <a href="https://github.com/login/device">github.com/login/device</a> 並輸入驗證碼。</p>
+<pre><code class="language-txt">┌ Login with GitHub Copilot
+│
+│ https://github.com/login/device
+│
+│ Enter code: 8F43-6FCF
+│
+└ Waiting for authorization...
+</code></pre>
+</li>
+<li><p>現在執行 <code>/models</code> 指令選擇您想要的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Google Vertex AI</h3>
+<p>要在 vanilla-closedcode 中使用 Google Vertex AI：</p>
+<ol>
+<li><p>前往 Google Cloud Console 中的<strong>模型花園</strong>，查看您所在區域可用的模型。</p>
+<p>:::note
+您需要一個啟用了 Vertex AI API 的 Google Cloud 專案。
+:::</p>
+</li>
+<li><p>設定所需的環境變數：</p>
+<ul>
+<li><code>GOOGLE_CLOUD_PROJECT</code>：您的 Google Cloud 專案 ID</li>
+<li><code>VERTEX_LOCATION</code>（可選）：Vertex AI 的區域（預設為 <code>global</code>）</li>
+<li>身分驗證（選擇其一）：<ul>
+<li><code>GOOGLE_APPLICATION_CREDENTIALS</code>：服務帳號 JSON 金鑰檔案的路徑</li>
+<li>使用 gcloud CLI 進行身分驗證：<code>gcloud auth application-default login</code></li>
+</ul>
+</li>
+</ul>
+<p>在執行 closedcode 時設定：</p>
+<pre><code class="language-bash">GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json GOOGLE_CLOUD_PROJECT=your-project-id closedcode
+</code></pre>
+<p>或者新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export VERTEX_LOCATION=global
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-tip">
+`global` 區域可以提高可用性並減少錯誤，且不會產生額外費用。如果有資料駐留需求，請使用區域端點（例如 `us-central1`）。[了解更多](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models#regional_and_global_endpoints)
+</aside>
+3. 執行 `/models` 指令選擇您想要的模型。
+
+<pre><code class="language-txt">/models
+</code></pre>
+<hr>
+<h3>Groq</h3>
+<ol>
+<li><p>前往 <a href="https://console.groq.com/">Groq 控制台</a>，點擊 <strong>Create API Key</strong> 並複製金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 Groq。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入該提供商的 API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇您想要的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Hugging Face</h3>
+<p><a href="https://huggingface.co/docs/inference-providers">Hugging Face Inference Providers</a> 提供對由 17+ 提供商支援的開放模型的存取。</p>
+<ol>
+<li><p>前往 <a href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained">Hugging Face 設定</a>，建立一個具有呼叫 Inference Providers 權限的權杖。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Hugging Face</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Hugging Face 權杖。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Kimi-K2-Instruct</em> 或 <em>GLM-4.6</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a> 是一個 LLM 可觀測性平台，為您的 AI 應用程式提供日誌記錄、監控和分析功能。Helicone AI Gateway 會根據模型自動將請求路由到對應的提供商。</p>
+<ol>
+<li><p>前往 <a href="https://helicone.ai">Helicone</a>，建立帳號並在儀表板中產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Helicone</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Helicone API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>如需了解更多提供商以及快取、速率限制等進階功能，請查閱 <a href="https://docs.helicone.ai">Helicone 文件</a>。</p>
+<h4>可選設定</h4>
+<p>如果 Helicone 的某些功能或模型未透過 vanilla-closedcode 自動設定，您隨時可以手動設定。</p>
+<p><a href="https://helicone.ai/models">Helicone 模型目錄</a>中可以找到您需要新增的模型 ID。</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>自訂請求標頭</h4>
+<p>Helicone 支援用於快取、使用者追蹤和工作階段管理等功能的自訂請求標頭。使用 <code>options.headers</code> 將它們新增到提供商設定中：</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>工作階段追蹤</h5>
+<p>Helicone 的 <a href="https://docs.helicone.ai/features/sessions">Sessions</a> 功能允許您將相關的 LLM 請求歸為一組。使用 <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a> 外掛可以自動將每個 vanilla-closedcode 對話記錄為 Helicone 中的一個工作階段。</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>將其新增到設定中。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>該外掛會在您的請求中注入 <code>Helicone-Session-Id</code> 和 <code>Helicone-Session-Name</code> 請求標頭。在 Helicone 的 Sessions 頁面中，您可以看到每個 vanilla-closedcode 對話都作為獨立的工作階段列出。</p>
+<h5>常用 Helicone 請求標頭</h5>
+<table>
+<thead>
+<tr>
+<th>請求標頭</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>啟用回應快取（<code>true</code>/<code>false</code>）</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>按使用者追蹤指標</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>新增自訂屬性（例如 <code>Helicone-Property-Environment</code>）</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>將請求與提示詞版本關聯</td>
+</tr>
+</tbody></table>
+<p>有關所有可用請求標頭，請參閱 <a href="https://docs.helicone.ai/helicone-headers/header-directory">Helicone Header Directory</a>。</p>
+<hr>
+<h3>llama.cpp</h3>
+<p>您可以透過 <a href="https://github.com/ggml-org/llama.cpp">llama.cpp</a> 的 llama-server 工具設定 vanilla-closedcode 使用本地模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;llama.cpp&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;llama-server (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:8080/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;qwen3-coder:a3b&quot;: {
+          &quot;name&quot;: &quot;Qwen3-Coder: a3b-30b (local)&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 128000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>在這個範例中：</p>
+<ul>
+<li><code>llama.cpp</code> 是自訂的提供商 ID，可以是任意字串。</li>
+<li><code>npm</code> 指定該提供商使用的套件。這裡使用 <code>@ai-sdk/openai-compatible</code> 來相容任何 OpenAI 相容的 API。</li>
+<li><code>name</code> 是該提供商在 UI 中顯示的名稱。</li>
+<li><code>options.baseURL</code> 是本地伺服器的端點位址。</li>
+<li><code>models</code> 是模型 ID 到其設定的對應。模型名稱會顯示在模型選擇列表中。</li>
+</ul>
+<hr>
+<h3>IO.NET</h3>
+<p>IO.NET 提供 17 個針對不同使用情境最佳化的模型：</p>
+<ol>
+<li><p>前往 <a href="https://ai.io.net/">IO.NET 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>IO.NET</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 IO.NET API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>LM Studio</h3>
+<p>您可以透過 LM Studio 設定 vanilla-closedcode 使用本地模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;lmstudio&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;LM Studio (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1234/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;google/gemma-3n-e4b&quot;: {
+          &quot;name&quot;: &quot;Gemma 3n-e4b (local)&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>在這個範例中：</p>
+<ul>
+<li><code>lmstudio</code> 是自訂的提供商 ID，可以是任意字串。</li>
+<li><code>npm</code> 指定該提供商使用的套件。這裡使用 <code>@ai-sdk/openai-compatible</code> 來相容任何 OpenAI 相容的 API。</li>
+<li><code>name</code> 是該提供商在 UI 中顯示的名稱。</li>
+<li><code>options.baseURL</code> 是本地伺服器的端點位址。</li>
+<li><code>models</code> 是模型 ID 到其設定的對應。模型名稱會顯示在模型選擇列表中。</li>
+</ul>
+<hr>
+<h3>Moonshot AI</h3>
+<p>要使用 Moonshot AI 的 Kimi K2：</p>
+<ol>
+<li><p>前往 <a href="https://platform.moonshot.ai/console">Moonshot AI 控制台</a>，建立帳號並點擊 <strong>Create API key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Moonshot AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Moonshot API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇 <em>Kimi K2</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>MiniMax</h3>
+<ol>
+<li><p>前往 <a href="https://platform.minimax.io/login">MiniMax API 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>MiniMax</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 MiniMax API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>M2.1</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Nebius Token Factory</h3>
+<ol>
+<li><p>前往 <a href="https://tokenfactory.nebius.com/">Nebius Token Factory 控制台</a>，建立帳號並點擊 <strong>Add Key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Nebius Token Factory</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Nebius Token Factory API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Kimi K2 Instruct</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Ollama</h3>
+<p>您可以透過 Ollama 設定 vanilla-closedcode 使用本地模型。</p>
+<aside class="aside aside-tip">
+Ollama 可以自動為 vanilla-closedcode 進行設定。詳見 [Ollama 整合文件](https://docs.ollama.com/integrations/opencode)。
+</aside>
+```json title="closedcode.json" "ollama" {5, 6, 8, 10-14}
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "llama2": {
+          "name": "Llama 2"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>在這個範例中：</p>
+<ul>
+<li><code>ollama</code> 是自訂的提供商 ID，可以是任意字串。</li>
+<li><code>npm</code> 指定該提供商使用的套件。這裡使用 <code>@ai-sdk/openai-compatible</code> 來相容任何 OpenAI 相容的 API。</li>
+<li><code>name</code> 是該提供商在 UI 中顯示的名稱。</li>
+<li><code>options.baseURL</code> 是本地伺服器的端點位址。</li>
+<li><code>models</code> 是模型 ID 到其設定的對應。模型名稱會顯示在模型選擇列表中。</li>
+</ul>
+<aside class="aside aside-tip">
+如果工具呼叫不運作，請嘗試增大 Ollama 中的 `num_ctx` 值。建議從 16k - 32k 左右開始。
+</aside>
+---
+
+<h3>Ollama Cloud</h3>
+<p>要在 vanilla-closedcode 中使用 Ollama Cloud：</p>
+<ol>
+<li><p>前往 <a href="https://ollama.com/">https://ollama.com/</a> 登入或建立帳號。</p>
+</li>
+<li><p>導覽到 <strong>Settings</strong> &gt; <strong>Keys</strong>，點擊 <strong>Add API Key</strong> 產生新的 API 金鑰。</p>
+</li>
+<li><p>複製 API 金鑰以便在 vanilla-closedcode 中使用。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Ollama Cloud</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Ollama Cloud API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><strong>重要</strong>：在 vanilla-closedcode 中使用雲端模型之前，必須先將模型資訊拉取到本地：</p>
+<pre><code class="language-bash">ollama pull gpt-oss:20b-cloud
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇您的 Ollama Cloud 模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OpenAI</h3>
+<p>我們建議註冊 <a href="https://chatgpt.com/pricing">ChatGPT Plus 或 Pro</a>。</p>
+<ol>
+<li><p>註冊完成後，執行 <code>/connect</code> 指令並選擇 OpenAI。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>您可以選擇 <strong>ChatGPT Plus/Pro</strong> 選項，瀏覽器會自動開啟並要求您進行身分驗證。</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ ChatGPT Plus/Pro
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>現在使用 <code>/models</code> 指令即可看到所有 OpenAI 模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<h5>使用 API 金鑰</h5>
+<p>如果您已經有 API 金鑰，可以選擇 <strong>Manually enter API Key</strong> 並將其貼上到終端機中。</p>
+<hr>
+<h3>OpenRouter</h3>
+<ol>
+<li><p>前往 <a href="https://openrouter.ai/settings/keys">OpenRouter 儀表板</a>，點擊 <strong>Create API Key</strong> 並複製金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 OpenRouter。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入該提供商的 API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>預設已預先載入了許多 OpenRouter 模型，執行 <code>/models</code> 指令選擇您想要的模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>您也可以透過 vanilla-closedcode 設定新增更多模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>您還可以透過 vanilla-closedcode 設定自訂模型。以下是指定提供商的範例：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP AI Core</h3>
+<p>SAP AI Core 透過統一平台提供對來自 OpenAI、Anthropic、Google、Amazon、Meta、Mistral 和 AI21 的 40+ 模型的存取。</p>
+<ol>
+<li><p>前往 <a href="https://account.hana.ondemand.com/">SAP BTP Cockpit</a>，導覽到您的 SAP AI Core 服務實例，並建立服務金鑰。</p>
+<p>:::tip
+服務金鑰是一個包含 <code>clientid</code>、<code>clientsecret</code>、<code>url</code> 和 <code>serviceurls.AI_API_URL</code> 的 JSON 物件。您可以在 BTP Cockpit 的 <strong>Services</strong> &gt; <strong>Instances and Subscriptions</strong> 下找到您的 AI Core 實例。
+:::</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>SAP AI Core</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的服務金鑰 JSON。</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>或者設定 <code>AICORE_SERVICE_KEY</code> 環境變數：</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>或者新增到您的 bash 設定檔中：</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>可選：設定部署 ID 和資源群組：</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+這些設定是可選的，應根據您的 SAP AI Core 設定進行配置。
+:::</p>
+</li>
+<li><p>執行 <code>/models</code> 指令從 40+ 個可用模型中進行選擇。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>STACKIT</h3>
+<p>STACKIT AI Model Serving 提供完全託管的主權託管環境，專注於 Llama、Mistral 和 Qwen 等大語言模型，在歐洲基礎設施上實現最大程度的資料主權。</p>
+<ol>
+<li><p>前往 <a href="https://portal.stackit.cloud">STACKIT Portal</a>，導覽到 <strong>AI Model Serving</strong>，為您的專案建立認證權杖。</p>
+<p>:::tip
+您需要先擁有 STACKIT 客戶帳號、使用者帳號和專案，才能建立認證權杖。
+:::</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>STACKIT</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 STACKIT AI Model Serving 認證權杖。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Qwen3-VL 235B</em> 或 <em>Llama 3.3 70B</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OVHcloud AI Endpoints</h3>
+<ol>
+<li><p>前往 <a href="https://ovh.com/manager">OVHcloud 管理面板</a>。導覽到 <code>Public Cloud</code> 部分，<code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code>，在 <code>API Keys</code> 分頁中點擊 <strong>Create a new API key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>OVHcloud AI Endpoints</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 OVHcloud AI Endpoints API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>gpt-oss-120b</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Scaleway</h3>
+<p>要在 vanilla-closedcode 中使用 <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative APIs</a>：</p>
+<ol>
+<li><p>前往 <a href="https://console.scaleway.com/iam/api-keys">Scaleway Console IAM 設定</a>產生新的 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Scaleway</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Scaleway API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>devstral-2-123b-instruct-2512</em> 或 <em>gpt-oss-120b</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Together AI</h3>
+<ol>
+<li><p>前往 <a href="https://api.together.ai">Together AI 控制台</a>，建立帳號並點擊 <strong>Add Key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Together AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Together AI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Kimi K2 Instruct</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Venice AI</h3>
+<ol>
+<li><p>前往 <a href="https://venice.ai">Venice AI 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Venice AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Venice AI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Llama 3.3 70B</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Vercel AI Gateway</h3>
+<p>Vercel AI Gateway 允許您透過統一端點存取來自 OpenAI、Anthropic、Google、xAI 等提供商的模型。模型按原價提供，不額外加價。</p>
+<ol>
+<li><p>前往 <a href="https://vercel.com/">Vercel 儀表板</a>，導覽到 <strong>AI Gateway</strong> 分頁，點擊 <strong>API keys</strong> 建立新的 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Vercel AI Gateway</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 Vercel AI Gateway API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>您也可以透過 vanilla-closedcode 設定自訂模型。以下是指定提供商路由順序的範例。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>一些常用的路由選項：</p>
+<table>
+<thead>
+<tr>
+<th>選項</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>提供商嘗試順序</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>限制為特定提供商</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>僅使用具有零資料留存策略的提供商</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p>前往 <a href="https://console.x.ai/">xAI 控制台</a>，建立帳號並產生 API 金鑰。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>xAI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>輸入您的 xAI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>Grok Beta</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Z.AI</h3>
+<ol>
+<li><p>前往 <a href="https://z.ai/manage-apikey/apikey-list">Z.AI API 控制台</a>，建立帳號並點擊 <strong>Create a new API key</strong>。</p>
+</li>
+<li><p>執行 <code>/connect</code> 指令並搜尋 <strong>Z.AI</strong>。</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p>如果您訂閱了 <strong>GLM Coding Plan</strong>，請選擇 <strong>Z.AI Coding Plan</strong>。</p>
+</li>
+<li><p>輸入您的 Z.AI API 金鑰。</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>執行 <code>/models</code> 指令選擇模型，例如 <em>GLM-4.7</em>。</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>自訂提供商</h2>
+<p>要新增 <code>/connect</code> 指令中未列出的任何 <strong>OpenAI 相容</strong>提供商：</p>
+<aside class="aside aside-tip">
+您可以在 vanilla-closedcode 中使用任何 OpenAI 相容的提供商。大多數現代 AI 提供商都提供 OpenAI 相容的 API。
+</aside>
+1. 執行 `/connect` 指令，向下捲動到 **Other**。
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>輸入該提供商的唯一 ID。</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::note
+請選擇一個容易記住的 ID，您將在設定檔中使用它。
+:::</p>
+</li>
+<li><p>輸入該提供商的 API 金鑰。</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>在專案目錄中建立或更新 <code>closedcode.json</code> 檔案：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>以下是設定選項說明：</p>
+<ul>
+<li><strong>npm</strong>：要使用的 AI SDK 套件，對於 OpenAI 相容的提供商使用 <code>@ai-sdk/openai-compatible</code></li>
+<li><strong>name</strong>：在 UI 中顯示的名稱。</li>
+<li><strong>models</strong>：可用模型。</li>
+<li><strong>options.baseURL</strong>：API 端點 URL。</li>
+<li><strong>options.apiKey</strong>：可選，如果不使用 auth 認證，可直接設定 API 金鑰。</li>
+<li><strong>options.headers</strong>：可選，設定自訂請求標頭。</li>
+</ul>
+<p>更多進階選項請參見下面的範例。</p>
+</li>
+<li><p>執行 <code>/models</code> 指令，您自訂的提供商和模型將出現在選擇列表中。</p>
+</li>
+</ol>
+<hr>
+<h5>範例</h5>
+<p>以下是設定 <code>apiKey</code>、<code>headers</code> 和模型 <code>limit</code> 選項的範例。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>設定詳情：</p>
+<ul>
+<li><strong>apiKey</strong>：使用 <code>env</code> 變數語法設定，<a href="/docs/config#env-vars">了解更多</a>。</li>
+<li><strong>headers</strong>：隨每個請求傳送的自訂請求標頭。</li>
+<li><strong>limit.context</strong>：模型接受的最大輸入 Token 數。</li>
+<li><strong>limit.output</strong>：模型可產生的最大 Token 數。</li>
+</ul>
+<p><code>limit</code> 欄位讓 vanilla-closedcode 了解您還剩餘多少上下文空間。標準提供商會自動從 models.dev 拉取這些資訊。</p>
+<hr>
+<h2>疑難排解</h2>
+<p>如果您在設定提供商時遇到問題，請檢查以下幾點：</p>
+<ol>
+<li><p><strong>檢查認證設定</strong>：執行 <code>closedcode auth list</code> 查看該提供商的憑證是否已新增到設定中。</p>
+<p>這不適用於 Amazon Bedrock 等依賴環境變數進行認證的提供商。</p>
+</li>
+<li><p>對於自訂提供商，請檢查 vanilla-closedcode 設定並確認：</p>
+<ul>
+<li><code>/connect</code> 指令中使用的提供商 ID 與 vanilla-closedcode 設定中的 ID 一致。</li>
+<li>使用了正確的 npm 套件。例如，Cerebras 應使用 <code>@ai-sdk/cerebras</code>。對於其他所有 OpenAI 相容的提供商，使用 <code>@ai-sdk/openai-compatible</code>。</li>
+<li><code>options.baseURL</code> 欄位中的 API 端點位址正確。</li>
+</ul>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

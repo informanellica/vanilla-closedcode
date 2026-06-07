@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Polecenia — vanilla-closedcode docs</title>
+  <meta name="description" content="Twórz polecenia dla powtarzalnych zadań.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html">Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html" selected>Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Polecenia</h1>
+      <p class="lede">Twórz polecenia dla powtarzalnych zadań.</p>
+      <p>Polecenia to zdefiniowane prompty, które można uruchomić w TUI.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>Polecenia są dodatkiem do wbudowanych, takich jak <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Dowiedz się więcej</a>.</p>
+<hr>
+<h2>Utwórz pliki źródłowe</h2>
+<p>Utwórz pliki Markdown w katalogu <code>commands/</code>, aby zdefiniować polecenia.</p>
+<p>Utwórz <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Frontmatter definiuje właściwości. Treść staje się szablonem.</p>
+<p>Uruchom polecenie, wpisując <code>/</code>, a następnie nazwę polecenia.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Konfiguracja</h2>
+<p>Możesz zdefiniować polecenia w <code>closedcode.json</code> lub w plikach w katalogu <code>commands/</code>.</p>
+<hr>
+<h3>JSON</h3>
+<p>Użyj opcji <code>command</code> w swojej konfiguracji closedcode:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Teraz możesz wybrać opcję w TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Można także definiować polecenia za pomocą plików Markdown. Trzymaj je w:</p>
+<ul>
+<li>Globalnie: <code>~/.config/closedcode/commands/</code></li>
+<li>Na projekt: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Nazwa pliku Markdown staje się nazwą polecenia. Na przykład <code>test.md</code> pozwala
+uruchomić:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Składnia promptu</h2>
+<p>Prompty niestandardowych poleceń obsługują kilka specjalnych symboli zastępczych.</p>
+<hr>
+<h3>Argumenty</h3>
+<p>Przekazuj argumenty do promptu, używając symbolu zastępczego <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Uruchomienie polecenia z argumentami:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p><code>$ARGUMENTS</code> zostanie zastąpione przez <code>Button</code>.</p>
+<p>Dostęp do poszczególnych argumentów można uzyskać za pomocą parametrów pozycyjnych:</p>
+<ul>
+<li><code>$1</code> - Pierwszy argument</li>
+<li><code>$2</code> - Drugi argument</li>
+<li><code>$3</code> - Trzeci argument</li>
+<li>I tak dalej...</li>
+</ul>
+<p>Na przykład:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Uruchomienie polecenia:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Wartości:</p>
+<ul>
+<li><code>$1</code> to <code>config.json</code></li>
+<li><code>$2</code> to <code>src</code></li>
+<li><code>$3</code> to <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Dane wyjściowe poleceń</h3>
+<p>Użyj <code>!command</code>, aby wstawić dane wyjściowe <a href="/docs/tui#bash-commands">polecenia bash</a> do promptu.</p>
+<p>Na przykład, aby przeanalizować pokrycie testami:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Lub aby przejrzeć ostatnie zmiany:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>Polecenia są uruchamiane w powłoce, a ich dane wyjściowe są wstawiane do promptu.</p>
+<hr>
+<h3>Odwołania do plików</h3>
+<p>Dołącz pliki do swojego polecenia, używając <code>@</code> i ścieżki do pliku.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Zawartość pliku jest automatycznie wstawiana do promptu.</p>
+<hr>
+<h2>Opcje</h2>
+<p>Przyjrzyjmy się szczegółowo opcjom konfiguracji.</p>
+<hr>
+<h3>Template</h3>
+<p>Opcja <code>template</code> to prompt wysyłany do LLM po wykonaniu polecenia.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Jest to <strong>wymagana</strong> opcja konfiguracji.</p>
+<hr>
+<h3>Description</h3>
+<p>Użyj <code>description</code>, aby dodać krótki opis działania polecenia.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Jest wyświetlany jako opis w TUI po wpisaniu polecenia.</p>
+<hr>
+<h3>Agent</h3>
+<p>Użyj opcji <code>agent</code>, aby określić, który <a href="/docs/agents">agent</a> powinien wykonać to polecenie.
+Jeśli jest to <a href="/docs/agents/#subagents">subagent</a>, zostanie on użyty.
+Aby to zmienić, ustaw <code>subtask</code> na <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Jest to <strong>opcjonalna</strong> opcja konfiguracji. Jeśli nie podano, użyty zostanie domyślny agent.</p>
+<hr>
+<h3>Subtask</h3>
+<p>Użyj <code>subtask</code>, aby wymusić wywołanie polecenia jako subzadania.
+Jest to przydatne, jeśli chcesz, aby polecenie nie zanieczyszczało kontekstu i <strong>zmusiło</strong> agenta do działania jako subagent,
+nawet jeśli <code>mode</code> jest ustawiony na <code>primary</code> w konfiguracji <a href="/docs/agents">agent</a>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Jest to <strong>opcjonalna</strong> opcja konfiguracji.</p>
+<hr>
+<h3>Model</h3>
+<p>Użyj <code>model</code>, aby określić model dla tego polecenia.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Jest to <strong>opcjonalna</strong> opcja konfiguracji.</p>
+<hr>
+<h2>Wbudowane</h2>
+<p>closedcode zawiera kilka wbudowanych poleceń, takich jak <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">dowiedz się więcej</a>.</p>
+<aside class="aside aside-note">
+Polecenia wbudowane mogą zostać nadpisane.
+</aside>
+Jeśli zdefiniujesz tę samą nazwę, twoje polecenie będzie miało pierwszeństwo.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

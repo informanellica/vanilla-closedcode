@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Plugins — vanilla-closedcode docs</title>
+  <meta name="description" content="Skriv dine egne plugins for at udvide vanilla-closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/plugins.html">English</option>
+      <option value="../ar/plugins.html">العربية</option>
+      <option value="../bs/plugins.html">Bosanski</option>
+      <option value="../da/plugins.html" selected>Dansk</option>
+      <option value="../de/plugins.html">Deutsch</option>
+      <option value="../es/plugins.html">Español</option>
+      <option value="../fr/plugins.html">Français</option>
+      <option value="../it/plugins.html">Italiano</option>
+      <option value="../ja/plugins.html">日本語</option>
+      <option value="../ko/plugins.html">한국어</option>
+      <option value="../nb/plugins.html">Norsk</option>
+      <option value="../pl/plugins.html">Polski</option>
+      <option value="../pt-br/plugins.html">Português (BR)</option>
+      <option value="../ru/plugins.html">Русский</option>
+      <option value="../th/plugins.html">ไทย</option>
+      <option value="../tr/plugins.html">Türkçe</option>
+      <option value="../zh-cn/plugins.html">简体中文</option>
+      <option value="../zh-tw/plugins.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li class="active"><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Plugins</h1>
+      <p class="lede">Skriv dine egne plugins for at udvide vanilla-closedcode.</p>
+      <p>Plugins giver dig mulighed for at udvide vanilla-closedcode ved at tilslutte sig forskellige begivenheder og tilpasse adfærd. Du kan oprette plugins for at tilføje nye funktioner, integrere med eksterne tjenester eller ændre closedcodes standardadfærd.</p>
+<p>For eksempler, tjek <a href="/docs/ecosystem#plugins">plugins</a> oprettet af fællesskabet.</p>
+<hr>
+<h2>Brug af plugin</h2>
+<p>Der er to måder at indlæse plugins på.</p>
+<hr>
+<h3>Fra lokale filer</h3>
+<p>Placer JavaScript- eller TypeScript-filer i plugin-mappen.</p>
+<ul>
+<li><code>.closedcode/plugins/</code> - Plugins på projektniveau</li>
+<li><code>~/.config/closedcode/plugins/</code> - Globale plugins</li>
+</ul>
+<p>Filer i disse mapper indlæses automatisk ved opstart.</p>
+<hr>
+<h3>Fra npm</h3>
+<p>Angiv npm-pakker i din konfigurationsfil.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;opencode-wakatime&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p>Både almindelige og omfangsrige npm-pakker understøttes.</p>
+<p>Gennemse tilgængelige plugins i <a href="/docs/ecosystem#plugins">ecosystem</a>.</p>
+<hr>
+<h3>Installation af plugins</h3>
+<p><strong>npm plugins</strong> installeres automatisk ved hjælp af npm ved opstart. Pakker og deres afhængigheder cachelagres i <code>~/.cache/closedcode/node_modules/</code>.</p>
+<p><strong>Lokale plugins</strong> indlæses direkte fra plugin-biblioteket. For at bruge eksterne pakker skal du oprette en <code>package.json</code> i din konfigurationsmappe (se <a href="#dependencies">Dependencies</a>), eller udgive pluginnet til npm og <a href="/docs/config#plugins">add it to your config</a>.</p>
+<hr>
+<h3>Indlæsningsrækkefølge</h3>
+<p>Plugins indlæses fra alle kilder, og alle hooks kører i rækkefølge. Indlæsningsrækkefølgen er:</p>
+<ol>
+<li>Global konfiguration (<code>~/.config/closedcode/closedcode.json</code>)</li>
+<li>Projektkonfiguration (<code>closedcode.json</code>)</li>
+<li>Global plugin-mappe (<code>~/.config/closedcode/plugins/</code>)</li>
+<li>Projekt plugin bibliotek (<code>.closedcode/plugins/</code>)</li>
+</ol>
+<p>Dublerede npm-pakker med samme navn og version indlæses én gang. Et lokalt plugin og et npm plugin med lignende navne indlæses dog hver for sig.</p>
+<hr>
+<h2>Oprettelse af plugin</h2>
+<p>Et plugin er et <strong>JavaScript/TypeScript modul</strong>, der eksporterer et eller flere plugin
+funktioner. Hver funktion modtager et kontekstobjekt og returnerer et hooks-objekt.</p>
+<hr>
+<h3>Afhængigheder</h3>
+<p>Lokale plugins og brugerdefinerede værktøjer kan bruge eksterne npm-pakker. Tilføj en <code>package.json</code> til din konfigurationsmappe med de afhængigheder, du har brug for.</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;shescape&quot;: &quot;^2.1.0&quot;
+  }
+}
+</code></pre>
+<p>vanilla-closedcode kører <code>npm install</code> ved opstart for at installere disse. Dine plugins og værktøjer kan derefter importere dem.</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;bash&quot;) {
+        output.args.command = escape(output.args.command)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Grundlæggende struktur</h3>
+<pre><code class="language-js">
+  console.log(&quot;Plugin initialized!&quot;)
+
+  return {
+    // Hook implementations go here
+  }
+}
+</code></pre>
+<p>Plugin-funktionen modtager:</p>
+<ul>
+<li><code>project</code>: Den aktuelle projektinformation.</li>
+<li><code>directory</code>: Den aktuelle arbejdsmappe.</li>
+<li><code>worktree</code>: Git worktree-stien.</li>
+<li><code>client</code>: En closedcode SDK klient til interaktion med AI.</li>
+</ul>
+<hr>
+<h3>TypeScript-understøttelse</h3>
+<p>For TypeScript-plugins kan du importere typer fra plugin-pakken:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    // Type-safe hook implementations
+  }
+}
+</code></pre>
+<hr>
+<h3>Begivenheder</h3>
+<p>Plugins kan abonnere på begivenheder som vist nedenfor i afsnittet Eksempler. Her er en liste over de forskellige arrangementer.</p>
+<h4>Kommandohændelser</h4>
+<ul>
+<li><code>command.executed</code></li>
+</ul>
+<h4>Filhændelser</h4>
+<ul>
+<li><code>file.edited</code></li>
+<li><code>file.watcher.updated</code></li>
+</ul>
+<h4>Installationshændelser</h4>
+<ul>
+<li><code>installation.updated</code></li>
+</ul>
+<h4>LSP-hændelser</h4>
+<ul>
+<li><code>lsp.client.diagnostics</code></li>
+<li><code>lsp.updated</code></li>
+</ul>
+<h4>Beskedhændelser</h4>
+<ul>
+<li><code>message.part.removed</code></li>
+<li><code>message.part.updated</code></li>
+<li><code>message.removed</code></li>
+<li><code>message.updated</code></li>
+</ul>
+<h4>Tilladelseshændelser</h4>
+<ul>
+<li><code>permission.asked</code></li>
+<li><code>permission.replied</code></li>
+</ul>
+<h4>Serverhændelser</h4>
+<ul>
+<li><code>server.connected</code></li>
+</ul>
+<h4>Sessionshændelser</h4>
+<ul>
+<li><code>session.created</code></li>
+<li><code>session.compacted</code></li>
+<li><code>session.deleted</code></li>
+<li><code>session.diff</code></li>
+<li><code>session.error</code></li>
+<li><code>session.idle</code></li>
+<li><code>session.status</code></li>
+<li><code>session.updated</code></li>
+</ul>
+<h4>Todo-hændelser</h4>
+<ul>
+<li><code>todo.updated</code></li>
+</ul>
+<h4>Shell-hændelser</h4>
+<ul>
+<li><code>shell.env</code></li>
+</ul>
+<h4>Værktøjshændelser</h4>
+<ul>
+<li><code>tool.execute.after</code></li>
+<li><code>tool.execute.before</code></li>
+</ul>
+<h4>TUI-hændelser</h4>
+<ul>
+<li><code>tui.prompt.append</code></li>
+<li><code>tui.command.execute</code></li>
+<li><code>tui.toast.show</code></li>
+</ul>
+<hr>
+<h2>Eksempler</h2>
+<p>Her er nogle eksempler på plugins, du kan bruge til at udvide closedcode.</p>
+<hr>
+<h3>Send meddelelser</h3>
+<p>Send meddelelser, når visse hændelser indtræffer:</p>
+<pre><code class="language-js">
+  return {
+    event: async ({ event }) =&gt; {
+      // Send notification on session completion
+      if (event.type === &quot;session.idle&quot;) {
+        await $`osascript -e &#39;display notification &quot;Session completed!&quot; with title &quot;closedcode&quot;&#39;`
+      }
+    },
+  }
+}
+</code></pre>
+<p>Vi bruger <code>osascript</code> til at køre AppleScript på macOS. Her bruger vi det til at sende notifikationer.</p>
+<aside class="aside aside-note">
+Hvis du bruger vanilla-closedcode desktop-appen, kan den sende systemmeddelelser automatisk, når et svar er klar, eller når en session fejler.
+</aside>
+---
+
+<h3>.env-beskyttelse</h3>
+<p>Undgå closedcode i at læse <code>.env</code> filer:</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;tool.execute.before&quot;: async (input, output) =&gt; {
+      if (input.tool === &quot;read&quot; &amp;&amp; output.args.filePath.includes(&quot;.env&quot;)) {
+        throw new Error(&quot;Do not read .env files&quot;)
+      }
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Injicer miljøvariabler</h3>
+<p>Injicer miljøvariabler i al shell-udførelse (AI-værktøjer og brugerterminaler):</p>
+<pre><code class="language-javascript">
+  return {
+    &quot;shell.env&quot;: async (input, output) =&gt; {
+      output.env.MY_API_KEY = &quot;secret&quot;
+      output.env.PROJECT_ROOT = input.cwd
+    },
+  }
+}
+</code></pre>
+<hr>
+<h3>Brugerdefinerede værktøjer</h3>
+<p>Plugins kan også tilføje brugerdefinerede værktøjer til closedcode:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    tool: {
+      mytool: tool({
+        description: &quot;This is a custom tool&quot;,
+        args: {
+          foo: tool.schema.string(),
+        },
+        async execute(args, context) {
+          const { directory, worktree } = context
+          return `Hello ${args.foo} from ${directory} (worktree: ${worktree})`
+        },
+      }),
+    },
+  }
+}
+</code></pre>
+<p><code>tool</code>-hjælperen opretter et brugerdefineret værktøj, som closedcode kan kalde. Det tager en Zod-skemafunktion og returnerer en værktøjsdefinition med:</p>
+<ul>
+<li><code>description</code>: Hvad værktøjet gør</li>
+<li><code>args</code>: Zod-skema for værktøjets argumenter</li>
+<li><code>execute</code>: Funktion, der kører, når værktøjet kaldes</li>
+</ul>
+<p>Dine tilpassede værktøjer vil være tilgængelige for closedcode sammen med indbyggede værktøjer.</p>
+<aside class="aside aside-note">
+Hvis et plugin-værktøj bruger samme navn som et indbygget værktøj, har plugin-værktøjet forrang.
+</aside>
+---
+
+<h3>Logning</h3>
+<p>Brug <code>client.app.log()</code> i stedet for <code>console.log</code> til struktureret logning:</p>
+<pre><code class="language-ts">
+  await client.app.log({
+    body: {
+      service: &quot;my-plugin&quot;,
+      level: &quot;info&quot;,
+      message: &quot;Plugin initialized&quot;,
+      extra: { foo: &quot;bar&quot; },
+    },
+  })
+}
+</code></pre>
+<p>Niveauer: <code>debug</code>, <code>info</code>, <code>warn</code>, <code>error</code>. Se SDK documentation for detaljer.</p>
+<hr>
+<h3>Komprimerings-hooks</h3>
+<p>Tilpas konteksten inkluderet, når en session komprimeres:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Inject additional context into the compaction prompt
+      output.context.push(`
+## Custom Context
+
+Include any state that should persist across compaction:
+- Current task status
+- Important decisions made
+- Files being actively worked on
+`)
+    },
+  }
+}
+</code></pre>
+<p><code>experimental.session.compacting</code> krogen affyres, før LLM genererer en fortsættelsesoversigt. Brug den til at injicere domænespecifik kontekst, som standardkomprimeringsprompten ville gå glip af.</p>
+<p>Du kan også erstatte komprimeringsprompten helt ved at indstille <code>output.prompt</code>:</p>
+<pre><code class="language-ts">
+
+
+  return {
+    &quot;experimental.session.compacting&quot;: async (input, output) =&gt; {
+      // Replace the entire compaction prompt
+      output.prompt = `
+You are generating a continuation prompt for a multi-agent swarm session.
+
+Summarize:
+1. The current task and its status
+2. Which files are being modified and by whom
+3. Any blockers or dependencies between agents
+4. The next steps to complete the work
+
+Format as a structured prompt that a new agent can use to resume work.
+`
+    },
+  }
+}
+</code></pre>
+<p>Når <code>output.prompt</code> er indstillet, erstatter den standardkompressionsprompten fuldstændigt. <code>output.context</code>-arrayet ignoreres i dette tilfælde.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

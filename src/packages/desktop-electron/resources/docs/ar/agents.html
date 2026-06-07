@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الوكلاء — vanilla-closedcode docs</title>
+  <meta name="description" content="هيّئ الوكلاء المتخصصين واستخدمهم.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html" selected>العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>الوكلاء</h1>
+      <p class="lede">هيّئ الوكلاء المتخصصين واستخدمهم.</p>
+      <p>الوكلاء هم مساعدون متخصصون بالذكاء الاصطناعي يمكن تهيئتهم لمهام وسير عمل محدد. يتيحون لك إنشاء أدوات مركزة مع موجّهات مخصصة ونماذج وصلاحية وصول للأدوات.</p>
+<aside class="aside aside-tip">
+استخدم وكيل plan لتحليل الشفرة ومراجعة الاقتراحات بدون إجراء أي تغييرات على الشفرة.
+</aside>
+يمكنك التبديل بين الوكلاء أثناء الجلسة أو استدعاؤهم عبر الإشارة بـ `@`.
+
+<hr>
+<h2>الأنواع</h2>
+<p>يوجد نوعان من الوكلاء في vanilla-closedcode: وكلاء أساسيون ووكلاء فرعيون.</p>
+<hr>
+<h3>الوكلاء الأساسيون</h3>
+<p>الوكلاء الأساسيون هم المساعدون الرئيسيون الذين تتفاعل معهم مباشرة. يمكنك التنقل بينهم باستخدام مفتاح <strong>Tab</strong> أو اختصار <code>switch_agent</code> الذي قمت بتهيئته. يتولى هؤلاء الوكلاء محادثتك الرئيسية. يتم ضبط وصول الأدوات عبر الأذونات — على سبيل المثال، يمتلك Build جميع الأدوات مفعلة بينما يكون Plan مقيّدا.</p>
+<aside class="aside aside-tip">
+يمكنك استخدام مفتاح **Tab** للتبديل بين الوكلاء الأساسيين أثناء الجلسة.
+</aside>
+يأتي vanilla-closedcode مع وكيلين أساسيين مدمجين: **Build** و **Plan**. سنلقي نظرة عليهما أدناه.
+
+<hr>
+<h3>الوكلاء الفرعيون</h3>
+<p>الوكلاء الفرعيون هم مساعدين متخصصين يمكن للوكلاء الأساسيين استدعاؤهم لمهام محددة. يمكنك أيضا استدعاؤهم يدويا عبر <strong>الإشارة بـ @</strong> في رسائلك.</p>
+<p>يأتي vanilla-closedcode مع وكيلين فرعيين مدمجين: <strong>General</strong> و <strong>Explore</strong>. سنلقي نظرة على ذلك أدناه.</p>
+<hr>
+<h2>المدمجة</h2>
+<p>يأتي vanilla-closedcode مع وكيلين أساسيين مدمجين ووكيلين فرعيين مدمجين.</p>
+<hr>
+<h3>استخدام Build</h3>
+<p><em>الوضع</em>: <code>primary</code></p>
+<p>Build هو الوكيل الأساسي <strong>الافتراضي</strong> مع تفعيل جميع الأدوات. هذا هو الوكيل القياسي لأعمال التطوير عندما تحتاج إلى وصول كامل لعمليات الملفات وأوامر النظام.</p>
+<hr>
+<h3>استخدام Plan</h3>
+<p><em>الوضع</em>: <code>primary</code></p>
+<p>وكيل مقيّد صُمم للتخطيط والتحليل. نستخدم نظام أذونات لمنحك تحكما أكبر ومنع التغييرات غير المقصودة.
+افتراضيا، يتم ضبط كل ما يلي على <code>ask</code>:</p>
+<ul>
+<li><code>file edits</code>: جميع عمليات الكتابة والتصحيح (patches) والتحرير</li>
+<li><code>bash</code>: جميع أوامر bash</li>
+</ul>
+<p>يفيد هذا الوكيل عندما تريد من LLM تحليل الشفرة أو اقتراح تغييرات أو إنشاء خطط بدون إجراء أي تعديلات فعلية على قاعدة الشفرة.</p>
+<hr>
+<h3>استخدام General</h3>
+<p><em>الوضع</em>: <code>subagent</code></p>
+<p>وكيل عام الغرض للبحث في أسئلة معقدة وتنفيذ مهام متعددة الخطوات. لديه وصول كامل للأدوات (باستثناء todo)، لذا يمكنه إجراء تغييرات على الملفات عند الحاجة. استخدمه لتشغيل عدة وحدات عمل بالتوازي.</p>
+<hr>
+<h3>استخدام Explore</h3>
+<p><em>الوضع</em>: <code>subagent</code></p>
+<p>وكيل سريع للقراءة فقط لاستكشاف قواعد الشفرة. لا يستطيع تعديل الملفات. استخدمه عندما تحتاج إلى العثور بسرعة على ملفات عبر أنماط، أو البحث في الشفرة عن كلمات مفتاحية، أو الإجابة عن أسئلة حول قاعدة الشفرة.</p>
+<hr>
+<h3>استخدام Compaction</h3>
+<p><em>الوضع</em>: <code>primary</code></p>
+<p>وكيل نظام مخفي يضغط السياق الطويل إلى ملخص أصغر. يعمل تلقائيا عند الحاجة ولا يمكن اختياره من واجهة المستخدم.</p>
+<hr>
+<h3>استخدام Title</h3>
+<p><em>الوضع</em>: <code>primary</code></p>
+<p>وكيل نظام مخفي ينشئ عناوين قصيرة للجلسات. يعمل تلقائيا ولا يمكن اختياره من واجهة المستخدم.</p>
+<hr>
+<h3>استخدام Summary</h3>
+<p><em>الوضع</em>: <code>primary</code></p>
+<p>وكيل نظام مخفي ينشئ ملخصات للجلسات. يعمل تلقائيا ولا يمكن اختياره من واجهة المستخدم.</p>
+<hr>
+<h2>الاستخدام</h2>
+<ol>
+<li><p>للوكلاء الأساسيين، استخدم مفتاح <strong>Tab</strong> للتنقل بينهم أثناء الجلسة. يمكنك أيضا استخدام اختصار <code>switch_agent</code> الذي قمت بتهيئته.</p>
+</li>
+<li><p>يمكن استدعاء الوكلاء الفرعيين:</p>
+<ul>
+<li><p><strong>تلقائيا</strong> بواسطة الوكلاء الأساسيين لمهام متخصصة بناء على أوصافهم.</p>
+</li>
+<li><p>يدويا عبر <strong>الإشارة بـ @</strong> إلى وكيل فرعي في رسالتك. على سبيل المثال:</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>التنقل بين الجلسات</strong>: عندما ينشئ الوكلاء الفرعيون جلسات فرعية خاصة بهم، يمكنك التنقل بين الجلسة الأم وجميع الجلسات الفرعية باستخدام:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (أو اختصار <code>session_child_cycle</code> الذي قمت بتهيئته) للتنقل للأمام عبر parent → child1 → child2 → ... → parent</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (أو اختصار <code>session_child_cycle_reverse</code> الذي قمت بتهيئته) للتنقل للخلف عبر parent ← child1 ← child2 ← ... ← parent</li>
+</ul>
+<p>يتيح لك ذلك التبديل بسلاسة بين المحادثة الرئيسية وعمل الوكلاء الفرعيين المتخصص.</p>
+</li>
+</ol>
+<hr>
+<h2>التهيئة</h2>
+<p>يمكنك تخصيص الوكلاء المدمجين أو إنشاء وكلائك عبر التهيئة. يمكن تهيئة الوكلاء بطريقتين:</p>
+<hr>
+<h3>JSON</h3>
+<p>هيّئ الوكلاء في ملف إعدادات <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>يمكنك أيضا تعريف الوكلاء باستخدام ملفات Markdown. ضعها في:</p>
+<ul>
+<li>عام: <code>~/.config/closedcode/agents/</code></li>
+<li>لكل مشروع: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>يصبح اسم ملف Markdown هو اسم الوكيل. على سبيل المثال، ينشئ <code>review.md</code> وكيلا باسم <code>review</code>.</p>
+<hr>
+<h2>الخيارات</h2>
+<p>لنلق نظرة على خيارات التهيئة هذه بمزيد من التفصيل.</p>
+<hr>
+<h3>الوصف</h3>
+<p>استخدم خيار <code>description</code> لتقديم وصف موجز لما يفعله الوكيل ومتى ينبغي استخدامه.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذا خيار تهيئة <strong>إلزامي</strong>.</p>
+<hr>
+<h3>درجة الحرارة</h3>
+<p>تحكم في العشوائية والإبداع في ردود LLM عبر إعداد <code>temperature</code>.</p>
+<p>القيم الأقل تجعل الردود أكثر تركيزا وحتمية، بينما تزيد القيم الأعلى من الإبداع والتنوع.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>عادة تتراوح قيم <code>temperature</code> بين 0.0 و 1.0:</p>
+<ul>
+<li><strong>0.0-0.2</strong>: ردود شديدة التركيز وحتمية، مثالية لتحليل الشفرة والتخطيط</li>
+<li><strong>0.3-0.5</strong>: ردود متوازنة مع قدر من الإبداع، مناسبة لمهام التطوير العامة</li>
+<li><strong>0.6-1.0</strong>: ردود أكثر إبداعا وتنوعا، مفيدة للعصف الذهني والاستكشاف</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>إذا لم يتم تحديد temperature، يستخدم vanilla-closedcode القيم الافتراضية الخاصة بالنموذج؛ عادة 0 لمعظم النماذج و 0.55 لنماذج Qwen.</p>
+<hr>
+<h3>الحد الأقصى للخطوات</h3>
+<p>تحكم في الحد الأقصى لعدد التكرارات الوكيلة التي يمكن لوكيل تنفيذها قبل أن يُجبر على الرد بنص فقط. يتيح ذلك للمستخدمين الذين يرغبون في التحكم بالتكاليف وضع حد للإجراءات الوكيلة.</p>
+<p>إذا لم يتم ضبط هذا الخيار، سيستمر الوكيل بالتكرار حتى يقرر النموذج التوقف أو يقاطع المستخدم الجلسة.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>عند بلوغ الحد، يتلقى الوكيل موجّها نظاميا خاصا يطلب منه الرد بملخص لعمله والمهام المتبقية الموصى بها.</p>
+<aside class="aside aside-caution">
+الحقل القديم `maxSteps` متقادم. استخدم `steps` بدلا منه.
+</aside>
+---
+
+<h3>التعطيل</h3>
+<p>اضبطه على <code>true</code> لتعطيل الوكيل.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>الموجّه</h3>
+<p>حدد ملف موجّه نظامي مخصص لهذا الوكيل عبر إعداد <code>prompt</code>. يجب أن يحتوي ملف الموجّه على تعليمات خاصة بهدف الوكيل.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذا المسار نسبي لمكان وجود ملف الإعدادات. لذلك يعمل هذا لكل من إعدادات vanilla-closedcode العامة وإعدادات المشروع.</p>
+<hr>
+<h3>النموذج</h3>
+<p>استخدم إعداد <code>model</code> لتجاوز (override) النموذج لهذا الوكيل. يفيد ذلك لاستخدام نماذج مختلفة مُحسّنة لمهام مختلفة. على سبيل المثال، نموذج أسرع للتخطيط ونموذج أقدر للتنفيذ.</p>
+<aside class="aside aside-tip">
+إذا لم تحدد نموذجا، يستخدم الوكلاء الأساسيون [النموذج المُهيأ عالميا](/docs/config#models)، بينما يستخدم الوكلاء الفرعيون نموذج الوكيل الأساسي الذي استدعاهم.
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>يستخدم معرّف النموذج في إعدادات vanilla-closedcode الصيغة <code>provider/model-id</code>. على سبيل المثال، إذا كنت تستخدم Ollama، فستستخدم <code>ollama/gpt-oss:20b</code> لـ GPT-OSS 20B.</p>
+<hr>
+<h3>الأدوات</h3>
+<p>تحكم في الأدوات المتاحة لهذا الوكيل عبر إعداد <code>tools</code>. يمكنك تفعيل أو تعطيل أدوات محددة بضبطها على <code>true</code> أو <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+إعدادات الوكيل الخاصة تتجاوز الإعدادات العامة.
+</aside>
+يمكنك أيضا استخدام المحارف البديلة (wildcards) للتحكم في عدة أدوات دفعة واحدة. على سبيل المثال، لتعطيل جميع الأدوات القادمة من خادم MCP:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">اعرف المزيد عن الأدوات</a>.</p>
+<hr>
+<h3>الأذونات</h3>
+<p>يمكنك تهيئة الأذونات لإدارة الإجراءات التي يستطيع الوكيل تنفيذها. حاليا، يمكن تهيئة أذونات أدوات <code>edit</code> و <code>bash</code> و <code>webfetch</code> إلى:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — طلب الموافقة قبل تشغيل الأداة</li>
+<li><code>&quot;allow&quot;</code> — السماح بكل العمليات بدون موافقة</li>
+<li><code>&quot;deny&quot;</code> — تعطيل الأداة</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>يمكنك تجاوز هذه الأذونات لكل وكيل.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>يمكنك أيضا ضبط الأذونات في وكلاء Markdown.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>يمكنك ضبط الأذونات لأوامر bash محددة.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>يمكن لهذا أن يقبل نمط glob.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ويمكنك أيضا استخدام المحرف البديل <code>*</code> لإدارة الأذونات لكل الأوامر.
+وبما أن آخر قاعدة مطابقة لها الأولوية، ضع قاعدة <code>*</code> أولا ثم القواعد الأكثر تخصيصا بعدها.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">اعرف المزيد عن الأذونات</a>.</p>
+<hr>
+<h3>الوضع</h3>
+<p>تحكم في وضع الوكيل عبر إعداد <code>mode</code>. يُستخدم خيار <code>mode</code> لتحديد كيفية استخدام الوكيل.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p>يمكن ضبط خيار <code>mode</code> على <code>primary</code> أو <code>subagent</code> أو <code>all</code>. إذا لم يتم تحديد <code>mode</code>، فالقيمة الافتراضية هي <code>all</code>.</p>
+<hr>
+<h3>مخفي</h3>
+<p>أخفِ وكيلا فرعيا من قائمة الإكمال التلقائي لـ <code>@</code> عبر <code>hidden: true</code>. يفيد ذلك للوكلاء الفرعيين الداخليين الذين ينبغي استدعاؤهم برمجيا فقط بواسطة وكلاء آخرين عبر أداة Task.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>يؤثر هذا فقط على ظهور الوكيل للمستخدم في قائمة الإكمال التلقائي. لا يزال بإمكان النموذج استدعاء الوكلاء المخفيين عبر أداة Task إذا سمحت الأذونات.</p>
+<aside class="aside aside-note">
+ينطبق فقط على الوكلاء ذوي `mode: subagent`.
+</aside>
+---
+
+<h3>أذونات Task</h3>
+<p>تحكم في أي الوكلاء الفرعيين يمكن لوكيل استدعاؤهم عبر أداة Task باستخدام <code>permission.task</code>. يستخدم أنماط glob لمطابقة مرنة.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>عند ضبطها على <code>deny</code>، تتم إزالة الوكيل الفرعي بالكامل من وصف أداة Task، لذا لن يحاول النموذج استدعاءه.</p>
+<aside class="aside aside-tip">
+تُقيّم القواعد بالترتيب، و **آخر قاعدة مطابقة هي التي تفوز**. في المثال أعلاه، يطابق `orchestrator-planner` كلا من `*` (deny) و `orchestrator-*` (allow)، ولكن بما أن `orchestrator-*` تأتي بعد `*` فالنتيجة هي `allow`.
+</aside>
+<aside class="aside aside-tip">
+يمكن للمستخدمين دائما استدعاء أي وكيل فرعي مباشرة عبر قائمة الإكمال التلقائي لـ `@`، حتى لو كانت أذونات task للوكيل سترفض ذلك.
+</aside>
+---
+
+<h3>اللون</h3>
+<p>خصص المظهر البصري للوكيل في واجهة المستخدم عبر خيار <code>color</code>. يؤثر ذلك على كيفية ظهور الوكيل في الواجهة.</p>
+<p>استخدم لونا سداسيا صالحا (مثل <code>#FF5733</code>) أو لون سمة: <code>primary</code> و <code>secondary</code> و <code>accent</code> و <code>success</code> و <code>warning</code> و <code>error</code> و <code>info</code>.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>تحكم في تنوع الردود عبر خيار <code>top_p</code>. بديل عن temperature للتحكم بالعشوائية.</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>تتراوح القيم من 0.0 إلى 1.0. القيم الأقل أكثر تركيزا، والقيم الأعلى أكثر تنوعا.</p>
+<hr>
+<h3>خيارات إضافية</h3>
+<p>أي خيارات أخرى تحددها في تهيئة الوكيل سيتم <strong>تمريرها مباشرة</strong> إلى مزود النموذج كخيارات للنموذج. يتيح لك ذلك استخدام ميزات ومعاملات خاصة بالمزود.</p>
+<p>على سبيل المثال، مع نماذج الاستدلال من OpenAI يمكنك التحكم في مجهود الاستدلال:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>هذه الخيارات الإضافية تعتمد على النموذج والمزود. راجع توثيق مزودك لمعرفة المعاملات المتاحة.</p>
+<aside class="aside aside-tip">
+شغّل `closedcode models` لعرض قائمة بالنماذج المتاحة.
+</aside>
+---
+
+<h2>إنشاء وكلاء</h2>
+<p>يمكنك إنشاء وكلاء جدد باستخدام الأمر التالي:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>سيقوم هذا الأمر التفاعلي بما يلي:</p>
+<ol>
+<li>سيسألك أين تريد حفظ الوكيل: عام (global) أو خاص بالمشروع.</li>
+<li>سيطلب وصفا لما ينبغي أن يفعله الوكيل.</li>
+<li>سيولّد موجّها نظاميا ومعرّفا مناسبا.</li>
+<li>سيتيح لك اختيار الأدوات التي يمكن للوكيل الوصول إليها.</li>
+<li>أخيرا، سينشئ ملف Markdown يحتوي تهيئة الوكيل.</li>
+</ol>
+<hr>
+<h2>حالات الاستخدام</h2>
+<p>فيما يلي بعض حالات الاستخدام الشائعة لوكلاء مختلفين.</p>
+<ul>
+<li><strong>Build agent</strong>: أعمال تطوير كاملة مع تفعيل جميع الأدوات</li>
+<li><strong>Plan agent</strong>: تحليل وتخطيط بدون إجراء تغييرات</li>
+<li><strong>Review agent</strong>: مراجعة الشفرة مع وصول للقراءة فقط بالإضافة إلى أدوات التوثيق</li>
+<li><strong>Debug agent</strong>: يركز على التحقيق مع تفعيل أدوات bash والقراءة</li>
+<li><strong>Docs agent</strong>: كتابة التوثيق مع عمليات الملفات بدون أوامر النظام</li>
+</ul>
+<hr>
+<h2>أمثلة</h2>
+<p>فيما يلي بعض أمثلة الوكلاء التي قد تجدها مفيدة.</p>
+<aside class="aside aside-tip">
+هل لديك وكيل تود مشاركته؟ [قدّم PR](https://github.com/informanellica/vanilla-closedcode).
+</aside>
+---
+
+<h3>وكيل التوثيق</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>مدقق أمني</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Umiejętności Agenta — vanilla-closedcode docs</title>
+  <meta name="description" content="Definiuj powtarzalne zachowania za pomocą definicji SKILL.md">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html" selected>Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Umiejętności Agenta</h1>
+      <p class="lede">Definiuj powtarzalne zachowania za pomocą definicji SKILL.md</p>
+      <p>Umiejętności agenta pozwalają closedcode odkryć instrukcje wielokrotnego użytku z repozytorium lub katalogu domowego.
+Umiejętności są ładowane na żądanie za pośrednictwem natywnego narzędzia <code>skill</code> — agenci widzą dostępne umiejętności i w razie potrzeby mogą załadować pełną zawartość.</p>
+<hr>
+<h2>Lokalizacja plików</h2>
+<p>Utwórz jeden folder na nazwę umiejętności i umieść w nim <code>SKILL.md</code>.
+closedcode przeszukuje te lokalizacje:</p>
+<ul>
+<li>Project config: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global config: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Project Claude-compatible: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global Claude-compatible: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Project agent-compatible: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Global agent-compatible: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>Zrozumienie wykrywania</h2>
+<p>W przypadku ścieżek lokalnych projektu closedcode przechodzi od bieżącego katalogu roboczego, aż dotrze do drzewa roboczego git.
+Ładuje po drodze dowolne pasujące <code>skills/*/SKILL.md</code> w <code>.closedcode/</code> i dowolne pasujące <code>.claude/skills/*/SKILL.md</code> lub <code>.agents/skills/*/SKILL.md</code>.</p>
+<p>Ładowane są także definicje globalne z <code>~/.config/closedcode/skills/*/SKILL.md</code>, <code>~/.claude/skills/*/SKILL.md</code> i <code>~/.agents/skills/*/SKILL.md</code>.</p>
+<hr>
+<h2>Tworzenie frontmatter</h2>
+<p>Każdy <code>SKILL.md</code> musi zaczynać się od treści YAML.
+Rozpoznawane są tylko te pola:</p>
+<ul>
+<li><code>name</code> (wymagane)</li>
+<li><code>description</code> (wymagane)</li>
+<li><code>license</code> (opcjonalnie)</li>
+<li><code>compatibility</code> (opcjonalnie)</li>
+<li><code>metadata</code> (opcjonalnie, mapa string-to-string)</li>
+</ul>
+<p>Nieznane pola frontmatter są ignorowane.</p>
+<hr>
+<h2>Walidacja nazw</h2>
+<p><code>name</code> musi:</p>
+<ul>
+<li>Mieć od 1 do 64 znaków</li>
+<li>Należy używać małych liter alfanumerycznych i oddzielać je pojedynczym łącznikiem</li>
+<li>Nie zaczyna się ani nie kończy na <code>-</code></li>
+<li>Nie może zawierać następujących po sobie <code>--</code></li>
+<li>Dopasuj nazwę katalogu zawierającą <code>SKILL.md</code></li>
+</ul>
+<p>Odpowiednik wyrażenia regularnego:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>Zasady dotyczące długości</h2>
+<p><code>description</code> musi mieć od 1 do 1024 znaków.
+Zadbaj o to, aby agent mógł dokonać prawidłowego wyboru.</p>
+<hr>
+<h2>Przykład użycia</h2>
+<p>Utwórz <code>.closedcode/skills/git-release/SKILL.md</code> w ten sposób:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>Opis narzędzia</h2>
+<p>closedcode wymienia dostępne umiejętności w opisie narzędzia <code>skill</code>.
+Każdy wpis zawiera nazwę i opis umiejętności:</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>Agent ładuje umiejętność wywołując narzędzie:</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>Konfiguracja uprawnień</h2>
+<p>Kontroluj, do których umiejętności agenci mogą uzyskać dostęp, używając uprawnień opartych na wzorcach w <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>Umiejętność ładuje się natychmiast</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>Umiejętność ukryta przed agentem, dostęp odrzucony</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>Użytkownik proszony o zatwierdzenie przed załadowaniem</td>
+</tr>
+</tbody></table>
+<p>Wzorce obsługują symbole wieloznaczne: <code>internal-*</code> odpowiada <code>internal-docs</code>, <code>internal-tools</code> itd.</p>
+<hr>
+<h2>Nadpisywanie dla agenta</h2>
+<p>Nadaj konkretnym agentom inne uprawnienia niż globalne ustawienia domyślne.</p>
+<p><strong>Dla agentów niestandardowych</strong> (w temacie agentów):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>Dla agentów wbudowanych</strong> (w <code>closedcode.json</code>):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Wyłączanie narzędzia umiejętności</h2>
+<p>Całkowicie wyłącz umiejętności agentów, którzy nie powinni ich używać:</p>
+<p><strong>Dla agentów niestandardowych</strong> (w temacie agentów):</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>W przypadku agentów wbudowanych</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>Jeśli opcja jest wyłączona, sekcja <code>&lt;available_skills&gt;</code> jest całkowicie pomijana.</p>
+<hr>
+<h2>Rozwiązywanie problemów z ładowaniem</h2>
+<p>Jeśli umiejętność nie pojawi się:</p>
+<ol>
+<li>Sprawdź, czy <code>SKILL.md</code> jest napisane wielkimi literami</li>
+<li>Sprawdź, czy frontmatter zawiera <code>name</code> i <code>description</code></li>
+<li>Upewnij się, że nazwy umiejętności są unikalne we wszystkich lokalizacjach</li>
+<li>Sprawdź uprawnienia — umiejętności z <code>deny</code> są ukryte przed agentami</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

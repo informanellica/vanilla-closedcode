@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en" style="background-color: var(--background-base)">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>vanilla-closedcode</title>
+    <link rel="icon" type="image/png" href="./favicon-96x96-v3.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="./favicon-v3.svg" />
+    <link rel="shortcut icon" href="./favicon-v3.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v3.png" />
+    <meta name="theme-color" content="#F8F7F7" />
+    <meta name="theme-color" content="#131010" media="(prefers-color-scheme: dark)" />
+    <meta property="og:image" content="./social-share.png" />
+    <meta property="twitter:image" content="./social-share.png" />
+    <script id="oc-theme-preload-script" src="./oc-theme-preload.js"></script>
+    <!-- Runtime env (replaces Vite's import.meta.env). Classic script: runs before
+         any module. Build-less renderer (Stage C). -->
+    <script>
+      // Build-less ESM: deps reference process.env.NODE_ENV (the bundler used to
+      // inline this). Provide a minimal browser process shim before any module.
+      globalThis.process = globalThis.process || {
+        env: { NODE_ENV: "production" },
+        platform: "browser",
+        argv: [],
+        version: "",
+        versions: {},
+        cwd: function () { return "/"; },
+        nextTick: function (f) { queueMicrotask(f); },
+      };
+      window.__APP_ENV__ = {
+        MODE: "production",
+        DEV: false,
+        PROD: true,
+        CLOSEDCODE_CHANNEL: "prod",
+        VITE_CLOSEDCODE_CHANNEL: "prod",
+        VITE_SENTRY_DSN: "",
+        VITE_SENTRY_RELEASE: "",
+        VITE_SENTRY_ENVIRONMENT: "",
+        VITE_BUILD_ID: "dev",
+      };
+    </script>
+    <!-- Bootstrap 5 + Icons (vendored plain CSS, static links — Tailwind removed).
+         Loaded before the app stylesheet so app utilities (Tailwind-valued) win. -->
+    <link rel="stylesheet" href="./vendor/bootstrap/bootstrap.min.css" />
+    <link rel="stylesheet" href="./vendor/bootstrap/bootstrap-icons.min.css" />
+    <!-- Vanilla in-app editor: CodeMirror 5 (vendored, classic scripts — no bundler) -->
+    <link rel="stylesheet" href="./vendor/codemirror/lib/codemirror.css" />
+    <link rel="stylesheet" href="./vendor/codemirror/theme/material-darker.css" />
+    <link rel="stylesheet" href="./vanilla-ide.css" />
+    <!-- App utilities (Tailwind-valued custom classes, generated once and committed) -->
+    <link rel="stylesheet" href="./app.css" />
+    <!-- Desktop-specific topbar/chrome styles -->
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="antialiased overscroll-none text-12-regular overflow-hidden">
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root" class="flex flex-col h-dvh"></div>
+    <!-- Bootstrap JS bundle (Popper + Modal/Dropdown/etc.) as a classic global,
+         so window.bootstrap is available before the renderer module runs. -->
+    <script src="./vendor/bootstrap/bootstrap.bundle.min.js"></script>
+    <!-- CodeMirror 5 core + modes (classic globals; dependency order matters) -->
+    <script src="./vendor/codemirror/lib/codemirror.js"></script>
+    <script src="./vendor/codemirror/addon/mode/simple.js"></script>
+    <script src="./vendor/codemirror/mode/xml/xml.js"></script>
+    <script src="./vendor/codemirror/mode/javascript/javascript.js"></script>
+    <script src="./vendor/codemirror/mode/css/css.js"></script>
+    <script src="./vendor/codemirror/mode/clike/clike.js"></script>
+    <script src="./vendor/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+    <script src="./vendor/codemirror/mode/php/php.js"></script>
+    <script src="./vendor/codemirror/mode/markdown/markdown.js"></script>
+    <script src="./vendor/codemirror/mode/python/python.js"></script>
+    <script src="./vendor/codemirror/mode/shell/shell.js"></script>
+    <script src="./vendor/codemirror/mode/yaml/yaml.js"></script>
+    <script src="./vendor/codemirror/mode/sql/sql.js"></script>
+    <script src="./vendor/codemirror/mode/go/go.js"></script>
+    <script src="./vendor/codemirror/mode/rust/rust.js"></script>
+    <script src="./vendor/codemirror/mode/meta.js"></script>
+    <script src="./vanilla-ide.js"></script>
+    <script src="./index.js" type="module"></script>
+  </body>
+</html>

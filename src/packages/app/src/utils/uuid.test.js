@@ -1,0 +1,70 @@
+import { afterEach, describe, expect, test } from "@jest/globals";
+import { uuid } from "./uuid.js";
+const cryptoDescriptor = Object.getOwnPropertyDescriptor(globalThis, "crypto");
+const secureDescriptor = Object.getOwnPropertyDescriptor(globalThis, "isSecureContext");
+const randomDescriptor = Object.getOwnPropertyDescriptor(Math, "random");
+const setCrypto = value => {
+  Object.defineProperty(globalThis, "crypto", {
+    configurable: true,
+    value: value
+  });
+};
+const setSecure = value => {
+  Object.defineProperty(globalThis, "isSecureContext", {
+    configurable: true,
+    value
+  });
+};
+const setRandom = value => {
+  Object.defineProperty(Math, "random", {
+    configurable: true,
+    value
+  });
+};
+afterEach(() => {
+  if (cryptoDescriptor) {
+    Object.defineProperty(globalThis, "crypto", cryptoDescriptor);
+  }
+  if (secureDescriptor) {
+    Object.defineProperty(globalThis, "isSecureContext", secureDescriptor);
+  }
+  if (!secureDescriptor) {
+    delete globalThis.isSecureContext;
+  }
+  if (randomDescriptor) {
+    Object.defineProperty(Math, "random", randomDescriptor);
+  }
+});
+describe("uuid", () => {
+  test("uses randomUUID in secure contexts", () => {
+    setCrypto({
+      randomUUID: () => "00000000-0000-0000-0000-000000000000"
+    });
+    setSecure(true);
+    expect(uuid()).toBe("00000000-0000-0000-0000-000000000000");
+  });
+  test("falls back in insecure contexts", () => {
+    setCrypto({
+      randomUUID: () => "00000000-0000-0000-0000-000000000000"
+    });
+    setSecure(false);
+    setRandom(() => 0.5);
+    expect(uuid()).toBe("8");
+  });
+  test("falls back when randomUUID throws", () => {
+    setCrypto({
+      randomUUID: () => {
+        throw new DOMException("Failed", "OperationError");
+      }
+    });
+    setSecure(true);
+    setRandom(() => 0.5);
+    expect(uuid()).toBe("8");
+  });
+  test("falls back when randomUUID is unavailable", () => {
+    setCrypto({});
+    setSecure(true);
+    setRandom(() => 0.5);
+    expect(uuid()).toBe("8");
+  });
+});

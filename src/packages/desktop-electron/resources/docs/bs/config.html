@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Konfiguracija — vanilla-closedcode docs</title>
+  <meta name="description" content="Korištenje vanilla-closedcode JSON konfiguracije.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html" selected>Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Konfiguracija</h1>
+      <p class="lede">Korištenje vanilla-closedcode JSON konfiguracije.</p>
+      <p>Možete konfigurirati vanilla-closedcode koristeći JSON konfiguracijski fajl.</p>
+<hr>
+<h2>Format</h2>
+<p>vanilla-closedcode podržava i <strong>JSON</strong> i <strong>JSONC</strong> (JSON sa komentarima) formate.</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>Lokacije</h2>
+<p>Možete postaviti svoju konfiguraciju na nekoliko različitih lokacija i one imaju drugačiji redoslijed prioriteta.</p>
+<aside class="aside aside-note">
+Konfiguracijski fajlovi se **spajaju**, ne zamjenjuju.
+</aside>
+Konfiguracijski fajlovi se spajaju, ne zamjenjuju. Kombiniraju se postavke sa sljedećih konfiguracijskih lokacija. Kasnije konfiguracije poništavaju prethodne samo za konfliktne ključeve. Nekonfliktne postavke iz svih konfiguracija su sačuvane.
+
+<p>Na primjer, ako vaša globalna konfiguracija postavlja <code>autoupdate: true</code>, a vaša projektna konfiguracija postavlja <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>, konačna konfiguracija će uključivati ​​obje postavke.</p>
+<hr>
+<h3>Redoslijed prioriteta</h3>
+<p>Izvori konfiguracije se učitavaju ovim redoslijedom (kasniji izvori poništavaju ranije):</p>
+<ol>
+<li><strong>Globalna konfiguracija</strong> (<code>~/.config/closedcode/closedcode.json</code>) - korisničke preferencije</li>
+<li><strong>Prilagođena konfiguracija</strong> (<code>CLOSEDCODE_CONFIG</code> env var) - prilagođena preinačenja</li>
+<li><strong>Konfiguracija projekta</strong> (<code>closedcode.json</code> u projektu) - postavke specifične za projekat</li>
+<li><strong><code>.closedcode</code> direktoriji</strong> - agenti, komande, dodaci</li>
+<li><strong>Inline konfiguracija</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> env var) - runtime preinačenja</li>
+</ol>
+<p>To znači da konfiguracije projekta mogu nadjačati globalne zadane postavke, a globalne konfiguracije mogu nadjačati postavke udaljene organizacije.</p>
+<aside class="aside aside-note">
+Direktoriji `.closedcode` i `~/.config/closedcode` koriste **imena u množini** za poddirektorije: `agents/`, `commands/`, `modes/`, `plugins/`, `skills/`, `tools/` i `themes/`. Pojedinačna imena (npr. `agent/`) su također podržana za kompatibilnost unatrag.
+</aside>
+---
+
+
+<h3>Globalno</h3>
+<p>Postavite svoju globalnu vanilla-closedcode konfiguraciju u <code>~/.config/closedcode/closedcode.json</code>. Koristite globalnu konfiguraciju za korisničke preferencije kao što su provajderi, modeli i dozvole.</p>
+<p>Za postavke specifične za TUI, koristite <code>~/.config/closedcode/tui.json</code>.</p>
+<p>Globalna konfiguracija poništava zadane postavke udaljene organizacije.</p>
+<hr>
+<h3>Projekt</h3>
+<p>Dodajte <code>closedcode.json</code> u korijen projekta. Konfiguracija projekta ima najveći prioritet među standardnim konfiguracijskim datotekama - ona nadjačava globalne i udaljene konfiguracije.</p>
+<p>Za TUI postavke specifične za projekat, dodajte <code>tui.json</code> pored njega.</p>
+<aside class="aside aside-tip">
+Postavite specifičnu konfiguraciju projekta u korijen vašeg projekta.
+</aside>
+Kada se vanilla-closedcode pokrene, traži konfiguracijsku datoteku u trenutnom direktoriju ili prelazi do najbližeg Git direktorija.
+
+<p>Ovo je također sigurno provjeriti u Git i koristi istu shemu kao globalna.</p>
+<hr>
+<h3>Prilagođena konfiguracija</h3>
+<p>Navedite prilagođenu putanju konfiguracijske datoteke koristeći varijablu okruženja <code>CLOSEDCODE_CONFIG</code>.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Prilagođena konfiguracija se učitava između globalne i projektne konfiguracije po redoslijedu prioriteta.</p>
+<hr>
+<h3>Prilagođeni direktorij</h3>
+<p>Navedite prilagođeni konfiguracijski direktorij koristeći <code>CLOSEDCODE_CONFIG_DIR</code> varijablu okruženja. U ovom direktoriju će se tražiti agenti, komande, modovi i dodaci baš kao standardni <code>.closedcode</code> direktorij, i trebali bi pratiti istu strukturu.</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>Prilagođeni direktorij se učitava nakon direktorija globalne konfiguracije i <code>.closedcode</code>, tako da <strong>može nadjačati</strong> njihove postavke.</p>
+<hr>
+<h2>Šema</h2>
+<p>Konfiguracijski fajl ima šemu koja je definirana u <strong><code>config.json</code></strong>.</p>
+<p>TUI konfiguracija koristi <strong><code>tui.json</code></strong>.</p>
+<p>Vaš editor bi trebao biti u mogućnosti da validira i autodovršava na osnovu šeme.</p>
+<hr>
+<h3>TUI</h3>
+<p>Koristite namjenski <code>tui.json</code> (ili <code>tui.jsonc</code>) fajl za postavke specifične za TUI.</p>
+<pre><code class="language-json">{
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Koristite <code>CLOSEDCODE_TUI_CONFIG</code> da pokažete na prilagođeni TUI konfiguracijski fajl.</p>
+<p>Stari <code>theme</code>, <code>keybinds</code>, i <code>tui</code> ključevi u <code>closedcode.json</code> su zastarjeli i automatski će se migrirati kada je to moguće.</p>
+<p><a href="/docs/tui#configure">Saznajte više o korištenju TUI ovdje</a>.</p>
+<hr>
+<h3>Server</h3>
+<p>Možete konfigurirati postavke servera za naredbe <code>closedcode serve</code> i <code>closedcode web</code> putem opcije <code>server</code>.</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>Dostupne opcije:</p>
+<ul>
+<li><code>port</code> - Port za slušanje.</li>
+<li><code>hostname</code> - Hostname za slušanje. Kada je <code>mdns</code> omogućen i nije postavljeno ime hosta, podrazumevano je <code>0.0.0.0</code>.</li>
+<li><code>mdns</code> - Omogući mDNS otkrivanje servisa. Ovo omogućava drugim uređajima na mreži da otkriju vaš vanilla-closedcode server.</li>
+<li><code>mdnsDomain</code> - Prilagođeno ime domene za mDNS servis. Zadano je <code>closedcode.local</code>. Korisno za pokretanje više instanci na istoj mreži.</li>
+<li><code>cors</code> - Dodatni origini koji omogućavaju CORS kada koristite HTTP server iz klijenta baziranog na pretraživaču. Vrijednosti moraju biti puni origin (shema + host + opcijski port), npr. <code>https://app.example.com</code>.</li>
+</ul>
+<p><a href="/docs/server">Saznajte više o serveru ovdje</a>.</p>
+<hr>
+<h3>Alati</h3>
+<p>Možete upravljati alatima koje LLM može koristiti putem opcije <code>tools</code>.</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">Saznajte više o alatima ovdje</a>.</p>
+<hr>
+<h3>Model</h3>
+<p>Možete konfigurirati dobavljače i modele koje želite koristiti u svojoj vanilla-closedcode konfiguraciji kroz opcije <code>provider</code>, <code>model</code> i <code>small_model</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p>Opcija <code>small_model</code> konfigurira poseban model za lagane zadatke poput generiranja naslova. Podrazumevano, vanilla-closedcode pokušava da koristi jeftiniji model ako je dostupan od vašeg provajdera, inače se vraća na vaš glavni model.</p>
+<p>Opcije provajdera mogu uključivati ​​<code>timeout</code> i <code>setCacheKey</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - Vrijeme čekanja zahtjeva u milisekundama (podrazumevano: 300000). Postavite na <code>false</code> da onemogućite.</li>
+<li><code>setCacheKey</code> - Osigurajte da je ključ keš memorije uvijek postavljen za određenog provajdera.</li>
+</ul>
+<p>Također možete konfigurirati <a href="/docs/models#local">lokalne modele</a>. <a href="/docs/models">Saznajte više</a>.</p>
+<hr>
+<h4>Opcije specifične za provajdere</h4>
+<p>Neki provajderi podržavaju dodatne opcije konfiguracije osim generičkih postavki <code>timeout</code> i <code>apiKey</code>.</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock podržava konfiguraciju specifičnu za AWS:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - AWS regija za Bedrock (zadano na <code>AWS_REGION</code> env var ili <code>us-east-1</code>)</li>
+<li><code>profile</code> - AWS imenovani profil iz <code>~/.aws/credentials</code> (zadano na <code>AWS_PROFILE</code> env var)</li>
+<li><code>endpoint</code> - URL prilagođene krajnje tačke za VPC krajnje tačke. Ovo je alias za generičku opciju <code>baseURL</code> koristeći terminologiju specifičnu za AWS. Ako su oba navedena, <code>endpoint</code> ima prednost.</li>
+</ul>
+<aside class="aside aside-note">
+Tokeni nosioca (`AWS_BEARER_TOKEN_BEDROCK` ili `/connect`) imaju prednost nad autentifikacijom zasnovanom na profilu. Pogledajte [prednost autentifikacije](/docs/providers#authentication-precedence) za detalje.
+</aside>
+[Saznajte više o konfiguraciji Amazon Bedrock](/docs/providers#amazon-bedrock).
+
+<hr>
+<h3>Teme</h3>
+<p>Postavite vašu UI temu u <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Agenti</h3>
+<p>Možete konfigurirati specijalizirane agente za određene zadatke putem opcije <code>agent</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>Također možete definirati agente koristeći markdown datoteke u <code>~/.config/closedcode/agents/</code> ili <code>.closedcode/agents/</code>. <a href="/docs/agents">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Zadani agent</h3>
+<p>Možete postaviti zadanog agenta koristeći opciju <code>default_agent</code>. Ovo određuje koji se agent koristi kada nijedan nije eksplicitno specificiran.</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>Zadani agent mora biti primarni agent (ne podagent). Ovo može biti ugrađeni agent kao što je <code>&quot;build&quot;</code> ili <code>&quot;plan&quot;</code>, ili <a href="/docs/agents">prilagođeni agent</a> koji ste definirali. Ako navedeni agent ne postoji ili je podagent, vanilla-closedcode će se vratiti na <code>&quot;build&quot;</code> s upozorenjem.</p>
+<p>Ova postavka se primjenjuje na sva sučelja: TUI, CLI (<code>closedcode run</code>), desktop aplikaciju i GitHub Action.</p>
+<hr>
+<h3>Dijeljenje</h3>
+<p>Možete konfigurirati funkciju <a href="/docs/share">share</a> putem opcije <code>share</code>.</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>Ovo prihvata:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - Dozvoli ručno dijeljenje putem naredbi (podrazumevano)</li>
+<li><code>&quot;auto&quot;</code> - Automatski dijelite nove razgovore</li>
+<li><code>&quot;disabled&quot;</code> - Onemogući dijeljenje u potpunosti</li>
+</ul>
+<p>Podrazumevano, dijeljenje je postavljeno na ručni način rada gdje trebate eksplicitno dijeliti razgovore pomoću naredbe <code>/share</code>.</p>
+<hr>
+<h3>Naredbe</h3>
+<p>Možete konfigurirati prilagođene naredbe za ponavljanje zadataka putem opcije <code>command</code>.</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>Također možete definirati naredbe koristeći markdown fajlove u <code>~/.config/closedcode/commands/</code> ili <code>.closedcode/commands/</code>. <a href="/docs/commands">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Prečice tipki</h3>
+<p>Prilagodite prečice tipki u <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Automatsko ažuriranje</h3>
+<p>vanilla-closedcode će automatski preuzeti sva nova ažuriranja kada se pokrene. Ovo možete onemogućiti opcijom <code>autoupdate</code>.</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>Ako ne želite ažuriranja, ali želite biti obaviješteni kada nova verzija bude dostupna, postavite <code>autoupdate</code> na <code>&quot;notify&quot;</code>.
+Imajte na umu da ovo funkcionira samo ako nije instalirano pomoću upravitelja paketa kao što je Homebrew.</p>
+<hr>
+<h3>Formateri</h3>
+<p>Možete konfigurirati formatere koda putem opcije <code>formatter</code>.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">Saznajte više o formaterima</a> ovdje.</p>
+<hr>
+<h3>Dozvole</h3>
+<p>Prema zadanim postavkama, vanilla-closedcode <strong>dopušta sve operacije</strong> bez potrebe za eksplicitnim dopuštenjem. Ovo možete promijeniti koristeći opciju <code>permission</code>.</p>
+<p>Na primjer, da osigurate da alati <code>edit</code> i <code>bash</code> zahtijevaju odobrenje korisnika:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Saznajte više o dozvolama</a> ovdje.</p>
+<hr>
+<h3>Sažimanje</h3>
+<p>Možete kontrolirati ponašanje sažimanja konteksta putem opcije <code>compaction</code>.</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - Automatski sažimanje sesije kada je kontekst pun (podrazumevano: <code>true</code>).</li>
+<li><code>prune</code> - Uklonite stare izlaze alata da sačuvate tokene (podrazumevano: <code>true</code>).</li>
+<li><code>reserved</code> - Token buffer za sažimanje. Ostavlja dovoljno prostora da se izbjegne prelijevanje tokom sažimanja</li>
+</ul>
+<hr>
+<h3>Promatrač (Watcher)</h3>
+<p>Možete konfigurirati obrasce ignoriranja promatrača datoteka putem opcije <code>watcher</code>.</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>Obrasci prate glob sintaksu. Koristite ovo da isključite bučne direktorije iz pregleda datoteka.</p>
+<hr>
+<h3>MCP serveri</h3>
+<p>Možete konfigurirati MCP servere koje želite koristiti putem opcije <code>mcp</code>.</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Dodaci</h3>
+<p><a href="/docs/plugins">Plugins</a> proširuju vanilla-closedcode sa prilagođenim alatima, kukicama i integracijama.</p>
+<p>Postavite datoteke dodataka u <code>.closedcode/plugins/</code> ili <code>~/.config/closedcode/plugins/</code>. Također možete učitati dodatke iz npm-a preko opcije <code>plugin</code>.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">Saznajte više ovdje</a>.</p>
+<hr>
+<h3>Uputstva</h3>
+<p>Možete konfigurirati upute za model koji koristite putem opcije <code>instructions</code>.</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>Ovo uzima niz putanja i glob uzoraka do datoteka instrukcija. <a href="/docs/rules">Saznajte više o pravilima ovdje</a>.</p>
+<hr>
+<h3>Onemogućeni provajderi</h3>
+<p>Možete onemogućiti dobavljače koji se automatski učitavaju preko opcije <code>disabled_providers</code>. Ovo je korisno kada želite spriječiti učitavanje određenih provajdera čak i ako su njihovi vjerodajnici dostupni.</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` ima prioritet nad `enabled_providers`.
+</aside>
+Opcija `disabled_providers` prihvata niz ID-ova provajdera. Kada je provajder onemogućen:
+
+<ul>
+<li>Neće se učitati čak i ako su varijable okruženja postavljene.</li>
+<li>Neće se učitati čak i ako su API ključevi konfigurirani putem <code>/connect</code> naredbe.</li>
+<li>Modeli dobavljača se neće pojaviti na listi za odabir modela.</li>
+</ul>
+<hr>
+<h3>Omogućeni provajderi</h3>
+<p>Možete odrediti listu dozvoljenih dobavljača putem opcije <code>enabled_providers</code>. Kada se podesi, samo navedeni provajderi će biti omogućeni, a svi ostali će biti zanemareni.</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>Ovo je korisno kada želite da ograničite vanilla-closedcode da koristi samo određene provajdere umjesto da ih onemogućavate jednog po jednog.</p>
+<aside class="aside aside-note">
+`disabled_providers` ima prioritet nad `enabled_providers`.
+</aside>
+Ako se provajder pojavljuje i u `enabled_providers` i `disabled_providers`, `disabled_providers` ima prioritet za kompatibilnost unatrag.
+
+<hr>
+<h3>Eksperimentalno</h3>
+<p>Ključ <code>experimental</code> sadrži opcije koje su u aktivnom razvoju.</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+Eksperimentalne opcije nisu stabilne. Mogu se promijeniti ili ukloniti bez prethodne najave.
+</aside>
+---
+
+<h2>Varijable</h2>
+<p>Možete koristiti zamjenu varijabli u vašim konfiguracijskim datotekama da biste referencirali varijable okruženja i sadržaj datoteke.</p>
+<hr>
+<h3>Varijable okruženja</h3>
+<p>Koristite <code>{env:VARIABLE_NAME}</code> za zamjenu varijabli okruženja:</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Ako varijabla okruženja nije postavljena, bit će zamijenjena praznim nizom.</p>
+<hr>
+<h3>Datoteke</h3>
+<p>Koristite <code>{file:path/to/file}</code> da zamijenite sadržaj fajla:</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>Putanja fajla mogu biti:</p>
+<ul>
+<li>U odnosu na direktorij konfiguracijskih datoteka</li>
+<li>Ili apsolutne staze koje počinju sa <code>/</code> ili <code>~</code></li>
+</ul>
+<p>Ovo je korisno za:</p>
+<ul>
+<li>Pohranjivanje osjetljivih podataka poput API ključeva u odvojenim datotekama.</li>
+<li>Uključujući velike datoteke instrukcija bez zatrpavanja vaše konfiguracije.</li>
+<li>Dijeljenje zajedničkih isječaka konfiguracije u više konfiguracijskih datoteka.</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

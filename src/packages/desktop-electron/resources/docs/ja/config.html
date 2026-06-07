@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>設定 — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode JSON 設定を使用します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html" selected>日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html">简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>設定</h1>
+      <p class="lede">vanilla-closedcode JSON 設定を使用します。</p>
+      <p>JSON 設定ファイルを使用して vanilla-closedcode を構成できます。</p>
+<hr>
+<h2>形式</h2>
+<p>vanilla-closedcode は、<strong>JSON</strong> と <strong>JSONC</strong> (コメント付きの JSON) 形式の両方をサポートしています。</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>ファイルの場所</h2>
+<p>設定をいくつかの異なる場所に配置できます。それらは異なる優先順位を持ちます。</p>
+<aside class="aside aside-note">
+設定ファイルは置き換えられるのではなく、**マージ**されます。
+</aside>
+設定ファイルは結合され、置き換えられません。次の構成場所からの設定が結合されます。競合するキーに対してのみ、後の設定が前の設定を上書きします。すべての構成からの競合しない設定は保持されます。
+
+<p>たとえば、グローバル設定で <code>autoupdate: true</code> を設定し、プロジェクト設定で <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code> を設定した場合、最終的な構成には両方の設定が含まれます。</p>
+<hr>
+<h3>優先順位</h3>
+<p>設定ソースは次の順序でロードされます (後のソースは前のソースをオーバーライドします)。</p>
+<ol>
+<li><strong>グローバル設定</strong> (<code>~/.config/closedcode/closedcode.json</code>) - ユーザー設定</li>
+<li><strong>カスタム設定</strong> (<code>CLOSEDCODE_CONFIG</code> 環境変数) - カスタムオーバーライド</li>
+<li><strong>プロジェクト設定</strong> (プロジェクト内の <code>closedcode.json</code>) - プロジェクト固有の設定</li>
+<li><strong><code>.closedcode</code> ディレクトリ</strong> - エージェント、コマンド、プラグイン</li>
+<li><strong>インライン設定</strong> (<code>CLOSEDCODE_CONFIG_CONTENT</code> 環境変数) - ランタイムオーバーライド</li>
+</ol>
+<p>つまり、プロジェクト設定はグローバルのデフォルトをオーバーライドでき、グローバル設定はリモート組織のデフォルトをオーバーライドできます。</p>
+<aside class="aside aside-note">
+`.closedcode` および `~/.config/closedcode` ディレクトリでは、サブディレクトリに **複数名** が使用されています: `agents/`、`commands/`、`modes/`、`plugins/`、`skills/`、`tools/`、および `themes/`。下位互換性のために、単数形の名前 (`agent/` など) もサポートされています。
+</aside>
+---
+
+
+<h3>グローバル</h3>
+<p>グローバル vanilla-closedcode 設定を <code>~/.config/closedcode/closedcode.json</code> に配置します。プロバイダー、モデル、権限などのユーザー全体の設定にはグローバル設定を使用します。</p>
+<p>TUI 固有の設定には、<code>~/.config/closedcode/tui.json</code> を使用します。</p>
+<p>グローバル設定はリモート組織のデフォルトをオーバーライドします。</p>
+<hr>
+<h3>プロジェクトごと</h3>
+<p>プロジェクトのルートに <code>closedcode.json</code> を追加します。プロジェクト設定は、標準設定ファイルの中で最も高い優先順位を持ち、グローバル設定とリモート設定の両方をオーバーライドします。</p>
+<p>プロジェクト固有の TUI 設定については、その横に <code>tui.json</code> を追加します。</p>
+<aside class="aside aside-tip">
+プロジェクト固有の設定をプロジェクトのルートに配置します。
+</aside>
+vanilla-closedcode が起動すると、現在のディレクトリで設定ファイルを検索するか、最も近い Git ディレクトリまで移動します。
+
+<p>これは Git に安全にチェックインでき、グローバルスキーマと同じスキーマを使用します。</p>
+<hr>
+<h3>カスタムパス</h3>
+<p><code>CLOSEDCODE_CONFIG</code> 環境変数を使用してカスタム設定ファイルのパスを指定します。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>カスタム設定は、優先順位でグローバル設定とプロジェクト設定の間にロードされます。</p>
+<hr>
+<h3>カスタムディレクトリ</h3>
+<p><code>CLOSEDCODE_CONFIG_DIR</code> を使用してカスタム設定ディレクトリを指定します。
+環境変数。このディレクトリでは、エージェント、コマンド、
+モードとプラグインは標準の <code>.closedcode</code> ディレクトリと同様であり、次のようにする必要があります。
+同じ構造に従います。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>カスタムディレクトリはグローバル config ディレクトリと <code>.closedcode</code> ディレクトリの後にロードされるため、それらの設定を<strong>オーバーライド</strong>できます。</p>
+<hr>
+<h2>スキーマ</h2>
+<p>サーバー/ランタイム構成スキーマは <strong><code>config.json</code></strong> で定義されています。</p>
+<p>TUI 設定は <strong><code>tui.json</code></strong> を使用します。</p>
+<p>エディターはスキーマに基づいて検証し、オートコンプリートできる必要があります。</p>
+<hr>
+<h3>TUI</h3>
+<p>TUI 固有の設定には、専用の <code>tui.json</code> (または <code>tui.jsonc</code>) ファイルを使用します。</p>
+<pre><code class="language-json">{
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>カスタム TUI 設定ファイルを指定するには、<code>CLOSEDCODE_TUI_CONFIG</code> を使用します。</p>
+<p><code>closedcode.json</code> 内の従来の <code>theme</code>、<code>keybinds</code>、および <code>tui</code> キーは非推奨となり、可能であれば自動的に移行されます。</p>
+<p><a href="/docs/tui#configure">TUI の設定の詳細については、こちら</a> をご覧ください。</p>
+<hr>
+<h3>サーバー</h3>
+<p><code>closedcode serve</code> オプションを使用して、<code>closedcode web</code> および <code>server</code> コマンドのサーバー設定を構成できます。</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>利用可能なオプション:</p>
+<ul>
+<li><code>port</code> - リッスンするポート。</li>
+<li><code>hostname</code> - リッスンするホスト名。 <code>mdns</code> が有効でホスト名が設定されていない場合、デフォルトは <code>0.0.0.0</code> になります。</li>
+<li><code>mdns</code> - mDNS サービス検出を有効にします。これにより、ネットワーク上の他のデバイスが vanilla-closedcode サーバーを検出できるようになります。</li>
+<li><code>mdnsDomain</code> - mDNS サービスのカスタムドメイン名。デフォルトは <code>closedcode.local</code> です。同じネットワーク上で複数のインスタンスを実行する場合に便利です。</li>
+<li><code>cors</code> - ブラウザベースのクライアントから HTTP サーバーを使用するときに CORS を許可する追加のオリジン。値は完全なオリジン (スキーム + ホスト + オプションのポート) である必要があります (例: <code>https://app.example.com</code>)。</li>
+</ul>
+<p><a href="/docs/server">サーバーの詳細については、こちら</a>をご覧ください。</p>
+<hr>
+<h3>ツール</h3>
+<p>LLM が使用できるツールは、<code>tools</code> オプションを通じて管理できます。</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">ツールの詳細については、こちらをご覧ください</a>。</p>
+<hr>
+<h3>モデル</h3>
+<p><code>provider</code>、<code>model</code>、および <code>small_model</code> オプションを使用して、vanilla-closedcode 設定で使用するプロバイダーとモデルを構成できます。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p><code>small_model</code> オプションは、タイトルの生成などの軽量タスク用に個別のモデルを構成します。デフォルトでは、vanilla-closedcode は、プロバイダーから安価なモデルが入手可能な場合は、より安価なモデルを使用しようとします。そうでない場合は、メインモデルにフォールバックします。</p>
+<p>プロバイダーオプションには、<code>timeout</code> および <code>setCacheKey</code> を含めることができます。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - リクエストのタイムアウト (ミリ秒単位) (デフォルト: 300000)。無効にするには、<code>false</code> に設定します。</li>
+<li><code>setCacheKey</code> - 指定されたプロバイダーに対してキャッシュキーが常に設定されていることを確認します。</li>
+</ul>
+<p><a href="/docs/models#local">ローカルモデル</a> も設定できます。<a href="/docs/models">詳細はこちら</a>。</p>
+<hr>
+<h4>プロバイダー固有のオプション</h4>
+<p>一部のプロバイダーは、一般的な <code>timeout</code> および <code>apiKey</code> 設定を超える追加の構成オプションをサポートしています。</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock は、AWS 固有の設定をサポートしています。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - Bedrock の AWS リージョン (デフォルトは <code>AWS_REGION</code> 環境変数または <code>us-east-1</code>)</li>
+<li><code>profile</code> - <code>~/.aws/credentials</code> からの AWS 名前付きプロファイル (デフォルトは <code>AWS_PROFILE</code> 環境変数)</li>
+<li><code>endpoint</code> - VPC エンドポイントのカスタムエンドポイント URL。これは、AWS 固有の用語を使用した汎用 <code>baseURL</code> オプションのエイリアスです。両方を指定した場合は、<code>endpoint</code> が優先されます。</li>
+</ul>
+<aside class="aside aside-note">
+ベアラー トークン (`AWS_BEARER_TOKEN_BEDROCK` または `/connect`) は、プロファイルベースの認証より優先されます。詳細については、「[認証優先順位](/docs/providers#authentication-precedence)」を参照してください。
+</aside>
+[Amazon Bedrock 設定](/docs/providers#amazon-bedrock) の詳細をご覧ください。
+
+<hr>
+<h3>テーマ</h3>
+<p>UI テーマを <code>tui.json</code> で設定します。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;tokyonight&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">詳細はこちら</a>。</p>
+<hr>
+<h3>エージェント</h3>
+<p><code>agent</code> オプションを使用して、特定のタスクに特化したエージェントを構成できます。</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p><code>~/.config/closedcode/agents/</code> または <code>.closedcode/agents/</code> の Markdown ファイルを使用してエージェントを定義することもできます。 <a href="/docs/agents">詳細はこちら</a>。</p>
+<hr>
+<h3>デフォルトエージェント</h3>
+<p><code>default_agent</code> オプションを使用してデフォルトのエージェントを設定できます。これにより、明示的に何も指定されていない場合にどのエージェントが使用されるかが決まります。</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>デフォルトのエージェントはプライマリエージェントである必要があります (サブエージェントではありません)。これは、<code>&quot;build&quot;</code> や <code>&quot;plan&quot;</code> のような組み込みエージェント、または定義した<a href="/docs/agents">カスタムエージェント</a> にすることができます。指定されたエージェントが存在しないか、サブエージェントである場合、vanilla-closedcode は警告とともに <code>&quot;build&quot;</code> にフォールバックします。</p>
+<p>この設定は、TUI、CLI (<code>closedcode run</code>)、デスクトップアプリ、および GitHub Action のすべてのインターフェイスに適用されます。</p>
+<hr>
+<h3>共有</h3>
+<p><code>share</code> オプションを使用して <a href="/docs/share">share</a> 機能を設定できます。</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>これには以下が必要です:</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - コマンドによる手動共有を許可します (デフォルト)</li>
+<li><code>&quot;auto&quot;</code> - 新しい会話を自動的に共有します</li>
+<li><code>&quot;disabled&quot;</code> - 共有を完全に無効にする</li>
+</ul>
+<p>デフォルトでは、共有は手動モードに設定されており、<code>/share</code> コマンドを使用して会話を明示的に共有する必要があります。</p>
+<hr>
+<h3>コマンド</h3>
+<p><code>command</code> オプションを使用して、反復タスク用のカスタムコマンドを構成できます。</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p><code>~/.config/closedcode/commands/</code> または <code>.closedcode/commands/</code> の Markdown ファイルを使用してコマンドを定義することもできます。 <a href="/docs/commands">詳細はこちら</a>。</p>
+<hr>
+<h3>キーバインド</h3>
+<p><code>tui.json</code> でキーバインドをカスタマイズします。</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">詳細はこちら</a>。</p>
+<hr>
+<h3>自動更新</h3>
+<p>vanilla-closedcode は起動時に新しいアップデートを自動的にダウンロードします。 <code>autoupdate</code> オプションを使用してこれを無効にできます。</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>更新は必要ないが、新しいバージョンが利用可能になったときに通知を受け取りたい場合は、<code>autoupdate</code> を <code>&quot;notify&quot;</code> に設定します。
+これは、Homebrew などのパッケージマネージャーを使用してインストールされていない場合にのみ機能することに注意してください。</p>
+<hr>
+<h3>フォーマッタ</h3>
+<p><code>formatter</code> オプションを使用してコードフォーマッタを設定できます。</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">フォーマッタの詳細については、こちら</a> をご覧ください。</p>
+<hr>
+<h3>権限</h3>
+<p>デフォルトでは、closedcode は明示的な承認を必要とせずに <strong>すべての操作を許可</strong>します。これは、<code>permission</code> オプションを使用して変更できます。</p>
+<p>たとえば、<code>edit</code> ツールと <code>bash</code> ツールにユーザーの承認が必要であることを確認するには、次のようにします。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">権限の詳細については、こちら</a>をご覧ください。</p>
+<hr>
+<h3>圧縮</h3>
+<p><code>compaction</code> オプションを使用してコンテキストの圧縮動作を制御できます。</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - コンテキストがいっぱいのときにセッションを自動的に圧縮します (デフォルト: <code>true</code>)。</li>
+<li><code>prune</code> - 古いツールの出力を削除してトークンを保存します (デフォルト: <code>true</code>)。</li>
+</ul>
+<hr>
+<h3>ウォッチャー</h3>
+<p><code>watcher</code> オプションを使用して、ファイルウォッチャーの無視パターンを構成できます。</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>パターンは glob 構文に従います。これを使用して、ノイズの多いディレクトリをファイル監視から除外します。</p>
+<hr>
+<h3>MCPサーバー</h3>
+<p><code>mcp</code> オプションを使用して、使用する MCP サーバーを構成できます。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">詳細はこちら</a>。</p>
+<hr>
+<h3>プラグイン</h3>
+<p><a href="/docs/plugins">Plugins</a> は、カスタムツール、フック、統合を使用して vanilla-closedcode を拡張します。</p>
+<p>プラグインファイルを <code>.closedcode/plugins/</code> または <code>~/.config/closedcode/plugins/</code> に配置します。 <code>plugin</code> オプションを使用して npm からプラグインをロードすることもできます。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">詳細はこちら</a>。</p>
+<hr>
+<h3>指示</h3>
+<p><code>instructions</code> オプションを使用して、使用しているモデルの指示を構成できます。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>これは、指示ファイルへのパスとグロブパターンの配列を受け取ります。 <a href="/docs/rules">ルールについて詳しくはこちら</a>。</p>
+<hr>
+<h3>無効なプロバイダー</h3>
+<p><code>disabled_providers</code> オプションを使用して、自動的にロードされるプロバイダーを無効にすることができます。これは、認証情報が利用可能な場合でも、特定のプロバイダーが読み込まれないようにしたい場合に便利です。</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` は `enabled_providers` よりも優先されます。
+</aside>
+`disabled_providers` オプションは、プロバイダー ID の配列を受け入れます。プロバイダーが無効になっている場合:
+
+<ul>
+<li>環境変数を設定してもロードされません。</li>
+<li><code>/connect</code> コマンドで API キーを設定してもロードされません。</li>
+<li>プロバイダーのモデルはモデル選択リストに表示されません。</li>
+</ul>
+<hr>
+<h3>有効なプロバイダー</h3>
+<p><code>enabled_providers</code> オプションを使用してプロバイダーの許可リストを指定できます。設定すると、指定されたプロバイダーのみが有効になり、その他はすべて無視されます。</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>これは、vanilla-closedcode を 1 つずつ無効にするのではなく、特定のプロバイダーのみを使用するように制限したい場合に便利です。</p>
+<aside class="aside aside-note">
+`disabled_providers` は `enabled_providers` よりも優先されます。
+</aside>
+プロバイダーが `enabled_providers` と `disabled_providers` の両方に表示される場合、下位互換性のために `disabled_providers` が優先されます。
+
+<hr>
+<h3>実験的</h3>
+<p><code>experimental</code> キーには、現在開発中のオプションが含まれています。</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+実験的なオプションは安定していません。予告なく変更または削除される場合があります。
+</aside>
+---
+
+<h2>変数</h2>
+<p>設定ファイル内で変数置換を使用して、環境変数とファイルの内容を参照できます。</p>
+<hr>
+<h3>環境変数</h3>
+<p><code>{env:VARIABLE_NAME}</code> を使用して環境変数を置き換えます。</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>環境変数が設定されていない場合は、空の文字列に置き換えられます。</p>
+<hr>
+<h3>ファイル</h3>
+<p><code>{file:path/to/file}</code> を使用してファイルの内容を置き換えます。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>ファイルパスは次のとおりです。</p>
+<ul>
+<li>設定ファイルのディレクトリからの相対パス</li>
+<li>または、<code>/</code> または <code>~</code> で始まる絶対パス</li>
+</ul>
+<p>これらは次の場合に役立ちます。</p>
+<ul>
+<li>API キーなどの機密データを別のファイルに保存します。</li>
+<li>設定を乱雑にすることなく、大きな指示ファイルを含めることができます。</li>
+<li>複数の設定ファイル間で共通の設定スニペットを共有します。</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

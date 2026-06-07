@@ -1,0 +1,15 @@
+export default [
+  {
+    files: ["**/*.js"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+    },
+    rules: {
+      curly: "warn",
+      eqeqeq: "warn",
+      "no-throw-literal": "warn",
+      semi: "warn",
+    },
+  },
+]

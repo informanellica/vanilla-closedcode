@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>에이전트 스킬 — vanilla-closedcode docs</title>
+  <meta name="description" content="SKILL.md 정의를 통해 재사용 가능한 동작을 정의합니다.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html" selected>한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html">Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>에이전트 스킬</h1>
+      <p class="lede">SKILL.md 정의를 통해 재사용 가능한 동작을 정의합니다.</p>
+      <p>Agent Skill let closedcode discover reusable instruction from your repo 또는 홈 디렉토리.
+Skills are loaded on-demand via native <code>skill</code> tool-agents see available skills and can loaded full content when needed.</p>
+<hr>
+<h2>파일 위치</h2>
+<p>기술 이름 당 하나의 폴더를 만들고 내부 <code>SKILL.md</code>를 넣어.
+closedcode 이 위치를 검색:</p>
+<ul>
+<li>프로젝트 구성: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>글로벌 구성: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>프로젝트 클로드 호환 : <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>글로벌 클로드 호환 : <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>프로젝트 에이전트 호환 : <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>글로벌 에이전트 호환 : <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>검색 이해</h2>
+<p>Project-local paths의 경우, closedcode는 git worktree에 도달 할 때까지 현재 작업 디렉토리에서 걷습니다.
+그것은 <code>skills/*/SKILL.md</code>에 있는 어떤 어울리는 <code>.closedcode/</code> 및 어떤 어울리는 <code>.claude/skills/*/SKILL.md</code> 또는 <code>.agents/skills/*/SKILL.md</code>를 방법 적재합니다.</p>
+<p>세계적인 정의는 또한 <code>~/.config/closedcode/skills/*/SKILL.md</code>, <code>~/.claude/skills/*/SKILL.md</code> 및 <code>~/.agents/skills/*/SKILL.md</code>에서 적재됩니다.</p>
+<hr>
+<h2>Frontmatter 작성</h2>
+<p>각 <code>SKILL.md</code>는 YAML frontmatter로 시작해야 합니다.
+이 필드는 인식됩니다:</p>
+<ul>
+<li><code>name</code> (필수)</li>
+<li><code>description</code> (필수)</li>
+<li>(선택) <code>license</code></li>
+<li>(선택) <code>compatibility</code></li>
+<li><code>metadata</code> (선택 사항, 문자열에 문자열 맵)</li>
+</ul>
+<p>알려진 frontmatter 필드는 무시됩니다.</p>
+<hr>
+<h2>유효한 이름</h2>
+<p><code>name</code>는 해야 합니다:</p>
+<ul>
+<li>1–64자</li>
+<li>단 하나 hyphen 분리기를 가진 더 낮은 케이스 alphanumeric가 있으십시오</li>
+<li><code>-</code>로 시작 또는 끝 아닙니다</li>
+<li>연속 <code>--</code> 포함하지</li>
+<li><code>SKILL.md</code>를 포함하는 디렉토리 이름을 일치</li>
+</ul>
+<p>동등한 regex:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>길이 규칙 준수</h2>
+<p><code>description</code>는 1-1024 특성이어야 합니다.
+제대로 선택하기 위해 에이전트에 대해 충분히 유지하십시오.</p>
+<hr>
+<h2>사용 예제</h2>
+<p>이처럼 <code>.closedcode/skills/git-release/SKILL.md</code> 만들기:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>도구 설명 인식</h2>
+<p>closedcode는 <code>skill</code> 도구 설명에서 사용할 수있는 기술을 나열합니다.
+각 항목에는 기술 이름 및 설명이 포함됩니다.</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>에이전트는 도구를 호출하여 기술을로드 :</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>권한 구성</h2>
+<p>기술 에이전트가 <code>closedcode.json</code>의 패턴 기반 권한을 사용하여 액세스 할 수있는 제어 :</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>권한</th>
+<th>동작</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>기술이 즉시 로드됨</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>에이전트에서 기술 숨김, 접근 거부</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>로드 전에 사용자에게 승인 요청</td>
+</tr>
+</tbody></table>
+<p>패턴 지원 와일드 카드: <code>internal-*</code> 경기 <code>internal-docs</code>, <code>internal-tools</code>, 등.</p>
+<hr>
+<h2>에이전트별 재정의</h2>
+<p>글로벌 디폴트보다 특정 에이전트 다른 권한을 부여합니다.</p>
+<p>**사용자 지정 에이전트 ** ( 에이전트 frontmatter):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p>** 내장 에이전트 ** (<code>closedcode.json</code>에서):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>스킬 도구 비활성화</h2>
+<p>그들을 사용하지 않는 에이전트을위한 완전히 비활성화 된 기술 :</p>
+<p><strong>사용자 지정 에이전트</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p>** 내장 에이전트 **:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>비활성화 할 때, <code>&lt;available_skills&gt;</code> 섹션은 완전히 부유합니다.</p>
+<hr>
+<h2>로딩 문제 해결</h2>
+<p>기술이 나타나지 않는 경우:</p>
+<ol>
+<li><code>SKILL.md</code>는 모든 모자에서 spelled</li>
+<li><code>name</code>와 <code>description</code>를 포함하는 검사</li>
+<li>기술 이름은 모든 위치에서 독특합니다.</li>
+<li><code>deny</code>를 가진 허가를 검사하십시오 에이전트에서 숨겨집니다</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

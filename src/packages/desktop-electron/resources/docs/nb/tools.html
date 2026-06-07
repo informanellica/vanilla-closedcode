@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="nb">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verktøy — vanilla-closedcode docs</title>
+  <meta name="description" content="Administrer verktøyene en LLM kan bruke.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tools.html">English</option>
+      <option value="../ar/tools.html">العربية</option>
+      <option value="../bs/tools.html">Bosanski</option>
+      <option value="../da/tools.html">Dansk</option>
+      <option value="../de/tools.html">Deutsch</option>
+      <option value="../es/tools.html">Español</option>
+      <option value="../fr/tools.html">Français</option>
+      <option value="../it/tools.html">Italiano</option>
+      <option value="../ja/tools.html">日本語</option>
+      <option value="../ko/tools.html">한국어</option>
+      <option value="../nb/tools.html" selected>Norsk</option>
+      <option value="../pl/tools.html">Polski</option>
+      <option value="../pt-br/tools.html">Português (BR)</option>
+      <option value="../ru/tools.html">Русский</option>
+      <option value="../th/tools.html">ไทย</option>
+      <option value="../tr/tools.html">Türkçe</option>
+      <option value="../zh-cn/tools.html">简体中文</option>
+      <option value="../zh-tw/tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Norsk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li class="active"><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Verktøy</h1>
+      <p class="lede">Administrer verktøyene en LLM kan bruke.</p>
+      <p>Verktøy lar LLM utføre handlinger i kodebasen din. vanilla-closedcode kommer med et sett med innebygde verktøy, men du kan utvide det med <a href="/docs/custom-tools">egendefinerte verktøy</a> eller <a href="/docs/mcp-servers">MCP servere</a>.</p>
+<p>Som standard er alle verktøy <strong>aktivert</strong> og trenger ikke tillatelse for å kjøre. Du kan kontrollere verktøyets oppførsel gjennom <a href="/docs/permissions">tillatelser</a>.</p>
+<hr>
+<h2>Konfigurasjon</h2>
+<p>Bruk feltet <code>permission</code> for å kontrollere verktøyets oppførsel. Du kan tillate, avslå eller kreve godkjenning for hvert verktøy.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;,
+    &quot;bash&quot;: &quot;ask&quot;,
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Du kan også bruke jokertegn for å kontrollere flere verktøy samtidig. For eksempel, for å kreve godkjenning for alle verktøy fra en MCP-server:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;mymcp_*&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Finn ut mer</a> om konfigurering av tillatelser.</p>
+<hr>
+<h2>Innebygd</h2>
+<p>Her er alle de innebygde verktøyene som er tilgjengelige i vanilla-closedcode.</p>
+<hr>
+<h3>bash</h3>
+<p>Utfør skallkommandoer i prosjektmiljøet ditt.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dette verktøyet lar LLM kjøre terminalkommandoer som <code>npm install</code>, <code>git status</code> eller en hvilken som helst annen skallkommando.</p>
+<hr>
+<h3>edit</h3>
+<p>Endre eksisterende filer ved å bruke eksakte strengerstatninger.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dette verktøyet utfører nøyaktige redigeringer av filer ved å erstatte eksakte teksttreff. Det er den primære måten LLM endrer kode på.</p>
+<hr>
+<h3>write</h3>
+<p>Opprett nye filer eller overskriv eksisterende.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Bruk denne for å la LLM lage nye filer. Den vil overskrive eksisterende filer hvis de allerede eksisterer.</p>
+<aside class="aside aside-note">
+`write`-verktøyet kontrolleres av tillatelsen `edit`, som dekker alle filendringer (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>read</h3>
+<p>Les filinnholdet fra kodebasen din.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dette verktøyet leser filer og returnerer innholdet. Den støtter lesing av spesifikke linjeområder for store filer.</p>
+<hr>
+<h3>grep</h3>
+<p>Søk i filinnhold ved hjelp av regulære uttrykk.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;grep&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Rask innholdssøk på tvers av kodebasen din. Støtter full regex-syntaks og filmønsterfiltrering.</p>
+<hr>
+<h3>glob</h3>
+<p>Finn filer etter mønstermatching.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;glob&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Søk etter filer ved å bruke glob-mønstre som <code>**/*.js</code> eller <code>src/**/*.ts</code>. Returnerer samsvarende filbaner sortert etter endringstid.</p>
+<hr>
+<h3>lsp (eksperimentell)</h3>
+<p>Samhandle med dine konfigurerte LSP-servere for å få kodeintelligens-funksjoner som definisjoner, referanser, hover-informasjon og kallhierarki.</p>
+<aside class="aside aside-note">
+Dette verktøyet er bare tilgjengelig når `CLOSEDCODE_EXPERIMENTAL_LSP_TOOL=true` (eller `CLOSEDCODE_EXPERIMENTAL=true`).
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "lsp": "allow"
+  }
+}
+```
+
+<p>Støttede operasjoner inkluderer <code>goToDefinition</code>, <code>findReferences</code>, <code>hover</code>, <code>documentSymbol</code>, <code>workspaceSymbol</code>, <code>goToImplementation</code>, <code>prepareCallHierarchy</code>, <code>incomingCalls</code> og <code>outgoingCalls</code>.</p>
+<p>For å konfigurere hvilke LSP-servere som er tilgjengelige for prosjektet ditt, se <a href="/docs/lsp">LSP-servere</a>.</p>
+<hr>
+<h3>patch</h3>
+<p>Bruk patcher på filer.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dette verktøyet bruker oppdateringsfiler til kodebasen din. Nyttig for å påføre diffs og patcher fra forskjellige kilder.</p>
+<aside class="aside aside-note">
+`patch`-verktøyet kontrolleres av tillatelsen `edit`, som dekker alle filendringer (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>skill</h3>
+<p>Last inn en <a href="/docs/skills">ferdighet</a> (en <code>SKILL.md</code> fil) og returner innholdet i samtalen.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<hr>
+<h3>todowrite</h3>
+<p>Administrer gjøremålslister under kodingsøkter.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;todowrite&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Oppretter og oppdaterer oppgavelister for å spore fremdrift under komplekse operasjoner. LLM bruker dette til å organisere flertrinnsoppgaver.</p>
+<aside class="aside aside-note">
+Dette verktøyet er deaktivert for subagenter som standard, men du kan aktivere det manuelt. [Finn ut mer](/docs/agents/#permissions)
+</aside>
+---
+
+<h3>webfetch</h3>
+<p>Hent nettinnhold.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Lar LLM hente og lese nettsider. Nyttig for å slå opp dokumentasjon eller forske på nettressurser.</p>
+<hr>
+<h3>websearch</h3>
+<p>Søk på nettet for informasjon.</p>
+<aside class="aside aside-note">
+Dette verktøyet er bare tilgjengelig når du bruker vanilla-closedcode-leverandøren eller når miljøvariabelen `CLOSEDCODE_ENABLE_EXA` er satt til en sann verdi (f.eks. `true` eller `1`).
+
+<p>Slik aktiverer du når du starter vanilla-closedcode:</p>
+<pre><code class="language-bash">CLOSEDCODE_ENABLE_EXA=1 closedcode
+</code></pre>
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "websearch": "allow"
+  }
+}
+```
+
+<p>Utfører nettsøk med Exa AI for å finne relevant informasjon på nettet. Nyttig for å undersøke emner, finne aktuelle hendelser eller samle informasjon utover treningsdataavbruddet.</p>
+<p>Ingen API-nøkkel kreves — verktøyet kobles direkte til Exa AIs vertsbaserte MCP-tjeneste uten autentisering.</p>
+<aside class="aside aside-tip">
+Bruk `websearch` når du trenger å finne informasjon (oppdagelse), og `webfetch` når du trenger å hente innhold fra en bestemt URL (henting).
+</aside>
+---
+
+<h3>question</h3>
+<p>Still brukeren spørsmål under utførelse.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;question&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dette verktøyet lar LLM stille spørsmål til brukeren under en oppgave. Det er nyttig for:</p>
+<ul>
+<li>Samle brukerpreferanser eller krav</li>
+<li>Avklarende tvetydige instruksjoner</li>
+<li>Få beslutninger om gjennomføringsvalg</li>
+<li>Tilbyr valg om hvilken retning du skal ta</li>
+</ul>
+<p>Hvert spørsmål inkluderer en overskrift, spørsmålsteksten og en liste over alternativer. Brukere kan velge fra de angitte alternativene eller skrive inn et tilpasset svar. Når det er flere spørsmål, kan brukerne navigere mellom dem før de sender inn alle svarene.</p>
+<hr>
+<h2>Egendefinerte verktøy</h2>
+<p>Egendefinerte verktøy lar deg definere dine egne funksjoner som LLM kan kalle. Disse er definert i konfigurasjonsfilen din og kan kjøre vilkårlig kode.</p>
+<p><a href="/docs/custom-tools">Finn ut mer</a> om å lage tilpassede verktøy.</p>
+<hr>
+<h2>MCP servere</h2>
+<p>MCP (Model Context Protocol) servere lar deg integrere eksterne verktøy og tjenester. Dette inkluderer databasetilgang, API-integrasjoner og tredjepartstjenester.</p>
+<p><a href="/docs/mcp-servers">Les mer</a> om konfigurering av MCP-servere.</p>
+<hr>
+<h2>Internaler</h2>
+<p>Internt bruker verktøy som <code>grep</code> og <code>glob</code> <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a> i bakgrunnen. Som standard respekterer ripgrep <code>.gitignore</code>-mønstre, noe som betyr at filer og kataloger som er oppført i <code>.gitignore</code> vil bli ekskludert fra søk og oppføringer.</p>
+<hr>
+<h3>Ignorer mønstre</h3>
+<p>For å inkludere filer som normalt vil bli ignorert, lag en <code>.ignore</code>-fil i prosjektroten. Denne filen kan eksplisitt tillate visse stier.</p>
+<pre><code class="language-text">!node_modules/
+!dist/
+!build/
+</code></pre>
+<p>For eksempel lar denne <code>.ignore</code> filen ripgrep søke i <code>node_modules/</code>, <code>dist/</code> og <code>build/</code> kataloger selv om de er oppført i <code>.gitignore</code>.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

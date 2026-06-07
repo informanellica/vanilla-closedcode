@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "storybook",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "storybook": "echo \"storybook disabled\"",
+    "build": "echo \"build disabled\""
+  },
+  "devDependencies": {}
+}

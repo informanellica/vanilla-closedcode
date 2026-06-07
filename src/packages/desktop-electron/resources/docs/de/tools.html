@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tools — vanilla-closedcode docs</title>
+  <meta name="description" content="Verwalte, welche Tools ein LLM nutzen darf.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tools.html">English</option>
+      <option value="../ar/tools.html">العربية</option>
+      <option value="../bs/tools.html">Bosanski</option>
+      <option value="../da/tools.html">Dansk</option>
+      <option value="../de/tools.html" selected>Deutsch</option>
+      <option value="../es/tools.html">Español</option>
+      <option value="../fr/tools.html">Français</option>
+      <option value="../it/tools.html">Italiano</option>
+      <option value="../ja/tools.html">日本語</option>
+      <option value="../ko/tools.html">한국어</option>
+      <option value="../nb/tools.html">Norsk</option>
+      <option value="../pl/tools.html">Polski</option>
+      <option value="../pt-br/tools.html">Português (BR)</option>
+      <option value="../ru/tools.html">Русский</option>
+      <option value="../th/tools.html">ไทย</option>
+      <option value="../tr/tools.html">Türkçe</option>
+      <option value="../zh-cn/tools.html">简体中文</option>
+      <option value="../zh-tw/tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Deutsch</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li class="active"><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Tools</h1>
+      <p class="lede">Verwalte, welche Tools ein LLM nutzen darf.</p>
+      <p>Tools erlauben dem LLM Aktionen in deiner Codebasis.
+vanilla-closedcode bringt eingebaute Tools mit und laesst sich ueber <a href="/docs/custom-tools">Custom Tools</a> oder <a href="/docs/mcp-servers">MCP-Server</a> erweitern.</p>
+<p>Standardmaessig sind alle Tools <strong>aktiviert</strong> und brauchen keine Freigabe.
+Das Verhalten steuerst du ueber <a href="/docs/permissions">Berechtigungen</a>.</p>
+<hr>
+<h2>Konfiguration</h2>
+<p>Nutze das Feld <code>permission</code>, um Tool-Verhalten zu steuern.
+Pro Tool kannst du erlauben, verbieten oder eine Rueckfrage verlangen.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;,
+    &quot;bash&quot;: &quot;ask&quot;,
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Mit Wildcards kannst du mehrere Tools auf einmal steuern.
+Zum Beispiel, um fuer alle Tools eines MCP-Servers eine Freigabe zu verlangen:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;mymcp_*&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">Mehr dazu</a>, wie du Berechtigungen konfigurierst.</p>
+<hr>
+<h2>Eingebaut</h2>
+<p>Hier sind alle in vanilla-closedcode verfuegbaren eingebauten Tools.</p>
+<hr>
+<h3>bash</h3>
+<p>Fuehrt Shell-Befehle in deiner Projektumgebung aus.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Damit kann das LLM Terminal-Befehle wie <code>npm install</code>, <code>git status</code> oder andere Shell-Kommandos ausfuehren.</p>
+<hr>
+<h3>edit</h3>
+<p>Bearbeitet bestehende Dateien ueber exakte String-Ersetzungen.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dieses Tool fuehrt praezise Aenderungen per exakter Textsuche aus.
+Es ist der zentrale Weg, wie das LLM Code aendert.</p>
+<hr>
+<h3>write</h3>
+<p>Erstellt neue Dateien oder ueberschreibt bestehende Dateien.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Damit erlaubst du dem LLM, neue Dateien anzulegen.
+Bestehende Dateien werden dabei ueberschrieben.</p>
+<aside class="aside aside-note">
+Das Tool `write` wird ueber die Berechtigung `edit` gesteuert.
+`edit` gilt fuer alle Datei-Aenderungen (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>read</h3>
+<p>Liest Dateiinhalte aus deiner Codebasis.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dieses Tool liest Dateien und gibt deren Inhalt zurueck. Es unterstuetzt das Lesen spezifischer Zeilenbereiche bei grossen Dateien.</p>
+<hr>
+<h3>grep</h3>
+<p>Durchsucht Dateiinhalte mit regulaeren Ausdruecken.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;grep&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Schnelle Inhaltssuche in deiner Codebasis. Unterstuetzt volle Regex-Syntax und Filterung nach Dateimustern.</p>
+<hr>
+<h3>glob</h3>
+<p>Findet Dateien per Musterabgleich.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;glob&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Sucht nach Dateien mit Glob-Mustern wie <code>**/*.js</code> oder <code>src/**/*.ts</code>. Gibt passende Dateipfade sortiert nach Aenderungsdatum zurueck.</p>
+<hr>
+<h3>lsp (experimentell)</h3>
+<p>Interagiere mit deinen konfigurierten LSP-Servern fuer Code-Intelligence-Features wie Definitionen, Referenzen, Hover-Infos und Call-Hierarchien.</p>
+<aside class="aside aside-note">
+Dieses Tool ist nur verfuegbar, wenn `CLOSEDCODE_EXPERIMENTAL_LSP_TOOL=true` (oder `CLOSEDCODE_EXPERIMENTAL=true`) gesetzt ist.
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "lsp": "allow"
+  }
+}
+```
+
+<p>Unterstuetzte Operationen sind <code>goToDefinition</code>, <code>findReferences</code>, <code>hover</code>, <code>documentSymbol</code>, <code>workspaceSymbol</code>, <code>goToImplementation</code>, <code>prepareCallHierarchy</code>, <code>incomingCalls</code> und <code>outgoingCalls</code>.</p>
+<p>Um verfuegbare LSP-Server fuer dein Projekt zu konfigurieren, siehe <a href="/docs/lsp">LSP-Server</a>.</p>
+<hr>
+<h3>patch</h3>
+<p>Wendet Patches auf Dateien an.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dieses Tool wendet Patch-Dateien auf deine Codebasis an. Nuetzlich fuer Diffs und Patches aus verschiedenen Quellen.</p>
+<aside class="aside aside-note">
+Das Tool `patch` wird ueber die Berechtigung `edit` gesteuert, welche alle Datei-Aenderungen abdeckt (`edit`, `write`, `patch`).
+</aside>
+---
+
+<h3>skill</h3>
+<p>Laedt einen <a href="/docs/skills">Skill</a> (eine <code>SKILL.md</code>-Datei) und gibt dessen Inhalt in der Unterhaltung zurueck.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<hr>
+<h3>todowrite</h3>
+<p>Verwaltet Todo-Listen waehrend Coding-Sessions.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;todowrite&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Erstellt und aktualisiert Aufgabenlisten, um den Fortschritt bei komplexen Operationen zu verfolgen. Das LLM nutzt dies, um mehrstufige Aufgaben zu organisieren.</p>
+<aside class="aside aside-note">
+Dieses Tool ist fuer Sub-Agenten standardmaessig deaktiviert, kann aber manuell aktiviert werden. [Mehr dazu](/docs/agents/#permissions)
+</aside>
+---
+
+<h3>webfetch</h3>
+<p>Ruft Webinhalte ab.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;webfetch&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Erlaubt dem LLM, Webseiten abzurufen und zu lesen. Nuetzlich zum Nachschlagen von Dokumentation oder fuer Online-Recherche.</p>
+<hr>
+<h3>websearch</h3>
+<p>Durchsucht das Web nach Informationen.</p>
+<aside class="aside aside-note">
+Dieses Tool ist nur verfuegbar, wenn der vanilla-closedcode-Provider genutzt wird oder die Umgebungsvariable `CLOSEDCODE_ENABLE_EXA` auf einen 'truthy' Wert (z. B. `true` oder `1`) gesetzt ist.
+
+<p>Zum Aktivieren beim Start von vanilla-closedcode:</p>
+<pre><code class="language-bash">CLOSEDCODE_ENABLE_EXA=1 closedcode
+</code></pre>
+</aside>
+```json title="closedcode.json" {4}
+{
+  "permission": {
+    "websearch": "allow"
+  }
+}
+```
+
+<p>Fuehrt Websuchen mit Exa AI durch, um relevante Informationen online zu finden. Nuetzlich fuer Recherche, aktuelle Ereignisse oder Informationen jenseits des Trainingsdatums.</p>
+<p>Kein API-Key erforderlich — das Tool verbindet sich direkt mit dem gehosteten MCP-Service von Exa AI ohne Authentifizierung.</p>
+<aside class="aside aside-tip">
+Nutze `websearch` zum Finden von Informationen (Discovery) und `webfetch` zum Abrufen von Inhalten einer spezifischen URL (Retrieval).
+</aside>
+---
+
+<h3>question</h3>
+<p>Stellt dem Benutzer waehrend der Ausfuehrung Fragen.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;question&quot;: &quot;allow&quot;
+  }
+}
+</code></pre>
+<p>Dieses Tool erlaubt dem LLM, dem Benutzer waehrend einer Aufgabe Fragen zu stellen. Nuetzlich fuer:</p>
+<ul>
+<li>Sammeln von Benutzerpraeferenzen oder Anforderungen</li>
+<li>Klaerung mehrdeutiger Anweisungen</li>
+<li>Entscheidungen bei Implementierungsoptionen einholen</li>
+<li>Auswahlmoeglichkeiten fuer das weitere Vorgehen anbieten</li>
+</ul>
+<p>Jede Frage enthaelt eine Ueberschrift, den Fragetext und eine Liste von Optionen. Benutzer koennen aus den Optionen waehlen oder eine eigene Antwort eingeben. Bei mehreren Fragen koennen Benutzer zwischen ihnen navigieren, bevor sie alle Antworten absenden.</p>
+<hr>
+<h2>Benutzerdefinierte Tools</h2>
+<p>Mit Custom Tools definierst du eigene Funktionen, die das LLM aufrufen kann.
+Sie werden in der Konfigurationsdatei definiert und koennen beliebigen Code ausfuehren.</p>
+<p><a href="/docs/custom-tools">Mehr dazu</a>, wie du Custom Tools erstellst.</p>
+<hr>
+<h2>MCP-Server</h2>
+<p>MCP-Server (Model Context Protocol) binden externe Tools und Dienste ein.
+Dazu gehoeren Datenbanken, API-Integrationen und Drittanbieter-Services.</p>
+<p><a href="/docs/mcp-servers">Mehr dazu</a>, wie du MCP-Server konfigurierst.</p>
+<hr>
+<h2>Interna</h2>
+<p>Intern verwenden Tools wie <code>grep</code> und <code>glob</code> <a href="https://github.com/BurntSushi/ripgrep">ripgrep</a>.
+Standardmaessig beachtet ripgrep <code>.gitignore</code>, daher werden dort aufgefuehrte Dateien und Ordner nicht durchsucht.</p>
+<hr>
+<h3>Ignorier-Muster</h3>
+<p>Wenn du normalerweise ignorierte Dateien einschliessen willst, lege im Projekt-Root eine <code>.ignore</code>-Datei an.
+Dort kannst du Pfade explizit erlauben.</p>
+<pre><code class="language-text">!node_modules/
+!dist/
+!build/
+</code></pre>
+<p>Dieses Beispiel erlaubt ripgrep, in <code>node_modules/</code>, <code>dist/</code> und <code>build/</code> zu suchen, auch wenn sie in <code>.gitignore</code> stehen.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

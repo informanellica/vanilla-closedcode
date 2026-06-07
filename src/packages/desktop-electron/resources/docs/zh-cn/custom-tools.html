@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>自定义工具 — vanilla-closedcode docs</title>
+  <meta name="description" content="创建 LLM 可在 closedcode 中调用的工具。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html">Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html" selected>简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>自定义工具</h1>
+      <p class="lede">创建 LLM 可在 closedcode 中调用的工具。</p>
+      <p>自定义工具是你创建的函数，LLM 可以在对话过程中调用它们。它们与 closedcode 的<a href="/docs/tools">内置工具</a>（如 <code>read</code>、<code>write</code> 和 <code>bash</code>）协同工作。</p>
+<hr>
+<h2>创建工具</h2>
+<p>工具以 <strong>TypeScript</strong> 或 <strong>JavaScript</strong> 文件的形式定义。不过，工具定义可以调用<strong>任何语言</strong>编写的脚本——TypeScript 或 JavaScript 仅用于工具定义本身。</p>
+<hr>
+<h3>位置</h3>
+<p>工具可以在以下位置定义：</p>
+<ul>
+<li>本地定义：将工具文件放在项目的 <code>.closedcode/tools/</code> 目录中。</li>
+<li>全局定义：将工具文件放在 <code>~/.config/closedcode/tools/</code> 中。</li>
+</ul>
+<hr>
+<h3>结构</h3>
+<p>创建工具最简单的方式是使用 <code>tool()</code> 辅助函数，它提供类型安全和参数校验。</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Query the project database&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;SQL query to execute&quot;),
+  },
+  async execute(args) {
+    // Your database logic here
+    return `Executed query: ${args.query}`
+  },
+})
+</code></pre>
+<p><strong>文件名</strong>即为<strong>工具名称</strong>。上面的示例创建了一个名为 <code>database</code> 的工具。</p>
+<hr>
+<h4>单文件多工具</h4>
+<p>你也可以从单个文件中导出多个工具。每个导出都会成为<strong>一个独立的工具</strong>，命名格式为 <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong>：</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Add two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiply two numbers&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>这会创建两个工具：<code>math_add</code> 和 <code>math_multiply</code>。</p>
+<hr>
+<h4>与内置工具的名称冲突</h4>
+<p>自定义工具通过工具名称进行索引。如果自定义工具使用了与内置工具相同的名称，则优先使用自定义工具。</p>
+<p>例如，这个文件取代了内置的bash工具：</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+除非你有意替换内置工具，否则最好用独特的名字。如果你想禁用内置工具但不想覆盖它，使用 [权限](/docs/permissions).
+</aside>
+---
+
+<h3>参数</h3>
+<p>你可以使用 <code>tool.schema</code>（即 <a href="https://zod.dev">Zod</a>）来定义参数类型。</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;SQL query to execute&quot;)
+}
+</code></pre>
+<p>你也可以直接导入 <a href="https://zod.dev">Zod</a> 并返回一个普通对象：</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Tool description&quot;,
+  args: {
+    param: z.string().describe(&quot;Parameter description&quot;),
+  },
+  async execute(args, context) {
+    // Tool implementation
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>上下文</h3>
+<p>工具会接收当前会话的上下文信息：</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Get project information&quot;,
+  args: {},
+  async execute(args, context) {
+    // Access context information
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>使用 <code>context.directory</code> 获取会话的工作目录。
+使用 <code>context.worktree</code> 获取 git worktree 根目录。</p>
+<hr>
+<h2>示例</h2>
+<h3>用 Python 编写工具</h3>
+<p>你可以使用任何语言编写工具。以下示例展示了如何用 Python 实现两数相加。</p>
+<p>首先，创建一个 Python 脚本作为工具：</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>然后创建调用该脚本的工具定义：</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Add two numbers using Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;First number&quot;),
+    b: tool.schema.number().describe(&quot;Second number&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>这里我们使用 <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> 工具函数来运行 Python 脚本。</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

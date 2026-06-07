@@ -1,0 +1,31 @@
+const hop = new Set(["connection", "keep-alive", "proxy-authenticate", "proxy-authorization", "proxy-connection", "te", "trailer", "transfer-encoding", "upgrade", "host"]);
+function sanitize(out) {
+  for (const key of hop) out.delete(key);
+  out.delete("accept-encoding");
+  out.delete("x-closedcode-directory");
+  out.delete("x-closedcode-workspace");
+  out.delete("x-opencode-directory");
+  out.delete("x-opencode-workspace");
+}
+export function headers(input, extra) {
+  const raw = input instanceof Request ? input.headers : input;
+  const out = new Headers(raw instanceof Headers ? raw : Object.entries(raw));
+  sanitize(out);
+  if (!extra) return out;
+  for (const [key, value] of new Headers(extra).entries()) {
+    out.set(key, value);
+  }
+  return out;
+}
+export function websocketProtocols(input) {
+  const value = input instanceof Request ? input.headers.get("sec-websocket-protocol") : input["sec-websocket-protocol"];
+  if (!value) return [];
+  return value.split(",").map(item => item.trim()).filter(Boolean);
+}
+export function websocketTargetURL(url) {
+  const next = new URL(url);
+  if (next.protocol === "http:") next.protocol = "ws:";
+  if (next.protocol === "https:") next.protocol = "wss:";
+  return next.toString();
+}
+export * as ProxyUtil from "./proxy-util.js";

@@ -1,0 +1,54 @@
+{
+  "tags": {
+    "allowUnknownTags": true
+  },
+  "source": {
+    "include": [
+      "./packages/sdk/js/src",
+      "./packages/closedcode/src/index.js",
+      "./packages/closedcode/src/node.js",
+      "./packages/closedcode/src/server",
+      "./packages/closedcode/src/provider",
+      "./packages/closedcode/src/session",
+      "./packages/closedcode/src/tool",
+      "./packages/closedcode/src/config",
+      "./packages/closedcode/src/bus",
+      "./packages/closedcode/src/format"
+    ],
+    "exclude": [
+      "node_modules",
+      "nero_modules",
+      "packages/sdk/js/src/gen",
+      "packages/closedcode/src/server/server.test.js"
+    ],
+    "includePattern": ".+\\.(js|mjs)$",
+    "excludePattern": "(^|\\/)(node_modules|gen)(\\/)|\\.test\\.(js|mjs)$"
+  },
+  "templates": {
+    "default": {
+      "outputSourceFiles": false
+    }
+  },
+  "plugins": [
+    "plugins/markdown",
+    "./scripts/jsdoc-i18n-plugin.cjs"
+  ],
+  "opts": {
+    "encoding": "utf8",
+    "destination": "docs/src",
+    "recurse": true,
+    "template": "./nero_modules/jsdoc-theme",
+    "theme_opts": {
+      "search": true,
+      "homepageTitle": "vanilla-closedcode",
+      "title": "vanilla-closedcode",
+      "default_theme": "dark",
+      "includeFilesListInHomepage": false,
+      "footer": "<div style='margin-bottom: 0.5rem;'>vanilla-closedcode docs</div>"
+    }
+  },
+  "markdown": {
+    "hardwrap": false,
+    "idInHeadings": true
+  }
+}

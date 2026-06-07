@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MCPサーバー — vanilla-closedcode docs</title>
+  <meta name="description" content="ローカルおよびリモートの MCP ツールを追加します。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/mcp-servers.html">English</option>
+      <option value="../ar/mcp-servers.html">العربية</option>
+      <option value="../bs/mcp-servers.html">Bosanski</option>
+      <option value="../da/mcp-servers.html">Dansk</option>
+      <option value="../de/mcp-servers.html">Deutsch</option>
+      <option value="../es/mcp-servers.html">Español</option>
+      <option value="../fr/mcp-servers.html">Français</option>
+      <option value="../it/mcp-servers.html">Italiano</option>
+      <option value="../ja/mcp-servers.html" selected>日本語</option>
+      <option value="../ko/mcp-servers.html">한국어</option>
+      <option value="../nb/mcp-servers.html">Norsk</option>
+      <option value="../pl/mcp-servers.html">Polski</option>
+      <option value="../pt-br/mcp-servers.html">Português (BR)</option>
+      <option value="../ru/mcp-servers.html">Русский</option>
+      <option value="../th/mcp-servers.html">ไทย</option>
+      <option value="../tr/mcp-servers.html">Türkçe</option>
+      <option value="../zh-cn/mcp-servers.html">简体中文</option>
+      <option value="../zh-tw/mcp-servers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">日本語</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li class="active"><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>MCPサーバー</h1>
+      <p class="lede">ローカルおよびリモートの MCP ツールを追加します。</p>
+      <p><em>Model Context Protocol</em> (MCP) を使用して、vanilla-closedcode に外部ツールを追加できます。 vanilla-closedcode は、ローカルサーバーとリモートサーバーの両方をサポートします。</p>
+<p>MCP ツールを追加すると、組み込みツールとともに LLM で自動的に使用できるようになります。</p>
+<hr>
+<h4>注意事項</h4>
+<p>MCP サーバーを使用すると、コンテキストが追加されます。多くのツールがある場合、これはすぐに増加する可能性があります。したがって、使用する MCP サーバーには注意することをお勧めします。</p>
+<aside class="aside aside-tip">
+MCP サーバーはコンテキストに追加されるため、どのサーバーを有効にするかには注意してください。
+</aside>
+特定の MCP サーバー (GitHub MCP サーバーなど) は、大量のトークンを追加する傾向があり、コンテキスト制限を簡単に超える可能性があります。
+
+<hr>
+<h2>有効化</h2>
+<p>MCP サーバーは、<code>mcp</code> の下の <a href="./config.html">vanilla-closedcode 設定</a> で定義できます。各 MCP を一意の名前で追加します。 LLM にプロンプ​​トを表示するときに、その MCP を名前で参照できます。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;name-of-mcp-server&quot;: {
+      // ...
+      &quot;enabled&quot;: true,
+    },
+    &quot;name-of-other-mcp-server&quot;: {
+      // ...
+    },
+  },
+}
+</code></pre>
+<p><code>enabled</code> を <code>false</code> に設定してサーバーを無効にすることもできます。これは、サーバーを設定から削除せずに一時的に無効にする場合に便利です。</p>
+<hr>
+
+<h2>ローカル</h2>
+<p>MCP オブジェクト内の <code>type</code> から <code>&quot;local&quot;</code> を使用してローカル MCP サーバーを追加します。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;my-local-mcp-server&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      // Or [&quot;npx&quot;, &quot;my-mcp-command&quot;]
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true,
+      &quot;environment&quot;: {
+        &quot;MY_ENV_VAR&quot;: &quot;my_env_var_value&quot;,
+      },
+    },
+  },
+}
+</code></pre>
+<p>このコマンドは、ローカル MCP サーバーの起動方法を示します。環境変数のリストを渡すこともできます。</p>
+<p>たとえば、テスト <a href="https://www.npmjs.com/package/@modelcontextprotocol/server-everything"><code>@modelcontextprotocol/server-everything</code></a> MCP サーバーを追加する方法は次のとおりです。</p>
+<pre><code class="language-jsonc">{
+  &quot;mcp&quot;: {
+    &quot;mcp_everything&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;-y&quot;, &quot;@modelcontextprotocol/server-everything&quot;],
+    },
+  },
+}
+</code></pre>
+<p>これを使用するには、プロンプトに <code>use the mcp_everything tool</code> を追加します。</p>
+<pre><code class="language-txt">use the mcp_everything tool to add the number 3 and 4
+</code></pre>
+<hr>
+<h4>オプション</h4>
+<p>ここでは、ローカル MCP サーバーを構成するためのすべてのオプションを示します。</p>
+<table>
+<thead>
+<tr>
+<th>オプション</th>
+<th>タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>文字列</td>
+<td>Y</td>
+<td>MCP サーバー接続のタイプは、<code>&quot;local&quot;</code> である必要があります。</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>配列</td>
+<td>Y</td>
+<td>MCP サーバーを実行するためのコマンドと引数。</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>オブジェクト</td>
+<td></td>
+<td>サーバーの実行時に設定する環境変数。</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>ブール値</td>
+<td></td>
+<td>起動時に MCP サーバーを有効または無効にします。</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>数値</td>
+<td></td>
+<td>MCP サーバーからツールを取得する際のタイムアウト (ミリ秒)。デフォルトは 5000 (5 秒) です。</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>リモート</h2>
+<p><code>type</code> を <code>&quot;remote&quot;</code> に設定して、リモート MCP サーバーを追加します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-remote-mcp&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://my-mcp-server.com&quot;,
+      &quot;enabled&quot;: true,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer MY_API_KEY&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><code>url</code> はリモート MCP サーバーの URL で、<code>headers</code> オプションを使用するとヘッダーのリストを渡すことができます。</p>
+<hr>
+<h4>オプション</h4>
+<table>
+<thead>
+<tr>
+<th>オプション</th>
+<th>タイプ</th>
+<th>必須</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>type</code></td>
+<td>文字列</td>
+<td>Y</td>
+<td>MCP サーバー接続のタイプは、<code>&quot;remote&quot;</code> である必要があります。</td>
+</tr>
+<tr>
+<td><code>url</code></td>
+<td>文字列</td>
+<td>Y</td>
+<td>リモート MCP サーバーの URL。</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>ブール値</td>
+<td></td>
+<td>起動時に MCP サーバーを有効または無効にします。</td>
+</tr>
+<tr>
+<td><code>headers</code></td>
+<td>オブジェクト</td>
+<td></td>
+<td>リクエストとともに送信するヘッダー。</td>
+</tr>
+<tr>
+<td><code>oauth</code></td>
+<td>オブジェクト</td>
+<td></td>
+<td>OAuth 認証設定。以下の「<a href="#oauth">OAuth</a>」セクションを参照してください。</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td>数値</td>
+<td></td>
+<td>MCP サーバーからツールを取得する際のタイムアウト (ミリ秒)。デフォルトは 5000 (5 秒) です。</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>OAuth</h2>
+<p>vanilla-closedcode は、リモート MCP サーバーの OAuth 認証を自動的に処理します。サーバーが認証を必要とする場合、vanilla-closedcode は次のことを行います。</p>
+<ol>
+<li>401 応答を検出し、OAuth フローを開始します。</li>
+<li>サーバーでサポートされている場合は <strong>動的クライアント登録 (RFC 7591)</strong> を使用します</li>
+<li>今後のリクエストに備えてトークンを安全に保管する</li>
+</ol>
+<hr>
+<h3>自動</h3>
+<p>ほとんどの OAuth 対応 MCP サーバーでは、特別な構成は必要ありません。リモートサーバーを設定するだけです。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>サーバーが認証を必要とする場合、vanilla-closedcode を初めて使用しようとすると、認証を求めるプロンプトが表示されます。そうでない場合は、<code>closedcode mcp auth &lt;server-name&gt;</code> を使用して <a href="#authenticating">flow</a> を手動でトリガーできます。</p>
+<hr>
+<h3>事前登録済み</h3>
+<p>MCP サーバープロバイダーからクライアント認証情報を取得している場合は、それらを構成できます。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-oauth-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: {
+        &quot;clientId&quot;: &quot;{env:MY_MCP_CLIENT_ID}&quot;,
+        &quot;clientSecret&quot;: &quot;{env:MY_MCP_CLIENT_SECRET}&quot;,
+        &quot;scope&quot;: &quot;tools:read tools:execute&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>認証中</h3>
+<p>手動で認証をトリガーしたり、資格情報を管理したりできます。</p>
+<p>特定の MCP サーバーで認証します。</p>
+<pre><code class="language-bash">closedcode mcp auth my-oauth-server
+</code></pre>
+<p>すべての MCP サーバーとその認証ステータスをリストします。</p>
+<pre><code class="language-bash">closedcode mcp list
+</code></pre>
+<p>保存されている認証情報を削除します。</p>
+<pre><code class="language-bash">closedcode mcp logout my-oauth-server
+</code></pre>
+<p><code>mcp auth</code> コマンドは、認証のためにブラウザを開きます。承認後、vanilla-closedcode はトークンを <code>~/.local/share/closedcode/mcp-auth.json</code> に安全に保存します。</p>
+<hr>
+<h4>OAuthの無効化</h4>
+<p>サーバー (代わりに API キーを使用するサーバーなど) の自動 OAuth を無効にする場合は、<code>oauth</code> を <code>false</code> に設定します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-api-key-server&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.example.com/mcp&quot;,
+      &quot;oauth&quot;: false,
+      &quot;headers&quot;: {
+        &quot;Authorization&quot;: &quot;Bearer {env:MY_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>OAuth オプション</h4>
+<table>
+<thead>
+<tr>
+<th>オプション</th>
+<th>タイプ</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>oauth</code></td>
+<td>Object | false</td>
+<td>OAuth config object, or <code>false</code> to disable OAuth auto-detection.</td>
+</tr>
+<tr>
+<td><code>clientId</code></td>
+<td>String</td>
+<td>OAuth client ID. If not provided, dynamic client registration will be attempted.</td>
+</tr>
+<tr>
+<td><code>clientSecret</code></td>
+<td>String</td>
+<td>OAuth client secret, if required by the authorization server.</td>
+</tr>
+<tr>
+<td><code>scope</code></td>
+<td>String</td>
+<td>OAuth scopes to request during authorization.</td>
+</tr>
+</tbody></table>
+<h4>デバッグ</h4>
+<p>リモート MCP サーバーが認証に失敗した場合は、次の方法で問題を診断できます。</p>
+<pre><code class="language-bash"># View auth status for all OAuth-capable servers
+closedcode mcp auth list
+
+# Debug connection and OAuth flow for a specific server
+closedcode mcp debug my-oauth-server
+</code></pre>
+<p><code>mcp debug</code> コマンドは、現在の認証ステータスを表示し、HTTP 接続をテストし、OAuth 検出フローを試行します。</p>
+<hr>
+<h2>管理</h2>
+<p>MCP は、組み込みツールと並んで、vanilla-closedcode のツールとして利用できます。したがって、他のツールと同様に、vanilla-closedcode 設定を通じてそれらを管理できます。</p>
+<hr>
+<h3>グローバル</h3>
+<p>これは、それらをグローバルに有効または無効にできることを意味します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp-foo&quot;: false
+  }
+}
+</code></pre>
+<p>グロブパターンを使用して、一致するすべての MCP を無効にすることもできます。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp-foo&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-foo&quot;]
+    },
+    &quot;my-mcp-bar&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command-bar&quot;]
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  }
+}
+</code></pre>
+<p>ここでは、グロブパターン <code>my-mcp*</code> を使用して、すべての MCP を無効にしています。</p>
+<hr>
+<h3>エージェントごと</h3>
+<p>多数の MCP サーバーがある場合は、エージェントごとにのみ有効にし、グローバルに無効にすることができます。これを行うには:</p>
+<ol>
+<li>ツールとしてグローバルに無効にします。</li>
+<li><a href="/docs/agents#tools">エージェント設定</a> で、MCP サーバーをツールとして有効にします。</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;my-mcp&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [&quot;npx&quot;, &quot;my-mcp-command&quot;],
+      &quot;enabled&quot;: true
+    }
+  },
+  &quot;tools&quot;: {
+    &quot;my-mcp*&quot;: false
+  },
+  &quot;agent&quot;: {
+    &quot;my-agent&quot;: {
+      &quot;tools&quot;: {
+        &quot;my-mcp*&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h4>グロブパターン</h4>
+<p>グロブパターンでは、単純な正規表現のグロブパターンを使用します。</p>
+<ul>
+<li><code>*</code> は 0 個以上の任意の文字に一致します (例: <code>&quot;my-mcp*&quot;</code> は <code>my-mcp_search</code>、<code>my-mcp_list</code> などに一致します)。</li>
+<li><code>?</code> は 1 つの文字に正確に一致します</li>
+<li>他のすべての文字は文字通り一致します</li>
+</ul>
+<aside class="aside aside-note">
+MCP サーバーツールはサーバー名をプレフィックスとして登録されているため、サーバーのすべてのツールを無効にするには、次のコマンドを使用するだけです。
+
+<pre><code>&quot;mymcpservername_*&quot;: false
+</code></pre>
+</aside>
+---
+
+<h2>例</h2>
+<p>以下に、一般的な MCP サーバーの例をいくつか示します。他のサーバーを文書化したい場合は、PR を送信できます。</p>
+<hr>
+<h3>Sentry</h3>
+<p><a href="https://mcp.sentry.dev">Sentry MCP サーバー</a> を追加して、Sentry プロジェクトや問題と対話します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;sentry&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.sentry.dev/mcp&quot;,
+      &quot;oauth&quot;: {}
+    }
+  }
+}
+</code></pre>
+<p>設定を追加した後、Sentry で認証します。</p>
+<pre><code class="language-bash">closedcode mcp auth sentry
+</code></pre>
+<p>これにより、ブラウザウィンドウが開き、OAuth フローが完了し、vanilla-closedcode が Sentry アカウントに接続されます。</p>
+<p>認証が完了すると、プロンプトで Sentry ツールを使用して、問題、プロジェクト、エラーデータをクエリできるようになります。</p>
+<pre><code class="language-txt">Show me the latest unresolved issues in my project. use sentry
+</code></pre>
+<hr>
+<h3>Context7</h3>
+<p>ドキュメントを検索するために <a href="https://github.com/upstash/context7">Context7 MCP server</a> を追加します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;
+    }
+  }
+}
+</code></pre>
+<p>無料アカウントにサインアップしている場合は、API キーを使用して、より高いレート制限を取得できます。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;context7&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.context7.com/mcp&quot;,
+      &quot;headers&quot;: {
+        &quot;CONTEXT7_API_KEY&quot;: &quot;{env:CONTEXT7_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>ここでは、<code>CONTEXT7_API_KEY</code> 環境変数が設定されていることを前提としています。</p>
+<p>Context7 MCP サーバーを使用するには、プロンプトに <code>use context7</code> を追加します。</p>
+<pre><code class="language-txt">Configure a Cloudflare Worker script to cache JSON API responses for five minutes. use context7
+</code></pre>
+<p>あるいは、次のようなものを <a href="/docs/rules/">AGENTS.md</a> に追加します。</p>
+<pre><code class="language-md">When you need to search docs, use `context7` tools.
+</code></pre>
+<hr>
+<h3>Grep by Vercel</h3>
+<p>GitHub 上のコードスニペットを検索するには、<a href="https://grep.app">Grep by Vercel</a> MCP サーバーを追加します。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;gh_grep&quot;: {
+      &quot;type&quot;: &quot;remote&quot;,
+      &quot;url&quot;: &quot;https://mcp.grep.app&quot;
+    }
+  }
+}
+</code></pre>
+<p>MCP サーバーに <code>gh_grep</code> という名前を付けたので、プロンプトに <code>use the gh_grep tool</code> を追加して、エージェントにそれを使用させることができます。</p>
+<pre><code class="language-txt">What&#39;s the right way to set a custom domain in an SST Astro component? use the gh_grep tool
+</code></pre>
+<p>あるいは、次のようなものを <a href="/docs/rules/">AGENTS.md</a> に追加します。</p>
+<pre><code class="language-md">If you are unsure how to do something, use `gh_grep` to search code examples from GitHub.
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ferramentas Personalizadas — vanilla-closedcode docs</title>
+  <meta name="description" content="Crie ferramentas que o LLM pode chamar no closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/custom-tools.html">English</option>
+      <option value="../ar/custom-tools.html">العربية</option>
+      <option value="../bs/custom-tools.html">Bosanski</option>
+      <option value="../da/custom-tools.html">Dansk</option>
+      <option value="../de/custom-tools.html">Deutsch</option>
+      <option value="../es/custom-tools.html">Español</option>
+      <option value="../fr/custom-tools.html">Français</option>
+      <option value="../it/custom-tools.html">Italiano</option>
+      <option value="../ja/custom-tools.html">日本語</option>
+      <option value="../ko/custom-tools.html">한국어</option>
+      <option value="../nb/custom-tools.html">Norsk</option>
+      <option value="../pl/custom-tools.html">Polski</option>
+      <option value="../pt-br/custom-tools.html" selected>Português (BR)</option>
+      <option value="../ru/custom-tools.html">Русский</option>
+      <option value="../th/custom-tools.html">ไทย</option>
+      <option value="../tr/custom-tools.html">Türkçe</option>
+      <option value="../zh-cn/custom-tools.html">简体中文</option>
+      <option value="../zh-tw/custom-tools.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li class="active"><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Ferramentas Personalizadas</h1>
+      <p class="lede">Crie ferramentas que o LLM pode chamar no closedcode.</p>
+      <p>Ferramentas personalizadas são funções que você cria e que o LLM pode chamar durante as conversas. Elas funcionam junto com as <a href="/docs/tools">ferramentas integradas</a> do closedcode, como <code>read</code>, <code>write</code> e <code>bash</code>.</p>
+<hr>
+<h2>Criando uma ferramenta</h2>
+<p>As ferramentas são definidas como arquivos <strong>TypeScript</strong> ou <strong>JavaScript</strong>. No entanto, a definição da ferramenta pode invocar scripts escritos em <strong>qualquer linguagem</strong> — TypeScript ou JavaScript é usado apenas para a definição da ferramenta em si.</p>
+<hr>
+<h3>Localização</h3>
+<p>Elas podem ser definidas:</p>
+<ul>
+<li>Localmente, colocando-as no diretório <code>.closedcode/tools/</code> do seu projeto.</li>
+<li>Ou globalmente, colocando-as em <code>~/.config/closedcode/tools/</code>.</li>
+</ul>
+<hr>
+<h3>Estrutura</h3>
+<p>A maneira mais fácil de criar ferramentas é usando o helper <code>tool()</code>, que fornece segurança de tipo e validação.</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Consultar o banco de dados do projeto&quot;,
+  args: {
+    query: tool.schema.string().describe(&quot;Consulta SQL para executar&quot;),
+  },
+  async execute(args) {
+    // Sua lógica de banco de dados aqui
+    return `Consulta executada: ${args.query}`
+  },
+})
+</code></pre>
+<p>O <strong>nome do arquivo</strong> se torna o <strong>nome da ferramenta</strong>. O acima cria uma ferramenta <code>database</code>.</p>
+<hr>
+<h4>Múltiplas ferramentas por arquivo</h4>
+<p>Você também pode exportar várias ferramentas de um único arquivo. Cada exportação se torna <strong>uma ferramenta separada</strong> com o nome <strong><code>&lt;filename&gt;_&lt;exportname&gt;</code></strong>:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Adicionar dois números&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;Primeiro número&quot;),
+    b: tool.schema.number().describe(&quot;Segundo número&quot;),
+  },
+  async execute(args) {
+    return args.a + args.b
+  },
+})
+
+
+  description: &quot;Multiplicar dois números&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;Primeiro número&quot;),
+    b: tool.schema.number().describe(&quot;Segundo número&quot;),
+  },
+  async execute(args) {
+    return args.a * args.b
+  },
+})
+</code></pre>
+<p>Isso cria duas ferramentas: <code>math_add</code> e <code>math_multiply</code>.</p>
+<hr>
+<h4>Colisões de nome com ferramentas integradas</h4>
+<p>Ferramentas personalizadas são chaveadas pelo nome da ferramenta. Se uma ferramenta personalizada usar o mesmo nome que uma ferramenta integrada, a ferramenta personalizada tem precedência.</p>
+<p>Por exemplo, este arquivo substitui a ferramenta <code>bash</code> integrada:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Restricted bash wrapper&quot;,
+  args: {
+    command: tool.schema.string(),
+  },
+  async execute(args) {
+    return `blocked: ${args.command}`
+  },
+})
+</code></pre>
+<aside class="aside aside-note">
+Prefira nomes únicos, a menos que você queira intencionalmente substituir uma ferramenta integrada. Se você quiser desabilitar uma ferramenta integrada, mas não substituí-la, use [permissões](/docs/permissions).
+</aside>
+---
+
+<h3>Argumentos</h3>
+<p>Você pode usar <code>tool.schema</code>, que é apenas <a href="https://zod.dev">Zod</a>, para definir tipos de argumentos.</p>
+<pre><code class="language-ts">args: {
+  query: tool.schema.string().describe(&quot;Consulta SQL para executar&quot;)
+}
+</code></pre>
+<p>Você também pode importar <a href="https://zod.dev">Zod</a> diretamente e retornar um objeto simples:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Descrição da ferramenta&quot;,
+  args: {
+    param: z.string().describe(&quot;Descrição do parâmetro&quot;),
+  },
+  async execute(args, context) {
+    // Implementação da ferramenta
+    return &quot;result&quot;
+  },
+}
+</code></pre>
+<hr>
+<h3>Contexto</h3>
+<p>As ferramentas recebem contexto sobre a sessão atual:</p>
+<pre><code class="language-ts">
+
+
+  description: &quot;Obter informações do projeto&quot;,
+  args: {},
+  async execute(args, context) {
+    // Acessar informações de contexto
+    const { agent, sessionID, messageID, directory, worktree } = context
+    return `Agent: ${agent}, Session: ${sessionID}, Message: ${messageID}, Directory: ${directory}, Worktree: ${worktree}`
+  },
+})
+</code></pre>
+<p>Use <code>context.directory</code> para o diretório de trabalho da sessão.
+Use <code>context.worktree</code> para a raiz do worktree do git.</p>
+<hr>
+<h2>Exemplos</h2>
+<h3>Escrevendo uma ferramenta em Python</h3>
+<p>Você pode escrever suas ferramentas em qualquer linguagem que desejar. Aqui está um exemplo que adiciona dois números usando Python.</p>
+<p>Primeiro, crie a ferramenta como um script Python:</p>
+<pre><code class="language-python">
+
+a = int(sys.argv[1])
+b = int(sys.argv[2])
+print(a + b)
+</code></pre>
+<p>Em seguida, crie a definição da ferramenta que a invoca:</p>
+<pre><code class="language-ts">
+import { execSync } from "node:child_process"
+import path from "node:path"
+
+  description: &quot;Adicionar dois números usando Python&quot;,
+  args: {
+    a: tool.schema.number().describe(&quot;Primeiro número&quot;),
+    b: tool.schema.number().describe(&quot;Segundo número&quot;),
+  },
+  async execute(args, context) {
+    const script = path.join(context.worktree, &quot;.closedcode/tools/add.py&quot;)
+    const result = execSync(`python3 ${script} ${args.a} ${args.b}`, { encoding: "utf8" })
+    return result.trim()
+  },
+})
+</code></pre>
+<p>Aqui estamos usando o utilitário <a href="https://nodejs.org/api/child_process.html"><code>child_process</code></a> para executar o script Python.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

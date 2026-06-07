@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>권한 — vanilla-closedcode docs</title>
+  <meta name="description" content="실행 승인이 필요한 작업을 제어합니다.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html">Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html" selected>한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">한국어</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>권한</h1>
+      <p class="lede">실행 승인이 필요한 작업을 제어합니다.</p>
+      <p>closedcode는 주어진 동작이 자동으로 실행되는지 결정하기 위해 <code>permission</code> config를 사용하거나 차단합니다.</p>
+<p><code>v1.1.1</code>의 것과 같이, 유산 <code>tools</code> 불린 구성은 deprecated이고 <code>permission</code>로 합병되었습니다. 오래된 <code>tools</code> config는 여전히 뒤쪽 호환성을 위해 지원됩니다.</p>
+<hr>
+<h2>동작</h2>
+<p>각 권한 규칙은 다음과 같습니다:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> - 승인없이 실행</li>
+<li><code>&quot;ask&quot;</code> - 승인을위한 prompt</li>
+<li><code>&quot;deny&quot;</code> - 동작 차단</li>
+</ul>
+<hr>
+<h2>구성</h2>
+<p>글로벌 권한(<code>*</code> 포함) 및 특정 도구를 부여할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>한 번에 모든 권한을 설정할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>세부 규칙 (객체 구문)</h2>
+<p>대부분의 권한을 위해 도구 입력을 기반으로 다른 작업을 적용 할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>규칙은 패턴 일치에 의해 평가됩니다, ** 마지막 일치 규칙 우승 **. 일반적인 패턴은 catch-all <code>&quot;*&quot;</code> 규칙을 먼저 넣는 것입니다, 그리고 그 후에 더 구체적인 규칙.</p>
+<h2>와일드카드</h2>
+<p>Permission 본 사용 간단한 wildcard 일치:</p>
+<ul>
+<li><code>*</code>는 어떤 성격든지의 0개 이상 일치합니다</li>
+<li><code>?</code>는 정확히 하나의 문자 일치</li>
+<li>다른 모든 문자 일치 말 그대로</li>
+</ul>
+<h2>홈 디렉토리 확장</h2>
+<p><code>~</code> 또는 <code>$HOME</code>를 사용할 수 있습니다 패턴의 시작에 홈 디렉토리를 참조. 이것은 특히 유용합니다 <a href="#external-directories"><code>external_directory</code></a> 규칙.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h2>외부 디렉터리</h2>
+<p><code>external_directory</code>를 사용하여 도구가 closedcode가 시작된 작업 디렉토리 밖에 터치 경로가 호출되도록합니다. 이것은 입력 (예 : <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> 및 많은 <code>bash</code> 명령)로 경로를 수행하는 모든 도구에 적용됩니다.</p>
+<p>홈 확장 (<code>~/...</code>와 같은) 패턴이 작성된 방법에 영향을 미칩니다. 그것은 현재의 작업 공간의 외부 경로 부분을 만들지 않습니다, 그래서 작업 디렉토리 외부 경로는 여전히 <code>external_directory</code>를 통해 허용해야합니다.</p>
+<p>예를 들어, 이것은 <code>~/projects/personal/</code>의 모든 것에 액세스 할 수 있습니다.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>여기에 허용되는 모든 디렉토리는 현재 작업 공간과 동일한 기본값을 상속합니다. <a href="#defaults"><code>read</code> defaults to <code>allow</code></a>는 <code>external_directory</code>에서 <code>external_directory</code>의 항목에 대해 읽을 수 있습니다. 도구가 이러한 경로에 제한 될 때 명시적 규칙을 추가하십시오.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>신뢰할 수있는 경로에 초점을 맞춘 목록을 유지하고 다른 도구 (예 : <code>bash</code>)에 필요한대로 추가 허용하거나 deny 규칙을 층을 설정합니다.</p>
+<hr>
+<h2>사용 가능한 권한</h2>
+<p>closedcode 권한은 도구 이름에 의해 키 입력되며, 두 개의 안전 가드 :</p>
+<ul>
+<li><code>read</code> - 파일 읽기 (파일 경로의 매칭)</li>
+<li><code>edit</code> - 모든 파일 수정 (covers <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> - 파일 globbing (glob 패턴 매칭)</li>
+<li><code>grep</code> - 콘텐츠 검색 ( regex 패턴 매칭)</li>
+<li><code>bash</code> - shell 명령 실행 (<code>git status --porcelain</code>와 같은 팟 명령)</li>
+<li><code>task</code> - 에이전트 실행 (작업 에이전트 유형)</li>
+<li><code>skill</code> - 기술을 로딩 (기술 이름을 매칭)</li>
+<li><code>lsp</code> - LSP 쿼리 실행 (현재 비 과립)</li>
+<li><code>webfetch</code> - URL을 fetching ( URL을 매칭)</li>
+<li><code>websearch</code> - 웹 검색 (문자 쿼리)</li>
+<li><code>external_directory</code> - 프로젝트 작업 디렉토리 외부의 도구 접촉 경로 때 트리거</li>
+<li><code>doom_loop</code> - 동일한 도구 호출이 동일한 입력으로 3 번 반복 할 때 트리거</li>
+</ul>
+<hr>
+<h2>기본값</h2>
+<p>아무것도 지정하지 않는 경우, closedcode는 permissive 기본값에서 시작합니다.</p>
+<ul>
+<li><code>&quot;allow&quot;</code>에 기본 권한.</li>
+<li><code>doom_loop</code> 및 <code>external_directory</code> 기본적으로 <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code>는 <code>&quot;allow&quot;</code>이고, 그러나 <code>.env</code> 파일은 기본적으로 denied:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>&quot;Ask&quot;란 무엇입니까?</h2>
+<p>closedcode가 승인되면 UI는 세 가지 결과를 제공합니다.</p>
+<ul>
+<li><code>once</code> - 이 요청을 승인</li>
+<li><code>always</code> - 제안 된 패턴과 일치하는 미래 요청 (현재 closedcode 세션의 나머지)</li>
+<li><code>reject</code> - 요청을 거부</li>
+</ul>
+<p><code>always</code>는 도구 (예를 들면, bash 승인 일반적으로 <code>git status*</code>와 같은 안전한 명령 접두사)에 의해 approve가 제공 될 패턴의 집합.</p>
+<hr>
+<h2>에이전트</h2>
+<p>에이전트 당 권한이 부여 될 수 있습니다. 에이전트 권한은 글로벌 구성과 합병되며, 에이전트 규칙은 우선합니다. <a href="/docs/agents#permissions">Learn more</a> 약 에이전트 권한.</p>
+<aside class="aside aside-note">
+[Granular Rules (Object Syntax)](#granular-rules-object-syntax))에 대한 자세한 패턴 매칭 예제를 참조하십시오.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Markdown의 에이전트 권한을 구성할 수 있습니다.</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+인자와 명령에 대한 패턴 매칭을 사용합니다. `"grep *"`는 `grep pattern file.txt`를 허용하고, `"grep"`는 혼자 그것을 막을 것입니다. `git status`와 같은 명령은 기본 동작을 위해 작동하지만, 인수가 전달될 때 명시된 권한 (`"git status *"`와 같은)이 필요합니다.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

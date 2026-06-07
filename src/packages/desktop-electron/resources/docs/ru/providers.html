@@ -1,0 +1,1541 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Провайдеры — vanilla-closedcode docs</title>
+  <meta name="description" content="Использование любого провайдера LLM в closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/providers.html">English</option>
+      <option value="../ar/providers.html">العربية</option>
+      <option value="../bs/providers.html">Bosanski</option>
+      <option value="../da/providers.html">Dansk</option>
+      <option value="../de/providers.html">Deutsch</option>
+      <option value="../es/providers.html">Español</option>
+      <option value="../fr/providers.html">Français</option>
+      <option value="../it/providers.html">Italiano</option>
+      <option value="../ja/providers.html">日本語</option>
+      <option value="../ko/providers.html">한국어</option>
+      <option value="../nb/providers.html">Norsk</option>
+      <option value="../pl/providers.html">Polski</option>
+      <option value="../pt-br/providers.html">Português (BR)</option>
+      <option value="../ru/providers.html" selected>Русский</option>
+      <option value="../th/providers.html">ไทย</option>
+      <option value="../tr/providers.html">Türkçe</option>
+      <option value="../zh-cn/providers.html">简体中文</option>
+      <option value="../zh-tw/providers.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Русский</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li class="active"><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Провайдеры</h1>
+      <p class="lede">Использование любого провайдера LLM в closedcode.</p>
+      <p>closedcode использует <a href="https://ai-sdk.dev/">AI SDK</a> и <a href="https://models.dev">Models.dev</a> для поддержки <strong>более 75 поставщиков LLM</strong> и поддерживает запуск локальных моделей.</p>
+<p>Чтобы добавить провайдера, вам необходимо:</p>
+<ol>
+<li>Добавьте ключи API для провайдера с помощью команды <code>/connect</code>.</li>
+<li>Настройте провайдера в вашей конфигурации closedcode.</li>
+</ol>
+<hr>
+<h3>Учетные данные</h3>
+<p>Когда вы добавляете ключи API провайдера с помощью команды <code>/connect</code>, они сохраняются
+в <code>~/.local/share/closedcode/auth.json</code>.</p>
+<hr>
+<h3>Настройка</h3>
+<p>Вы можете настроить поставщиков через раздел <code>provider</code> в вашем closedcode.
+конфиг.</p>
+<hr>
+<h4>Базовый URL</h4>
+<p>Вы можете настроить базовый URL-адрес для любого провайдера, установив параметр <code>baseURL</code>. Это полезно при использовании прокси-сервисов или пользовательских конечных точек.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.anthropic.com/v1&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Каталог</h2>
+<p>Рассмотрим некоторых провайдеров подробнее. Если вы хотите добавить провайдера в список, смело открывайте PR.</p>
+<aside class="aside aside-note">
+Не видите здесь провайдера? Откройте PR.
+</aside>
+---
+
+<h3>302.AI</h3>
+<ol>
+<li><p>Перейдите в консоль 302.AI](<a href="https://302.ai/">https://302.ai/</a>), создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>302.AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API 302.AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Amazon Bedrock</h3>
+<p>Чтобы использовать Amazon Bedrock с closedcode:</p>
+<ol>
+<li><p>Перейдите в <strong>Каталог моделей</strong> в консоли Amazon Bedrock и запросите
+доступ к нужным моделям.</p>
+<p>:::tip
+Вам необходимо иметь доступ к нужной модели в Amazon Bedrock.
+:::</p>
+</li>
+<li><p><strong>Настройте аутентификацию</strong> одним из следующих способов:</p>
+<h4>Переменные среды (быстрый старт)</h4>
+<p>Установите одну из этих переменных среды при запуске closedcode:</p>
+<pre><code class="language-bash"># Option 1: Using AWS access keys
+AWS_ACCESS_KEY_ID=XXX AWS_SECRET_ACCESS_KEY=YYY closedcode
+
+# Option 2: Using named AWS profile
+AWS_PROFILE=my-profile closedcode
+
+# Option 3: Using Bedrock bearer token
+AWS_BEARER_TOKEN_BEDROCK=XXX closedcode
+</code></pre>
+<p>Или добавьте их в свой профиль bash:</p>
+<pre><code class="language-bash">export AWS_PROFILE=my-dev-profile
+export AWS_REGION=us-east-1
+</code></pre>
+<h4>Файл конфигурации (рекомендуется)</h4>
+<p>Для конкретной или постоянной конфигурации проекта используйте <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p><strong>Доступные варианты:</strong></p>
+<ul>
+<li><code>region</code> – регион AWS (например, <code>us-east-1</code>, <code>eu-west-1</code>).</li>
+<li><code>profile</code> – именованный профиль AWS из <code>~/.aws/credentials</code>.</li>
+<li><code>endpoint</code> — URL-адрес пользовательской конечной точки для конечных точек VPC (псевдоним для общей опции <code>baseURL</code>).</li>
+</ul>
+<p>:::tip
+Параметры файла конфигурации имеют приоритет над переменными среды.
+:::</p>
+<h4>Дополнительно: конечные точки VPC</h4>
+<p>Если вы используете конечные точки VPC для Bedrock:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;production&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>:::note
+Параметр <code>endpoint</code> — это псевдоним общего параметра <code>baseURL</code>, использующий терминологию, специфичную для AWS. Если указаны и <code>endpoint</code>, и <code>baseURL</code>, <code>endpoint</code> имеет приоритет.
+:::</p>
+<h4>Методы аутентификации</h4>
+<ul>
+<li><strong><code>AWS_ACCESS_KEY_ID</code> / <code>AWS_SECRET_ACCESS_KEY</code></strong>: создайте пользователя IAM и сгенерируйте ключи доступа в консоли AWS.</li>
+<li><strong><code>AWS_PROFILE</code></strong>: использовать именованные профили из <code>~/.aws/credentials</code>. Сначала настройте <code>aws configure --profile my-profile</code> или <code>aws sso login</code>.</li>
+<li><strong><code>AWS_BEARER_TOKEN_BEDROCK</code></strong>: создание долгосрочных ключей API из консоли Amazon Bedrock.</li>
+<li><strong><code>AWS_WEB_IDENTITY_TOKEN_FILE</code>/<code>AWS_ROLE_ARN</code></strong>: для EKS IRSA (роли IAM для учетных записей служб) или других сред Kubernetes с федерацией OIDC. Эти переменные среды автоматически вводятся Kubernetes при использовании аннотаций учетной записи службы.</li>
+</ul>
+<h4>Приоритет аутентификации</h4>
+<p>Amazon Bedrock использует следующий приоритет аутентификации:</p>
+<ol>
+<li><strong>Токен носителя</strong> — переменная среды <code>AWS_BEARER_TOKEN_BEDROCK</code> или токен из команды <code>/connect</code>.</li>
+<li><strong>Цепочка учетных данных AWS</strong> — профиль, ключи доступа, общие учетные данные, роли IAM, токены веб-идентификации (EKS IRSA), метаданные экземпляра.</li>
+</ol>
+<p>:::note
+Когда токен-носитель установлен (через <code>/connect</code> или <code>AWS_BEARER_TOKEN_BEDROCK</code>), он имеет приоритет над всеми методами учетных данных AWS, включая настроенные профили.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать нужную модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-note">
+Для пользовательских профилей вывода используйте имя модели и поставщика в ключе и задайте для свойства `id` значение arn. Это обеспечивает правильное кэширование:
+
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      // ...
+      &quot;models&quot;: {
+        &quot;anthropic-claude-sonnet-4.5&quot;: {
+          &quot;id&quot;: &quot;arn:aws:bedrock:us-east-1:xxx:application-inference-profile/yyy&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</aside>
+---
+
+<h3>Anthropic</h3>
+<ol>
+<li><p>После регистрации введите команду <code>/connect</code> и выберите Anthropic.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Здесь вы можете выбрать опцию <strong>Claude Pro/Max</strong>, и ваш браузер откроется.
+и попросите вас пройти аутентификацию.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ Claude Pro/Max
+│ Create an API Key
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>Теперь все модели Anthropic должны быть доступны при использовании команды <code>/models</code>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>:::info
+Использование вашей подписки Claude Pro/Max в closedcode официально не поддерживается <a href="https://anthropic.com">Anthropic</a>.
+:::</p>
+<h5>Использование ключей API</h5>
+<p>Вы также можете выбрать <strong>Создать ключ API</strong>, если у вас нет подписки Pro/Max. Он также откроет ваш браузер и попросит вас войти в Anthropic и предоставит вам код, который вы можете вставить в свой терминал.</p>
+<p>Или, если у вас уже есть ключ API, вы можете выбрать <strong>Ввести ключ API вручную</strong> и вставить его в свой терминал.</p>
+<hr>
+<h3>Atomic Chat</h3>
+<p>Вы можете настроить closedcode для работы с локальными моделями через <a href="https://atomic.chat">Atomic Chat</a> — десктопное приложение, которое запускает локальные LLM за OpenAI-совместимым API-сервером (конечная точка по умолчанию <code>http://127.0.0.1:1337/v1</code>).</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;atomic-chat&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Atomic Chat (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1337/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;&lt;your-model-id&gt;&quot;: {
+          &quot;name&quot;: &quot;&lt;your-model-name&gt;&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>В этом примере:</p>
+<ul>
+<li><code>atomic-chat</code> — пользовательский идентификатор провайдера. Это может быть любая строка.</li>
+<li><code>npm</code> указывает пакет, используемый для этого провайдера. Здесь используется <code>@ai-sdk/openai-compatible</code> для любых OpenAI-совместимых API.</li>
+<li><code>name</code> — отображаемое имя провайдера в интерфейсе.</li>
+<li><code>options.baseURL</code> — конечная точка локального сервера. Измените хост и порт в соответствии с вашей конфигурацией Atomic Chat.</li>
+<li><code>models</code> — карта идентификаторов моделей и их отображаемых имён. Каждый ID должен совпадать со значением <code>id</code>, которое возвращает <code>GET /v1/models</code> — выполните <code>curl http://127.0.0.1:1337/v1/models</code>, чтобы увидеть ID моделей, загруженных в Atomic Chat.</li>
+</ul>
+<aside class="aside aside-tip">
+Если вызовы инструментов работают нестабильно, выберите загруженную модель с хорошей поддержкой tool calling (например, вариант из семейств Qwen-Coder или DeepSeek-Coder).
+</aside>
+---
+
+<h3>Azure OpenAI</h3>
+<aside class="aside aside-note">
+Если вы столкнулись с ошибками «Извините, но я не могу помочь с этим запросом», попробуйте изменить фильтр содержимого с **DefaultV2** на **Default** в своем ресурсе Azure.
+</aside>
+1. Перейдите на [портал Azure](https://portal.azure.com/) и создайте ресурс **Azure OpenAI**. Вам понадобится:
+   - **Имя ресурса**: оно становится частью вашей конечной точки API (`https://RESOURCE_NAME.openai.azure.com/`).
+   - **Ключ API**: `KEY 1` или `KEY 2` из вашего ресурса.
+
+<ol start="2">
+<li><p>Перейдите в <a href="https://ai.azure.com/">Azure AI Foundry</a> и разверните модель.</p>
+<p>:::примечание
+Для правильной работы closedcode имя развертывания должно совпадать с именем модели.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Azure</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Задайте имя ресурса как переменную среды:</p>
+<pre><code class="language-bash">AZURE_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>Или добавьте его в свой профиль bash:</p>
+<pre><code class="language-bash">export AZURE_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать развернутую модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Azure Cognitive Services</h3>
+<ol>
+<li><p>Перейдите на <a href="https://portal.azure.com/">портал Azure</a> и создайте ресурс <strong>Azure OpenAI</strong>. Вам понадобится:</p>
+<ul>
+<li><strong>Имя ресурса</strong>: оно становится частью вашей конечной точки API (<code>https://AZURE_COGNITIVE_SERVICES_RESOURCE_NAME.cognitiveservices.azure.com/</code>).</li>
+<li><strong>Ключ API</strong>: <code>KEY 1</code> или <code>KEY 2</code> из вашего ресурса.</li>
+</ul>
+</li>
+<li><p>Перейдите в <a href="https://ai.azure.com/">Azure AI Foundry</a> и разверните модель.</p>
+<p>:::примечание
+Для правильной работы closedcode имя развертывания должно совпадать с именем модели.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Azure Cognitive Services</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Задайте имя ресурса как переменную среды:</p>
+<pre><code class="language-bash">AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX closedcode
+</code></pre>
+<p>Или добавьте его в свой профиль bash:</p>
+<pre><code class="language-bash">export AZURE_COGNITIVE_SERVICES_RESOURCE_NAME=XXX
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать развернутую модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Baseten</h3>
+<ol>
+<li><p>Перейдите в <a href="https://app.baseten.co/">Baseten</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Baseten</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Baseten.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cerebras</h3>
+<ol>
+<li><p>Перейдите в <a href="https://inference.cerebras.ai/">консоль Cerebras</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Cerebras</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Cerebras.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Qwen 3 Coder 480B</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cloudflare AI Gateway</h3>
+<p>Cloudflare AI Gateway позволяет вам получать доступ к моделям OpenAI, Anthropic, Workers AI и т. д. через единую конечную точку. Благодаря <a href="https://developers.cloudflare.com/ai-gateway/features/unified-billing/">Unified Billing</a> вам не нужны отдельные ключи API для каждого провайдера.</p>
+<ol>
+<li><p>Перейдите на <a href="https://dash.cloudflare.com/">панель управления Cloudflare</a>, выберите <strong>AI</strong> &gt; <strong>AI Gateway</strong> и создайте новый шлюз.</p>
+</li>
+<li><p>Установите идентификатор своей учетной записи и идентификатор шлюза в качестве переменных среды.</p>
+<pre><code class="language-bash">export CLOUDFLARE_ACCOUNT_ID=your-32-character-account-id
+export CLOUDFLARE_GATEWAY_ID=your-gateway-id
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Cloudflare AI Gateway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой токен API Cloudflare.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+<p>Или установите его как переменную среды.</p>
+<pre><code class="language-bash">export CLOUDFLARE_API_TOKEN=your-api-token
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Вы также можете добавлять модели через конфигурацию closedcode.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;cloudflare-ai-gateway&quot;: {
+      &quot;models&quot;: {
+        &quot;openai/gpt-4o&quot;: {},
+        &quot;anthropic/claude-sonnet-4&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Cortecs</h3>
+<ol>
+<li><p>Перейдите в <a href="https://cortecs.ai/">консоль Cortecs</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Cortecs</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Cortecs.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>DeepSeek</h3>
+<ol>
+<li><p>Перейдите в <a href="https://platform.deepseek.com/">консоль DeepSeek</a>, создайте учетную запись и нажмите <strong>Создать новый ключ API</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>DeepSeek</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API DeepSeek.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель DeepSeek, например <em>DeepSeek V4 Pro</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Deep Infra</h3>
+<ol>
+<li><p>Перейдите на панель мониторинга Deep Infra](<a href="https://deepinfra.com/dash">https://deepinfra.com/dash</a>), создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Deep Infra</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Deep Infra.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Firmware</h3>
+<ol>
+<li><p>Перейдите на <a href="https://app.firmware.ai/signup">панель Firmware</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Firmware</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API Firmware.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Fireworks AI</h3>
+<ol>
+<li><p>Перейдите в <a href="https://app.fireworks.ai/">консоль Fireworks AI</a>, создайте учетную запись и нажмите <strong>Создать ключ API</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Fireworks AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API Fireworks AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>GitLab Duo</h3>
+<p>GitLab Duo предоставляет агентский чат на базе искусственного интеллекта со встроенными возможностями вызова инструментов через прокси-сервер GitLab Anthropic.</p>
+<ol>
+<li><p>Запустите команду <code>/connect</code> и выберите GitLab.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Выберите метод аутентификации:</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ OAuth (Recommended)
+│ Personal Access Token
+└
+</code></pre>
+<h4>Использование OAuth (рекомендуется)</h4>
+<p>Выберите <strong>OAuth</strong>, и ваш браузер откроется для авторизации.</p>
+<h4>Использование токена личного доступа</h4>
+<ol>
+<li>Перейдите в <a href="https://gitlab.com/-/user_settings/personal_access_tokens">Настройки пользователя GitLab &gt; Токены доступа</a>.</li>
+<li>Нажмите <strong>Добавить новый токен</strong>.</li>
+<li>Имя: <code>vanilla-closedcode</code>, Области применения: <code>api</code></li>
+<li>Скопируйте токен (начинается с <code>glpat-</code>)</li>
+<li>Введите его в терминал</li>
+</ol>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы просмотреть доступные модели.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Доступны три модели на основе Claude:</p>
+<ul>
+<li><strong>duo-chat-haiku-4-5</strong> (по умолчанию) — быстрые ответы на быстрые задачи.</li>
+<li><strong>duo-chat-sonnet-4-5</strong> — сбалансированная производительность для большинства рабочих процессов.</li>
+<li><strong>duo-chat-opus-4-5</strong> — Наиболее способен к комплексному анализу.</li>
+</ul>
+</li>
+</ol>
+<aside class="aside aside-note">
+Вы также можете указать переменную среды «GITLAB_TOKEN», если не хотите.
+для хранения токена в хранилище аутентификации closedcode.
+</aside>
+##### Самостоятельная GitLab
+
+<aside class="aside aside-note">
+<p class="aside-label">примечание о соответствии</p>
+vanilla-closedcode uses a small model for some AI tasks like generating the session title. To keep these tasks on your own GitLab-hosted instance, set <code>small_model</code> in your <code>closedcode.json</code> and disable session sharing:
+
+<pre><code class="language-json">{
+  &quot;small_model&quot;: &quot;gitlab/duo-chat-haiku-4-5&quot;,
+  &quot;share&quot;: &quot;disabled&quot;
+}
+</code></pre>
+</aside>
+Для самостоятельных экземпляров GitLab:
+
+<pre><code class="language-bash">
+</code></pre>
+<p>Если в вашем экземпляре используется собственный AI-шлюз:</p>
+<pre><code class="language-bash">GITLAB_AI_GATEWAY_URL=https://ai-gateway.company.com
+</code></pre>
+<p>Или добавьте в свой профиль bash:</p>
+<pre><code class="language-bash">
+
+</code></pre>
+<aside class="aside aside-note">
+Ваш администратор GitLab должен включить следующее:
+
+<ol>
+<li><a href="https://docs.gitlab.com/user/duo_agent_platform/turn_on_off/">Платформа Duo Agent</a> для пользователя, группы или экземпляра</li>
+<li>Флаги функций (через консоль Rails):<ul>
+<li><code>agent_platform_claude_code</code></li>
+<li><code>third_party_agents_enabled</code>
+:::</li>
+</ul>
+</li>
+</ol>
+<h5>OAuth для локальных экземпляров</h5>
+<p>Чтобы Oauth работал на вашем локальном экземпляре, вам необходимо создать
+новое приложение (Настройки → Приложения) с
+URL обратного вызова <code>http://127.0.0.1:8080/callback</code> и следующие области:</p>
+<ul>
+<li>API (Доступ к API от вашего имени)</li>
+<li>read_user (прочитать вашу личную информацию)</li>
+<li>read_repository (разрешает доступ к репозиторию только для чтения)</li>
+</ul>
+<p>Затем укажите идентификатор приложения как переменную среды:</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Дополнительная документация на домашней странице <a href="https://www.npmjs.com/package/opencode-gitlab-auth">opencode-gitlab-auth</a>.</p>
+<h5>Конфигурация</h5>
+<p>Настройте через <code>closedcode.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;gitlab&quot;: {
+      &quot;options&quot;: {
+        &quot;instanceUrl&quot;: &quot;https://gitlab.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<h5>Инструменты API GitLab (необязательно, но настоятельно рекомендуется)</h5>
+<p>Чтобы получить доступ к инструментам GitLab (мерж-реквесты, задачи, конвейеры, CI/CD и т. д.):</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-gitlab-plugin&quot;]
+}
+</code></pre>
+<p>Этот плагин предоставляет комплексные возможности управления репозиторием GitLab, включая проверки MR, отслеживание проблем, мониторинг конвейера и многое другое.</p>
+<hr>
+<h3>GitHub Copilot</h3>
+<p>Чтобы использовать подписку GitHub Copilot с открытым кодом:</p>
+<p>:::note
+Некоторым моделям может потребоваться <a href="https://github.com/features/copilot/plans">Pro+
+подписка</a> для использования.</p>
+<p>Некоторые модели необходимо включить вручную в настройках <a href="https://docs.github.com/en/copilot/how-tos/use-ai-models/configure-access-to-ai-models#setup-for-individual-use">GitHub Copilot</a>.</p>
+</aside>
+1. Запустите команду `/connect` и найдите GitHub Copilot.
+
+<pre><code class="language-txt">/connect
+</code></pre>
+<ol start="2">
+<li><p>Перейдите на <a href="https://github.com/login/device">github.com/login/device</a> и введите код.</p>
+<pre><code class="language-txt">┌ Login with GitHub Copilot
+│
+│ https://github.com/login/device
+│
+│ Enter code: 8F43-6FCF
+│
+└ Waiting for authorization...
+</code></pre>
+</li>
+<li><p>Теперь запустите команду <code>/models</code>, чтобы выбрать нужную модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Google Vertex AI</h3>
+<p>Чтобы использовать Google Vertex AI с closedcode:</p>
+<ol>
+<li><p>Перейдите в <strong>Model Garden</strong> в Google Cloud Console и проверьте
+модели, доступные в вашем регионе.</p>
+<p>:::note
+Вам необходим проект Google Cloud с включенным Vertex AI API.
+:::</p>
+</li>
+<li><p>Установите необходимые переменные среды:</p>
+<ul>
+<li><code>GOOGLE_CLOUD_PROJECT</code>: идентификатор вашего проекта Google Cloud.</li>
+<li><code>VERTEX_LOCATION</code> (необязательно): регион для Vertex AI (по умолчанию <code>global</code>).</li>
+<li>Аутентификация (выберите одну):<ul>
+<li><code>GOOGLE_APPLICATION_CREDENTIALS</code>: путь к ключевому файлу JSON вашего сервисного аккаунта.</li>
+<li>Аутентификация через CLI gcloud: <code>gcloud auth application-default login</code>.</li>
+</ul>
+</li>
+</ul>
+<p>Установите их во время запуска closedcode.</p>
+<pre><code class="language-bash">GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json GOOGLE_CLOUD_PROJECT=your-project-id closedcode
+</code></pre>
+<p>Или добавьте их в свой профиль bash.</p>
+<pre><code class="language-bash">export GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+export GOOGLE_CLOUD_PROJECT=your-project-id
+export VERTEX_LOCATION=global
+</code></pre>
+</li>
+</ol>
+<aside class="aside aside-tip">
+Регион `global` повышает доступность и уменьшает количество ошибок без дополнительных затрат. Используйте региональные конечные точки (например, `us-central1`) для требований к местонахождению данных. [Подробнее](https://cloud.google.com/vertex-ai/generative-ai/docs/partner-models/use-partner-models#regional_and_global_endpoints)
+</aside>
+3. Запустите команду `/models`, чтобы выбрать нужную модель.
+
+<pre><code class="language-txt">/models
+</code></pre>
+<hr>
+<h3>Groq</h3>
+<ol>
+<li><p>Перейдите в консоль Groq](<a href="https://console.groq.com/">https://console.groq.com/</a>), нажмите <strong>Создать ключ API</strong> и скопируйте ключ.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите Groq.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API для провайдера.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать тот, который вам нужен.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Hugging Face</h3>
+<p><a href="https://huggingface.co/docs/inference-providers">Hugging Face Inference Providers</a> предоставляют доступ к открытым моделям, поддерживаемым более чем 17 поставщиками.</p>
+<ol>
+<li><p>Перейдите в <a href="https://huggingface.co/settings/tokens/new?ownUserPermissions=inference.serverless.write&tokenType=fineGrained">Настройки Hugging Face</a>, чтобы создать токен с разрешением совершать вызовы к поставщикам выводов.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Hugging Face</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой токен Hugging Face.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Kimi-K2-Instruct</em> или <em>GLM-4.6</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Helicone</h3>
+<p><a href="https://helicone.ai">Helicone</a> — это платформа наблюдения LLM, которая обеспечивает ведение журнала, мониторинг и аналитику для ваших приложений искусственного интеллекта. Helicone AI Gateway автоматически направляет ваши запросы соответствующему поставщику на основе модели.</p>
+<ol>
+<li><p>Перейдите в <a href="https://helicone.ai">Helicone</a>, создайте учетную запись и сгенерируйте ключ API на своей панели управления.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Helicone</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Helicone.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>Дополнительные сведения о дополнительных провайдерах и расширенных функциях, таких как кэширование и ограничение скорости, см. в <a href="https://docs.helicone.ai">Документация Helicone</a>.</p>
+<h4>Дополнительные конфигурации</h4>
+<p>Если вы видите функцию или модель от Helicone, которая не настраивается автоматически через closedcode, вы всегда можете настроить ее самостоятельно.</p>
+<p>Вот <a href="https://helicone.ai/models">Справочник моделей Helicone</a>, он понадобится вам, чтобы получить идентификаторы моделей, которые вы хотите добавить.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+      },
+      &quot;models&quot;: {
+        &quot;gpt-4o&quot;: {
+          // Model ID (from Helicone&#39;s model directory page)
+          &quot;name&quot;: &quot;GPT-4o&quot;, // Your own custom name for the model
+        },
+        &quot;claude-sonnet-4-20250514&quot;: {
+          &quot;name&quot;: &quot;Claude Sonnet 4&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h4>Пользовательские заголовки</h4>
+<p>Helicone поддерживает пользовательские заголовки для таких функций, как кэширование, отслеживание пользователей и управление сеансами. Добавьте их в конфигурацию вашего провайдера, используя <code>options.headers</code>:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;helicone&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;Helicone&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://ai-gateway.helicone.ai&quot;,
+        &quot;headers&quot;: {
+          &quot;Helicone-Cache-Enabled&quot;: &quot;true&quot;,
+          &quot;Helicone-User-Id&quot;: &quot;closedcode&quot;,
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h5>Отслеживание сеансов</h5>
+<p>Функция Helicone <a href="https://docs.helicone.ai/features/sessions">Sessions</a> позволяет группировать связанные запросы LLM вместе. Используйте плагин <a href="https://github.com/H2Shami/opencode-helicone-session">opencode-helicone-session</a>, чтобы автоматически регистрировать каждый диалог closedcode как сеанс в Helicone.</p>
+<pre><code class="language-bash">npm install -g opencode-helicone-session
+</code></pre>
+<p>Добавьте его в свою конфигурацию.</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;]
+}
+</code></pre>
+<p>Плагин вставляет в ваши запросы заголовки <code>Helicone-Session-Id</code> и <code>Helicone-Session-Name</code>. На странице «Сеансы» Helicone вы увидите каждый диалог closedcode, указанный как отдельный сеанс.</p>
+<h5>Общие разъемы Helicone</h5>
+<table>
+<thead>
+<tr>
+<th>Заголовок</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Helicone-Cache-Enabled</code></td>
+<td>Включить кэширование ответов (<code>true</code>/<code>false</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-User-Id</code></td>
+<td>Отслеживание показателей по пользователю</td>
+</tr>
+<tr>
+<td><code>Helicone-Property-[Name]</code></td>
+<td>Добавьте пользовательские свойства (например, <code>Helicone-Property-Environment</code>)</td>
+</tr>
+<tr>
+<td><code>Helicone-Prompt-Id</code></td>
+<td>Связывание запросов с версиями промптов</td>
+</tr>
+</tbody></table>
+<p>См. <a href="https://docs.helicone.ai/helicone-headers/header-directory">Справочник заголовков Helicone</a> для всех доступных заголовков.</p>
+<hr>
+<h3>llama.cpp</h3>
+<p>Вы можете настроить closedcode для использования локальных моделей с помощью <a href="https://github.com/ggml-org/llama.cpp">утилиты llama-server llama.cpp&#39;s</a></p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;llama.cpp&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;llama-server (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:8080/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;qwen3-coder:a3b&quot;: {
+          &quot;name&quot;: &quot;Qwen3-Coder: a3b-30b (local)&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 128000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>В этом примере:</p>
+<ul>
+<li><code>llama.cpp</code> — это идентификатор пользовательского поставщика. Это может быть любая строка, которую вы хотите.</li>
+<li><code>npm</code> указывает пакет, который будет использоваться для этого поставщика. Здесь <code>@ai-sdk/openai-compatible</code> используется для любого API-интерфейса, совместимого с OpenAI.</li>
+<li><code>name</code> — это отображаемое имя поставщика в пользовательском интерфейсе.</li>
+<li><code>options.baseURL</code> — конечная точка локального сервера.</li>
+<li><code>models</code> — это карта идентификаторов моделей с их конфигурациями. Название модели будет отображаться в списке выбора модели.</li>
+</ul>
+<hr>
+<h3>IO.NET</h3>
+<p>IO.NET предлагает 17 моделей, оптимизированных для различных случаев использования:</p>
+<ol>
+<li><p>Перейдите в консоль IO.NET](<a href="https://ai.io.net/">https://ai.io.net/</a>), создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>IO.NET</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API IO.NET.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>LM Studio</h3>
+<p>Вы можете настроить closedcode для использования локальных моделей через LM Studio.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;lmstudio&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;LM Studio (local)&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;http://127.0.0.1:1234/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;google/gemma-3n-e4b&quot;: {
+          &quot;name&quot;: &quot;Gemma 3n-e4b (local)&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>В этом примере:</p>
+<ul>
+<li><code>lmstudio</code> — это идентификатор пользовательского поставщика. Это может быть любая строка, которую вы хотите.</li>
+<li><code>npm</code> указывает пакет, который будет использоваться для этого поставщика. Здесь <code>@ai-sdk/openai-compatible</code> используется для любого API-интерфейса, совместимого с OpenAI.</li>
+<li><code>name</code> — это отображаемое имя поставщика в пользовательском интерфейсе.</li>
+<li><code>options.baseURL</code> — конечная точка локального сервера.</li>
+<li><code>models</code> — это карта идентификаторов моделей с их конфигурациями. Название модели будет отображаться в списке выбора модели.</li>
+</ul>
+<hr>
+<h3>Moonshot AI</h3>
+<p>Чтобы использовать Кими К2 из Moonshot AI:</p>
+<ol>
+<li><p>Перейдите в <a href="https://platform.moonshot.ai/console">консоль Moonshot AI</a>, создайте учетную запись и нажмите <strong>Создать ключ API</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Moonshot AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой API-ключ Moonshot.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать <em>Kimi K2</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>MiniMax</h3>
+<ol>
+<li><p>Перейдите в <a href="https://platform.minimax.io/login">консоль API MiniMax</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>MiniMax</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API MiniMax.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель типа <em>M2.1</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Nebius Token Factory</h3>
+<ol>
+<li><p>Перейдите в консоль Nebius Token Factory](<a href="https://tokenfactory.nebius.com/">https://tokenfactory.nebius.com/</a>), создайте учетную запись и нажмите <strong>Добавить ключ</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Nebius Token Factory</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API фабрики токенов Nebius.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Ollama</h3>
+<p>Вы можете настроить closedcode для использования локальных моделей через Ollama.</p>
+<aside class="aside aside-tip">
+Ollama может автоматически настроиться для closedcode. Подробности см. в документации по интеграции Ollama](https://docs.ollama.com/integrations/opencode).
+</aside>
+```json title="closedcode.json" "ollama" {5, 6, 8, 10-14}
+{
+  "provider": {
+    "ollama": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "Ollama (local)",
+      "options": {
+        "baseURL": "http://localhost:11434/v1"
+      },
+      "models": {
+        "llama2": {
+          "name": "Llama 2"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>В этом примере:</p>
+<ul>
+<li><code>ollama</code> — это идентификатор пользовательского поставщика. Это может быть любая строка, которую вы хотите.</li>
+<li><code>npm</code> указывает пакет, который будет использоваться для этого поставщика. Здесь <code>@ai-sdk/openai-compatible</code> используется для любого API-интерфейса, совместимого с OpenAI.</li>
+<li><code>name</code> — это отображаемое имя поставщика в пользовательском интерфейсе.</li>
+<li><code>options.baseURL</code> — конечная точка локального сервера.</li>
+<li><code>models</code> — это карта идентификаторов моделей с их конфигурациями. Название модели будет отображаться в списке выбора модели.</li>
+</ul>
+<aside class="aside aside-tip">
+Если вызовы инструментов не работают, попробуйте увеличить `num_ctx` в Олламе. Начните с 16–32 тысяч.
+</aside>
+---
+
+<h3>Ollama Cloud</h3>
+<p>Чтобы использовать Ollama Cloud с closedcode:</p>
+<ol>
+<li><p>Перейдите на <a href="https://ollama.com/">https://ollama.com/</a> и войдите в систему или создайте учетную запись.</p>
+</li>
+<li><p>Перейдите в <strong>Настройки</strong> &gt; <strong>Ключи</strong> и нажмите <strong>Добавить ключ API</strong>, чтобы создать новый ключ API.</p>
+</li>
+<li><p>Скопируйте ключ API для использования в closedcode.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Ollama Cloud</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Ollama Cloud.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p><strong>Важно</strong>. Перед использованием облачных моделей в closedcode необходимо получить информацию о модели локально:</p>
+<pre><code class="language-bash">ollama pull gpt-oss:20b-cloud
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель облака Ollama.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OpenAI</h3>
+<p>Мы рекомендуем подписаться на <a href="https://chatgpt.com/pricing">ChatGPT Plus или Pro</a>.</p>
+<ol>
+<li><p>После регистрации выполните команду <code>/connect</code> и выберите OpenAI.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Здесь вы можете выбрать опцию <strong>ChatGPT Plus/Pro</strong>, и ваш браузер откроется.
+и попросите вас пройти аутентификацию.</p>
+<pre><code class="language-txt">┌ Select auth method
+│
+│ ChatGPT Plus/Pro
+│ Manually enter API Key
+└
+</code></pre>
+</li>
+<li><p>Теперь все модели OpenAI должны быть доступны при использовании команды <code>/models</code>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<h5>Использование ключей API</h5>
+<p>Если у вас уже есть ключ API, вы можете выбрать <strong>Ввести ключ API вручную</strong> и вставить его в свой терминал.</p>
+<hr>
+<h3>OpenRouter</h3>
+<ol>
+<li><p>Перейдите на панель управления OpenRouter](<a href="https://openrouter.ai/settings/keys">https://openrouter.ai/settings/keys</a>), нажмите <strong>Создать ключ API</strong> и скопируйте ключ.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите OpenRouter.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API для провайдера.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Многие модели OpenRouter предварительно загружены по умолчанию. Запустите команду <code>/models</code>, чтобы выбрать нужную.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+<p>Вы также можете добавить дополнительные модели через конфигурацию closedcode.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;somecoolnewmodel&quot;: {}
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+<li><p>Вы также можете настроить их через конфигурацию closedcode. Вот пример указания провайдера</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;openrouter&quot;: {
+      &quot;models&quot;: {
+        &quot;moonshotai/kimi-k2&quot;: {
+          &quot;options&quot;: {
+            &quot;provider&quot;: {
+              &quot;order&quot;: [&quot;baseten&quot;],
+              &quot;allow_fallbacks&quot;: false
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>SAP AI Core</h3>
+<p>SAP AI Core предоставляет доступ к более чем 40 моделям от OpenAI, Anthropic, Google, Amazon, Meta, Mistral и AI21 через единую платформу.</p>
+<ol>
+<li><p>Перейдите в <a href="https://account.hana.ondemand.com/">SAP BTP Cockpit</a>, перейдите к экземпляру службы SAP AI Core и создайте ключ службы.</p>
+<p>:::tip
+Ключ службы — это объект JSON, содержащий <code>clientid</code>, <code>clientsecret</code>, <code>url</code> и <code>serviceurls.AI_API_URL</code>. Экземпляр AI Core можно найти в разделе <strong>Сервисы</strong> &gt; <strong>Экземпляры и подписки</strong> в панели управления BTP.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>SAP AI Core</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой сервисный ключ в формате JSON.</p>
+<pre><code class="language-txt">┌ Service key
+│
+│
+└ enter
+</code></pre>
+<p>Или установите переменную среды <code>AICORE_SERVICE_KEY</code>:</p>
+<pre><code class="language-bash">AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39; closedcode
+</code></pre>
+<p>Или добавьте его в свой профиль bash:</p>
+<pre><code class="language-bash">export AICORE_SERVICE_KEY=&#39;{&quot;clientid&quot;:&quot;...&quot;,&quot;clientsecret&quot;:&quot;...&quot;,&quot;url&quot;:&quot;...&quot;,&quot;serviceurls&quot;:{&quot;AI_API_URL&quot;:&quot;...&quot;}}&#39;
+</code></pre>
+</li>
+<li><p>При необходимости укажите идентификатор развертывания и группу ресурсов:</p>
+<pre><code class="language-bash">AICORE_DEPLOYMENT_ID=your-deployment-id AICORE_RESOURCE_GROUP=your-resource-group closedcode
+</code></pre>
+<p>:::note
+Эти параметры являются необязательными и должны быть настроены в соответствии с настройками SAP AI Core.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать одну из более чем 40 доступных моделей.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>STACKIT</h3>
+<p>STACKIT AI Model Serving предоставляет полностью управляемую суверенную среду хостинга для моделей ИИ, ориентированную на LLM, таких как Llama, Mistral и Qwen, с максимальным суверенитетом данных в европейской инфраструктуре.</p>
+<ol>
+<li><p>Перейдите на <a href="https://portal.stackit.cloud">портал STACKIT</a>, перейдите в <strong>AI Model Serving</strong> и создайте токен аутентификации для своего проекта.</p>
+<p>:::tip
+Вам необходима учетная запись клиента STACKIT, учетная запись пользователя и проект перед созданием токенов аутентификации.
+:::</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>STACKIT</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой токен аутентификации STACKIT AI Model Serving.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать одну из доступных моделей, например <em>Qwen3-VL 235B</em> или <em>Llama 3.3 70B</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>OVHcloud AI Endpoints</h3>
+<ol>
+<li><p>Перейдите к <a href="https://ovh.com/manager">OVHcloud Panel</a>. Перейдите в раздел <code>Public Cloud</code>, <code>AI &amp; Machine Learning</code> &gt; <code>AI Endpoints</code> и на вкладке <code>API Keys</code> нажмите <strong>Создать новый ключ API</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Конечные точки OVHcloud AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API конечных точек OVHcloud AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель типа <em>gpt-oss-120b</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Scaleway</h3>
+<p>Чтобы использовать <a href="https://www.scaleway.com/en/docs/generative-apis/">Scaleway Generative APIs</a> с closedcode:</p>
+<ol>
+<li><p>Перейдите к <a href="https://console.scaleway.com/iam/api-keys">Настройки IAM консоли Scaleway</a>, чтобы сгенерировать новый ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Scaleway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API Scaleway.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель, например <em>devstral-2-123b-instruct-2512</em> или <em>gpt-oss-120b</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Together AI</h3>
+<ol>
+<li><p>Перейдите в <a href="https://api.together.ai">консоль Together AI</a>, создайте учетную запись и нажмите <strong>Добавить ключ</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Together AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API Together AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Kimi K2 Instruct</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Venice AI</h3>
+<ol>
+<li><p>Перейдите к <a href="https://venice.ai">консоли Venice AI</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Venice AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API Venice AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель типа <em>Llama 3.3 70B</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Vercel AI Gateway</h3>
+<p>Vercel AI Gateway позволяет получать доступ к моделям OpenAI, Anthropic, Google, xAI и других источников через единую конечную точку. Модели предлагаются по прейскурантной цене без наценок.</p>
+<ol>
+<li><p>Перейдите на <a href="https://vercel.com/">панель мониторинга Vercel</a>, перейдите на вкладку <strong>AI Gateway</strong> и нажмите <strong>Ключи API</strong>, чтобы создать новый ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Vercel AI Gateway</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите ключ API Vercel AI Gateway.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<p>Вы также можете настраивать модели через конфигурацию closedcode. Ниже приведен пример указания порядка маршрутизации поставщика.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;vercel&quot;: {
+      &quot;models&quot;: {
+        &quot;anthropic/claude-sonnet-4&quot;: {
+          &quot;options&quot;: {
+            &quot;order&quot;: [&quot;anthropic&quot;, &quot;vertex&quot;]
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Некоторые полезные параметры маршрутизации:</p>
+<table>
+<thead>
+<tr>
+<th>Вариант</th>
+<th>Описание</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>order</code></td>
+<td>Последовательность провайдеров для попытки</td>
+</tr>
+<tr>
+<td><code>only</code></td>
+<td>Ограничить конкретными провайдерами</td>
+</tr>
+<tr>
+<td><code>zeroDataRetention</code></td>
+<td>Использовать только провайдеров с политикой нулевого хранения данных</td>
+</tr>
+</tbody></table>
+<hr>
+<h3>xAI</h3>
+<ol>
+<li><p>Перейдите на <a href="https://console.x.ai/">консоль xAI</a>, создайте учетную запись и сгенерируйте ключ API.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>xAI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+</li>
+<li><p>Введите свой ключ API xAI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать такую ​​модель, как <em>Grok Beta</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h3>Z.AI</h3>
+<ol>
+<li><p>Перейдите в <a href="https://z.ai/manage-apikey/apikey-list">консоль Z.AI API</a>, создайте учетную запись и нажмите <strong>Создать новый ключ API</strong>.</p>
+</li>
+<li><p>Запустите команду <code>/connect</code> и найдите <strong>Z.AI</strong>.</p>
+<pre><code class="language-txt">/connect
+</code></pre>
+<p>Если вы подписаны на <strong>План кодирования GLM</strong>, выберите <strong>План кодирования Z.AI</strong>.</p>
+</li>
+<li><p>Введите свой ключ API Z.AI.</p>
+<pre><code class="language-txt">┌ API key
+│
+│
+└ enter
+</code></pre>
+</li>
+<li><p>Запустите команду <code>/models</code>, чтобы выбрать модель типа <em>GLM-4.7</em>.</p>
+<pre><code class="language-txt">/models
+</code></pre>
+</li>
+</ol>
+<hr>
+<h2>Пользовательский поставщик</h2>
+<p>Чтобы добавить любого <strong>совместимого с OpenAI</strong> поставщика, не указанного в команде <code>/connect</code>:</p>
+<aside class="aside aside-tip">
+Вы можете использовать любого OpenAI-совместимого провайдера с открытым кодом. Большинство современных поставщиков ИИ предлагают API-интерфейсы, совместимые с OpenAI.
+</aside>
+1. Запустите команду `/connect` и прокрутите вниз до пункта **Другое**.
+
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◆  Select provider
+│  ...
+│  ● Other
+└
+</code></pre>
+<ol start="2">
+<li><p>Введите уникальный идентификатор провайдера.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+◇  Enter provider id
+│  myprovider
+└
+</code></pre>
+<p>:::примечание
+Выберите запоминающийся идентификатор, вы будете использовать его в своем файле конфигурации.
+:::</p>
+</li>
+<li><p>Введите свой ключ API для провайдера.</p>
+<pre><code class="language-bash">$ /connect
+
+┌  Add credential
+│
+▲  This only stores a credential for myprovider - you will need to configure it in closedcode.json, check the docs for examples.
+│
+◇  Enter your API key
+│  sk-...
+└
+</code></pre>
+</li>
+<li><p>Создайте или обновите файл <code>closedcode.json</code> в каталоге вашего проекта:</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Вот варианты конфигурации:</p>
+<ul>
+<li><strong>npm</strong>: используемый пакет AI SDK, <code>@ai-sdk/openai-compatible</code> для поставщиков, совместимых с OpenAI.</li>
+<li><strong>имя</strong>: отображаемое имя в пользовательском интерфейсе.</li>
+<li><strong>модели</strong>: Доступные модели.</li>
+<li><strong>options.baseURL</strong>: URL-адрес конечной точки API.</li>
+<li><strong>options.apiKey</strong>: при необходимости установите ключ API, если не используется аутентификация.</li>
+<li><strong>options.headers</strong>: при необходимости можно установить собственные заголовки.</li>
+</ul>
+<p>Подробнее о дополнительных параметрах в примере ниже.</p>
+</li>
+<li><p>Запустите команду <code>/models</code>, и ваш пользовательский поставщик и модели появятся в списке выбора.</p>
+</li>
+</ol>
+<hr>
+<h5>Пример</h5>
+<p>Ниже приведен пример настройки параметров <code>apiKey</code>, <code>headers</code> и модели <code>limit</code>.</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;myprovider&quot;: {
+      &quot;npm&quot;: &quot;@ai-sdk/openai-compatible&quot;,
+      &quot;name&quot;: &quot;My AI ProviderDisplay Name&quot;,
+      &quot;options&quot;: {
+        &quot;baseURL&quot;: &quot;https://api.myprovider.com/v1&quot;,
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;,
+        &quot;headers&quot;: {
+          &quot;Authorization&quot;: &quot;Bearer custom-token&quot;
+        }
+      },
+      &quot;models&quot;: {
+        &quot;my-model-name&quot;: {
+          &quot;name&quot;: &quot;My Model Display Name&quot;,
+          &quot;limit&quot;: {
+            &quot;context&quot;: 200000,
+            &quot;output&quot;: 65536
+          }
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>Детали конфигурации:</p>
+<ul>
+<li><strong>apiKey</strong>: устанавливается с использованием синтаксиса переменной <code>env</code>, <a href="/docs/config#env-vars">подробнее </a>.</li>
+<li><strong>заголовки</strong>: пользовательские заголовки, отправляемые с каждым запросом.</li>
+<li><strong>limit.context</strong>: Максимальное количество входных токенов, которые принимает модель.</li>
+<li><strong>limit.output</strong>: Максимальное количество токенов, которые может сгенерировать модель.</li>
+</ul>
+<p>Поля <code>limit</code> позволяют closedcode понять, сколько контекста у вас осталось. Стандартные поставщики автоматически извлекают их из models.dev.</p>
+<hr>
+<h2>Поиск неисправностей</h2>
+<p>Если у вас возникли проблемы с настройкой провайдера, проверьте следующее:</p>
+<ol>
+<li><p><strong>Проверьте настройку аутентификации</strong>: запустите <code>closedcode auth list</code>, чтобы проверить, верны ли учетные данные.
+для провайдера добавлены в ваш конфиг.</p>
+<p>Это не относится к таким поставщикам, как Amazon Bedrock, которые для аутентификации полагаются на переменные среды.</p>
+</li>
+<li><p>Для пользовательских поставщиков проверьте конфигурацию closedcode и:</p>
+<ul>
+<li>Убедитесь, что идентификатор провайдера, используемый в команде <code>/connect</code>, соответствует идентификатору в вашей конфигурации closedcode.</li>
+<li>Для провайдера используется правильный пакет npm. Например, используйте <code>@ai-sdk/cerebras</code> для Cerebras. А для всех других поставщиков, совместимых с OpenAI, используйте <code>@ai-sdk/openai-compatible</code>.</li>
+<li>Убедитесь, что в поле <code>options.baseURL</code> используется правильная конечная точка API.</li>
+</ul>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

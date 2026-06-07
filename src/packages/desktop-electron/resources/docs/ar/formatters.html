@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>المُنسِّقات — vanilla-closedcode docs</title>
+  <meta name="description" content="يستخدم vanilla-closedcode مُنسِّقات خاصة بكل لغة.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html" selected>العربية</option>
+      <option value="../bs/formatters.html">Bosanski</option>
+      <option value="../da/formatters.html">Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html">Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html">ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">العربية</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>المُنسِّقات</h1>
+      <p class="lede">يستخدم vanilla-closedcode مُنسِّقات خاصة بكل لغة.</p>
+      <p>يُنسِّق vanilla-closedcode الملفات تلقائيا بعد كتابتها أو تعديلها باستخدام مُنسِّقات خاصة بكل لغة. يضمن ذلك أن الشيفرة التي يتم توليدها تتبع أساليب التنسيق المعتمدة في مشروعك.</p>
+<hr>
+<h2>مُضمَّنة</h2>
+<p>يأتي vanilla-closedcode مع عدة مُنسِّقات مُضمَّنة للغات وأطر العمل الشائعة. فيما يلي قائمة بالمُنسِّقات وامتدادات الملفات المدعومة والأوامر أو خيارات الإعداد التي تحتاجها.</p>
+<table>
+<thead>
+<tr>
+<th>المُنسِّق</th>
+<th>الامتدادات</th>
+<th>المتطلبات</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gofmt</td>
+<td>.go</td>
+<td>يتوفر أمر <code>gofmt</code></td>
+</tr>
+<tr>
+<td>mix</td>
+<td>.ex, .exs, .eex, .heex, .leex, .neex, .sface</td>
+<td>يتوفر أمر <code>mix</code></td>
+</tr>
+<tr>
+<td>prettier</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml، و<a href="https://prettier.io/docs/en/index.html">غير ذلك</a></td>
+<td>وجود اعتماد <code>prettier</code> في <code>package.json</code></td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml، و<a href="https://biomejs.dev/">غير ذلك</a></td>
+<td>ملف إعداد <code>biome.json(c)</code></td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig, .zon</td>
+<td>يتوفر أمر <code>zig</code></td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>.c, .cpp, .h, .hpp, .ino، و<a href="https://clang.llvm.org/docs/ClangFormat.html">غير ذلك</a></td>
+<td>ملف إعداد <code>.clang-format</code></td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt, .kts</td>
+<td>يتوفر أمر <code>ktlint</code></td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py, .pyi</td>
+<td>يتوفر أمر <code>ruff</code> مع إعداد</td>
+</tr>
+<tr>
+<td>rustfmt</td>
+<td>.rs</td>
+<td>يتوفر أمر <code>rustfmt</code></td>
+</tr>
+<tr>
+<td>cargofmt</td>
+<td>.rs</td>
+<td>يتوفر أمر <code>cargo fmt</code></td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py, .pyi</td>
+<td>يتوفر أمر <code>uv</code></td>
+</tr>
+<tr>
+<td>rubocop</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>يتوفر أمر <code>rubocop</code></td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td>يتوفر أمر <code>standardrb</code></td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb, .html.erb</td>
+<td>يتوفر أمر <code>htmlbeautifier</code></td>
+</tr>
+<tr>
+<td>air</td>
+<td>.R</td>
+<td>يتوفر أمر <code>air</code></td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td>يتوفر أمر <code>dart</code></td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td>يتوفر أمر <code>dfmt</code></td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml, .mli</td>
+<td>يتوفر أمر <code>ocamlformat</code> وملف إعداد <code>.ocamlformat</code></td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td>يتوفر أمر <code>terraform</code></td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td>يتوفر أمر <code>gleam</code></td>
+</tr>
+<tr>
+<td>nixfmt</td>
+<td>.nix</td>
+<td>يتوفر أمر <code>nixfmt</code></td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh, .bash</td>
+<td>يتوفر أمر <code>shfmt</code></td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td>وجود اعتماد <code>laravel/pint</code> في <code>composer.json</code></td>
+</tr>
+<tr>
+<td>oxfmt (Experimental)</td>
+<td>.js, .jsx, .ts, .tsx</td>
+<td>وجود اعتماد <code>oxfmt</code> في <code>package.json</code> و<a href="/docs/cli/#experimental">علم متغير بيئة تجريبي</a></td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td>يتوفر أمر <code>ormolu</code></td>
+</tr>
+</tbody></table>
+<p>لذا إذا كان مشروعك يتضمن <code>prettier</code> ضمن <code>package.json</code>، فسيستخدمه vanilla-closedcode تلقائيا.</p>
+<hr>
+<h2>كيف يعمل</h2>
+<p>عندما يكتب vanilla-closedcode ملفا أو يحرره، فإنه:</p>
+<ol>
+<li>يتحقق من امتداد الملف مقابل جميع المُنسِّقات المفعّلة.</li>
+<li>يشغّل أمر المُنسِّق المناسب على الملف.</li>
+<li>يطبق تغييرات التنسيق تلقائيا.</li>
+</ol>
+<p>تتم هذه العملية في الخلفية لضمان الحفاظ على أساليب تنسيق الشيفرة دون أي خطوات يدوية.</p>
+<hr>
+<h2>الإعداد</h2>
+<p>يمكنك تخصيص المُنسِّقات عبر قسم <code>formatter</code> في إعدادات vanilla-closedcode.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>يدعم إعداد كل مُنسِّق ما يلي:</p>
+<table>
+<thead>
+<tr>
+<th>الخاصية</th>
+<th>النوع</th>
+<th>الوصف</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>اضبطها على <code>true</code> لتعطيل المُنسِّق</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>الأمر الذي سيتم تشغيله للتنسيق</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>object</td>
+<td>متغيرات البيئة التي يتم ضبطها عند تشغيل المُنسِّق</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>امتدادات الملفات التي يجب أن يتعامل معها هذا المُنسِّق</td>
+</tr>
+</tbody></table>
+<p>لنلقِ نظرة على بعض الأمثلة.</p>
+<hr>
+<h3>تعطيل المُنسِّقات</h3>
+<p>لتعطيل <strong>جميع</strong> المُنسِّقات على مستوى عام، اضبط <code>formatter</code> على <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>لتعطيل مُنسِّق <strong>محدد</strong>، اضبط <code>disabled</code> على <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>مُنسِّقات مخصّصة</h3>
+<p>يمكنك تجاوز المُنسِّقات المُضمَّنة أو إضافة مُنسِّقات جديدة عبر تحديد الأمر ومتغيرات البيئة وامتدادات الملفات:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p>سيتم استبدال <strong>العنصر النائب <code>$FILE</code></strong> في الأمر بمسار الملف الذي يجري تنسيقه.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

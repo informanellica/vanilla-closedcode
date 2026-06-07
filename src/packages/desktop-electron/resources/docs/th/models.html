@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>โมเดล — vanilla-closedcode docs</title>
+  <meta name="description" content="การกำหนดค่าผู้ให้บริการและรุ่น LLM">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html">Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html" selected>ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>โมเดล</h1>
+      <p class="lede">การกำหนดค่าผู้ให้บริการและรุ่น LLM</p>
+      <p>vanilla-closedcode ใช้ <a href="https://ai-sdk.dev/">AI SDK</a> และ <a href="https://models.dev">Models.dev</a> เพื่อรองรับผู้ให้บริการ <strong>75+ LLM</strong> และรองรับการใช้งานโมเดลท้องถิ่น</p>
+<hr>
+<h2>ผู้ให้บริการ</h2>
+<p>ผู้ให้บริการที่ได้รับความนิยมส่วนใหญ่จะถูกโหลดไว้ล่วงหน้าตามค่าเริ่มต้น หากคุณได้เพิ่มข้อมูลรับรองสำหรับผู้ให้บริการผ่านคำสั่ง <code>/connect</code> ข้อมูลเหล่านั้นจะพร้อมใช้งานเมื่อคุณเริ่ม vanilla-closedcode</p>
+<p>เรียนรู้เพิ่มเติมเกี่ยวกับ <a href="/docs/providers">ผู้ให้บริการ</a></p>
+<hr>
+<h2>เลือกรุ่น</h2>
+<p>เมื่อคุณกำหนดค่าผู้ให้บริการแล้ว คุณสามารถเลือกรุ่นที่ต้องการได้โดยพิมพ์:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>รุ่นที่แนะนำ</h2>
+<p>มีโมเดลออกมามากมาย โดยมีโมเดลใหม่ๆ ออกมาทุกสัปดาห์</p>
+<aside class="aside aside-tip">
+พิจารณาใช้รุ่นใดรุ่นหนึ่งที่เราแนะนำ
+</aside>
+อย่างไรก็ตาม มีเพียงไม่กี่ตัวเท่านั้นที่เก่งทั้งการสร้างโค้ดและการเรียกใช้เครื่องมือ
+
+<p>ต่อไปนี้เป็นโมเดลหลายรุ่นที่ทำงานได้ดีกับ vanilla-closedcode โดยไม่เรียงลำดับเป็นพิเศษ (นี่ไม่ใช่รายการที่ครอบคลุมและไม่จำเป็นต้องเป็นข้อมูลล่าสุด):</p>
+<ul>
+<li>GPT 5.2</li>
+<li>GPT-OSS 20B</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>MiniMax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>ตั้งค่าเริ่มต้น</h2>
+<p>หากต้องการตั้งค่าสิ่งใดสิ่งหนึ่งเป็นโมเดลเริ่มต้น คุณสามารถตั้งค่าคีย์ <code>model</code> ในของคุณ
+การกำหนดค่า vanilla-closedcode</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>ID แบบเต็มคือ <code>provider_id/model_id</code> ตัวอย่างเช่น หากคุณใช้ Ollama คุณจะใช้ <code>ollama/gpt-oss:20b</code> สำหรับ GPT-OSS 20B</p>
+<p>หากคุณได้กำหนดค่า <a href="/docs/providers#%E0%B8%81%E0%B8%B3%E0%B8%AB%E0%B8%99%E0%B8%94%E0%B9%80%E0%B8%AD%E0%B8%87">ผู้ให้บริการที่กำหนดเอง</a> <code>provider_id</code> จะเป็นคีย์จากส่วน <code>provider</code> ของการกำหนดค่าของคุณ และ <code>model_id</code> จะเป็นคีย์จาก <code>provider.models</code></p>
+<hr>
+<h2>กำหนดค่าโมเดล</h2>
+<p>คุณสามารถกำหนดค่าตัวเลือกของโมเดลได้ทั่วโลกผ่านการกำหนดค่า</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>ที่นี่เรากำลังกำหนดการตั้งค่าส่วนกลางสำหรับโมเดลในตัวสองรุ่น: <code>gpt-5</code> เมื่อเข้าถึงผ่านผู้ให้บริการ <code>openai</code> และ <code>claude-sonnet-4-20250514</code> เมื่อเข้าถึงผ่านผู้ให้บริการ <code>anthropic</code>
+สามารถดูผู้ให้บริการและชื่อรุ่นในตัวได้ที่ <a href="https://models.dev">Models.dev</a></p>
+<p>คุณยังสามารถกำหนดค่าตัวเลือกเหล่านี้สำหรับตัวแทนใดๆ ที่คุณใช้อยู่ได้ การกำหนดค่าตัวแทนจะแทนที่ตัวเลือกส่วนกลางใดๆ ที่นี่ <a href="/docs/agents/#%E0%B9%80%E0%B8%9E%E0%B8%B4%E0%B9%88%E0%B8%A1%E0%B9%80%E0%B8%95%E0%B8%B4%E0%B8%A1">เรียนรู้เพิ่มเติม</a></p>
+<p>คุณยังสามารถกำหนดตัวแปรแบบกำหนดเองที่ขยายตัวแปรในตัวได้ ตัวแปรช่วยให้คุณกำหนดการตั้งค่าที่แตกต่างกันสำหรับรุ่นเดียวกันโดยไม่ต้องสร้างรายการที่ซ้ำกัน:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Variants (แบบ)</h2>
+<p>โมเดลหลายตัวรองรับหลาย variants (รูปแบบย่อย) ที่มีการกำหนดค่าต่างกัน vanilla-closedcode มาพร้อมกับ variants เริ่มต้นในตัวสำหรับผู้ให้บริการยอดนิยม</p>
+<h3>Variants ในตัว (Built-in Variants)</h3>
+<p>vanilla-closedcode มาพร้อมกับ variants เริ่มต้นสำหรับผู้ให้บริการหลายราย:</p>
+<p><strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - งบประมาณการคิดสูง (ค่าเริ่มต้น)</li>
+<li><code>max</code> - งบประมาณการคิดสูงสุด</li>
+</ul>
+<p><strong>OpenAI</strong>:</p>
+<p>แตกต่างกันไปตามรุ่น แต่โดยประมาณ:</p>
+<ul>
+<li><code>none</code> - ไม่ใช้การให้เหตุผล</li>
+<li><code>minimal</code> - ความพยายามในการให้เหตุผลน้อยที่สุด</li>
+<li><code>low</code> - ความพยายามในการให้เหตุผลต่ำ</li>
+<li><code>medium</code> - ความพยายามในการให้เหตุผลปานกลาง</li>
+<li><code>high</code> - ความพยายามในการให้เหตุผลสูง</li>
+<li><code>xhigh</code> - ความพยายามในการให้เหตุผลสูงเป็นพิเศษ</li>
+</ul>
+<p><strong>Google</strong>:</p>
+<ul>
+<li><code>low</code> - งบประมาณการคิดต่ำ/token ต่ำ</li>
+<li><code>high</code> - งบประมาณการคิดสูง/token สูง</li>
+</ul>
+<aside class="aside aside-tip">
+รายการนี้ไม่ครอบคลุมทั้งหมด ผู้ให้บริการรายอื่นหลายรายก็มีค่าเริ่มต้นในตัวเช่นกัน
+</aside>
+### Variants แบบกำหนดเอง
+
+<p>คุณสามารถแทนที่ variants ที่มีอยู่หรือเพิ่มของคุณเองได้:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>การหมุนเวียน Variants</h3>
+<p>ใช้ปุ่มลัด <code>variant_cycle</code> เพื่อสลับระหว่าง variants ต่างๆ อย่างรวดเร็ว <a href="/docs/keybinds">เรียนรู้เพิ่มเติม</a></p>
+<hr>
+<h2>กำลังโหลดโมเดล</h2>
+<p>เมื่อ vanilla-closedcode เริ่มทำงาน ระบบจะตรวจสอบรุ่นตามลำดับความสำคัญต่อไปนี้:</p>
+<ol>
+<li><p>การตั้งค่าสถานะบรรทัดคำสั่ง <code>--model</code> หรือ <code>-m</code> รูปแบบจะเหมือนกับในไฟล์ปรับแต่ง: <code>provider_id/model_id</code></p>
+</li>
+<li><p>รายการโมเดลในการกำหนดค่า vanilla-closedcode</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>รูปแบบที่นี่คือ <code>provider/model</code></p>
+</li>
+<li><p>รุ่นที่ใช้ล่าสุด.</p>
+</li>
+<li><p>รุ่นแรกที่ใช้ลำดับความสำคัญภายใน</p>
+</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

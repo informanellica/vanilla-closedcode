@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TUI — vanilla-closedcode docs</title>
+  <meta name="description" content="Korzystanie z interfejsu użytkownika terminala closedcode.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/tui.html">English</option>
+      <option value="../ar/tui.html">العربية</option>
+      <option value="../bs/tui.html">Bosanski</option>
+      <option value="../da/tui.html">Dansk</option>
+      <option value="../de/tui.html">Deutsch</option>
+      <option value="../es/tui.html">Español</option>
+      <option value="../fr/tui.html">Français</option>
+      <option value="../it/tui.html">Italiano</option>
+      <option value="../ja/tui.html">日本語</option>
+      <option value="../ko/tui.html">한국어</option>
+      <option value="../nb/tui.html">Norsk</option>
+      <option value="../pl/tui.html" selected>Polski</option>
+      <option value="../pt-br/tui.html">Português (BR)</option>
+      <option value="../ru/tui.html">Русский</option>
+      <option value="../th/tui.html">ไทย</option>
+      <option value="../tr/tui.html">Türkçe</option>
+      <option value="../zh-cn/tui.html">简体中文</option>
+      <option value="../zh-tw/tui.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Polski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li class="active"><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>TUI</h1>
+      <p class="lede">Korzystanie z interfejsu użytkownika terminala closedcode.</p>
+      <p>closedcode zapewnia interaktywny interfejs terminala lub TUI do pracy nad projektami za pomocą LLM.</p>
+<p>Uruchomienie closedcode uruchamia TUI dla bieżącego katalogu.</p>
+<pre><code class="language-bash">closedcode
+</code></pre>
+<p>Możesz też uruchomić go dla określonego katalogu roboczego.</p>
+<pre><code class="language-bash">closedcode /path/to/project
+</code></pre>
+<p>Gdy znajdziesz się w TUI, możesz wyświetlić monit za pomocą komunikatu.</p>
+<pre><code class="language-text">Give me a quick summary of the codebase.
+</code></pre>
+<hr>
+<h2>Referencje plików</h2>
+<p>Możesz odwoływać się do plików w swoich wiadomościach, używając <code>@</code>. Spowoduje to rozmyte wyszukiwanie plików w bieżącym katalogu roboczym.</p>
+<aside class="aside aside-tip">
+Możesz także użyć `@` do odwoływania się do plików w swoich wiadomościach.
+</aside>
+```text "@packages/functions/src/api/index.ts"
+How is auth handled in @packages/functions/src/api/index.ts?
+```
+
+<p>Zawartość pliku jest automatycznie dodawana do rozmowy.</p>
+<hr>
+<h2>Polecenia Bash</h2>
+<p>Rozpocznij wiadomość od <code>!</code>, aby uruchomić polecenie shell.</p>
+<pre><code class="language-bash">!ls -la
+</code></pre>
+<p>Dane wyjściowe polecenia są dodawane do konwersacji jako wynik narzędzia.</p>
+<hr>
+<h2>Komendy</h2>
+<p>Korzystając z TUI closedcode, możesz wpisać <code>/</code>, po którym następuje nazwa polecenia, aby szybko wykonać działania. Na przykład:</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p>Większość poleceń ma również skrót klawiszowy wykorzystujący <code>ctrl+x</code> jako klucz wiodący, gdzie <code>ctrl+x</code> jest domyślnym klawiszem wiodącym. <a href="/docs/keybinds">Dowiedz się więcej</a>.</p>
+<p>Oto wszystkie dostępne slash commands:</p>
+<hr>
+<h3>connect</h3>
+<p>Dodaj dostawcę do closedcode. Umożliwia wybór dostępnych dostawców i dodanie ich kluczy API.</p>
+<pre><code class="language-bash">/connect
+</code></pre>
+<hr>
+<h3>compact</h3>
+<p>Kompaktuj bieżącą sesję. <em>Alias</em>: <code>/summarize</code></p>
+<pre><code class="language-bash">/compact
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x c</code></p>
+<hr>
+<h3>details</h3>
+<p>Przełącz szczegóły wykonywania narzędzi.</p>
+<pre><code class="language-bash">/details
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x d</code></p>
+<hr>
+<h3>editor</h3>
+<p>Otwórz zewnętrzny edytor do tworzenia wiadomości. Używa edytora ustawionego w zmiennej środowiskowej <code>EDITOR</code>. <a href="#editor-setup">Dowiedz się więcej</a>.</p>
+<pre><code class="language-bash">/editor
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x e</code></p>
+<hr>
+<h3>exit</h3>
+<p>Zamknij closedcode. <em>Aliasy</em>: <code>/quit</code>, <code>/q</code></p>
+<pre><code class="language-bash">/exit
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x q</code></p>
+<hr>
+<h3>export</h3>
+<p>Wyeksportuj bieżącą rozmowę do Markdown i otwórz ją w domyślnym edytorze. Używa edytora ustawionego w zmiennej środowiskowej <code>EDITOR</code>. <a href="#editor-setup">Dowiedz się więcej</a>.</p>
+<pre><code class="language-bash">/export
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x x</code></p>
+<hr>
+<h3>help</h3>
+<p>Pokaż okno pomocy.</p>
+<pre><code class="language-bash">/help
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x h</code></p>
+<hr>
+<h3>init</h3>
+<p>Utwórz lub zaktualizuj plik <code>AGENTS.md</code>. <a href="/docs/rules">Dowiedz się więcej</a>.</p>
+<pre><code class="language-bash">/init
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x i</code></p>
+<hr>
+<h3>models</h3>
+<p>Lista dostępnych modeli.</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x m</code></p>
+<hr>
+<h3>new</h3>
+<p>Rozpocznij nową sesję. <em>Alias</em>: <code>/clear</code></p>
+<pre><code class="language-bash">/new
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x n</code></p>
+<hr>
+<h3>redo</h3>
+<p>Ponów cofniętą wcześniej wiadomość. Dostępne tylko po użyciu <code>/undo</code>.</p>
+<aside class="aside aside-tip">
+Wszystkie zmiany plików również zostaną przywrócone.
+</aside>
+Wewnętrznie używa Git do zarządzania zmianami plików. Więc Twój projekt ** musi
+be a Git repository**.
+
+<pre><code class="language-bash">/redo
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x r</code></p>
+<hr>
+<h3>sessions</h3>
+<p>Wyświetl listę i przełączaj się między sesjami. <em>Aliasy</em>: <code>/resume</code>, <code>/continue</code></p>
+<pre><code class="language-bash">/sessions
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x l</code></p>
+<hr>
+<h3>share</h3>
+<p>Udostępnij bieżącą sesję. <a href="/docs/share">Dowiedz się więcej</a>.</p>
+<pre><code class="language-bash">/share
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x s</code></p>
+<hr>
+<h3>themes</h3>
+<p>Lista dostępnych motywów.</p>
+<pre><code class="language-bash">/theme
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x t</code></p>
+<hr>
+<h3>thinking</h3>
+<p>Przełącz widoczność bloków myślenia/rozumowania w rozmowie. Po włączeniu tej opcji można zobaczyć proces wnioskowania modelu w przypadku modeli obsługujących myślenie rozszerzone.</p>
+<aside class="aside aside-note">
+To polecenie kontroluje jedynie, czy bloki myślowe są **wyświetlane** - nie włącza ani nie wyłącza możliwości wnioskowania modelu. Aby przełączyć rzeczywiste możliwości wnioskowania, użyj `ctrl+t` do przełączania wariantów modelu.
+</aside>
+```bash frame="none"
+/thinking
+```
+
+<hr>
+<h3>undo</h3>
+<p>Cofnij ostatnią wiadomość w rozmowie. Usuwa najnowszą wiadomość użytkownika, wszystkie kolejne odpowiedzi i wszelkie zmiany w plikach.</p>
+<aside class="aside aside-tip">
+Wszystkie zmiany plików również zostaną cofnięte.
+</aside>
+Wewnętrznie używa Git do zarządzania zmianami plików. Więc Twój projekt ** musi
+be a Git repository**.
+
+<pre><code class="language-bash">/undo
+</code></pre>
+<p><strong>Keybind:</strong> <code>ctrl+x u</code></p>
+<hr>
+<h3>unshare</h3>
+<p>Anuluj udostępnianie bieżącej sesji. <a href="/docs/share#un-sharing">Dowiedz się więcej</a>.</p>
+<pre><code class="language-bash">/unshare
+</code></pre>
+<hr>
+<h2>Konfiguracja edytora</h2>
+<p>Zarówno polecenia <code>/editor</code>, jak i <code>/export</code> korzystają z edytora określonego w zmiennej środowiskowej <code>EDITOR</code>.</p>
+<div class="tabs">
+<div class="tab"><h4>Linux/macOS</h4>
+
+<pre><code>```bash
+# Example for nano or vim
+export EDITOR=nano
+export EDITOR=vim
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+export EDITOR=&quot;code --wait&quot;
+```
+
+Aby było to trwałe, dodaj to do swojego profilu shell;
+`~/.bashrc`, `~/.zshrc`, etc.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (CMD)</h4>
+
+<pre><code>```bash
+set EDITOR=notepad
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+set EDITOR=code --wait
+```
+
+Aby ustawić tę opcję na stałe, użyj opcji **Właściwości systemu** &gt; **Środowisko
+Variables**.
+</code></pre>
+</div>
+<div class="tab"><h4>Windows (PowerShell)</h4>
+
+<pre><code>```powershell
+$env:EDITOR = &quot;notepad&quot;
+
+# For GUI editors, VS Code, Cursor, VSCodium, Windsurf, Zed, etc.
+# include --wait
+$env:EDITOR = &quot;code --wait&quot;
+```
+
+Aby uczynić to trwałym, dodaj to do swojego profilu PowerShell.
+</code></pre>
+</div>
+</div>
+
+<p>Popularne opcje edytora:</p>
+<ul>
+<li><code>code</code> - Visual Studio Code</li>
+<li><code>cursor</code> - Cursor</li>
+<li><code>windsurf</code> - Windsurf</li>
+<li><code>nvim</code> - Neovim editor</li>
+<li><code>vim</code> - Vim editor</li>
+<li><code>nano</code> - Nano editor</li>
+<li><code>notepad</code> - Windows Notepad</li>
+<li><code>subl</code> - Sublime Text</li>
+</ul>
+<aside class="aside aside-note">
+Niektóre edytory, takie jak VS Code, należy uruchamiać z flagą `--wait`.
+</aside>
+Niektórzy edytory potrzebują argumentów wiersza poleceń, aby działać w trybie blokowania. Flaga `--wait` blokuje proces edytora aż do jego zamknięcia.
+
+<hr>
+<h2>Skonfiguruj</h2>
+<p>Możesz dostosować zachowanie TUI za pomocą pliku <code>tui.json</code> (lub <code>tui.jsonc</code>).</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;closedcode&quot;,
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;
+  },
+  &quot;scroll_speed&quot;: 3,
+  &quot;scroll_acceleration&quot;: {
+    &quot;enabled&quot;: true
+  },
+  &quot;diff_style&quot;: &quot;auto&quot;
+}
+</code></pre>
+<p>Jest to oddzielny plik od <code>closedcode.json</code>, który konfiguruje zachowanie serwera/runtime.</p>
+<h3>Opcje</h3>
+<ul>
+<li><code>theme</code> - Ustawia motyw interfejsu. <a href="/docs/themes">Dowiedz się więcej</a>.</li>
+<li><code>keybinds</code> - Dostosowuje skróty klawiszowe. <a href="/docs/keybinds">Dowiedz się więcej</a>.</li>
+<li><code>scroll_acceleration.enabled</code> — Włącz przyspieszenie przewijania w stylu macOS, aby zapewnić płynne, naturalne przewijanie. Po włączeniu prędkość przewijania wzrasta wraz z szybkimi gestami przewijania i pozostaje precyzyjna w przypadku wolniejszych ruchów. <strong>To ustawienie ma pierwszeństwo przed <code>scroll_speed</code> i zastępuje je, gdy jest włączone.</strong></li>
+<li><code>scroll_speed</code> - Kontroluje szybkość przewijania TUI podczas korzystania z poleceń przewijania (minimum: <code>0.001</code>, obsługuje wartości dziesiętne). Wartość domyślna to <code>3</code>. <strong>Uwaga: jest to ignorowane, jeśli <code>scroll_acceleration.enabled</code> jest ustawione na <code>true</code>.</strong></li>
+<li><code>diff_style</code> - Steruje renderowaniem różnic. <code>&quot;auto&quot;</code> dostosowuje się do szerokości terminala, <code>&quot;stacked&quot;</code> zawsze pokazuje układ jednokolumnowy.</li>
+</ul>
+<p>Użyj <code>CLOSEDCODE_TUI_CONFIG</code>, aby załadować niestandardową ścieżkę konfiguracji TUI.</p>
+<hr>
+<h2>Personalizacja</h2>
+<p>Za pomocą palety poleceń (<code>ctrl+x h</code> lub <code>/help</code>) można dostosować różne aspekty widoku TUI. Te ustawienia są zachowywane po ponownym uruchomieniu.</p>
+<hr>
+<h4>Wyświetlanie nazwy użytkownika</h4>
+<p>Włącz lub wyłącz wyświetlanie Twojej nazwy użytkownika w wiadomościach na czacie. Dostęp do tego poprzez:</p>
+<ul>
+<li>Paleta poleceń: Wyszukaj „nazwę użytkownika” lub „ukryj nazwę użytkownika”</li>
+<li>Ustawienie zostanie zapamiętane automatycznie i będzie pamiętane podczas sesji TUI</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rede — vanilla-closedcode docs</title>
+  <meta name="description" content="Configure proxies e certificados personalizados.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/network.html">English</option>
+      <option value="../ar/network.html">العربية</option>
+      <option value="../bs/network.html">Bosanski</option>
+      <option value="../da/network.html">Dansk</option>
+      <option value="../de/network.html">Deutsch</option>
+      <option value="../es/network.html">Español</option>
+      <option value="../fr/network.html">Français</option>
+      <option value="../it/network.html">Italiano</option>
+      <option value="../ja/network.html">日本語</option>
+      <option value="../ko/network.html">한국어</option>
+      <option value="../nb/network.html">Norsk</option>
+      <option value="../pl/network.html">Polski</option>
+      <option value="../pt-br/network.html" selected>Português (BR)</option>
+      <option value="../ru/network.html">Русский</option>
+      <option value="../th/network.html">ไทย</option>
+      <option value="../tr/network.html">Türkçe</option>
+      <option value="../zh-cn/network.html">简体中文</option>
+      <option value="../zh-tw/network.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li class="active"><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Rede</h1>
+      <p class="lede">Configure proxies e certificados personalizados.</p>
+      <p>O closedcode suporta variáveis de ambiente de proxy padrão e certificados personalizados para ambientes de rede corporativa.</p>
+<hr>
+<h2>Proxy</h2>
+<p>O closedcode respeita variáveis de ambiente de proxy padrão.</p>
+<pre><code class="language-bash"># HTTPS proxy (recommended)
+
+
+# HTTP proxy (if HTTPS not available)
+
+
+# Bypass proxy for local server (required)
+</code></pre>
+<aside class="aside aside-caution">
+O TUI se comunica com um servidor HTTP local. Você deve ignorar o proxy para essa conexão para evitar loops de roteamento.
+</aside>
+Você pode configurar a porta e o nome do host do servidor usando [flags da CLI](/docs/cli#run).
+
+<hr>
+<h3>Autenticação</h3>
+<p>Se o seu proxy requer autenticação básica, inclua as credenciais na URL.</p>
+<pre><code class="language-bash">
+</code></pre>
+<aside class="aside aside-caution">
+Evite codificar senhas. Use variáveis de ambiente ou armazenamento seguro de credenciais.
+</aside>
+Para proxies que requerem autenticação avançada como NTLM ou Kerberos, considere usar um LLM Gateway que suporte seu método de autenticação.
+
+<hr>
+<h2>Certificados personalizados</h2>
+<p>Se sua empresa usa CAs personalizadas para conexões HTTPS, configure o closedcode para confiá-las.</p>
+<pre><code class="language-bash">
+</code></pre>
+<p>Isso funciona tanto para conexões de proxy quanto para acesso direto à API.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

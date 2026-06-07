@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ฟอร์แมตเตอร์ — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode ใช้ตัวจัดรูปแบบเฉพาะภาษา">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html">العربية</option>
+      <option value="../bs/formatters.html">Bosanski</option>
+      <option value="../da/formatters.html">Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html">Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html" selected>ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>ฟอร์แมตเตอร์</h1>
+      <p class="lede">vanilla-closedcode ใช้ตัวจัดรูปแบบเฉพาะภาษา</p>
+      <p>vanilla-closedcode จะจัดรูปแบบไฟล์โดยอัตโนมัติหลังจากที่เขียนหรือแก้ไขโดยใช้ตัวจัดรูปแบบเฉพาะภาษา เพื่อให้แน่ใจว่าโค้ดที่สร้างขึ้นเป็นไปตามสไตล์โค้ดของโปรเจ็กต์ของคุณ</p>
+<hr>
+<h2>บิวท์อิน</h2>
+<p>vanilla-closedcode มาพร้อมกับฟอร์แมตเตอร์ในตัวหลายตัวสำหรับภาษาและเฟรมเวิร์กยอดนิยม ด้านล่างนี้คือรายการฟอร์แมตเตอร์ นามสกุลไฟล์ที่รองรับ และคำสั่งหรือตัวเลือกการกำหนดค่าที่ต้องการ</p>
+<table>
+<thead>
+<tr>
+<th>ฟอร์แมตเตอร์</th>
+<th>ส่วนขยาย</th>
+<th>ความต้องการ</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gofmt</td>
+<td>.go</td>
+<td><code>gofmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>mix</td>
+<td>.ex, .exs, .eex, .heex, .leex, .neex, .sface</td>
+<td><code>mix</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>prettier</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml และ <a href="https://prettier.io/docs/en/index.html">เพิ่มเติม</a></td>
+<td><code>prettier</code> การพึ่งพาใน <code>package.json</code></td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js, .jsx, .ts, .tsx, .html, .css, .md, .json, .yaml และ <a href="https://biomejs.dev/">เพิ่มเติม</a></td>
+<td><code>biome.json(c)</code> ไฟล์ปรับแต่ง</td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig, .zon</td>
+<td><code>zig</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>clang-format</td>
+<td>.c, .cpp, .h, .hpp, .ino และ <a href="https://clang.llvm.org/docs/ClangFormat.html">เพิ่มเติม</a></td>
+<td><code>.clang-format</code> ไฟล์ปรับแต่ง</td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt, .kts</td>
+<td><code>ktlint</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py, .pyi</td>
+<td>คำสั่ง <code>ruff</code> ใช้ได้กับ config</td>
+</tr>
+<tr>
+<td>rust</td>
+<td>.rs</td>
+<td><code>rustfmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>cargo fmt</td>
+<td>.rs</td>
+<td><code>cargo fmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py, .pyi</td>
+<td><code>uv</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>rubocop</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>rubocop</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb, .rake, .gemspec, .ru</td>
+<td><code>standardrb</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb, .html.erb</td>
+<td><code>htmlbeautifier</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>air</td>
+<td>.r</td>
+<td><code>air</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td><code>dfmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml, .mli</td>
+<td>มีคำสั่ง <code>ocamlformat</code> และไฟล์ปรับแต่ง <code>.ocamlformat</code></td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf, .tfvars</td>
+<td><code>terraform</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>gleam</td>
+<td>.gleam</td>
+<td><code>gleam</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>nix</td>
+<td>.nix</td>
+<td><code>nixfmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh, .bash</td>
+<td><code>shfmt</code> คำสั่งใช้ได้</td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td><code>laravel/pint</code> การพึ่งพาใน <code>composer.json</code></td>
+</tr>
+<tr>
+<td>oxfmt (ทดลอง)</td>
+<td>.js, .jsx, .ts, .tsx</td>
+<td><code>oxfmt</code> การพึ่งพาใน <code>package.json</code> และ <a href="/docs/cli/#experimental">แฟล็กตัวแปร env ทดลอง</a></td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td><code>ormolu</code> คำสั่งใช้ได้</td>
+</tr>
+</tbody></table>
+<p>ดังนั้นหากโปรเจ็กต์ของคุณมี <code>prettier</code> ใน <code>package.json</code> vanilla-closedcode จะใช้มันโดยอัตโนมัติ</p>
+<hr>
+<h2>มันทำงานอย่างไร</h2>
+<p>เมื่อ vanilla-closedcode เขียนหรือแก้ไขไฟล์ มันจะ:</p>
+<ol>
+<li>ตรวจสอบนามสกุลไฟล์กับฟอร์แมตเตอร์ที่เปิดใช้งานทั้งหมด</li>
+<li>รันคำสั่งฟอร์แมตเตอร์ที่เหมาะสมบนไฟล์</li>
+<li>ใช้การเปลี่ยนแปลงการจัดรูปแบบโดยอัตโนมัติ</li>
+</ol>
+<p>กระบวนการนี้เกิดขึ้นในเบื้องหลัง ทำให้มั่นใจได้ว่าสไตล์โค้ดของคุณจะถูกรักษาไว้โดยไม่มีขั้นตอนที่ต้องทำเอง</p>
+<hr>
+<h2>กำหนดค่า</h2>
+<p>คุณสามารถปรับแต่งฟอร์แมตเตอร์ได้ผ่านทางส่วน <code>formatter</code> ในการกำหนดค่า vanilla-closedcode ของคุณ</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>การกำหนดค่าฟอร์แมตเตอร์แต่ละรายการรองรับสิ่งต่อไปนี้:</p>
+<table>
+<thead>
+<tr>
+<th>คุณสมบัติ</th>
+<th>พิมพ์</th>
+<th>คำอธิบาย</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>บูลีน</td>
+<td>ตั้งค่านี้เป็น <code>true</code> เพื่อปิดใช้งานฟอร์แมตเตอร์</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>สตริง[]</td>
+<td>คำสั่งให้เรียกใช้การจัดรูปแบบ</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>วัตถุ</td>
+<td>ตัวแปรสภาพแวดล้อมที่จะตั้งค่าเมื่อรันฟอร์แมตเตอร์</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>สตริง[]</td>
+<td>นามสกุลไฟล์ที่ฟอร์แมตเตอร์นี้ควรรองรับ</td>
+</tr>
+</tbody></table>
+<p>ลองดูตัวอย่างบางส่วน</p>
+<hr>
+<h3>ปิดการใช้งานฟอร์แมตเตอร์</h3>
+<p>หากต้องการปิดการใช้งาน <strong>ทั้งหมด</strong> ฟอร์แมตเตอร์ทั่วโลก ให้ตั้งค่า <code>formatter</code> เป็น <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>หากต้องการปิดใช้งานฟอร์แมตเตอร์ <strong>เฉพาะ</strong> ให้ตั้งค่า <code>disabled</code> เป็น <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>ตัวจัดรูปแบบที่กำหนดเอง</h3>
+<p>คุณสามารถแทนที่ฟอร์แมตเตอร์ที่มีอยู่แล้วภายในหรือเพิ่มฟอร์แมตใหม่ได้โดยการระบุคำสั่ง ตัวแปรสภาพแวดล้อม และนามสกุลไฟล์:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p>ตัวยึดตำแหน่ง <strong><code>$FILE</code></strong> ในคำสั่งจะถูกแทนที่ด้วยเส้นทางไปยังไฟล์ที่กำลังจัดรูปแบบ</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

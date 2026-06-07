@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="bs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modeli — vanilla-closedcode docs</title>
+  <meta name="description" content="Konfiguriranje LLM provajdera i modela.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/models.html">English</option>
+      <option value="../ar/models.html">العربية</option>
+      <option value="../bs/models.html" selected>Bosanski</option>
+      <option value="../da/models.html">Dansk</option>
+      <option value="../de/models.html">Deutsch</option>
+      <option value="../es/models.html">Español</option>
+      <option value="../fr/models.html">Français</option>
+      <option value="../it/models.html">Italiano</option>
+      <option value="../ja/models.html">日本語</option>
+      <option value="../ko/models.html">한국어</option>
+      <option value="../nb/models.html">Norsk</option>
+      <option value="../pl/models.html">Polski</option>
+      <option value="../pt-br/models.html">Português (BR)</option>
+      <option value="../ru/models.html">Русский</option>
+      <option value="../th/models.html">ไทย</option>
+      <option value="../tr/models.html">Türkçe</option>
+      <option value="../zh-cn/models.html">简体中文</option>
+      <option value="../zh-tw/models.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Bosanski</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li class="active"><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Modeli</h1>
+      <p class="lede">Konfiguriranje LLM provajdera i modela.</p>
+      <p>vanilla-closedcode koristi <a href="https://ai-sdk.dev/">AI SDK</a> i <a href="https://models.dev">Models.dev</a> za podršku <strong>75+ LLM providera</strong>, uključujući lokalne modele.</p>
+<h2>Provajderi</h2>
+<p>Većina popularnih provajdera su unaprijed učitani prema zadanim postavkama. Ako ste dodali vjerodajnice za provajdera putem naredbe <code>/connect</code>, oni će biti dostupni kada pokrenete vanilla-closedcode.
+Saznajte više o <a href="/docs/providers">providers</a>.</p>
+<hr>
+<h2>Odabir modela</h2>
+<p>Nakon što konfigurirate svog provajdera, možete odabrati model koji želite upisivanjem:</p>
+<pre><code class="language-bash">/models
+</code></pre>
+<hr>
+<h2>Preporučeni modeli</h2>
+<p>Postoji mnogo modela vani, a novi modeli izlaze svake sedmice.</p>
+<aside class="aside aside-tip">
+Razmislite o korištenju jednog od modela koje preporučujemo.
+</aside>
+Međutim, postoji samo nekoliko njih koji su dobri i u generiranju koda i u pozivanju alata.
+Evo nekoliko modela koji dobro rade sa vanilla-closedcode, bez posebnog redosleda. (Ovo nije potpuna lista niti je nužno ažurirana):
+
+<ul>
+<li>GPT 5.2</li>
+<li>Codex GPT 5.1</li>
+<li>Claude Opus 4.5</li>
+<li>Claude Sonnet 4.5</li>
+<li>Minimax M2.1</li>
+<li>Gemini 3 Pro</li>
+</ul>
+<hr>
+<h2>Postavljanje zadanog</h2>
+<p>Da postavite jedan od ovih kao zadani model, možete postaviti ključ <code>model</code> u svom
+vanilla-closedcode config.</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;ollama/gpt-oss:20b&quot;
+}
+</code></pre>
+<p>Ovdje je puni ID <code>provider_id/model_id</code>. Na primjer, ako koristite Ollama, koristili biste <code>ollama/gpt-oss:20b</code> za GPT-OSS 20B.
+Ako ste konfigurirali <a href="/docs/providers#custom">prilagođenog provajdera</a>, <code>provider_id</code> je ključ iz <code>provider</code> dijela vaše konfiguracije, a <code>model_id</code> je ključ iz <code>provider.models</code>.</p>
+<hr>
+<h2>Konfiguracija modela</h2>
+<p>Možete globalno konfigurirati opcije modela kroz config.</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;options&quot;: {
+            &quot;reasoningEffort&quot;: &quot;high&quot;,
+            &quot;textVerbosity&quot;: &quot;low&quot;,
+            &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            &quot;include&quot;: [&quot;reasoning.encrypted_content&quot;],
+          },
+        },
+      },
+    },
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {
+        &quot;claude-sonnet-4-5-20250929&quot;: {
+          &quot;options&quot;: {
+            &quot;thinking&quot;: {
+              &quot;type&quot;: &quot;enabled&quot;,
+              &quot;budgetTokens&quot;: 16000,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<p>Ovdje konfiguriramo globalne postavke za dva ugrađena modela: <code>gpt-5</code> kada se pristupa preko <code>openai</code> provajdera i <code>claude-sonnet-4-20250514</code> kada se pristupa preko <code>anthropic</code> provajdera.
+Ugrađeni dobavljač i nazivi modela mogu se naći na <a href="https://models.dev">Models.dev</a>.
+Također možete konfigurirati ove opcije za sve agente koje koristite. Konfiguracija agenta poništava sve globalne opcije ovdje. <a href="/docs/agents/#additional">Saznajte više</a>.
+Također možete definirati prilagođene varijante koje proširuju ugrađene. Varijante vam omogućavaju da konfigurirate različite postavke za isti model bez stvaranja duplih unosa:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;opencode&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;high&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+            &quot;low&quot;: {
+              &quot;reasoningEffort&quot;: &quot;low&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+              &quot;reasoningSummary&quot;: &quot;auto&quot;,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<hr>
+<h2>Varijante</h2>
+<p>Mnogi modeli podržavaju više varijanti sa različitim konfiguracijama. vanilla-closedcode se isporučuje sa ugrađenim podrazumevanim varijantama za popularne provajdere.</p>
+<h3>Ugrađene varijante</h3>
+<p>vanilla-closedcode se isporučuje sa zadanim varijantama za mnoge provajdere:
+<strong>Anthropic</strong>:</p>
+<ul>
+<li><code>high</code> - Visok budžet za razmišljanje (zadano)</li>
+<li><code>max</code> - Maksimalni budžet za razmišljanje
+<strong>OpenAI</strong>:
+Zavisi od modela, ali otprilike:</li>
+<li><code>none</code> - Bez obrazloženja</li>
+<li><code>minimal</code> - Minimalni napor za rasuđivanje</li>
+<li><code>low</code> - Nizak napor u rasuđivanju</li>
+<li><code>medium</code> - Srednji napor u zaključivanju</li>
+<li><code>high</code> - Veliki napor u rasuđivanju</li>
+<li><code>xhigh</code> - Ekstra visok napor u rasuđivanju
+<strong>Google</strong>:</li>
+<li><code>low</code> - Manji trud/budžet tokena</li>
+<li><code>high</code> - Veći budžet za trud/token
+:::tip
+Ova lista nije sveobuhvatna. Mnogi drugi provajderi također imaju ugrađene zadane postavke.
+:::</li>
+</ul>
+<h3>Prilagođene varijante</h3>
+<p>Možete nadjačati postojeće varijante ili dodati svoje:</p>
+<pre><code class="language-jsonc">{
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;models&quot;: {
+        &quot;gpt-5&quot;: {
+          &quot;variants&quot;: {
+            &quot;thinking&quot;: {
+              &quot;reasoningEffort&quot;: &quot;high&quot;,
+              &quot;textVerbosity&quot;: &quot;low&quot;,
+            },
+            &quot;fast&quot;: {
+              &quot;disabled&quot;: true,
+            },
+          },
+        },
+      },
+    },
+  },
+}
+</code></pre>
+<h3>Kruženje kroz varijante</h3>
+<p>Koristite keybind <code>variant_cycle</code> za brzo prebacivanje između varijanti. <a href="/docs/keybinds">Saznajte više</a>.</p>
+<h2>Učitavanje modela</h2>
+<p>Kada se vanilla-closedcode pokrene, on provjerava modele u sljedećem prioritetnom redoslijedu:</p>
+<ol>
+<li>Oznaka komandne linije <code>--model</code> ili <code>-m</code>. Format je isti kao u konfiguracijskoj datoteci: <code>provider_id/model_id</code>.</li>
+<li>Lista modela u vanilla-closedcode konfiguraciji.</li>
+</ol>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;
+}
+</code></pre>
+<p>Format ovdje je <code>provider/model</code>. 3. Posljednji korišteni model. 4. Prvi model koji koristi interni prioritet.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

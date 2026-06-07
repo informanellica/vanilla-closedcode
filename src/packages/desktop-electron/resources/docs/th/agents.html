@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เอเจนต์ — vanilla-closedcode docs</title>
+  <meta name="description" content="เอเจนต์พิเศษและปรับแต่งได้">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html" selected>ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">ไทย</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>เอเจนต์</h1>
+      <p class="lede">เอเจนต์พิเศษและปรับแต่งได้</p>
+      <p>เอเจนต์ (Agent) คือผู้ช่วย AI ที่เชี่ยวชาญในงานเฉพาะด้าน คุณสามารถสร้างเอเจนต์ที่มีเครื่องมือ (tools) ที่เหมาะสมกับงานและคำสั่งระบบ (system prompt) ที่ต้องการได้</p>
+<aside class="aside aside-tip">
+ใช้เอเจนต์ **Plan** เพื่อวิเคราะห์โค้ดและตรวจสอบเหตุผลก่อนทำการเปลี่ยนแปลงโค้ดใดๆ
+</aside>
+คุณสามารถสลับเอเจนต์ได้ระหว่างการสนทนาโดยใช้ปุ่ม **Tab** หรือเรียกใช้โดยระบุ `@`
+
+<hr>
+<h2>ประเภท</h2>
+<p>vanilla-closedcode มีเอเจนต์สองประเภท: <strong>Primary Agent</strong> (เอเจนต์หลัก) และ <strong>Subagent</strong> (เอเจนต์ย่อย)</p>
+<hr>
+<h3>Primary Agent (เอเจนต์หลัก)</h3>
+<p>Primary Agent คือผู้ช่วยหลักที่คุณคุยด้วยโดยตรง คุณสามารถวนดูเอเจนต์หลักที่มีอยู่ได้โดยกดปุ่ม <strong>Tab</strong> หรือปุ่ม <code>switch_agent</code> ที่ตั้งค่าไว้ เอเจนต์เหล่านี้สามารถจัดการงานที่ซับซ้อนและเข้าถึงเครื่องมือที่มีความเสี่ยงสูงได้ เช่น <strong>Build</strong> ที่มีเครื่องมือทั้งหมด หรือ <strong>Plan</strong> ที่ถูกจำกัดสิทธิ์</p>
+<aside class="aside aside-tip">
+**Tab** จะเก็บประวัติการสนทนาไว้เมื่อสลับระหว่างเอเจนต์
+</aside>
+vanilla-closedcode มีเอเจนต์หลักในตัวได้แก่ **Build** และ **Plan**
+ดูรายละเอียดด้านล่าง
+
+<hr>
+<h3>Subagent (เอเจนต์ย่อย)</h3>
+<p>Subagent คือผู้ช่วยเฉพาะทางที่ Primary Agent สามารถเรียกใช้งานได้ หรือคุณสามารถเรียกใช้โดยตรงโดยพิมพ์ <strong>@</strong> ตามด้วยชื่อเอเจนต์ในข้อความของคุณ</p>
+<p>vanilla-closedcode มี subagent ในตัวได้แก่ <strong>General</strong> และ <strong>Explore</strong></p>
+<hr>
+<h2>บิวท์อิน</h2>
+<p>vanilla-closedcode มาพร้อมกับเอเจนต์หลักและ subagent ในตัวดังนี้</p>
+<hr>
+<h3>Build</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>เอเจนต์หลักสำหรับ <strong>การพัฒนา</strong> มาพร้อมกับเครื่องมือทั้งหมดเพื่อให้มีสิทธิ์การเข้าถึงไฟล์และคำสั่งระบบโดยสมบูรณ์</p>
+<hr>
+<h3>Plan</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>เอเจนต์ที่ถูกจำกัดสิทธิ์ เน้นการคิดวิเคราะห์และวางแผน โดยป้องกันการเปลี่ยนแปลงไฟล์โดยไม่ได้ตั้งใจ
+เครื่องมือต่อไปนี้จะถูกตั้งค่าเป็น <code>ask</code> (ต้องขออนุญาต):</p>
+<ul>
+<li><code>file edits</code>: การแก้ไขไฟล์, patch, และการเขียนไฟล์</li>
+<li><code>bash</code>: คำสั่ง bash ทั้งหมด</li>
+</ul>
+<p>เอเจนต์นี้มีประโยชน์เมื่อต้องการให้ LLM ตรวจสอบโค้ด หรือสร้างแผนงานก่อนที่จะลงมือทำจริง</p>
+<hr>
+<h3>General</h3>
+<p><em>Mode</em>: <code>subagent</code></p>
+<p>เอเจนต์สำหรับตอบคำถามทั่วไปและการคิดวิเคราะห์หลายขั้นตอน อนุญาตให้เข้าถึงเครื่องมือต่างๆ (ยกเว้นการแก้ไขไฟล์) ใช้สิ่งนี้เมื่อต้องการรันงานที่ไม่ต้องแก้ไขโค้ด</p>
+<hr>
+<h3>Explore</h3>
+<p><em>Mode</em>: <code>subagent</code></p>
+<p>เอเจนต์ความเร็วสูงสำหรับอ่านและสำรวจ codebase ใช้สิ่งนี้เมื่อคุณต้องการค้นหาไฟล์อย่างรวดเร็ว, ค้นหาโค้ดด้วยคำสำคัญ, หรือสอบถามเกี่ยวกับโครงสร้าง codebase</p>
+<hr>
+<h3>Compact</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>เอเจนต์ระบบที่มีหน้าที่สรุปประวัติการสนทนาที่ยาวให้สั้นลง โดยยังคงใจความสำคัญไว้</p>
+<hr>
+<h3>Name</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>เอเจนต์ระบบที่มีหน้าที่สร้างชื่อ session ให้สั้นและได้ใจความ ทำงานอัตโนมัติโดยไม่ต้องมี UI</p>
+<hr>
+<h3>Summarize</h3>
+<p><em>Mode</em>: <code>primary</code></p>
+<p>เอเจนต์ระบบที่มีหน้าที่สร้างสรุปการเปลี่ยนแปลงและงานที่ทำไป ทำงานอัตโนมัติโดยไม่ต้องมี UI</p>
+<hr>
+<h2>การใช้งาน</h2>
+<ol>
+<li><p>สำหรับ Primary Agent ให้ใช้ปุ่ม <strong>Tab</strong> เพื่อวนดูเอเจนต์ที่มีอยู่ หรือใช้ keybind <code>switch_agent</code> ที่คุณตั้งค่าไว้</p>
+</li>
+<li><p>สำหรับ Subagent:</p>
+<ul>
+<li><p>เรียกใช้โดย Primary Agent โดยอัตโนมัติตามความเหมาะสม</p>
+</li>
+<li><p>เรียกใช้ด้วยตนเองโดยพิมพ์ <strong>@</strong> ตามด้วยชื่อ subagent ในข้อความของคุณ เช่น</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>การนำทางระหว่าง Agent</strong>: เมื่อ Subagent ทำงานเสร็จและส่งผลลัพธ์กลับมายัง Primary Agent คุณสามารถดูประวัติการทำงานได้:</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong> (หรือ <code>session_child_cycle</code> keybind) เพื่อวนผ่าน parent → child1 → child2 → ... → parent</li>
+<li><strong>&lt;Leader&gt;+Left</strong> (หรือ <code>session_child_cycle_reverse</code> keybind) เพื่อวนย้อนกลับผ่าน parent ← child1 ← child2 ← ... ← parent</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2>การกำหนดค่า</h2>
+<p>คุณสามารถปรับแต่งเอเจนต์ที่มีอยู่หรือสร้างเอเจนต์ใหม่ได้สองวิธี:</p>
+<hr>
+<h3>JSON</h3>
+<p>กำหนดค่าเอเจนต์ในไฟล์ <code>closedcode.json</code> ของคุณ:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>คุณสามารถกำหนดเอเจนต์ด้วยไฟล์ Markdown ได้ใน:</p>
+<ul>
+<li>ระดับผู้ใช้ (Global): <code>~/.config/closedcode/agents/</code></li>
+<li>ระดับโปรเจ็กต์: <code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>ชื่อไฟล์ Markdown จะกลายเป็นชื่อเอเจนต์ เช่น <code>review.md</code> สร้างเอเจนต์ <code>review</code></p>
+<hr>
+<h2>ตัวเลือก</h2>
+<p>มาดูรายละเอียดของตัวเลือกต่างๆ</p>
+<hr>
+<h3>Description (คำอธิบาย)</h3>
+<p>ใช้ฟิลด์ <code>description</code> เพื่ออธิบายว่าเอเจนต์นี้ทำอะไร</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>ฟิลด์นี้ <strong>จำเป็น</strong> สำหรับ JSON</p>
+<hr>
+<h3>Temperature (อุณหภูมิ)</h3>
+<p>ควบคุมความสุ่มและความคิดสร้างสรรค์ของการตอบกลับของ LLM ด้วย <code>temperature</code></p>
+<p>ค่าที่ต่ำกว่าจะให้ผลลัพธ์ที่แน่นอนและแม่นยำกว่า ส่วนค่าที่สูงกว่าจะให้ความหลากหลายและความคิดสร้างสรรค์มากกว่า</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>ช่วงอุณหภูมิอยู่ระหว่าง 0.0 ถึง 1.0:</p>
+<ul>
+<li><strong>0.0-0.2</strong>: แน่นอนและแม่นยำ เหมาะสำหรับการเขียนโค้ดและการวางแผน</li>
+<li><strong>0.3-0.5</strong>: สมดุล เหมาะสำหรับการพัฒนาทั่วไป</li>
+<li><strong>0.6-1.0</strong>: สร้างสรรค์ เหมาะสำหรับการระดมสมอง</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>หมายเหตุ: vanilla-closedcode ค่าเริ่มต้นคือ 0 สำหรับโมเดลส่วนใหญ่ และ 0.55 สำหรับโมเดล Qwen</p>
+<hr>
+<h3>Steps (ขั้นตอน)</h3>
+<p>จำกัดจำนวนการวนซ้ำ (iterations) สูงสุดที่เอเจนต์สามารถทำได้ เพื่อควบคุมค่าใช้จ่ายและป้องกันการทำงานไม่รู้จบ</p>
+<p>หากไม่ได้ตั้งค่านี้ เอเจนต์จะทำงานต่อไปจนกว่างานจะเสร็จหรือผู้ใช้ขัดจังหวะ</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>เมื่อถึงขีดจำกัด เอเจนต์จะได้รับพรอมต์พิเศษเพื่อสรุปงานและสิ่งที่เหลืออยู่</p>
+<aside class="aside aside-caution">
+ฟิลด์ `maxSteps` แบบเดิมเลิกใช้แล้ว โปรดใช้ `steps` แทน
+</aside>
+---
+
+<h3>Disable (ปิดใช้งาน)</h3>
+<p>ตั้งค่าเป็น <code>true</code> เพื่อปิดการใช้งานเอเจนต์</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>พรอมต์</h3>
+<p>ระบุ System Prompt สำหรับเอเจนต์นี้ด้วย <code>prompt</code></p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>รองรับเส้นทางสัมพัทธ์ (Relative paths) ซึ่งทำให้ใช้งานได้สะดวกทั้งในระดับ Global และ Project</p>
+<hr>
+<h3>Model (โมเดล)</h3>
+<p>ใช้ตัวเลือก <code>model</code> เพื่อกำหนดโมเดลเฉพาะสำหรับเอเจนต์นี้ มีประโยชน์เมื่อต้องการใช้โมเดลที่เชี่ยวชาญเฉพาะด้าน หรือโมเดลที่มี Context window ขนาดใหญ่สำหรับการตรวจสอบ codebase</p>
+<aside class="aside aside-tip">
+หากไม่ได้ระบุโมเดล เอเจนต์จะใช้ [โมเดลเริ่มต้น](/docs/config#models) ของ vanilla-closedcode
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>ID ของโมเดลใช้รูปแบบ <code>provider/model-id</code></p>
+<hr>
+<h3>เครื่องมือ</h3>
+<p>กำหนดเครื่องมือที่เอเจนต์สามารถใช้งานได้ด้วย <code>tools</code> คุณสามารถระบุชื่อเครื่องมือ หรือใช้ wildcard</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+การกำหนดค่าเครื่องมือในระดับเอเจนต์จะมีความสำคัญเหนือกว่าระดับ Global
+</aside>
+คุณสามารถใช้ wildcard `*` เพื่อควบคุมเครื่องมือหลายรายการพร้อมกัน เช่น เครื่องมือจากเซิร์ฟเวอร์ MCP:
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">เรียนรู้เพิ่มเติมเกี่ยวกับเครื่องมือ</a></p>
+<hr>
+<h3>Permissions (สิทธิ์)</h3>
+<p>กำหนดสิทธิ์สำหรับเครื่องมือที่มีความละเอียดอ่อน เช่น <code>edit</code>, <code>bash</code> และ <code>webfetch</code>:</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — ต้องขออนุมัติจากผู้ใช้ก่อน</li>
+<li><code>&quot;allow&quot;</code> — อนุญาตให้ทำงานได้โดยไม่ต้องถาม</li>
+<li><code>&quot;deny&quot;</code> — ไม่อนุญาตให้ใช้</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>คุณสามารถกำหนดสิทธิ์ในระดับเอเจนต์ได้:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>ใน Markdown agent:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>คุณสามารถกำหนดสิทธิ์สำหรับคำสั่ง bash เฉพาะได้:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>รองรับ glob patterns:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>ใช้ <code>*</code> wildcard เพื่อตั้งค่าเริ่มต้นสำหรับคำสั่งอื่นๆ ทั้งหมด กฎที่ตรงกันล่าสุดจะมีผลบังคับใช้ (Last match wins):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">เรียนรู้เพิ่มเติมเกี่ยวกับสิทธิ์</a></p>
+<hr>
+<h3>Mode (โหมด)</h3>
+<p>กำหนดโหมดของเอเจนต์ด้วย <code>mode</code></p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p><code>mode</code> สามารถเป็น <code>primary</code>, <code>subagent</code> หรือ <code>all</code> หากไม่ระบุ ค่าเริ่มต้นจะเป็น <code>all</code></p>
+<hr>
+<h3>Hidden (ซ่อน)</h3>
+<p>ซ่อน subagent จากเมนู autocomplete <code>@</code> ด้วย <code>hidden: true</code> มีประโยชน์สำหรับ subagent ภายในที่ถูกเรียกใช้โดยเอเจนต์อื่นผ่านเครื่องมือ task เท่านั้น</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+ใช้ได้กับเอเจนต์ที่มี `mode: subagent` เท่านั้น
+</aside>
+---
+
+<h3>Task Permissions (สิทธิ์งาน)</h3>
+<p>กำหนดว่า subagent ใดที่เอเจนต์นี้สามารถเรียกใช้ได้ผ่านเครื่องมือ task ด้วย <code>permission.task</code></p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>หากตั้งเป็น <code>deny</code> เอเจนต์จะมองไม่เห็นเครื่องมือ task สำหรับ subagent นั้นๆ</p>
+<aside class="aside aside-tip">
+กฎทำงานตามลำดับ และ **กฎที่ตรงกันล่าสุดจะมีผล** ในตัวอย่างข้างต้น `orchestrator-planner` ตรงกับทั้ง `*` (deny) และ `orchestrator-*` (allow) แต่เนื่องจาก `orchestrator-*` มาทีหลัง ผลลัพธ์จึงเป็น `allow`
+</aside>
+---
+
+<h3>สี</h3>
+<p>ปรับแต่งสีของเอเจนต์ใน UI ด้วยตัวเลือก <code>color</code></p>
+<p>ใช้รหัสสี hex (เช่น <code>#FF5733</code>) หรือชื่อสีมาตรฐาน: <code>primary</code>, <code>secondary</code>, <code>accent</code>, <code>success</code>, <code>warning</code>, <code>error</code>, <code>info</code></p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>ควบคุมความหลากหลายของการตอบกลับด้วยตัวเลือก <code>top_p</code></p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>ช่วงค่า 0.0 ถึง 1.0 ค่าที่ต่ำกว่าจะเน้นไปที่โทเค็นที่มีความน่าจะเป็นสูง</p>
+<hr>
+<h3>Additional (เพิ่มเติม)</h3>
+<p>คุณสมบัติอื่นๆ ที่คุณระบุใน object ของเอเจนต์จะถูก <strong>ส่งผ่านโดยตรง</strong> ไปยัง LLM config</p>
+<p>เช่น สำหรับโมเดลที่มีการให้เหตุผลของ OpenAI:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>ตรวจสอบเอกสารของแต่ละโมเดลสำหรับตัวเลือกที่รองรับ</p>
+<aside class="aside aside-tip">
+ใช้ `closedcode models` เพื่อดูรายการตัวเลือกทั้งหมด
+</aside>
+---
+
+<h2>การสร้างเอเจนต์</h2>
+<p>สร้างเอเจนต์ใหม่ด้วยคำสั่ง:</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>คำสั่งแบบโต้ตอบจะถาม:</p>
+<ol>
+<li>สถานที่บันทึก (Global หรือ Project)</li>
+<li>คำอธิบายหน้าที่ของเอเจนต์</li>
+<li>สร้างพรอมต์และเลือกไอคอนที่เหมาะสม</li>
+<li>เลือกเครื่องมือที่เอเจนต์สามารถใช้ได้</li>
+<li>สร้างไฟล์ Markdown ของเอเจนต์</li>
+</ol>
+<hr>
+<h2>ตัวอย่างการใช้งาน</h2>
+<p>ต่อไปนี้เป็นกรณีการใช้งานทั่วไปสำหรับเอเจนต์ต่างๆ</p>
+<ul>
+<li><strong>Developer</strong>: งานพัฒนาทั่วไป ใช้เครื่องมือทั้งหมด</li>
+<li><strong>Planner</strong>: วิเคราะห์และวางแผนโดยไม่ทำการเปลี่ยนแปลง</li>
+<li><strong>Reviewer</strong>: ตรวจสอบโค้ดแบบอ่านอย่างเดียว (Read-only)</li>
+<li><strong>Debugger</strong>: แก้ไขข้อผิดพลาดโดยเน้นการอ่าน log และทดสอบ</li>
+<li><strong>Docs Writer</strong>: เขียนและปรับปรุงเอกสาร</li>
+</ul>
+<hr>
+<h2>ตัวอย่างเอเจนต์</h2>
+<p>นี่คือตัวอย่างเอเจนต์ที่คุณอาจพบว่ามีประโยชน์</p>
+<aside class="aside aside-tip">
+คุณมีเอเจนต์เจ๋งๆ ที่ต้องการแบ่งปันหรือไม่? [ส่ง PR มาที่นี่](https://github.com/informanellica/vanilla-closedcode)
+</aside>
+### Docs Writer
+
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>Security Auditor</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

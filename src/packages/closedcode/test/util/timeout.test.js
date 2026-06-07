@@ -1,0 +1,17 @@
+import {  withTimeout  } from "../../src/util/timeout.js"
+import {  describe, expect, test, beforeAll  } from "@jest/globals"
+describe("util.timeout", () => {
+  test("should resolve when promise completes before timeout", async () => {
+    const fastPromise = new Promise(resolve => {
+      setTimeout(() => resolve("fast"), 10);
+    });
+    const result = await withTimeout(fastPromise, 100);
+    expect(result).toBe("fast");
+  });
+  test("should reject when promise exceeds timeout", async () => {
+    const slowPromise = new Promise(resolve => {
+      setTimeout(() => resolve("slow"), 200);
+    });
+    await expect(withTimeout(slowPromise, 50)).rejects.toThrow("Operation timed out after 50ms");
+  });
+});

@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formatere — vanilla-closedcode docs</title>
+  <meta name="description" content="vanilla-closedcode bruger sprogspecifikke formatere.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/formatters.html">English</option>
+      <option value="../ar/formatters.html">العربية</option>
+      <option value="../bs/formatters.html">Bosanski</option>
+      <option value="../da/formatters.html" selected>Dansk</option>
+      <option value="../de/formatters.html">Deutsch</option>
+      <option value="../es/formatters.html">Español</option>
+      <option value="../fr/formatters.html">Français</option>
+      <option value="../it/formatters.html">Italiano</option>
+      <option value="../ja/formatters.html">日本語</option>
+      <option value="../ko/formatters.html">한국어</option>
+      <option value="../nb/formatters.html">Norsk</option>
+      <option value="../pl/formatters.html">Polski</option>
+      <option value="../pt-br/formatters.html">Português (BR)</option>
+      <option value="../ru/formatters.html">Русский</option>
+      <option value="../th/formatters.html">ไทย</option>
+      <option value="../tr/formatters.html">Türkçe</option>
+      <option value="../zh-cn/formatters.html">简体中文</option>
+      <option value="../zh-tw/formatters.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li class="active"><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Formatere</h1>
+      <p class="lede">vanilla-closedcode bruger sprogspecifikke formatere.</p>
+      <p>vanilla-closedcode formaterer automatisk filer, efter de er skrevet eller redigeret ved hjælp af sprogspecifikke formatere. Dette sikrer, at den kode, der genereres, følger kodestilene for dit projekt.</p>
+<hr>
+<h2>Indbyggede</h2>
+<p>vanilla-closedcode leveres med flere indbyggede formatere til populære sprog og rammer. Nedenfor er en liste over de formatere, understøttede filtypenavne og kommandoer eller konfigurationsmuligheder, der har brug for.</p>
+<table>
+<thead>
+<tr>
+<th>Formater</th>
+<th>Udvidelser</th>
+<th>Krav</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>gofmt</td>
+<td>.go</td>
+<td><code>gofmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>blande</td>
+<td>.ex,.exs,.eex,.heex,.leex,.neex,.sface</td>
+<td><code>mix</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>smukkere</td>
+<td>.js,.jsx,.ts,.tsx,.html,.css,.md,.json,.yaml og <a href="https://prettier.io/docs/en/index.html">more</a></td>
+<td><code>prettier</code> afhængighed i <code>package.json</code></td>
+</tr>
+<tr>
+<td>biome</td>
+<td>.js,.jsx,.ts,.tsx,.html,.css,.md,.json,.yaml og <a href="https://biomejs.dev/">more</a></td>
+<td><code>biome.json(c)</code> konfigurationsfil</td>
+</tr>
+<tr>
+<td>zig</td>
+<td>.zig,.zon</td>
+<td><code>zig</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>klang-format</td>
+<td>.c,.cpp,.h,.hpp,.ino og <a href="https://clang.llvm.org/docs/ClangFormat.html">more</a></td>
+<td><code>.clang-format</code> konfigurationsfil</td>
+</tr>
+<tr>
+<td>ktlint</td>
+<td>.kt,.kts</td>
+<td><code>ktlint</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>ruff</td>
+<td>.py,.pyi</td>
+<td><code>ruff</code> kommando tilgængelig med konfiguration</td>
+</tr>
+<tr>
+<td>rustfmt</td>
+<td>.rs</td>
+<td><code>rustfmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>cargofmt</td>
+<td>.rs</td>
+<td><code>cargo fmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>uv</td>
+<td>.py,.pyi</td>
+<td><code>uv</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>rubocop</td>
+<td>.rb,.rake,.gemspec,.ru</td>
+<td><code>rubocop</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>standardrb</td>
+<td>.rb,.rake,.gemspec,.ru</td>
+<td><code>standardrb</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>htmlbeautifier</td>
+<td>.erb,.html.erb</td>
+<td><code>htmlbeautifier</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>luft</td>
+<td>.R</td>
+<td><code>air</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>dart</td>
+<td>.dart</td>
+<td><code>dart</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>dfmt</td>
+<td>.d</td>
+<td><code>dfmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>ocamlformat</td>
+<td>.ml,.mli</td>
+<td><code>ocamlformat</code> kommando tilgængelig og <code>.ocamlformat</code> config fil</td>
+</tr>
+<tr>
+<td>terraform</td>
+<td>.tf,.tfvars</td>
+<td><code>terraform</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>glimt</td>
+<td>.glimt</td>
+<td><code>gleam</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>nixfmt</td>
+<td>.nix</td>
+<td><code>nixfmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>shfmt</td>
+<td>.sh,.bash</td>
+<td><code>shfmt</code> kommando tilgængelig</td>
+</tr>
+<tr>
+<td>pint</td>
+<td>.php</td>
+<td><code>laravel/pint</code> afhængighed i <code>composer.json</code></td>
+</tr>
+<tr>
+<td>oxfmt (Eksperimentel)</td>
+<td>.js,.jsx,.ts,.tsx</td>
+<td><code>oxfmt</code> afhængighed i <code>package.json</code> og en <a href="/docs/cli/#experimental">experimental env variable flag</a></td>
+</tr>
+<tr>
+<td>ormolu</td>
+<td>.hs</td>
+<td><code>ormolu</code> kommando tilgængelig</td>
+</tr>
+</tbody></table>
+<p>Så hvis dit projekt har <code>prettier</code> i din <code>package.json</code>, vil vanilla-closedcode automatisk bruge det.</p>
+<hr>
+<h2>Sådan fungerer det</h2>
+<p>Når vanilla-closedcode skriver eller redigerer en fil, vil det:</p>
+<ol>
+<li>Kontrollerer filtypenavnet mod alle aktiverede formatere.</li>
+<li>Kører den relevante formateringskommando på filen.</li>
+<li>Anvender formateringsændringerne automatisk.</li>
+</ol>
+<p>Denne proces sker i baggrunden, hvilket sikrer, at dine kodestile vedligeholdes uden nogen manuelle trin.</p>
+<hr>
+<h2>Konfiguration</h2>
+<p>Du kan tilpasse formatere gennem afsnittet <code>formatter</code> i din vanilla-closedcode-konfiguration.</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {}
+}
+</code></pre>
+<p>Hver formateringskonfiguration understøtter følgende:</p>
+<table>
+<thead>
+<tr>
+<th>Ejendom</th>
+<th>Skriv</th>
+<th>Beskrivelse</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>disabled</code></td>
+<td>boolean</td>
+<td>Indstil dette til <code>true</code> for at deaktivere formateringsværktøjet</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td>string[]</td>
+<td>Kommandoen til at køre for formatering</td>
+</tr>
+<tr>
+<td><code>environment</code></td>
+<td>object</td>
+<td>Miljøvariabler, der skal indstilles, når formateringsværktøjet køres</td>
+</tr>
+<tr>
+<td><code>extensions</code></td>
+<td>string[]</td>
+<td>Filtypenavne, som denne formaterer skal håndtere</td>
+</tr>
+</tbody></table>
+<p>Lad os se på nogle eksempler.</p>
+<hr>
+<h3>Deaktivering af formatere</h3>
+<p>For at deaktivere <strong>alle</strong> formatere globalt, skal du indstille <code>formatter</code> til <code>false</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: false
+}
+</code></pre>
+<p>For at deaktivere en <strong>specifik</strong> formatter, skal du indstille <code>disabled</code> til <code>true</code>:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Brugerdefinerede formatere</h3>
+<p>Du kan tilsidesætte de indbyggede formattere eller tilføje nye ved at angive kommandoen, miljøvariabler og filtypenavne:</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    },
+    &quot;custom-markdown-formatter&quot;: {
+      &quot;command&quot;: [&quot;deno&quot;, &quot;fmt&quot;, &quot;$FILE&quot;],
+      &quot;extensions&quot;: [&quot;.md&quot;]
+    }
+  }
+}
+</code></pre>
+<p><strong><code>$FILE</code> pladsholderen</strong> i kommandoen vil blive erstattet med stien til filen, der formateres.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

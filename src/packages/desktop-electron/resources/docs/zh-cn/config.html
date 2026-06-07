@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-cn">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>配置 — vanilla-closedcode docs</title>
+  <meta name="description" content="使用 vanilla-closedcode JSON 配置。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/config.html">English</option>
+      <option value="../ar/config.html">العربية</option>
+      <option value="../bs/config.html">Bosanski</option>
+      <option value="../da/config.html">Dansk</option>
+      <option value="../de/config.html">Deutsch</option>
+      <option value="../es/config.html">Español</option>
+      <option value="../fr/config.html">Français</option>
+      <option value="../it/config.html">Italiano</option>
+      <option value="../ja/config.html">日本語</option>
+      <option value="../ko/config.html">한국어</option>
+      <option value="../nb/config.html">Norsk</option>
+      <option value="../pl/config.html">Polski</option>
+      <option value="../pt-br/config.html">Português (BR)</option>
+      <option value="../ru/config.html">Русский</option>
+      <option value="../th/config.html">ไทย</option>
+      <option value="../tr/config.html">Türkçe</option>
+      <option value="../zh-cn/config.html" selected>简体中文</option>
+      <option value="../zh-tw/config.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">简体中文</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li class="active"><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>配置</h1>
+      <p class="lede">使用 vanilla-closedcode JSON 配置。</p>
+      <p>您可以使用 JSON 配置文件来配置 vanilla-closedcode。</p>
+<hr>
+<h2>格式</h2>
+<p>vanilla-closedcode 支持 <strong>JSON</strong> 和 <strong>JSONC</strong>（带注释的 JSON）格式。</p>
+<pre><code class="language-jsonc">{
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;autoupdate&quot;: true,
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+  },
+}
+</code></pre>
+<hr>
+<h2>位置</h2>
+<p>您可以将配置放置在不同的位置，它们具有不同的优先级顺序。</p>
+<aside class="aside aside-note">
+配置文件是**合并在一起**的，而不是替换。
+</aside>
+配置文件是合并在一起的，而不是被替换。来自以下配置位置的设置会被合并。后面的配置仅在键冲突时覆盖前面的配置。所有配置中的非冲突设置都会被保留。
+
+<p>例如，如果您的全局配置设置了 <code>autoupdate: true</code>，而您的项目配置设置了 <code>model: &quot;anthropic/claude-sonnet-4-5&quot;</code>，则最终配置将包含这两个设置。</p>
+<hr>
+<h3>优先级顺序</h3>
+<p>配置源按以下顺序加载（后面的源覆盖前面的源）：</p>
+<ol>
+<li><strong>全局配置</strong>（<code>~/.config/closedcode/closedcode.json</code>）- 用户偏好</li>
+<li><strong>自定义配置</strong>（<code>CLOSEDCODE_CONFIG</code> 环境变量）- 自定义覆盖</li>
+<li><strong>项目配置</strong>（项目中的 <code>closedcode.json</code>）- 项目特定设置</li>
+<li><strong><code>.closedcode</code> 目录</strong> - 代理、命令、插件</li>
+<li><strong>内联配置</strong>（<code>CLOSEDCODE_CONFIG_CONTENT</code> 环境变量）- 运行时覆盖</li>
+</ol>
+<p>这意味着项目配置可以覆盖全局默认值，全局配置可以覆盖远程组织默认值。</p>
+<aside class="aside aside-note">
+`.closedcode` 和 `~/.config/closedcode` 目录的子目录使用**复数名称**：`agents/`、`commands/`、`modes/`、`plugins/`、`skills/`、`tools/` 和 `themes/`。为了向后兼容，也支持单数名称（例如 `agent/`）。
+</aside>
+---
+
+
+<h3>全局</h3>
+<p>将全局 vanilla-closedcode 配置放在 <code>~/.config/closedcode/closedcode.json</code> 中。使用全局配置来设置用户级别的偏好，例如主题、提供商或快捷键。</p>
+<p>全局配置覆盖远程组织默认值。</p>
+<hr>
+<h3>项目级</h3>
+<p>在项目根目录中添加 <code>closedcode.json</code>。项目配置在标准配置文件中具有最高优先级——它会覆盖全局配置和远程配置。</p>
+<aside class="aside aside-tip">
+将项目特定配置放在项目的根目录中。
+</aside>
+当 vanilla-closedcode 启动时，它会在当前目录中查找配置文件，或向上遍历到最近的 Git 目录。
+
+<p>该配置文件也可以安全地提交到 Git 中，并使用与全局配置相同的 Schema。</p>
+<hr>
+<h3>自定义路径</h3>
+<p>使用 <code>CLOSEDCODE_CONFIG</code> 环境变量指定自定义配置文件路径。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>自定义配置在优先级顺序中位于全局配置和项目配置之间加载。</p>
+<hr>
+<h3>自定义目录</h3>
+<p>使用 <code>CLOSEDCODE_CONFIG_DIR</code> 环境变量指定自定义配置目录。该目录会像标准 <code>.closedcode</code> 目录一样被搜索代理、命令、模式和插件，并且应遵循相同的结构。</p>
+<pre><code class="language-bash">
+closedcode run &quot;Hello world&quot;
+</code></pre>
+<p>自定义目录在全局配置和 <code>.closedcode</code> 目录之后加载，因此<strong>可以覆盖</strong>它们的设置。</p>
+<hr>
+<h2>Schema</h2>
+<p>配置文件具有在 <strong><code>config.json</code></strong> 中定义的 Schema。</p>
+<p>您的编辑器应该能够基于该 Schema 进行验证和自动补全。</p>
+<hr>
+<h3>TUI</h3>
+<p>您可以通过 <code>tui</code> 选项配置 TUI 相关设置。</p>
+<pre><code class="language-json">{
+  &quot;tui&quot;: {
+    &quot;scroll_speed&quot;: 3,
+    &quot;scroll_acceleration&quot;: {
+      &quot;enabled&quot;: true
+    },
+    &quot;diff_style&quot;: &quot;auto&quot;
+  }
+}
+</code></pre>
+<p>可用选项：</p>
+<ul>
+<li><code>scroll_acceleration.enabled</code> - 启用 macOS 风格的滚动加速。<strong>优先于 <code>scroll_speed</code>。</strong></li>
+<li><code>scroll_speed</code> - 自定义滚动速度倍率（默认值：<code>3</code>，最小值：<code>1</code>）。如果 <code>scroll_acceleration.enabled</code> 为 <code>true</code>，则忽略此选项。</li>
+<li><code>diff_style</code> - 控制差异渲染方式。<code>&quot;auto&quot;</code> 根据终端宽度自适应，<code>&quot;stacked&quot;</code> 始终显示单列。</li>
+</ul>
+<p><a href="/docs/tui">在此了解更多关于 TUI 的信息</a>。</p>
+<hr>
+<h3>服务器</h3>
+<p>您可以通过 <code>server</code> 选项为 <code>closedcode serve</code> 和 <code>closedcode web</code> 命令配置服务器设置。</p>
+<pre><code class="language-json">{
+  &quot;server&quot;: {
+    &quot;port&quot;: 4096,
+    &quot;hostname&quot;: &quot;0.0.0.0&quot;,
+    &quot;mdns&quot;: true,
+    &quot;mdnsDomain&quot;: &quot;myproject.local&quot;,
+    &quot;cors&quot;: [&quot;http://localhost:5173&quot;]
+  }
+}
+</code></pre>
+<p>可用选项：</p>
+<ul>
+<li><code>port</code> - 监听端口。</li>
+<li><code>hostname</code> - 监听主机名。当 <code>mdns</code> 启用且未设置主机名时，默认为 <code>0.0.0.0</code>。</li>
+<li><code>mdns</code> - 启用 mDNS 服务发现。这允许网络上的其他设备发现您的 vanilla-closedcode 服务器。</li>
+<li><code>mdnsDomain</code> - mDNS 服务的自定义域名。默认为 <code>closedcode.local</code>。适用于在同一网络上运行多个实例的场景。</li>
+<li><code>cors</code> - 从基于浏览器的客户端使用 HTTP 服务器时允许 CORS 的额外来源。值必须是完整的来源（协议 + 主机 + 可选端口），例如 <code>https://app.example.com</code>。</li>
+</ul>
+<p><a href="/docs/server">在此了解更多关于服务器的信息</a>。</p>
+<hr>
+<h3>工具</h3>
+<p>您可以通过 <code>tools</code> 选项管理 LLM 可以使用的工具。</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: false,
+    &quot;bash&quot;: false
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">在此了解更多关于工具的信息</a>。</p>
+<hr>
+<h3>模型</h3>
+<p>您可以通过 <code>provider</code>、<code>model</code> 和 <code>small_model</code> 选项在 vanilla-closedcode 配置中设置要使用的提供商和模型。</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {},
+  &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+  &quot;small_model&quot;: &quot;anthropic/claude-haiku-4-5&quot;
+}
+</code></pre>
+<p><code>small_model</code> 选项为标题生成等轻量级任务配置单独的模型。默认情况下，如果您的提供商有更便宜的模型可用，vanilla-closedcode 会尝试使用该模型，否则会回退到您的主模型。</p>
+<p>提供商选项可以包括 <code>timeout</code> 和 <code>setCacheKey</code>：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;options&quot;: {
+        &quot;timeout&quot;: 600000,
+        &quot;setCacheKey&quot;: true
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>timeout</code> - 请求超时时间，单位为毫秒（默认值：300000）。设置为 <code>false</code> 可禁用超时。</li>
+<li><code>setCacheKey</code> - 确保始终为指定提供商设置缓存键。</li>
+</ul>
+<p>您还可以配置<a href="/docs/models#local">本地模型</a>。<a href="/docs/models">了解更多</a>。</p>
+<hr>
+<h4>提供商特定选项</h4>
+<p>一些提供商支持除通用 <code>timeout</code> 和 <code>apiKey</code> 设置之外的额外配置选项。</p>
+<h5>Amazon Bedrock</h5>
+<p>Amazon Bedrock 支持 AWS 特定配置：</p>
+<pre><code class="language-json">{
+  &quot;provider&quot;: {
+    &quot;amazon-bedrock&quot;: {
+      &quot;options&quot;: {
+        &quot;region&quot;: &quot;us-east-1&quot;,
+        &quot;profile&quot;: &quot;my-aws-profile&quot;,
+        &quot;endpoint&quot;: &quot;https://bedrock-runtime.us-east-1.vpce-xxxxx.amazonaws.com&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<ul>
+<li><code>region</code> - Bedrock 的 AWS 区域（默认为 <code>AWS_REGION</code> 环境变量或 <code>us-east-1</code>）</li>
+<li><code>profile</code> - 来自 <code>~/.aws/credentials</code> 的 AWS 命名配置文件（默认为 <code>AWS_PROFILE</code> 环境变量）</li>
+<li><code>endpoint</code> - VPC 端点的自定义端点 URL。这是通用 <code>baseURL</code> 选项使用 AWS 特定术语的别名。如果两者都指定，<code>endpoint</code> 优先。</li>
+</ul>
+<aside class="aside aside-note">
+Bearer Token（`AWS_BEARER_TOKEN_BEDROCK` 或 `/connect`）优先于基于配置文件的身份验证。详情请参见[身份验证优先级](/docs/providers#authentication-precedence)。
+</aside>
+[了解更多关于 Amazon Bedrock 配置的信息](/docs/providers#amazon-bedrock)。
+
+<hr>
+<h3>主题</h3>
+<p>您可以通过 vanilla-closedcode 配置中的 <code>theme</code> 选项设置要使用的主题。</p>
+<pre><code class="language-json">{
+  &quot;theme&quot;: &quot;&quot;
+}
+</code></pre>
+<p><a href="/docs/themes">在此了解更多</a>。</p>
+<hr>
+<h3>代理</h3>
+<p>您可以通过 <code>agent</code> 选项为特定任务配置专用代理。</p>
+<pre><code class="language-jsonc">{
+  &quot;agent&quot;: {
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-5&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        // Disable file modification tools for review-only agent
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+      },
+    },
+  },
+}
+</code></pre>
+<p>您还可以使用 <code>~/.config/closedcode/agents/</code> 或 <code>.closedcode/agents/</code> 中的 Markdown 文件定义代理。<a href="/docs/agents">在此了解更多</a>。</p>
+<hr>
+<h3>默认代理</h3>
+<p>您可以使用 <code>default_agent</code> 选项设置默认代理。当未明确指定代理时，将使用该默认代理。</p>
+<pre><code class="language-json">{
+  &quot;default_agent&quot;: &quot;plan&quot;
+}
+</code></pre>
+<p>默认代理必须是主代理（不能是子代理）。可以是内置代理（如 <code>&quot;build&quot;</code> 或 <code>&quot;plan&quot;</code>），也可以是您定义的<a href="/docs/agents">自定义代理</a>。如果指定的代理不存在或是子代理，vanilla-closedcode 将回退到 <code>&quot;build&quot;</code> 并发出警告。</p>
+<p>此设置适用于所有界面：TUI、CLI（<code>closedcode run</code>）、桌面应用和 GitHub Action。</p>
+<hr>
+<h3>分享</h3>
+<p>您可以通过 <code>share</code> 选项配置<a href="/docs/share">分享</a>功能。</p>
+<pre><code class="language-json">{
+  &quot;share&quot;: &quot;manual&quot;
+}
+</code></pre>
+<p>该选项接受：</p>
+<ul>
+<li><code>&quot;manual&quot;</code> - 允许通过命令手动分享（默认）</li>
+<li><code>&quot;auto&quot;</code> - 自动分享新会话</li>
+<li><code>&quot;disabled&quot;</code> - 完全禁用分享</li>
+</ul>
+<p>默认情况下，分享设置为手动模式，您需要使用 <code>/share</code> 命令显式分享会话。</p>
+<hr>
+<h3>命令</h3>
+<p>您可以通过 <code>command</code> 选项为重复任务配置自定义命令。</p>
+<pre><code class="language-jsonc">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-5&quot;,
+    },
+    &quot;component&quot;: {
+      &quot;template&quot;: &quot;Create a new React component named $ARGUMENTS with TypeScript support.\nInclude proper typing and basic structure.&quot;,
+      &quot;description&quot;: &quot;Create a new component&quot;,
+    },
+  },
+}
+</code></pre>
+<p>您还可以使用 <code>~/.config/closedcode/commands/</code> 或 <code>.closedcode/commands/</code> 中的 Markdown 文件定义命令。<a href="/docs/commands">在此了解更多</a>。</p>
+<hr>
+<h3>快捷键</h3>
+<p>您可以通过 <code>keybinds</code> 选项自定义快捷键。</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/keybinds">在此了解更多</a>。</p>
+<hr>
+<h3>自动更新</h3>
+<p>vanilla-closedcode 启动时会自动下载新版本。您可以使用 <code>autoupdate</code> 选项禁用此功能。</p>
+<pre><code class="language-json">{
+  &quot;autoupdate&quot;: false
+}
+</code></pre>
+<p>如果您不想自动更新但希望在新版本可用时收到通知，可将 <code>autoupdate</code> 设置为 <code>&quot;notify&quot;</code>。
+请注意，此功能仅在未通过 Homebrew 等包管理器安装时有效。</p>
+<hr>
+<h3>格式化程序</h3>
+<p>您可以通过 <code>formatter</code> 选项配置代码格式化程序。</p>
+<pre><code class="language-json">{
+  &quot;formatter&quot;: {
+    &quot;prettier&quot;: {
+      &quot;disabled&quot;: true
+    },
+    &quot;custom-prettier&quot;: {
+      &quot;command&quot;: [&quot;npx&quot;, &quot;prettier&quot;, &quot;--write&quot;, &quot;$FILE&quot;],
+      &quot;environment&quot;: {
+        &quot;NODE_ENV&quot;: &quot;development&quot;
+      },
+      &quot;extensions&quot;: [&quot;.js&quot;, &quot;.ts&quot;, &quot;.jsx&quot;, &quot;.tsx&quot;]
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/formatters">在此了解更多关于格式化程序的信息</a>。</p>
+<hr>
+<h3>权限</h3>
+<p>默认情况下，vanilla-closedcode <strong>允许所有操作</strong>，无需明确批准。您可以使用 <code>permission</code> 选项更改此行为。</p>
+<p>例如，要让 <code>edit</code> 和 <code>bash</code> 工具需要用户确认：</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;ask&quot;
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">在此了解更多关于权限的信息</a>。</p>
+<hr>
+<h3>压缩</h3>
+<p>您可以通过 <code>compaction</code> 选项控制上下文压缩行为。</p>
+<pre><code class="language-json">{
+  &quot;compaction&quot;: {
+    &quot;auto&quot;: true,
+    &quot;prune&quot;: true,
+    &quot;reserved&quot;: 10000
+  }
+}
+</code></pre>
+<ul>
+<li><code>auto</code> - 当上下文已满时自动压缩会话（默认值：<code>true</code>）。</li>
+<li><code>prune</code> - 删除旧的工具输出以节省 Token（默认值：<code>true</code>）。</li>
+<li><code>reserved</code> - 压缩时的 Token 缓冲区。保留足够的窗口以避免压缩过程中溢出。</li>
+</ul>
+<hr>
+<h3>文件监视器</h3>
+<p>您可以通过 <code>watcher</code> 选项配置文件监视器的忽略模式。</p>
+<pre><code class="language-json">{
+  &quot;watcher&quot;: {
+    &quot;ignore&quot;: [&quot;node_modules/**&quot;, &quot;dist/**&quot;, &quot;.git/**&quot;]
+  }
+}
+</code></pre>
+<p>模式遵循 glob 语法。使用此选项可以从文件监视中排除频繁变动的目录。</p>
+<hr>
+<h3>MCP 服务器</h3>
+<p>您可以通过 <code>mcp</code> 选项配置要使用的 MCP 服务器。</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {}
+}
+</code></pre>
+<p><a href="/docs/mcp-servers">在此了解更多</a>。</p>
+<hr>
+<h3>插件</h3>
+<p><a href="/docs/plugins">插件</a>通过自定义工具、钩子和集成来扩展 vanilla-closedcode。</p>
+<p>将插件文件放置在 <code>.closedcode/plugins/</code> 或 <code>~/.config/closedcode/plugins/</code> 中。您还可以通过 <code>plugin</code> 选项从 npm 加载插件。</p>
+<pre><code class="language-json">{
+  &quot;plugin&quot;: [&quot;opencode-helicone-session&quot;, &quot;@my-org/custom-plugin&quot;]
+}
+</code></pre>
+<p><a href="/docs/plugins">在此了解更多</a>。</p>
+<hr>
+<h3>指令</h3>
+<p>您可以通过 <code>instructions</code> 选项为所使用的模型配置指令。</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;CONTRIBUTING.md&quot;, &quot;docs/guidelines.md&quot;, &quot;.cursor/rules/*.md&quot;]
+}
+</code></pre>
+<p>该选项接受指令文件路径和 glob 模式的数组。<a href="/docs/rules">在此了解更多关于规则的信息</a>。</p>
+<hr>
+<h3>禁用提供商</h3>
+<p>您可以通过 <code>disabled_providers</code> 选项禁用自动加载的提供商。当您希望阻止某些提供商被加载（即使其凭据可用）时，此选项非常有用。</p>
+<pre><code class="language-json">{
+  &quot;disabled_providers&quot;: [&quot;openai&quot;, &quot;gemini&quot;]
+}
+</code></pre>
+<aside class="aside aside-note">
+`disabled_providers` 优先于 `enabled_providers`。
+</aside>
+`disabled_providers` 选项接受提供商 ID 的数组。当某个提供商被禁用时：
+
+<ul>
+<li>即使设置了环境变量，也不会被加载。</li>
+<li>即使通过 <code>/connect</code> 命令配置了 API 密钥，也不会被加载。</li>
+<li>该提供商的模型不会出现在模型选择列表中。</li>
+</ul>
+<hr>
+<h3>启用提供商</h3>
+<p>您可以通过 <code>enabled_providers</code> 选项指定允许使用的提供商白名单。设置后，仅启用指定的提供商，所有其他提供商将被忽略。</p>
+<pre><code class="language-json">{
+  &quot;enabled_providers&quot;: [&quot;anthropic&quot;, &quot;openai&quot;]
+}
+</code></pre>
+<p>当您希望限制 vanilla-closedcode 仅使用特定提供商，而不是逐一禁用其他提供商时，此选项非常有用。</p>
+<aside class="aside aside-note">
+`disabled_providers` 优先于 `enabled_providers`。
+</aside>
+如果某个提供商同时出现在 `enabled_providers` 和 `disabled_providers` 中，为了向后兼容，`disabled_providers` 优先。
+
+<hr>
+<h3>实验性功能</h3>
+<p><code>experimental</code> 键包含正在积极开发中的选项。</p>
+<pre><code class="language-json">{
+  &quot;experimental&quot;: {}
+}
+</code></pre>
+<aside class="aside aside-caution">
+实验性选项不稳定。它们可能会在不另行通知的情况下被更改或移除。
+</aside>
+---
+
+<h2>变量</h2>
+<p>您可以在配置文件中使用变量替换来引用环境变量和文件内容。</p>
+<hr>
+<h3>环境变量</h3>
+<p>使用 <code>{env:VARIABLE_NAME}</code> 来替换环境变量：</p>
+<pre><code class="language-json">{
+  &quot;model&quot;: &quot;{env:CLOSEDCODE_MODEL}&quot;,
+  &quot;provider&quot;: {
+    &quot;anthropic&quot;: {
+      &quot;models&quot;: {},
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{env:ANTHROPIC_API_KEY}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>如果环境变量未设置，它将被替换为空字符串。</p>
+<hr>
+<h3>文件</h3>
+<p>使用 <code>{file:path/to/file}</code> 来替换文件内容：</p>
+<pre><code class="language-json">{
+  &quot;instructions&quot;: [&quot;./custom-instructions.md&quot;],
+  &quot;provider&quot;: {
+    &quot;openai&quot;: {
+      &quot;options&quot;: {
+        &quot;apiKey&quot;: &quot;{file:~/.secrets/openai-key}&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>文件路径可以是：</p>
+<ul>
+<li>相对于配置文件所在目录的路径</li>
+<li>以 <code>/</code> 或 <code>~</code> 开头的绝对路径</li>
+</ul>
+<p>这些功能适用于：</p>
+<ul>
+<li>将 API 密钥等敏感数据保存在单独的文件中。</li>
+<li>引入大型指令文件而不会使配置变得杂乱。</li>
+<li>在多个配置文件之间共享通用配置片段。</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

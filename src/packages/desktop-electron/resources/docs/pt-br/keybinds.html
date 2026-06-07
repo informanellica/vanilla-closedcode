@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Atalhos de Teclado — vanilla-closedcode docs</title>
+  <meta name="description" content="Personalize seus atalhos de teclado.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/keybinds.html">English</option>
+      <option value="../ar/keybinds.html">العربية</option>
+      <option value="../bs/keybinds.html">Bosanski</option>
+      <option value="../da/keybinds.html">Dansk</option>
+      <option value="../de/keybinds.html">Deutsch</option>
+      <option value="../es/keybinds.html">Español</option>
+      <option value="../fr/keybinds.html">Français</option>
+      <option value="../it/keybinds.html">Italiano</option>
+      <option value="../ja/keybinds.html">日本語</option>
+      <option value="../ko/keybinds.html">한국어</option>
+      <option value="../nb/keybinds.html">Norsk</option>
+      <option value="../pl/keybinds.html">Polski</option>
+      <option value="../pt-br/keybinds.html" selected>Português (BR)</option>
+      <option value="../ru/keybinds.html">Русский</option>
+      <option value="../th/keybinds.html">ไทย</option>
+      <option value="../tr/keybinds.html">Türkçe</option>
+      <option value="../zh-cn/keybinds.html">简体中文</option>
+      <option value="../zh-tw/keybinds.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li class="active"><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Atalhos de Teclado</h1>
+      <p class="lede">Personalize seus atalhos de teclado.</p>
+      <p>O closedcode tem uma lista de atalhos de teclado que você pode personalizar através de <code>tui.json</code>.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {
+    &quot;leader&quot;: &quot;ctrl+x&quot;,
+    &quot;app_exit&quot;: &quot;ctrl+c,ctrl+d,&lt;leader&gt;q&quot;,
+    &quot;editor_open&quot;: &quot;&lt;leader&gt;e&quot;,
+    &quot;theme_list&quot;: &quot;&lt;leader&gt;t&quot;,
+    &quot;sidebar_toggle&quot;: &quot;&lt;leader&gt;b&quot;,
+    &quot;scrollbar_toggle&quot;: &quot;none&quot;,
+    &quot;username_toggle&quot;: &quot;none&quot;,
+    &quot;status_view&quot;: &quot;&lt;leader&gt;s&quot;,
+    &quot;tool_details&quot;: &quot;none&quot;,
+    &quot;session_export&quot;: &quot;&lt;leader&gt;x&quot;,
+    &quot;session_new&quot;: &quot;&lt;leader&gt;n&quot;,
+    &quot;session_list&quot;: &quot;&lt;leader&gt;l&quot;,
+    &quot;session_timeline&quot;: &quot;&lt;leader&gt;g&quot;,
+    &quot;session_fork&quot;: &quot;none&quot;,
+    &quot;session_rename&quot;: &quot;none&quot;,
+    &quot;session_share&quot;: &quot;none&quot;,
+    &quot;session_unshare&quot;: &quot;none&quot;,
+    &quot;session_interrupt&quot;: &quot;escape&quot;,
+    &quot;session_compact&quot;: &quot;&lt;leader&gt;c&quot;,
+    &quot;session_child_first&quot;: &quot;&lt;leader&gt;down&quot;,
+    &quot;session_child_cycle&quot;: &quot;&lt;leader&gt;right&quot;,
+    &quot;session_child_cycle_reverse&quot;: &quot;&lt;leader&gt;left&quot;,
+    &quot;session_parent&quot;: &quot;&lt;leader&gt;up&quot;,
+    &quot;messages_page_up&quot;: &quot;pageup,ctrl+alt+b&quot;,
+    &quot;messages_page_down&quot;: &quot;pagedown,ctrl+alt+f&quot;,
+    &quot;messages_line_up&quot;: &quot;ctrl+alt+y&quot;,
+    &quot;messages_line_down&quot;: &quot;ctrl+alt+e&quot;,
+    &quot;messages_half_page_up&quot;: &quot;ctrl+alt+u&quot;,
+    &quot;messages_half_page_down&quot;: &quot;ctrl+alt+d&quot;,
+    &quot;messages_first&quot;: &quot;ctrl+g,home&quot;,
+    &quot;messages_last&quot;: &quot;ctrl+alt+g,end&quot;,
+    &quot;messages_next&quot;: &quot;none&quot;,
+    &quot;messages_previous&quot;: &quot;none&quot;,
+    &quot;messages_copy&quot;: &quot;&lt;leader&gt;y&quot;,
+    &quot;messages_undo&quot;: &quot;&lt;leader&gt;u&quot;,
+    &quot;messages_redo&quot;: &quot;&lt;leader&gt;r&quot;,
+    &quot;messages_last_user&quot;: &quot;none&quot;,
+    &quot;messages_toggle_conceal&quot;: &quot;&lt;leader&gt;h&quot;,
+    &quot;model_list&quot;: &quot;&lt;leader&gt;m&quot;,
+    &quot;model_cycle_recent&quot;: &quot;f2&quot;,
+    &quot;model_cycle_recent_reverse&quot;: &quot;shift+f2&quot;,
+    &quot;model_cycle_favorite&quot;: &quot;none&quot;,
+    &quot;model_cycle_favorite_reverse&quot;: &quot;none&quot;,
+    &quot;variant_cycle&quot;: &quot;ctrl+t&quot;,
+    &quot;variant_list&quot;: &quot;none&quot;,
+    &quot;command_list&quot;: &quot;ctrl+p&quot;,
+    &quot;agent_list&quot;: &quot;&lt;leader&gt;a&quot;,
+    &quot;agent_cycle&quot;: &quot;tab&quot;,
+    &quot;agent_cycle_reverse&quot;: &quot;shift+tab&quot;,
+    &quot;input_clear&quot;: &quot;ctrl+c&quot;,
+    &quot;input_paste&quot;: &quot;ctrl+v&quot;,
+    &quot;input_submit&quot;: &quot;return&quot;,
+    &quot;input_newline&quot;: &quot;shift+return,ctrl+return,alt+return,ctrl+j&quot;,
+    &quot;input_move_left&quot;: &quot;left,ctrl+b&quot;,
+    &quot;input_move_right&quot;: &quot;right,ctrl+f&quot;,
+    &quot;input_move_up&quot;: &quot;up&quot;,
+    &quot;input_move_down&quot;: &quot;down&quot;,
+    &quot;input_select_left&quot;: &quot;shift+left&quot;,
+    &quot;input_select_right&quot;: &quot;shift+right&quot;,
+    &quot;input_select_up&quot;: &quot;shift+up&quot;,
+    &quot;input_select_down&quot;: &quot;shift+down&quot;,
+    &quot;input_line_home&quot;: &quot;ctrl+a&quot;,
+    &quot;input_line_end&quot;: &quot;ctrl+e&quot;,
+    &quot;input_select_line_home&quot;: &quot;ctrl+shift+a&quot;,
+    &quot;input_select_line_end&quot;: &quot;ctrl+shift+e&quot;,
+    &quot;input_visual_line_home&quot;: &quot;alt+a&quot;,
+    &quot;input_visual_line_end&quot;: &quot;alt+e&quot;,
+    &quot;input_select_visual_line_home&quot;: &quot;alt+shift+a&quot;,
+    &quot;input_select_visual_line_end&quot;: &quot;alt+shift+e&quot;,
+    &quot;input_buffer_home&quot;: &quot;home&quot;,
+    &quot;input_buffer_end&quot;: &quot;end&quot;,
+    &quot;input_select_buffer_home&quot;: &quot;shift+home&quot;,
+    &quot;input_select_buffer_end&quot;: &quot;shift+end&quot;,
+    &quot;input_delete_line&quot;: &quot;ctrl+shift+d&quot;,
+    &quot;input_delete_to_line_end&quot;: &quot;ctrl+k&quot;,
+    &quot;input_delete_to_line_start&quot;: &quot;ctrl+u&quot;,
+    &quot;input_backspace&quot;: &quot;backspace,shift+backspace&quot;,
+    &quot;input_delete&quot;: &quot;ctrl+d,delete,shift+delete&quot;,
+    &quot;input_undo&quot;: &quot;ctrl+-,super+z&quot;,
+    &quot;input_redo&quot;: &quot;ctrl+.,super+shift+z&quot;,
+    &quot;input_word_forward&quot;: &quot;alt+f,alt+right,ctrl+right&quot;,
+    &quot;input_word_backward&quot;: &quot;alt+b,alt+left,ctrl+left&quot;,
+    &quot;input_select_word_forward&quot;: &quot;alt+shift+f,alt+shift+right&quot;,
+    &quot;input_select_word_backward&quot;: &quot;alt+shift+b,alt+shift+left&quot;,
+    &quot;input_delete_word_forward&quot;: &quot;alt+d,alt+delete,ctrl+delete&quot;,
+    &quot;input_delete_word_backward&quot;: &quot;ctrl+w,ctrl+backspace,alt+backspace&quot;,
+    &quot;history_previous&quot;: &quot;up&quot;,
+    &quot;history_next&quot;: &quot;down&quot;,
+    &quot;terminal_suspend&quot;: &quot;ctrl+z&quot;,
+    &quot;terminal_title_toggle&quot;: &quot;none&quot;,
+    &quot;tips_toggle&quot;: &quot;&lt;leader&gt;h&quot;,
+    &quot;display_thinking&quot;: &quot;none&quot;
+  }
+}
+</code></pre>
+<hr>
+<h2>Tecla líder</h2>
+<p>O closedcode usa uma tecla <code>leader</code> para a maioria dos atalhos de teclado. Isso evita conflitos no seu terminal.</p>
+<p>Por padrão, <code>ctrl+x</code> é a tecla líder e a maioria das ações requer que você primeiro pressione a tecla líder e depois o atalho. Por exemplo, para iniciar uma nova sessão, você primeiro pressiona <code>ctrl+x</code> e depois pressiona <code>n</code>.</p>
+<p>Você não precisa usar uma tecla líder para seus atalhos, mas recomendamos que o faça.</p>
+<hr>
+<h2>Desativar atalho</h2>
+<p>Você pode desativar um atalho adicionando a tecla à sua configuração com um valor de &quot;none&quot;.</p>
+<pre><code class="language-json">{
+  &quot;keybinds&quot;: {
+    &quot;session_compact&quot;: &quot;none&quot;
+  }
+}
+</code></pre>
+<hr>
+<h2>Atalhos do prompt do desktop</h2>
+<p>O prompt de entrada do aplicativo desktop closedcode suporta atalhos comuns de estilo Readline/Emacs para edição de texto. Estes são embutidos e atualmente não são configuráveis via <code>closedcode.json</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Atalho</th>
+<th>Ação</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>ctrl+a</code></td>
+<td>Mover para o início da linha atual</td>
+</tr>
+<tr>
+<td><code>ctrl+e</code></td>
+<td>Mover para o final da linha atual</td>
+</tr>
+<tr>
+<td><code>ctrl+b</code></td>
+<td>Mover o cursor uma posição para trás</td>
+</tr>
+<tr>
+<td><code>ctrl+f</code></td>
+<td>Mover o cursor uma posição para frente</td>
+</tr>
+<tr>
+<td><code>alt+b</code></td>
+<td>Mover o cursor uma palavra para trás</td>
+</tr>
+<tr>
+<td><code>alt+f</code></td>
+<td>Mover o cursor uma palavra para frente</td>
+</tr>
+<tr>
+<td><code>ctrl+d</code></td>
+<td>Deletar o caractere sob o cursor</td>
+</tr>
+<tr>
+<td><code>ctrl+k</code></td>
+<td>Matar até o final da linha</td>
+</tr>
+<tr>
+<td><code>ctrl+u</code></td>
+<td>Matar até o início da linha</td>
+</tr>
+<tr>
+<td><code>ctrl+w</code></td>
+<td>Matar a palavra anterior</td>
+</tr>
+<tr>
+<td><code>alt+d</code></td>
+<td>Matar a próxima palavra</td>
+</tr>
+<tr>
+<td><code>ctrl+t</code></td>
+<td>Transpor caracteres</td>
+</tr>
+<tr>
+<td><code>ctrl+g</code></td>
+<td>Cancelar popovers / abortar resposta em execução</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Shift+Enter</h2>
+<p>Alguns terminais não enviam teclas modificadoras com Enter por padrão. Você pode precisar configurar seu terminal para enviar <code>Shift+Enter</code> como uma sequência de escape.</p>
+<h3>Windows Terminal</h3>
+<p>Abra seu <code>settings.json</code> em:</p>
+<pre><code>%LOCALAPPDATA%\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\settings.json
+</code></pre>
+<p>Adicione isso ao array <code>actions</code> de nível raiz:</p>
+<pre><code class="language-json">&quot;actions&quot;: [
+  {
+    &quot;command&quot;: {
+      &quot;action&quot;: &quot;sendInput&quot;,
+      &quot;input&quot;: &quot;\u001b[13;2u&quot;
+    },
+    &quot;id&quot;: &quot;User.sendInput.ShiftEnterCustom&quot;
+  }
+]
+</code></pre>
+<p>Adicione isso ao array <code>keybindings</code> de nível raiz:</p>
+<pre><code class="language-json">&quot;keybindings&quot;: [
+  {
+    &quot;keys&quot;: &quot;shift+enter&quot;,
+    &quot;id&quot;: &quot;User.sendInput.ShiftEnterCustom&quot;
+  }
+]
+</code></pre>
+<p>Salve o arquivo e reinicie o Windows Terminal ou abra uma nova aba.</p>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

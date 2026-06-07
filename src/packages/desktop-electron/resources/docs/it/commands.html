@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comandi — vanilla-closedcode docs</title>
+  <meta name="description" content="Crea comandi personalizzati per task ripetitivi.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/commands.html">English</option>
+      <option value="../ar/commands.html">العربية</option>
+      <option value="../bs/commands.html">Bosanski</option>
+      <option value="../da/commands.html">Dansk</option>
+      <option value="../de/commands.html">Deutsch</option>
+      <option value="../es/commands.html">Español</option>
+      <option value="../fr/commands.html">Français</option>
+      <option value="../it/commands.html" selected>Italiano</option>
+      <option value="../ja/commands.html">日本語</option>
+      <option value="../ko/commands.html">한국어</option>
+      <option value="../nb/commands.html">Norsk</option>
+      <option value="../pl/commands.html">Polski</option>
+      <option value="../pt-br/commands.html">Português (BR)</option>
+      <option value="../ru/commands.html">Русский</option>
+      <option value="../th/commands.html">ไทย</option>
+      <option value="../tr/commands.html">Türkçe</option>
+      <option value="../zh-cn/commands.html">简体中文</option>
+      <option value="../zh-tw/commands.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Italiano</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li class="active"><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Comandi</h1>
+      <p class="lede">Crea comandi personalizzati per task ripetitivi.</p>
+      <p>I comandi personalizzati ti permettono di definire un prompt da eseguire quando quel comando viene lanciato nella TUI.</p>
+<pre><code class="language-bash">/my-command
+</code></pre>
+<p>I comandi personalizzati si aggiungono a quelli integrati come <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>. <a href="/docs/tui#commands">Scopri di piu</a>.</p>
+<hr>
+<h2>Creazione file di comando</h2>
+<p>Crea file markdown nella directory <code>commands/</code> per definire comandi personalizzati.</p>
+<p>Crea <code>.closedcode/commands/test.md</code>:</p>
+<pre><code class="language-md">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Il frontmatter definisce le proprieta del comando. Il contenuto diventa il template.</p>
+<p>Usa il comando digitando <code>/</code> seguito dal nome del comando.</p>
+<pre><code class="language-bash">&quot;/test&quot;
+</code></pre>
+<hr>
+<h2>Configurazione</h2>
+<p>Puoi aggiungere comandi personalizzati tramite la config di vanilla-closedcode o creando file markdown nella directory <code>commands/</code>.</p>
+<hr>
+<h3>JSON</h3>
+<p>Usa l&#39;opzione <code>command</code> nella <a href="/docs/config">config</a> di vanilla-closedcode:</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    // This becomes the name of the command
+    &quot;test&quot;: {
+      // This is the prompt that will be sent to the LLM
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;,
+      // This is shown as the description in the TUI
+      &quot;description&quot;: &quot;Run tests with coverage&quot;,
+      &quot;agent&quot;: &quot;build&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Ora puoi eseguire questo comando nella TUI:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>Puoi anche definire comandi usando file markdown. Mettili in:</p>
+<ul>
+<li>Globale: <code>~/.config/closedcode/commands/</code></li>
+<li>Per progetto: <code>.closedcode/commands/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Run tests with coverage
+agent: build
+model: anthropic/claude-3-5-sonnet-20241022
+---
+
+Run the full test suite with coverage report and show any failures.
+Focus on the failing tests and suggest fixes.
+</code></pre>
+<p>Il nome del file markdown diventa il nome del comando. Per esempio, <code>test.md</code> ti permette di eseguire:</p>
+<pre><code class="language-bash">/test
+</code></pre>
+<hr>
+<h2>Configurazione del prompt</h2>
+<p>I prompt dei comandi personalizzati supportano diversi placeholder e sintassi speciali.</p>
+<hr>
+<h3>Argomenti</h3>
+<p>Passa argomenti ai comandi usando il placeholder <code>$ARGUMENTS</code>.</p>
+<pre><code class="language-md">---
+description: Create a new component
+---
+
+Create a new React component named $ARGUMENTS with TypeScript support.
+Include proper typing and basic structure.
+</code></pre>
+<p>Esegui il comando con argomenti:</p>
+<pre><code class="language-bash">/component Button
+</code></pre>
+<p>E <code>$ARGUMENTS</code> verra sostituito con <code>Button</code>.</p>
+<p>Puoi anche accedere ai singoli argomenti usando parametri posizionali:</p>
+<ul>
+<li><code>$1</code> - Primo argomento</li>
+<li><code>$2</code> - Secondo argomento</li>
+<li><code>$3</code> - Terzo argomento</li>
+<li>E cosi via...</li>
+</ul>
+<p>Per esempio:</p>
+<pre><code class="language-md">---
+description: Create a new file with content
+---
+
+Create a file named $1 in the directory $2
+with the following content: $3
+</code></pre>
+<p>Esegui il comando:</p>
+<pre><code class="language-bash">/create-file config.json src &quot;{ \&quot;key\&quot;: \&quot;value\&quot; }&quot;
+</code></pre>
+<p>Questo sostituisce:</p>
+<ul>
+<li><code>$1</code> con <code>config.json</code></li>
+<li><code>$2</code> con <code>src</code></li>
+<li><code>$3</code> con <code>{ &quot;key&quot;: &quot;value&quot; }</code></li>
+</ul>
+<hr>
+<h3>Output della shell</h3>
+<p>Usa <em>!<code>command</code></em> per inserire nel prompt l&#39;output di un <a href="/docs/tui#bash-commands">comando bash</a>.</p>
+<p>Per esempio, per creare un comando personalizzato che analizzi la copertura dei test:</p>
+<pre><code class="language-md">---
+description: Analyze test coverage
+---
+
+Here are the current test results:
+!`npm test`
+
+Based on these results, suggest improvements to increase coverage.
+</code></pre>
+<p>Oppure per rivedere modifiche recenti:</p>
+<pre><code class="language-md">---
+description: Review recent changes
+---
+
+Recent git commits:
+!`git log --oneline -10`
+
+Review these changes and suggest any improvements.
+</code></pre>
+<p>I comandi vengono eseguiti nella root del progetto e il loro output diventa parte del prompt.</p>
+<hr>
+<h3>Riferimenti ai file</h3>
+<p>Includi file nel comando usando <code>@</code> seguito dal nome del file.</p>
+<pre><code class="language-md">---
+description: Review component
+---
+
+Review the component in @src/components/Button.tsx.
+Check for performance issues and suggest improvements.
+</code></pre>
+<p>Il contenuto del file viene incluso automaticamente nel prompt.</p>
+<hr>
+<h2>Opzioni</h2>
+<p>Vediamo le opzioni di configurazione nel dettaglio.</p>
+<hr>
+<h3>Template del prompt</h3>
+<p>L&#39;opzione <code>template</code> definisce il prompt che verra inviato all&#39;LLM quando il comando viene eseguito.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;template&quot;: &quot;Run the full test suite with coverage report and show any failures.\nFocus on the failing tests and suggest fixes.&quot;
+    }
+  }
+}
+</code></pre>
+<p>Questa e un&#39;opzione di config <strong>obbligatoria</strong>.</p>
+<hr>
+<h3>Descrizione</h3>
+<p>Usa l&#39;opzione <code>description</code> per fornire una breve descrizione di cosa fa il comando.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;test&quot;: {
+      &quot;description&quot;: &quot;Run tests with coverage&quot;
+    }
+  }
+}
+</code></pre>
+<p>Questo viene mostrato come descrizione nella TUI quando digiti il comando.</p>
+<hr>
+<h3>Agente</h3>
+<p>Usa la config <code>agent</code> per specificare opzionalmente quale <a href="/docs/agents">agente</a> deve eseguire il comando.
+Se e un <a href="/docs/agents/#subagents">subagent</a>, il comando attiva per default l&#39;invocazione di un subagent.
+Per disabilitare questo comportamento, imposta <code>subtask</code> a <code>false</code>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;review&quot;: {
+      &quot;agent&quot;: &quot;plan&quot;
+    }
+  }
+}
+</code></pre>
+<p>Questa e un&#39;opzione di config <strong>opzionale</strong>. Se non specificata, usa l&#39;agente corrente.</p>
+<hr>
+<h3>Sottotask</h3>
+<p>Usa il booleano <code>subtask</code> per forzare il comando ad attivare l&#39;invocazione di un <a href="/docs/agents/#subagents">subagent</a>.
+E utile se vuoi evitare che il comando inquini il contesto principale e <strong>forza</strong> l&#39;agente ad agire come subagent,
+anche se <code>mode</code> e impostato su <code>primary</code> nella configurazione dell&#39;<a href="/docs/agents">agente</a>.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;subtask&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>Questa e un&#39;opzione di config <strong>opzionale</strong>.</p>
+<hr>
+<h3>Modello</h3>
+<p>Usa la config <code>model</code> per sovrascrivere il modello predefinito per questo comando.</p>
+<pre><code class="language-json">{
+  &quot;command&quot;: {
+    &quot;analyze&quot;: {
+      &quot;model&quot;: &quot;anthropic/claude-3-5-sonnet-20241022&quot;
+    }
+  }
+}
+</code></pre>
+<p>Questa e un&#39;opzione di config <strong>opzionale</strong>.</p>
+<hr>
+<h2>Comandi integrati</h2>
+<p>closedcode include diversi comandi integrati come <code>/init</code>, <code>/undo</code>, <code>/redo</code>, <code>/share</code>, <code>/help</code>; <a href="/docs/tui#commands">scopri di piu</a>.</p>
+<aside class="aside aside-note">
+I comandi personalizzati possono sovrascrivere quelli integrati.
+</aside>
+Se definisci un comando personalizzato con lo stesso nome, sovrascrivera il comando integrato.
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

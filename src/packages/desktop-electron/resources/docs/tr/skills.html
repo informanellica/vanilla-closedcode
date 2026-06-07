@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ajan becerileri — vanilla-closedcode docs</title>
+  <meta name="description" content="SKILL.md ile tekrar kullanilabilir davranis tanimlayin">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/skills.html">English</option>
+      <option value="../ar/skills.html">العربية</option>
+      <option value="../bs/skills.html">Bosanski</option>
+      <option value="../da/skills.html">Dansk</option>
+      <option value="../de/skills.html">Deutsch</option>
+      <option value="../es/skills.html">Español</option>
+      <option value="../fr/skills.html">Français</option>
+      <option value="../it/skills.html">Italiano</option>
+      <option value="../ja/skills.html">日本語</option>
+      <option value="../ko/skills.html">한국어</option>
+      <option value="../nb/skills.html">Norsk</option>
+      <option value="../pl/skills.html">Polski</option>
+      <option value="../pt-br/skills.html">Português (BR)</option>
+      <option value="../ru/skills.html">Русский</option>
+      <option value="../th/skills.html">ไทย</option>
+      <option value="../tr/skills.html" selected>Türkçe</option>
+      <option value="../zh-cn/skills.html">简体中文</option>
+      <option value="../zh-tw/skills.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Türkçe</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li class="active"><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Ajan becerileri</h1>
+      <p class="lede">SKILL.md ile tekrar kullanilabilir davranis tanimlayin</p>
+      <p>Ajan becerileri, closedcode&#39;un deponuzdan veya ev dizininizden tekrar kullanilabilir talimatlari kesfetmesini saglar.
+Beceriler, yerel <code>skill</code> araci uzerinden ihtiyac aninda yuklenir; ajanlar mevcut becerileri gorur ve gerektiginde tam icerigi yukler.</p>
+<hr>
+<h2>Dosyalari yerlestirin</h2>
+<p>Her beceri adi icin bir klasor olusturun ve icine bir <code>SKILL.md</code> koyun.
+closedcode su konumlari tarar:</p>
+<ul>
+<li>Proje konfigurasyonu: <code>.closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Genel konfigurasyon: <code>~/.config/closedcode/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Proje Claude uyumlu: <code>.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Genel Claude uyumlu: <code>~/.claude/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Proje agent uyumlu: <code>.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+<li>Genel agent uyumlu: <code>~/.agents/skills/&lt;name&gt;/SKILL.md</code></li>
+</ul>
+<hr>
+<h2>Kesfi anlayin</h2>
+<p>Proje yerel yollarinda closedcode, mevcut calisma dizininizden baslayip git worktree kokune kadar yukari cikar.
+Bu sirada <code>skills/*/SKILL.md</code> altindaki eslesen <code>.closedcode/</code> dosyalarini ve <code>.claude/skills/*/SKILL.md</code> ya da <code>.agents/skills/*/SKILL.md</code> dosyalarini yukler.</p>
+<p>Genel tanimlar da <code>~/.config/closedcode/skills/*/SKILL.md</code>, <code>~/.claude/skills/*/SKILL.md</code> ve <code>~/.agents/skills/*/SKILL.md</code> yollarindan yuklenir.</p>
+<hr>
+<h2>Frontmatter yazin</h2>
+<p>Her <code>SKILL.md</code>, YAML frontmatter ile baslamalidir.
+Sadece su alanlar taninir:</p>
+<ul>
+<li><code>name</code> (zorunlu)</li>
+<li><code>description</code> (zorunlu)</li>
+<li><code>license</code> (istege bagli)</li>
+<li><code>compatibility</code> (istege bagli)</li>
+<li><code>metadata</code> (istege bagli, string-to-string map)</li>
+</ul>
+<p>Bilinmeyen frontmatter alanlari yok sayilir.</p>
+<hr>
+<h2>Adlari dogrulayin</h2>
+<p><code>name</code> su kurallari saglamalidir:</p>
+<ul>
+<li>1-64 karakter olmali</li>
+<li>Kucuk harf alfanumerik ve tekli tire ayirici kullanmali</li>
+<li><code>-</code> ile baslamamali veya bitmemeli</li>
+<li>Ardisik <code>--</code> icermemeli</li>
+<li><code>SKILL.md</code> dosyasini barindiran klasor adi ile ayni olmali</li>
+</ul>
+<p>Esdeger regex:</p>
+<pre><code class="language-text">^[a-z0-9]+(-[a-z0-9]+)*$
+</code></pre>
+<hr>
+<h2>Uzunluk kurallarina uyun</h2>
+<p><code>description</code> 1-1024 karakter arasinda olmali.
+Ajanin dogru secim yapmasi icin yeterince acik yazin.</p>
+<hr>
+<h2>Ornek kullanin</h2>
+<p><code>.closedcode/skills/git-release/SKILL.md</code> dosyasini soyle olusturun:</p>
+<pre><code class="language-markdown">---
+name: git-release
+description: Create consistent releases and changelogs
+license: MIT
+compatibility: closedcode
+metadata:
+  audience: maintainers
+  workflow: github
+---
+
+## What I do
+
+- Draft release notes from merged PRs
+- Propose a version bump
+- Provide a copy-pasteable `gh release create` command
+
+## When to use me
+
+Use this when you are preparing a tagged release.
+Ask clarifying questions if the target versioning scheme is unclear.
+</code></pre>
+<hr>
+<h2>Arac aciklamasini taniyin</h2>
+<p>closedcode, <code>skill</code> araci aciklamasinda mevcut becerileri listeler.
+Her kayitta beceri adi ve aciklamasi yer alir:</p>
+<pre><code class="language-xml">&lt;available_skills&gt;
+  &lt;skill&gt;
+    &lt;name&gt;git-release&lt;/name&gt;
+    &lt;description&gt;Create consistent releases and changelogs&lt;/description&gt;
+  &lt;/skill&gt;
+&lt;/available_skills&gt;
+</code></pre>
+<p>Ajan, araci cagirarak beceri yukler:</p>
+<pre><code>skill({ name: &quot;git-release&quot; })
+</code></pre>
+<hr>
+<h2>Izinleri yapilandirin</h2>
+<p><code>closedcode.json</code> icinde pattern tabanli izinlerle ajanlarin hangi becerilere erisecegini kontrol edin:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;skill&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;pr-review&quot;: &quot;allow&quot;,
+      &quot;internal-*&quot;: &quot;deny&quot;,
+      &quot;experimental-*&quot;: &quot;ask&quot;
+    }
+  }
+}
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Permission</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>allow</code></td>
+<td>Beceri hemen yuklenir</td>
+</tr>
+<tr>
+<td><code>deny</code></td>
+<td>Beceri ajandan gizlenir, erisim reddedilir</td>
+</tr>
+<tr>
+<td><code>ask</code></td>
+<td>Yukleme oncesi kullanicidan onay istenir</td>
+</tr>
+</tbody></table>
+<p>Pattern&#39;lar wildcard destekler: <code>internal-*</code>, <code>internal-docs</code>, <code>internal-tools</code> vb. adlarla eslesir.</p>
+<hr>
+<h2>Ajan bazinda gecersiz kilin</h2>
+<p>Belirli ajanlara genel varsayimlardan farkli izinler verebilirsiniz.</p>
+<p><strong>Ozel ajanlar icin</strong> (agent frontmatter icinde):</p>
+<pre><code class="language-yaml">---
+permission:
+  skill:
+    &quot;documents-*&quot;: &quot;allow&quot;
+---
+</code></pre>
+<p><strong>Yerlesik ajanlar icin</strong> (<code>closedcode.json</code> icinde):</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;permission&quot;: {
+        &quot;skill&quot;: {
+          &quot;internal-*&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Skill aracini kapatin</h2>
+<p>Beceri kullanmamasi gereken ajanlar icin skill aracini tamamen kapatabilirsiniz:</p>
+<p><strong>Ozel ajanlar icin</strong>:</p>
+<pre><code class="language-yaml">---
+tools:
+  skill: false
+---
+</code></pre>
+<p><strong>Yerlesik ajanlar icin</strong>:</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;skill&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p>Devre disi oldugunda <code>&lt;available_skills&gt;</code> bolumu tamamen kaldirilir.</p>
+<hr>
+<h2>Yukleme sorunlarini giderin</h2>
+<p>Bir beceri listede gorunmuyorsa:</p>
+<ol>
+<li><code>SKILL.md</code> adinin tamamen buyuk harfle yazildigini dogrulayin</li>
+<li>Frontmatter icinde <code>name</code> ve <code>description</code> oldugunu kontrol edin</li>
+<li>Tum konumlarda beceri adlarinin benzersiz oldugundan emin olun</li>
+<li>Izinleri kontrol edin - <code>deny</code> olan beceriler ajanlardan gizlenir</li>
+</ol>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

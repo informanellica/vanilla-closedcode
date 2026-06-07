@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tilladelser — vanilla-closedcode docs</title>
+  <meta name="description" content="Kontroller, hvilke handlinger der kræver godkendelse for at køre.">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/permissions.html">English</option>
+      <option value="../ar/permissions.html">العربية</option>
+      <option value="../bs/permissions.html">Bosanski</option>
+      <option value="../da/permissions.html" selected>Dansk</option>
+      <option value="../de/permissions.html">Deutsch</option>
+      <option value="../es/permissions.html">Español</option>
+      <option value="../fr/permissions.html">Français</option>
+      <option value="../it/permissions.html">Italiano</option>
+      <option value="../ja/permissions.html">日本語</option>
+      <option value="../ko/permissions.html">한국어</option>
+      <option value="../nb/permissions.html">Norsk</option>
+      <option value="../pl/permissions.html">Polski</option>
+      <option value="../pt-br/permissions.html">Português (BR)</option>
+      <option value="../ru/permissions.html">Русский</option>
+      <option value="../th/permissions.html">ไทย</option>
+      <option value="../tr/permissions.html">Türkçe</option>
+      <option value="../zh-cn/permissions.html">简体中文</option>
+      <option value="../zh-tw/permissions.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Dansk</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li class="active"><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>Tilladelser</h1>
+      <p class="lede">Kontroller, hvilke handlinger der kræver godkendelse for at køre.</p>
+      <p>vanilla-closedcode bruger <code>permission</code>-konfigurationen til at bestemme, om en given handling skal køre automatisk, bede dig om eller blokeres.</p>
+<p>Fra <code>v1.1.1</code> er den ældre <code>tools</code> booleske konfiguration forældet og er blevet flettet ind i <code>permission</code>. Den gamle <code>tools</code>-konfiguration er stadig understøttet for bagudkompatibilitet.</p>
+<hr>
+<h2>Handlinger</h2>
+<p>Hver tilladelsesregel løses til en af:</p>
+<ul>
+<li><code>&quot;allow&quot;</code> — køre uden godkendelse</li>
+<li><code>&quot;ask&quot;</code> — prompt om godkendelse</li>
+<li><code>&quot;deny&quot;</code> — bloker handlingen</li>
+</ul>
+<hr>
+<h2>Konfiguration</h2>
+<p>Du kan indstille tilladelser globalt (med <code>*</code>) og tilsidesætte specifikke værktøjer.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;*&quot;: &quot;ask&quot;,
+    &quot;bash&quot;: &quot;allow&quot;,
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>Du kan også indstille alle tilladelser på én gang:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: &quot;allow&quot;
+}
+</code></pre>
+<hr>
+<h2>Granulære regler (objektsyntaks)</h2>
+<p>For de fleste tilladelser kan du bruge et objekt til at anvende forskellige handlinger baseret på værktøjsinputtet.</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;bash&quot;: {
+      &quot;*&quot;: &quot;ask&quot;,
+      &quot;git *&quot;: &quot;allow&quot;,
+      &quot;npm *&quot;: &quot;allow&quot;,
+      &quot;rm *&quot;: &quot;deny&quot;,
+      &quot;grep *&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;*&quot;: &quot;deny&quot;,
+      &quot;packages/web/src/content/docs/*.mdx&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Regler evalueres efter mønstermatch, hvor den <strong>sidste matchende regel vinder</strong>. Et almindeligt mønster er at sætte catch-all <code>&quot;*&quot;</code> reglen først og mere specifikke regler efter den.</p>
+<h3>Jokertegn</h3>
+<p>Tilladelsesmønstre bruger simpel jokertegn-matchning:</p>
+<ul>
+<li><code>*</code> matcher nul eller flere af et hvilket som helst tegn</li>
+<li><code>?</code> matcher nøjagtigt ét tegn</li>
+<li>Alle andre karakterer matcher bogstaveligt talt</li>
+</ul>
+<h3>Udvidelse af hjemmemappe</h3>
+<p>Du kan bruge <code>~</code> eller <code>$HOME</code> i starten af ​​et mønster til at referere til din hjemmemappe. Dette er især nyttigt for <a href="#external-directories"><code>external_directory</code></a> regler.</p>
+<ul>
+<li><code>~/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>$HOME/projects/*</code> -&gt; <code>/Users/username/projects/*</code></li>
+<li><code>~</code> -&gt; <code>/Users/username</code></li>
+</ul>
+<h3>Eksterne mapper</h3>
+<p>Brug <code>external_directory</code> til at tillade værktøjsopkald, der berører stier uden for den arbejdsmappe, hvor vanilla-closedcode blev startet. Dette gælder for ethvert værktøj, der tager en sti som input (for eksempel <code>read</code>, <code>edit</code>, <code>glob</code>, <code>grep</code> og mange <code>bash</code> kommandoer).</p>
+<p>Hjemmeudvidelse (som <code>~/...</code>) påvirker kun, hvordan et mønster skrives. Det gør ikke en ekstern sti til en del af det aktuelle arbejdsområde, så stier uden for arbejdsbiblioteket skal stadig være tilladt via <code>external_directory</code>.</p>
+<p>For eksempel giver dette adgang til alt under <code>~/projects/personal/</code>:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<p>Enhver mappe, der er tilladt her, arver de samme standarder som det aktuelle arbejdsområde. Siden <a href="#defaults"><code>read</code> defaults to <code>allow</code></a>, er læsninger også tilladt for poster under <code>external_directory</code>, medmindre de tilsidesættes. Tilføj eksplicitte regler, når et værktøj skal begrænses i disse stier, såsom blokering af redigeringer, mens læsninger bevares:</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;external_directory&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;allow&quot;
+    },
+    &quot;edit&quot;: {
+      &quot;~/projects/personal/**&quot;: &quot;deny&quot;
+    }
+  }
+}
+</code></pre>
+<p>Hold listen fokuseret på betroede stier, og lag ekstra tillad eller afvis regler efter behov for andre værktøjer (for eksempel <code>bash</code>).</p>
+<hr>
+<h2>Tilgængelige tilladelser</h2>
+<p>vanilla-closedcode tilladelser indtastes efter værktøjsnavn plus et par sikkerhedsafskærmninger:</p>
+<ul>
+<li><code>read</code> — læser en fil (matcher filstien)</li>
+<li><code>edit</code> — alle filændringer (dækker <code>edit</code>, <code>write</code>, <code>patch</code>)</li>
+<li><code>glob</code> — fil-globing (matcher glob-mønsteret)</li>
+<li><code>grep</code> — indholdssøgning (matcher regex-mønsteret)</li>
+<li><code>bash</code> — kører shell-kommandoer (matcher parsede kommandoer som <code>git status --porcelain</code>)</li>
+<li><code>task</code> — lancering af underagenter (matcher underagenttypen)</li>
+<li><code>skill</code> — indlæsning af en færdighed (matcher færdighedsnavnet)</li>
+<li><code>lsp</code> — kører LSP forespørgsler (i øjeblikket ikke-granulære)</li>
+<li><code>webfetch</code> — henter en URL (matcher URL)</li>
+<li><code>websearch</code> — websøgning (matcher forespørgslen)</li>
+<li><code>external_directory</code> — udløses, når et værktøj berører stier uden for projektets arbejdsmappe</li>
+<li><code>doom_loop</code> — udløses, når det samme værktøjskald gentages 3 gange med identisk input</li>
+</ul>
+<hr>
+<h2>Standarder</h2>
+<p>Hvis du ikke angiver noget, starter vanilla-closedcode fra tilladelige standardindstillinger:</p>
+<ul>
+<li>De fleste tilladelser er som standard <code>&quot;allow&quot;</code>.</li>
+<li><code>doom_loop</code> og <code>external_directory</code> er som standard <code>&quot;ask&quot;</code>.</li>
+<li><code>read</code> er <code>&quot;allow&quot;</code>, men <code>.env</code> filer nægtes som standard:</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;read&quot;: {
+      &quot;*&quot;: &quot;allow&quot;,
+      &quot;*.env&quot;: &quot;deny&quot;,
+      &quot;*.env.*&quot;: &quot;deny&quot;,
+      &quot;*.env.example&quot;: &quot;allow&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h2>Hvad &quot;Spørg&quot; gør</h2>
+<p>Når vanilla-closedcode beder om godkendelse, tilbyder brugergrænsefladen tre resultater:</p>
+<ul>
+<li><code>once</code> — godkend netop denne anmodning</li>
+<li><code>always</code> — godkend fremtidige anmodninger, der matcher de foreslåede mønstre (for resten af ​​den nuværende vanilla-closedcode session)</li>
+<li><code>reject</code> — afvis anmodningen</li>
+</ul>
+<p>Sættet af mønstre, som <code>always</code> ville godkende, leveres af værktøjet (f.eks. hvidlister bash-godkendelser typisk et sikkert kommandopræfiks som <code>git status*</code>).</p>
+<hr>
+<h2>Agenter</h2>
+<p>Du kan tilsidesætte tilladelser pr. agent. Agenttilladelser flettes med den globale konfiguration, og agentregler har forrang. <a href="/docs/agents#permissions">Learn more</a> om agenttilladelser.</p>
+<aside class="aside aside-note">
+Se afsnittet [Granular Rules (Object Syntax)](#granular-rules-object-syntax) ovenfor for mere detaljerede mønstermatchningseksempler.
+</aside>
+```json title="closedcode.json"
+{
+  "permission": {
+    "bash": {
+      "*": "ask",
+      "git *": "allow",
+      "git commit *": "deny",
+      "git push *": "deny",
+      "grep *": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "permission": {
+        "bash": {
+          "*": "ask",
+          "git *": "allow",
+          "git commit *": "ask",
+          "git push *": "deny",
+          "grep *": "allow"
+        }
+      }
+    }
+  }
+}
+```
+
+<p>Du kan også konfigurere agenttilladelser i Markdown:</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash: ask
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<aside class="aside aside-tip">
+Brug mønstermatchning til kommandoer med argumenter. `"grep *"` tillader `grep pattern file.txt`, mens `"grep"` alene ville blokere det. Kommandoer som `git status` fungerer for standardadfærd, men kræver eksplicit tilladelse (som `"git status *"`), når argumenter sendes.
+</aside>
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

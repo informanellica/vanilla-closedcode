@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="zh-tw">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>代理 — vanilla-closedcode docs</title>
+  <meta name="description" content="設定和使用專門的代理。">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/agents.html">English</option>
+      <option value="../ar/agents.html">العربية</option>
+      <option value="../bs/agents.html">Bosanski</option>
+      <option value="../da/agents.html">Dansk</option>
+      <option value="../de/agents.html">Deutsch</option>
+      <option value="../es/agents.html">Español</option>
+      <option value="../fr/agents.html">Français</option>
+      <option value="../it/agents.html">Italiano</option>
+      <option value="../ja/agents.html">日本語</option>
+      <option value="../ko/agents.html">한국어</option>
+      <option value="../nb/agents.html">Norsk</option>
+      <option value="../pl/agents.html">Polski</option>
+      <option value="../pt-br/agents.html">Português (BR)</option>
+      <option value="../ru/agents.html">Русский</option>
+      <option value="../th/agents.html">ไทย</option>
+      <option value="../tr/agents.html">Türkçe</option>
+      <option value="../zh-cn/agents.html">简体中文</option>
+      <option value="../zh-tw/agents.html" selected>繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">繁體中文</a></h3>
+    <ul>
+      <li class="active"><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>代理</h1>
+      <p class="lede">設定和使用專門的代理。</p>
+      <p>代理是專門的 AI 助手，可以針對特定任務和工作流程進行設定。它們允許您建立具有自訂提示詞、模型和工具存取權限的專用工具。</p>
+<aside class="aside aside-tip">
+使用 Plan 代理來分析程式碼和審查建議，而不會進行任何程式碼變更。
+</aside>
+您可以在工作階段期間切換代理，或使用 `@` 提及來呼叫它們。
+
+<hr>
+<h2>類型</h2>
+<p>vanilla-closedcode 中有兩種類型的代理：主代理和子代理。</p>
+<hr>
+<h3>主代理</h3>
+<p>主代理是您直接互動的主要助手。您可以使用 <strong>Tab</strong> 鍵或設定的 <code>switch_agent</code> 快速鍵來循環切換它們。這些代理處理您的主要對話。工具存取透過權限進行設定——例如，Build 啟用了所有工具，而 Plan 則受到限制。</p>
+<aside class="aside aside-tip">
+您可以在工作階段期間使用 **Tab** 鍵在主代理之間切換。
+</aside>
+vanilla-closedcode 內建了兩個主代理：**Build** 和 **Plan**。我們將在下面介紹它們。
+
+<hr>
+<h3>子代理</h3>
+<p>子代理是主代理可以呼叫來執行特定任務的專業助手。您也可以透過在訊息中 <strong>@ 提及</strong>它們來手動呼叫。</p>
+<p>vanilla-closedcode 內建了兩個子代理：<strong>General</strong> 和 <strong>Explore</strong>。我們將在下面介紹它們。</p>
+<hr>
+<h2>內建代理</h2>
+<p>vanilla-closedcode 內建了兩個主代理和兩個子代理。</p>
+<hr>
+<h3>使用 Build</h3>
+<p><em>模式</em>：<code>primary</code></p>
+<p>Build 是啟用了所有工具的<strong>預設</strong>主代理。這是用於需要完全存取檔案操作和系統命令的開發工作的標準代理。</p>
+<hr>
+<h3>使用 Plan</h3>
+<p><em>模式</em>：<code>primary</code></p>
+<p>一個專為規劃和分析設計的受限代理。我們使用權限系統來為您提供更多控制權，並防止意外變更。
+預設情況下，以下所有項均設為 <code>ask</code>：</p>
+<ul>
+<li><code>file edits</code>：所有寫入、補丁和編輯</li>
+<li><code>bash</code>：所有 bash 命令</li>
+</ul>
+<p>當您希望 LLM 分析程式碼、建議變更或建立計畫，而不對程式碼庫進行任何實際修改時，此代理非常有用。</p>
+<hr>
+<h3>使用 General</h3>
+<p><em>模式</em>：<code>subagent</code></p>
+<p>一個用於研究複雜問題和執行多步驟任務的通用代理。擁有完整的工具存取權限（todo 除外），因此可以在需要時修改檔案。可用於並行執行多個工作單元。</p>
+<hr>
+<h3>使用 Explore</h3>
+<p><em>模式</em>：<code>subagent</code></p>
+<p>一個用於探索程式碼庫的快速唯讀代理。無法修改檔案。當您需要按模式快速查找檔案、搜尋程式碼中的關鍵字或回答有關程式碼庫的問題時，請使用此代理。</p>
+<hr>
+<h3>使用 Compaction</h3>
+<p><em>模式</em>：<code>primary</code></p>
+<p>隱藏的系統代理，將長上下文壓縮為較小的摘要。它會在需要時自動執行，且無法在 UI 中選擇。</p>
+<hr>
+<h3>使用 Title</h3>
+<p><em>模式</em>：<code>primary</code></p>
+<p>隱藏的系統代理，用於產生簡短的工作階段標題。它會自動執行，且無法在 UI 中選擇。</p>
+<hr>
+<h3>使用 Summary</h3>
+<p><em>模式</em>：<code>primary</code></p>
+<p>隱藏的系統代理，用於建立工作階段摘要。它會自動執行，且無法在 UI 中選擇。</p>
+<hr>
+<h2>用法</h2>
+<ol>
+<li><p>對於主代理，在工作階段期間使用 <strong>Tab</strong> 鍵循環切換。您也可以使用設定的 <code>switch_agent</code> 快速鍵。</p>
+</li>
+<li><p>子代理可以透過以下方式呼叫：</p>
+<ul>
+<li><p>由主代理根據其描述<strong>自動</strong>呼叫以執行專門任務。</p>
+</li>
+<li><p>透過在訊息中 <strong>@ 提及</strong>子代理來手動呼叫。例如：</p>
+<pre><code class="language-txt">@general help me search for this function
+</code></pre>
+</li>
+</ul>
+</li>
+<li><p><strong>工作階段間導覽</strong>：當子代理建立自己的子工作階段時，您可以使用以下方式在父工作階段和所有子工作階段之間導覽：</p>
+<ul>
+<li><strong>&lt;Leader&gt;+Right</strong>（或設定的 <code>session_child_cycle</code> 快速鍵）向前循環：父工作階段 → 子工作階段1 → 子工作階段2 → ... → 父工作階段</li>
+<li><strong>&lt;Leader&gt;+Left</strong>（或設定的 <code>session_child_cycle_reverse</code> 快速鍵）向後循環：父工作階段 ← 子工作階段1 ← 子工作階段2 ← ... ← 父工作階段</li>
+</ul>
+<p>這使您可以在主對話和專門的子代理工作之間無縫切換。</p>
+</li>
+</ol>
+<hr>
+<h2>設定</h2>
+<p>您可以自訂內建代理或透過設定建立自己的代理。代理可以透過兩種方式進行設定：</p>
+<hr>
+<h3>JSON</h3>
+<p>在 <code>closedcode.json</code> 設定檔中設定代理：</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;{file:./prompts/build.txt}&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: true,
+        &quot;edit&quot;: true,
+        &quot;bash&quot;: true
+      }
+    },
+    &quot;plan&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-haiku-4-20250514&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false,
+        &quot;bash&quot;: false
+      }
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;,
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;model&quot;: &quot;anthropic/claude-sonnet-4-20250514&quot;,
+      &quot;prompt&quot;: &quot;You are a code reviewer. Focus on security, performance, and maintainability.&quot;,
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Markdown</h3>
+<p>您還可以使用 Markdown 檔案定義代理。將它們放在：</p>
+<ul>
+<li>全域：<code>~/.config/closedcode/agents/</code></li>
+<li>專案級：<code>.closedcode/agents/</code></li>
+</ul>
+<pre><code class="language-markdown">---
+description: Reviews code for quality and best practices
+mode: subagent
+model: anthropic/claude-sonnet-4-20250514
+temperature: 0.1
+tools:
+  write: false
+  edit: false
+  bash: false
+---
+
+You are in code review mode. Focus on:
+
+- Code quality and best practices
+- Potential bugs and edge cases
+- Performance implications
+- Security considerations
+
+Provide constructive feedback without making direct changes.
+</code></pre>
+<p>Markdown 檔案名稱即為代理名稱。例如，<code>review.md</code> 會建立一個名為 <code>review</code> 的代理。</p>
+<hr>
+<h2>選項</h2>
+<p>讓我們詳細了解這些設定選項。</p>
+<hr>
+<h3>描述</h3>
+<p>使用 <code>description</code> 選項提供代理的功能及使用場景的簡要描述。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;description&quot;: &quot;Reviews code for best practices and potential issues&quot;
+    }
+  }
+}
+</code></pre>
+<p>這是一個<strong>必需的</strong>設定選項。</p>
+<hr>
+<h3>溫度</h3>
+<p>使用 <code>temperature</code> 設定控制 LLM 回應的隨機性和創造力。</p>
+<p>較低的值使回應更加集中和確定，而較高的值則增加創造力和多樣性。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;temperature&quot;: 0.1
+    },
+    &quot;creative&quot;: {
+      &quot;temperature&quot;: 0.8
+    }
+  }
+}
+</code></pre>
+<p>溫度值通常範圍為 0.0 到 1.0：</p>
+<ul>
+<li><strong>0.0-0.2</strong>：非常集中和確定性的回應，適合程式碼分析和規劃</li>
+<li><strong>0.3-0.5</strong>：平衡的回應，兼顧一定創造力，適合一般開發任務</li>
+<li><strong>0.6-1.0</strong>：更有創造力和多樣性的回應，適合腦力激盪和探索</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;analyze&quot;: {
+      &quot;temperature&quot;: 0.1,
+      &quot;prompt&quot;: &quot;{file:./prompts/analysis.txt}&quot;
+    },
+    &quot;build&quot;: {
+      &quot;temperature&quot;: 0.3
+    },
+    &quot;brainstorm&quot;: {
+      &quot;temperature&quot;: 0.7,
+      &quot;prompt&quot;: &quot;{file:./prompts/creative.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>如果未指定溫度，vanilla-closedcode 將使用模型特定的預設值；大多數模型通常為 0，Qwen 模型為 0.55。</p>
+<hr>
+<h3>最大步數</h3>
+<p>控制代理在被強制以純文字回應之前可以執行的最大代理迭代次數。這允許希望控制成本的使用者對代理操作設定限制。</p>
+<p>如果未設定此選項，代理將持續迭代，直到模型選擇停止或使用者中斷工作階段。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;quick-thinker&quot;: {
+      &quot;description&quot;: &quot;Fast reasoning with limited iterations&quot;,
+      &quot;prompt&quot;: &quot;You are a quick thinker. Solve problems with minimal steps.&quot;,
+      &quot;steps&quot;: 5
+    }
+  }
+}
+</code></pre>
+<p>當達到限制時，代理會收到一個特殊的系統提示詞，指示其回覆工作摘要和建議的剩餘任務。</p>
+<aside class="aside aside-caution">
+舊版 `maxSteps` 欄位已棄用。請改用 `steps`。
+</aside>
+---
+
+<h3>停用</h3>
+<p>設為 <code>true</code> 以停用代理。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;disable&quot;: true
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>提示詞</h3>
+<p>使用 <code>prompt</code> 設定為代理指定自訂系統提示詞檔案。提示詞檔案應包含針對代理用途的具體指令。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;prompt&quot;: &quot;{file:./prompts/code-review.txt}&quot;
+    }
+  }
+}
+</code></pre>
+<p>此路徑相對於設定檔所在位置。因此它同時適用於全域 vanilla-closedcode 設定和專案級設定。</p>
+<hr>
+<h3>模型</h3>
+<p>使用 <code>model</code> 設定為代理覆寫模型。適用於針對不同任務使用不同的最佳化模型。例如，用更快的模型進行規劃，用更強大的模型進行實作。</p>
+<aside class="aside aside-tip">
+如果您不指定模型，主代理將使用[全域設定的模型](/docs/config#models)，而子代理將使用呼叫它的主代理所使用的模型。
+</aside>
+```json title="closedcode.json"
+{
+  "agent": {
+    "plan": {
+      "model": "anthropic/claude-haiku-4-20250514"
+    }
+  }
+}
+```
+
+<p>vanilla-closedcode 設定中的模型 ID 使用 <code>provider/model-id</code> 格式。例如，如果您使用 Ollama，則可以使用 <code>ollama/gpt-oss:20b</code> 來表示 GPT-OSS 20B。</p>
+<hr>
+<h3>工具</h3>
+<p>使用 <code>tools</code> 設定控制代理中可用的工具。您可以透過將特定工具設為 <code>true</code> 或 <code>false</code> 來啟用或停用它們。</p>
+<pre><code class="language-json">{
+  &quot;tools&quot;: {
+    &quot;write&quot;: true,
+    &quot;bash&quot;: true
+  },
+  &quot;agent&quot;: {
+    &quot;plan&quot;: {
+      &quot;tools&quot;: {
+        &quot;write&quot;: false,
+        &quot;bash&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<aside class="aside aside-note">
+代理級設定會覆寫全域設定。
+</aside>
+您還可以使用萬用字元同時控制多個工具。例如，要停用 MCP 伺服器中的所有工具：
+
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;readonly&quot;: {
+      &quot;tools&quot;: {
+        &quot;mymcp_*&quot;: false,
+        &quot;write&quot;: false,
+        &quot;edit&quot;: false
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/tools">了解更多關於工具的資訊</a>。</p>
+<hr>
+<h3>權限</h3>
+<p>您可以設定權限來管理代理可以執行的操作。目前，<code>edit</code>、<code>bash</code> 和 <code>webfetch</code> 工具的權限可以設定為：</p>
+<ul>
+<li><code>&quot;ask&quot;</code> — 執行工具前提示審批</li>
+<li><code>&quot;allow&quot;</code> — 允許所有操作，無需審批</li>
+<li><code>&quot;deny&quot;</code> — 停用該工具</li>
+</ul>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  }
+}
+</code></pre>
+<p>您可以按代理覆寫這些權限。</p>
+<pre><code class="language-json">{
+  &quot;permission&quot;: {
+    &quot;edit&quot;: &quot;deny&quot;
+  },
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;edit&quot;: &quot;ask&quot;
+      }
+    }
+  }
+}
+</code></pre>
+<p>您還可以在 Markdown 代理中設定權限。</p>
+<pre><code class="language-markdown">---
+description: Code review without edits
+mode: subagent
+permission:
+  edit: deny
+  bash:
+    &quot;*&quot;: ask
+    &quot;git diff&quot;: allow
+    &quot;git log*&quot;: allow
+    &quot;grep *&quot;: allow
+  webfetch: deny
+---
+
+Only analyze code and suggest changes.
+</code></pre>
+<p>您可以為特定的 bash 命令設定權限。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git push&quot;: &quot;ask&quot;,
+          &quot;grep *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>這可以使用 glob 模式。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;git *&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>您還可以使用 <code>*</code> 萬用字元來管理所有命令的權限。
+由於最後匹配的規則優先，請將 <code>*</code> 萬用字元放在前面，將具體規則放在後面。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;build&quot;: {
+      &quot;permission&quot;: {
+        &quot;bash&quot;: {
+          &quot;*&quot;: &quot;ask&quot;,
+          &quot;git status *&quot;: &quot;allow&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p><a href="/docs/permissions">了解更多關於權限的資訊</a>。</p>
+<hr>
+<h3>模式</h3>
+<p>使用 <code>mode</code> 設定控制代理的模式。<code>mode</code> 選項用於確定代理的使用方式。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;review&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;
+    }
+  }
+}
+</code></pre>
+<p><code>mode</code> 選項可以設為 <code>primary</code>、<code>subagent</code> 或 <code>all</code>。如果未指定 <code>mode</code>，則預設為 <code>all</code>。</p>
+<hr>
+<h3>隱藏</h3>
+<p>使用 <code>hidden: true</code> 將子代理從 <code>@</code> 自動補全選單中隱藏。適用於只應由其他代理透過 Task 工具以程式化方式呼叫的內部子代理。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;internal-helper&quot;: {
+      &quot;mode&quot;: &quot;subagent&quot;,
+      &quot;hidden&quot;: true
+    }
+  }
+}
+</code></pre>
+<p>這僅影響自動補全選單中的使用者可見性。如果權限允許，模型仍然可以透過 Task 工具呼叫隱藏的代理。</p>
+<aside class="aside aside-note">
+僅適用於 `mode: subagent` 的代理。
+</aside>
+---
+
+<h3>任務權限</h3>
+<p>使用 <code>permission.task</code> 控制代理可以透過 Task 工具呼叫哪些子代理。使用 glob 模式進行靈活匹配。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;orchestrator&quot;: {
+      &quot;mode&quot;: &quot;primary&quot;,
+      &quot;permission&quot;: {
+        &quot;task&quot;: {
+          &quot;*&quot;: &quot;deny&quot;,
+          &quot;orchestrator-*&quot;: &quot;allow&quot;,
+          &quot;code-reviewer&quot;: &quot;ask&quot;
+        }
+      }
+    }
+  }
+}
+</code></pre>
+<p>當設為 <code>deny</code> 時，子代理將從 Task 工具描述中完全移除，因此模型不會嘗試呼叫它。</p>
+<aside class="aside aside-tip">
+規則按順序評估，**最後匹配的規則優先**。在上面的範例中，`orchestrator-planner` 同時匹配 `*`（deny）和 `orchestrator-*`（allow），但由於 `orchestrator-*` 在 `*` 之後，所以結果為 `allow`。
+</aside>
+<aside class="aside aside-tip">
+使用者始終可以透過 `@` 自動補全選單直接呼叫任何子代理，即使代理的任務權限會拒絕它。
+</aside>
+---
+
+<h3>顏色</h3>
+<p>使用 <code>color</code> 選項自訂代理在 UI 中的視覺外觀。這會影響代理在介面中的顯示方式。</p>
+<p>使用有效的十六進位顏色（例如 <code>#FF5733</code>）或主題顏色：<code>primary</code>、<code>secondary</code>、<code>accent</code>、<code>success</code>、<code>warning</code>、<code>error</code>、<code>info</code>。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;creative&quot;: {
+      &quot;color&quot;: &quot;#ff6b6b&quot;
+    },
+    &quot;code-reviewer&quot;: {
+      &quot;color&quot;: &quot;accent&quot;
+    }
+  }
+}
+</code></pre>
+<hr>
+<h3>Top P</h3>
+<p>使用 <code>top_p</code> 選項控制回應多樣性。這是控制隨機性的溫度替代方案。</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;brainstorm&quot;: {
+      &quot;top_p&quot;: 0.9
+    }
+  }
+}
+</code></pre>
+<p>值範圍從 0.0 到 1.0。較低的值更加集中，較高的值更加多樣化。</p>
+<hr>
+<h3>其他選項</h3>
+<p>您在代理設定中指定的任何其他選項都將作為模型選項<strong>直接傳遞</strong>給提供商。這允許您使用提供商特定的功能和參數。</p>
+<p>例如，使用 OpenAI 的推理模型時，您可以控制推理力度：</p>
+<pre><code class="language-json">{
+  &quot;agent&quot;: {
+    &quot;deep-thinker&quot;: {
+      &quot;description&quot;: &quot;Agent that uses high reasoning effort for complex problems&quot;,
+      &quot;model&quot;: &quot;openai/gpt-5&quot;,
+      &quot;reasoningEffort&quot;: &quot;high&quot;,
+      &quot;textVerbosity&quot;: &quot;low&quot;
+    }
+  }
+}
+</code></pre>
+<p>這些附加選項是模型和提供商特定的。請查閱您的提供商文件以取得可用參數。</p>
+<aside class="aside aside-tip">
+執行 `closedcode models` 查看可用模型列表。
+</aside>
+---
+
+<h2>建立代理</h2>
+<p>您可以使用以下命令建立新代理：</p>
+<pre><code class="language-bash">closedcode agent create
+</code></pre>
+<p>此互動式命令將：</p>
+<ol>
+<li>詢問代理的儲存位置——全域或專案級。</li>
+<li>描述代理應該做什麼。</li>
+<li>產生合適的系統提示詞和識別碼。</li>
+<li>讓您選擇代理可以存取哪些工具。</li>
+<li>最後，建立一個包含代理設定的 Markdown 檔案。</li>
+</ol>
+<hr>
+<h2>使用場景</h2>
+<p>以下是不同代理的一些常見使用場景。</p>
+<ul>
+<li><strong>Build 代理</strong>：啟用所有工具的完整開發工作</li>
+<li><strong>Plan 代理</strong>：分析和規劃，不進行任何變更</li>
+<li><strong>Review 代理</strong>：具有唯讀存取權限和文件工具的程式碼審查</li>
+<li><strong>Debug 代理</strong>：專注於問題排查，啟用 bash 和讀取工具</li>
+<li><strong>Docs 代理</strong>：文件編寫，具有檔案操作但不使用系統命令</li>
+</ul>
+<hr>
+<h2>範例</h2>
+<p>以下是一些您可能會覺得有用的範例代理。</p>
+<aside class="aside aside-tip">
+您有想要分享的代理嗎？[提交 PR](https://github.com/informanellica/vanilla-closedcode)。
+</aside>
+---
+
+<h3>文件代理</h3>
+<pre><code class="language-markdown">---
+description: Writes and maintains project documentation
+mode: subagent
+tools:
+  bash: false
+---
+
+You are a technical writer. Create clear, comprehensive documentation.
+
+Focus on:
+
+- Clear explanations
+- Proper structure
+- Code examples
+- User-friendly language
+</code></pre>
+<hr>
+<h3>安全稽核代理</h3>
+<pre><code class="language-markdown">---
+description: Performs security audits and identifies vulnerabilities
+mode: subagent
+tools:
+  write: false
+  edit: false
+---
+
+You are a security expert. Focus on identifying potential security issues.
+
+Look for:
+
+- Input validation vulnerabilities
+- Authentication and authorization flaws
+- Data exposure risks
+- Dependency vulnerabilities
+- Configuration security issues
+</code></pre>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the OpenCode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>

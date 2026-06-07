@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDE — vanilla-closedcode docs</title>
+  <meta name="description" content="A extensão closedcode para VS Code, Cursor e outros IDEs">
+  <link rel="stylesheet" href="../docs.css">
+</head>
+<body>
+  <header class="page-header">
+    <a class="brand" href="index.html">vanilla-closedcode docs</a>
+    <nav class="lang-switcher" aria-label="Languages">
+    <select onchange="location.href = this.value">
+      <option value="../en/ide.html">English</option>
+      <option value="../ar/ide.html">العربية</option>
+      <option value="../bs/ide.html">Bosanski</option>
+      <option value="../da/ide.html">Dansk</option>
+      <option value="../de/ide.html">Deutsch</option>
+      <option value="../es/ide.html">Español</option>
+      <option value="../fr/ide.html">Français</option>
+      <option value="../it/ide.html">Italiano</option>
+      <option value="../ja/ide.html">日本語</option>
+      <option value="../ko/ide.html">한국어</option>
+      <option value="../nb/ide.html">Norsk</option>
+      <option value="../pl/ide.html">Polski</option>
+      <option value="../pt-br/ide.html" selected>Português (BR)</option>
+      <option value="../ru/ide.html">Русский</option>
+      <option value="../th/ide.html">ไทย</option>
+      <option value="../tr/ide.html">Türkçe</option>
+      <option value="../zh-cn/ide.html">简体中文</option>
+      <option value="../zh-tw/ide.html">繁體中文</option>
+    </select>
+  </nav>
+  </header>
+  <main class="layout">
+    <aside class="sidebar">
+    <h3><a href="index.html">Português (BR)</a></h3>
+    <ul>
+      <li><a href="agents.html">agents</a></li>
+      <li><a href="cli.html">cli</a></li>
+      <li><a href="commands.html">commands</a></li>
+      <li><a href="config.html">config</a></li>
+      <li><a href="custom-tools.html">custom-tools</a></li>
+      <li><a href="formatters.html">formatters</a></li>
+      <li class="active"><a href="ide.html">ide</a></li>
+      <li><a href="index.html">index</a></li>
+      <li><a href="keybinds.html">keybinds</a></li>
+      <li><a href="lsp.html">lsp</a></li>
+      <li><a href="mcp-servers.html">mcp-servers</a></li>
+      <li><a href="models.html">models</a></li>
+      <li><a href="network.html">network</a></li>
+      <li><a href="permissions.html">permissions</a></li>
+      <li><a href="plugins.html">plugins</a></li>
+      <li><a href="providers.html">providers</a></li>
+      <li><a href="rules.html">rules</a></li>
+      <li><a href="server.html">server</a></li>
+      <li><a href="skills.html">skills</a></li>
+      <li><a href="themes.html">themes</a></li>
+      <li><a href="tools.html">tools</a></li>
+      <li><a href="troubleshooting.html">troubleshooting</a></li>
+      <li><a href="tui.html">tui</a></li>
+      <li><a href="windows-wsl.html">windows-wsl</a></li>
+    </ul>
+  </aside>
+    <article class="content">
+      <h1>IDE</h1>
+      <p class="lede">A extensão closedcode para VS Code, Cursor e outros IDEs</p>
+      <p>O closedcode integra-se com VS Code, Cursor ou qualquer IDE que suporte um terminal. Basta executar <code>closedcode</code> no terminal para começar.</p>
+<hr>
+<h2>Uso</h2>
+<ul>
+<li><strong>Lançamento Rápido</strong>: Use <code>Cmd+Esc</code> (Mac) ou <code>Ctrl+Esc</code> (Windows/Linux) para abrir o closedcode em uma visualização de terminal dividido, ou focar em uma sessão de terminal existente se uma já estiver em execução.</li>
+<li><strong>Nova Sessão</strong>: Use <code>Cmd+Shift+Esc</code> (Mac) ou <code>Ctrl+Shift+Esc</code> (Windows/Linux) para iniciar uma nova sessão de terminal closedcode, mesmo que uma já esteja aberta. Você também pode clicar no botão closedcode na interface.</li>
+<li><strong>Consciência de Contexto</strong>: Compartilhe automaticamente sua seleção ou aba atual com o closedcode.</li>
+<li><strong>Atalhos de Referência de Arquivo</strong>: Use <code>Cmd+Option+K</code> (Mac) ou <code>Alt+Ctrl+K</code> (Linux/Windows) para inserir referências de arquivo. Por exemplo, <code>@File#L37-42</code>.</li>
+</ul>
+<hr>
+<h2>Instalação</h2>
+<p>Para instalar o closedcode no VS Code e forks populares como Cursor, Windsurf, VSCodium:</p>
+<ol>
+<li>Abra o VS Code</li>
+<li>Abra o terminal integrado</li>
+<li>Execute <code>closedcode</code> - a extensão será instalada automaticamente</li>
+</ol>
+<p>Se, por outro lado, você quiser usar seu próprio IDE ao executar <code>/editor</code> ou <code>/export</code> a partir do TUI, você precisará definir <code>export EDITOR=&quot;code --wait&quot;</code>. <a href="/docs/tui/#editor-setup">Saiba mais</a>.</p>
+<hr>
+<h3>Instalação Manual</h3>
+<p>Procure por <strong>closedcode</strong> no Marketplace de Extensões e clique em <strong>Instalar</strong>.</p>
+<hr>
+<h3>Solução de Problemas</h3>
+<p>Se a extensão falhar ao instalar automaticamente:</p>
+<ul>
+<li>Certifique-se de que você está executando <code>closedcode</code> no terminal integrado.</li>
+<li>Confirme se a CLI para seu IDE está instalado:<ul>
+<li>Para VS Code: comando <code>code</code></li>
+<li>Para Cursor: comando <code>cursor</code></li>
+<li>Para Windsurf: comando <code>windsurf</code></li>
+<li>Para VSCodium: comando <code>codium</code></li>
+<li>Se não, execute <code>Cmd+Shift+P</code> (Mac) ou <code>Ctrl+Shift+P</code> (Windows/Linux) e procure por &quot;Shell Command: Install &#39;code&#39; command in PATH&quot; (ou o equivalente para seu IDE)</li>
+</ul>
+</li>
+<li>Certifique-se de que o VS Code tem permissão para instalar extensões</li>
+</ul>
+
+    </article>
+  </main>
+  <footer class="page-footer">
+    Adapted from the closedcode documentation. Local-LLM-only fork.
+  </footer>
+</body>
+</html>
