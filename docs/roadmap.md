@@ -1,7 +1,8 @@
 # Roadmap
 
-Future work beyond the current preview (`v0.1.0-preview`). Each item should become
-a milestone with its own issues; this file is the high-level index.
+Future work beyond the `v0.1.0-preview` milestone. Active development now happens on
+the `0.1.0-dev` line (see `CHANGELOG.md`). Each item should become a milestone with
+its own issues; this file is the high-level index.
 
 ## Milestones
 
