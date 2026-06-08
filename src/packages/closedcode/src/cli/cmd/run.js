@@ -25,13 +25,19 @@ function props(part) {
 // only returns on EOF; when closedcode is launched in the background or inherits a
 // pipe/tty that never closes (CI, `&`, redirected harnesses), stdin never reaches EOF
 // and the whole run wedges BEFORE the server/agent loop starts (looks like a hang with
-// an empty log). Resolve on EOF, or after a short idle gap with no new data — so
-// `echo "msg" | closedcode run` still works while an idle/open stdin can't wedge it.
-function readPipedStdin(idleMs = Number(process.env.CLOSEDCODE_STDIN_IDLE_MS) || 250) {
+// an empty log).
+//
+// The grace window applies ONLY until the first byte: if nothing arrives within it we
+// conclude there is no piped input and proceed (this is what rescues the idle/open
+// stdin). Once any data has arrived we cancel the timer and read to real EOF — so a
+// genuine producer (even one that streams with long gaps between chunks) is NEVER
+// truncated. `echo "msg" | closedcode run` keeps working. Grace is overridable via
+// CLOSEDCODE_STDIN_IDLE_MS (default 250ms); only the no-input-at-all case is affected.
+function readPipedStdin(firstByteGraceMs = Number(process.env.CLOSEDCODE_STDIN_IDLE_MS) || 250) {
   const stdin = process.stdin;
   return new Promise(resolve => {
     let data = "";
-    let timer;
+    let started = false;
     const finish = () => {
       clearTimeout(timer);
       stdin.off("data", onData);
@@ -40,18 +46,21 @@ function readPipedStdin(idleMs = Number(process.env.CLOSEDCODE_STDIN_IDLE_MS) ||
       stdin.pause();
       resolve(data);
     };
-    const arm = () => {
-      clearTimeout(timer);
-      timer = setTimeout(finish, idleMs);
-    };
     const onData = chunk => {
+      // First byte means stdin really is piped: stop the grace timer and let the
+      // stream run to EOF so nothing is dropped, however slowly it trickles in.
+      if (!started) {
+        started = true;
+        clearTimeout(timer);
+      }
       data += chunk.toString("utf8");
-      arm();
     };
+    const timer = setTimeout(() => {
+      if (!started) finish();
+    }, firstByteGraceMs);
     stdin.on("data", onData);
     stdin.on("end", finish);
     stdin.on("error", finish);
-    arm();
     stdin.resume();
   });
 }
