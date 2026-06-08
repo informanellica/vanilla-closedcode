@@ -21,6 +21,40 @@ function props(part) {
     part
   };
 }
+// Read piped stdin without blocking forever. `for await (const chunk of process.stdin)`
+// only returns on EOF; when closedcode is launched in the background or inherits a
+// pipe/tty that never closes (CI, `&`, redirected harnesses), stdin never reaches EOF
+// and the whole run wedges BEFORE the server/agent loop starts (looks like a hang with
+// an empty log). Resolve on EOF, or after a short idle gap with no new data — so
+// `echo "msg" | closedcode run` still works while an idle/open stdin can't wedge it.
+function readPipedStdin(idleMs = Number(process.env.CLOSEDCODE_STDIN_IDLE_MS) || 250) {
+  const stdin = process.stdin;
+  return new Promise(resolve => {
+    let data = "";
+    let timer;
+    const finish = () => {
+      clearTimeout(timer);
+      stdin.off("data", onData);
+      stdin.off("end", finish);
+      stdin.off("error", finish);
+      stdin.pause();
+      resolve(data);
+    };
+    const arm = () => {
+      clearTimeout(timer);
+      timer = setTimeout(finish, idleMs);
+    };
+    const onData = chunk => {
+      data += chunk.toString("utf8");
+      arm();
+    };
+    stdin.on("data", onData);
+    stdin.on("end", finish);
+    stdin.on("error", finish);
+    arm();
+    stdin.resume();
+  });
+}
 function inline(info) {
   const suffix = info.description ? UI.Style.TEXT_DIM + ` ${info.description}` + UI.Style.TEXT_NORMAL : "";
   UI.println(UI.Style.TEXT_NORMAL + info.icon, UI.Style.TEXT_NORMAL + info.title + suffix);
@@ -257,9 +291,8 @@ export const RunCommand = effectCmd({
         }
       }
       if (!process.stdin.isTTY) {
-        let stdinText = "";
-        for await (const chunk of process.stdin) stdinText += chunk.toString("utf8");
-        message += "\n" + stdinText;
+        const stdinText = await readPipedStdin();
+        if (stdinText) message += "\n" + stdinText;
       }
       if (message.trim().length === 0 && !args.command) {
         UI.error("You must provide a message or a command");
