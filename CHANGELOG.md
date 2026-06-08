@@ -25,8 +25,10 @@ Development line following `0.1.0-preview`.
   EOF that never came, wedging the run before the in-process server and agent loop
   even started — an intermittent "no output / no edit" hang with an empty log,
   easy to mistake for a model or integration failure. Piped stdin is now read with
-  a short idle timeout (`CLOSEDCODE_STDIN_IDLE_MS`, default 250 ms); `echo "msg" |
-  closedcode run` still works. (`fix/cli-server-startup-hang`)
+  a **first-byte grace window** (`CLOSEDCODE_STDIN_IDLE_MS`, default 250 ms): if no
+  data arrives the run proceeds; once any data is seen it is read to real EOF, so
+  slow/streamed input is never truncated. `echo "msg" | closedcode run` still works.
+  (`fix/cli-server-startup-hang`)
 
 ## [0.1.0-preview] — 2026-06-07
 
