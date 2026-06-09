@@ -1,7 +1,15 @@
 // Express runtime adapter: wraps an Express app with node:http.createServer for
 // listening and a noServer WebSocketServer (ws package) for upgrade handling.
 import http from "node:http";
+import { Agent } from "undici";
 import { WebSocketServer, WebSocket } from "ws";
+
+// Dispatcher with the per-request idle timeouts disabled, for the in-process
+// loopback fetch below. `closedcode run` runs the whole agent loop inside one
+// request whose response headers are not sent until the loop finishes (often
+// >5 min); undici's default headersTimeout/bodyTimeout (300 s) would otherwise
+// abort that fetch (UND_ERR_HEADERS_TIMEOUT) and kill the run. 0 = no timeout.
+const IN_PROCESS_DISPATCHER = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
 import { Flag } from "core/flag/flag";
 import { WorkspaceID } from "@/control-plane/schema.js";
 import { Workspace } from "@/control-plane/workspace.js";
@@ -207,6 +215,14 @@ function createInProcessFetch(expressApp) {
     if (_ready) return _ready;
     _ready = new Promise((resolve, reject) => {
       const server = http.createServer(expressApp);
+      // `closedcode run` drives the ENTIRE multi-turn agent loop inside a single
+      // POST /session/:id/message request to this in-process server. Node's default
+      // `requestTimeout` (300000 ms) would abort that request — and thus the whole
+      // run — at 5 minutes regardless of progress. Disable the per-request timeouts
+      // so long agentic sessions are not capped. (Explicit cancellation is preserved
+      // separately by forwarding the caller's abort signal in `fetch` below.)
+      server.requestTimeout = 0;
+      server.headersTimeout = 0;
       server.listen(0, "127.0.0.1", () => {
         const { port } = server.address();
         resolve(`http://127.0.0.1:${port}`);
@@ -222,7 +238,11 @@ function createInProcessFetch(expressApp) {
     const req = input instanceof Request ? input : new Request(input, init);
     const url = new URL(req.url);
     const target = `${base}${url.pathname}${url.search}`;
-    const fwdInit = { method: req.method, headers: req.headers };
+    // Forward the caller's abort signal so explicit cancellation still propagates
+    // to the loopback request (disabling the timeouts only removes the fixed
+    // 5-minute deadline, not deliberate cancellation). The no-timeout dispatcher
+    // stops undici from aborting the long-lived agent-loop request at 300 s.
+    const fwdInit = { method: req.method, headers: req.headers, signal: req.signal, dispatcher: IN_PROCESS_DISPATCHER };
     if (req.body) {
       fwdInit.body = Buffer.from(await req.arrayBuffer());
     }
