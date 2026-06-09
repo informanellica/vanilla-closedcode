@@ -1,65 +1,55 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-slot=text-shimmer-char><span data-slot=text-shimmer-char-base aria-hidden=true></span><span data-slot=text-shimmer-char-shimmer aria-hidden=true>`);
-import { createEffect, createMemo, createSignal, onCleanup } from "solid-js";
-import { Dynamic } from "solid-js/web";
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
 export const TextShimmer = props => {
-  const text = createMemo(() => props.text ?? "");
-  const active = createMemo(() => props.active ?? true);
-  const offset = createMemo(() => props.offset ?? 0);
-  const [run, setRun] = createSignal(active());
   const swap = 220;
-  let timer;
-  createEffect(() => {
-    if (timer) {
-      clearTimeout(timer);
-      timer = undefined;
-    }
-    if (active()) {
-      setRun(true);
-      return;
-    }
-    timer = setTimeout(() => {
-      timer = undefined;
-      setRun(false);
+  const active = props.active ?? true;
+  const text = props.text ?? "";
+  const offset = props.offset ?? 0;
+  const outer = document.createElement(props.as || "span");
+  const base = document.createElement("span");
+  const shimmer = document.createElement("span");
+
+  outer.setAttribute("data-component", "text-shimmer");
+  outer.setAttribute("aria-label", text);
+  outer.setAttribute("data-active", active ? "true" : "false");
+  outer.className = props.class || "";
+  outer.style.setProperty("--text-shimmer-swap", `${swap}ms`);
+  outer.style.setProperty("--text-shimmer-index", `${offset}`);
+
+  base.setAttribute("data-slot", "text-shimmer-char");
+  base.setAttribute("aria-hidden", "true");
+  base.setAttribute("data-run", active ? "true" : "false");
+
+  shimmer.setAttribute("data-slot", "text-shimmer-char");
+  shimmer.setAttribute("aria-hidden", "true");
+  shimmer.setAttribute("data-run", active ? "true" : "false");
+
+  appendChildren(base, text);
+  appendChildren(shimmer, text);
+  outer.appendChild(base);
+  outer.appendChild(shimmer);
+
+  if (!active) {
+    setTimeout(() => {
+      base.setAttribute("data-run", "false");
+      shimmer.setAttribute("data-run", "false");
     }, swap);
-  });
-  onCleanup(() => {
-    if (!timer) return;
-    clearTimeout(timer);
-  });
-  return _$createComponent(Dynamic, {
-    get component() {
-      return props.as ?? "span";
-    },
-    "data-component": "text-shimmer",
-    get ["data-active"]() {
-      return active() ? "true" : "false";
-    },
-    get ["class"]() {
-      return props.class;
-    },
-    get ["aria-label"]() {
-      return text();
-    },
-    get style() {
-      return {
-        "--text-shimmer-swap": `${swap}ms`,
-        "--text-shimmer-index": `${offset()}`
-      };
-    },
-    get children() {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.nextSibling;
-      _$insert(_el$2, text);
-      _$insert(_el$3, text);
-      _$effect(() => _$setAttribute(_el$3, "data-run", run() ? "true" : "false"));
-      return _el$;
-    }
-  });
+  }
+
+  return outer;
 };
