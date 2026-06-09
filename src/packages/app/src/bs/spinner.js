@@ -1,20 +1,32 @@
-import { template as _$template } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span role=status>`);
 export function Spinner(props) {
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(props, {
-      "data-component": "spinner",
-      get classList() {
-        return {
-          "spinner-border": true,
-          ...props.classList,
-          [props.class ?? ""]: !!props.class
-        };
-      }
-    }), false, false);
-    return _el$;
-  })();
+  const el = document.createElement("span");
+  el.setAttribute("role", "status");
+
+  const classList = {
+    "spinner-border": true,
+    ...props.classList,
+    [props.class ?? ""]: !!props.class
+  };
+
+  for (const key in props) {
+    if (key === "class" || key === "classList") continue;
+    const value = props[key];
+    if (/^on[A-Z]/.test(key) && typeof value === "function") {
+      el.addEventListener(key.slice(2).toLowerCase(), value);
+      continue;
+    }
+    if (value != null && value !== false) {
+      el.setAttribute(key, value === true ? "" : String(value));
+    }
+  }
+
+  if (Object.keys(classList).length > 0) {
+    const classes = Object.entries(classList)
+      .filter(([_, value]) => value)
+      .map(([key]) => key)
+      .join(" ");
+    if (classes) el.setAttribute("class", classes);
+  }
+
+  return el;
 }

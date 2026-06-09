@@ -1,18 +1,9 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<i data-component=icon aria-hidden=true>`);
-import { splitProps } from "solid-js";
 const iconMap = {
-  // app-specific names (not in the original icon set)
   agent: "bi-robot",
   theme: "bi-circle-half",
   build: "bi-hammer",
   planner: "bi-list-check",
   src: "bi-file-earmark-code",
-  // full original icon set -> Bootstrap Icons
   "align-right": "bi-text-right",
   archive: "bi-archive",
   "arrow-down-to-line": "bi-box-arrow-in-down",
@@ -114,24 +105,49 @@ const iconMap = {
   warning: "bi-exclamation-triangle",
   "window-cursor": "bi-window"
 };
+
 const FALLBACK = "bi-question-circle";
+
+function setAttribute(el, attr, value) {
+  if (value != null && value !== false && value !== "") {
+    el.setAttribute(attr, value === true ? "" : String(value));
+  }
+}
+
+function getClassList(classList, localClass, biClass, size) {
+  const classes = { ...classList };
+  classes.bi = true;
+  classes[biClass] = true;
+  if (localClass) classes[localClass] = true;
+  if (size) classes[size] = true;
+  return Object.keys(classes).filter(k => !!classes[k]).join(" ");
+}
+
 export function Icon(props) {
-  const [local, others] = splitProps(props, ["name", "size", "class", "classList"]);
-  const biClass = () => iconMap[local.name] || FALLBACK;
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps({
-      get classList() {
-        return {
-          ...local.classList,
-          bi: true,
-          [biClass()]: true,
-          [local.class ?? ""]: !!local.class,
-          [local.size ?? ""]: !!local.size
-        };
-      }
-    }, others), false, false);
-    _$effect(() => _$setAttribute(_el$, "data-size", local.size || "normal"));
-    return _el$;
-  })();
+  const name = props.name,
+        size = props.size,
+        className = props.class,
+        classList = props.classList || {},
+        others = { ...props };
+
+  delete others.name;
+  delete others.size;
+  delete others.class;
+  delete others.classList;
+
+  const biClass = iconMap[name] || FALLBACK;
+
+  const el = document.createElement("i");
+  el.setAttribute("data-component", "icon");
+  el.setAttribute("aria-hidden", "true");
+  setAttribute(el, "class", getClassList(classList, className, biClass, size));
+  setAttribute(el, "data-size", size || "normal");
+
+  for (const key in others) {
+    if (Object.prototype.hasOwnProperty.call(others, key)) {
+      setAttribute(el, key, others[key]);
+    }
+  }
+
+  return el;
 }

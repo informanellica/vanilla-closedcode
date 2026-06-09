@@ -1,14 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<select data-component=select>`),
-  _tmplGroup$ = /*#__PURE__*/_$template(`<optgroup>`),
-  _tmplOption$ = /*#__PURE__*/_$template(`<option>`);
-import { createMemo, For, onCleanup, Show, splitProps } from "solid-js";
 import { pipe, groupBy, entries, map } from "remeda";
 
 export function Select(props) {
@@ -36,26 +25,21 @@ export function Select(props) {
     state.cleanup = local.onHighlight(item);
     state.key = key;
   };
-  onCleanup(stop);
 
-  // Flat list of options (preserving group order) so the native select index
-  // maps back to the original item passed by the consumer.
-  const flat = createMemo(() => local.options ?? []);
-  const grouped = createMemo(() => {
-    return pipe(local.options ?? [], groupBy(x => local.groupBy ? local.groupBy(x) : ""), entries(), map(([category, options]) => ({
-      category,
-      options
-    })));
-  });
-  const hasGroups = createMemo(() => local.groupBy && grouped().some(g => g.category !== ""));
-  const currentKey = createMemo(() => local.current === undefined || local.current === null ? undefined : keyFor(local.current));
-  const indexOfKey = key => flat().findIndex(item => keyFor(item) === key);
+  const optionsList = local.options ?? [];
+  const flatOptions = optionsList;
+  const groupedOptions = pipe(optionsList, groupBy(x => local.groupBy ? local.groupBy(x) : ""), entries(), map(([category, options]) => ({
+    category,
+    options
+  })));
+  const hasGroups = local.groupBy && groupedOptions.some(g => g.category !== "");
+  const currentKeyVal = local.current === undefined || local.current === null ? undefined : keyFor(local.current);
+  const indexOfKey = key => flatOptions.findIndex(item => keyFor(item) === key);
 
   const onChange = e => {
     const idx = e.currentTarget.selectedIndex;
-    // Account for a leading placeholder option when no current value matches.
     const offset = hasPlaceholderOption() ? 1 : 0;
-    const item = flat()[idx - offset];
+    const item = flatOptions[idx - offset];
     if (item === undefined) {
       local.onSelect?.(undefined);
     } else {
@@ -64,106 +48,128 @@ export function Select(props) {
     stop();
   };
 
-  const hasPlaceholderOption = () => currentKey() === undefined && !!local.placeholder;
+  const hasPlaceholderOption = () => currentKeyVal === undefined && !!local.placeholder;
 
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(others, () => local.triggerProps, {
-      get ["data-trigger-style"]() {
-        return local.triggerVariant;
-      },
-      get ["data-size"]() {
-        return local.size || "normal";
-      },
-      get ["data-variant"]() {
-        return local.variant || "secondary";
-      },
-      get style() {
-        return local.triggerStyle;
-      },
-      get classList() {
-        return {
-          ...local.classList,
-          "form-select": true,
-          "form-select-sm": local.size === "small",
-          "form-select-lg": local.size === "large",
-          [local.valueClass ?? ""]: !!local.valueClass,
-          [local.class ?? ""]: !!local.class
-        };
-      }
-    }), false, true);
-    _el$.addEventListener("change", onChange);
-    _el$.addEventListener("focus", () => local.onOpenChange?.(true));
-    _el$.addEventListener("blur", () => {
-      local.onOpenChange?.(false);
-      stop();
-    });
-    _$effect(() => {
-      _el$.disabled = !!local.disabled;
-    });
-    // Keep the native selected option in sync with the reactive `current` value.
-    _$effect(() => {
-      const offset = hasPlaceholderOption() ? 1 : 0;
-      const idx = indexOfKey(currentKey());
-      _el$.selectedIndex = idx < 0 ? 0 : idx + offset;
-    });
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return hasPlaceholderOption();
-      },
-      get children() {
-        var _opt = _tmplOption$();
-        _opt.value = "";
-        _opt.disabled = true;
-        _$insert(_opt, () => local.placeholder);
-        return _opt;
-      }
-    }), null);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return hasGroups();
-      },
-      get fallback() {
-        return _$createComponent(For, {
-          get each() {
-            return flat();
-          },
-          children: item => renderOption(item)
-        });
-      },
-      get children() {
-        return _$createComponent(For, {
-          get each() {
-            return grouped();
-          },
-          children: group => {
-            var _g = _tmplGroup$();
-            _$effect(() => _$setAttribute(_g, "label", group.category));
-            _$insert(_g, _$createComponent(For, {
-              get each() {
-                return group.options;
-              },
-              children: item => renderOption(item)
-            }));
-            return _g;
-          }
-        });
-      }
-    }), null);
-    return _el$;
-  })();
+  const el = document.createElement("select");
+  el.setAttribute("data-component", "select");
 
-  function renderOption(item) {
-    var _opt = _tmplOption$();
-    _opt.addEventListener("pointerenter", () => move(item));
-    _$effect(() => {
-      const key = keyFor(item);
-      _opt.value = typeof key === "string" ? key : String(key ?? "");
+  spread(el, mergeProps(others, local.triggerProps, {
+    ["data-trigger-style"]: local.triggerVariant,
+    ["data-size"]: local.size || "normal",
+    ["data-variant"]: local.variant || "secondary",
+    style: local.triggerStyle,
+    classList: {
+      ...local.classList,
+      "form-select": true,
+      "form-select-sm": local.size === "small",
+      "form-select-lg": local.size === "large",
+      [local.valueClass ?? ""]: !!local.valueClass,
+      [local.class ?? ""]: !!local.class
+    }
+  }));
+
+  el.addEventListener("change", onChange);
+  el.addEventListener("focus", () => local.onOpenChange?.(true));
+  el.addEventListener("blur", () => {
+    local.onOpenChange?.(false);
+    stop();
+  });
+
+  if (local.disabled) {
+    el.disabled = true;
+  }
+
+  const placeholderOpt = hasPlaceholderOption() ? (() => {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.disabled = true;
+    opt.textContent = local.placeholder;
+    return opt;
+  })() : null;
+
+  if (placeholderOpt) {
+    el.appendChild(placeholderOpt);
+  }
+
+  if (hasGroups) {
+    groupedOptions.forEach(group => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = group.category;
+      group.options.forEach(item => {
+        optgroup.appendChild(createOptionElement(item, keyFor, labelFor, currentKeyVal, move));
+      });
+      el.appendChild(optgroup);
     });
-    _$effect(() => {
-      _opt.selected = keyFor(item) === currentKey();
+  } else {
+    flatOptions.forEach(item => {
+      el.appendChild(createOptionElement(item, keyFor, labelFor, currentKeyVal, move));
     });
-    _$insert(_opt, () => labelFor(item));
-    return _opt;
+  }
+
+  const offset = hasPlaceholderOption() ? 1 : 0;
+  const idx = indexOfKey(currentKeyVal);
+  el.selectedIndex = idx < 0 ? 0 : idx + offset;
+
+  return el;
+}
+
+function createOptionElement(item, keyFor, labelFor, currentKeyVal, move) {
+  const opt = document.createElement("option");
+  opt.addEventListener("pointerenter", () => move(item));
+  const key = keyFor(item);
+  opt.value = typeof key === "string" ? key : String(key ?? "");
+  if (keyFor(item) === currentKeyVal) {
+    opt.selected = true;
+  }
+  opt.textContent = labelFor(item);
+  return opt;
+}
+
+function splitProps(props, keys) {
+  const local = {};
+  const others = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      local[key] = props[key];
+    } else {
+      others[key] = props[key];
+    }
+  }
+  return [local, others];
+}
+
+function mergeProps(...sources) {
+  const target = {};
+  sources.forEach(source => {
+    if (!source) return;
+    for (const key in source) {
+      if (Object.prototype.hasOwnProperty.call(source, key)) {
+        target[key] = source[key];
+      }
+    }
+  });
+  return target;
+}
+
+function spread(el, props) {
+  if (!props) return;
+  for (const key in props) {
+    const value = props[key];
+    if (key === "style" && value && typeof value === "object") {
+      Object.assign(el.style, value);
+    } else if (key === "classList" && value && typeof value === "object") {
+      for (const cls in value) {
+        if (value[cls]) {
+          el.classList.add(cls);
+        }
+      }
+    } else if (key.startsWith("on")) {
+      const eventName = key.toLowerCase().slice(2);
+      el.addEventListener(eventName, value);
+    } else if (el.hasOwnProperty(key) || typeof el[key] !== "function") {
+      el[key] = value;
+    } else {
+      el.setAttribute(key, value);
+    }
   }
 }

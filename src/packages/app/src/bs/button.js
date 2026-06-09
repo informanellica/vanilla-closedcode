@@ -1,65 +1,80 @@
-import { template as _$template } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<button>`);
-import { Show, splitProps } from "solid-js";
 import { Icon } from "@/bs/icon.js";
+
 const VARIANT_CLASS = {
   primary: "btn-primary",
   secondary: "btn-outline-secondary",
   ghost: "btn-link",
   critical: "btn-danger"
 };
+
 const SIZE_CLASS = {
   small: "btn-sm",
   large: "btn-lg"
 };
+
+function getClassList(classList, variantClass, sizeClass, extraClass) {
+  const classes = { ...classList };
+  classes.btn = true;
+  classes[variantClass] = true;
+  if (sizeClass) classes[sizeClass] = true;
+  classes["d-inline-flex align-items-center gap-1"] = true;
+  if (extraClass) classes[extraClass] = true;
+  return Object.keys(classes).filter(k => !!classes[k]).join(" ");
+}
+
+function appendChildValue(target, value) {
+  if (typeof value === "function") {
+    appendChildValue(target, value());
+    return;
+  }
+  if (value == null || value === false || value === true) return;
+  if (Array.isArray(value)) {
+    value.forEach(item => appendChildValue(target, item));
+    return;
+  }
+  if (value instanceof Node) {
+    target.push(value);
+    return;
+  }
+  target.push(document.createTextNode(String(value)));
+}
+
 export function Button(props) {
-  const [split, rest] = splitProps(props, ["variant", "size", "icon", "class", "classList", "children"]);
-  const variantClass = () => VARIANT_CLASS[split.variant] || VARIANT_CLASS.secondary;
-  const sizeClass = () => SIZE_CLASS[split.size] || "";
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps({
-      type: "button",
-      "data-component": "button",
-      get ["data-size"]() {
-        return split.size || "normal";
-      },
-      get ["data-variant"]() {
-        return split.variant || "secondary";
-      },
-      get ["data-icon"]() {
-        return split.icon;
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          btn: true,
-          [variantClass()]: true,
-          [sizeClass()]: !!sizeClass(),
-          "d-inline-flex align-items-center gap-1": true,
-          [split.class ?? ""]: !!split.class
-        };
+  const button = document.createElement("button");
+
+  button.type = "button";
+  button.dataset.component = "button";
+  button.dataset.size = props.size || "normal";
+  button.dataset.variant = props.variant || "secondary";
+  if (props.icon) button.dataset.icon = props.icon;
+
+  const variantClass = VARIANT_CLASS[props.variant] || VARIANT_CLASS.secondary;
+  const sizeClass = SIZE_CLASS[props.size] || "";
+
+  button.className = getClassList(props.classList || {}, variantClass, sizeClass, props.class);
+
+  const children = [];
+
+  if (props.icon) {
+    const iconEl = Icon({ name: props.icon, size: "small" });
+    children.push(iconEl);
+  }
+
+  appendChildValue(children, props.children);
+
+  for (const key in props) {
+    if (key !== "variant" && key !== "size" && key !== "icon" &&
+        key !== "class" && key !== "classList" && key !== "children") {
+      const value = props[key];
+      if (/^on[A-Z]/.test(key) && typeof value === "function") {
+        button.addEventListener(key.slice(2).toLowerCase(), value);
+      } else if (value != null && value !== false) {
+        button.setAttribute(key, value === true ? "" : String(value));
       }
-    }, rest), false, true);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return split.icon;
-      },
-      get children() {
-        return _$createComponent(Icon, {
-          get name() {
-            return split.icon;
-          },
-          size: "small"
-        });
-      }
-    }), null);
-    _$insert(_el$, _$memo(() => split.children), null);
-    return _el$;
-  })();
+    }
+  }
+
+  children.forEach(child => button.appendChild(child));
+
+  return button;
 }

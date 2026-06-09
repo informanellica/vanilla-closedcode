@@ -1,16 +1,4 @@
-import { createEffect, createMemo, createUniqueId, splitProps } from "solid-js";
-
 export function Switch(props) {
-  const [local, others] = splitProps(props, ["checked", "onChange", "disabled", "hideLabel", "children", "class", "classList"]);
-
-  const id = createUniqueId();
-  const classList = createMemo(() => ({
-    ...local.classList,
-    "form-check": true,
-    "form-switch": true,
-    [local.class ?? ""]: !!local.class
-  }));
-
   const container = document.createElement("div");
   container.setAttribute("data-component", "switch");
 
@@ -24,93 +12,48 @@ export function Switch(props) {
   label.className = "form-check-label";
   label.dataset.slot = "label";
 
-  createEffect(() => {
-    container.className = "";
-    const cls = classList();
-    Object.keys(cls).forEach(name => {
-      if (cls[name]) {
-        container.classList.add(name);
-      }
-    });
-  });
+  const id = container.id;
 
-  function appendChildValue(result, value) {
-    if (typeof value === "function") {
-      appendChildValue(result, value());
-      return;
-    }
-    if (value == null || value === false || value === true) return;
-    if (Array.isArray(value)) {
-      for (const item of value) appendChildValue(result, item);
-      return;
-    }
-    if (value instanceof Node) {
-      result.push(value);
-      return;
-    }
-    if (typeof value === "string" || typeof value === "number") {
-      result.push(document.createTextNode(String(value)));
-    }
+  container.className = `form-check form-switch ${props.class ?? ""}`.trim();
+
+  if (props.checked) input.checked = true;
+  if (props.disabled) input.disabled = true;
+  input.id = id;
+  label.htmlFor = id;
+
+  if (props.hideLabel) {
+    label.classList.add("visually-hidden");
   }
 
-  function renderChildren(value) {
-    const result = [];
-    appendChildValue(result, value);
-    return result;
-  }
-
-  createEffect(() => {
-    label.replaceChildren(...renderChildren(local.children));
-  });
-
-  createEffect(() => {
-    if (local.hideLabel) {
-      label.classList.add("visually-hidden");
+  if (props.children != null && props.children !== false && props.children !== true) {
+    const node = typeof props.children === "function" ? props.children() : props.children;
+    if (Array.isArray(node)) {
+      for (const item of node) label.appendChild(item instanceof Node ? item : document.createTextNode(String(item)));
     } else {
-      label.classList.remove("visually-hidden");
+      label.appendChild(node instanceof Node ? node : document.createTextNode(String(node)));
     }
-  });
+  }
 
   input.addEventListener("change", e => {
-    local.onChange?.(e.currentTarget.checked);
+    props.onChange?.(e.currentTarget.checked);
   });
 
-  createEffect(() => {
-    input.id = id;
-  });
-
-  createEffect(() => {
-    input.checked = !!local.checked;
-  });
-
-  createEffect(() => {
-    input.disabled = !!local.disabled;
-  });
-
-  createEffect(() => {
-    label.htmlFor = id;
-  });
-
-  Object.keys(others).forEach(key => {
+  Object.keys(props).forEach(key => {
     if (key === "class" || key === "classList") return;
     if (/^on[A-Z]/.test(key)) {
       const eventName = key.charAt(2).toLowerCase() + key.slice(3);
-      const handler = others[key];
+      const handler = props[key];
       if (typeof handler === "function") container.addEventListener(eventName, handler);
       return;
     }
-    createEffect(() => {
-      const value = others[key];
-      if (value === undefined || value === null || value === false) {
-        container.removeAttribute(key);
-        return;
-      }
+    const value = props[key];
+    if (value !== undefined && value !== null && value !== false) {
       if (key === "style" && typeof value === "object") {
         Object.assign(container.style, value);
       } else {
         container.setAttribute(key, value === true ? "" : value);
       }
-    });
+    }
   });
 
   container.appendChild(input);
