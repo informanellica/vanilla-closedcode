@@ -1,49 +1,120 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=switch><input type=checkbox role=switch class=form-check-input><label class=form-check-label>`);
-import { createUniqueId, Show, splitProps } from "solid-js";
+import { createEffect, createMemo, createUniqueId, splitProps } from "solid-js";
+
 export function Switch(props) {
   const [local, others] = splitProps(props, ["checked", "onChange", "disabled", "hideLabel", "children", "class", "classList"]);
+
   const id = createUniqueId();
-  return (() => {
-    var _el$ = _tmpl$(),
-      _input = _el$.firstChild,
-      _label = _input.nextSibling;
-    _$spread(_el$, _$mergeProps({
-      get classList() {
-        return {
-          ...local.classList,
-          "form-check": true,
-          "form-switch": true,
-          [local.class ?? ""]: !!local.class
-        };
+  const classList = createMemo(() => ({
+    ...local.classList,
+    "form-check": true,
+    "form-switch": true,
+    [local.class ?? ""]: !!local.class
+  }));
+
+  const container = document.createElement("div");
+  container.setAttribute("data-component", "switch");
+
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.role = "switch";
+  input.className = "form-check-input";
+  input.dataset.slot = "input";
+
+  const label = document.createElement("label");
+  label.className = "form-check-label";
+  label.dataset.slot = "label";
+
+  createEffect(() => {
+    container.className = "";
+    const cls = classList();
+    Object.keys(cls).forEach(name => {
+      if (cls[name]) {
+        container.classList.add(name);
       }
-    }, others), false, true);
-    _input.addEventListener("change", e => {
-      local.onChange?.(e.currentTarget.checked);
     });
-    _$effect(() => _$setAttribute(_input, "id", id));
-    _$effect(() => {
-      _input.checked = !!local.checked;
-    });
-    _$effect(() => {
-      _input.disabled = !!local.disabled;
-    });
-    _$effect(() => _$setAttribute(_label, "for", id));
-    _$insert(_label, _$createComponent(Show, {
-      get when() {
-        return local.children;
-      },
-      get children() {
-        return local.children;
+  });
+
+  function appendChildValue(result, value) {
+    if (typeof value === "function") {
+      appendChildValue(result, value());
+      return;
+    }
+    if (value == null || value === false || value === true) return;
+    if (Array.isArray(value)) {
+      for (const item of value) appendChildValue(result, item);
+      return;
+    }
+    if (value instanceof Node) {
+      result.push(value);
+      return;
+    }
+    if (typeof value === "string" || typeof value === "number") {
+      result.push(document.createTextNode(String(value)));
+    }
+  }
+
+  function renderChildren(value) {
+    const result = [];
+    appendChildValue(result, value);
+    return result;
+  }
+
+  createEffect(() => {
+    label.replaceChildren(...renderChildren(local.children));
+  });
+
+  createEffect(() => {
+    if (local.hideLabel) {
+      label.classList.add("visually-hidden");
+    } else {
+      label.classList.remove("visually-hidden");
+    }
+  });
+
+  input.addEventListener("change", e => {
+    local.onChange?.(e.currentTarget.checked);
+  });
+
+  createEffect(() => {
+    input.id = id;
+  });
+
+  createEffect(() => {
+    input.checked = !!local.checked;
+  });
+
+  createEffect(() => {
+    input.disabled = !!local.disabled;
+  });
+
+  createEffect(() => {
+    label.htmlFor = id;
+  });
+
+  Object.keys(others).forEach(key => {
+    if (key === "class" || key === "classList") return;
+    if (/^on[A-Z]/.test(key)) {
+      const eventName = key.charAt(2).toLowerCase() + key.slice(3);
+      const handler = others[key];
+      if (typeof handler === "function") container.addEventListener(eventName, handler);
+      return;
+    }
+    createEffect(() => {
+      const value = others[key];
+      if (value === undefined || value === null || value === false) {
+        container.removeAttribute(key);
+        return;
       }
-    }));
-    _$effect(() => _label.classList.toggle("visually-hidden", !!local.hideLabel));
-    return _el$;
-  })();
+      if (key === "style" && typeof value === "object") {
+        Object.assign(container.style, value);
+      } else {
+        container.setAttribute(key, value === true ? "" : value);
+      }
+    });
+  });
+
+  container.appendChild(input);
+  container.appendChild(label);
+
+  return container;
 }
