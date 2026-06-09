@@ -1,63 +1,108 @@
-import { template as _$template } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<img data-slot=avatar-image>`);
-import { splitProps, Show } from "solid-js";
-const segmenter = typeof Intl !== "undefined" && "Segmenter" in Intl ? new Intl.Segmenter(undefined, {
-  granularity: "grapheme"
-}) : undefined;
+const segmenter = typeof Intl !== "undefined" && "Segmenter" in Intl ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : undefined;
+
 function first(value) {
   if (!value) return "";
   if (!segmenter) return Array.from(value)[0] ?? "";
   return segmenter.segment(value)[Symbol.iterator]().next().value?.segment ?? Array.from(value)[0] ?? "";
 }
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback
+      }
+    }
+    if (value === false || value === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+
+function applyStyle(el, style) {
+  if (!style || typeof style !== "object") return;
+  for (const key in style) {
+    if (style[key] == null) continue;
+    el.style.setProperty(key, String(style[key]));
+  }
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
 export function Avatar(props) {
   const [split, rest] = splitProps(props, ["fallback", "src", "background", "foreground", "size", "class", "classList", "style"]);
-  const src = split.src; // did this so i can zero it out to test fallback
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(rest, {
-      "data-component": "avatar",
-      get ["data-size"]() {
-        return split.size || "normal";
-      },
-      "data-has-image": src ? "" : undefined,
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      },
-      get style() {
-        return {
-          ...(typeof split.style === "object" ? split.style : {}),
-          ...(!src && split.background ? {
-            "--avatar-bg": split.background
-          } : {}),
-          ...(!src && split.foreground ? {
-            "--avatar-fg": split.foreground
-          } : {})
-        };
-      }
-    }), false, true);
-    _$insert(_el$, _$createComponent(Show, {
-      when: src,
-      get fallback() {
-        return first(split.fallback);
-      },
-      children: src => (() => {
-        var _el$2 = _tmpl$2();
-        _$setAttribute(_el$2, "draggable", false);
-        _$effect(() => _$setAttribute(_el$2, "src", src()));
-        return _el$2;
-      })()
-    }));
-    return _el$;
-  })();
+  const src = split.src;
+  const el = document.createElement("div");
+  el.setAttribute("data-component", "avatar");
+  el.setAttribute("data-size", split.size || "normal");
+  if (src) el.setAttribute("data-has-image", "");
+  else el.removeAttribute("data-has-image");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  applyStyle(el, typeof split.style === "object" ? split.style : {});
+
+  if (!src && split.background) el.style.setProperty("--avatar-bg", split.background);
+  if (!src && split.foreground) el.style.setProperty("--avatar-fg", split.foreground);
+
+  if (src) {
+    const img = document.createElement("img");
+    img.setAttribute("data-slot", "avatar-image");
+    img.draggable = false;
+    img.src = src;
+    el.appendChild(img);
+  } else {
+    el.textContent = first(split.fallback);
+  }
+
+  return el;
 }
