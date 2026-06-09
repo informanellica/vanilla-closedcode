@@ -1,9 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<img data-component=app-icon>`);
-import { createSignal, onCleanup, onMount, splitProps } from "solid-js";
 import androidStudio from "../assets/icons/app/android-studio.svg";
 import antigravity from "../assets/icons/app/antigravity.svg";
 import cursor from "../assets/icons/app/cursor.svg";
@@ -48,38 +42,69 @@ const scheme = () => {
   if (document.documentElement.dataset.colorScheme === "dark") return "dark";
   return "light";
 };
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) split[key] = props[key];
+    else rest[key] = props[key];
+  }
+  return [split, rest];
+}
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback
+      }
+    }
+    if (value === false || value === null) el.removeAttribute(key);
+    else el.setAttribute(key, String(value));
+  }
+}
 export const AppIcon = props => {
   const [local, rest] = splitProps(props, ["id", "class", "classList", "alt", "draggable"]);
-  const [mode, setMode] = createSignal(scheme());
-  onMount(() => {
-    const sync = () => setMode(scheme());
-    const observer = new MutationObserver(sync);
+  const img = document.createElement("img");
+  let mode = scheme();
+  const update = () => {
+    mode = scheme();
+    img.src = themed[local.id]?.[mode] ?? icons[local.id] ?? "";
+  };
+  const observer = new MutationObserver(update);
+  if (typeof document === "object") {
     observer.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["data-color-scheme"]
     });
-    sync();
-    onCleanup(() => observer.disconnect());
+  }
+  img.setAttribute("data-component", "app-icon");
+  img.alt = local.alt ?? "";
+  img.draggable = local.draggable ?? false;
+  if (local.class) img.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
+  applyClassList(img, local.classList);
+  applyRestProps(img, rest);
+  update();
+  queueMicrotask(() => {
+    if (img.isConnected) return;
+    observer.disconnect();
   });
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(rest, {
-      get src() {
-        return themed[local.id]?.[mode()] ?? icons[local.id];
-      },
-      get alt() {
-        return local.alt ?? "";
-      },
-      get draggable() {
-        return local.draggable ?? false;
-      },
-      get classList() {
-        return {
-          ...local.classList,
-          [local.class ?? ""]: !!local.class
-        };
-      }
-    }), false, false);
-    return _el$;
-  })();
+  return img;
 };

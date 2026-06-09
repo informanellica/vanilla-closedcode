@@ -1,58 +1,90 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<svg><defs><mask mask-type=alpha><use></svg>`, false, true, false),
-  _tmpl$2 = /*#__PURE__*/_$template(`<svg><rect width=100% height=100% fill=currentColor></svg>`, false, true, false),
-  _tmpl$3 = /*#__PURE__*/_$template(`<svg data-component=file-icon>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<svg><use></svg>`, false, true, false);
-import { createMemo, createUniqueId, splitProps, Show } from "solid-js";
 import sprite from "./file-icons/sprite.svg";
+let fileIconId = 0;
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback to attribute
+      }
+    }
+    if (value === false || value === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+function createSvg(tag) {
+  return document.createElementNS("http://www.w3.org/2000/svg", tag);
+}
+function appendUse(href) {
+  const svg = createSvg("svg");
+  const use = createSvg("use");
+  use.setAttribute("href", href);
+  svg.appendChild(use);
+  return svg;
+}
 export const FileIcon = props => {
   const [local, rest] = splitProps(props, ["node", "class", "classList", "expanded", "mono"]);
-  const name = createMemo(() => chooseIconName(local.node.path, local.node.type, local.expanded || false));
-  const id = `file-icon-mono-${createUniqueId()}`;
-  return (() => {
-    var _el$ = _tmpl$3();
-    _$spread(_el$, _$mergeProps(rest, {
-      get classList() {
-        return {
-          ...local.classList,
-          [local.class ?? ""]: !!local.class
-        };
-      }
-    }), true, true);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return local.mono;
-      },
-      get fallback() {
-        return (() => {
-          var _el$6 = _tmpl$4();
-          _$effect(() => _$setAttribute(_el$6, "href", `${sprite}#${name()}`));
-          return _el$6;
-        })();
-      },
-      get children() {
-        return [(() => {
-          var _el$2 = _tmpl$(),
-            _el$3 = _el$2.firstChild,
-            _el$4 = _el$3.firstChild;
-          _$setAttribute(_el$3, "id", id);
-          _$effect(() => _$setAttribute(_el$4, "href", `${sprite}#${name()}`));
-          return _el$2;
-        })(), (() => {
-          var _el$5 = _tmpl$2();
-          _$setAttribute(_el$5, "mask", `url(#${id})`);
-          return _el$5;
-        })()];
-      }
-    }));
-    return _el$;
-  })();
+  const name = chooseIconName(local.node.path, local.node.type, local.expanded || false);
+  const root = createSvg("svg");
+  root.setAttribute("data-component", "file-icon");
+  if (local.class) root.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
+  applyClassList(root, local.classList);
+  applyRestProps(root, rest);
+
+  if (local.mono) {
+    const id = `file-icon-mono-${++fileIconId}`;
+    const defs = createSvg("defs");
+    const mask = createSvg("mask");
+    mask.setAttribute("mask-type", "alpha");
+    mask.setAttribute("id", id);
+    const use1 = createSvg("use");
+    use1.setAttribute("href", `${sprite}#${name}`);
+    mask.appendChild(use1);
+    defs.appendChild(mask);
+    root.appendChild(defs);
+    const rect = createSvg("rect");
+    rect.setAttribute("width", "100%");
+    rect.setAttribute("height", "100%");
+    rect.setAttribute("fill", "currentColor");
+    rect.setAttribute("mask", `url(#${id})`);
+    root.appendChild(rect);
+    return root;
+  }
+
+  root.appendChild(appendUse(`${sprite}#${name}`));
+  return root;
 };
 const ICON_MAPS = {
   fileNames: {
