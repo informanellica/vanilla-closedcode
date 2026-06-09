@@ -1,189 +1,324 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmplRoot$ = /*#__PURE__*/_$template(`<div data-component=tabs>`),
-  _tmplTrigger$ = /*#__PURE__*/_$template(`<button type=button data-slot=tabs-trigger>`),
-  _tmplClose$ = /*#__PURE__*/_$template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close-button>`),
-  _tmplContent$ = /*#__PURE__*/_$template(`<div data-slot=tabs-content>`),
-  _tmplTitle$ = /*#__PURE__*/_$template(`<div class="text-uppercase text-secondary small fw-semibold px-2 pt-2 pb-1" data-slot=tabs-section-title>`);
-import { createContext, createMemo, createSignal, Show, splitProps, useContext } from "solid-js";
-const TabsContext = /*#__PURE__*/createContext();
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) {
+      el.classList.add(cls);
+    } else {
+      el.classList.remove(cls);
+    }
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fall through to attribute assignment
+      }
+    }
+    if (value === null || value === false) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+
+let TabsContext = null;
+
 function useTabs() {
-  return useContext(TabsContext);
+  return TabsContext;
 }
+
+function createTabsState(props) {
+  const controlled = props.value !== undefined;
+  let internalValue = props.defaultValue ?? null;
+  const triggers = new Set();
+  const contents = new Set();
+
+  const readValue = () => (controlled ? props.value : internalValue);
+  const readOrientation = () => props.orientation || "horizontal";
+  const readVariant = () => props.variant || "normal";
+
+  const sync = () => {
+    const currentValue = readValue();
+    const orientation = readOrientation();
+    const variant = readVariant();
+
+    for (const entry of triggers) {
+      const isActive = entry.value === currentValue;
+      entry.el.setAttribute("aria-selected", isActive ? "true" : "false");
+      entry.el.classList.toggle("active", isActive);
+      if (entry.buttonClass) {
+        entry.el.classList.toggle(entry.buttonClass, isActive);
+      }
+      if (entry.closeEl) {
+        entry.closeEl.toggleAttribute("data-hidden", !!entry.hideCloseButton);
+      }
+    }
+
+    for (const entry of contents) {
+      const isActive = entry.value === currentValue;
+      entry.el.classList.toggle("active", isActive);
+      entry.el.classList.toggle("d-none", !isActive);
+      entry.el.toggleAttribute("hidden", !isActive);
+      entry.el.setAttribute("aria-hidden", isActive ? "false" : "true");
+    }
+
+    if (rootEl) {
+      rootEl.setAttribute("data-orientation", orientation);
+      rootEl.setAttribute("data-variant", variant);
+      rootEl.classList.toggle("flex-row", orientation === "vertical");
+      rootEl.classList.toggle("flex-column", orientation !== "vertical");
+    }
+  };
+
+  const api = {
+    value: readValue,
+    select(next) {
+      if (!controlled) internalValue = next;
+      sync();
+      props.onChange?.(next);
+    },
+    orientation: readOrientation,
+    variant: readVariant,
+    registerTrigger(entry) {
+      triggers.add(entry);
+      sync();
+    },
+    registerContent(entry) {
+      contents.add(entry);
+      sync();
+    },
+    unregisterTrigger(entry) {
+      triggers.delete(entry);
+    },
+    unregisterContent(entry) {
+      contents.delete(entry);
+    },
+    sync
+  };
+
+  let rootEl = null;
+  api.registerRoot = el => {
+    rootEl = el;
+    sync();
+  };
+
+  return api;
+}
+
 function TabsRoot(props) {
-  const [split, rest] = splitProps(props, ["class", "classList", "variant", "orientation", "value", "defaultValue", "onChange", "children"]);
-  const [internal, setInternal] = createSignal(split.defaultValue);
-  const value = createMemo(() => split.value !== undefined ? split.value : internal());
-  const select = next => {
-    if (split.value === undefined) setInternal(next);
-    split.onChange?.(next);
-  };
-  const orientation = () => split.orientation || "horizontal";
-  const ctx = {
-    value,
-    select,
-    orientation,
-    get variant() {
-      return split.variant || "normal";
-    }
-  };
-  return _$createComponent(TabsContext.Provider, {
-    value: ctx,
-    get children() {
-      return (() => {
-        var _el$ = _tmplRoot$();
-        _$spread(_el$, _$mergeProps({
-          "data-component": "tabs",
-          get ["data-variant"]() {
-            return split.variant || "normal";
-          },
-          get ["data-orientation"]() {
-            return orientation();
-          },
-          get classList() {
-            return {
-              ...split.classList,
-              "d-flex": true,
-              "flex-row": orientation() === "vertical",
-              "flex-column": orientation() !== "vertical",
-              [split.class ?? ""]: !!split.class
-            };
-          }
-        }, rest), false, true);
-        _$insert(_el$, () => split.children);
-        return _el$;
-      })();
-    }
-  });
+  const [split, rest] = splitProps(props, [
+    "class",
+    "classList",
+    "variant",
+    "orientation",
+    "value",
+    "defaultValue",
+    "onChange",
+    "children"
+  ]);
+
+  const previousContext = TabsContext;
+  const state = createTabsState(split);
+  TabsContext = state;
+
+  const rootEl = template(`<div data-component=tabs>`);
+  state.registerRoot(rootEl);
+
+  rootEl.setAttribute("data-variant", state.variant());
+  rootEl.setAttribute("data-orientation", state.orientation());
+  rootEl.classList.add("d-flex");
+  rootEl.classList.toggle("flex-row", state.orientation() === "vertical");
+  rootEl.classList.toggle("flex-column", state.orientation() !== "vertical");
+
+  if (split.class) {
+    rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  }
+  applyClassList(rootEl, split.classList);
+  applyRestProps(rootEl, rest);
+
+  try {
+    appendChildren(rootEl, split.children);
+  } finally {
+    TabsContext = previousContext;
+  }
+
+  state.sync();
+  return rootEl;
 }
+
 function TabsList(props) {
   const tabs = useTabs();
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  const vertical = () => tabs?.orientation() === "vertical";
-  return (() => {
-    var _el$ = _tmplRoot$();
-    _$spread(_el$, _$mergeProps({
-      role: "tablist",
-      "data-slot": "tabs-list",
-      get ["data-orientation"]() {
-        return tabs?.orientation() || "horizontal";
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          nav: true,
-          "nav-pills": true,
-          "flex-column": vertical(),
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }, rest), false, true);
-    _$insert(_el$, () => split.children);
-    return _el$;
-  })();
+  const listEl = template(`<div data-component=tabs-list>`);
+
+  listEl.setAttribute("role", "tablist");
+  listEl.setAttribute("data-slot", "tabs-list");
+  listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
+  listEl.classList.add("nav", "nav-pills");
+  listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
+
+  if (split.class) {
+    listEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  }
+  applyClassList(listEl, split.classList);
+  applyRestProps(listEl, rest);
+  appendChildren(listEl, split.children);
+  return listEl;
 }
+
 function TabsTrigger(props) {
   const tabs = useTabs();
-  const [split, rest] = splitProps(props, ["class", "classList", "classes", "children", "value", "closeButton", "hideCloseButton", "onMiddleClick", "onClick"]);
-  const active = createMemo(() => tabs?.value() === split.value);
-  return (() => {
-    var _el$ = _tmplTrigger$();
-    _el$.addEventListener("auxclick", e => {
-      if (e.button === 1 && split.onMiddleClick) {
-        e.preventDefault();
-        split.onMiddleClick();
-      }
-    });
-    _el$.addEventListener("mousedown", e => {
-      if (e.button === 1 && split.onMiddleClick) {
-        e.preventDefault();
-      }
-    });
-    _el$.addEventListener("click", e => {
-      tabs?.select(split.value);
-      split.onClick?.(e);
-    });
-    _$spread(_el$, _$mergeProps({
-      role: "tab",
-      "data-slot": "tabs-trigger",
-      get ["data-value"]() {
-        return split.value;
-      },
-      get ["aria-selected"]() {
-        return active() ? "true" : "false";
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          "nav-link": true,
-          "d-inline-flex align-items-center gap-1": true,
-          active: active(),
-          [split.classes?.button ?? ""]: !!split.classes?.button,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }, rest), false, true);
-    _$insert(_el$, () => split.children, null);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return split.closeButton;
-      },
-      children: closeButton => (() => {
-        var _el$2 = _tmplClose$();
-        _$insert(_el$2, () => typeof closeButton === "function" ? closeButton() : closeButton);
-        _$effect(() => _$setAttribute(_el$2, "data-hidden", split.hideCloseButton ? "true" : "false"));
-        return _el$2;
-      })()
-    }), null);
-    return _el$;
-  })();
+  const [split, rest] = splitProps(props, [
+    "class",
+    "classList",
+    "classes",
+    "children",
+    "value",
+    "closeButton",
+    "hideCloseButton",
+    "onMiddleClick",
+    "onClick"
+  ]);
+  const triggerEl = template(`<button type=button data-slot=tabs-trigger>`);
+  const value = split.value;
+  const closeButton = split.closeButton;
+
+  triggerEl.setAttribute("role", "tab");
+  triggerEl.setAttribute("data-value", value ?? "");
+  triggerEl.setAttribute("aria-selected", tabs?.value() === value ? "true" : "false");
+  triggerEl.classList.add("nav-link", "d-inline-flex", "align-items-center", "gap-1");
+
+  if (split.class) {
+    triggerEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  }
+  applyClassList(triggerEl, split.classList);
+  if (split.classes?.button) {
+    triggerEl.classList.add(split.classes.button);
+  }
+  applyRestProps(triggerEl, rest);
+
+  const syncEntry = {
+    el: triggerEl,
+    value,
+    buttonClass: split.classes?.button || "",
+    hideCloseButton: !!split.hideCloseButton,
+    closeEl: null
+  };
+
+  triggerEl.addEventListener("auxclick", event => {
+    if (event.button === 1 && typeof split.onMiddleClick === "function") {
+      event.preventDefault();
+      split.onMiddleClick(event);
+    }
+  });
+  triggerEl.addEventListener("mousedown", event => {
+    if (event.button === 1 && typeof split.onMiddleClick === "function") {
+      event.preventDefault();
+    }
+  });
+  triggerEl.addEventListener("click", event => {
+    tabs?.select?.(value);
+    split.onClick?.(event);
+  });
+
+  appendChildren(triggerEl, split.children);
+
+  if (closeButton) {
+    const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close-button>`);
+    closeEl.textContent = typeof closeButton === "function" ? String(closeButton()) : String(closeButton);
+    if (split.hideCloseButton) {
+      closeEl.setAttribute("data-hidden", "true");
+    }
+    syncEntry.closeEl = closeEl;
+    triggerEl.appendChild(closeEl);
+  }
+
+  tabs?.registerTrigger?.(syncEntry);
+  return triggerEl;
 }
+
 function TabsContent(props) {
   const tabs = useTabs();
   const [split, rest] = splitProps(props, ["class", "classList", "children", "value"]);
-  const active = createMemo(() => tabs?.value() === split.value);
-  return (() => {
-    var _el$ = _tmplContent$();
-    _$spread(_el$, _$mergeProps({
-      role: "tabpanel",
-      "data-slot": "tabs-content",
-      get ["data-value"]() {
-        return split.value;
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          "tab-pane": true,
-          active: active(),
-          "d-none": !active(),
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }, rest), false, true);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return active();
-      },
-      get children() {
-        return _$memo(() => split.children);
-      }
-    }));
-    return _el$;
-  })();
+  const contentEl = template(`<div data-slot=tabs-content>`);
+  const value = split.value;
+
+  contentEl.setAttribute("role", "tabpanel");
+  contentEl.setAttribute("data-value", value ?? "");
+  contentEl.classList.add("tab-pane");
+  contentEl.classList.toggle("active", tabs?.value() === value);
+  contentEl.classList.toggle("d-none", tabs?.value() !== value);
+  contentEl.toggleAttribute("hidden", tabs?.value() !== value);
+  contentEl.setAttribute("aria-hidden", tabs?.value() === value ? "false" : "true");
+
+  if (split.class) {
+    contentEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  }
+  applyClassList(contentEl, split.classList);
+  applyRestProps(contentEl, rest);
+
+  appendChildren(contentEl, split.children);
+
+  tabs?.registerContent?.({ el: contentEl, value });
+  return contentEl;
 }
-const TabsSectionTitle = props => {
-  return (() => {
-    var _el$ = _tmplTitle$();
-    _$insert(_el$, () => props.children);
-    return _el$;
-  })();
-};
+
+function TabsSectionTitle(props) {
+  const titleEl = template(`<div class="text-uppercase text-secondary small fw-semibold px-2 pt-2 pb-1" data-slot=tabs-section-title>`);
+  appendChildren(titleEl, props.children);
+  return titleEl;
+}
+
 export const Tabs = Object.assign(TabsRoot, {
   List: TabsList,
   Trigger: TabsTrigger,
