@@ -1,134 +1,138 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span data-slot=card-title-icon>`);
-import { splitProps } from "solid-js";
 import { Icon } from "./icon.js";
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) split[key] = props[key];
+    else rest[key] = props[key];
+  }
+  return [split, rest];
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback
+      }
+    }
+    if (value === false || value === null) el.removeAttribute(key);
+    else el.setAttribute(key, String(value));
+  }
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
 function pick(variant) {
   if (variant === "error") return "circle-ban-sign";
   if (variant === "warning") return "warning";
   if (variant === "success") return "circle-check";
   if (variant === "info") return "help";
-  return;
 }
-function mix(style, value) {
-  if (!value) return style;
-  if (!style) return {
-    "--card-accent": value
-  };
-  if (typeof style === "string") return `${style};--card-accent:${value};`;
-  return {
-    ...style,
-    "--card-accent": value
-  };
+
+function accentFor(variant) {
+  if (variant === "error") return "var(--icon-critical-base)";
+  if (variant === "warning") return "var(--icon-warning-active)";
+  if (variant === "success") return "var(--icon-success-active)";
+  if (variant === "info") return "var(--icon-info-active)";
 }
+
 export function Card(props) {
   const [split, rest] = splitProps(props, ["variant", "style", "class", "classList"]);
-  const variant = () => split.variant ?? "normal";
-  const accent = () => {
-    const v = variant();
-    if (v === "error") return "var(--icon-critical-base)";
-    if (v === "warning") return "var(--icon-warning-active)";
-    if (v === "success") return "var(--icon-success-active)";
-    if (v === "info") return "var(--icon-info-active)";
-    return;
-  };
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(rest, {
-      "data-component": "card",
-      get ["data-variant"]() {
-        return variant();
-      },
-      get style() {
-        return mix(split.style, accent());
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }), false, true);
-    _$insert(_el$, () => props.children);
-    return _el$;
-  })();
+  const el = document.createElement("div");
+  const variant = split.variant ?? "normal";
+  el.setAttribute("data-component", "card");
+  el.setAttribute("data-variant", variant);
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  const accent = accentFor(variant);
+  if (split.style) {
+    if (typeof split.style === "string") {
+      el.setAttribute("style", `${split.style}${accent ? `;--card-accent:${accent};` : ""}`);
+    } else if (typeof split.style === "object") {
+      for (const key in split.style) el.style.setProperty(key, String(split.style[key]));
+      if (accent) el.style.setProperty("--card-accent", accent);
+    }
+  } else if (accent) {
+    el.style.setProperty("--card-accent", accent);
+  }
+  appendChildren(el, props.children);
+  return el;
 }
+
 export function CardTitle(props) {
   const [split, rest] = splitProps(props, ["variant", "icon", "class", "classList", "children"]);
-  const show = () => split.icon !== false && split.icon !== null;
-  const name = () => {
-    if (split.icon === false || split.icon === null) return;
-    if (typeof split.icon === "string") return split.icon;
-    return pick(split.variant ?? "normal");
-  };
-  const placeholder = () => !name();
-  return (() => {
-    var _el$2 = _tmpl$();
-    _$spread(_el$2, _$mergeProps(rest, {
-      "data-slot": "card-title",
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }), false, true);
-    _$insert(_el$2, (() => {
-      var _c$ = _$memo(() => !!show());
-      return () => _c$() ? (() => {
-        var _el$3 = _tmpl$2();
-        _$insert(_el$3, _$createComponent(Icon, {
-          get name() {
-            return name() ?? "dash";
-          },
-          size: "small"
-        }));
-        _$effect(() => _$setAttribute(_el$3, "data-placeholder", placeholder() || undefined));
-        return _el$3;
-      })() : null;
-    })(), null);
-    _$insert(_el$2, () => split.children, null);
-    return _el$2;
-  })();
+  const el = document.createElement("div");
+  const variant = split.variant ?? "normal";
+  const iconName = split.icon === false || split.icon === null ? null : typeof split.icon === "string" ? split.icon : pick(variant);
+  el.setAttribute("data-slot", "card-title");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  if (iconName) {
+    const iconEl = document.createElement("span");
+    iconEl.setAttribute("data-slot", "card-title-icon");
+    appendChildren(iconEl, Icon({ name: iconName, size: "small" }));
+    el.appendChild(iconEl);
+  }
+  appendChildren(el, split.children);
+  return el;
 }
+
 export function CardDescription(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return (() => {
-    var _el$4 = _tmpl$();
-    _$spread(_el$4, _$mergeProps(rest, {
-      "data-slot": "card-description",
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }), false, true);
-    _$insert(_el$4, () => split.children);
-    return _el$4;
-  })();
+  const el = document.createElement("div");
+  el.setAttribute("data-slot", "card-description");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  appendChildren(el, split.children);
+  return el;
 }
+
 export function CardActions(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return (() => {
-    var _el$5 = _tmpl$();
-    _$spread(_el$5, _$mergeProps(rest, {
-      "data-slot": "card-actions",
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }), false, true);
-    _$insert(_el$5, () => split.children);
-    return _el$5;
-  })();
+  const el = document.createElement("div");
+  el.setAttribute("data-slot", "card-actions");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  appendChildren(el, split.children);
+  return el;
 }

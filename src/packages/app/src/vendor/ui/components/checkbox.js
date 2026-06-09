@@ -1,67 +1,103 @@
-import { template as _$template } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=checkbox-checkbox-content>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<svg viewBox="0 0 12 12"fill=none width=10 height=10 xmlns=http://www.w3.org/2000/svg><path d="M3 7.17905L5.02703 8.85135L9 3.5"stroke=currentColor stroke-width=1.5 stroke-linecap=square>`);
-import { Checkbox as Kobalte } from "@kobalte/core/checkbox";
-import { Show, splitProps } from "solid-js";
-export function Checkbox(props) {
-  const [local, others] = splitProps(props, ["children", "class", "label", "hideLabel", "description", "icon"]);
-  return _$createComponent(Kobalte, _$mergeProps(others, {
-    "data-component": "checkbox",
-    get children() {
-      return [_$createComponent(Kobalte.Input, {
-        "data-slot": "checkbox-checkbox-input"
-      }), _$createComponent(Kobalte.Control, {
-        "data-slot": "checkbox-checkbox-control",
-        get children() {
-          return _$createComponent(Kobalte.Indicator, {
-            "data-slot": "checkbox-checkbox-indicator",
-            get children() {
-              return local.icon || _tmpl$2();
-            }
-          });
-        }
-      }), (() => {
-        var _el$ = _tmpl$();
-        _$insert(_el$, _$createComponent(Show, {
-          get when() {
-            return props.children;
-          },
-          get children() {
-            return _$createComponent(Kobalte.Label, {
-              "data-slot": "checkbox-checkbox-label",
-              get classList() {
-                return {
-                  "sr-only": local.hideLabel
-                };
-              },
-              get children() {
-                return props.children;
-              }
-            });
-          }
-        }), null);
-        _$insert(_el$, _$createComponent(Show, {
-          get when() {
-            return local.description;
-          },
-          get children() {
-            return _$createComponent(Kobalte.Description, {
-              "data-slot": "checkbox-checkbox-description",
-              get children() {
-                return local.description;
-              }
-            });
-          }
-        }), null);
-        _$insert(_el$, _$createComponent(Kobalte.ErrorMessage, {
-          "data-slot": "checkbox-checkbox-error"
-        }), null);
-        return _el$;
-      })()];
+import { Icon } from "./icon.js";
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) split[key] = props[key];
+    else rest[key] = props[key];
+  }
+  return [split, rest];
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
     }
-  }));
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback
+      }
+    }
+    if (value === false || value === null) el.removeAttribute(key);
+    else el.setAttribute(key, String(value));
+  }
+}
+
+export function Checkbox(props) {
+  const [local, others] = splitProps(props, ["children", "class", "classList", "label", "hideLabel", "description", "icon"]);
+  const root = document.createElement("label");
+  root.setAttribute("data-component", "checkbox");
+  if (local.class) root.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
+  applyClassList(root, local.classList);
+  applyRestProps(root, others);
+
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.setAttribute("data-slot", "checkbox-checkbox-input");
+  root.appendChild(input);
+
+  const control = document.createElement("span");
+  control.setAttribute("data-slot", "checkbox-checkbox-control");
+  const indicator = document.createElement("span");
+  indicator.setAttribute("data-slot", "checkbox-checkbox-indicator");
+  appendChildren(indicator, local.icon || Icon({ name: "check" }));
+  control.appendChild(indicator);
+  root.appendChild(control);
+
+  const content = document.createElement("div");
+  content.setAttribute("data-slot", "checkbox-checkbox-content");
+  if (props.children) {
+    const label = document.createElement("span");
+    label.setAttribute("data-slot", "checkbox-checkbox-label");
+    if (local.hideLabel) label.classList.add("sr-only");
+    appendChildren(label, props.children);
+    content.appendChild(label);
+  }
+  if (local.description) {
+    const desc = document.createElement("div");
+    desc.setAttribute("data-slot", "checkbox-checkbox-description");
+    appendChildren(desc, local.description);
+    content.appendChild(desc);
+  }
+  const error = document.createElement("div");
+  error.setAttribute("data-slot", "checkbox-checkbox-error");
+  content.appendChild(error);
+  root.appendChild(content);
+
+  return root;
 }
