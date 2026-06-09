@@ -1,37 +1,80 @@
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { Button as Kobalte } from "@kobalte/core/button";
-import { splitProps } from "solid-js";
 import { Icon } from "./icon.js";
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback to attribute
+      }
+    }
+    if (value === false || value === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+
 export function IconButton(props) {
   const [split, rest] = splitProps(props, ["variant", "size", "iconSize", "class", "classList"]);
-  return _$createComponent(Kobalte, _$mergeProps(rest, {
-    "data-component": "icon-button",
-    get ["data-icon"]() {
-      return props.icon;
-    },
-    get ["data-size"]() {
-      return split.size || "normal";
-    },
-    get ["data-variant"]() {
-      return split.variant || "secondary";
-    },
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    },
-    get children() {
-      return _$createComponent(Icon, {
-        get name() {
-          return props.icon;
-        },
-        get size() {
-          return split.iconSize ?? (split.size === "large" ? "normal" : "small");
-        }
-      });
-    }
-  }));
+  const el = document.createElement("button");
+  el.type = "button";
+  el.setAttribute("data-component", "icon-button");
+  el.setAttribute("data-icon", props.icon);
+  el.setAttribute("data-size", split.size || "normal");
+  el.setAttribute("data-variant", split.variant || "secondary");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  appendChildren(el, Icon({ name: props.icon, size: split.iconSize ?? (split.size === "large" ? "normal" : "small") }));
+  return el;
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
 }

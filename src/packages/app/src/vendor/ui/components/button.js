@@ -1,42 +1,84 @@
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { Button as Kobalte } from "@kobalte/core/button";
-import { Show, splitProps } from "solid-js";
 import { Icon } from "./icon.js";
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback to attribute
+      }
+    }
+    if (value === false || value === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+
 export function Button(props) {
   const [split, rest] = splitProps(props, ["variant", "size", "icon", "class", "classList"]);
-  return _$createComponent(Kobalte, _$mergeProps(rest, {
-    "data-component": "button",
-    get ["data-size"]() {
-      return split.size || "normal";
-    },
-    get ["data-variant"]() {
-      return split.variant || "secondary";
-    },
-    get ["data-icon"]() {
-      return split.icon;
-    },
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    },
-    get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return split.icon;
-        },
-        get children() {
-          return _$createComponent(Icon, {
-            get name() {
-              return split.icon;
-            },
-            size: "small"
-          });
-        }
-      }), _$memo(() => props.children)];
-    }
-  }));
+  const el = document.createElement("button");
+  el.type = "button";
+  el.setAttribute("data-component", "button");
+  el.setAttribute("data-size", split.size || "normal");
+  el.setAttribute("data-variant", split.variant || "secondary");
+  if (split.icon) el.setAttribute("data-icon", String(split.icon));
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+
+  if (split.icon) {
+    appendChildren(el, Icon({ name: split.icon, size: "small" }));
+  }
+  appendChildren(el, props.children);
+  return el;
 }

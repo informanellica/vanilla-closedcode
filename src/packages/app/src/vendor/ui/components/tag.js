@@ -1,27 +1,75 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span>`);
-import { splitProps } from "solid-js";
+function splitProps(props, keys) {
+  const split = {};
+  const rest = {};
+  for (const key in props) {
+    if (keys.includes(key)) {
+      split[key] = props[key];
+    } else {
+      rest[key] = props[key];
+    }
+  }
+  return [split, rest];
+}
+
+function applyClassList(el, classList) {
+  if (!classList) return;
+  for (const cls in classList) {
+    if (!cls) continue;
+    if (classList[cls]) el.classList.add(cls);
+    else el.classList.remove(cls);
+  }
+}
+
+function applyRestProps(el, rest) {
+  for (const key in rest) {
+    if (key === "class" || key === "classList" || key === "children") continue;
+    const value = rest[key];
+    if (key.startsWith("on") && typeof value === "function") {
+      el[key.toLowerCase()] = value;
+      continue;
+    }
+    if (value === undefined) continue;
+    if (key in el && !key.includes("-")) {
+      try {
+        el[key] = value;
+        continue;
+      } catch {
+        // fallback to attribute
+      }
+    }
+    if (value === false || value === null) {
+      el.removeAttribute(key);
+    } else {
+      el.setAttribute(key, String(value));
+    }
+  }
+}
+
+function appendChildren(parent, children) {
+  if (children == null || children === false) return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    appendChildren(parent, children());
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(children)));
+}
+
 export function Tag(props) {
   const [split, rest] = splitProps(props, ["size", "class", "classList", "children"]);
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps(rest, {
-      "data-component": "tag",
-      get ["data-size"]() {
-        return split.size || "normal";
-      },
-      get classList() {
-        return {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      }
-    }), false, true);
-    _$insert(_el$, () => split.children);
-    return _el$;
-  })();
+  const el = document.createElement("span");
+  el.setAttribute("data-component", "tag");
+  el.setAttribute("data-size", split.size || "normal");
+  if (split.class) el.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+  applyClassList(el, split.classList);
+  applyRestProps(el, rest);
+  appendChildren(el, split.children);
+  return el;
 }
