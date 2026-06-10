@@ -1,5 +1,6 @@
-// e2e: the titlebar center shows which folder is open on session routes
-// (fix/titlebar-current-folder). Home shows nothing there.
+// e2e: the file-tree panel header shows WHICH folder is open (basename, full
+// path on hover). The custom titlebar isn't rendered in this app configuration,
+// so the panel header is where the opened-folder name lives.
 import { expect, test } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -12,7 +13,7 @@ import {
   shot,
 } from "./helpers.js";
 
-test.describe("titlebar current folder", () => {
+test.describe("opened folder name", () => {
   let cleanup = [];
 
   test.afterEach(async () => {
@@ -21,7 +22,7 @@ test.describe("titlebar current folder", () => {
     }
   });
 
-  test("shows the opened project directory in the titlebar center", async () => {
+  test("file-tree panel header shows the opened project folder", async () => {
     const { browser, child, root } = await launchDesktopWithConfig({});
     cleanup.push(async () => rmWithRetry(root));
     cleanup.push(async () => killAndWait(child));
@@ -31,17 +32,12 @@ test.describe("titlebar current folder", () => {
     await mkdir(project, { recursive: true });
 
     const page = await rendererPage(browser);
-    const center = page.locator("#closedcode-titlebar-center");
-
-    // Home route: no folder shown.
-    await expect(center).not.toContainText("demo-project");
-
     await gotoProject(page, project);
 
-    // Session route: the decoded directory is rendered (truncated display,
-    // full path in the title attribute).
-    await expect(center).toContainText("demo-project", { timeout: 30_000 });
-    await expect(center.locator("div[title]").first()).toHaveAttribute("title", project);
-    await shot(page, "e2e-titlebar-current-folder");
+    const panel = page.locator("#file-tree-panel");
+    await expect(panel).toContainText("demo-project", { timeout: 30_000 });
+    // Full path is exposed via the title attribute for truncated display.
+    await expect(panel.locator("span[title]").first()).toHaveAttribute("title", project);
+    await shot(page, "e2e-opened-folder-name");
   });
 });
