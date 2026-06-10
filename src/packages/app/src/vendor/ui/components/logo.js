@@ -1,48 +1,34 @@
-function makeSvg(width, height, paths, attrs = {}) {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-  for (const [key, value] of Object.entries(attrs)) {
-    svg.setAttribute(key, String(value));
-  }
-  for (const pathAttrs of paths) {
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    for (const [key, value] of Object.entries(pathAttrs)) {
-      path.setAttribute(key, String(value));
-    }
-    svg.appendChild(path);
-  }
-  return svg;
-}
-
-function applyClass(el, cls) {
-  if (cls) el.classList.add(...String(cls).split(/\s+/).filter(Boolean));
-}
-
-const MARK_PATHS = [
-  { d: "M12 16H4V8H12V16Z", fill: "var(--icon-weak-base)", "data-slot": "logo-logo-mark-shadow" },
-  { d: "M12 4H4V16H12V4ZM16 20H0V0H16V20Z", fill: "var(--icon-strong-base)", "data-slot": "logo-logo-mark-o" }
-];
-
-const C_SQUARE = () => makeSvg(16, 20, MARK_PATHS, { "data-component": "logo-mark" });
-
+import { template as _$template } from "solid-js/web";
+import { use as _$use } from "solid-js/web";
+import { classList as _$classList } from "solid-js/web";
+import { effect as _$effect } from "solid-js/web";
+// Brand mark: Bootstrap `c-square` icon as an inline SVG. Rendered as SVG (not
+// an <i> font glyph) so it scales with the width utility classes the callers
+// pass (w-10, md:w-xl, …) and inherits color via currentColor — exactly like
+// the closedcode logo SVG it replaces.
+var _tmplCSquare = /*#__PURE__*/_$template(`<svg viewBox="0 0 16 16" fill=currentColor xmlns=http://www.w3.org/2000/svg><path d="M8.146 4.992c-1.212 0-1.927.92-1.927 2.502v1.06c0 1.571.703 2.462 1.927 2.462.979 0 1.641-.586 1.729-1.418h1.295v.093c-.1 1.448-1.354 2.467-3.03 2.467-2.091 0-3.269-1.336-3.269-3.603V7.482c0-2.261 1.201-3.638 3.27-3.638 1.681 0 2.935 1.054 3.029 2.572v.088H9.875c-.088-.879-.768-1.512-1.729-1.512"></path><path d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"></path></svg>`);
 export const Mark = props => {
-  const svg = C_SQUARE();
-  applyClass(svg, props.class);
-  return svg;
+  var _el$ = _tmplCSquare();
+  _$effect(_$p => _$classList(_el$, {
+    [props.class ?? ""]: !!props.class
+  }, _$p));
+  return _el$;
 };
-
 export const Splash = props => {
-  const svg = C_SQUARE();
-  applyClass(svg, props.class);
-  if (typeof props.ref === "function") props.ref(svg);
-  else if (props.ref && typeof props.ref === "object") props.ref.current = svg;
-  return svg;
+  var _el$2 = _tmplCSquare();
+  var _ref$ = props.ref;
+  typeof _ref$ === "function" ? _$use(_ref$, _el$2) : props.ref = _el$2;
+  _$effect(_$p => _$classList(_el$2, {
+    [props.class ?? ""]: !!props.class
+  }, _$p));
+  return _el$2;
 };
-
+// Logo (the large faint home watermark / error-page brand) now renders the
+// same c-square mark, scaled by the caller's width class.
 export const Logo = props => {
-  const svg = C_SQUARE();
-  applyClass(svg, props.class);
-  return svg;
+  var _el$3 = _tmplCSquare();
+  _$effect(_$p => _$classList(_el$3, {
+    [props.class ?? ""]: !!props.class
+  }, _$p));
+  return _el$3;
 };

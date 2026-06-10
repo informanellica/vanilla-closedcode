@@ -9,12 +9,12 @@ export const ProviderIcon = props => {
   const resolved = iconNames.includes(id) ? id : "synthetic";
   useEl.setAttribute("href", `${sprite}#${resolved}`);
   if (props.class) {
-    el.classList.add(props.class);
+    el.classList.add(...String(props.class).split(/\s+/).filter(Boolean));
   }
   if (props.classList) {
     Object.keys(props.classList).forEach(className => {
       if (props.classList[className]) {
-        el.classList.add(className);
+        el.classList.add(...className.split(/\s+/).filter(Boolean));
       }
     });
   }

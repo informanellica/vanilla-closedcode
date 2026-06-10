@@ -1,4 +1,1 @@
-[data-component="logo-mark"] {
-  width: 16px;
-  aspect-ratio: 4/5;
-}
+/* The brand mark is a plain inline SVG (c-square); no extra styles needed. */

@@ -1506,8 +1506,10 @@ export const PromptInput = props => {
                             get children() {
                               return _$createComponent(Select, {
                                 get options() {
-                                  const list = local.model.list().filter(m => local.model.visible({ modelID: m.id, providerID: m.provider.id }));
-                                  return list;
+                                  // Local-only fork: list every configured/pulled model.
+                                  // The old visible() filter hid everything but the
+                                  // recently-used model, which read as "can't choose".
+                                  return local.model.list();
                                 },
                                 get current() { return local.model.current?.(); },
                                 label: opt => opt.name,

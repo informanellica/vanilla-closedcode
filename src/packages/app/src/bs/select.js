@@ -159,9 +159,9 @@ function spread(el, props) {
       Object.assign(el.style, value);
     } else if (key === "classList" && value && typeof value === "object") {
       for (const cls in value) {
-        if (value[cls]) {
-          el.classList.add(cls);
-        }
+        if (!value[cls]) continue;
+        // keys may contain multiple space-separated classes (Solid contract)
+        el.classList.add(...cls.split(/\s+/).filter(Boolean));
       }
     } else if (key.startsWith("on")) {
       const eventName = key.toLowerCase().slice(2);
