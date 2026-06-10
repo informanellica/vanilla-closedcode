@@ -21,6 +21,9 @@ async function listen(app, opts, inject) {
   const start = (port) =>
     new Promise((resolve, reject) => {
       const server = http.createServer(app);
+    // Disable default Node timeouts to allow long-running in‑process requests.
+    server.requestTimeout = 0;
+    server.headersTimeout = 0;
       inject?.(server);
       const fail = (err) => {
         cleanup();
