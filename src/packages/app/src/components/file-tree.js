@@ -60,10 +60,16 @@ const kindDotColor = kind => {
   if (kind === "del") return "background-color: var(--icon-diff-delete-base)";
   return "background-color: var(--icon-diff-modified-base)";
 };
+// Diff maps/sets are keyed by normalized paths ("/" separators, no trailing
+// slash), but node.path uses OS separators on Windows — so look up with a
+// normalized key, or every nested entry misses and only top-level names
+// (which contain no separator) ever show their marker.
+const diffKey = p => p.replaceAll("\\", "/").replace(/\/+$/, "");
 const visibleKind = (node, kinds, marks) => {
-  const kind = kinds?.get(node.path);
+  const key = diffKey(node.path);
+  const kind = kinds?.get(key);
   if (!kind) return;
-  if (!marks?.has(node.path)) return;
+  if (!marks?.has(key)) return;
   return kind;
 };
 const buildDragImage = target => {

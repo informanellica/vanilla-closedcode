@@ -59,7 +59,9 @@ export function FileTreePane(props) {
       if (a === b) return a;
       return "mix";
     };
-    const normalize = p => p.replaceAll("\\\\", "/").replace(/\/+$/, "");
+    // "\\\\" only matched doubled backslashes; single "\\" (the actual Windows
+    // separator) slipped through and broke key matching against node paths.
+    const normalize = p => p.replaceAll("\\", "/").replace(/\/+$/, "");
     const out = new Map();
     for (const diff of props.diffs()) {
       const f = normalize(diff.file);
