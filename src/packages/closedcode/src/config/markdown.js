@@ -1,7 +1,7 @@
 import { NamedError } from "core/util/error";
 import matter from "gray-matter";
 import { z } from "zod";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 export const FILE_REGEX = /(?<![\w`])@(\.?[^\s`,.]*(?:\.[^\s`,.]+)*)/g;
 export const SHELL_REGEX = /!`([^`]+)`/g;
 export function files(template) {

@@ -3,10 +3,10 @@ import {  Effect, FileSystem, Layer  } from "effect"
 import {  testEffect  } from "../lib/effect.js"
 import {  writeFileStringScoped  } from "../lib/filesystem.js"
 import {  TestConfig  } from "../fixture/config.js"
-import {  Truncate  } from "@/tool/truncate.js"
+import {  Truncate  } from "#tool/truncate.js"
 import {  Identifier  } from "../../src/id/id.js"
-import {  Process  } from "@/util/process.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Process  } from "#util/process.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  describe, test, expect, beforeAll  } from "@jest/globals"
 import path from "path";
 import { fileURLToPath as __toPath } from "node:url";
@@ -233,7 +233,7 @@ describe("Truncate", () => {
     // surface — this catches regressions in syntax, top-level evaluation, and
     // layer construction without depending on a bundler.
     test("loads truncate effect module without side-effect errors", async () => {
-      const mod = await import("@/tool/truncate.js");
+      const mod = await import("#tool/truncate.js");
       expect(typeof mod.MAX_LINES).toBe("number");
       expect(typeof mod.MAX_BYTES).toBe("number");
       expect(typeof mod.GLOB).toBe("string");

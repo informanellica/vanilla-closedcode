@@ -1,7 +1,7 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { DialogPrompt } from "@tui/ui/dialog-prompt.js";
-import { useDialog } from "@tui/ui/dialog.js";
-import { useSync } from "@tui/context/sync.js";
+import { DialogPrompt } from "#tui/ui/dialog-prompt.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { useSync } from "#tui/context/sync.js";
 import { createMemo } from "solid-js";
 import { useSDK } from "../context/sdk.js";
 export function DialogSessionRename(props) {

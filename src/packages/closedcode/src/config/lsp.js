@@ -1,7 +1,7 @@
 export * as ConfigLSP from "./lsp.js";
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 import * as LSPServer from "../lsp/server.js";
 export const Disabled = Schema.Struct({
   disabled: Schema.Literal(true)

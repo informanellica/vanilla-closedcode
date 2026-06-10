@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import z from "zod";
-import { zod } from "@/util/effect-zod.js";
+import { zod } from "#util/effect-zod.js";
 
 /**
  * Create a Schema-backed NamedError-shaped class.

@@ -3,11 +3,11 @@
 // submitTuiResponse, callTui, TuiRequest) are shared with the rest of the system.
 import express from "express";
 import z from "zod";
-import { Bus } from "@/bus/index.js";
-import { Session } from "@/session/session.js";
-import { TuiEvent } from "@/cli/cmd/tui/event.js";
-import { zodObject } from "@/util/effect-zod.js";
-import { AsyncQueue } from "@/util/queue.js";
+import { Bus } from "#bus/index.js";
+import { Session } from "#session/session.js";
+import { TuiEvent } from "#cli/cmd/tui/event.js";
+import { zodObject } from "#util/effect-zod.js";
+import { AsyncQueue } from "#util/queue.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";

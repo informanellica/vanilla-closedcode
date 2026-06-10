@@ -1,5 +1,5 @@
-import { SessionID } from "@/session/schema.js";
-import { SessionMessage } from "@/v2/session-message.js";
+import { SessionID } from "#session/schema.js";
+import { SessionMessage } from "#v2/session-message.js";
 import { Schema } from "effect";
 import { HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../../middleware/authorization.js";

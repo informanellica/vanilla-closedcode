@@ -70,7 +70,7 @@ function matchLegacyOpenApi(input) {
   const spec = input;
 
   // Effect's multi-document JSON Schema deduplicator can produce self-referencing
-  // component schemas (e.g. `{"$ref":"#/components/schemas/X"}` as the definition
+  // component schemas (e.g. `{"$ref":"#components/schemas/X"}` as the definition
   // of X itself) when the same AST node appears both as a standalone endpoint
   // payload and inside an annotated union arm. Resolve these by inlining the
   // actual schema from any parent union that references them.
@@ -108,7 +108,7 @@ function matchLegacyOpenApi(input) {
           // Workspace creation fields `branch` and `extra` are Schema.NullOr —
           // genuinely nullable, not just optional. Re-add the null that the
           // component-level strip above removed.
-          const ref = operation.requestBody.content?.["application/json"]?.schema?.$ref?.replace("#/components/schemas/", "");
+          const ref = operation.requestBody.content?.["application/json"]?.schema?.$ref?.replace("#components/schemas/", "");
           const properties = ref ? spec.components?.schemas?.[ref]?.properties : operation.requestBody.content?.["application/json"]?.schema?.properties;
           if (properties?.branch) properties.branch = {
             anyOf: [properties.branch, {
@@ -141,9 +141,9 @@ function matchLegacyOpenApi(input) {
           content: {
             "text/event-stream": {
               schema: path === "/event" ? {
-                $ref: "#/components/schemas/Event"
+                $ref: "#components/schemas/Event"
               } : {
-                $ref: "#/components/schemas/GlobalEvent"
+                $ref: "#components/schemas/GlobalEvent"
               }
             }
           }
@@ -294,7 +294,7 @@ function canonicalizeSchema(input, schemas) {
   return Object.fromEntries(Object.entries(input).filter(([key]) => key !== "description").sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, canonicalizeSchema(value, schemas)]));
 }
 function canonicalRef(ref, schemas) {
-  const name = ref.replace("#/components/schemas/", "");
+  const name = ref.replace("#components/schemas/", "");
   const base = name.replace(/\d+$/, "");
   if (base !== name && schemas[base]) return `#/components/schemas/${base}`;
   return ref;
@@ -328,12 +328,12 @@ function normalizeLegacyOperation(operation, path, method) {
     required: ["info", "parts"],
     properties: {
       info: {
-        $ref: "#/components/schemas/AssistantMessage"
+        $ref: "#components/schemas/AssistantMessage"
       },
       parts: {
         type: "array",
         items: {
-          $ref: "#/components/schemas/Part"
+          $ref: "#components/schemas/Part"
         }
       }
     }
@@ -361,7 +361,7 @@ function legacyErrorResponse(description, name) {
 /**
  * Fix component schemas that are self-referencing `$ref`s — an Effect OpenAPI
  * generation bug where annotated union arms that share AST nodes with other
- * endpoints produce `{"$ref":"#/components/schemas/X"}` as the definition of X.
+ * endpoints produce `{"$ref":"#components/schemas/X"}` as the definition of X.
  *
  * Resolves by finding the actual schema from a parent union's `anyOf`/`oneOf`
  * that references the broken component, then inlining that schema.
@@ -379,7 +379,7 @@ function fixSelfReferencingComponents(spec) {
   // schema we need.
   for (const [, schema] of Object.entries(schemas)) {
     for (const member of schema.anyOf ?? schema.oneOf ?? []) {
-      const ref = member.$ref?.replace("#/components/schemas/", "");
+      const ref = member.$ref?.replace("#components/schemas/", "");
       if (!ref || !selfRefs.has(ref)) continue;
       // This member's $ref points to a self-referencing component. The member
       // itself is just {$ref:...}, so the actual schema must be resolved from

@@ -1,8 +1,8 @@
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { SessionID } from "@/session/schema.js";
-import { SessionMessage } from "@/v2/session-message.js";
-import { Prompt } from "@/v2/session-prompt.js";
-import { SessionV2 } from "@/v2/session.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { SessionID } from "#session/schema.js";
+import { SessionMessage } from "#v2/session-message.js";
+import { Prompt } from "#v2/session-prompt.js";
+import { SessionV2 } from "#v2/session.js";
 import { Schema, SchemaGetter } from "effect";
 import { HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../../middleware/authorization.js";

@@ -1,15 +1,15 @@
 import { Effect, Exit, Layer, Option, Schema, Scope, Context, Stream } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
-import { Account } from "@/account/account.js";
-import { Bus } from "@/bus/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { Provider } from "@/provider/provider.js";
-import { ModelID, ProviderID } from "@/provider/schema.js";
-import { Session } from "@/session/session.js";
-import { MessageV2 } from "@/session/message-v2.js";
-import { Database } from "@/storage/db.js";
+import { Account } from "#account/account.js";
+import { Bus } from "#bus/index.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { Provider } from "#provider/provider.js";
+import { ModelID, ProviderID } from "#provider/schema.js";
+import { Session } from "#session/session.js";
+import { MessageV2 } from "#session/message-v2.js";
+import { Database } from "#storage/db.js";
 import { eq } from "drizzle-orm";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import * as Log from "core/util/log";
 import { SessionShareTable } from "./share.sql.js";
 const log = Log.create({

@@ -1,4 +1,4 @@
-import { PartID } from "@/session/schema.js";
+import { PartID } from "#session/schema.js";
 export function strip(part) {
   const {
     id: _id,

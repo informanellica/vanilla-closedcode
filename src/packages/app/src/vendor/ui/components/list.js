@@ -19,7 +19,7 @@ var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=list-item-add>`),
   _tmpl$0 = /*#__PURE__*/_$template(`<button data-slot=list-item type=button>`),
   _tmpl$1 = /*#__PURE__*/_$template(`<span data-slot=list-item-active-icon>`),
   _tmpl$10 = /*#__PURE__*/_$template(`<span data-slot=list-item-divider>`);
-import { useFilteredList } from "../hooks";
+import { useFilteredList } from "../hooks/index.js";
 import { createEffect, For, on, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@solid-primitives/event-listener";

@@ -1,7 +1,8 @@
 # Milestone: Pure Vanilla Standardization
 
-> Status: **planned** (next milestone after the initial preview release)
-> Tracking: split the work below into issues under this milestone.
+> Status: **stages 1–4 implemented** (2026-06-11, `0.1.0-dev` line); stage 5 is
+> the "what remains" inventory below. Third-party interop walls stay by design.
+> Tracking: split remaining items into issues under this milestone.
 
 ## Context
 
@@ -52,6 +53,45 @@ Stage 5: confirm esbuild / loader dependencies are reduced/removed
 
 Each stage removes one compatibility layer and is verified independently
 (build-less run + tests), on a dedicated branch, not in the preview release.
+
+## Implementation status (2026-06-11)
+
+- **Stage 1 — done.** `@/` / `@tui/` (1,400 sites, 383 files) moved to
+  `package.json#imports`: `#db` / `#pty` (pre-existing), `#tui/*` →
+  `./src/cli/cmd/tui/*`, `#*` → `./src/*`. Specifiers are `#util/x.js` style —
+  note `#/...` is **invalid** per the Node spec (Node v24 tolerates it, esbuild
+  rejects it), hence the slash-less prefix. `node src/index.js` now runs with no
+  loader and no bundle. Third-party extension-less deep imports our code made
+  (`@parcel/watcher/wrapper`) got their `.js` spelled out.
+- **Stage 2 — done.** All 28 `import x from "./x.txt"` sites read through
+  `src/util/asset.js` (`assetText("agent/generate.txt")`, standard
+  `fs.readFileSync(new URL(...))`); both build scripts ship `src/**/*.txt` as an
+  `assets/` tree next to the bundle, and the desktop build copies it through to
+  `out/main/closedcode-server/`. The TUI (`tui` / `attach` commands) loads
+  `app.js` lazily: `@opentui/core`'s `.scm` / `.ts` imports are a third-party
+  wall, so they no longer sit on the startup path — every non-TUI command runs
+  pure-vanilla; the TUI itself still requires the bundled dist.
+- **Stage 3 — done.** The renderer serves **first-party modules verbatim**
+  (extension-complete relative imports; assets via `new URL(...).href`); bare and
+  `@/` specifiers resolve through an **import map** generated at startup (walk +
+  `es-module-lexer` over `packages/app/src`, `src/renderer`, `core`, `sdk`) and
+  injected into the served HTML. The `oc://` rewriter now touches **only files
+  physically under `node_modules/`** (CJS/UMD wrapping, extension inference,
+  deep transitive specifiers, module workers — import maps do not reach workers).
+- **Stage 4 — done (nothing to remove).** main/preload contain no aliases or
+  asset imports. What remains is the platform-required shape: `createRequire`
+  for `electron` (Electron-ESM does not expose the runtime API via `import`)
+  and a CommonJS preload (sandboxed preloads cannot use ESM).
+
+## Stage 5 inventory — what machinery remains, and why
+
+| Machinery | Scope | Why it stays |
+| --- | --- | --- |
+| esbuild bundles (`script/build.js`, `script/build-node.js`) | distribution only | single-file sidecar/CLI artifacts; running from src needs no build |
+| `.scm` `with {type:"file"}` rewrite, FFI/zig.ts plugins | `@opentui/core` (TUI) | third-party internals; lazily loaded, bundled dist only |
+| `oc://` rewriter for `/node_modules/` | renderer third-party deps | CJS/UMD interop, extension-less deep imports, module workers |
+| patch-package (3 patches) + `fix-node-pty` | third-party | upstream bugs/Electron ABI |
+| `createRequire("electron")`, CJS preload | Electron platform | Electron-ESM/sandbox constraints, standard Node APIs |
 
 ## Known limitations (the irreducible wall)
 
@@ -113,10 +153,12 @@ caught up with the preview release yet. Track them as issues under this mileston
 
 ## 現在の状態（日本語）
 
-本バージョンは主要機能が動作するプレビュー版です。内部実装には、独自ローダ、
-ビルド時 alias、第三者ライブラリ向けの互換処理（esbuild / `oc://` など）が一部
-残っています。今後、native ESM、`package.json` の `imports`、import maps、
-Node.js 標準 API を利用した構成へ**段階的に**移行します（Stage 1〜5）。
+Stage 1〜4 を実装済みです（2026-06-11）。自前コードは `package.json#imports`
+（`#util/...` 形式 — 仕様上 `#/` 始まりは無効な点に注意）、fs API によるテキスト
+アセット読み込み、レンダラーは起動時生成の import map ＋ first-party 素通し配信
+へ移行し、`node src/index.js` はローダーなしで動作します。esbuild は配布物
+（単一ファイルのサイドカー/CLI）の生成のみに残り、`oc://` の書き換えは
+node_modules 配下（第三者依存の互換処理）に限定されました。
 
 第三者依存（`effect` / `ai-sdk` / `tree-sitter` / `@opentui/core` 等）の内部にある
 CJS・拡張子なし・非標準 import は、こちらでは標準化できないため対象外です。到達

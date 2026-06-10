@@ -1,4 +1,4 @@
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { InstanceStore } from "./instance-store.js";
 
 // Bridge for Promise/ALS callers that cannot yet yield InstanceStore.Service.

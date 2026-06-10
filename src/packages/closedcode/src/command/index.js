@@ -1,16 +1,17 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { EffectBridge } from "@/effect/bridge.js";
-import { SessionID, MessageID } from "@/session/schema.js";
+import { assetText } from "#util/asset.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { EffectBridge } from "#effect/bridge.js";
+import { SessionID, MessageID } from "#session/schema.js";
 import { Effect, Layer, Context, Schema } from "effect";
 import z from "zod";
-import { zod, ZodOverride } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
-import { Config } from "@/config/config.js";
+import { zod, ZodOverride } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
+import { Config } from "#config/config.js";
 import { MCP } from "../mcp/index.js";
 import { Skill } from "../skill/index.js";
-import PROMPT_INITIALIZE from "./template/initialize.txt";
-import PROMPT_REVIEW from "./template/review.txt";
+const PROMPT_INITIALIZE = assetText("command/template/initialize.txt");
+const PROMPT_REVIEW = assetText("command/template/review.txt");
 export const Event = {
   Executed: BusEvent.define("command.executed", Schema.Struct({
     name: Schema.String,

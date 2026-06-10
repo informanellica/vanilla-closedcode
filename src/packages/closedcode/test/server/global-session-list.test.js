@@ -1,8 +1,8 @@
 import {  Effect  } from "effect"
 import {  tmpdir  } from "../fixture/fixture.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
-import {  Project  } from "@/project/project.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Project  } from "#project/project.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 

@@ -1,6 +1,6 @@
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { PositiveInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { PositiveInt, withStatics } from "#util/schema.js";
 export const Local = Schema.Struct({
   type: Schema.Literal("local").annotate({
     description: "Type of MCP server connection"

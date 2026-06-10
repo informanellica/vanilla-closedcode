@@ -1,6 +1,6 @@
-import * as InstanceState from "@/effect/instance-state.js";
-import { File } from "@/file/index.js";
-import { Ripgrep } from "@/file/ripgrep.js";
+import * as InstanceState from "#effect/instance-state.js";
+import { File } from "#file/index.js";
+import { Ripgrep } from "#file/ripgrep.js";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

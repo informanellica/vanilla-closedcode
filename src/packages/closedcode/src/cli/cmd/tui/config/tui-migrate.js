@@ -5,9 +5,9 @@ import z from "zod";
 import { TuiInfo, TuiOptions } from "./tui-schema.js";
 import { Flag } from "core/flag/flag";
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import * as Log from "core/util/log";
-import * as ConfigPaths from "@/config/paths.js";
+import * as ConfigPaths from "#config/paths.js";
 const log = Log.create({
   service: "tui.migrate"
 });

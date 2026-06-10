@@ -1,4 +1,4 @@
-import { Process } from "@/util/process.js";
+import { Process } from "#util/process.js";
 export function spawn(cmd, argsOrOpts, opts) {
   const args = Array.isArray(argsOrOpts) ? [...argsOrOpts] : [];
   const cfg = Array.isArray(argsOrOpts) ? opts : argsOrOpts;

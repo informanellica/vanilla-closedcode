@@ -1,7 +1,7 @@
-import { Config } from "@/config/config.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { SyncEvent } from "@/sync/index.js";
-import "@/server/event.js";
+import { Config } from "#config/config.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { SyncEvent } from "#sync/index.js";
+import "#server/event.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { described } from "./metadata.js";

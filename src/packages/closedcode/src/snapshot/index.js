@@ -3,14 +3,14 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { formatPatch, structuredPatch } from "diff";
 import path from "path";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
 import { Hash } from "core/util/hash";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Global } from "core/global";
 import * as Log from "core/util/log";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
-import { zod } from "@/util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
+import { zod } from "#util/effect-zod.js";
 export const Patch = Schema.Struct({
   hash: Schema.String,
   files: Schema.mutable(Schema.Array(Schema.String))

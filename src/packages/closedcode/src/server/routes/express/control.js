@@ -1,10 +1,10 @@
 // Express route group for the control-plane endpoints (auth, /log, OpenAPI /doc).
 import express from "express";
-import { Auth } from "@/auth/index.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Auth } from "#auth/index.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import * as Log from "core/util/log";
 import { Effect } from "effect";
-import { ProviderID } from "@/provider/schema.js";
+import { ProviderID } from "#provider/schema.js";
 import z from "zod";
 import { registerOperation, buildSpec } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

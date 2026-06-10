@@ -1,4 +1,4 @@
-import { lazy } from "@/util/lazy.js";
+import { lazy } from "#util/lazy.js";
 import * as Log from "core/util/log";
 import { MDNS } from "./mdns.js";
 import { initProjectors } from "./projectors.js";

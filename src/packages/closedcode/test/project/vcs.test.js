@@ -6,7 +6,7 @@ import {  AppRuntime  } from "../../src/effect/app-runtime.js"
 import {  FileWatcher  } from "../../src/file/watcher.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  GlobalBus  } from "../../src/bus/global.js"
-import {  Vcs  } from "@/project/vcs.js"
+import {  Vcs  } from "#project/vcs.js"
 import {  afterEach, describe, expect, test, beforeAll  } from "@jest/globals"
 import fs from "fs/promises";
 import path from "path";

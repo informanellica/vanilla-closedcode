@@ -5,7 +5,7 @@ import {  disposeAllInstances, provideTmpdirInstance  } from "../fixture/fixture
 import {  testEffect  } from "../lib/effect.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  SkillTool  } from "../../src/tool/skill.js"
-import {  ToolRegistry  } from "@/tool/registry.js"
+import {  ToolRegistry  } from "#tool/registry.js"
 import {  SessionID, MessageID  } from "../../src/session/schema.js"
 import {  afterEach, describe, expect, beforeAll  } from "@jest/globals"
 import path from "path";

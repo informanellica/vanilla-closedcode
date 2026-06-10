@@ -1,5 +1,5 @@
-import { InstanceState } from "@/effect/instance-state.js";
-import { Runner } from "@/effect/runner.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { Runner } from "#effect/runner.js";
 import { Effect, Layer, Scope, Context } from "effect";
 import * as Session from "./session.js";
 import { SessionStatus } from "./status.js";

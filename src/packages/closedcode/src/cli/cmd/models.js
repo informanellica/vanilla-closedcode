@@ -1,8 +1,8 @@
 import { EOL } from "os";
 import { Effect } from "effect";
-import { Provider } from "@/provider/provider.js";
+import { Provider } from "#provider/provider.js";
 import { ProviderID } from "../../provider/schema.js";
-import { ModelsDev } from "@/provider/models.js";
+import { ModelsDev } from "#provider/models.js";
 import { effectCmd, fail } from "../effect-cmd.js";
 import { UI } from "../ui.js";
 export const ModelsCommand = effectCmd({

@@ -1,5 +1,5 @@
-import * as InstanceState from "@/effect/instance-state.js";
-import { Project } from "@/project/project.js";
+import * as InstanceState from "#effect/instance-state.js";
+import { Project } from "#project/project.js";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

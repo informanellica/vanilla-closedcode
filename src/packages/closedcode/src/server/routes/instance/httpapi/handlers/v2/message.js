@@ -1,5 +1,5 @@
-import { SessionMessage } from "@/v2/session-message.js";
-import { SessionV2 } from "@/v2/session.js";
+import { SessionMessage } from "#v2/session-message.js";
+import { SessionV2 } from "#v2/session.js";
 import { Effect, Schema } from "effect";
 import * as DateTime from "effect/DateTime";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";

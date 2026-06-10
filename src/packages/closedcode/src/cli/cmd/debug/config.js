@@ -1,6 +1,6 @@
 import { EOL } from "os";
 import { Effect } from "effect";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { effectCmd } from "../../effect-cmd.js";
 export const ConfigCommand = effectCmd({
   command: "config",

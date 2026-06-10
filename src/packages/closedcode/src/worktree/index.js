@@ -1,26 +1,26 @@
 import z from "zod";
 import { NamedError } from "core/util/error";
 import { Global } from "core/global";
-import { InstanceLayer } from "@/project/instance-layer.js";
-import { InstanceStore } from "@/project/instance-store.js";
-import { Project } from "@/project/project.js";
-import { Database } from "@/storage/db.js";
+import { InstanceLayer } from "#project/instance-layer.js";
+import { InstanceStore } from "#project/instance-store.js";
+import { Project } from "#project/project.js";
+import { Database } from "#storage/db.js";
 import { eq } from "drizzle-orm";
 import { ProjectTable } from "../project/project.sql.js";
 import * as Log from "core/util/log";
 import { Slug } from "core/util/slug";
 import { errorMessage } from "../util/error.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { GlobalBus } from "@/bus/global.js";
-import { Git } from "@/git/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { GlobalBus } from "#bus/global.js";
+import { Git } from "#git/index.js";
 import { Effect, Layer, Path, Schema, Scope, Context, Stream } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { NodePath } from "@effect/platform-node";
 import { AppFileSystem } from "core/filesystem";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { InstanceState } from "@/effect/instance-state.js";
-import { zod as effectZod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { zod as effectZod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "worktree"
 });

@@ -1,26 +1,26 @@
 import z from "zod";
 import { and } from "drizzle-orm";
-import { Database } from "@/storage/db.js";
+import { Database } from "#storage/db.js";
 import { eq } from "drizzle-orm";
 import { ProjectTable } from "./project.sql.js";
 import { SessionTable } from "../session/session.sql.js";
 import * as Log from "core/util/log";
 import { Flag } from "core/flag/flag";
-import { BusEvent } from "@/bus/bus-event.js";
-import { GlobalBus } from "@/bus/global.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { GlobalBus } from "#bus/global.js";
 import { which } from "../util/which.js";
 import { ProjectID } from "./schema.js";
-import { Bus } from "@/bus/index.js";
-import { Command } from "@/command/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Bus } from "#bus/index.js";
+import { Command } from "#command/index.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { Effect, Layer, Path, Scope, Context, Stream, Schema } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { NodePath } from "@effect/platform-node";
 import { AppFileSystem } from "core/filesystem";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, optionalOmitUndefined, withStatics } from "@/util/schema.js";
-import { serviceUse } from "@/effect/service-use.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, optionalOmitUndefined, withStatics } from "#util/schema.js";
+import { serviceUse } from "#effect/service-use.js";
 const log = Log.create({
   service: "project"
 });

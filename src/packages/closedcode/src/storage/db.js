@@ -1,6 +1,6 @@
 import { sql as drizzleSql } from "drizzle-orm";
 export * from "drizzle-orm";
-import { LocalContext } from "@/util/local-context.js";
+import { LocalContext } from "#util/local-context.js";
 import { lazy } from "../util/lazy.js";
 import { Global } from "core/global";
 import * as Log from "core/util/log";
@@ -11,8 +11,8 @@ import { readFileSync, readdirSync, existsSync, renameSync } from "fs";
 import { fileURLToPath } from "node:url";
 import { Flag } from "core/flag/flag";
 import { InstallationChannel } from "core/installation/version";
-import { InstanceState } from "@/effect/instance-state.js";
-import { iife } from "@/util/iife.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { iife } from "#util/iife.js";
 import { init } from "#db";
 export const NotFoundError = NamedError.create("NotFoundError", z.object({
   message: z.string()

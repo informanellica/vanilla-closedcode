@@ -1,6 +1,6 @@
 import { Npm } from "core/npm";
-import { Filesystem } from "@/util/filesystem.js";
-import { Process } from "@/util/process.js";
+import { Filesystem } from "#util/filesystem.js";
+import { Process } from "#util/process.js";
 import { which } from "../util/which.js";
 import { Flag } from "core/flag/flag";
 export const gofmt = {

@@ -1,5 +1,5 @@
 import {  Effect, Layer  } from "effect"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import {  SessionPrompt  } from "../../src/session/prompt.js"
 import * as Log from "core/util/log";
 import {  WithInstance  } from "../../src/project/with-instance.js"

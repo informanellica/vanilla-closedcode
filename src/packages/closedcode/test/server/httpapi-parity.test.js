@@ -5,7 +5,7 @@ import {  Flag  } from "core/flag/flag"
 import * as Log from "core/util/log";
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  Server  } from "../../src/server/server.js"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import {  MessageID  } from "../../src/session/schema.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 import {  afterEach, describe, expect, test, beforeAll  } from "@jest/globals"

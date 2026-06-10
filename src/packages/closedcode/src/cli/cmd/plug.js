@@ -1,15 +1,15 @@
 import { intro, log, outro, spinner } from "@clack/prompts";
 import { Effect } from "effect";
-import { ConfigPaths } from "@/config/paths.js";
+import { ConfigPaths } from "#config/paths.js";
 import { Global } from "core/global";
 import { installPlugin, patchPluginConfig, readPluginManifest } from "../../plugin/install.js";
 import { resolvePluginTarget } from "../../plugin/shared.js";
 import { errorMessage } from "../../util/error.js";
-import { Filesystem } from "@/util/filesystem.js";
-import { Process } from "@/util/process.js";
+import { Filesystem } from "#util/filesystem.js";
+import { Process } from "#util/process.js";
 import { UI } from "../ui.js";
 import { effectCmd } from "../effect-cmd.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
+import { InstanceRef } from "#effect/instance-ref.js";
 const defaultPlugDeps = {
   spinner: () => spinner(),
   log: {

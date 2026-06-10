@@ -1,7 +1,7 @@
-import { ProviderAuth } from "@/provider/auth.js";
-import { Config } from "@/config/config.js";
-import { ModelsDev } from "@/provider/models.js";
-import { Provider } from "@/provider/provider.js";
+import { ProviderAuth } from "#provider/auth.js";
+import { Config } from "#config/config.js";
+import { ModelsDev } from "#provider/models.js";
+import { Provider } from "#provider/provider.js";
 import { mapValues } from "remeda";
 import { Effect, Schema } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";

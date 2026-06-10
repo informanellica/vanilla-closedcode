@@ -1,9 +1,9 @@
 // Express route group for the instance /question endpoints (list, reply, reject).
 import express from "express";
 import { Effect } from "effect";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { QuestionID } from "@/question/schema.js";
-import { Question } from "@/question/index.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { QuestionID } from "#question/schema.js";
+import { Question } from "#question/index.js";
 import z from "zod";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

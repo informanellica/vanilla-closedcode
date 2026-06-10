@@ -1,10 +1,10 @@
 import { spawn } from "child_process";
-import { Database } from "@/storage/db.js";
+import { Database } from "#storage/db.js";
 import { drizzle } from "drizzle-orm/node-sqlite";
 import { DatabaseSync } from "node:sqlite";
 import { UI } from "../ui.js";
 import { cmd } from "./cmd.js";
-import { JsonMigration } from "@/storage/json-migration.js";
+import { JsonMigration } from "#storage/json-migration.js";
 import { EOL } from "os";
 import { errorMessage } from "../../util/error.js";
 const QueryCommand = cmd({

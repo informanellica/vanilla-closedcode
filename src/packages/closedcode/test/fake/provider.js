@@ -1,5 +1,5 @@
 import {  Effect, Layer  } from "effect"
-import {  Provider  } from "@/provider/provider.js"
+import {  Provider  } from "#provider/provider.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 let ProviderTest;
 (function (_ProviderTest) {

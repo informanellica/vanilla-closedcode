@@ -2,8 +2,8 @@ import * as Log from "core/util/log";
 import { Effect } from "effect";
 import { effectCmd } from "../effect-cmd.js";
 import { AgentSideConnection, ndJsonStream } from "@agentclientprotocol/sdk";
-import { ACP } from "@/acp/agent.js";
-import { Server } from "@/server/server.js";
+import { ACP } from "#acp/agent.js";
+import { Server } from "#server/server.js";
 import { createOpencodeClient } from "sdk/v2";
 import { withNetworkOptions, resolveNetworkOptions } from "../network.js";
 const log = Log.create({

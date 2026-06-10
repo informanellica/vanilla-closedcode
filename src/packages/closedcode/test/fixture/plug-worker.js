@@ -1,6 +1,6 @@
 import path from "path";
 import {  createPlugTask  } from "../../src/cli/cmd/plug.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

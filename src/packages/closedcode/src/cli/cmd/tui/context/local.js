@@ -1,17 +1,17 @@
 import { createStore } from "solid-js/store";
 import { createSimpleContext } from "./helper.js";
 import { batch, createEffect, createMemo } from "solid-js";
-import { useSync } from "@tui/context/sync.js";
-import { useTheme } from "@tui/context/theme.js";
+import { useSync } from "#tui/context/sync.js";
+import { useTheme } from "#tui/context/theme.js";
 import { uniqueBy } from "remeda";
 import path from "path";
 import { Global } from "core/global";
-import { iife } from "@/util/iife.js";
+import { iife } from "#util/iife.js";
 import { useToast } from "../ui/toast.js";
 import { useArgs } from "./args.js";
 import { useSDK } from "./sdk.js";
 import { RGBA } from "@opentui/core";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 export function parseModel(model) {
   const [providerID, ...rest] = model.split("/");
   return {

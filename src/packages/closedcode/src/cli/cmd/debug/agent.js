@@ -2,14 +2,14 @@ import { EOL } from "os";
 import { basename } from "path";
 import { Effect } from "effect";
 import { Agent } from "../../../agent/agent.js";
-import { Provider } from "@/provider/provider.js";
-import { Session } from "@/session/session.js";
+import { Provider } from "#provider/provider.js";
+import { Session } from "#session/session.js";
 import { MessageID, PartID } from "../../../session/schema.js";
-import { ToolRegistry } from "@/tool/registry.js";
+import { ToolRegistry } from "#tool/registry.js";
 import { Permission } from "../../../permission/index.js";
 import { iife } from "../../../util/iife.js";
 import { effectCmd, fail } from "../../effect-cmd.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
+import { InstanceRef } from "#effect/instance-ref.js";
 export const AgentCommand = effectCmd({
   command: "agent <name>",
   describe: "show agent configuration details",

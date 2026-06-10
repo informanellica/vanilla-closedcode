@@ -1,7 +1,7 @@
 export * as ConfigPermission from "./permission.js";
 import { Schema, SchemaGetter } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 export const Action = Schema.Literals(["ask", "allow", "deny"]).annotate({
   identifier: "PermissionActionConfig"
 }).pipe(withStatics(s => ({

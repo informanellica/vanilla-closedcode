@@ -1,5 +1,5 @@
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { SessionV2 } from "@/v2/session.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { SessionV2 } from "#v2/session.js";
 import { Effect, Schema } from "effect";
 import { HttpApiBuilder, HttpApiError, HttpApiSchema } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../../api.js";

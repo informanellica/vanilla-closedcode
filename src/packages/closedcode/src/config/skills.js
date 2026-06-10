@@ -1,6 +1,6 @@
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 export const Info = Schema.Struct({
   paths: Schema.optional(Schema.Array(Schema.String)).annotate({
     description: "Additional paths to skill folders"

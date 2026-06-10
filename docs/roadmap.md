@@ -10,6 +10,11 @@ its own issues; this file is the high-level index.
   move our own code to native ESM / `package.json#imports` / import maps / standard
   Node APIs, removing esbuild, the custom loader, and the `oc://` scheme where
   possible (third-party deps remain a documented interop wall).
+  **Stages 1–4 implemented** (2026-06-11): engine aliases → `#imports`, text
+  assets → fs API, renderer → startup-generated import map with first-party
+  modules served verbatim (`oc://` rewriting now third-party-only), main/preload
+  verified standard. esbuild remains for distribution bundles only — see the
+  milestone's Stage 5 inventory.
 
 ## Backlog (future considerations)
 

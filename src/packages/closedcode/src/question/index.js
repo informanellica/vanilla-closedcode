@@ -1,11 +1,11 @@
 import { Deferred, Effect, Layer, Schema, Context } from "effect";
-import { Bus } from "@/bus/index.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { SessionID, MessageID } from "@/session/schema.js";
-import { zod } from "@/util/effect-zod.js";
+import { Bus } from "#bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { SessionID, MessageID } from "#session/schema.js";
+import { zod } from "#util/effect-zod.js";
 import * as Log from "core/util/log";
-import { withStatics } from "@/util/schema.js";
+import { withStatics } from "#util/schema.js";
 import { QuestionID } from "./schema.js";
 const log = Log.create({
   service: "question"

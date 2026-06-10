@@ -1,9 +1,9 @@
-import { Agent } from "@/agent/agent.js";
-import { Command } from "@/command/index.js";
-import { Format } from "@/format/index.js";
-import { LSP } from "@/lsp/lsp.js";
-import { Vcs } from "@/project/vcs.js";
-import { Skill } from "@/skill/index.js";
+import { Agent } from "#agent/agent.js";
+import { Command } from "#command/index.js";
+import { Format } from "#format/index.js";
+import { LSP } from "#lsp/lsp.js";
+import { Vcs } from "#project/vcs.js";
+import { Skill } from "#skill/index.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

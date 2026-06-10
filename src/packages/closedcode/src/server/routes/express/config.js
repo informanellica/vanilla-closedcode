@@ -1,11 +1,11 @@
 // Express route group for the instance "/config" endpoints.
 import express from "express";
 import { Effect } from "effect";
-import { Config } from "@/config/config.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { InstanceStore } from "@/project/instance-store.js";
-import { Provider } from "@/provider/provider.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Config } from "#config/config.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { InstanceStore } from "#project/instance-store.js";
+import { Provider } from "#provider/provider.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import * as Log from "core/util/log";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

@@ -1,19 +1,19 @@
 // Express route group for the instance /sync endpoints (start, replay, history).
 import express from "express";
 import z from "zod";
-import { SyncEvent } from "@/sync/index.js";
-import { Database } from "@/storage/db.js";
+import { SyncEvent } from "#sync/index.js";
+import { Database } from "#storage/db.js";
 import { asc } from "drizzle-orm";
 import { and } from "drizzle-orm";
 import { not } from "drizzle-orm";
 import { or } from "drizzle-orm";
 import { lte } from "drizzle-orm";
 import { eq } from "drizzle-orm";
-import { EventTable } from "@/sync/event.sql.js";
+import { EventTable } from "#sync/event.sql.js";
 import * as Log from "core/util/log";
-import { Workspace } from "@/control-plane/workspace.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { Instance } from "@/project/instance.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { Instance } from "#project/instance.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";

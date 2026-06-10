@@ -11,7 +11,7 @@ import { useDialog } from "./dialog.js";
 import { createStore } from "solid-js/store";
 import { For } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
-import { Locale } from "@/util/locale.js";
+import { Locale } from "#util/locale.js";
 export function DialogConfirm(props) {
   const dialog = useDialog();
   const {

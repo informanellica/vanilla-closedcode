@@ -1,5 +1,5 @@
 import {  drizzle  } from "drizzle-orm/node-sqlite"
-import {  JsonMigration  } from "@/storage/json-migration.js"
+import {  JsonMigration  } from "#storage/json-migration.js"
 import {  Global  } from "core/global"
 import {  ProjectTable  } from "../../src/project/project.sql.js"
 import {  ProjectID  } from "../../src/project/schema.js"

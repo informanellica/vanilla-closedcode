@@ -1,6 +1,6 @@
 import z from "zod";
-import { ConfigPlugin } from "@/config/plugin.js";
-import { ConfigKeybinds } from "@/config/keybinds.js";
+import { ConfigPlugin } from "#config/plugin.js";
+import { ConfigKeybinds } from "#config/keybinds.js";
 const KeybindOverride = z.object(Object.fromEntries(Object.keys(ConfigKeybinds.Keybinds.shape).map(key => [key, z.string().optional()]))).strict();
 export const TuiOptions = z.object({
   scroll_speed: z.number().min(0.001).optional().describe("TUI scroll speed"),

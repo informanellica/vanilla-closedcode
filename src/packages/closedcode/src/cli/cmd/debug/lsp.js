@@ -1,4 +1,4 @@
-import { LSP } from "@/lsp/lsp.js";
+import { LSP } from "#lsp/lsp.js";
 import { Effect } from "effect";
 import { effectCmd } from "../../effect-cmd.js";
 import { cmd } from "../cmd.js";

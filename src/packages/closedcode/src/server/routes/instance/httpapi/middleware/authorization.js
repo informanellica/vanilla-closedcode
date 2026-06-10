@@ -1,4 +1,4 @@
-import { ConfigService } from "@/effect/config-service.js";
+import { ConfigService } from "#effect/config-service.js";
 import { Config, Effect, Encoding, Layer, Option, Redacted } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiError, HttpApiMiddleware, HttpApiSecurity } from "effect/unstable/httpapi";

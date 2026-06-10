@@ -6,7 +6,7 @@ import { createElement as _$createElement } from "@opentui/solid";
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createContext, useContext, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useTheme } from "@tui/context/theme.js";
+import { useTheme } from "#tui/context/theme.js";
 import { useTerminalDimensions } from "@opentui/solid";
 import { SplitBorder } from "../component/border.js";
 import { TextAttributes } from "@opentui/core";

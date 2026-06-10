@@ -9,8 +9,8 @@ import { createElement as _$createElement } from "@opentui/solid";
 import { TextAttributes } from "@opentui/core";
 import { fileURLToPath } from "node:url";
 import { useTheme } from "../context/theme.js";
-import { useDialog } from "@tui/ui/dialog.js";
-import { useSync } from "@tui/context/sync.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { useSync } from "#tui/context/sync.js";
 import { For, Match, Switch, Show, createMemo } from "solid-js";
 export function DialogStatus() {
   const sync = useSync();

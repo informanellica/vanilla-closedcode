@@ -5,8 +5,8 @@ import { NamedError } from "core/util/error";
 import z from "zod";
 import { AppFileSystem } from "core/filesystem";
 import { Effect, Exit, Layer, Option, RcMap, Schema, Context, TxReentrantLock } from "effect";
-import { NonNegativeInt } from "@/util/schema.js";
-import { Git } from "@/git/index.js";
+import { NonNegativeInt } from "#util/schema.js";
+import { Git } from "#git/index.js";
 const log = Log.create({
   service: "storage"
 });

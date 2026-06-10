@@ -11,7 +11,7 @@ async function loadWorktree() {
     AppRuntime
   }, {
     Worktree
-  }] = await Promise.all([import("@/effect/app-runtime.js"), import("@/worktree/index.js")]);
+  }] = await Promise.all([import("#effect/app-runtime.js"), import("#worktree/index.js")]);
   return {
     AppRuntime,
     Worktree

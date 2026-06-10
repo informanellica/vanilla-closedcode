@@ -1,9 +1,9 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { Bus } from "@/bus/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { Bus } from "#bus/index.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { SessionID } from "./schema.js";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
 import { Effect, Layer, Context, Schema } from "effect";
 export const Info = Schema.Union([Schema.Struct({
   type: Schema.Literal("idle")

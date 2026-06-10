@@ -1,5 +1,5 @@
 import {  rm  } from "fs/promises"
-import {  Database  } from "@/storage/db.js"
+import {  Database  } from "#storage/db.js"
 import {  disposeAllInstances  } from "./fixture.js"
 export async function resetDatabase() {
   await disposeAllInstances().catch(() => undefined);

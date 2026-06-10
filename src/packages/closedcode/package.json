@@ -30,7 +30,9 @@
     "#pty": {
       "node": "./src/pty/pty.node.js",
       "default": "./src/pty/pty.node.js"
-    }
+    },
+    "#tui/*": "./src/cli/cmd/tui/*",
+    "#*": "./src/*"
   },
   "devDependencies": {
     "@babel/core": "7.28.4",

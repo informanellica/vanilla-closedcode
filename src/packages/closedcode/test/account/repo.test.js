@@ -2,7 +2,7 @@ import {  Effect, Layer, Option  } from "effect"
 import {  testEffect  } from "../lib/effect.js"
 import {  AccountRepo  } from "../../src/account/repo.js"
 import {  AccessToken, AccountID, OrgID, RefreshToken  } from "../../src/account/schema.js"
-import {  Database  } from "@/storage/db.js"
+import {  Database  } from "#storage/db.js"
 import {  expect, beforeAll  } from "@jest/globals"
 const truncate = Layer.effectDiscard(Effect.sync(() => {
   const db = Database.Client();

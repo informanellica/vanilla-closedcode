@@ -1,11 +1,11 @@
 import { Effect, Layer, Context, Schema } from "effect";
 import { Bus } from "../bus/index.js";
 import { Snapshot } from "../snapshot/index.js";
-import { Storage } from "@/storage/storage.js";
+import { Storage } from "#storage/storage.js";
 import { SyncEvent } from "../sync/index.js";
 import * as Log from "core/util/log";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 import * as Session from "./session.js";
 import { MessageV2 } from "./message-v2.js";
 import { SessionID, MessageID, PartID } from "./schema.js";

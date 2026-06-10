@@ -39,16 +39,16 @@ const migrations = await Promise.all(
 console.log(`Loaded ${migrations.length} migrations`)
 
 const ALIASES = [
-  { prefix: "@/", replace: path.join(dir, "src") + "/" },
-  { prefix: "@tui/", replace: path.join(dir, "src/cli/cmd/tui") + "/" },
-  { prefix: "@test/", replace: path.join(dir, "test") + "/" },
   { prefix: "#db", replace: path.join(dir, "src/storage/db.node.js") },
   { prefix: "#pty", replace: path.join(dir, "src/pty/pty.node.js") },
+  { prefix: "#tui/", replace: path.join(dir, "src/cli/cmd/tui") + "/" },
+  { prefix: "#test/", replace: path.join(dir, "test") + "/" },
+  { prefix: "#", replace: path.join(dir, "src") + "/" },
 ]
 const pathAliases = {
   name: "path-aliases",
   setup(build) {
-    build.onResolve({ filter: /^(@\/|@tui\/|@test\/|#(db|pty)$)/ }, (args) => {
+    build.onResolve({ filter: /^#/ }, (args) => {
       for (const a of ALIASES) {
         if (a.prefix === "#db" || a.prefix === "#pty") {
           if (args.path === a.prefix) return { path: a.replace }
@@ -79,7 +79,7 @@ const externalize = {
     build.onResolve({ filter: /.*/ }, (args) => {
       if (args.kind === "entry-point") return null
       if (args.path.startsWith(".") || args.path.startsWith("/")) return null
-      if (args.path.startsWith("@/") || args.path.startsWith("@tui/") || args.path.startsWith("#")) return null
+      if (args.path.startsWith("#")) return null
       const pkgName = args.path.startsWith("@") ? args.path.split("/").slice(0, 2).join("/") : args.path.split("/")[0]
       if (EXTERNAL_NATIVE.has(pkgName)) return { path: args.path, external: true }
       return null
@@ -150,4 +150,24 @@ await esbuild({
   },
   loader: { ".wav": "file", ".node": "file" },
 })
+
+// Stage 2 (pure-vanilla): prompts/tool descriptions are read via fs at runtime
+// (src/util/asset.js) instead of bundler text imports — ship every src/**/*.txt
+// next to the bundle under assets/, preserving the src/-relative layout.
+function copyTextAssets(outRoot) {
+  const srcRoot = path.join(dir, "src");
+  const walk = d =>
+    fs.readdirSync(d, { withFileTypes: true }).flatMap(e =>
+      e.isDirectory() ? walk(path.join(d, e.name)) : e.name.endsWith(".txt") ? [path.join(d, e.name)] : []);
+  let count = 0;
+  for (const file of walk(srcRoot)) {
+    const dest = path.join(outRoot, "assets", path.relative(srcRoot, file));
+    fs.mkdirSync(path.dirname(dest), { recursive: true });
+    fs.copyFileSync(file, dest);
+    count++;
+  }
+  console.log(`copied ${count} text assets -> ${path.relative(dir, outRoot)}/assets`);
+}
+
+copyTextAssets(path.join(dir, "dist/node"))
 console.log("Build complete")

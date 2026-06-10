@@ -1,14 +1,14 @@
 import { createStore, produce, reconcile } from "solid-js/store";
-import { useProject } from "@tui/context/project.js";
-import { useEvent } from "@tui/context/event.js";
-import { useSDK } from "@tui/context/sdk.js";
+import { useProject } from "#tui/context/project.js";
+import { useEvent } from "#tui/context/event.js";
+import { useSDK } from "#tui/context/sdk.js";
 import { Binary } from "core/util/binary";
 import { createSimpleContext } from "./helper.js";
 import { useExit } from "./exit.js";
 import { useArgs } from "./args.js";
 import { batch, onMount } from "solid-js";
 import * as Log from "core/util/log";
-import { emptyConsoleState } from "@/config/console-state.js";
+import { emptyConsoleState } from "#config/console-state.js";
 import path from "path";
 import { useKV } from "./kv.js";
 export const {

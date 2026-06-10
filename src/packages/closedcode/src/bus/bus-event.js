@@ -1,6 +1,6 @@
 import z from "zod";
 import { Schema } from "effect";
-import { zodObject } from "@/util/effect-zod.js";
+import { zodObject } from "#util/effect-zod.js";
 const registry = new Map();
 export function define(type, properties) {
   const result = {

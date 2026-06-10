@@ -1,8 +1,8 @@
 import {  Effect, Layer, ManagedRuntime, Schema  } from "effect"
 import {  Agent  } from "../../src/agent/agent.js"
 import {  MessageID, SessionID  } from "../../src/session/schema.js"
-import {  Tool  } from "@/tool/tool.js"
-import {  Truncate  } from "@/tool/truncate.js"
+import {  Tool  } from "#tool/tool.js"
+import {  Truncate  } from "#tool/truncate.js"
 import {  describe, test, expect, beforeAll  } from "@jest/globals"
 const runtime = ManagedRuntime.make(Layer.mergeAll(Truncate.defaultLayer, Agent.defaultLayer));
 const params = Schema.Struct({

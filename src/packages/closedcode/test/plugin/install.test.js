@@ -1,5 +1,5 @@
 import {  tmpdir  } from "../fixture/fixture.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  createPlugTask  } from "../../src/cli/cmd/plug.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import fs from "fs/promises";

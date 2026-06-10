@@ -4,7 +4,7 @@ import {  disposeAllInstances, provideInstance, tmpdir  } from "../fixture/fixtu
 import {  GlobalBus  } from "../../src/bus/global.js"
 import {  Snapshot  } from "../../src/snapshot/index.js"
 import {  Server  } from "../../src/server/server.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import * as Log from "core/util/log";
 import {  afterEach, describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";

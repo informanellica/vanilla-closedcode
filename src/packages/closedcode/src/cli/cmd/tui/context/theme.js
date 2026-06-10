@@ -40,9 +40,9 @@ import { useKV } from "./kv.js";
 import { useRenderer } from "@opentui/solid";
 import { createStore, produce } from "solid-js/store";
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { useTuiConfig } from "./tui-config.js";
-import { isRecord } from "@/util/record.js";
+import { isRecord } from "#util/record.js";
 export function selectedForeground(theme, bg) {
   // If theme explicitly defines selectedListItemText, use it
   if (theme._hasSelectedListItemText) {

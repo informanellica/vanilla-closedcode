@@ -5,14 +5,14 @@ import { createTextNode as _$createTextNode } from "@opentui/solid";
 import { insertNode as _$insertNode } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
-import { useLocal } from "@tui/context/local.js";
-import { useSync } from "@tui/context/sync.js";
+import { useLocal } from "#tui/context/local.js";
+import { useSync } from "#tui/context/sync.js";
 import { map, pipe, entries, sortBy } from "remeda";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
 import { useTheme } from "../context/theme.js";
-import { Keybind } from "@/util/keybind.js";
+import { Keybind } from "#util/keybind.js";
 import { TextAttributes } from "@opentui/core";
-import { useSDK } from "@tui/context/sdk.js";
+import { useSDK } from "#tui/context/sdk.js";
 function Status(props) {
   const {
     theme

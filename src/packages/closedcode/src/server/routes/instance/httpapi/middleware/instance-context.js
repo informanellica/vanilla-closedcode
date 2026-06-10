@@ -1,5 +1,5 @@
-import { WorkspaceRef } from "@/effect/instance-ref.js";
-import { InstanceStore } from "@/project/instance-store.js";
+import { WorkspaceRef } from "#effect/instance-ref.js";
+import { InstanceStore } from "#project/instance-store.js";
 import { Effect, Layer } from "effect";
 import { HttpRouter } from "effect/unstable/http";
 import { HttpApiMiddleware } from "effect/unstable/httpapi";

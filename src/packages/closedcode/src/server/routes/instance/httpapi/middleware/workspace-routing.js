@@ -1,11 +1,11 @@
-import { getAdapter } from "@/control-plane/adapters/index.js";
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { Workspace } from "@/control-plane/workspace.js";
-import { EffectBridge } from "@/effect/bridge.js";
-import { Session } from "@/session/session.js";
+import { getAdapter } from "#control-plane/adapters/index.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { EffectBridge } from "#effect/bridge.js";
+import { Session } from "#session/session.js";
 import { HttpApiProxy } from "./proxy.js";
-import * as Fence from "@/server/fence.js";
-import { getWorkspaceRouteSessionID, isLocalWorkspaceRoute, workspaceProxyURL } from "@/server/workspace.js";
+import * as Fence from "#server/fence.js";
+import { getWorkspaceRouteSessionID, isLocalWorkspaceRoute, workspaceProxyURL } from "#server/workspace.js";
 import { Flag } from "core/flag/flag";
 import { Context, Data, Effect, Layer } from "effect";
 import { HttpClient, HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";

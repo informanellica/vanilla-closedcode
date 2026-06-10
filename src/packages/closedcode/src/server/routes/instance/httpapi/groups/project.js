@@ -1,5 +1,5 @@
-import { Project } from "@/project/project.js";
-import { ProjectID } from "@/project/schema.js";
+import { Project } from "#project/project.js";
+import { ProjectID } from "#project/schema.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

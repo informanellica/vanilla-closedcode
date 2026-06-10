@@ -1,6 +1,6 @@
 export * as ConfigPaths from "./paths.js";
 import path from "path";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Flag } from "core/flag/flag";
 import { Global } from "core/global";
 import { unique } from "remeda";

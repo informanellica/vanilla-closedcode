@@ -1,9 +1,10 @@
+import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
 import path from "path";
-import { LSP } from "@/lsp/lsp.js";
-import DESCRIPTION from "./lsp.txt";
-import { InstanceState } from "@/effect/instance-state.js";
+import { LSP } from "#lsp/lsp.js";
+const DESCRIPTION = assetText("tool/lsp.txt");
+import { InstanceState } from "#effect/instance-state.js";
 import { pathToFileURL } from "url";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 import { AppFileSystem } from "core/filesystem";

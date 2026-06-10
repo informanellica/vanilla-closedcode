@@ -1,8 +1,8 @@
 import { cmd } from "./cmd.js";
 import { Duration, Effect, Match, Option } from "effect";
 import { UI } from "../ui.js";
-import { Account } from "@/account/account.js";
-import { PollExpired } from "@/account/schema.js";
+import { Account } from "#account/account.js";
+import { PollExpired } from "#account/schema.js";
 import { effectCmd } from "../effect-cmd.js";
 import * as Prompt from "../effect/prompt.js";
 import open from "open";

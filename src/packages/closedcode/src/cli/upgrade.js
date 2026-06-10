@@ -1,8 +1,8 @@
-import { Bus } from "@/bus/index.js";
-import { Config } from "@/config/config.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Bus } from "#bus/index.js";
+import { Config } from "#config/config.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { Flag } from "core/flag/flag";
-import { Installation } from "@/installation/index.js";
+import { Installation } from "#installation/index.js";
 import { InstallationVersion } from "core/installation/version";
 export async function upgrade() {
   // Self-update is disabled: this is a privately distributed, signed build, not

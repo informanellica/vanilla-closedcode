@@ -1,4 +1,4 @@
-import {  Wildcard  } from "@/util/wildcard.js"
+import {  Wildcard  } from "#util/wildcard.js"
 import {  test, expect, beforeAll  } from "@jest/globals"
 test("match handles glob tokens", () => {
   expect(Wildcard.match("file1.txt", "file?.txt")).toBe(true);

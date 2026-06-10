@@ -1,6 +1,6 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useRoute } from "@tui/context/route.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useRoute } from "#tui/context/route.js";
 export function DialogSubagent(props) {
   const route = useRoute();
   return _$createComponent(DialogSelect, {

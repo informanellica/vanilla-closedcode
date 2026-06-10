@@ -1,4 +1,4 @@
-import { LocalContext } from "@/util/local-context.js";
+import { LocalContext } from "#util/local-context.js";
 const context = LocalContext.create("instance");
 export const WorkspaceContext = {
   async provide(input) {

@@ -1,7 +1,7 @@
 export * as ConfigVariable from "./variable.js";
 import path from "path";
 import os from "os";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { InvalidError } from "./error.js";
 function source(input) {
   return input.type === "path" ? input.path : input.source;

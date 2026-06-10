@@ -5,10 +5,10 @@ import { insertNode as _$insertNode } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { TextAttributes } from "@opentui/core";
-import { useTheme } from "@tui/context/theme.js";
+import { useTheme } from "#tui/context/theme.js";
 import { useDialog } from "./dialog.js";
 import { useKeyboard } from "@opentui/solid";
-import { useKeybind } from "@tui/context/keybind.js";
+import { useKeybind } from "#tui/context/keybind.js";
 export function DialogHelp() {
   const dialog = useDialog();
   const {

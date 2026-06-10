@@ -1,8 +1,8 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { useDialog } from "@tui/ui/dialog.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
 import { createMemo, createSignal } from "solid-js";
-import { Locale } from "@/util/locale.js";
+import { Locale } from "#util/locale.js";
 import { useTheme } from "../context/theme.js";
 import { useKeybind } from "../context/keybind.js";
 import { usePromptStash } from "./prompt/stash.js";

@@ -1,6 +1,6 @@
 import { Cause, Clock, Duration, Effect, Schedule } from "effect";
 import { MessageV2 } from "./message-v2.js";
-import { iife } from "@/util/iife.js";
+import { iife } from "#util/iife.js";
 // This exported message is shared with the TUI upsell detector. Matching on a
 // literal error string kind of sucks, but it is the simplest for now.
 export const GO_UPSELL_MESSAGE = "Free usage limit exceeded";

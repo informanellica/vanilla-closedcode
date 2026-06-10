@@ -1,19 +1,20 @@
+import { assetText } from "#util/asset.js";
 import * as path from "path";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
 import { Bus } from "../bus/index.js";
 import { FileWatcher } from "../file/watcher.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { Patch } from "../patch/index.js";
 import { createTwoFilesPatch, diffLines } from "diff";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 import { trimDiff } from "./edit.js";
-import { LSP } from "@/lsp/lsp.js";
+import { LSP } from "#lsp/lsp.js";
 import { AppFileSystem } from "core/filesystem";
-import DESCRIPTION from "./apply_patch.txt";
+const DESCRIPTION = assetText("tool/apply_patch.txt");
 import { File } from "../file/index.js";
 import { Format } from "../format/index.js";
-import * as Bom from "@/util/bom.js";
+import * as Bom from "#util/bom.js";
 export const Parameters = Schema.Struct({
   patchText: Schema.String.annotate({
     description: "The full patch text that describes all changes to be made"

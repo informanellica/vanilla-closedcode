@@ -1,5 +1,5 @@
 import { createOpencodeClient } from "sdk/v2";
-import { SessionID } from "@/session/schema.js";
+import { SessionID } from "#session/schema.js";
 export async function validateSession(input) {
   if (!input.sessionID) return;
   const result = SessionID.zod.safeParse(input.sessionID);

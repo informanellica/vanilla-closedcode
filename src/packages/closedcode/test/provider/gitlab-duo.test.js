@@ -11,7 +11,7 @@ export {};
 // import { tmpdir } from "../fixture/fixture.js"
 // import { Instance } from "../../src/project/instance.js"
 
-// import { Provider } from "@/provider/provider.js"
+// import { Provider } from "#provider/provider.js"
 // import { Env } from "../../src/env/index.js"
 // import { Global } from "core/global"
 // import { GitLabWorkflowLanguageModel } from "gitlab-ai-provider"

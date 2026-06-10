@@ -1,22 +1,22 @@
 export * as TuiConfig from "./tui.js";
 import { mergeDeep, unique } from "remeda";
 import { Context, Effect, Fiber, Layer } from "effect";
-import { ConfigParse } from "@/config/parse.js";
-import * as ConfigPaths from "@/config/paths.js";
+import { ConfigParse } from "#config/parse.js";
+import * as ConfigPaths from "#config/paths.js";
 import { migrateTuiConfig } from "./tui-migrate.js";
 import { TuiInfo } from "./tui-schema.js";
 import { Flag } from "core/flag/flag";
-import { isRecord } from "@/util/record.js";
+import { isRecord } from "#util/record.js";
 import { Global } from "core/global";
 import { AppFileSystem } from "core/filesystem";
 import { CurrentWorkingDirectory } from "./cwd.js";
-import { ConfigPlugin } from "@/config/plugin.js";
-import { ConfigKeybinds } from "@/config/keybinds.js";
+import { ConfigPlugin } from "#config/plugin.js";
+import { ConfigKeybinds } from "#config/keybinds.js";
 import { InstallationLocal, InstallationVersion } from "core/installation/version";
 import { makeRuntime } from "core/effect/runtime";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import * as Log from "core/util/log";
-import { ConfigVariable } from "@/config/variable.js";
+import { ConfigVariable } from "#config/variable.js";
 import { Npm } from "core/npm";
 const log = Log.create({
   service: "tui.config"

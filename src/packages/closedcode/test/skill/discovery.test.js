@@ -1,7 +1,7 @@
 import {  Effect  } from "effect"
 import {  Discovery  } from "../../src/skill/discovery.js"
 import {  Global  } from "core/global"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  describe, test, expect, beforeAll, afterAll  } from "@jest/globals"
 import {  rm  } from "fs/promises"
 import path from "path";

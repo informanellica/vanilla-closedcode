@@ -1,4 +1,4 @@
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { context } from "./instance-context.js";
 import { InstanceStore } from "./instance-store.js";
 export async function provide(input) {

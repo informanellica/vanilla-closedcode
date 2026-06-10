@@ -1,17 +1,17 @@
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Bus } from "../bus/index.js";
 import * as Log from "core/util/log";
 import { createOpencodeClient } from "sdk";
 import { Flag } from "core/flag/flag";
-import { Session } from "@/session/session.js";
+import { Session } from "#session/session.js";
 import { NamedError } from "core/util/error";
 import { Effect, Layer, Context, Stream } from "effect";
-import { EffectBridge } from "@/effect/bridge.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { errorMessage } from "@/util/error.js";
+import { EffectBridge } from "#effect/bridge.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { errorMessage } from "#util/error.js";
 import { PluginLoader } from "./loader.js";
 import { parsePluginSpecifier, readPluginId, readV1Plugin, resolvePluginId } from "./shared.js";
-import { registerAdapter } from "@/control-plane/adapters/index.js";
+import { registerAdapter } from "#control-plane/adapters/index.js";
 const log = Log.create({
   service: "plugin"
 });

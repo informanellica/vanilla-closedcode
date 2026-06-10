@@ -4,9 +4,9 @@
 // test pattern) is not legal under Jest's vm-modules loader. Import this file
 // *before* importing any source module that pulls in tui config.
 import { jest } from "@jest/globals";
-const realModule = await import("@/cli/cmd/tui/config/tui.js");
+const realModule = await import("#cli/cmd/tui/config/tui.js");
 export const waitForDependenciesMock = jest.fn(async () => {});
-jest.unstable_mockModule("@/cli/cmd/tui/config/tui.js", () => ({
+jest.unstable_mockModule("#cli/cmd/tui/config/tui.js", () => ({
   ...realModule,
   TuiConfig: {
     ...realModule.TuiConfig,

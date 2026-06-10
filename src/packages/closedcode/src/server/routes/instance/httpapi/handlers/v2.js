@@ -1,4 +1,4 @@
-import { SessionV2 } from "@/v2/session.js";
+import { SessionV2 } from "#v2/session.js";
 import { Layer } from "effect";
 import { messageHandlers } from "./v2/message.js";
 import { sessionHandlers } from "./v2/session.js";

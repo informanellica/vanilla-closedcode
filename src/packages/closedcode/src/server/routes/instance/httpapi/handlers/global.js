@@ -1,9 +1,9 @@
-import { Config } from "@/config/config.js";
-import { GlobalBus } from "@/bus/global.js";
-import { EffectBridge } from "@/effect/bridge.js";
-import { Bus } from "@/bus/index.js";
-import { Installation } from "@/installation/index.js";
-import { disposeAllInstancesAndEmitGlobalDisposed } from "@/server/global-lifecycle.js";
+import { Config } from "#config/config.js";
+import { GlobalBus } from "#bus/global.js";
+import { EffectBridge } from "#effect/bridge.js";
+import { Bus } from "#bus/index.js";
+import { Installation } from "#installation/index.js";
+import { disposeAllInstancesAndEmitGlobalDisposed } from "#server/global-lifecycle.js";
 import { InstallationVersion } from "core/installation/version";
 import * as Log from "core/util/log";
 import { Effect, Queue, Schema } from "effect";

@@ -1,8 +1,8 @@
-import { Auth } from "@/auth/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { zod } from "@/util/effect-zod.js";
-import { namedSchemaError } from "@/util/named-schema-error.js";
-import { optionalOmitUndefined, withStatics } from "@/util/schema.js";
+import { Auth } from "#auth/index.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { zod } from "#util/effect-zod.js";
+import { namedSchemaError } from "#util/named-schema-error.js";
+import { optionalOmitUndefined, withStatics } from "#util/schema.js";
 import { Plugin } from "../plugin/index.js";
 import { ProviderID } from "./schema.js";
 import { Array as Arr, Effect, Layer, Record, Result, Context, Schema } from "effect";

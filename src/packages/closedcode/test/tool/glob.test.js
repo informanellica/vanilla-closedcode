@@ -6,7 +6,7 @@ import {  SessionID, MessageID  } from "../../src/session/schema.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  Ripgrep  } from "../../src/file/ripgrep.js"
 import {  AppFileSystem  } from "core/filesystem"
-import {  Truncate  } from "@/tool/truncate.js"
+import {  Truncate  } from "#tool/truncate.js"
 import {  Agent  } from "../../src/agent/agent.js"
 import {  describe, expect, beforeAll  } from "@jest/globals"
 import path from "path";

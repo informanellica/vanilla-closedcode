@@ -1,5 +1,5 @@
 import { Context, Effect, Layer } from "effect";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 export class Service extends Context.Service()("@closedcode/Env") {}
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const state = yield* InstanceState.make(Effect.fn("Env.state")(() => Effect.succeed({

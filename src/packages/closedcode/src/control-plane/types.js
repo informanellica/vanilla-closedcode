@@ -1,8 +1,8 @@
 import { Schema } from "effect";
-import { ProjectID } from "@/project/schema.js";
+import { ProjectID } from "#project/schema.js";
 import { WorkspaceID } from "./schema.js";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 export const WorkspaceInfo = Schema.Struct({
   id: WorkspaceID,
   type: Schema.String,

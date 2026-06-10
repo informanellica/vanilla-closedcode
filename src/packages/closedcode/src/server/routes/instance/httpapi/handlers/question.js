@@ -1,4 +1,4 @@
-import { Question } from "@/question/index.js";
+import { Question } from "#question/index.js";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

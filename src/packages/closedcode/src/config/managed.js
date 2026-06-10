@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 import os from "os";
 import path from "path";
 import * as Log from "core/util/log";
-import { Process } from "@/util/process.js";
+import { Process } from "#util/process.js";
 const log = Log.create({
   service: "config"
 });

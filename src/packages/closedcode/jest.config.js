@@ -13,20 +13,17 @@ export default {
   testEnvironment: "node",
   moduleFileExtensions: ["js", "json"],
   moduleNameMapper: {
-    "^@/(.*)$": "<rootDir>/src/$1",
-    "^@tui/(.*)$": "<rootDir>/src/cli/cmd/tui/$1",
-    "^@test/(.*)$": "<rootDir>/test/$1",
+    "^#tui/(.*)$": "<rootDir>/src/cli/cmd/tui/$1",
+    "^#test/(.*)$": "<rootDir>/test/$1",
     "^#db$": "<rootDir>/src/storage/db.node.js",
     "^#pty$": "<rootDir>/src/pty/pty.node.js",
+    "^#(.*)$": "<rootDir>/src/$1",
     "^@opentui/core-(darwin|linux|win32)-(arm64|x64)/index\\.js$": "<rootDir>/test/lib/opentui-native-stub.js",
     "^@opentui/solid/runtime-plugin-support(/configure)?$": "<rootDir>/test/lib/opentui-solid-runtime-stub.js",
   },
   setupFiles: ["<rootDir>/test/setup-globals.js"],
   setupFilesAfterEnv: ["<rootDir>/test/preload.js"],
   testMatch: ["<rootDir>/test/**/*.test.js"],
-  transform: {
-    "^.+\\.txt$": "<rootDir>/test/text-transform.js",
-  },
   transformIgnorePatterns: ["/node_modules/(?!(@opentui)/)"],
   // forceExit defaults to true because effect's ManagedRuntime + jest's
   // --experimental-vm-modules loader leave a handful of unref-able internal
