@@ -1,3 +1,4 @@
+import { createEffect as _solidEffect, createRoot as _solidRoot } from "solid-js";
 import { insert as _solidInsert } from "solid-js/web";
 function template(html) {
   const wrapper = document.createElement("div");
@@ -89,9 +90,16 @@ function createTabsState(props) {
   // can't reach the context to register, and a copied props.value can never
   // change on click. Instead: seed from props.value/defaultValue, track the
   // selection internally, and sync by walking the DOM under the root.
-  let internalValue = props.value ?? props.defaultValue ?? null;
+  let internalValue = props.defaultValue ?? null;
 
-  const readValue = () => internalValue;
+  // Controlled usage (file tabs drive `value` from an external store): read
+  // props.value EVERY time so compiled getters stay live — the previous
+  // copy-once approach froze the selection and every pane went hidden/blank
+  // when tabs were switched externally.
+  const readValue = () => {
+    const v = props.value;
+    return v !== undefined && v !== null ? v : internalValue;
+  };
   const readOrientation = () => props.orientation || "horizontal";
   const readVariant = () => props.variant || "normal";
 
@@ -152,6 +160,13 @@ function createTabsState(props) {
   let rootEl = null;
   api.registerRoot = el => {
     rootEl = el;
+    // Track external (controlled) value changes reactively.
+    _solidRoot(() => {
+      _solidEffect(() => {
+        void props.value;
+        sync();
+      });
+    });
     // Click delegation on the root: trigger elements may have been created
     // before this state existed (so their own listeners hold tabs=null) —
     // the root handles selection for every descendant trigger it owns.
@@ -181,7 +196,8 @@ function TabsRoot(props) {
   ]);
 
   const previousContext = TabsContext;
-  const state = createTabsState(split);
+  // Pass the ORIGINAL props (not the copied split) so value/onChange getters stay reactive.
+  const state = createTabsState(props);
   TabsContext = state;
 
   const rootEl = template(`<div data-component=tabs>`);
