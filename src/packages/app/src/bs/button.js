@@ -1,3 +1,4 @@
+import { createRenderEffect as _solidRenderEffect } from "solid-js";
 import { Icon } from "@/bs/icon.js";
 
 const VARIANT_CLASS = {
@@ -62,17 +63,25 @@ export function Button(props) {
 
   appendChildValue(children, props.children);
 
+  const STATIC_KEYS = ["variant", "size", "icon", "class", "classList", "children", "ref"];
   for (const key in props) {
-    if (key !== "variant" && key !== "size" && key !== "icon" &&
-        key !== "class" && key !== "classList" && key !== "children") {
-      const value = props[key];
-      if (/^on[A-Z]/.test(key) && typeof value === "function") {
-        button.addEventListener(key.slice(2).toLowerCase(), value);
-      } else if (value != null && value !== false) {
-        button.setAttribute(key, value === true ? "" : String(value));
-      }
+    if (STATIC_KEYS.includes(key)) continue;
+    const value = props[key];
+    if (/^on[A-Z]/.test(key) && typeof value === "function") {
+      button.addEventListener(key.slice(2).toLowerCase(), value);
     }
   }
+
+  // Attribute props (disabled, aria-*, …) are often signal-backed getters;
+  // re-apply them in an effect instead of reading them once at creation.
+  _solidRenderEffect(() => {
+    for (const key in props) {
+      if (STATIC_KEYS.includes(key) || /^on[A-Z]/.test(key)) continue;
+      const value = props[key];
+      if (value == null || value === false) button.removeAttribute(key);
+      else button.setAttribute(key, value === true ? "" : String(value));
+    }
+  });
 
   children.forEach(child => button.appendChild(child));
 
