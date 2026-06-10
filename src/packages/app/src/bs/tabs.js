@@ -125,8 +125,6 @@ function createTabsState(props) {
 
     rootEl.setAttribute("data-orientation", orientation);
     rootEl.setAttribute("data-variant", variant);
-    rootEl.classList.toggle("flex-row", orientation === "vertical");
-    rootEl.classList.toggle("flex-column", orientation !== "vertical");
   };
 
   const api = {
@@ -191,9 +189,9 @@ function TabsRoot(props) {
 
   rootEl.setAttribute("data-variant", state.variant());
   rootEl.setAttribute("data-orientation", state.orientation());
-  rootEl.classList.add("d-flex");
-  rootEl.classList.toggle("flex-row", state.orientation() === "vertical");
-  rootEl.classList.toggle("flex-column", state.orientation() !== "vertical");
+  // NOTE: no layout classes here — upstream's Tabs root only carries data
+  // attributes; layout belongs to the caller/CSS. Forcing d-flex flex-column
+  // broke the file-tab layout (tab bar rendered BELOW the editor).
 
   if (split.class) {
     rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
@@ -292,7 +290,11 @@ function TabsTrigger(props) {
 
   if (closeButton) {
     const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close-button>`);
-    closeEl.textContent = typeof closeButton === "function" ? String(closeButton()) : String(closeButton);
+    // closeButton may be a component/Node (e.g. a TooltipKeybind-wrapped icon)
+    // — String() rendered "[object HTMLDivElement]" into the tab label.
+    const closeValue = typeof closeButton === "function" ? closeButton() : closeButton;
+    if (closeValue instanceof Node) closeEl.appendChild(closeValue);
+    else if (closeValue != null) closeEl.textContent = String(closeValue);
     if (split.hideCloseButton) {
       closeEl.setAttribute("data-hidden", "true");
     }
