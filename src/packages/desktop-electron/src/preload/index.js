@@ -91,6 +91,10 @@ const api = {
   fetchLocalLLM: (url, headers) => ipcRenderer.invoke("fetch-local-llm", {
     url,
     headers
-  })
+  }),
+  // True only when the app was launched with CLOSEDCODE_REMOTE_DEBUG (the
+  // Playwright e2e harness attaching over CDP). Renderer test hooks gate on
+  // this so they are never installed in a normal run.
+  remoteDebug: Boolean(process.env.CLOSEDCODE_REMOTE_DEBUG)
 };
 contextBridge.exposeInMainWorld("api", api);
