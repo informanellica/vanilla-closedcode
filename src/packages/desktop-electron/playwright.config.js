@@ -2,6 +2,7 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.js",
   // Failure traces/screenshots land under the repo's artifacts/ dir.
   outputDir: "../../artifacts/playwright",
   // 180s: the Electron cold start (fresh temp profile = full DB migration,
