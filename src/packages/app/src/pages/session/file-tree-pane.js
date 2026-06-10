@@ -131,7 +131,7 @@ export function FileTreePane(props) {
       };
       _$insert(_rootName, () => {
         const dir = openedDir();
-        const name = dir ? dir.split(/[\/]/).filter(Boolean).pop() : "";
+        const name = dir ? dir.split(/[\\/]/).filter(Boolean).pop() : "";
         return name ? `— ${name}` : "";
       });
       _$effect(() => _rootName.setAttribute("title", openedDir()));
