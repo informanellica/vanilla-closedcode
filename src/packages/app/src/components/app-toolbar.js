@@ -171,29 +171,7 @@ export function AppToolbar(props) {
       "aria-label": "右サイドバー切り替え",
       onClick: () => props.onToggleReviewPanel?.()
     }), null);
-    // Far-right group (ms-auto): Help, Settings, Light/Dark.
-    _$insert(_rightGroup, _$createComponent(IconButton, {
-      icon: "help",
-      variant: "ghost",
-      title: "ヘルプ",
-      "aria-label": "ヘルプ",
-      onClick: () => props.onHelp?.()
-    }), null);
-    _$insert(_rightGroup, _$createComponent(IconButton, {
-      icon: "settings-gear",
-      variant: "ghost",
-      title: "設定",
-      "aria-label": "設定",
-      onClick: () => props.onOpenSettings?.()
-    }), null);
-    _$insert(_rightGroup, _$createComponent(ThemeToggle, {
-      get colorScheme() {
-        return props.colorScheme;
-      },
-      get onSetTheme() {
-        return props.onSetTheme;
-      }
-    }), null);
+    // Far-right group (ms-auto): Language, Light/Dark, Settings, Help.
     // UI language switcher (far right): compact native select showing the
     // locale code (JA/EN/…); switching re-renders all reactive i18n text live.
     const language = useLanguage();
@@ -213,6 +191,28 @@ export function AppToolbar(props) {
       get title() {
         return language.t("settings.general.language") ?? "Language";
       }
+    }), null);
+    _$insert(_rightGroup, _$createComponent(ThemeToggle, {
+      get colorScheme() {
+        return props.colorScheme;
+      },
+      get onSetTheme() {
+        return props.onSetTheme;
+      }
+    }), null);
+    _$insert(_rightGroup, _$createComponent(IconButton, {
+      icon: "settings-gear",
+      variant: "ghost",
+      title: "設定",
+      "aria-label": "設定",
+      onClick: () => props.onOpenSettings?.()
+    }), null);
+    _$insert(_rightGroup, _$createComponent(IconButton, {
+      icon: "help",
+      variant: "ghost",
+      title: "ヘルプ",
+      "aria-label": "ヘルプ",
+      onClick: () => props.onHelp?.()
     }), null);
     return _el$;
   })();
