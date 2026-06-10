@@ -14,6 +14,7 @@ import { InstallationChannel } from "core/installation/version";
 import { InstanceState } from "#effect/instance-state.js";
 import { iife } from "#util/iife.js";
 import { init } from "#db";
+import { applyMigrationsSync, applyMigrationsAsync } from "./migrate.js";
 export const NotFoundError = NamedError.create("NotFoundError", z.object({
   message: z.string()
 }));
@@ -58,38 +59,15 @@ export const Path = iife(() => {
 // (migrationsFolder); reimplement the minimal pieces for bundled entries.
 // Reimplement the minimal pieces we need: a __drizzle_migrations table that
 // tracks creation timestamps and per-entry execution.
-function applyMigrations(db, entries) {
-  const client = db.$client;
-  client.exec(
-    "CREATE TABLE IF NOT EXISTS __drizzle_migrations (" +
-      "id INTEGER PRIMARY KEY AUTOINCREMENT, hash text NOT NULL, created_at numeric)",
-  );
-  const last = client
-    .prepare("SELECT MAX(created_at) AS created_at FROM __drizzle_migrations")
-    .get()
-  const lastAt = last?.created_at ?? 0
-  for (const entry of entries) {
-    if (entry.timestamp <= lastAt) continue
-    client.exec("BEGIN")
-    try {
-      for (const stmt of entry.sql.split("--> statement-breakpoint")) {
-        const trimmed = stmt.trim()
-        if (trimmed) client.exec(trimmed)
-      }
-      client
-        .prepare("INSERT INTO __drizzle_migrations (hash, created_at) VALUES (?, ?)")
-        .run(entry.name, entry.timestamp)
-      client.exec("COMMIT")
-    } catch (e) {
-      client.exec("ROLLBACK")
-      throw e
-    }
-  }
-}
 function time(tag) {
   const match = /^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/.exec(tag);
   if (!match) return 0;
   return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]), Number(match[6]));
+}
+export function migrationEntries() {
+  const entries = typeof CLOSEDCODE_MIGRATIONS !== "undefined" ? CLOSEDCODE_MIGRATIONS : migrations(path.join(__dirname, "../../migration"));
+  if (Flag.CLOSEDCODE_SKIP_MIGRATIONS) for (const item of entries) item.sql = "select 1;";
+  return entries;
 }
 function migrations(dir) {
   const dirs = readdirSync(dir, {
@@ -121,18 +99,13 @@ export const Client = lazy(() => {
   db.run("PRAGMA wal_checkpoint(PASSIVE)");
 
   // Apply schema migrations
-  const entries = typeof CLOSEDCODE_MIGRATIONS !== "undefined" ? CLOSEDCODE_MIGRATIONS : migrations(path.join(__dirname, "../../migration"));
+  const entries = migrationEntries();
   if (entries.length > 0) {
     log.info("applying migrations", {
       count: entries.length,
       mode: typeof CLOSEDCODE_MIGRATIONS !== "undefined" ? "bundled" : "dev"
     });
-    if (Flag.CLOSEDCODE_SKIP_MIGRATIONS) {
-      for (const item of entries) {
-        item.sql = "select 1;";
-      }
-    }
-    applyMigrations(db, entries);
+    applyMigrationsSync(db.$client, entries);
   }
   return db;
 });
@@ -209,6 +182,7 @@ export function ormInit() {
       "PRAGMA cache_size = -64000",
       "PRAGMA foreign_keys = ON",
     ]) await sequelize.query(pragma);
+    await applyMigrationsAsync(sequelize, migrationEntries());
     return Orm();
   })();
   return ormReady;
