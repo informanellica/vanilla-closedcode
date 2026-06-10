@@ -122,7 +122,7 @@ export function AppToolbar(props) {
       get current() {
         return settings.appearance.font();
       },
-      label: f => f === "" ? "Font" : f,
+      label: f => f === "" ? "Consolas (default)" : f, // monoFallback resolves to Consolas on Windows
       value: f => f,
       onSelect: f => settings.appearance.setFont(f ?? ""),
       variant: "ghost",
