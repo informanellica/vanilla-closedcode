@@ -184,12 +184,12 @@ export function base64Dir(value) {
   return Buffer.from(value, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
 
-// Navigate the SPA to the session route of a directory the same way home.js
-// does (router pushState), without going through the native folder picker.
+// Navigate the SPA to the session route of a directory. The app router uses
+// MEMORY integration on oc:// (pushState/popstate are ignored), so this calls
+// the e2e hook home.js exposes (the real openProject flow: projects.open +
+// touch + navigate) instead of touching browser history.
 export async function gotoProject(page, directory) {
-  await page.evaluate((dir) => {
-    history.pushState({}, "", `/${dir}`);
-    dispatchEvent(new PopStateEvent("popstate"));
-  }, base64Dir(directory));
-  await page.waitForFunction(() => location.pathname.length > 1, { timeout: 10_000 });
+  await page.waitForFunction(() => typeof window.__closedcode_openProject === "function", { timeout: 30_000 });
+  await page.evaluate((dir) => window.__closedcode_openProject(dir), directory);
+  await page.waitForFunction(() => location.pathname.length > 1, { timeout: 15_000 });
 }

@@ -60,6 +60,9 @@ export default function Home() {
     server.projects.touch(directory);
     navigate(`/${base64Encode(directory)}`);
   }
+  // e2e hook: the router uses memory integration (no browser history on oc://),
+  // so tests cannot navigate via pushState — expose the real open flow instead.
+  window.__closedcode_openProject = openProject;
   async function chooseProject() {
     function resolve(result) {
       if (Array.isArray(result)) {

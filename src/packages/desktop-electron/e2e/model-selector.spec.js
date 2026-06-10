@@ -35,6 +35,7 @@ test.describe("prompt model selector", () => {
   });
 
   test("lists configured models in a native select under the chat box", async () => {
+    test.setTimeout(180_000);
     const { browser, child, root } = await launchDesktopWithConfig({
       provider: { ollama: ollamaProvider },
     });

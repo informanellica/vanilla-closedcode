@@ -23,6 +23,7 @@ test.describe("opened folder name", () => {
   });
 
   test("file-tree panel header shows the opened project folder", async () => {
+    test.setTimeout(180_000);
     const { browser, child, root } = await launchDesktopWithConfig({});
     cleanup.push(async () => rmWithRetry(root));
     cleanup.push(async () => killAndWait(child));

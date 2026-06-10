@@ -21,6 +21,7 @@ test.describe("boot smoke", () => {
   });
 
   test("boots to the home screen without the crash page", async () => {
+    test.setTimeout(180_000); // first run migrates the DB in a cold temp profile
     const { browser, child, root } = await launchDesktopWithConfig({});
     cleanup.push(async () => rmWithRetry(root));
     cleanup.push(async () => killAndWait(child));
@@ -35,8 +36,8 @@ test.describe("boot smoke", () => {
     const body = await page.locator("body").innerText();
     // …and it is NOT the error boundary.
     expect(body).not.toContain("問題が発生しました");
-    // Home shows the hero CTA.
-    await expect(page.getByText("フォルダを開く").first()).toBeVisible({ timeout: 30_000 });
+    // Home shows the welcome hero (unique, always visible on the home route).
+    await expect(page.getByText("ようこそ")).toBeVisible({ timeout: 30_000 });
     await shot(page, "e2e-boot-smoke");
   });
 });
