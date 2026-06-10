@@ -33,9 +33,20 @@ const ModelList = props => {
   // providers — the visible() filter hid all but recently-used models, which
   // made the picker look broken / single-model. Provider scoping and the
   // local-endpoint guard stay.
-  const models = createMemo(() => model.list().filter(m => props.provider ? m.provider.id === props.provider : true).filter(m => isLocalProvider(m.provider.options) || isLocalProvider({
-    baseURL: m.api.url
-  })));
+  const models = createMemo(() => {
+    // model.list() can contain the same model twice (config-declared entry +
+    // API-discovered entry) — dedupe by provider/model id so the picker shows
+    // each model once.
+    const seen = new Set();
+    return model.list().filter(m => {
+      const key = `${m.provider.id}/${m.id}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).filter(m => props.provider ? m.provider.id === props.provider : true).filter(m => isLocalProvider(m.provider.options) || isLocalProvider({
+      baseURL: m.api.url
+    }));
+  });
   return _$createComponent(List, {
     get ["class"]() {
       return `flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0 ${props.class ?? ""}`;
