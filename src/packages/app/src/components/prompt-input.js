@@ -1504,26 +1504,48 @@ export const PromptInput = props => {
                               return command.keybind("model.choose");
                             },
                             get children() {
-                              return _$createComponent(Select, {
-                                get options() {
-                                  // Local-only fork: list every configured/pulled model.
-                                  // The old visible() filter hid everything but the
-                                  // recently-used model, which read as "can't choose".
-                                  return local.model.list();
+                              return _$createComponent(ModelSelectorPopover, {
+                                get model() {
+                                  return local.model;
                                 },
-                                get current() { return local.model.current?.(); },
-                                label: opt => opt.name,
-                                value: opt => `${opt.provider.id}/${opt.id}`,
-                                onSelect: opt => {
-                                  if (opt) {
-                                    local.model.set({ modelID: opt.id, providerID: opt.provider.id }, { recent: true });
-                                  }
-                                  restoreFocus();
+                                triggerAs: Button,
+                                get triggerProps() {
+                                  return {
+                                    variant: "ghost",
+                                    size: "normal",
+                                    style: control(),
+                                    class: "min-w-0 max-w-[320px] fw-normal text-body group",
+                                    "data-action": "prompt-model"
+                                  };
                                 },
-                                variant: "ghost",
-                                size: "small",
-                                style: control(),
-                                class: "min-w-0 max-w-[320px] fw-normal text-body group"
+                                onClose: restoreFocus,
+                                get children() {
+                                  return [_$createComponent(Show, {
+                                    get when() {
+                                      return local.model.current()?.provider?.id;
+                                    },
+                                    get children() {
+                                      return _$createComponent(ProviderIcon, {
+                                        get id() {
+                                          return local.model.current()?.provider?.id ?? "";
+                                        },
+                                        "class": "size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150",
+                                        style: {
+                                          "will-change": "opacity",
+                                          transform: "translateZ(0)"
+                                        }
+                                      });
+                                    }
+                                  }), (() => {
+                                    var _el$23 = _tmpl$5();
+                                    _$insert(_el$23, () => local.model.current()?.name ?? language.t("dialog.model.select.title"));
+                                    return _el$23;
+                                  })(), _$createComponent(Icon, {
+                                    name: "chevron-down",
+                                    size: "small",
+                                    "class": "shrink-0"
+                                  })];
+                                }
                               });
                             }
                           });

@@ -29,10 +29,11 @@ function isLocalProvider(options) {
 const ModelList = props => {
   const model = props.model ?? useLocal().model;
   const language = useLanguage();
-  const models = createMemo(() => model.list().filter(m => model.visible({
-    modelID: m.id,
-    providerID: m.provider.id
-  })).filter(m => props.provider ? m.provider.id === props.provider : true).filter(m => isLocalProvider(m.provider.options) || isLocalProvider({
+  // Local-only fork: list every configured model across all connected
+  // providers — the visible() filter hid all but recently-used models, which
+  // made the picker look broken / single-model. Provider scoping and the
+  // local-endpoint guard stay.
+  const models = createMemo(() => model.list().filter(m => props.provider ? m.provider.id === props.provider : true).filter(m => isLocalProvider(m.provider.options) || isLocalProvider({
     baseURL: m.api.url
   })));
   return _$createComponent(List, {
