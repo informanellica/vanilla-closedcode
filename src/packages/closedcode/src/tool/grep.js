@@ -19,7 +19,9 @@ export const Parameters = Schema.Struct({
     description: 'File pattern to include in the search (e.g. "*.js", "*.{ts,tsx}")'
   })
 });
-export const GrepTool = Tool.define("grep", Effect.gen(function* () {
+// Shared with tool/search.js: some models insist on a `search` tool for code
+// search, so the same implementation is exposed under both ids.
+export const GrepDefinition = Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const rg = yield* Ripgrep.Service;
   return {
@@ -118,4 +120,5 @@ export const GrepTool = Tool.define("grep", Effect.gen(function* () {
       };
     }).pipe(Effect.orDie)
   };
-}));
+});
+export const GrepTool = Tool.define("grep", GrepDefinition);

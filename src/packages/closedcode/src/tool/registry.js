@@ -5,6 +5,7 @@ import { ShellTool } from "./shell.js";
 import { EditTool } from "./edit.js";
 import { GlobTool } from "./glob.js";
 import { GrepTool } from "./grep.js";
+import { SearchTool } from "./search.js";
 import { ReadTool } from "./read.js";
 import { TaskTool } from "./task.js";
 import { TodoWriteTool } from "./todo.js";
@@ -67,6 +68,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const writetool = yield* WriteTool;
   const edit = yield* EditTool;
   const greptool = yield* GrepTool;
+  const searchtool = yield* SearchTool;
   const patchtool = yield* ApplyPatchTool;
   const skilltool = yield* SkillTool;
   const agent = yield* Agent.Service;
@@ -156,7 +158,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       task: Tool.init(task),
       fetch: Tool.init(webfetch),
       todo: Tool.init(todo),
-      search: Tool.init(websearch),
+      search: Tool.init(searchtool),
+      websearch: Tool.init(websearch),
       skill: Tool.init(skilltool),
       patch: Tool.init(patchtool),
       question: Tool.init(question),
@@ -165,7 +168,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return {
       custom,
-      builtin: [tool.invalid, ...(questionEnabled ? [tool.question] : []), tool.shell, tool.read, tool.glob, tool.grep, tool.edit, tool.write, tool.task, tool.fetch, tool.todo, tool.search, tool.skill, tool.patch, ...(Flag.CLOSEDCODE_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []), ...(Flag.CLOSEDCODE_EXPERIMENTAL_PLAN_MODE && Flag.CLOSEDCODE_CLIENT === "cli" ? [tool.plan] : [])],
+      builtin: [tool.invalid, ...(questionEnabled ? [tool.question] : []), tool.shell, tool.read, tool.glob, tool.grep, tool.edit, tool.write, tool.task, tool.fetch, tool.todo, tool.search, tool.websearch, tool.skill, tool.patch, ...(Flag.CLOSEDCODE_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []), ...(Flag.CLOSEDCODE_EXPERIMENTAL_PLAN_MODE && Flag.CLOSEDCODE_CLIENT === "cli" ? [tool.plan] : [])],
       task: tool.task,
       read: tool.read
     };
