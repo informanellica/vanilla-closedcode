@@ -1,6 +1,6 @@
-// e2e: the prompt input's model picker is a native <select> listing the
-// configured models (feat/model-selector-dropdown), selectable without the
-// search popover.
+// e2e: the prompt input's model picker opens the searchable popover listing
+// every configured model grouped by provider, and selecting one updates the
+// current model (fix/model-popover-restore).
 import { expect, test } from "@playwright/test";
 import { mkdir } from "node:fs/promises";
 import path from "node:path";
@@ -13,8 +13,6 @@ import {
   shot,
 } from "./helpers.js";
 
-// Endpoint is a dead local port on purpose: the model list comes from config,
-// no live Ollama is needed for the picker itself.
 const ollamaProvider = {
   npm: "@ai-sdk/openai-compatible",
   name: "Ollama",
@@ -34,7 +32,7 @@ test.describe("prompt model selector", () => {
     }
   });
 
-  test("lists configured models in a native select under the chat box", async () => {
+  test("popover lists all configured models and selects one", async () => {
     test.setTimeout(180_000);
     const { browser, child, root } = await launchDesktopWithConfig({
       provider: { ollama: ollamaProvider },
@@ -49,21 +47,13 @@ test.describe("prompt model selector", () => {
     const page = await rendererPage(browser);
     await gotoProject(page, project);
 
-    // The model picker is the <select> whose options carry provider/model
-    // values (the agent picker next to it has different values).
-    const select = page
-      .locator("select")
-      .filter({ has: page.locator('option[value^="ollama/"]') })
-      .first();
-    await expect(select).toBeVisible({ timeout: 30_000 });
-
-    const labels = await select.locator("option").allTextContents();
-    expect(labels.join("|")).toContain("Model Alpha");
-    expect(labels.join("|")).toContain("Model Beta");
-
-    // Selecting via the native control updates the current model.
-    await select.selectOption("ollama/model-beta");
-    await expect(select).toHaveValue("ollama/model-beta");
-    await shot(page, "e2e-model-selector");
+    await page.locator('[data-action="prompt-model"]').click({ timeout: 30_000 });
+    // Both configured models are listed (visible() no longer hides them).
+    await expect(page.getByText("Model Alpha")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText("Model Beta")).toBeVisible();
+    await shot(page, "e2e-model-popover");
+    await page.getByText("Model Beta").click();
+    // The trigger now shows the selected model.
+    await expect(page.locator('[data-action="prompt-model"]')).toContainText("Model Beta", { timeout: 15_000 });
   });
 });
