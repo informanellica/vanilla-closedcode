@@ -13,6 +13,8 @@ var _tmpl$ = /*#__PURE__*/_$template(`<div class="h-100 d-flex flex-column"><div
   _tmpl$4 = /*#__PURE__*/_$template(`<div id=file-tree-panel class="relative min-w-0 h-100 shrink-0 overflow-hidden border-r border"><div class="h-100 d-flex flex-column overflow-hidden">`),
   _tmplClose = /*#__PURE__*/_$template(`<button type=button class="btn btn-link btn-sm p-0 px-1 position-absolute text-secondary text-decoration-none bg-body-tertiary rounded" style="top:3px;right:5px;z-index:6;line-height:1" title="左サイドバーを隠す" aria-label="左サイドバーを隠す"><i class="bi bi-x-lg"></i></button>`);
 import { Match, Show, Switch, createMemo } from "solid-js";
+import { useParams } from "@solidjs/router";
+import { base64Decode } from "core/util/encode";
 import { createMediaQuery } from "@solid-primitives/media";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import FileTree from "@/components/file-tree.js";
@@ -115,7 +117,26 @@ export function FileTreePane(props) {
       var _title = document.createElement("span");
       _title.className = "small fw-medium text-secondary";
       _$insert(_title, () => language.t("session.files.all"));
+      // Show WHICH folder is open: decode the session route's :dir param and
+      // append the folder name next to the panel title (full path on hover).
+      var _rootName = document.createElement("span");
+      _rootName.className = "small fw-normal text-secondary text-truncate ms-1 me-auto";
+      const routeParams = useParams();
+      const openedDir = () => {
+        try {
+          return base64Decode(routeParams.dir ?? "");
+        } catch {
+          return "";
+        }
+      };
+      _$insert(_rootName, () => {
+        const dir = openedDir();
+        const name = dir ? dir.split(/[\/]/).filter(Boolean).pop() : "";
+        return name ? `— ${name}` : "";
+      });
+      _$effect(() => _rootName.setAttribute("title", openedDir()));
       _$insert(_header, _title);
+      _$insert(_header, _rootName);
       _$insert(_header, _close);
       _$insert(_el$6, _header);
 

@@ -238,6 +238,10 @@ function CollapsibleRoot(props) {
     while (target && target !== root) {
       const trigger = target.closest('[data-slot="collapsible-trigger"]');
       if (trigger) {
+        // Nested collapsibles (file tree): the same click bubbles to every
+        // ancestor root, each of which would toggle itself — clicking a child
+        // folder collapsed its parents. Handle it once, at the innermost root.
+        e.stopPropagation();
         handleTriggerClick(e, trigger.__collapsibleContext);
         return;
       }
