@@ -19,6 +19,16 @@ otherwise the current git branch.
 Development line following `0.1.0-preview`.
 
 ### Fixed
+- **デスクトップ UI の vanilla 化レイヤー (bs/) を本番品質に修正**(自己改良ループ成果の取り込み):
+  設定画面が真っ白 (Tabs を DOM 走査ベースに再設計) / モデルピッカー復元 (検索付き
+  ポップオーバー・全モデル表示・重複排除・ポップ位置 = ref 転送・ツールチップ内
+  ボタン無反応 = cloneNode 廃止) / 関数 children の固定評価×12ファイル / classList
+  空白トークン×15ファイル / DropdownTrigger に as=コンポーネント / ツリーの M
+  マーカーが深い階層に出ない / サブフォルダ展開で親が閉じる / ツリーヘッダーに
+  開いているフォルダ名 / id=search ツール (grep 別名、モデルの search 連打ループ解消)
+  / opencode 旧ロゴの完全削除 / serve の listen() にも requestTimeout=0。
+  e2e: boot-smoke / opened-folder-name / model-selector (Playwright) を整備、
+  memory router 用に __closedcode_openProject フックを追加。
 - **`closedcode run` no longer hangs before starting on a non-TTY stdin that never
   reaches EOF.** When launched in the background or with an inherited pipe/tty
   (CI, `&`, redirected harnesses), the old `for await (… process.stdin)` waited for
