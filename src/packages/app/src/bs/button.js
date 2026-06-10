@@ -76,5 +76,9 @@ export function Button(props) {
 
   children.forEach(child => button.appendChild(child));
 
+  // Solid ref forwarding: Kobalte's Popover Trigger measures its anchor via
+  // ref — without this the popover renders at the viewport origin (top-left).
+  if (typeof props.ref === "function") props.ref(button);
+  else if ("ref" in props) { try { props.ref = button; } catch {} }
   return button;
 }
