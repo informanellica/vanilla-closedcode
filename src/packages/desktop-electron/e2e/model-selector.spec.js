@@ -49,10 +49,10 @@ test.describe("prompt model selector", () => {
 
     await page.locator('[data-action="prompt-model"]').click({ timeout: 30_000 });
     // Both configured models are listed (visible() no longer hides them).
-    await expect(page.getByText("Model Alpha")).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText("Model Beta")).toBeVisible();
+    await expect(page.getByText("Model Alpha").first()).toBeVisible({ timeout: 15_000 }); // trigger + list entry
+    await expect(page.getByText("Model Beta").first()).toBeVisible();
     await shot(page, "e2e-model-popover");
-    await page.getByText("Model Beta").click();
+    await page.getByText("Model Beta").first().click();
     // The trigger now shows the selected model.
     await expect(page.locator('[data-action="prompt-model"]')).toContainText("Model Beta", { timeout: 15_000 });
   });
