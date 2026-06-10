@@ -156,7 +156,9 @@ export async function launchDesktopWithConfig(config) {
 // Resolve the renderer window: wait for the oc://renderer page to finish the
 // loading.html -> index.html navigation on the same page object.
 export async function rendererPage(browser) {
-  const deadline = Date.now() + 90_000;
+  // 150s: cold starts (fresh temp profile = full DB migration + first-run
+  // binary scan) intermittently exceed 90s when the machine is busy.
+  const deadline = Date.now() + 150_000;
   while (Date.now() < deadline) {
     const pages = browser.contexts().flatMap((context) => context.pages());
     const renderer = pages.find((page) => page.url().startsWith("oc://renderer/"));
