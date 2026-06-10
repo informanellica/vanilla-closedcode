@@ -70,8 +70,9 @@ Development line following `0.1.0-preview`.
   file-tree M markers missing on nested paths (normalized-key lookups) and parent
   folders collapsing when expanding a child (Collapsible click bubbling); a `search`
   tool (grep alias) so models that insist on calling `search` stop spinning;
-  leftover opencode logos removed; `serve`'s `listen()` path also gets
-  `requestTimeout/headersTimeout = 0`.
+  leftover opencode logos removed; `serve`'s `listen()` path also disables the
+  request timeouts (later restricted to explicit loopback binds — see the review
+  round 2/3 entry below).
 
 - **Prompt send button stuck disabled forever.** The vanilla `IconButton`/`Button`
   read getter props (`disabled`, `icon`, `aria-label`, …) once at creation, so the
@@ -120,10 +121,17 @@ Development line following `0.1.0-preview`.
   `horizontal` — dialog CSS happened to mask it); the context is now set before
   props are touched, and `settings-smoke` asserts `data-orientation="vertical"` +
   `flex-column` on the list. `serve`'s `listen()` zeroes
-  `requestTimeout`/`headersTimeout` **only for loopback binds**, keeping Node's
-  defaults on externally reachable hosts (slow-header connections can no longer be
-  held open forever). The e2e-hook gate validates `CLOSEDCODE_REMOTE_DEBUG` as a
-  real TCP port instead of string truthiness (`"0"`/`"false"` no longer count).
+  `requestTimeout`/`headersTimeout` **only for explicit loopback binds**
+  (`127.0.0.1`/`localhost`/`::1`); an omitted hostname makes Node listen on all
+  interfaces, so it keeps Node's defaults too — slow-header connections can no
+  longer be held open forever on externally reachable hosts (round 3: the
+  `!opts.hostname` case was initially and wrongly treated as loopback). Round 3
+  also disposes the Tabs controlled-value effect with its owner (re-opening
+  dialogs no longer accumulates effects; standalone roots self-dispose once the
+  tabs root leaves the document), makes `Tabs.List` follow a dynamically changed
+  orientation, and lets `AnimatedCountLabel` clear its class when it turns null.
+  The e2e-hook gate validates `CLOSEDCODE_REMOTE_DEBUG` as a real TCP port
+  instead of string truthiness (`"0"`/`"false"` no longer count).
 
 ## [0.1.0-preview] — 2026-06-07
 

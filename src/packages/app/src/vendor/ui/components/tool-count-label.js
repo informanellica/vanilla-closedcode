@@ -77,7 +77,7 @@ export function AnimatedCountLabel(props) {
   });
 
   _solidRenderEffect(() => {
-    if (props.class != null) root.className = props.class;
+    root.className = props.class ?? "";
   });
 
   return root;
