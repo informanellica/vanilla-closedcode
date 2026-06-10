@@ -1,6 +1,6 @@
 import {  Effect  } from "effect"
 import {  provideInstance, tmpdir  } from "../fixture/fixture.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  File  } from "../../src/file/index.js"
 import {  Instance  } from "../../src/project/instance.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"

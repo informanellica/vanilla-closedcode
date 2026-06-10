@@ -1,4 +1,4 @@
-import { GlobalBus } from "@/bus/global.js";
+import { GlobalBus } from "#bus/global.js";
 import { Effect } from "effect";
 export function waitEvent(input) {
   if (input.signal?.aborted) return Effect.fail(input.signal.reason ?? new Error("Request aborted"));

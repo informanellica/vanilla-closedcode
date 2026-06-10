@@ -1,8 +1,8 @@
 import { Effect, Schema } from "effect";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { InstanceStore } from "@/project/instance-store.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
-import { Instance } from "@/project/instance.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { InstanceStore } from "#project/instance-store.js";
+import { InstanceRef } from "#effect/instance-ref.js";
+import { Instance } from "#project/instance.js";
 import { cmd } from "./cmd/cmd.js";
 
 /**

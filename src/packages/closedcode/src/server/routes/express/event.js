@@ -2,9 +2,9 @@
 import express from "express";
 import z from "zod";
 import * as Log from "core/util/log";
-import { BusEvent } from "@/bus/bus-event.js";
-import { Bus } from "@/bus/index.js";
-import { AsyncQueue } from "@/util/queue.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { Bus } from "#bus/index.js";
+import { AsyncQueue } from "#util/queue.js";
 import { registerOperation } from "../../express/openapi.js";
 
 const log = Log.create({ service: "server" });

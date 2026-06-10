@@ -1,4 +1,4 @@
-import { Permission } from "@/permission/index.js";
+import { Permission } from "#permission/index.js";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

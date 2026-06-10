@@ -1,8 +1,8 @@
-import { Workspace } from "@/control-plane/workspace.js";
-import * as InstanceState from "@/effect/instance-state.js";
-import { Database } from "@/storage/db.js";
-import { SyncEvent } from "@/sync/index.js";
-import { EventTable } from "@/sync/event.sql.js";
+import { Workspace } from "#control-plane/workspace.js";
+import * as InstanceState from "#effect/instance-state.js";
+import { Database } from "#storage/db.js";
+import { SyncEvent } from "#sync/index.js";
+import { EventTable } from "#sync/event.sql.js";
 import { asc } from "drizzle-orm";
 import { and } from "drizzle-orm";
 import { eq } from "drizzle-orm";

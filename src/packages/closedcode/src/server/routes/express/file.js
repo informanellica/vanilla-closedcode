@@ -1,12 +1,12 @@
 // Express route group for the instance file/find endpoints.
 import express from "express";
 import { Effect } from "effect";
-import { File } from "@/file/index.js";
-import { Ripgrep } from "@/file/ripgrep.js";
-import { LSP } from "@/lsp/lsp.js";
-import { Instance } from "@/project/instance.js";
+import { File } from "#file/index.js";
+import { Ripgrep } from "#file/ripgrep.js";
+import { LSP } from "#lsp/lsp.js";
+import { Instance } from "#project/instance.js";
 import z from "zod";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { paramToAttributeKey } from "../instance/trace.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

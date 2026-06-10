@@ -1,15 +1,14 @@
-import { cmd } from "@/cli/cmd/cmd.js";
+import { cmd } from "#cli/cmd/cmd.js";
 import { Worker } from "node:worker_threads";
-import { tui } from "./app.js";
-import { Rpc } from "@/util/rpc.js";
+import { Rpc } from "#util/rpc.js";
 import path from "path";
 import { fileURLToPath } from "url";
-import { UI } from "@/cli/ui.js";
+import { UI } from "#cli/ui.js";
 import * as Log from "core/util/log";
-import { errorMessage } from "@/util/error.js";
-import { withTimeout } from "@/util/timeout.js";
-import { withNetworkOptions, resolveNetworkOptionsNoConfig } from "@/cli/network.js";
-import { Filesystem } from "@/util/filesystem.js";
+import { errorMessage } from "#util/error.js";
+import { withTimeout } from "#util/timeout.js";
+import { withNetworkOptions, resolveNetworkOptionsNoConfig } from "#cli/network.js";
+import { Filesystem } from "#util/filesystem.js";
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32.js";
 import { writeHeapSnapshot } from "v8";
 import { TuiConfig } from "./config/tui.js";
@@ -189,7 +188,11 @@ export const TuiThreadCommand = cmd({
         }).catch(() => {});
       }, 1000).unref?.();
       try {
-        await tui({
+        // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
+      // cannot load (the documented third-party interop wall) — load it only
+      // when the TUI actually starts.
+      const { tui } = await import("./app.js");
+      await tui({
           url: transport.url,
           async onSnapshot() {
             const tui = writeHeapSnapshot("tui.heapsnapshot");

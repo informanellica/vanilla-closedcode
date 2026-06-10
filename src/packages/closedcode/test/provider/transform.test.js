@@ -1,4 +1,4 @@
-import {  ProviderTransform  } from "@/provider/transform.js"
+import {  ProviderTransform  } from "#provider/transform.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 describe("ProviderTransform.options - setCacheKey", () => {
@@ -1043,7 +1043,7 @@ describe("ProviderTransform.schema - moonshot $ref siblings", () => {
           type: "array"
         },
         variantOptions: {
-          $ref: "#/$defs/VariantOptions",
+          $ref: "#$defs/VariantOptions",
           description: "Required. The variant options for generation, including the number of variants, creative range, and aspects to focus on."
         }
       },
@@ -1079,7 +1079,7 @@ describe("ProviderTransform.schema - moonshot $ref siblings", () => {
     };
     const result = ProviderTransform.schema(moonshotModel, schema);
     expect(result.properties.variantOptions).toEqual({
-      $ref: "#/$defs/VariantOptions"
+      $ref: "#$defs/VariantOptions"
     });
     expect(result.$defs.VariantOptions.description).toBe(schema.$defs.VariantOptions.description);
   });
@@ -1094,7 +1094,7 @@ describe("ProviderTransform.schema - moonshot $ref siblings", () => {
       type: "object",
       properties: {
         value: {
-          $ref: "#/$defs/Value",
+          $ref: "#$defs/Value",
           description: "Moonshot rejects this sibling after ref expansion."
         }
       },
@@ -1106,7 +1106,7 @@ describe("ProviderTransform.schema - moonshot $ref siblings", () => {
       }
     });
     expect(result.properties.value).toEqual({
-      $ref: "#/$defs/Value"
+      $ref: "#$defs/Value"
     });
   });
   test("converts tuple-style array items to a single item schema", () => {

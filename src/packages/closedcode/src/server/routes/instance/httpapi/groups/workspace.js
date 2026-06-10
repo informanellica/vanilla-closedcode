@@ -1,6 +1,6 @@
-import { Workspace } from "@/control-plane/workspace.js";
-import { WorkspaceAdapterEntry } from "@/control-plane/types.js";
-import { NonNegativeInt } from "@/util/schema.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { WorkspaceAdapterEntry } from "#control-plane/types.js";
+import { NonNegativeInt } from "#util/schema.js";
 import { Schema, Struct } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

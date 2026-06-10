@@ -3,15 +3,15 @@ import { formatPatch, structuredPatch } from "diff";
 import path from "path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
-import { Bus } from "@/bus/index.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Bus } from "#bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
-import { FileWatcher } from "@/file/watcher.js";
-import { Git } from "@/git/index.js";
+import { FileWatcher } from "#file/watcher.js";
+import { Git } from "#git/index.js";
 import * as Log from "core/util/log";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
 
 // Single-worker pool for `formatPatch + structuredPatch`. The structured
 // patch with full-file context is O(file size) sync CPU; running it inline

@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { effectCmd } from "../effect-cmd.js";
-import { Session } from "@/session/session.js";
-import { Database } from "@/storage/db.js";
+import { Session } from "#session/session.js";
+import { Database } from "#storage/db.js";
 import { SessionTable } from "../../session/session.sql.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
+import { InstanceRef } from "#effect/instance-ref.js";
 export const StatsCommand = effectCmd({
   command: "stats",
   describe: "show token usage and cost statistics",

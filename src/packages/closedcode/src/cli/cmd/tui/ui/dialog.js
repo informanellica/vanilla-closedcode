@@ -7,12 +7,12 @@ import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
 import { batch, createContext, Show, useContext } from "solid-js";
-import { useTheme } from "@tui/context/theme.js";
+import { useTheme } from "#tui/context/theme.js";
 import { MouseButton, RGBA } from "@opentui/core";
 import { createStore } from "solid-js/store";
 import { useToast } from "./toast.js";
 import { Flag } from "core/flag/flag";
-import * as Selection from "@tui/util/selection.js";
+import * as Selection from "#tui/util/selection.js";
 export function Dialog(props) {
   const dimensions = useTerminalDimensions();
   const {

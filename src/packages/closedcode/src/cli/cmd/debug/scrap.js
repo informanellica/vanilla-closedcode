@@ -1,5 +1,5 @@
 import { EOL } from "os";
-import { Project } from "@/project/project.js";
+import { Project } from "#project/project.js";
 import * as Log from "core/util/log";
 import { cmd } from "../cmd.js";
 export const ScrapCommand = cmd({

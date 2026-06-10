@@ -1,9 +1,9 @@
-import { defer } from "@/util/defer.js";
+import { defer } from "#util/defer.js";
 import { rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { Filesystem } from "@/util/filesystem.js";
-import { Process } from "@/util/process.js";
+import { Filesystem } from "#util/filesystem.js";
+import { Process } from "#util/process.js";
 export async function open(opts) {
   const editor = process.env["VISUAL"] || process.env["EDITOR"];
   if (!editor) return;

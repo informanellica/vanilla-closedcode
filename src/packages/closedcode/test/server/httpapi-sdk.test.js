@@ -11,7 +11,7 @@ import {  ExperimentalHttpApiServer  } from "../../src/server/routes/instance/ht
 import {  Server  } from "../../src/server/server.js"
 import {  MessageID, PartID, SessionID  } from "../../src/session/schema.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import {  afterEach, describe, expect, beforeAll  } from "@jest/globals"
 
 import path from "path";

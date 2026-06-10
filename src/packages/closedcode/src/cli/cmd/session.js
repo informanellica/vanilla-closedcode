@@ -1,13 +1,13 @@
 import { Effect } from "effect";
 import { cmd } from "./cmd.js";
 import { effectCmd, fail } from "../effect-cmd.js";
-import { Session } from "@/session/session.js";
+import { Session } from "#session/session.js";
 import { SessionID } from "../../session/schema.js";
 import { UI } from "../ui.js";
-import { Locale } from "@/util/locale.js";
+import { Locale } from "#util/locale.js";
 import { Flag } from "core/flag/flag";
-import { Filesystem } from "@/util/filesystem.js";
-import { Process } from "@/util/process.js";
+import { Filesystem } from "#util/filesystem.js";
+import { Process } from "#util/process.js";
 import { EOL } from "os";
 import path from "path";
 import { which } from "../../util/which.js";

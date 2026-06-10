@@ -5,7 +5,7 @@ import {  AppFileSystem  } from "core/filesystem"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  Git  } from "../../src/git/index.js"
 import {  Global  } from "core/global"
-import {  Storage  } from "@/storage/storage.js"
+import {  Storage  } from "#storage/storage.js"
 import {  describe, expect, beforeAll  } from "@jest/globals"
 import path from "path";
 const dir = path.join(Global.Path.data, "storage");

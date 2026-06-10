@@ -1,20 +1,20 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { Bus } from "@/bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { Bus } from "#bus/index.js";
 import * as Log from "core/util/log";
 import * as LSPClient from "./client.js";
 import path from "path";
 import { pathToFileURL, fileURLToPath } from "url";
 import * as LSPServer from "./server.js";
 import z from "zod";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Flag } from "core/flag/flag";
-import { Process } from "@/util/process.js";
+import { Process } from "#util/process.js";
 import { spawn as lspspawn } from "./launch.js";
 import { Effect, Layer, Context, Schema } from "effect";
-import { InstanceState } from "@/effect/instance-state.js";
-import { containsPath } from "@/project/instance-context.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
-import { zod, ZodOverride } from "@/util/effect-zod.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { containsPath } from "#project/instance-context.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
+import { zod, ZodOverride } from "#util/effect-zod.js";
 const log = Log.create({
   service: "lsp"
 });

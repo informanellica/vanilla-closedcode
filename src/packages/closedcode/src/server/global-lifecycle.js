@@ -1,5 +1,5 @@
-import { GlobalBus } from "@/bus/global.js";
-import { InstanceStore } from "@/project/instance-store.js";
+import { GlobalBus } from "#bus/global.js";
+import { InstanceStore } from "#project/instance-store.js";
 import * as Log from "core/util/log";
 import { Effect } from "effect";
 import { Event } from "./event.js";

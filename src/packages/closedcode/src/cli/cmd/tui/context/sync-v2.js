@@ -1,4 +1,4 @@
-import { useEvent } from "@tui/context/event.js";
+import { useEvent } from "#tui/context/event.js";
 import { createStore, produce, reconcile } from "solid-js/store";
 import { createSimpleContext } from "./helper.js";
 import { useSDK } from "./sdk.js";

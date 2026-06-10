@@ -6,7 +6,7 @@ import { insertNode as _$insertNode } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { createMemo, For } from "solid-js";
-import { DEFAULT_THEMES, useTheme } from "@tui/context/theme.js";
+import { DEFAULT_THEMES, useTheme } from "#tui/context/theme.js";
 const themeCount = Object.keys(DEFAULT_THEMES).length;
 const themeTip = `Use {highlight}/themes{/highlight} or {highlight}Ctrl+X T{/highlight} to switch between ${themeCount} built-in themes`;
 function parse(tip) {

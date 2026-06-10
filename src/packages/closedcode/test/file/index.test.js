@@ -4,7 +4,7 @@ import {  $  } from "script/shell"
 import {  File  } from "../../src/file/index.js"
 import {  Instance  } from "../../src/project/instance.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  afterEach, describe, test, expect, beforeAll  } from "@jest/globals"
 import path from "path";
 import fs from "fs/promises";

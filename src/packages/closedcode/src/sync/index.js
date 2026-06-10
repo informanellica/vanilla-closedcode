@@ -1,17 +1,17 @@
 import z from "zod";
-import { Database } from "@/storage/db.js";
+import { Database } from "#storage/db.js";
 import { eq } from "drizzle-orm";
-import { GlobalBus } from "@/bus/global.js";
-import { Bus as ProjectBus } from "@/bus/index.js";
-import { BusEvent } from "@/bus/bus-event.js";
+import { GlobalBus } from "#bus/global.js";
+import { Bus as ProjectBus } from "#bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
 import { EventSequenceTable, EventTable } from "./event.sql.js";
 import { EventID } from "./schema.js";
 import { Flag } from "core/flag/flag";
 import { Context, Effect, Layer, Schema as EffectSchema } from "effect";
-import { zodObject } from "@/util/effect-zod.js";
-import { makeRuntime } from "@/effect/run-service.js";
-import { serviceUse } from "@/effect/service-use.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { zodObject } from "#util/effect-zod.js";
+import { makeRuntime } from "#effect/run-service.js";
+import { serviceUse } from "#effect/service-use.js";
+import { InstanceState } from "#effect/instance-state.js";
 
 // Keep `Event["data"]` mutable because projectors mutate the persisted shape
 // when writing to the database. Bus payloads (`Properties`) stay readonly —

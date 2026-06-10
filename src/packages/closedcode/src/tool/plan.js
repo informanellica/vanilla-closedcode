@@ -1,13 +1,14 @@
+import { assetText } from "#util/asset.js";
 import path from "path";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
 import { Question } from "../question/index.js";
-import { Session } from "@/session/session.js";
+import { Session } from "#session/session.js";
 import { MessageV2 } from "../session/message-v2.js";
-import { Provider } from "@/provider/provider.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Provider } from "#provider/provider.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { MessageID, PartID } from "../session/schema.js";
-import EXIT_DESCRIPTION from "./plan-exit.txt";
+const EXIT_DESCRIPTION = assetText("tool/plan-exit.txt");
 function getLastModel(sessionID) {
   for (const item of MessageV2.stream(sessionID)) {
     if (item.info.role === "user" && item.info.model) return item.info.model;

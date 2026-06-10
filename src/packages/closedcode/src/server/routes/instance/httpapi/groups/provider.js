@@ -1,6 +1,6 @@
-import { ProviderAuth } from "@/provider/auth.js";
-import { Provider } from "@/provider/provider.js";
-import { ProviderID } from "@/provider/schema.js";
+import { ProviderAuth } from "#provider/auth.js";
+import { Provider } from "#provider/provider.js";
+import { ProviderID } from "#provider/schema.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

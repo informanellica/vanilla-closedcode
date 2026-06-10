@@ -1,20 +1,20 @@
 import { RequestError } from "@agentclientprotocol/sdk";
 import * as Log from "core/util/log";
 import { pathToFileURL } from "url";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Hash } from "core/util/hash";
 import { ACPSessionManager } from "./session.js";
-import { Provider } from "@/provider/provider.js";
+import { Provider } from "#provider/provider.js";
 import { ModelID, ProviderID } from "../provider/schema.js";
 import { Agent as AgentModule } from "../agent/agent.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { MessageV2 } from "@/session/message-v2.js";
-import { Todo } from "@/session/todo.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { MessageV2 } from "#session/message-v2.js";
+import { Todo } from "#session/todo.js";
 import { Result, Schema } from "effect";
 import { LoadAPIKeyError } from "ai";
 import { applyPatch } from "diff";
 import { InstallationVersion } from "core/installation/version";
-import { ShellID } from "@/tool/shell/id.js";
+import { ShellID } from "#tool/shell/id.js";
 const decodeTodos = Schema.decodeUnknownResult(Schema.fromJsonString(Schema.Array(Todo.Info)));
 const DEFAULT_VARIANT_VALUE = "default";
 const log = Log.create({

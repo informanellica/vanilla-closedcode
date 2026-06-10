@@ -1,9 +1,9 @@
-import { and, desc, eq } from "@/storage/db.js";
-import { SessionMessage } from "@/v2/session-message.js";
-import { SessionMessageUpdater } from "@/v2/session-message-updater.js";
-import { SessionEvent } from "@/v2/session-event.js";
+import { and, desc, eq } from "#storage/db.js";
+import { SessionMessage } from "#v2/session-message.js";
+import { SessionMessageUpdater } from "#v2/session-message-updater.js";
+import { SessionEvent } from "#v2/session-event.js";
 import * as DateTime from "effect/DateTime";
-import { SyncEvent } from "@/sync/index.js";
+import { SyncEvent } from "#sync/index.js";
 import { SessionMessageTable, SessionTable } from "./session.sql.js";
 import { Schema } from "effect";
 const decodeMessage = Schema.decodeUnknownSync(SessionMessage.Message);

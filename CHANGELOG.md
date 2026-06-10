@@ -37,6 +37,25 @@ Development line following `0.1.0-preview`.
   harness), so it does not exist on a normal run.
 
 ### Changed
+- **Pure Vanilla Standardization stages 1–4 implemented** (roadmap milestone).
+  *Engine/CLI:* the `@/` / `@tui/` aliases (1,400 sites) moved to standard
+  `package.json#imports` — specifiers are `#util/x.js` style because `#/...` is
+  invalid per the Node spec (Node tolerates it; esbuild rejects it) — so
+  **`node src/index.js` runs with no loader and no bundle**. All 28
+  `import x from "./x.txt"` prompt/description imports now read through
+  `src/util/asset.js` (standard `fs.readFileSync(new URL(...))`); the build
+  ships `src/**/*.txt` as an `assets/` tree next to the bundle. The TUI loads
+  lazily so `@opentui/core`'s `.scm`/`.ts` imports (third-party wall) are off
+  the startup path. *Renderer:* first-party modules are served **verbatim** —
+  bare and `@/` specifiers resolve via an **import map** generated at startup
+  and injected into the served HTML; the `oc://` rewriter now only touches
+  files under `node_modules/` (CJS interop, module workers). Asset imports
+  became `new URL(...).href` (17 sites). *Verification:* the jest suite shows
+  **zero regressions** vs. the pre-change baseline (the suite's long-standing
+  red set is unchanged; all 10 differing suites pass individually), desktop
+  e2e suite green. esbuild remains for distribution bundles only — see
+  `docs/milestones/pure-vanilla-standardization.md` for the Stage 5 inventory.
+
 - **`pages/home.js` rewritten in pure vanilla JS** (first pages-layer file with zero
   `solid-js/web` compiler output): template literal + `querySelector` skeleton,
   imperative DOM driven by `createEffect`/`createMemo` so i18n labels, server

@@ -1,7 +1,7 @@
-import { Bus } from "@/bus/index.js";
-import { TuiEvent } from "@/cli/cmd/tui/event.js";
-import { SessionTable } from "@/session/session.sql.js";
-import * as Database from "@/storage/db.js";
+import { Bus } from "#bus/index.js";
+import { TuiEvent } from "#cli/cmd/tui/event.js";
+import { SessionTable } from "#session/session.sql.js";
+import * as Database from "#storage/db.js";
 import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";

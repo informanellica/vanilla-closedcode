@@ -1,6 +1,6 @@
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { PositiveInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { PositiveInt, withStatics } from "#util/schema.js";
 export const Server = Schema.Struct({
   port: Schema.optional(PositiveInt).annotate({
     description: "Port to listen on"

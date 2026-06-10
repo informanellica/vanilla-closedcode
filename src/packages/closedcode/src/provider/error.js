@@ -1,5 +1,5 @@
 import { STATUS_CODES } from "http";
-import { iife } from "@/util/iife.js";
+import { iife } from "#util/iife.js";
 // Adapted from overflow detection patterns in:
 // https://github.com/badlogic/pi-mono/blob/main/packages/ai/src/utils/overflow.ts
 const OVERFLOW_PATTERNS = [/prompt is too long/i,

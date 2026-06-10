@@ -9,7 +9,7 @@ import express from "express";
 import { adapter } from "../adapter.express.js";
 import { AuthMiddleware, CompressionMiddleware, CorsMiddleware, ErrorMiddleware, InstanceMiddleware, LoggerMiddleware } from "./middleware.js";
 import { Flag } from "core/flag/flag";
-import { WorkspaceID } from "@/control-plane/schema.js";
+import { WorkspaceID } from "#control-plane/schema.js";
 import { createRegistry, buildSpec, serveDocs } from "./openapi.js";
 import { GlobalRoutes } from "../routes/express/global.js";
 import { ControlPlaneRoutes } from "../routes/express/control.js";

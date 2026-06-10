@@ -1,7 +1,7 @@
 import { EOL } from "os";
 import { Effect } from "effect";
 import { File } from "../../../file/index.js";
-import { Ripgrep } from "@/file/ripgrep.js";
+import { Ripgrep } from "#file/ripgrep.js";
 import { effectCmd } from "../../effect-cmd.js";
 import { cmd } from "../cmd.js";
 const FileSearchCommand = effectCmd({

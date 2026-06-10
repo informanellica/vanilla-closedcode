@@ -1,4 +1,4 @@
-import { Auth } from "@/auth/index.js";
+import { Auth } from "#auth/index.js";
 import * as Log from "core/util/log";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";

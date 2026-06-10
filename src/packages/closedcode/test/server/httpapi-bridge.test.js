@@ -83,7 +83,7 @@ function requestBodyKey(spec, body) {
 function requestBodySchemaKind(spec, schema) {
   if (!schema) return "";
   // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- `$ref` lookup is constrained to OpenAPI schema components in this test helper.
-  const resolved = schema.$ref ? spec.components?.schemas?.[schema.$ref.replace("#/components/schemas/", "")] : schema;
+  const resolved = schema.$ref ? spec.components?.schemas?.[schema.$ref.replace("#components/schemas/", "")] : schema;
   if (resolved?.properties) return "object";
   if (resolved?.anyOf ?? resolved?.oneOf ?? resolved?.allOf) return "object";
   return resolved?.type ?? schema.type ?? "inline";

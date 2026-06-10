@@ -1,12 +1,12 @@
 // Express route group for the instance /project endpoints.
 import express from "express";
 import { Effect } from "effect";
-import { Instance } from "@/project/instance.js";
-import { InstanceRuntime } from "@/project/instance-runtime.js";
-import { Project } from "@/project/project.js";
+import { Instance } from "#project/instance.js";
+import { InstanceRuntime } from "#project/instance-runtime.js";
+import { Project } from "#project/project.js";
 import z from "zod";
-import { ProjectID } from "@/project/schema.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { ProjectID } from "#project/schema.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";

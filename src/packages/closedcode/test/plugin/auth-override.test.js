@@ -1,11 +1,11 @@
 import {  Effect, Layer  } from "effect"
 import {  provideTestInstance, tmpdir  } from "../fixture/fixture.js"
 import {  TestConfig  } from "../fixture/config.js"
-import {  ProviderAuth  } from "@/provider/auth.js"
+import {  ProviderAuth  } from "#provider/auth.js"
 import {  ProviderID  } from "../../src/provider/schema.js"
-import {  Plugin  } from "@/plugin/index.js"
-import {  Auth  } from "@/auth/index.js"
-import {  Bus  } from "@/bus/index.js"
+import {  Plugin  } from "#plugin/index.js"
+import {  Auth  } from "#auth/index.js"
+import {  Bus  } from "#bus/index.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";
 import fs from "fs/promises";

@@ -1,19 +1,19 @@
-import androidStudio from "../assets/icons/app/android-studio.svg";
-import antigravity from "../assets/icons/app/antigravity.svg";
-import cursor from "../assets/icons/app/cursor.svg";
-import fileExplorer from "../assets/icons/app/file-explorer.svg";
-import finder from "../assets/icons/app/finder.png";
-import ghostty from "../assets/icons/app/ghostty.svg";
-import iterm2 from "../assets/icons/app/iterm2.svg";
-import powershell from "../assets/icons/app/powershell.svg";
-import terminal from "../assets/icons/app/terminal.png";
-import textmate from "../assets/icons/app/textmate.png";
-import vscode from "../assets/icons/app/vscode.svg";
-import warp from "../assets/icons/app/warp.png";
-import xcode from "../assets/icons/app/xcode.png";
-import zed from "../assets/icons/app/zed.svg";
-import zedDark from "../assets/icons/app/zed-dark.svg";
-import sublimetext from "../assets/icons/app/sublimetext.svg";
+const androidStudio = new URL("../assets/icons/app/android-studio.svg", import.meta.url).href;
+const antigravity = new URL("../assets/icons/app/antigravity.svg", import.meta.url).href;
+const cursor = new URL("../assets/icons/app/cursor.svg", import.meta.url).href;
+const fileExplorer = new URL("../assets/icons/app/file-explorer.svg", import.meta.url).href;
+const finder = new URL("../assets/icons/app/finder.png", import.meta.url).href;
+const ghostty = new URL("../assets/icons/app/ghostty.svg", import.meta.url).href;
+const iterm2 = new URL("../assets/icons/app/iterm2.svg", import.meta.url).href;
+const powershell = new URL("../assets/icons/app/powershell.svg", import.meta.url).href;
+const terminal = new URL("../assets/icons/app/terminal.png", import.meta.url).href;
+const textmate = new URL("../assets/icons/app/textmate.png", import.meta.url).href;
+const vscode = new URL("../assets/icons/app/vscode.svg", import.meta.url).href;
+const warp = new URL("../assets/icons/app/warp.png", import.meta.url).href;
+const xcode = new URL("../assets/icons/app/xcode.png", import.meta.url).href;
+const zed = new URL("../assets/icons/app/zed.svg", import.meta.url).href;
+const zedDark = new URL("../assets/icons/app/zed-dark.svg", import.meta.url).href;
+const sublimetext = new URL("../assets/icons/app/sublimetext.svg", import.meta.url).href;
 const icons = {
   vscode,
   cursor,

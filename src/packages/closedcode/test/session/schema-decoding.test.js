@@ -1,5 +1,5 @@
 import {  Schema  } from "effect"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import {  SessionPrompt  } from "../../src/session/prompt.js"
 import {  SessionRevert  } from "../../src/session/revert.js"
 import {  SessionStatus  } from "../../src/session/status.js"

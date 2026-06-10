@@ -2,11 +2,11 @@
 import express from "express";
 import { Effect, Schema } from "effect";
 import z from "zod";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { Pty } from "@/pty/index.js";
-import { PtyID } from "@/pty/schema.js";
-import { Shell } from "@/shell/shell.js";
-import { NotFoundError } from "@/storage/storage.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { Pty } from "#pty/index.js";
+import { PtyID } from "#pty/schema.js";
+import { Shell } from "#shell/shell.js";
+import { NotFoundError } from "#storage/storage.js";
 import { paramToAttributeKey } from "../instance/trace.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

@@ -1,6 +1,6 @@
-import { Pty } from "@/pty/index.js";
-import { handlePtyInput } from "@/pty/input.js";
-import { Shell } from "@/shell/shell.js";
+import { Pty } from "#pty/index.js";
+import { handlePtyInput } from "#pty/input.js";
+import { Shell } from "#shell/shell.js";
 import { Effect } from "effect";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstable/http";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";

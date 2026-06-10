@@ -1,6 +1,6 @@
-import { Identifier } from "@/id/id.js";
-import { SyncEvent } from "@/sync/index.js";
-import { withStatics } from "@/util/schema.js";
+import { Identifier } from "#id/id.js";
+import { SyncEvent } from "#sync/index.js";
+import { withStatics } from "#util/schema.js";
 import { Flag } from "core/flag/flag";
 import * as Schema from "effect/Schema";
 export const ID = Schema.String.pipe(Schema.brand("Event.ID"), withStatics(s => ({

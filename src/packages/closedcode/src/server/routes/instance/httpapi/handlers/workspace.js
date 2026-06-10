@@ -1,6 +1,6 @@
-import { listAdapters } from "@/control-plane/adapters/index.js";
-import { Workspace } from "@/control-plane/workspace.js";
-import * as InstanceState from "@/effect/instance-state.js";
+import { listAdapters } from "#control-plane/adapters/index.js";
+import { Workspace } from "#control-plane/workspace.js";
+import * as InstanceState from "#effect/instance-state.js";
 import { Effect } from "effect";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

@@ -1,6 +1,6 @@
 import {  Effect  } from "effect"
 import {  WithInstance  } from "../../src/project/with-instance.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import {  MessageV2  } from "../../src/session/message-v2.js"
 import {  MessageID, PartID  } from "../../src/session/schema.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"

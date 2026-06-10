@@ -8,7 +8,7 @@
 // Route groups spread these into their describeRoute responses, e.g.
 //   responses: { 200: {...}, ...errors(400) }  /  ...errors(404)  /  ...errors(400, 404)
 import z from "zod";
-import { NotFoundError } from "@/storage/storage.js";
+import { NotFoundError } from "#storage/storage.js";
 
 export const ERRORS = {
   400: {

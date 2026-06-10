@@ -2,21 +2,21 @@
 import zlib from "node:zlib";
 import { Readable } from "node:stream";
 import corsLib from "cors";
-import { Provider } from "@/provider/provider.js";
+import { Provider } from "#provider/provider.js";
 import { NamedError } from "core/util/error";
-import { NotFoundError } from "@/storage/storage.js";
-import { Session } from "@/session/session.js";
+import { NotFoundError } from "#storage/storage.js";
+import { Session } from "#session/session.js";
 import * as Log from "core/util/log";
 import { Flag } from "core/flag/flag";
 import { isAllowedCorsOrigin } from "../cors.js";
-import { WithInstance } from "@/project/with-instance.js";
-import { WorkspaceContext } from "@/control-plane/workspace-context.js";
+import { WithInstance } from "#project/with-instance.js";
+import { WorkspaceContext } from "#control-plane/workspace-context.js";
 import { AppFileSystem } from "core/filesystem";
-import { Workspace } from "@/control-plane/workspace.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { ProxyUtil } from "@/server/proxy-util.js";
-import * as Fence from "@/server/fence.js";
-import { resolveWorkspaceRoute, workspaceProxyURL } from "@/server/workspace.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { ProxyUtil } from "#server/proxy-util.js";
+import * as Fence from "#server/fence.js";
+import { resolveWorkspaceRoute, workspaceProxyURL } from "#server/workspace.js";
 
 const log = Log.create({ service: "server" });
 

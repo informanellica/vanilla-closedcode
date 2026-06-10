@@ -9,13 +9,13 @@ import { UI } from "../ui.js";
 import { MCP } from "../../mcp/index.js";
 import { McpAuth } from "../../mcp/auth.js";
 import { McpOAuthProvider } from "../../mcp/oauth-provider.js";
-import { Config } from "@/config/config.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
+import { Config } from "#config/config.js";
+import { InstanceRef } from "#effect/instance-ref.js";
 import { InstallationVersion } from "core/installation/version";
 import path from "path";
 import { Global } from "core/global";
 import { modify, applyEdits } from "jsonc-parser";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Bus } from "../../bus/index.js";
 import { Effect } from "effect";
 function getAuthStatusIcon(status) {

@@ -1,9 +1,9 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { useDialog } from "@tui/ui/dialog.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
 import { createContext, createMemo, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "solid-js";
 import { useKeyboard } from "@opentui/solid";
-import { useKeybind } from "@tui/context/keybind.js";
+import { useKeybind } from "#tui/context/keybind.js";
 const ctx = createContext();
 function init() {
   const root = getOwner();

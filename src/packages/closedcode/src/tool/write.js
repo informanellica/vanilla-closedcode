@@ -1,19 +1,20 @@
+import { assetText } from "#util/asset.js";
 import { Schema } from "effect";
 import * as path from "path";
 import { Effect } from "effect";
 import * as Tool from "./tool.js";
-import { LSP } from "@/lsp/lsp.js";
+import { LSP } from "#lsp/lsp.js";
 import { createTwoFilesPatch } from "diff";
-import DESCRIPTION from "./write.txt";
+const DESCRIPTION = assetText("tool/write.txt");
 import { Bus } from "../bus/index.js";
 import { File } from "../file/index.js";
 import { FileWatcher } from "../file/watcher.js";
 import { Format } from "../format/index.js";
 import { AppFileSystem } from "core/filesystem";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { trimDiff } from "./edit.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
-import * as Bom from "@/util/bom.js";
+import * as Bom from "#util/bom.js";
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5;
 export const Parameters = Schema.Struct({
   content: Schema.String.annotate({

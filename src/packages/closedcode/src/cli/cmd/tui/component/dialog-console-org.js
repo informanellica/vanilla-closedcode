@@ -5,11 +5,11 @@ import { insert as _$insert } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { createResource, createMemo } from "solid-js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useSDK } from "@tui/context/sdk.js";
-import { useDialog } from "@tui/ui/dialog.js";
-import { useToast } from "@tui/ui/toast.js";
-import { useTheme } from "@tui/context/theme.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useSDK } from "#tui/context/sdk.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { useToast } from "#tui/ui/toast.js";
+import { useTheme } from "#tui/context/theme.js";
 const accountHost = url => {
   try {
     return new URL(url).host;

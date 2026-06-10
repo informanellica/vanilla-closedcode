@@ -1,28 +1,29 @@
-import { Config } from "@/config/config.js";
+import { assetText } from "#util/asset.js";
+import { Config } from "#config/config.js";
 import z from "zod";
-import { Provider } from "@/provider/provider.js";
+import { Provider } from "#provider/provider.js";
 import { ModelID, ProviderID } from "../provider/schema.js";
 import { generateObject, streamObject } from "ai";
-import { Truncate } from "@/tool/truncate.js";
+import { Truncate } from "#tool/truncate.js";
 import { Auth } from "../auth/index.js";
-import { ProviderTransform } from "@/provider/transform.js";
-import PROMPT_GENERATE from "./generate.txt";
-import PROMPT_COMPACTION from "./prompt/compaction.txt";
-import PROMPT_EXPLORE from "./prompt/explore.txt";
-import PROMPT_SUMMARY from "./prompt/summary.txt";
-import PROMPT_TITLE from "./prompt/title.txt";
-import { Permission } from "@/permission/index.js";
+import { ProviderTransform } from "#provider/transform.js";
+const PROMPT_GENERATE = assetText("agent/generate.txt");
+const PROMPT_COMPACTION = assetText("agent/prompt/compaction.txt");
+const PROMPT_EXPLORE = assetText("agent/prompt/explore.txt");
+const PROMPT_SUMMARY = assetText("agent/prompt/summary.txt");
+const PROMPT_TITLE = assetText("agent/prompt/title.txt");
+import { Permission } from "#permission/index.js";
 import { mergeDeep, pipe, sortBy, values } from "remeda";
 import { Global } from "core/global";
 import path from "path";
-import { Plugin } from "@/plugin/index.js";
+import { Plugin } from "#plugin/index.js";
 import { Skill } from "../skill/index.js";
 import { Effect, Context, Layer, Schema } from "effect";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import * as Option from "effect/Option";
 import * as OtelTracer from "@effect/opentelemetry/Tracer";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 export const Info = Schema.Struct({
   name: Schema.String,
   description: Schema.optional(Schema.String),

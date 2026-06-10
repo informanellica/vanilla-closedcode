@@ -1,8 +1,9 @@
+import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import * as Tool from "./tool.js";
 import * as McpExa from "./mcp-exa.js";
-import DESCRIPTION from "./websearch.txt";
+const DESCRIPTION = assetText("tool/websearch.txt");
 export const Parameters = Schema.Struct({
   query: Schema.String.annotate({
     description: "Websearch query"

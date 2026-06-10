@@ -5,7 +5,7 @@ import {  Flag  } from "core/flag/flag"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  Server  } from "../../src/server/server.js"
 import {  SyncPaths  } from "../../src/server/routes/instance/httpapi/groups/sync.js"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  afterEach, describe, expect, test, beforeAll, jest  } from "@jest/globals"
 void Log.init({

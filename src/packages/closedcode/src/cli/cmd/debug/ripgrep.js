@@ -3,7 +3,7 @@ import { Effect, Stream } from "effect";
 import { Ripgrep } from "../../../file/ripgrep.js";
 import { effectCmd } from "../../effect-cmd.js";
 import { cmd } from "../cmd.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
+import { InstanceRef } from "#effect/instance-ref.js";
 export const RipgrepCommand = cmd({
   command: "rg",
   describe: "ripgrep debugging utilities",

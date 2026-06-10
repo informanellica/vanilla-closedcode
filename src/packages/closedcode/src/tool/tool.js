@@ -1,6 +1,6 @@
 import { Effect, Schema } from "effect";
 import * as Truncate from "./truncate.js";
-import { Agent } from "@/agent/agent.js";
+import { Agent } from "#agent/agent.js";
 
 // TODO: remove this hack
 

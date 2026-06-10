@@ -1,10 +1,11 @@
+import { assetText } from "#util/asset.js";
 import { Context, Effect, Layer } from "effect";
-import { InstanceState } from "@/effect/instance-state.js";
-import PROMPT_DEFAULT from "./prompt/default.txt";
-import PROMPT_KIMI from "./prompt/kimi.txt";
-import PROMPT_TRINITY from "./prompt/trinity.txt";
-import { Permission } from "@/permission/index.js";
-import { Skill } from "@/skill/index.js";
+import { InstanceState } from "#effect/instance-state.js";
+const PROMPT_DEFAULT = assetText("session/prompt/default.txt");
+const PROMPT_KIMI = assetText("session/prompt/kimi.txt");
+const PROMPT_TRINITY = assetText("session/prompt/trinity.txt");
+import { Permission } from "#permission/index.js";
+import { Skill } from "#skill/index.js";
 export function provider(model) {
   if (model.api.id.toLowerCase().includes("trinity")) return [PROMPT_TRINITY];
   if (model.api.id.toLowerCase().includes("kimi")) return [PROMPT_KIMI];

@@ -1,6 +1,6 @@
-import { Config } from "@/config/config.js";
-import { Provider } from "@/provider/provider.js";
-import * as InstanceState from "@/effect/instance-state.js";
+import { Config } from "#config/config.js";
+import { Provider } from "#provider/provider.js";
+import * as InstanceState from "#effect/instance-state.js";
 import { Effect } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";

@@ -1,7 +1,8 @@
+import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
 import { Question } from "../question/index.js";
-import DESCRIPTION from "./question.txt";
+const DESCRIPTION = assetText("tool/question.txt");
 export const Parameters = Schema.Struct({
   questions: Schema.mutable(Schema.Array(Question.Prompt)).annotate({
     description: "Questions to ask"

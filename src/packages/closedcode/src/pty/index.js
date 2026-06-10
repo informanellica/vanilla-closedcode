@@ -1,16 +1,16 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { Bus } from "@/bus/index.js";
-import { Config } from "@/config/config.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { EffectBridge } from "@/effect/bridge.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { Bus } from "#bus/index.js";
+import { Config } from "#config/config.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { EffectBridge } from "#effect/bridge.js";
 import { lazy } from "core/util/lazy";
-import { Plugin } from "@/plugin/index.js";
-import { Shell } from "@/shell/shell.js";
+import { Plugin } from "#plugin/index.js";
+import { Shell } from "#shell/shell.js";
 import * as Log from "core/util/log";
 import { PtyID } from "./schema.js";
 import { Effect, Layer, Context, Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, PositiveInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, PositiveInt, withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "pty"
 });

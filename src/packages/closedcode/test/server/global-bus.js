@@ -1,4 +1,4 @@
-import { GlobalBus } from "@/bus/global.js"
+import { GlobalBus } from "#bus/global.js"
 import { Cause, Effect } from "effect"
 export function waitGlobalBusEvent(input) {
   return Effect.callback(resume => {

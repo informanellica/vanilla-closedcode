@@ -5,7 +5,7 @@ import { SessionTable, MessageTable, PartTable, TodoTable, PermissionTable } fro
 import { SessionShareTable } from "../share/share.sql.js";
 import path from "path";
 import { existsSync } from "fs";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Glob } from "core/util/glob";
 const log = Log.create({
   service: "json-migration"

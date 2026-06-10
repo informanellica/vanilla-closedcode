@@ -1,9 +1,8 @@
 import { cmd } from "../cmd.js";
-import { UI } from "@/cli/ui.js";
-import { tui } from "./app.js";
+import { UI } from "#cli/ui.js";
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32.js";
-import { TuiConfig } from "@/cli/cmd/tui/config/tui.js";
-import { errorMessage } from "@/util/error.js";
+import { TuiConfig } from "#cli/cmd/tui/config/tui.js";
+import { errorMessage } from "#util/error.js";
 import { validateSession } from "./validate-session.js";
 export const AttachCommand = cmd({
   command: "attach <url>",
@@ -72,6 +71,10 @@ export const AttachCommand = cmd({
         process.exitCode = 1;
         return;
       }
+      // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
+      // cannot load (the documented third-party interop wall) — load it only
+      // when the TUI actually starts.
+      const { tui } = await import("./app.js");
       await tui({
         url: args.url,
         config,

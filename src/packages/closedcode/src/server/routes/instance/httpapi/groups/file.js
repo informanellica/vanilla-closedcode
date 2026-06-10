@@ -1,6 +1,6 @@
-import { File } from "@/file/index.js";
-import { Ripgrep } from "@/file/ripgrep.js";
-import { LSP } from "@/lsp/lsp.js";
+import { File } from "#file/index.js";
+import { Ripgrep } from "#file/ripgrep.js";
+import { LSP } from "#lsp/lsp.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

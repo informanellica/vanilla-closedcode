@@ -1,5 +1,5 @@
 import {  tmpdir  } from "../fixture/fixture.js"
-import {  Process  } from "@/util/process.js"
+import {  Process  } from "#util/process.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import fs from "fs/promises";
 import path from "path";

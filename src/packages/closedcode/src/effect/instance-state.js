@@ -1,10 +1,10 @@
 import { Effect, Fiber, ScopedCache, Context } from "effect";
 import * as EffectLogger from "core/effect/logger";
-import { Instance } from "@/project/instance.js";
-import { LocalContext } from "@/util/local-context.js";
+import { Instance } from "#project/instance.js";
+import { LocalContext } from "#util/local-context.js";
 import { InstanceRef, WorkspaceRef } from "./instance-ref.js";
 import { registerDisposer } from "./instance-registry.js";
-import { WorkspaceContext } from "@/control-plane/workspace-context.js";
+import { WorkspaceContext } from "#control-plane/workspace-context.js";
 const TypeId = "~closedcode/InstanceState";
 export const bind = fn => {
   try {

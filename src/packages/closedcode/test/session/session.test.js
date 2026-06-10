@@ -1,5 +1,5 @@
 import {  tmpdir  } from "../fixture/fixture.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import {  Bus  } from "../../src/bus/index.js"
 import * as Log from "core/util/log";
 import {  WithInstance  } from "../../src/project/with-instance.js"

@@ -7,7 +7,7 @@ import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { TextAttributes } from "@opentui/core";
 import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid";
-import * as Clipboard from "@tui/util/clipboard.js";
+import * as Clipboard from "#tui/util/clipboard.js";
 import { createSignal } from "solid-js";
 import { InstallationVersion } from "core/installation/version";
 import { win32FlushInputBuffer } from "../win32.js";

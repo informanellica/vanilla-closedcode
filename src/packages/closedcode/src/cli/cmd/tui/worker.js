@@ -1,19 +1,19 @@
-import { Installation } from "@/installation/index.js";
-import { Server } from "@/server/server.js";
+import { Installation } from "#installation/index.js";
+import { Server } from "#server/server.js";
 import * as Log from "core/util/log";
-import { InstanceRuntime } from "@/project/instance-runtime.js";
-import { WithInstance } from "@/project/with-instance.js";
-import { Rpc } from "@/util/rpc.js";
-import { upgrade } from "@/cli/upgrade.js";
-import { Config } from "@/config/config.js";
-import { GlobalBus } from "@/bus/global.js";
+import { InstanceRuntime } from "#project/instance-runtime.js";
+import { WithInstance } from "#project/with-instance.js";
+import { Rpc } from "#util/rpc.js";
+import { upgrade } from "#cli/upgrade.js";
+import { Config } from "#config/config.js";
+import { GlobalBus } from "#bus/global.js";
 import { Flag } from "core/flag/flag";
 import { writeHeapSnapshot } from "node:v8";
-import { Heap } from "@/cli/heap.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Heap } from "#cli/heap.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { ensureProcessMetadata } from "core/util/closedcode-process";
 import { Effect } from "effect";
-import { disposeAllInstancesAndEmitGlobalDisposed } from "@/server/global-lifecycle.js";
+import { disposeAllInstancesAndEmitGlobalDisposed } from "#server/global-lifecycle.js";
 ensureProcessMetadata("worker");
 await Log.init({
   print: process.argv.includes("--print-logs"),

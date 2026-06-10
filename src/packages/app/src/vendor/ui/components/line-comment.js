@@ -25,7 +25,7 @@ var _tmpl$ = /*#__PURE__*/_$template(`<svg><path d="M16.25 3.75H3.75V16.25L6.875
   _tmpl$11 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-mention-item><div data-slot=line-comment-mention-path><span data-slot=line-comment-mention-dir>`),
   _tmpl$12 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-action data-variant=ghost>`),
   _tmpl$13 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-action data-variant=primary>`);
-import { useFilteredList } from "../hooks";
+import { useFilteredList } from "../hooks/index.js";
 import { getDirectory, getFilename } from "core/util/path";
 import { createSignal, For, onMount, Show, splitProps } from "solid-js";
 import { Button } from "./button.js";

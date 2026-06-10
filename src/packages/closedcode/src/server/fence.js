@@ -1,9 +1,9 @@
-import { Database } from "@/storage/db.js";
+import { Database } from "#storage/db.js";
 import { inArray } from "drizzle-orm";
-import { EventSequenceTable } from "@/sync/event.sql.js";
-import { Workspace } from "@/control-plane/workspace.js";
+import { EventSequenceTable } from "#sync/event.sql.js";
+import { Workspace } from "#control-plane/workspace.js";
 import * as Log from "core/util/log";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { Effect } from "effect";
 const HEADER = "x-closedcode-sync";
 const log = Log.create({

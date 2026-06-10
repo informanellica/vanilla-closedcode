@@ -1,5 +1,5 @@
 import { createSlot, createSolidSlotRegistry } from "@opentui/solid";
-import { isRecord } from "@/util/record.js";
+import { isRecord } from "#util/record.js";
 function empty(_props) {
   return null;
 }

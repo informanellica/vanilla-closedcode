@@ -1,7 +1,7 @@
-import { GlobalBus } from "@/bus/global.js";
-import { WorkspaceContext } from "@/control-plane/workspace-context.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
-import { disposeInstance as runDisposers } from "@/effect/instance-registry.js";
+import { GlobalBus } from "#bus/global.js";
+import { WorkspaceContext } from "#control-plane/workspace-context.js";
+import { InstanceRef } from "#effect/instance-ref.js";
+import { disposeInstance as runDisposers } from "#effect/instance-registry.js";
 import { AppFileSystem } from "core/filesystem";
 import { Context, Deferred, Duration, Effect, Exit, Layer, Scope } from "effect";
 import { InstanceBootstrap } from "./bootstrap-service.js";

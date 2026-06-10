@@ -1,11 +1,12 @@
+import { assetText } from "#util/asset.js";
 import path from "path";
 import { Effect, Option, Schema } from "effect";
 import * as Stream from "effect/Stream";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
 import { Ripgrep } from "../file/ripgrep.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
-import DESCRIPTION from "./glob.txt";
+const DESCRIPTION = assetText("tool/glob.txt");
 import * as Tool from "./tool.js";
 export const Parameters = Schema.Struct({
   pattern: Schema.String.annotate({

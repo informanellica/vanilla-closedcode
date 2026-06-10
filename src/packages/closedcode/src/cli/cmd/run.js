@@ -6,14 +6,14 @@ import { readPipedStdin } from "../stdin.js";
 import { effectCmd } from "../effect-cmd.js";
 import { Flag } from "core/flag/flag";
 import { EOL } from "os";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { createOpencodeClient } from "sdk/v2";
 import { Server } from "../../server/server.js";
-import { Provider } from "@/provider/provider.js";
+import { Provider } from "#provider/provider.js";
 import { Agent } from "../../agent/agent.js";
 import { ShellID } from "../../tool/shell/id.js";
-import { Locale } from "@/util/locale.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Locale } from "#util/locale.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 function props(part) {
   const state = part.state;
   return {

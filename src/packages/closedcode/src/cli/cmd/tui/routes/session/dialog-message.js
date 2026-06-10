@@ -1,11 +1,11 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createMemo } from "solid-js";
-import { useSync } from "@tui/context/sync.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useSDK } from "@tui/context/sdk.js";
-import { useRoute } from "@tui/context/route.js";
-import * as Clipboard from "@tui/util/clipboard.js";
-import { strip } from "@tui/component/prompt/part.js";
+import { useSync } from "#tui/context/sync.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useSDK } from "#tui/context/sdk.js";
+import { useRoute } from "#tui/context/route.js";
+import * as Clipboard from "#tui/util/clipboard.js";
+import { strip } from "#tui/component/prompt/part.js";
 export function DialogMessage(props) {
   const sync = useSync();
   const sdk = useSDK();

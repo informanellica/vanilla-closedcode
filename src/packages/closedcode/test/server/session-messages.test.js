@@ -2,7 +2,7 @@ import {  Effect  } from "effect"
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  Server  } from "../../src/server/server.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import {  MessageID, PartID  } from "../../src/session/schema.js"
 import * as Log from "core/util/log";
 import {  afterEach, describe, expect, test, beforeAll  } from "@jest/globals"

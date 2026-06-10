@@ -3,17 +3,17 @@ import { insert as _$insert } from "@opentui/solid";
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
-import { Prompt } from "@tui/component/prompt/index.js";
+import { Prompt } from "#tui/component/prompt/index.js";
 import { createEffect, createSignal } from "solid-js";
 import { Logo } from "../component/logo.js";
 import { useProject } from "../context/project.js";
 import { useSync } from "../context/sync.js";
 import { Toast } from "../ui/toast.js";
 import { useArgs } from "../context/args.js";
-import { useRouteData } from "@tui/context/route.js";
+import { useRouteData } from "#tui/context/route.js";
 import { usePromptRef } from "../context/prompt.js";
 import { useLocal } from "../context/local.js";
-import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime.js";
+import { TuiPluginRuntime } from "#cli/cmd/tui/plugin/runtime.js";
 let once = false;
 const placeholder = {
   normal: ["Fix a TODO in the codebase", "What is the tech stack of this project?", "Fix broken tests"],

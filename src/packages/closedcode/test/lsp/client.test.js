@@ -1,5 +1,5 @@
 import {  tmpdir  } from "../fixture/fixture.js"
-import {  LSPClient  } from "@/lsp/client.js"
+import {  LSPClient  } from "#lsp/client.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import * as Log from "core/util/log";
 import {  beforeEach, describe, expect, test, beforeAll  } from "@jest/globals"

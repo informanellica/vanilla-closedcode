@@ -1,7 +1,7 @@
-import { Session } from "@/session/session.js";
-import { SyncEvent } from "@/sync/index.js";
+import { Session } from "#session/session.js";
+import { SyncEvent } from "#sync/index.js";
 import { Effect, Layer, Scope, Context } from "effect";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Flag } from "core/flag/flag";
 import * as ShareNext from "./share-next.js";
 export class Service extends Context.Service()("@closedcode/SessionShare") {}

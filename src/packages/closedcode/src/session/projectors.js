@@ -1,7 +1,7 @@
-import { NotFoundError } from "@/storage/storage.js";
+import { NotFoundError } from "#storage/storage.js";
 import { eq } from "drizzle-orm";
 import { and } from "drizzle-orm";
-import { SyncEvent } from "@/sync/index.js";
+import { SyncEvent } from "#sync/index.js";
 import * as Session from "./session.js";
 import { MessageV2 } from "./message-v2.js";
 import { SessionTable, MessageTable, PartTable } from "./session.sql.js";

@@ -1,6 +1,6 @@
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { PositiveInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { PositiveInt, withStatics } from "#util/schema.js";
 export const Model = Schema.Struct({
   id: Schema.optional(Schema.String),
   name: Schema.optional(Schema.String),

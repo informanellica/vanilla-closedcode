@@ -1,4 +1,4 @@
-import { LocalContext } from "@/util/local-context.js";
+import { LocalContext } from "#util/local-context.js";
 import { AppFileSystem } from "core/filesystem";
 export const context = LocalContext.create("instance");
 

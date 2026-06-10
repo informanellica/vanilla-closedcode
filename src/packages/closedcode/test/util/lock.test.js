@@ -1,4 +1,4 @@
-import {  Lock  } from "@/util/lock.js"
+import {  Lock  } from "#util/lock.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 function tick() {
   return new Promise(r => queueMicrotask(r));

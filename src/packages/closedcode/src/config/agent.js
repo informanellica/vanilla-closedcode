@@ -1,8 +1,8 @@
 export * as ConfigAgent from "./agent.js";
 import { Exit, Schema, SchemaGetter } from "effect";
-import { Bus } from "@/bus/index.js";
-import { zod } from "@/util/effect-zod.js";
-import { PositiveInt, withStatics } from "@/util/schema.js";
+import { Bus } from "#bus/index.js";
+import { zod } from "#util/effect-zod.js";
+import { PositiveInt, withStatics } from "#util/schema.js";
 import * as Log from "core/util/log";
 import { NamedError } from "core/util/error";
 import { Glob } from "core/util/glob";
@@ -103,7 +103,7 @@ export async function load(dir) {
       const message = ConfigMarkdown.FrontmatterError.isInstance(err) ? err.data.message : `Failed to parse agent ${item}`;
       const {
         Session
-      } = await import("@/session/session.js");
+      } = await import("#session/session.js");
       void Bus.publish(Session.Event.Error, {
         error: new NamedError.Unknown({
           message
@@ -139,7 +139,7 @@ export async function loadMode(dir) {
       const message = ConfigMarkdown.FrontmatterError.isInstance(err) ? err.data.message : `Failed to parse mode ${item}`;
       const {
         Session
-      } = await import("@/session/session.js");
+      } = await import("#session/session.js");
       void Bus.publish(Session.Event.Error, {
         error: new NamedError.Unknown({
           message
