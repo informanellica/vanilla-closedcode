@@ -19,6 +19,11 @@ otherwise the current git branch.
 Development line following `0.1.0-preview`.
 
 ### Added
+- **Editor font controls in the toolbar**: Font (default shown as "Consolas (default)",
+  plus common monospace choices) and Size (10–22px) selects next to the save button.
+  They write to the existing `settings.appearance.font/fontSize` store (fontSize was
+  previously unwired); applied via `--font-family-mono` / new `--editor-font-size`
+  CSS variables, pinned onto CodeMirror, and persisted across restarts.
 - **Toolbar UI-language switcher** (far right, next to theme/settings/help): a compact
   native select showing locale codes (JA/EN/…); switching re-renders all reactive
   i18n text live via `language.setLocale`.
