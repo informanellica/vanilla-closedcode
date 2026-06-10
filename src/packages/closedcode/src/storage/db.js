@@ -185,4 +185,65 @@ export function transaction(callback, options) {
     throw err;
   }
 }
+// ---- Sequelize layer (ORM migration S1, feat/orm-sequelize) ----------------
+// Async successors of use/transaction/effect. Both layers run against the
+// SAME database file during the staged conversion; modules switch one by one.
+// The ambient transaction travels via AsyncLocalStorage; callbacks receive a
+// handle { models, sequelize, tx } and pass { transaction: handle.tx } to
+// model calls.
+import { createSequelize, transactionStorage } from "./sequelize.js";
+export const Orm = lazy(() => {
+  if (!Flag.CLOSEDCODE_DB) migrateDbFile(Path);
+  const { sequelize, models } = createSequelize(Path);
+  return { sequelize, models };
+});
+let ormReady = null;
+export function ormInit() {
+  if (ormReady) return ormReady;
+  ormReady = (async () => {
+    const { sequelize } = Orm();
+    for (const pragma of [
+      "PRAGMA journal_mode = WAL",
+      "PRAGMA synchronous = NORMAL",
+      "PRAGMA busy_timeout = 5000",
+      "PRAGMA cache_size = -64000",
+      "PRAGMA foreign_keys = ON",
+    ]) await sequelize.query(pragma);
+    return Orm();
+  })();
+  return ormReady;
+}
+export async function useAsync(callback) {
+  const ambient = transactionStorage.getStore();
+  if (ambient) return callback({ ...ambient.handle });
+  const { sequelize, models } = await ormInit();
+  return callback({ models, sequelize, tx: undefined });
+}
+export async function transactionAsync(callback) {
+  const ambient = transactionStorage.getStore();
+  if (ambient) return callback({ ...ambient.handle });
+  const { sequelize, models } = await ormInit();
+  const effects = [];
+  const result = await sequelize.transaction(async tx => {
+    const handle = { models, sequelize, tx };
+    return transactionStorage.run({ tx, effects, handle }, () => callback(handle));
+  });
+  for (const fn of effects) fn();
+  return result;
+}
+// Commit-deferred side effects (parity with effect() above): inside an
+// ambient transaction they run after commit, otherwise immediately.
+export function effectAsync(fn) {
+  const bound = InstanceState.bind(fn);
+  const ambient = transactionStorage.getStore();
+  if (ambient) ambient.effects.push(bound);
+  else bound();
+}
+export async function closeAsync() {
+  if (!Orm.loaded()) return;
+  await Orm().sequelize.close();
+  Orm.reset();
+  ormReady = null;
+}
+
 export * as Database from "./db.js";
