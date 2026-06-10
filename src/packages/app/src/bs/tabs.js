@@ -1,4 +1,4 @@
-import { createEffect as _solidEffect, createRoot as _solidRoot } from "solid-js";
+import { createEffect as _solidEffect, createRenderEffect as _solidRenderEffect, createRoot as _solidRoot, getOwner as _solidGetOwner } from "solid-js";
 import { insert as _solidInsert } from "solid-js/web";
 function template(html) {
   const wrapper = document.createElement("div");
@@ -160,13 +160,40 @@ function createTabsState(props) {
   let rootEl = null;
   api.registerRoot = el => {
     rootEl = el;
-    // Track external (controlled) value changes reactively.
-    _solidRoot(() => {
-      _solidEffect(() => {
-        void props.value;
-        sync();
+    // Track external (controlled) value changes reactively. Prefer the caller's
+    // owner so the effect is disposed together with the component that created
+    // the Tabs (dialogs that re-open repeatedly must not accumulate effects).
+    // Only when there is no owner do we create a standalone root — and then it
+    // self-disposes once the tabs root has left the document.
+    const watch = () => {
+      void props.value;
+      sync();
+    };
+    if (_solidGetOwner()) {
+      _solidEffect(watch);
+    } else {
+      // isConnected is NOT reactive, so an effect alone would only notice the
+      // unmount if some signal happened to fire afterwards. Watch the DOM
+      // itself: once the tabs root has been in the document and leaves it,
+      // dispose the standalone reactive root. (In-app Tabs always have an
+      // owner; this path exists for detached/manual usage only.)
+      let wasConnected = false;
+      _solidRoot(dispose => {
+        _solidEffect(watch);
+        const observer = new MutationObserver(() => {
+          if (!rootEl) return;
+          if (rootEl.isConnected) {
+            wasConnected = true;
+            return;
+          }
+          if (wasConnected) {
+            observer.disconnect();
+            dispose();
+          }
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
       });
-    });
+    }
     // Click delegation on the root: trigger elements may have been created
     // before this state existed (so their own listeners hold tabs=null) —
     // the root handles selection for every descendant trigger it owns.
@@ -184,45 +211,49 @@ function createTabsState(props) {
 }
 
 function TabsRoot(props) {
-  const [split, rest] = splitProps(props, [
-    "class",
-    "classList",
-    "variant",
-    "orientation",
-    "value",
-    "defaultValue",
-    "onChange",
-    "children"
-  ]);
-
   const previousContext = TabsContext;
   // Pass the ORIGINAL props (not the copied split) so value/onChange getters stay reactive.
   const state = createTabsState(props);
+  // Set the context BEFORE touching props: splitProps copies getter props by
+  // evaluating them, and the children getter instantiates Tabs.List/Trigger/
+  // Content right there — with the context still unset they would build as
+  // horizontal (orientation fell back to the default).
   TabsContext = state;
 
-  const rootEl = template(`<div data-component=tabs>`);
-  state.registerRoot(rootEl);
-
-  rootEl.setAttribute("data-variant", state.variant());
-  rootEl.setAttribute("data-orientation", state.orientation());
-  // NOTE: no layout classes here — upstream's Tabs root only carries data
-  // attributes; layout belongs to the caller/CSS. Forcing d-flex flex-column
-  // broke the file-tab layout (tab bar rendered BELOW the editor).
-
-  if (split.class) {
-    rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
-  }
-  applyClassList(rootEl, split.classList);
-  applyRestProps(rootEl, rest);
-
   try {
+    const [split, rest] = splitProps(props, [
+      "class",
+      "classList",
+      "variant",
+      "orientation",
+      "value",
+      "defaultValue",
+      "onChange",
+      "children"
+    ]);
+
+    const rootEl = template(`<div data-component=tabs>`);
+    state.registerRoot(rootEl);
+
+    rootEl.setAttribute("data-variant", state.variant());
+    rootEl.setAttribute("data-orientation", state.orientation());
+    // NOTE: no layout classes here — upstream's Tabs root only carries data
+    // attributes; layout belongs to the caller/CSS. Forcing d-flex flex-column
+    // broke the file-tab layout (tab bar rendered BELOW the editor).
+
+    if (split.class) {
+      rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+    }
+    applyClassList(rootEl, split.classList);
+    applyRestProps(rootEl, rest);
+
     appendChildren(rootEl, split.children);
+
+    state.sync();
+    return rootEl;
   } finally {
     TabsContext = previousContext;
   }
-
-  state.sync();
-  return rootEl;
 }
 
 function TabsList(props) {
@@ -232,9 +263,13 @@ function TabsList(props) {
 
   listEl.setAttribute("role", "tablist");
   listEl.setAttribute("data-slot", "tabs-list");
-  listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
   listEl.classList.add("nav", "nav-pills");
-  listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
+  // Render effect (runs immediately, then re-runs) so the list follows a
+  // dynamically changing orientation instead of freezing the initial value.
+  _solidRenderEffect(() => {
+    listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
+    listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
+  });
 
   if (split.class) {
     listEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));

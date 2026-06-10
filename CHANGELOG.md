@@ -28,15 +28,25 @@ Development line following `0.1.0-preview`.
   native select showing locale codes (JA/EN/…); switching re-renders all reactive
   i18n text live via `language.setLocale`.
 - **Playwright e2e suite for the desktop app**: `boot-smoke` (boots past the crash
-  page — caught every boot-killer below), `opened-folder-name`, `model-selector`;
-  plus a `window.__closedcode_openProject` hook because the router runs on memory
-  integration over `oc://` (pushState/popstate cannot navigate it).
+  page — caught every boot-killer below), `opened-folder-name`, `model-selector`,
+  `settings-smoke` (dialog opens populated, tabs switch) and `prompt-send-button`
+  (regression: the send button must enable once the prompt has text); plus a
+  `window.__closedcode_openProject` hook because the router runs on memory
+  integration over `oc://` (pushState/popstate cannot navigate it). The hook is
+  only installed when the app is launched with `CLOSEDCODE_REMOTE_DEBUG` (the e2e
+  harness), so it does not exist on a normal run.
 
 ### Changed
 - **`pages/home.js` rewritten in pure vanilla JS** (first pages-layer file with zero
   `solid-js/web` compiler output): template literal + `querySelector` skeleton,
   imperative DOM driven by `createEffect`/`createMemo` so i18n labels, server
   status and the recent-projects list stay fully reactive.
+- **`components/dialog-settings.js` rewritten in pure vanilla JS** — the first file
+  produced by the GUI self-improvement loop: gpt-oss:120b was driven through the
+  desktop app itself (Playwright over CDP typing the prompt and verifying the edit
+  via git), then the output was reviewed and repaired by hand (a `{ get children: fn }`
+  syntax error, a missing `createEffect` import, and the lost top/bottom tab-list
+  layout). Zero `solid-js/web` compiler output remains in the file.
 - New-file "+" tab no longer writes an empty file to disk on open; the file is only
   written when Save is pressed.
 - Read-only editor mode icon changed to `bi-file-earmark-lock`.
@@ -60,8 +70,29 @@ Development line following `0.1.0-preview`.
   file-tree M markers missing on nested paths (normalized-key lookups) and parent
   folders collapsing when expanding a child (Collapsible click bubbling); a `search`
   tool (grep alias) so models that insist on calling `search` stop spinning;
-  leftover opencode logos removed; `serve`'s `listen()` path also gets
-  `requestTimeout/headersTimeout = 0`.
+  leftover opencode logos removed; `serve`'s `listen()` path also disables the
+  request timeouts (later restricted to explicit loopback binds — see the review
+  round 2/3 entry below).
+
+- **Prompt send button stuck disabled forever.** The vanilla `IconButton`/`Button`
+  read getter props (`disabled`, `icon`, `aria-label`, …) once at creation, so the
+  send button froze in its boot state (empty prompt = disabled) and the send ⇄ stop
+  icon never swapped. Attribute props are now re-applied inside a
+  `createRenderEffect` (removed when they turn `false`/`null`), the icon is swapped
+  reactively, and `IconButton` forwards Solid `ref`s like `Button`.
+
+- **Tool names rendered doubled ("ShellShell", "ExploringExploring") in the chat
+  transcript.** The vanilla `TextShimmer` emitted its two text copies as siblings
+  with the wrong slot names, so the CSS overlay (`char` > `char-base` +
+  `char-shimmer` stacked via `grid-area: 1/1`) never applied and both copies showed
+  side by side. The DOM now matches the stylesheet, and `TextShimmer` /
+  `ToolStatusTitle` track `active` and i18n texts live instead of reading them once
+  (the running ⇄ done crossfade works again).
+
+- **Jagged window/taskbar icon on dev-channel builds.** `icons/dev/icon.ico` only
+  contained small sizes (23 KB) and Windows upscaled them; dev now ships the same
+  multi-resolution icon as prod (372 KB). The DEV badge in the titlebar remains the
+  channel indicator.
 
 - **`closedcode run` no longer hangs before starting on a non-TTY stdin that never
   reaches EOF.** When launched in the background or with an inherited pipe/tty
@@ -69,10 +100,74 @@ Development line following `0.1.0-preview`.
   EOF that never came, wedging the run before the in-process server and agent loop
   even started — an intermittent "no output / no edit" hang with an empty log,
   easy to mistake for a model or integration failure. Piped stdin is now read with
-  a **first-byte grace window** (`CLOSEDCODE_STDIN_IDLE_MS`, default 250 ms): if no
-  data arrives the run proceeds; once any data is seen it is read to real EOF, so
-  slow/streamed input is never truncated. `echo "msg" | closedcode run` still works.
-  (`fix/cli-server-startup-hang`)
+  a **first-byte grace window** (`CLOSEDCODE_STDIN_IDLE_MS`, default 250 ms), applied
+  **only when an argv message was given** (stdin is auxiliary there and may be an
+  inherited pipe that never closes). When stdin is the *sole* input source —
+  `(sleep 1; echo "fix this") | closedcode run` — the run waits for real EOF, so a
+  slow first byte cannot lose the message. Once any data is seen it is always read
+  to EOF, so streaming with gaps is never truncated; with an argv message, input
+  whose *first* byte arrives after the window is treated as no input by design.
+  `readPipedStdin` lives in `src/cli/stdin.js` (stream-injectable) with the
+  trade-off documented by unit tests in `test/cli/stdin.test.js`.
+  (`fix/cli-server-startup-hang`, `fix/review-feedback-round2`)
+
+- **Review feedback round 2** (from the `0.1.0-dev` diff review):
+  `AnimatedCountLabel` had lost its reactivity in the vanilla rewrite —
+  `props.count` was read once, freezing the tool-count summaries mid-turn and
+  dropping the digit-roll animation; `AnimatedNumber` is restored and the
+  singular/plural label now follows the live count. `TabsRoot` set its context
+  *after* `splitProps` had already evaluated the `children` getter, so `Tabs.List`
+  built as horizontal (DOM-probed in the settings dialog: root `vertical`, list
+  `horizontal` — dialog CSS happened to mask it); the context is now set before
+  props are touched, and `settings-smoke` asserts `data-orientation="vertical"` +
+  `flex-column` on the list. `serve`'s `listen()` zeroes
+  `requestTimeout`/`headersTimeout` **only for explicit loopback binds**
+  (`127.0.0.1`/`localhost`/`::1`); an omitted hostname makes Node listen on all
+  interfaces, so it keeps Node's defaults too — slow-header connections can no
+  longer be held open forever on externally reachable hosts (round 3: the
+  `!opts.hostname` case was initially and wrongly treated as loopback). Round 3
+  also disposes the Tabs controlled-value effect with its owner (re-opening
+  dialogs no longer accumulates effects; standalone roots self-dispose once the
+  tabs root leaves the document), makes `Tabs.List` follow a dynamically changed
+  orientation, and lets `AnimatedCountLabel` clear its class when it turns null.
+  The e2e-hook gate validates `CLOSEDCODE_REMOTE_DEBUG` as a real TCP port
+  instead of string truthiness (`"0"`/`"false"` no longer count).
+
+- **Review feedback round 4 — vanilla DropdownMenu lifecycle and reactivity.**
+  The document-level `pointerdown`/`keydown` listeners are removed with the
+  owning component (`onCleanup`) and additionally self-heal on the first event
+  after the menu has left the document; the body-mounted Portal node is removed
+  with its owner and registered with the dropdown state; clicks inside the
+  portaled content (search box, checkbox/radio items) are no longer treated as
+  outside clicks — the duplicated `rootEl.contains` check now consults
+  content/portal. The file-local `splitProps` forwards **getters** instead of
+  copying values (matching Solid's semantics), so controlled props
+  (`open`/`checked`/`disabled`/radio `value`/`placement`/`gutter`) stay live;
+  checkbox/radio items re-apply their checked/disabled state in render effects
+  and read `checked` live in the click handler (no more repeating the same
+  inverted value). The standalone Tabs fallback root now disposes via a
+  MutationObserver (`isConnected` is not reactive, so the previous self-dispose
+  only ran if another signal fired); `TextShimmer` clears its class when it
+  turns null, like `AnimatedCountLabel`. *Note for diff-only reviewers:*
+  `undici` has been a declared direct dependency of `packages/closedcode`
+  (`"undici": "5.29.0"`) since `v0.1.0-preview`, so the
+  `import { Agent } from "undici"` addition needs no manifest change.
+
+- **Review feedback round 5 — DropdownMenu radio indicators and the remaining
+  frozen props.** `RadioItem` now gives its children an item-bound radio context
+  — the group's `isSelected(value)` takes the candidate value but
+  `ItemIndicator` calls it with no argument, so the radio check mark never
+  showed. Plain `Item` tracks `disabled` reactively (CheckboxItem/RadioItem
+  already did). A component-typed `as` trigger receives the getter-preserving
+  `rest` object as-is — spreading it re-froze signal-backed props
+  (disabled/title/aria-*). `sync()` strips every placement class before adding
+  the current one (start → end no longer leaves both), and the root re-syncs on
+  `placement`/`gutter` changes, not only `open`. Lazily evaluated children
+  (Show/For accessors) are re-entered with the menu's module-variable context,
+  so conditionally rendered Content/Portal/indicators still wire up to their
+  root. `triggerId` was flagged as missing but is already exposed on the
+  dropdown state. Ownerless (manual DOM) usage is explicitly unsupported and
+  documented in the Portal.
 
 ## [0.1.0-preview] — 2026-06-07
 

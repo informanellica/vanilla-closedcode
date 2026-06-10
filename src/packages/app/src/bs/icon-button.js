@@ -1,3 +1,4 @@
+import { createRenderEffect as _solidRenderEffect } from "solid-js";
 import { Icon } from "@/bs/icon.js";
 
 function getClassList(classList, variantClass, sizeClass, extraClass) {
@@ -43,7 +44,6 @@ export function IconButton(props) {
   }
 
   element.dataset.component = "icon-button";
-  element.dataset.icon = props.icon;
   element.dataset.size = props.size || "normal";
   element.dataset.variant = props.variant || "secondary";
 
@@ -53,24 +53,43 @@ export function IconButton(props) {
 
   element.className = getClassList(props.classList || {}, variantClass, sizeClass, props.class);
 
-  if (props.icon) {
-    const iconEl = Icon({ name: props.icon, size: props.iconSize ?? (props.size === "large" ? "normal" : "small") });
-    element.appendChild(iconEl);
-  }
+  // props.icon can be a getter (e.g. send ⇄ stop); track it instead of reading once.
+  let iconEl = null;
+  _solidRenderEffect(() => {
+    const name = props.icon;
+    element.dataset.icon = name ?? "";
+    const next = name ? Icon({ name, size: props.iconSize ?? (props.size === "large" ? "normal" : "small") }) : null;
+    if (iconEl) iconEl.remove();
+    if (next) element.insertBefore(next, element.firstChild);
+    iconEl = next;
+  });
 
   appendChildValue(element, props.children);
 
+  const STATIC_KEYS = ["icon", "variant", "size", "iconSize", "as", "class", "classList", "children", "ref"];
   for (const key in props) {
-    if (key !== "icon" && key !== "variant" && key !== "size" &&
-        key !== "iconSize" && key !== "as" && key !== "class" && key !== "classList") {
-      const value = props[key];
-      if (/^on[A-Z]/.test(key) && typeof value === "function") {
-        element.addEventListener(key.slice(2).toLowerCase(), value);
-      } else if (value != null && value !== false) {
-        element.setAttribute(key, value === true ? "" : String(value));
-      }
+    if (STATIC_KEYS.includes(key)) continue;
+    const value = props[key];
+    if (/^on[A-Z]/.test(key) && typeof value === "function") {
+      element.addEventListener(key.slice(2).toLowerCase(), value);
     }
   }
+
+  // Attribute props (disabled, aria-label, tabIndex, …) are often getters backed
+  // by signals; re-apply them in an effect so e.g. disabled releases once the
+  // prompt has text. Reading them once froze the submit button disabled forever.
+  _solidRenderEffect(() => {
+    for (const key in props) {
+      if (STATIC_KEYS.includes(key) || /^on[A-Z]/.test(key)) continue;
+      const value = props[key];
+      if (value == null || value === false) element.removeAttribute(key);
+      else element.setAttribute(key, value === true ? "" : String(value));
+    }
+  });
+
+  // Solid ref forwarding (Kobalte anchors measure via ref).
+  if (typeof props.ref === "function") props.ref(element);
+  else if ("ref" in props) { try { props.ref = element; } catch {} }
 
   return element;
 }

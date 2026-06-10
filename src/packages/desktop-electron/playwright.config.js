@@ -2,9 +2,13 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./e2e",
+  globalSetup: "./e2e/global-setup.js",
   // Failure traces/screenshots land under the repo's artifacts/ dir.
   outputDir: "../../artifacts/playwright",
-  timeout: 90_000,
+  // 180s: the Electron cold start (fresh temp profile = full DB migration,
+  // first-run binary scan) intermittently exceeds 90s under load; specs that
+  // pass in isolation were timing out mid-suite at the old default.
+  timeout: 180_000,
   expect: {
     timeout: 15_000,
   },

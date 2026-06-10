@@ -132,7 +132,9 @@ export default function Home() {
   }
   // e2e hook: the router uses memory integration (no browser history on oc://),
   // so tests cannot navigate via pushState — expose the real open flow instead.
-  window.__closedcode_openProject = openProject;
+  // Gated to CDP-debug launches (CLOSEDCODE_REMOTE_DEBUG) so it never exists in
+  // a normal run.
+  if (window.api?.remoteDebug) window.__closedcode_openProject = openProject;
 
   async function chooseProject() {
     const resolve = (result) => {
