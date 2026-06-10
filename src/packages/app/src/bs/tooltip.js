@@ -1,3 +1,4 @@
+import { insert as _solidInsert } from "solid-js/web";
 const placementStyle = (placement) => {
   switch (placement) {
     case "bottom":
@@ -92,6 +93,11 @@ export function Tooltip(props) {
     triggerEl.textContent = props.children;
   } else if (props.children instanceof Node) {
     triggerEl.appendChild(props.children.cloneNode(true));
+  } else if (typeof props.children === "function" || Array.isArray(props.children)) {
+    // Component/accessor children (e.g. the model-selector popover trigger):
+    // there was no branch for these, so the child silently vanished. Let
+    // solid-js/web insert() render and track them.
+    _solidInsert(triggerEl, props.children);
   }
 
   syncPopover();

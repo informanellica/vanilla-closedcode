@@ -1,3 +1,4 @@
+import { insert as _solidInsert } from "solid-js/web";
 function appendChildren(parent, children) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -9,7 +10,9 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    appendChildren(parent, children());
+    // Reactive child (Solid Show/For/components return accessors): let
+    // solid-js/web insert() track it so updates re-render instead of freezing.
+    _solidInsert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
