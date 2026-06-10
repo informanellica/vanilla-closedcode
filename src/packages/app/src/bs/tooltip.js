@@ -92,7 +92,9 @@ export function Tooltip(props) {
   if (typeof props.children === "string") {
     triggerEl.textContent = props.children;
   } else if (props.children instanceof Node) {
-    triggerEl.appendChild(props.children.cloneNode(true));
+    // Do NOT cloneNode: cloning drops addEventListener handlers, which made
+    // buttons wrapped in tooltips (e.g. the model-popover "+" button) dead.
+    triggerEl.appendChild(props.children);
   } else if (typeof props.children === "function" || Array.isArray(props.children)) {
     // Component/accessor children (e.g. the model-selector popover trigger):
     // there was no branch for these, so the child silently vanished. Let
