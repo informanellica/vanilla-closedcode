@@ -34,6 +34,14 @@ test.describe("settings smoke", () => {
     // General tab content must be visible by default (NOT a blank pane).
     await expect(dialog.getByText("外観").first()).toBeVisible({ timeout: 30_000 });
 
+    // The tab list must be built as VERTICAL. Text-visibility checks cannot
+    // catch this: when TabsRoot evaluated the children getter before setting
+    // the context, Tabs.List fell back to horizontal (and the dialog CSS
+    // happened to mask it visually).
+    const list = dialog.locator('[data-component="tabs-list"]').first();
+    await expect(list).toHaveAttribute("data-orientation", "vertical");
+    await expect(list).toHaveClass(/flex-column/);
+
     // Switching tabs must actually swap the pane content.
     await dialog.getByText("ショートカット", { exact: true }).first().click();
     await expect(dialog.getByText("外観")).not.toBeVisible();

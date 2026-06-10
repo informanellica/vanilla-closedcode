@@ -21,9 +21,16 @@ async function listen(app, opts, inject) {
   const start = (port) =>
     new Promise((resolve, reject) => {
       const server = http.createServer(app);
-    // Disable default Node timeouts to allow long-running in‑process requests.
-    server.requestTimeout = 0;
-    server.headersTimeout = 0;
+      // Long agent loops run inside a single request, so the default 5-minute
+      // requestTimeout would abort them — but zeroing the timeouts also lets a
+      // client hold a connection open forever (slow-header DoS). Only disable
+      // them for loopback binds; an externally reachable serve keeps Node's
+      // defaults.
+      const loopback = !opts.hostname || ["127.0.0.1", "localhost", "::1", "::ffff:127.0.0.1"].includes(opts.hostname);
+      if (loopback) {
+        server.requestTimeout = 0;
+        server.headersTimeout = 0;
+      }
       inject?.(server);
       const fail = (err) => {
         cleanup();
