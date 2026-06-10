@@ -31,6 +31,7 @@ import { useCommand } from "@/context/command.js";
 import { useLanguage } from "@/context/language.js";
 import { useSettings } from "@/context/settings.js";
 import { applyPath, backPath, forwardPath } from "./titlebar-history.js";
+import { base64Decode } from "core/util/encode";
 const tauriApi = () => window.__TAURI__;
 const currentDesktopWindow = () => tauriApi()?.window?.getCurrentWindow?.();
 const currentThemeWindow = () => tauriApi()?.webviewWindow?.getCurrentWebviewWindow?.();
@@ -145,6 +146,28 @@ export function Titlebar() {
       _el$13 = _el$12.firstChild;
     _el$.$$dblclick = maximize;
     _el$.$$mousedown = drag;
+    // Show which folder is open, centered in the titlebar. Session routes carry
+    // the project directory base64-encoded in the :dir route param; home has no
+    // dir, so nothing is shown there.
+    _$insert(_el$11.firstChild, _$createComponent(Show, {
+      get when() {
+        return params.dir;
+      },
+      get children() {
+        var _folder = document.createElement("div");
+        _folder.className = "small fw-normal text-secondary text-truncate px-2";
+        const decoded = () => {
+          try {
+            return base64Decode(params.dir);
+          } catch {
+            return "";
+          }
+        };
+        _$insert(_folder, decoded);
+        _$effect(() => _folder.setAttribute("title", decoded()));
+        return _folder;
+      }
+    }));
     _$insert(_el$2, _$createComponent(Show, {
       get when() {
         return mac();
