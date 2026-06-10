@@ -35,10 +35,10 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
-function appendChildren(parent, children) {
+function appendChildren(parent, children, wrap) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
-    for (const child of children) appendChildren(parent, child);
+    for (const child of children) appendChildren(parent, child, wrap);
     return;
   }
   if (children instanceof Node) {
@@ -48,7 +48,10 @@ function appendChildren(parent, children) {
   if (typeof children === "function") {
     // Reactive child (Solid Show/For/components return accessors): let
     // solid-js/web insert() track it so updates re-render instead of freezing.
-    _solidInsert(parent, children);
+    // `wrap` re-establishes the module-variable context around each lazy
+    // evaluation — Show/For re-create their children long after the synchronous
+    // build restored the previous context.
+    _solidInsert(parent, wrap ? () => wrap(children) : children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -160,8 +163,13 @@ function createDropdownState(local) {
     }
     if (contentEl) {
       const placementClass = PLACEMENT_CLASS[local.placement || "bottom-start"] ?? "";
+      // Drop every placement class first — toggling only the current one would
+      // leave a stale class behind when placement changes (start → end).
+      for (const cls of new Set(Object.values(PLACEMENT_CLASS))) {
+        contentEl.classList.remove(cls);
+      }
+      if (placementClass) contentEl.classList.add(placementClass);
       contentEl.classList.toggle("show", open);
-      contentEl.classList.toggle(placementClass, !!placementClass);
       contentEl.style.display = open ? "" : "none";
       positionContent();
     }
@@ -283,14 +291,30 @@ function DropdownMenuRoot(props) {
   document.addEventListener("keydown", onDocKeyDown, true);
   if (_solidGetOwner()) _solidOnCleanup(removeDocListeners);
 
-  // Controlled `open` is a live getter — re-sync when the owner flips it.
+  // Controlled props are live getters — re-sync when the owner changes them.
+  // placement/gutter affect the placement class and the position computation.
   _solidRenderEffect(() => {
     void local.open;
+    void local.placement;
+    void local.gutter;
     state.sync();
   });
 
+  // Re-establish this menu's context around lazily evaluated children (Show/
+  // For accessors create components after the synchronous build below has
+  // already restored the previous context).
+  const withContext = fn => {
+    const prev = DropdownContext;
+    DropdownContext = state;
+    try {
+      return fn();
+    } finally {
+      DropdownContext = prev;
+    }
+  };
+
   try {
-    appendChildren(rootEl, local.children);
+    appendChildren(rootEl, local.children, withContext);
   } finally {
     DropdownContext = previousContext;
   }
@@ -311,7 +335,9 @@ function DropdownMenuTrigger(props) {
   const asComponent = typeof tag === "function";
   let triggerEl;
   if (asComponent) {
-    const produced = tag({ ...rest });
+    // Pass `rest` as-is: spreading it would evaluate the forwarded getters and
+    // freeze signal-backed props (disabled/title/aria-*) at their first value.
+    const produced = tag(rest);
     triggerEl = produced instanceof Node ? produced : document.createElement("button");
   } else {
     triggerEl = document.createElement(tag);
@@ -362,6 +388,10 @@ function DropdownMenuPortal(props) {
   // Register so the outside-click handler can tell portal clicks apart, and
   // remove the body-mounted node with the owning component (it would otherwise
   // accumulate under <body> on every re-render).
+  // NOTE: ownerless (manual DOM) usage is NOT supported — without an owner the
+  // portal node stays in <body> and the Root's document listeners only
+  // self-remove on the next pointer/key event after unmount. All in-app usage
+  // goes through createComponent and therefore has an owner.
   ctx?.registerPortal?.(portal);
   if (_solidGetOwner()) _solidOnCleanup(() => portal.remove());
   return document.createComment("dropdown-menu-portal");
@@ -442,8 +472,12 @@ function DropdownMenuItem(props) {
   el.classList.add("dropdown-item", "d-flex", "align-items-center", "gap-2");
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
-  el.disabled = !!local.disabled;
-  el.classList.toggle("disabled", !!local.disabled);
+  // disabled is signal-backed — track it like CheckboxItem/RadioItem do.
+  _solidRenderEffect(() => {
+    const disabled = !!local.disabled;
+    el.disabled = disabled;
+    el.classList.toggle("disabled", disabled);
+  });
   el.addEventListener("click", event => {
     if (local.disabled) return;
     local.onSelect?.(event);
@@ -561,7 +595,18 @@ function DropdownMenuRadioItem(props) {
     dropdown?.close?.();
   });
 
-  appendChildren(el, local.children);
+  // The group's isSelected(value) takes the candidate value, but ItemIndicator
+  // calls isSelected() with no argument — give the children an item-bound
+  // context (like CheckboxItem does) or the check mark never shows.
+  const previous = RadioContext;
+  RadioContext = group
+    ? { ...group, isSelected: () => !!group.isSelected?.(value) }
+    : group;
+  try {
+    appendChildren(el, local.children);
+  } finally {
+    RadioContext = previous;
+  }
   return el;
 }
 

@@ -153,6 +153,22 @@ Development line following `0.1.0-preview`.
   (`"undici": "5.29.0"`) since `v0.1.0-preview`, so the
   `import { Agent } from "undici"` addition needs no manifest change.
 
+- **Review feedback round 5 — DropdownMenu radio indicators and the remaining
+  frozen props.** `RadioItem` now gives its children an item-bound radio context
+  — the group's `isSelected(value)` takes the candidate value but
+  `ItemIndicator` calls it with no argument, so the radio check mark never
+  showed. Plain `Item` tracks `disabled` reactively (CheckboxItem/RadioItem
+  already did). A component-typed `as` trigger receives the getter-preserving
+  `rest` object as-is — spreading it re-froze signal-backed props
+  (disabled/title/aria-*). `sync()` strips every placement class before adding
+  the current one (start → end no longer leaves both), and the root re-syncs on
+  `placement`/`gutter` changes, not only `open`. Lazily evaluated children
+  (Show/For accessors) are re-entered with the menu's module-variable context,
+  so conditionally rendered Content/Portal/indicators still wire up to their
+  root. `triggerId` was flagged as missing but is already exposed on the
+  dropdown state. Ownerless (manual DOM) usage is explicitly unsupported and
+  documented in the Portal.
+
 ## [0.1.0-preview] — 2026-06-07
 
 First public preview release (git tag `v0.1.0-preview`): Windows (64-bit) installer
