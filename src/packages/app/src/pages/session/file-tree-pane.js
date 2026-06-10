@@ -115,12 +115,12 @@ export function FileTreePane(props) {
       var _header = document.createElement("div");
       _header.className = "shrink-0 d-flex align-items-center justify-content-between px-3 pt-3 pb-1";
       var _title = document.createElement("span");
-      _title.className = "small fw-medium text-secondary";
+      _title.className = "small fw-medium text-secondary text-nowrap flex-shrink-0";
       _$insert(_title, () => language.t("session.files.all"));
       // Show WHICH folder is open: decode the session route's :dir param and
       // append the folder name next to the panel title (full path on hover).
       var _rootName = document.createElement("span");
-      _rootName.className = "small fw-normal text-secondary text-truncate ms-1 me-auto";
+      _rootName.className = "small fw-normal text-secondary text-truncate ms-1 me-auto min-w-0";
       const routeParams = useParams();
       const openedDir = () => {
         try {
