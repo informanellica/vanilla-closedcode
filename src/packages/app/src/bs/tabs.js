@@ -79,77 +79,86 @@ function useTabs() {
 }
 
 function createTabsState(props) {
-  const controlled = props.value !== undefined;
-  let internalValue = props.defaultValue ?? null;
-  const triggers = new Set();
-  const contents = new Set();
+  // NOTE: not "controlled vs uncontrolled" — children (Trigger/Content) are
+  // often built BEFORE this root runs (argument evaluation order), so they
+  // can't reach the context to register, and a copied props.value can never
+  // change on click. Instead: seed from props.value/defaultValue, track the
+  // selection internally, and sync by walking the DOM under the root.
+  let internalValue = props.value ?? props.defaultValue ?? null;
 
-  const readValue = () => (controlled ? props.value : internalValue);
+  const readValue = () => internalValue;
   const readOrientation = () => props.orientation || "horizontal";
   const readVariant = () => props.variant || "normal";
 
+  // An element belongs to THIS tabs instance if its nearest tabs root is ours
+  // (nested Tabs must not steal each other's panes).
+  const ownedBy = el => el.closest('[data-component="tabs"]') === rootEl;
+
   const sync = () => {
+    if (!rootEl) return;
     const currentValue = readValue();
     const orientation = readOrientation();
     const variant = readVariant();
 
-    for (const entry of triggers) {
-      const isActive = entry.value === currentValue;
-      entry.el.setAttribute("aria-selected", isActive ? "true" : "false");
-      entry.el.classList.toggle("active", isActive);
-      if (entry.buttonClass) {
-        entry.el.classList.toggle(entry.buttonClass, isActive);
-      }
-      if (entry.closeEl) {
-        entry.closeEl.toggleAttribute("data-hidden", !!entry.hideCloseButton);
-      }
+    for (const el of rootEl.querySelectorAll('[data-slot="tabs-trigger"]')) {
+      if (!ownedBy(el)) continue;
+      const isActive = el.dataset.value === currentValue;
+      el.setAttribute("aria-selected", isActive ? "true" : "false");
+      el.classList.toggle("active", isActive);
+      const buttonClass = el.dataset.activeClass;
+      if (buttonClass) el.classList.toggle(buttonClass, isActive);
     }
 
-    for (const entry of contents) {
-      const isActive = entry.value === currentValue;
-      entry.el.classList.toggle("active", isActive);
-      entry.el.classList.toggle("d-none", !isActive);
-      entry.el.toggleAttribute("hidden", !isActive);
-      entry.el.setAttribute("aria-hidden", isActive ? "false" : "true");
+    for (const el of rootEl.querySelectorAll('[data-slot="tabs-content"]')) {
+      if (!ownedBy(el)) continue;
+      const isActive = el.dataset.value === currentValue;
+      el.classList.toggle("active", isActive);
+      el.classList.toggle("d-none", !isActive);
+      el.toggleAttribute("hidden", !isActive);
+      el.setAttribute("aria-hidden", isActive ? "false" : "true");
     }
 
-    if (rootEl) {
-      rootEl.setAttribute("data-orientation", orientation);
-      rootEl.setAttribute("data-variant", variant);
-      rootEl.classList.toggle("flex-row", orientation === "vertical");
-      rootEl.classList.toggle("flex-column", orientation !== "vertical");
-    }
+    rootEl.setAttribute("data-orientation", orientation);
+    rootEl.setAttribute("data-variant", variant);
+    rootEl.classList.toggle("flex-row", orientation === "vertical");
+    rootEl.classList.toggle("flex-column", orientation !== "vertical");
   };
 
   const api = {
     value: readValue,
     select(next) {
-      if (!controlled) internalValue = next;
+      internalValue = next;
       sync();
       props.onChange?.(next);
     },
     orientation: readOrientation,
     variant: readVariant,
-    registerTrigger(entry) {
-      triggers.add(entry);
+    // register* kept as no-op-compatible API: sync() walks the DOM, so entries
+    // created outside the context window still work.
+    registerTrigger() {
       sync();
     },
-    registerContent(entry) {
-      contents.add(entry);
+    registerContent() {
       sync();
     },
-    unregisterTrigger(entry) {
-      triggers.delete(entry);
-    },
-    unregisterContent(entry) {
-      contents.delete(entry);
-    },
+    unregisterTrigger() {},
+    unregisterContent() {},
     sync
   };
 
   let rootEl = null;
   api.registerRoot = el => {
     rootEl = el;
+    // Click delegation on the root: trigger elements may have been created
+    // before this state existed (so their own listeners hold tabs=null) —
+    // the root handles selection for every descendant trigger it owns.
+    el.addEventListener("click", e => {
+      let target = e.target instanceof Element ? e.target : null;
+      const trigger = target?.closest('[data-slot="tabs-trigger"]');
+      if (!trigger || !ownedBy(trigger)) return;
+      if (target?.closest('[data-slot="tabs-trigger-close"]')) return;
+      api.select(trigger.dataset.value);
+    });
     sync();
   };
 
@@ -245,6 +254,7 @@ function TabsTrigger(props) {
   applyClassList(triggerEl, split.classList);
   if (split.classes?.button) {
     triggerEl.classList.add(split.classes.button);
+    triggerEl.dataset.activeClass = split.classes.button;
   }
   applyRestProps(triggerEl, rest);
 
@@ -268,14 +278,15 @@ function TabsTrigger(props) {
     }
   });
   triggerEl.addEventListener("click", event => {
-    tabs?.select?.(value);
+    // Selection is handled by the root's delegated listener (works even when
+    // this trigger was created before the root state existed).
     split.onClick?.(event);
   });
 
   appendChildren(triggerEl, split.children);
 
   if (closeButton) {
-    const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close-button>`);
+    const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close>`);
     closeEl.textContent = typeof closeButton === "function" ? String(closeButton()) : String(closeButton);
     if (split.hideCloseButton) {
       closeEl.setAttribute("data-hidden", "true");
