@@ -61,7 +61,6 @@ import { parseMarkdown } from "./markdown.js";
 import { createMenu } from "./menu.js";
 import { getDefaultServerUrl, getWslConfig, resolveSidecarUrl, setDefaultServerUrl, setWslConfig, spawnLocalServer } from "./server.js";
 import { createLoadingWindow, createMainWindow, registerRendererProtocol, setBackgroundColor, setDockIcon } from "./windows.js";
-import { drizzle } from "drizzle-orm/node-sqlite/driver";
 const initEmitter = new EventEmitter();
 let initStep = {
   phase: "server_waiting"
@@ -208,12 +207,10 @@ async function initialize() {
       // Resolve the sidecar entry (packaged asar-unpacked path, or the
       // build-less packages/closedcode/dist/node fallback) before importing.
       const {
-        Database,
         JsonMigration
       } = await import(resolveSidecarUrl());
-      await JsonMigration.run(drizzle({
-        client: Database.Client().$client
-      }), {
+      // ORM migration S4: JsonMigration opens the Sequelize layer itself.
+      await JsonMigration.run({
         progress: event => {
           const percent = Math.round(event.current / event.total) * 100;
           initEmitter.emit("sqlite", {

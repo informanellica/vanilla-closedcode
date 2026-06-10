@@ -28,7 +28,9 @@ function wireTimestamps(model) {
   model.beforeValidate(instance => {
     const now = Date.now();
     if (instance.isNewRecord && instance.get("time_created") == null) instance.set("time_created", now);
-    instance.set("time_updated", now);
+    // Respect an explicitly provided time_updated (e.g. the JSON->sqlite
+    // migration preserves original timestamps); only fill it when absent.
+    if (instance.get("time_updated") == null || !instance.changed("time_updated")) instance.set("time_updated", now);
   });
   model.beforeBulkCreate(instances => {
     const now = Date.now();
@@ -41,8 +43,23 @@ function wireTimestamps(model) {
 
 // JSON columns: drizzle's { mode: "json" } stores JSON.stringify-ed TEXT.
 // DataTypes.JSON on sqlite does the same physical encoding.
-const JSON_COL = () => ({ type: DataTypes.JSON });
-const JSON_NN = () => ({ type: DataTypes.JSON, allowNull: false });
+// The sqlite dialect type-parses by the DECLARED column type from PRAGMA
+// table_info; our migration DDL declares JSON columns as `text`, so reads
+// come back as raw strings. Parse in the attribute getter (writes still go
+// through DataTypes.JSON stringification).
+function jsonAttr(extra = {}) {
+  return {
+    type: DataTypes.JSON,
+    ...extra,
+    get(key) {
+      const value = this.getDataValue(key);
+      if (typeof value !== "string") return value;
+      try { return JSON.parse(value); } catch { return value; }
+    },
+  };
+}
+const JSON_COL = () => jsonAttr();
+const JSON_NN = () => jsonAttr({ allowNull: false });
 const TEXT_PK = () => ({ type: DataTypes.TEXT, primaryKey: true });
 const TEXT_NN = () => ({ type: DataTypes.TEXT, allowNull: false });
 

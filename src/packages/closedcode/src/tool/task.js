@@ -68,7 +68,7 @@ export const TaskTool = Tool.define(id, Effect.gen(function* () {
         permission: item
       })) ?? [])]
     }));
-    const msg = yield* Effect.sync(() => MessageV2.get({
+    const msg = yield* Effect.promise(() => MessageV2.get({
       sessionID: ctx.sessionID,
       messageID: ctx.messageID
     }));

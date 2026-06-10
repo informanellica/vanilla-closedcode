@@ -32,11 +32,9 @@ import { DbCommand } from "./cli/cmd/db.js";
 import path from "path";
 import { Global } from "core/global";
 import { JsonMigration } from "#storage/json-migration.js";
-import { Database } from "#storage/db.js";
 import { errorMessage } from "./util/error.js";
 import { PluginCommand } from "./cli/cmd/plug.js";
 import { Heap } from "./cli/heap.js";
-import { drizzle } from "drizzle-orm/node-sqlite";
 import { ensureProcessMetadata } from "core/util/closedcode-process";
 const processMetadata = ensureProcessMetadata("main");
 process.on("unhandledRejection", e => {
@@ -107,9 +105,9 @@ const cli = yargs(args).parserConfiguration({
     let last = -1;
     if (tty) process.stderr.write("\x1b[?25l");
     try {
-      await JsonMigration.run(drizzle({
-        client: Database.Client().$client
-      }), {
+      // ORM migration S3: JsonMigration opens the shared Sequelize layer
+      // itself (ormInit applies the same SQL migration journal first).
+      await JsonMigration.run({
         progress: event => {
           const percent = Math.floor(event.current / event.total * 100);
           if (percent === last && event.current !== event.total) return;

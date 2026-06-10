@@ -278,7 +278,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
                 providerExecuted: true
               } : value.providerMetadata
             }));
-            const parts = MessageV2.parts(ctx.assistantMessage.id);
+            const parts = yield* Effect.promise(() => MessageV2.parts(ctx.assistantMessage.id));
             const recentParts = parts.slice(-DOOM_LOOP_THRESHOLD);
             if (recentParts.length !== DOOM_LOOP_THRESHOLD || !recentParts.every(part => part.type === "tool" && part.tool === value.toolName && part.state.status !== "pending" && JSON.stringify(part.state.input) === JSON.stringify(value.input))) {
               return;

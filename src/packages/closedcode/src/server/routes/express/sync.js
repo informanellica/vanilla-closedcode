@@ -3,13 +3,7 @@ import express from "express";
 import z from "zod";
 import { SyncEvent } from "#sync/index.js";
 import { Database } from "#storage/db.js";
-import { asc } from "drizzle-orm";
-import { and } from "drizzle-orm";
-import { not } from "drizzle-orm";
-import { or } from "drizzle-orm";
-import { lte } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { EventTable } from "#sync/event.sql.js";
+import { Op } from "#storage/sequelize.js";
 import * as Log from "core/util/log";
 import { Workspace } from "#control-plane/workspace.js";
 import { AppRuntime } from "#effect/app-runtime.js";
@@ -134,8 +128,19 @@ export function SyncRoutes(registry) {
     try {
       const body = req.valid.json;
       const exclude = Object.entries(body);
-      const where = exclude.length > 0 ? not(or(...exclude.map(([id, seq]) => and(eq(EventTable.aggregate_id, id), lte(EventTable.seq, seq))))) : undefined;
-      const rows = Database.use(db => db.select().from(EventTable).where(where).orderBy(asc(EventTable.seq)).all());
+      const where = exclude.length > 0 ? {
+        [Op.not]: {
+          [Op.or]: exclude.map(([id, seq]) => ({ aggregate_id: id, seq: { [Op.lte]: seq } }))
+        }
+      } : undefined;
+      const rows = await Database.useAsync(async h => {
+        const found = await h.models.Event.findAll({
+          where,
+          order: [["seq", "ASC"]],
+          transaction: h.tx
+        });
+        return found.map(r => r.get({ plain: true }));
+      });
       res.json(rows);
     } catch (err) {
       next(err);

@@ -15,7 +15,6 @@ export default {
   moduleNameMapper: {
     "^#tui/(.*)$": "<rootDir>/src/cli/cmd/tui/$1",
     "^#test/(.*)$": "<rootDir>/test/$1",
-    "^#db$": "<rootDir>/src/storage/db.node.js",
     "^#pty$": "<rootDir>/src/pty/pty.node.js",
     "^#(.*)$": "<rootDir>/src/$1",
     "^@opentui/core-(darwin|linux|win32)-(arm64|x64)/index\\.js$": "<rootDir>/test/lib/opentui-native-stub.js",

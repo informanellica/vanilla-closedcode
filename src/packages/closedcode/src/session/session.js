@@ -7,18 +7,8 @@ import { Flag } from "core/flag/flag";
 import { InstallationVersion } from "core/installation/version";
 import { Database } from "#storage/db.js";
 import { NotFoundError } from "#storage/storage.js";
-import { eq } from "drizzle-orm";
-import { and } from "drizzle-orm";
-import { gte } from "drizzle-orm";
-import { isNull } from "drizzle-orm";
-import { desc } from "drizzle-orm";
-import { like } from "drizzle-orm";
-import { inArray } from "drizzle-orm";
-import { lt } from "drizzle-orm";
-import { or } from "drizzle-orm";
+import { Op } from "#storage/sequelize.js";
 import { SyncEvent } from "../sync/index.js";
-import { PartTable, SessionTable } from "./session.sql.js";
-import { ProjectTable } from "../project/project.sql.js";
 import { Storage } from "#storage/storage.js";
 import * as Log from "core/util/log";
 import { MessageV2 } from "./message-v2.js";
@@ -349,7 +339,11 @@ export class BusyError extends Error {
   }
 }
 export class Service extends Context.Service()("@closedcode/Session") {}
-const db = fn => Effect.sync(() => Database.use(fn));
+// Sequelize call-site conventions (ORM migration S3): callbacks receive the
+// handle { models, sequelize, tx } and every model call passes
+// { transaction: h.tx }; reads return plain rows (JSON columns parsed).
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
+const db = fn => Effect.promise(() => Database.useAsync(fn));
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const storage = yield* Storage.Service;
@@ -390,7 +384,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return result;
   });
   const get = Effect.fn("Session.get")(function* (id) {
-    const row = yield* db(d => d.select().from(SessionTable).where(eq(SessionTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Session.findOne({
+      where: {
+        id
+      },
+      transaction: h.tx
+    })));
     if (!row) throw new NotFoundError({
       message: `Session not found: ${id}`
     });
@@ -398,13 +397,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   });
   const list = Effect.fn("Session.list")(function* (input) {
     const ctx = yield* InstanceState.context;
-    return Array.from(listByProject({
+    return yield* Effect.promise(() => listByProject({
       projectID: ctx.project.id,
       ...(input ?? {})
     }));
   });
   const children = Effect.fn("Session.children")(function* (parentID) {
-    const rows = yield* db(d => d.select().from(SessionTable).where(and(eq(SessionTable.parent_id, parentID))).all());
+    const rows = yield* db(async h => (await h.models.Session.findAll({
+      where: {
+        parent_id: parentID
+      },
+      transaction: h.tx
+    })).map(r => r.get({
+      plain: true
+    })));
     return rows.map(fromRow);
   });
   const remove = Effect.fnUntraced(function* (sessionID) {
@@ -447,7 +453,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return part;
   }).pipe(Effect.withSpan("Session.updatePart"));
   const getPart = Effect.fn("Session.getPart")(function* (input) {
-    const row = Database.use(db => db.select().from(PartTable).where(and(eq(PartTable.session_id, input.sessionID), eq(PartTable.message_id, input.messageID), eq(PartTable.id, input.partID))).get());
+    const row = yield* db(async h => plain(await h.models.Part.findOne({
+      where: {
+        session_id: input.sessionID,
+        message_id: input.messageID,
+        id: input.partID
+      },
+      transaction: h.tx
+    })));
     if (!row) return;
     return {
       ...row.data,
@@ -573,12 +586,17 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   });
   const messages = Effect.fn("Session.messages")(function* (input) {
     if (input.limit) {
-      return MessageV2.page({
+      const result = yield* Effect.promise(() => MessageV2.page({
         sessionID: input.sessionID,
         limit: input.limit
-      }).items;
+      }));
+      return result.items;
     }
-    return Array.from(MessageV2.stream(input.sessionID)).reverse();
+    return yield* Effect.promise(async () => {
+      const items = [];
+      for await (const item of MessageV2.stream(input.sessionID)) items.push(item);
+      return items.reverse();
+    });
   });
   const removeMessage = Effect.fn("Session.removeMessage")(function* (input) {
     yield* sync.run(MessageV2.Event.Removed, {
@@ -601,10 +619,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
 
   /** Finds the first message matching the predicate, searching newest-first. */
   const findMessage = Effect.fn("Session.findMessage")(function* (sessionID, predicate) {
-    for (const item of MessageV2.stream(sessionID)) {
-      if (predicate(item)) return Option.some(item);
-    }
-    return Option.none();
+    return yield* Effect.promise(async () => {
+      for await (const item of MessageV2.stream(sessionID)) {
+        if (predicate(item)) return Option.some(item);
+      }
+      return Option.none();
+    });
   });
   return Service.of({
     list,
@@ -632,69 +652,115 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   });
 }));
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Storage.defaultLayer), Layer.provide(SyncEvent.defaultLayer));
-function* listByProject(input) {
-  const conditions = [eq(SessionTable.project_id, input.projectID)];
+async function listByProject(input) {
+  const where = {
+    project_id: input.projectID
+  };
   if (input.workspaceID) {
-    conditions.push(eq(SessionTable.workspace_id, input.workspaceID));
+    where.workspace_id = input.workspaceID;
   }
   if (input.path !== undefined) {
     if (input.path) {
-      const conds = [eq(SessionTable.path, input.path), like(SessionTable.path, `${input.path}/%`)];
-      conditions.push(input.directory ? or(...conds, and(isNull(SessionTable.path), eq(SessionTable.directory, input.directory))) : or(...conds));
+      const conds = [{
+        path: input.path
+      }, {
+        path: {
+          [Op.like]: `${input.path}/%`
+        }
+      }];
+      where[Op.or] = input.directory ? [...conds, {
+        path: {
+          [Op.is]: null
+        },
+        directory: input.directory
+      }] : conds;
     }
   } else if (input.scope !== "project" && !Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES) {
     if (input.directory) {
-      conditions.push(eq(SessionTable.directory, input.directory));
+      where.directory = input.directory;
     }
   }
   if (input.roots) {
-    conditions.push(isNull(SessionTable.parent_id));
+    where.parent_id = {
+      [Op.is]: null
+    };
   }
   if (input.start) {
-    conditions.push(gte(SessionTable.time_updated, input.start));
+    where.time_updated = {
+      [Op.gte]: input.start
+    };
   }
   if (input.search) {
-    conditions.push(like(SessionTable.title, `%${input.search}%`));
+    where.title = {
+      [Op.like]: `%${input.search}%`
+    };
   }
   const limit = input.limit ?? 100;
-  const rows = Database.use(db => db.select().from(SessionTable).where(and(...conditions)).orderBy(desc(SessionTable.time_updated)).limit(limit).all());
-  for (const row of rows) {
-    yield fromRow(row);
-  }
+  const rows = await Database.useAsync(async h => (await h.models.Session.findAll({
+    where,
+    order: [["time_updated", "DESC"]],
+    limit,
+    transaction: h.tx
+  })).map(r => r.get({
+    plain: true
+  })));
+  return rows.map(fromRow);
 }
-export function* listGlobal(input) {
-  const conditions = [];
+export async function* listGlobal(input) {
+  const where = {};
   if (input?.directory) {
-    conditions.push(eq(SessionTable.directory, input.directory));
+    where.directory = input.directory;
   }
   if (input?.roots) {
-    conditions.push(isNull(SessionTable.parent_id));
+    where.parent_id = {
+      [Op.is]: null
+    };
   }
+  // `start` (gte) and `cursor` (lt) both constrain time_updated; merge the
+  // operators into a single attribute condition.
+  const timeUpdated = {};
   if (input?.start) {
-    conditions.push(gte(SessionTable.time_updated, input.start));
+    timeUpdated[Op.gte] = input.start;
   }
   if (input?.cursor) {
-    conditions.push(lt(SessionTable.time_updated, input.cursor));
+    timeUpdated[Op.lt] = input.cursor;
+  }
+  if (Object.getOwnPropertySymbols(timeUpdated).length > 0) {
+    where.time_updated = timeUpdated;
   }
   if (input?.search) {
-    conditions.push(like(SessionTable.title, `%${input.search}%`));
+    where.title = {
+      [Op.like]: `%${input.search}%`
+    };
   }
   if (!input?.archived) {
-    conditions.push(isNull(SessionTable.time_archived));
+    where.time_archived = {
+      [Op.is]: null
+    };
   }
   const limit = input?.limit ?? 100;
-  const rows = Database.use(db => {
-    const query = conditions.length > 0 ? db.select().from(SessionTable).where(and(...conditions)) : db.select().from(SessionTable);
-    return query.orderBy(desc(SessionTable.time_updated), desc(SessionTable.id)).limit(limit).all();
-  });
+  const rows = await Database.useAsync(async h => (await h.models.Session.findAll({
+    where,
+    order: [["time_updated", "DESC"], ["id", "DESC"]],
+    limit,
+    transaction: h.tx
+  })).map(r => r.get({
+    plain: true
+  })));
   const ids = [...new Set(rows.map(row => row.project_id))];
   const projects = new Map();
   if (ids.length > 0) {
-    const items = Database.use(db => db.select({
-      id: ProjectTable.id,
-      name: ProjectTable.name,
-      worktree: ProjectTable.worktree
-    }).from(ProjectTable).where(inArray(ProjectTable.id, ids)).all());
+    const items = await Database.useAsync(async h => (await h.models.Project.findAll({
+      attributes: ["id", "name", "worktree"],
+      where: {
+        id: {
+          [Op.in]: ids
+        }
+      },
+      transaction: h.tx
+    })).map(r => r.get({
+      plain: true
+    })));
     for (const item of items) {
       projects.set(item.id, {
         id: item.id,

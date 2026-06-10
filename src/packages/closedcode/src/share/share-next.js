@@ -8,10 +8,8 @@ import { ModelID, ProviderID } from "#provider/schema.js";
 import { Session } from "#session/session.js";
 import { MessageV2 } from "#session/message-v2.js";
 import { Database } from "#storage/db.js";
-import { eq } from "drizzle-orm";
 import { Config } from "#config/config.js";
 import * as Log from "core/util/log";
-import { SessionShareTable } from "./share.sql.js";
 const log = Log.create({
   service: "share-next"
 });
@@ -22,7 +20,11 @@ const ShareSchema = Schema.Struct({
   secret: Schema.String
 });
 export class Service extends Context.Service()("@closedcode/ShareNext") {}
-const db = fn => Effect.sync(() => Database.use(fn));
+// Sequelize call-site conventions (ORM migration S3): Database.useAsync hands
+// a handle { models, sequelize, tx }; every model call passes
+// { transaction: h.tx }. Errors stay defects (Effect.sync -> Effect.promise).
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
+const db = fn => Effect.promise(() => Database.useAsync(fn));
 function api(resource) {
   return {
     create: `/api/${resource}`,
@@ -155,7 +157,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   });
   const get = Effect.fnUntraced(function* (sessionID) {
-    const row = yield* db(db => db.select().from(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID)).get());
+    const row = yield* db(async h => plain(await h.models.SessionShare.findOne({
+      where: { session_id: sessionID },
+      transaction: h.tx
+    })));
     if (!row) return;
     return {
       id: row.id,
@@ -200,7 +205,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     const info = yield* session.get(sessionID);
     const diffs = yield* session.diff(sessionID);
-    const messages = yield* Effect.sync(() => Array.from(MessageV2.stream(sessionID)));
+    const messages = yield* Effect.promise(() => Array.fromAsync(MessageV2.stream(sessionID)));
     const models = yield* Effect.forEach(Array.from(new Map(messages.filter(msg => msg.info.role === "user").map(msg => msg.info.model).map(item => [`${item.providerID}/${item.modelID}`, item])).values()), item => provider.getModel(ProviderID.make(item.providerID), ModelID.make(item.modelID)), {
       concurrency: 8
     });
@@ -241,19 +246,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     const result = yield* HttpClientRequest.post(`${req.baseUrl}${req.api.create}`).pipe(HttpClientRequest.setHeaders(req.headers), HttpClientRequest.bodyJson({
       sessionID
     }), Effect.flatMap(r => httpOk.execute(r)), Effect.flatMap(HttpClientResponse.schemaBodyJson(ShareSchema)));
-    yield* db(db => db.insert(SessionShareTable).values({
+    yield* db(h => h.models.SessionShare.upsert({
       session_id: sessionID,
       id: result.id,
       secret: result.secret,
       url: result.url
-    }).onConflictDoUpdate({
-      target: SessionShareTable.session_id,
-      set: {
-        id: result.id,
-        secret: result.secret,
-        url: result.url
-      }
-    }).run());
+    }, { transaction: h.tx }));
     const s = yield* InstanceState.get(state);
     s.shared.set(sessionID, result);
     yield* full(sessionID).pipe(Effect.catchCause(cause => Effect.sync(() => {
@@ -280,7 +278,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* HttpClientRequest.delete(`${req.baseUrl}${req.api.remove(share.id)}`).pipe(HttpClientRequest.setHeaders(req.headers), HttpClientRequest.bodyJson({
       secret: share.secret
     }), Effect.flatMap(r => httpOk.execute(r)));
-    yield* db(db => db.delete(SessionShareTable).where(eq(SessionShareTable.session_id, sessionID)).run());
+    yield* db(h => h.models.SessionShare.destroy({ where: { session_id: sessionID }, transaction: h.tx }));
     s.shared.delete(sessionID);
     s.queue.delete(sessionID);
   });

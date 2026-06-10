@@ -1,6 +1,3 @@
-import { sql as drizzleSql } from "drizzle-orm";
-export * from "drizzle-orm";
-import { LocalContext } from "#util/local-context.js";
 import { lazy } from "../util/lazy.js";
 import { Global } from "core/global";
 import * as Log from "core/util/log";
@@ -13,8 +10,7 @@ import { Flag } from "core/flag/flag";
 import { InstallationChannel } from "core/installation/version";
 import { InstanceState } from "#effect/instance-state.js";
 import { iife } from "#util/iife.js";
-import { init } from "#db";
-import { applyMigrationsSync, applyMigrationsAsync } from "./migrate.js";
+import { applyMigrationsAsync } from "./migrate.js";
 export const NotFoundError = NamedError.create("NotFoundError", z.object({
   message: z.string()
 }));
@@ -84,88 +80,15 @@ function migrations(dir) {
   }).filter(Boolean);
   return sql.sort((a, b) => a.timestamp - b.timestamp);
 }
-export const Client = lazy(() => {
-  // Migrate legacy opencode.db -> closedcode.db before opening.
-  if (!Flag.CLOSEDCODE_DB) migrateDbFile(Path);
-  log.info("opening database", {
-    path: Path
-  });
-  const db = init(Path);
-  db.run("PRAGMA journal_mode = WAL");
-  db.run("PRAGMA synchronous = NORMAL");
-  db.run("PRAGMA busy_timeout = 5000");
-  db.run("PRAGMA cache_size = -64000");
-  db.run("PRAGMA foreign_keys = ON");
-  db.run("PRAGMA wal_checkpoint(PASSIVE)");
-
-  // Apply schema migrations
-  const entries = migrationEntries();
-  if (entries.length > 0) {
-    log.info("applying migrations", {
-      count: entries.length,
-      mode: typeof CLOSEDCODE_MIGRATIONS !== "undefined" ? "bundled" : "dev"
-    });
-    applyMigrationsSync(db.$client, entries);
-  }
-  return db;
-});
+// ORM migration S4: the legacy node:sqlite/drizzle layer is gone. close()
+// remains (test teardowns + shutdown) and now only drops the Sequelize layer.
 export function close() {
-  // Also drop the Sequelize layer: test teardowns call this sync close to get
-  // a fresh :memory: db per test — without resetting Orm the async layer's
-  // :memory: instance would leak rows across tests (order-dependent failures).
-  if (Orm.loaded()) {
-    void Orm().sequelize.close().catch(() => {});
-    Orm.reset();
-    ormReady = null;
-  }
-  if (!Client.loaded()) return;
-  Client().$client.close();
-  Client.reset();
+  if (!Orm.loaded()) return;
+  void Orm().sequelize.close().catch(() => {});
+  Orm.reset();
+  ormReady = null;
 }
-const ctx = LocalContext.create("database");
-export function use(callback) {
-  try {
-    return callback(ctx.use().tx);
-  } catch (err) {
-    if (err instanceof LocalContext.NotFound) {
-      const effects = [];
-      const result = ctx.provide({
-        effects,
-        tx: Client()
-      }, () => callback(Client()));
-      for (const effect of effects) effect();
-      return result;
-    }
-    throw err;
-  }
-}
-export function effect(fn) {
-  const bound = InstanceState.bind(fn);
-  try {
-    ctx.use().effects.push(bound);
-  } catch {
-    bound();
-  }
-}
-export function transaction(callback, options) {
-  try {
-    return callback(ctx.use().tx);
-  } catch (err) {
-    if (err instanceof LocalContext.NotFound) {
-      const effects = [];
-      const txCallback = InstanceState.bind(tx => ctx.provide({
-        tx,
-        effects
-      }, () => callback(tx)));
-      const result = Client().transaction(txCallback, {
-        behavior: options?.behavior
-      });
-      for (const effect of effects) effect();
-      return result;
-    }
-    throw err;
-  }
-}
+
 // ---- Sequelize layer (ORM migration S1, feat/orm-sequelize) ----------------
 // Async successors of use/transaction/effect. Both layers run against the
 // SAME database file during the staged conversion; modules switch one by one.
@@ -201,12 +124,16 @@ export async function useAsync(callback) {
   const { sequelize, models } = await ormInit();
   return callback({ models, sequelize, tx: undefined });
 }
-export async function transactionAsync(callback) {
+export async function transactionAsync(callback, options) {
   const ambient = transactionStorage.getStore();
   if (ambient) return callback({ ...ambient.handle });
   const { sequelize, models } = await ormInit();
   const effects = [];
-  const result = await sequelize.transaction(async tx => {
+  // sqlite BEGIN behavior parity with the legacy layer: "immediate"/"exclusive"
+  // take the write lock at BEGIN (drizzle's { behavior } option).
+  const types = { immediate: "IMMEDIATE", exclusive: "EXCLUSIVE", deferred: "DEFERRED" };
+  const txOptions = options?.behavior ? { type: types[options.behavior] ?? "DEFERRED" } : {};
+  const result = await sequelize.transaction(txOptions, async tx => {
     const handle = { models, sequelize, tx };
     return transactionStorage.run({ tx, effects, handle }, () => callback(handle));
   });

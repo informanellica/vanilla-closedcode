@@ -54,7 +54,7 @@ export function ProjectRoutes(registry) {
   });
   router.get("/", async (_req, res, next) => {
     try {
-      const projects = Project.list();
+      const projects = await Project.list();
       res.json(projects);
     } catch (err) {
       next(err);

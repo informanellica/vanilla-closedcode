@@ -1,5 +1,6 @@
-export { AccountTable, AccountStateTable, ControlAccountTable } from "../account/account.sql.js";
-export { ProjectTable } from "../project/project.sql.js";
-export { SessionTable, MessageTable, PartTable, TodoTable, PermissionTable } from "../session/session.sql.js";
-export { SessionShareTable } from "../share/share.sql.js";
-export { WorkspaceTable } from "../control-plane/workspace.sql.js";
+// ORM migration S3: the drizzle table re-exports (../*/*.sql.js) are retired.
+// The Sequelize models live in ./sequelize.js and must only be reached through
+// the Database handle (Database.useAsync / Database.transactionAsync) — never
+// imported directly. The legacy drizzle table definitions remain in the
+// *.sql.js files as the source for the SQL migration journal.
+export {};

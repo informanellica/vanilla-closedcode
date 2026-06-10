@@ -1,8 +1,6 @@
 import { Global } from "core/global";
 import * as Log from "core/util/log";
-import { ProjectTable } from "../project/project.sql.js";
-import { SessionTable, MessageTable, PartTable, TodoTable, PermissionTable } from "../session/session.sql.js";
-import { SessionShareTable } from "../share/share.sql.js";
+import { Database } from "#storage/db.js";
 import path from "path";
 import { existsSync } from "fs";
 import { Filesystem } from "#util/filesystem.js";
@@ -10,7 +8,50 @@ import { Glob } from "core/util/glob";
 const log = Log.create({
   service: "json-migration"
 });
-export async function run(db, options) {
+// Raw-SQL batch specs (ORM migration S3). The drizzle table objects are gone;
+// INSERT OR IGNORE batches (drizzle's onConflictDoNothing) go through
+// h.sequelize.query so explicitly provided time_created/time_updated values
+// survive — the model bulkCreate hooks would overwrite time_updated. JSON
+// columns are stringified manually, the same physical encoding as drizzle's
+// text({ mode: "json" }).
+const TABLES = {
+  project: {
+    name: "project",
+    columns: ["id", "worktree", "vcs", "name", "icon_url", "icon_url_override", "icon_color", "time_created", "time_updated", "time_initialized", "sandboxes", "commands"],
+    json: new Set(["sandboxes", "commands"])
+  },
+  session: {
+    name: "session",
+    columns: ["id", "project_id", "parent_id", "slug", "directory", "path", "title", "version", "share_url", "summary_additions", "summary_deletions", "summary_files", "summary_diffs", "revert", "permission", "time_created", "time_updated", "time_compacting", "time_archived"],
+    json: new Set(["summary_diffs", "revert", "permission"])
+  },
+  message: {
+    name: "message",
+    columns: ["id", "session_id", "time_created", "time_updated", "data"],
+    json: new Set(["data"])
+  },
+  part: {
+    name: "part",
+    columns: ["id", "message_id", "session_id", "time_created", "time_updated", "data"],
+    json: new Set(["data"])
+  },
+  todo: {
+    name: "todo",
+    columns: ["session_id", "content", "status", "priority", "position", "time_created", "time_updated"],
+    json: new Set()
+  },
+  permission: {
+    name: "permission",
+    columns: ["project_id", "time_created", "time_updated", "data"],
+    json: new Set(["data"])
+  },
+  session_share: {
+    name: "session_share",
+    columns: ["session_id", "id", "secret", "url", "time_created", "time_updated"],
+    json: new Set()
+  }
+};
+export async function run(options) {
   const storageDir = path.join(Global.Path.data, "storage");
   if (!existsSync(storageDir)) {
     log.info("storage directory does not exist, skipping migration");
@@ -30,13 +71,15 @@ export async function run(db, options) {
   });
   const start = performance.now();
 
-  // const db = drizzle({ client: sqlite })
-
-  // Optimize SQLite for bulk inserts
-  db.run("PRAGMA journal_mode = WAL");
-  db.run("PRAGMA synchronous = OFF");
-  db.run("PRAGMA cache_size = 10000");
-  db.run("PRAGMA temp_store = MEMORY");
+  // Optimize SQLite for bulk inserts (outside the transaction below —
+  // journal_mode cannot be changed inside an open transaction)
+  await Database.useAsync(async h => {
+    for (const pragma of ["PRAGMA journal_mode = WAL", "PRAGMA synchronous = OFF", "PRAGMA cache_size = 10000", "PRAGMA temp_store = MEMORY"]) {
+      await h.sequelize.query(pragma, {
+        transaction: h.tx
+      });
+    }
+  });
   const stats = {
     projects: 0,
     sessions: 0,
@@ -82,16 +125,6 @@ export async function run(db, options) {
     }
     return items;
   }
-  function insert(values, table, label) {
-    if (values.length === 0) return 0;
-    try {
-      db.insert(table).values(values).onConflictDoNothing().run();
-      return values.length;
-    } catch (e) {
-      errs.push(`failed to migrate ${label} batch: ${e}`);
-      return 0;
-    }
-  }
 
   // Pre-scan all files upfront to avoid repeated glob operations
   log.info("scanning files...");
@@ -121,294 +154,321 @@ export async function run(db, options) {
     total,
     label: "starting"
   });
-  db.run("BEGIN TRANSACTION");
-
-  // Migrate projects first (no FK deps)
-  // Derive all IDs from file paths, not JSON content
-  const projectIds = new Set();
-  const projectValues = [];
-  for (let i = 0; i < projectFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, projectFiles.length);
-    const batch = await read(projectFiles, i, end);
-    projectValues.length = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const id = path.basename(projectFiles[i + j], ".json");
-      projectIds.add(id);
-      projectValues.push({
-        id,
-        worktree: data.worktree ?? "/",
-        vcs: data.vcs,
-        name: data.name ?? undefined,
-        icon_url: data.icon?.url,
-        icon_url_override: data.icon?.override,
-        icon_color: data.icon?.color,
-        time_created: data.time?.created ?? now,
-        time_updated: data.time?.updated ?? now,
-        time_initialized: data.time?.initialized,
-        sandboxes: data.sandboxes ?? [],
-        commands: data.commands
-      });
-    }
-    stats.projects += insert(projectValues, ProjectTable, "project");
-    step("projects", end - i);
-  }
-  log.info("migrated projects", {
-    count: stats.projects,
-    duration: Math.round(performance.now() - start)
-  });
-
-  // Migrate sessions (depends on projects)
-  // Derive all IDs from directory/file paths, not JSON content, since earlier
-  // migrations may have moved sessions to new directories without updating the JSON
-  const sessionProjects = sessionFiles.map(file => path.basename(path.dirname(file)));
-  const sessionIds = new Set();
-  const sessionValues = [];
-  for (let i = 0; i < sessionFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, sessionFiles.length);
-    const batch = await read(sessionFiles, i, end);
-    sessionValues.length = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const id = path.basename(sessionFiles[i + j], ".json");
-      const projectID = sessionProjects[i + j];
-      if (!projectIds.has(projectID)) {
-        orphans.sessions++;
-        continue;
+  await Database.transactionAsync(async h => {
+    async function insert(values, spec, label) {
+      if (values.length === 0) return 0;
+      try {
+        const tuple = `(${spec.columns.map(() => "?").join(", ")})`;
+        const replacements = [];
+        for (const value of values) {
+          for (const column of spec.columns) {
+            const raw = value[column];
+            replacements.push(raw == null ? null : spec.json.has(column) ? JSON.stringify(raw) : raw);
+          }
+        }
+        await h.sequelize.query(`INSERT OR IGNORE INTO ${spec.name} (${spec.columns.join(", ")}) VALUES ${values.map(() => tuple).join(", ")}`, {
+          replacements,
+          transaction: h.tx
+        });
+        return values.length;
+      } catch (e) {
+        errs.push(`failed to migrate ${label} batch: ${e}`);
+        return 0;
       }
-      sessionIds.add(id);
-      sessionValues.push({
-        id,
-        project_id: projectID,
-        parent_id: data.parentID ?? null,
-        slug: data.slug ?? "",
-        directory: data.directory ?? "",
-        path: data.path ?? null,
-        title: data.title ?? "",
-        version: data.version ?? "",
-        share_url: data.share?.url ?? null,
-        summary_additions: data.summary?.additions ?? null,
-        summary_deletions: data.summary?.deletions ?? null,
-        summary_files: data.summary?.files ?? null,
-        summary_diffs: data.summary?.diffs ?? null,
-        revert: data.revert ?? null,
-        permission: data.permission ?? null,
-        time_created: data.time?.created ?? now,
-        time_updated: data.time?.updated ?? now,
-        time_compacting: data.time?.compacting ?? null,
-        time_archived: data.time?.archived ?? null
-      });
     }
-    stats.sessions += insert(sessionValues, SessionTable, "session");
-    step("sessions", end - i);
-  }
-  log.info("migrated sessions", {
-    count: stats.sessions
-  });
-  if (orphans.sessions > 0) {
-    log.warn("skipped orphaned sessions", {
-      count: orphans.sessions
-    });
-  }
 
-  // Migrate messages using pre-scanned file map
-  const allMessageFiles = [];
-  const allMessageSessions = [];
-  const messageSessions = new Map();
-  for (const file of messageFiles) {
-    const sessionID = path.basename(path.dirname(file));
-    if (!sessionIds.has(sessionID)) continue;
-    allMessageFiles.push(file);
-    allMessageSessions.push(sessionID);
-  }
-  for (let i = 0; i < allMessageFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, allMessageFiles.length);
-    const batch = await read(allMessageFiles, i, end);
-    // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated for index-based batch fill
-    const values = new Array(batch.length);
-    let count = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const file = allMessageFiles[i + j];
-      const id = path.basename(file, ".json");
-      const sessionID = allMessageSessions[i + j];
-      messageSessions.set(id, sessionID);
-      const rest = data;
-      delete rest.id;
-      delete rest.sessionID;
-      values[count++] = {
-        id,
-        session_id: sessionID,
-        time_created: data.time?.created ?? now,
-        time_updated: data.time?.updated ?? now,
-        data: rest
-      };
-    }
-    values.length = count;
-    stats.messages += insert(values, MessageTable, "message");
-    step("messages", end - i);
-  }
-  log.info("migrated messages", {
-    count: stats.messages
-  });
-
-  // Migrate parts using pre-scanned file map
-  for (let i = 0; i < partFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, partFiles.length);
-    const batch = await read(partFiles, i, end);
-    // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated for index-based batch fill
-    const values = new Array(batch.length);
-    let count = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const file = partFiles[i + j];
-      const id = path.basename(file, ".json");
-      const messageID = path.basename(path.dirname(file));
-      const sessionID = messageSessions.get(messageID);
-      if (!sessionID) {
-        errs.push(`part missing message session: ${file}`);
-        continue;
-      }
-      if (!sessionIds.has(sessionID)) continue;
-      const rest = data;
-      delete rest.id;
-      delete rest.messageID;
-      delete rest.sessionID;
-      values[count++] = {
-        id,
-        message_id: messageID,
-        session_id: sessionID,
-        time_created: data.time?.created ?? now,
-        time_updated: data.time?.updated ?? now,
-        data: rest
-      };
-    }
-    values.length = count;
-    stats.parts += insert(values, PartTable, "part");
-    step("parts", end - i);
-  }
-  log.info("migrated parts", {
-    count: stats.parts
-  });
-
-  // Migrate todos
-  const todoSessions = todoFiles.map(file => path.basename(file, ".json"));
-  for (let i = 0; i < todoFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, todoFiles.length);
-    const batch = await read(todoFiles, i, end);
-    const values = [];
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const sessionID = todoSessions[i + j];
-      if (!sessionIds.has(sessionID)) {
-        orphans.todos++;
-        continue;
-      }
-      if (!Array.isArray(data)) {
-        errs.push(`todo not an array: ${todoFiles[i + j]}`);
-        continue;
-      }
-      for (let position = 0; position < data.length; position++) {
-        const todo = data[position];
-        if (!todo?.content || !todo?.status || !todo?.priority) continue;
-        values.push({
-          session_id: sessionID,
-          content: todo.content,
-          status: todo.status,
-          priority: todo.priority,
-          position,
-          time_created: now,
-          time_updated: now
+    // Migrate projects first (no FK deps)
+    // Derive all IDs from file paths, not JSON content
+    const projectIds = new Set();
+    const projectValues = [];
+    for (let i = 0; i < projectFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, projectFiles.length);
+      const batch = await read(projectFiles, i, end);
+      projectValues.length = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const id = path.basename(projectFiles[i + j], ".json");
+        projectIds.add(id);
+        projectValues.push({
+          id,
+          worktree: data.worktree ?? "/",
+          vcs: data.vcs,
+          name: data.name ?? undefined,
+          icon_url: data.icon?.url,
+          icon_url_override: data.icon?.override,
+          icon_color: data.icon?.color,
+          time_created: data.time?.created ?? now,
+          time_updated: data.time?.updated ?? now,
+          time_initialized: data.time?.initialized,
+          sandboxes: data.sandboxes ?? [],
+          commands: data.commands
         });
       }
+      stats.projects += await insert(projectValues, TABLES.project, "project");
+      step("projects", end - i);
     }
-    stats.todos += insert(values, TodoTable, "todo");
-    step("todos", end - i);
-  }
-  log.info("migrated todos", {
-    count: stats.todos
-  });
-  if (orphans.todos > 0) {
-    log.warn("skipped orphaned todos", {
-      count: orphans.todos
+    log.info("migrated projects", {
+      count: stats.projects,
+      duration: Math.round(performance.now() - start)
     });
-  }
 
-  // Migrate permissions
-  const permProjects = permFiles.map(file => path.basename(file, ".json"));
-  const permValues = [];
-  for (let i = 0; i < permFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, permFiles.length);
-    const batch = await read(permFiles, i, end);
-    permValues.length = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const projectID = permProjects[i + j];
-      if (!projectIds.has(projectID)) {
-        orphans.permissions++;
-        continue;
+    // Migrate sessions (depends on projects)
+    // Derive all IDs from directory/file paths, not JSON content, since earlier
+    // migrations may have moved sessions to new directories without updating the JSON
+    const sessionProjects = sessionFiles.map(file => path.basename(path.dirname(file)));
+    const sessionIds = new Set();
+    const sessionValues = [];
+    for (let i = 0; i < sessionFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, sessionFiles.length);
+      const batch = await read(sessionFiles, i, end);
+      sessionValues.length = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const id = path.basename(sessionFiles[i + j], ".json");
+        const projectID = sessionProjects[i + j];
+        if (!projectIds.has(projectID)) {
+          orphans.sessions++;
+          continue;
+        }
+        sessionIds.add(id);
+        sessionValues.push({
+          id,
+          project_id: projectID,
+          parent_id: data.parentID ?? null,
+          slug: data.slug ?? "",
+          directory: data.directory ?? "",
+          path: data.path ?? null,
+          title: data.title ?? "",
+          version: data.version ?? "",
+          share_url: data.share?.url ?? null,
+          summary_additions: data.summary?.additions ?? null,
+          summary_deletions: data.summary?.deletions ?? null,
+          summary_files: data.summary?.files ?? null,
+          summary_diffs: data.summary?.diffs ?? null,
+          revert: data.revert ?? null,
+          permission: data.permission ?? null,
+          time_created: data.time?.created ?? now,
+          time_updated: data.time?.updated ?? now,
+          time_compacting: data.time?.compacting ?? null,
+          time_archived: data.time?.archived ?? null
+        });
       }
-      permValues.push({
-        project_id: projectID,
-        data
+      stats.sessions += await insert(sessionValues, TABLES.session, "session");
+      step("sessions", end - i);
+    }
+    log.info("migrated sessions", {
+      count: stats.sessions
+    });
+    if (orphans.sessions > 0) {
+      log.warn("skipped orphaned sessions", {
+        count: orphans.sessions
       });
     }
-    stats.permissions += insert(permValues, PermissionTable, "permission");
-    step("permissions", end - i);
-  }
-  log.info("migrated permissions", {
-    count: stats.permissions
-  });
-  if (orphans.permissions > 0) {
-    log.warn("skipped orphaned permissions", {
-      count: orphans.permissions
-    });
-  }
 
-  // Migrate session shares
-  const shareSessions = shareFiles.map(file => path.basename(file, ".json"));
-  const shareValues = [];
-  for (let i = 0; i < shareFiles.length; i += batchSize) {
-    const end = Math.min(i + batchSize, shareFiles.length);
-    const batch = await read(shareFiles, i, end);
-    shareValues.length = 0;
-    for (let j = 0; j < batch.length; j++) {
-      const data = batch[j];
-      if (!data) continue;
-      const sessionID = shareSessions[i + j];
-      if (!sessionIds.has(sessionID)) {
-        orphans.shares++;
-        continue;
+    // Migrate messages using pre-scanned file map
+    const allMessageFiles = [];
+    const allMessageSessions = [];
+    const messageSessions = new Map();
+    for (const file of messageFiles) {
+      const sessionID = path.basename(path.dirname(file));
+      if (!sessionIds.has(sessionID)) continue;
+      allMessageFiles.push(file);
+      allMessageSessions.push(sessionID);
+    }
+    for (let i = 0; i < allMessageFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, allMessageFiles.length);
+      const batch = await read(allMessageFiles, i, end);
+      // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated for index-based batch fill
+      const values = new Array(batch.length);
+      let count = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const file = allMessageFiles[i + j];
+        const id = path.basename(file, ".json");
+        const sessionID = allMessageSessions[i + j];
+        messageSessions.set(id, sessionID);
+        const rest = data;
+        delete rest.id;
+        delete rest.sessionID;
+        values[count++] = {
+          id,
+          session_id: sessionID,
+          time_created: data.time?.created ?? now,
+          time_updated: data.time?.updated ?? now,
+          data: rest
+        };
       }
-      if (!data?.id || !data?.secret || !data?.url) {
-        errs.push(`session_share missing id/secret/url: ${shareFiles[i + j]}`);
-        continue;
+      values.length = count;
+      stats.messages += await insert(values, TABLES.message, "message");
+      step("messages", end - i);
+    }
+    log.info("migrated messages", {
+      count: stats.messages
+    });
+
+    // Migrate parts using pre-scanned file map
+    for (let i = 0; i < partFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, partFiles.length);
+      const batch = await read(partFiles, i, end);
+      // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated for index-based batch fill
+      const values = new Array(batch.length);
+      let count = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const file = partFiles[i + j];
+        const id = path.basename(file, ".json");
+        const messageID = path.basename(path.dirname(file));
+        const sessionID = messageSessions.get(messageID);
+        if (!sessionID) {
+          errs.push(`part missing message session: ${file}`);
+          continue;
+        }
+        if (!sessionIds.has(sessionID)) continue;
+        const rest = data;
+        delete rest.id;
+        delete rest.messageID;
+        delete rest.sessionID;
+        values[count++] = {
+          id,
+          message_id: messageID,
+          session_id: sessionID,
+          time_created: data.time?.created ?? now,
+          time_updated: data.time?.updated ?? now,
+          data: rest
+        };
       }
-      shareValues.push({
-        session_id: sessionID,
-        id: data.id,
-        secret: data.secret,
-        url: data.url
+      values.length = count;
+      stats.parts += await insert(values, TABLES.part, "part");
+      step("parts", end - i);
+    }
+    log.info("migrated parts", {
+      count: stats.parts
+    });
+
+    // Migrate todos
+    const todoSessions = todoFiles.map(file => path.basename(file, ".json"));
+    for (let i = 0; i < todoFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, todoFiles.length);
+      const batch = await read(todoFiles, i, end);
+      const values = [];
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const sessionID = todoSessions[i + j];
+        if (!sessionIds.has(sessionID)) {
+          orphans.todos++;
+          continue;
+        }
+        if (!Array.isArray(data)) {
+          errs.push(`todo not an array: ${todoFiles[i + j]}`);
+          continue;
+        }
+        for (let position = 0; position < data.length; position++) {
+          const todo = data[position];
+          if (!todo?.content || !todo?.status || !todo?.priority) continue;
+          values.push({
+            session_id: sessionID,
+            content: todo.content,
+            status: todo.status,
+            priority: todo.priority,
+            position,
+            time_created: now,
+            time_updated: now
+          });
+        }
+      }
+      stats.todos += await insert(values, TABLES.todo, "todo");
+      step("todos", end - i);
+    }
+    log.info("migrated todos", {
+      count: stats.todos
+    });
+    if (orphans.todos > 0) {
+      log.warn("skipped orphaned todos", {
+        count: orphans.todos
       });
     }
-    stats.shares += insert(shareValues, SessionShareTable, "session_share");
-    step("shares", end - i);
-  }
-  log.info("migrated session shares", {
-    count: stats.shares
-  });
-  if (orphans.shares > 0) {
-    log.warn("skipped orphaned session shares", {
-      count: orphans.shares
+
+    // Migrate permissions
+    // (timestamps were drizzle column defaults; raw SQL needs them explicit)
+    const permProjects = permFiles.map(file => path.basename(file, ".json"));
+    const permValues = [];
+    for (let i = 0; i < permFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, permFiles.length);
+      const batch = await read(permFiles, i, end);
+      permValues.length = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const projectID = permProjects[i + j];
+        if (!projectIds.has(projectID)) {
+          orphans.permissions++;
+          continue;
+        }
+        permValues.push({
+          project_id: projectID,
+          time_created: Date.now(),
+          time_updated: Date.now(),
+          data
+        });
+      }
+      stats.permissions += await insert(permValues, TABLES.permission, "permission");
+      step("permissions", end - i);
+    }
+    log.info("migrated permissions", {
+      count: stats.permissions
     });
-  }
-  db.run("COMMIT");
+    if (orphans.permissions > 0) {
+      log.warn("skipped orphaned permissions", {
+        count: orphans.permissions
+      });
+    }
+
+    // Migrate session shares
+    // (timestamps were drizzle column defaults; raw SQL needs them explicit)
+    const shareSessions = shareFiles.map(file => path.basename(file, ".json"));
+    const shareValues = [];
+    for (let i = 0; i < shareFiles.length; i += batchSize) {
+      const end = Math.min(i + batchSize, shareFiles.length);
+      const batch = await read(shareFiles, i, end);
+      shareValues.length = 0;
+      for (let j = 0; j < batch.length; j++) {
+        const data = batch[j];
+        if (!data) continue;
+        const sessionID = shareSessions[i + j];
+        if (!sessionIds.has(sessionID)) {
+          orphans.shares++;
+          continue;
+        }
+        if (!data?.id || !data?.secret || !data?.url) {
+          errs.push(`session_share missing id/secret/url: ${shareFiles[i + j]}`);
+          continue;
+        }
+        shareValues.push({
+          session_id: sessionID,
+          id: data.id,
+          secret: data.secret,
+          url: data.url,
+          time_created: Date.now(),
+          time_updated: Date.now()
+        });
+      }
+      stats.shares += await insert(shareValues, TABLES.session_share, "session_share");
+      step("shares", end - i);
+    }
+    log.info("migrated session shares", {
+      count: stats.shares
+    });
+    if (orphans.shares > 0) {
+      log.warn("skipped orphaned session shares", {
+        count: orphans.shares
+      });
+    }
+  });
   log.info("json migration complete", {
     projects: stats.projects,
     sessions: stats.sessions,

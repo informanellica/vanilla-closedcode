@@ -1,18 +1,11 @@
-import {  drizzle  } from "drizzle-orm/node-sqlite"
 import {  JsonMigration  } from "#storage/json-migration.js"
 import {  Global  } from "core/global"
-import {  ProjectTable  } from "../../src/project/project.sql.js"
+import {  Database  } from "#storage/db.js"
 import {  ProjectID  } from "../../src/project/schema.js"
-import {  SessionTable, MessageTable, PartTable, TodoTable, PermissionTable  } from "../../src/session/session.sql.js"
-import {  SessionShareTable  } from "../../src/share/share.sql.js"
 import {  SessionID, MessageID, PartID  } from "../../src/session/schema.js"
-import {  describe, test, expect, beforeEach, afterEach, beforeAll  } from "@jest/globals"
-import {  DatabaseSync as Database  } from "node:sqlite"
+import {  describe, test, expect, beforeEach, afterEach  } from "@jest/globals"
 import path from "path";
 import fs from "fs/promises";
-import {  readFileSync, readdirSync  } from "fs"
-import { fileURLToPath as __toPath } from "node:url";
-const __dirname = path.dirname(__toPath(import.meta.url));
 
 async function bunWrite(p, content) {
   await fs.mkdir(path.dirname(p), { recursive: true });
@@ -104,37 +97,25 @@ async function writeSession(storageDir, projectID, session) {
   await bunWrite(path.join(storageDir, "session", projectID, `${session.id}.json`), JSON.stringify(session));
 }
 
-// Helper to create in-memory test database with schema
-function createTestDb() {
-  const sqlite = new Database(":memory:");
-  sqlite.exec("PRAGMA foreign_keys = ON");
-
-  // Apply schema migrations using drizzle migrate
-  const dir = path.join(__dirname, "../../migration");
-  const entries = readdirSync(dir, {
-    withFileTypes: true
-  });
-  const migrations = entries.filter(entry => entry.isDirectory()).map(entry => ({
-    sql: readFileSync(path.join(dir, entry.name, "migration.sql"), "utf-8"),
-    timestamp: Number(entry.name.split("_")[0]),
-    name: entry.name
-  })).sort((a, b) => a.timestamp - b.timestamp);
-  const db = drizzle({
-    client: sqlite
-  });
-  { for (const m of migrations) { const stmts = m.sql.split("--> statement-breakpoint"); for (const s of stmts) if (s.trim()) sqlite.exec(s); } };
-  return [sqlite, db];
-}
+// JsonMigration now runs on the shared Sequelize layer (ORM migration S3):
+// the lazy Orm opens CLOSEDCODE_DB=:memory: and applies the SQL migration
+// journal itself, so no per-test drizzle database is constructed anymore.
+// Reads go through the model handle and return plain rows (JSON parsed).
+const rows = (model, options) => Database.useAsync(async h => (await h.models[model].findAll({
+  ...options,
+  transaction: h.tx
+})).map(r => r.get({
+  plain: true
+})));
 describe("JSON to SQLite migration", () => {
   let storageDir;
-  let sqlite;
-  let db;
   beforeEach(async () => {
     storageDir = await setupStorageDir();
-    [sqlite, db] = createTestDb();
   });
   afterEach(async () => {
-    sqlite.close();
+    // closeAsync resets the lazy Orm — next useAsync gets a fresh :memory:
+    // database (mirrors the per-test in-memory db the old fixture created).
+    await Database.closeAsync();
     await fs.rm(storageDir, {
       recursive: true,
       force: true
@@ -152,9 +133,9 @@ describe("JSON to SQLite migration", () => {
       },
       sandboxes: ["/test/sandbox"]
     });
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.projects).toBe(1);
-    const projects = db.select().from(ProjectTable).all();
+    const projects = await rows("Project");
     expect(projects.length).toBe(1);
     expect(projects[0].id).toBe(ProjectID.make("proj_test123abc"));
     expect(projects[0].worktree).toBe("/test/path");
@@ -170,9 +151,9 @@ describe("JSON to SQLite migration", () => {
       name: "Test Project",
       sandboxes: []
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.projects).toBe(1);
-    const projects = db.select().from(ProjectTable).all();
+    const projects = await rows("Project");
     expect(projects.length).toBe(1);
     expect(projects[0].id).toBe(ProjectID.make("proj_filename")); // Uses filename, not JSON id
   });
@@ -191,9 +172,9 @@ describe("JSON to SQLite migration", () => {
         start: "npm run dev"
       }
     });
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.projects).toBe(1);
-    const projects = db.select().from(ProjectTable).all();
+    const projects = await rows("Project");
     expect(projects.length).toBe(1);
     expect(projects[0].id).toBe(ProjectID.make("proj_with_commands"));
     expect(projects[0].commands).toEqual({
@@ -212,9 +193,9 @@ describe("JSON to SQLite migration", () => {
       },
       sandboxes: []
     });
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.projects).toBe(1);
-    const projects = db.select().from(ProjectTable).all();
+    const projects = await rows("Project");
     expect(projects.length).toBe(1);
     expect(projects[0].id).toBe(ProjectID.make("proj_no_commands"));
     expect(projects[0].commands).toBeNull();
@@ -249,8 +230,8 @@ describe("JSON to SQLite migration", () => {
         url: "https://example.com/share"
       }
     });
-    await JsonMigration.run(db);
-    const sessions = db.select().from(SessionTable).all();
+    await JsonMigration.run();
+    const sessions = await rows("Session");
     expect(sessions.length).toBe(1);
     expect(sessions[0].id).toBe(SessionID.make("ses_test456def"));
     expect(sessions[0].project_id).toBe(ProjectID.make("proj_test123abc"));
@@ -279,13 +260,13 @@ describe("JSON to SQLite migration", () => {
     await bunWrite(path.join(storageDir, "part", "msg_test789ghi", "prt_testabc123.json"), JSON.stringify({
       ...fixtures.part
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.messages).toBe(1);
     expect(stats?.parts).toBe(1);
-    const messages = db.select().from(MessageTable).all();
+    const messages = await rows("Message");
     expect(messages.length).toBe(1);
     expect(messages[0].id).toBe(MessageID.make("msg_test789ghi"));
-    const parts = db.select().from(PartTable).all();
+    const parts = await rows("Part");
     expect(parts.length).toBe(1);
     expect(parts[0].id).toBe(PartID.make("prt_testabc123"));
   });
@@ -317,16 +298,16 @@ describe("JSON to SQLite migration", () => {
       type: "text",
       text: "Hello, world!"
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.messages).toBe(1);
     expect(stats?.parts).toBe(1);
-    const messages = db.select().from(MessageTable).all();
+    const messages = await rows("Message");
     expect(messages.length).toBe(1);
     expect(messages[0].id).toBe(MessageID.make("msg_test789ghi"));
     expect(messages[0].session_id).toBe(SessionID.make("ses_test456def"));
     expect(messages[0].data).not.toHaveProperty("id");
     expect(messages[0].data).not.toHaveProperty("sessionID");
-    const parts = db.select().from(PartTable).all();
+    const parts = await rows("Part");
     expect(parts.length).toBe(1);
     expect(parts[0].id).toBe(PartID.make("prt_testabc123"));
     expect(parts[0].message_id).toBe(MessageID.make("msg_test789ghi"));
@@ -358,9 +339,9 @@ describe("JSON to SQLite migration", () => {
         created: 1700000000000
       }
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.messages).toBe(1);
-    const messages = db.select().from(MessageTable).all();
+    const messages = await rows("Message");
     expect(messages.length).toBe(1);
     expect(messages[0].id).toBe(MessageID.make("msg_from_filename")); // Uses filename, not JSON id
     expect(messages[0].session_id).toBe(SessionID.make("ses_test456def"));
@@ -394,9 +375,9 @@ describe("JSON to SQLite migration", () => {
       type: "text",
       text: "Hello"
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.parts).toBe(1);
-    const parts = db.select().from(PartTable).all();
+    const parts = await rows("Part");
     expect(parts.length).toBe(1);
     expect(parts[0].id).toBe(PartID.make("prt_from_filename")); // Uses filename, not JSON id
     expect(parts[0].message_id).toBe(MessageID.make("msg_realmsgid")); // Uses parent dir, not JSON messageID
@@ -414,7 +395,7 @@ describe("JSON to SQLite migration", () => {
         updated: Date.now()
       }
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.sessions).toBe(0);
   });
   test("uses directory path for projectID when JSON has stale value", async () => {
@@ -446,9 +427,9 @@ describe("JSON to SQLite migration", () => {
         updated: 1700000001000
       }
     });
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.sessions).toBe(1);
-    const sessions = db.select().from(SessionTable).all();
+    const sessions = await rows("Session");
     expect(sessions.length).toBe(1);
     expect(sessions[0].id).toBe(SessionID.make("ses_migrated"));
     expect(sessions[0].project_id).toBe(ProjectID.make(gitBasedProjectID)); // Uses directory, not stale JSON
@@ -476,9 +457,9 @@ describe("JSON to SQLite migration", () => {
         updated: 1700000001000
       }
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.sessions).toBe(1);
-    const sessions = db.select().from(SessionTable).all();
+    const sessions = await rows("Session");
     expect(sessions.length).toBe(1);
     expect(sessions[0].id).toBe(SessionID.make("ses_from_filename")); // Uses filename, not JSON id
     expect(sessions[0].project_id).toBe(ProjectID.make("proj_test123abc"));
@@ -493,10 +474,10 @@ describe("JSON to SQLite migration", () => {
       },
       sandboxes: []
     });
-    await JsonMigration.run(db);
-    await JsonMigration.run(db);
-    const projects = db.select().from(ProjectTable).all();
-    expect(projects.length).toBe(1); // Still only 1 due to onConflictDoNothing
+    await JsonMigration.run();
+    await JsonMigration.run();
+    const projects = await rows("Project");
+    expect(projects.length).toBe(1); // Still only 1 due to INSERT OR IGNORE
   });
   test("migrates todos", async () => {
     await writeProject(storageDir, {
@@ -524,9 +505,9 @@ describe("JSON to SQLite migration", () => {
       status: "completed",
       priority: "medium"
     }]));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.todos).toBe(2);
-    const todos = db.select().from(TodoTable).orderBy(TodoTable.position).all();
+    const todos = await rows("Todo", { order: [["position", "ASC"]] });
     expect(todos.length).toBe(2);
     expect(todos[0].content).toBe("First todo");
     expect(todos[0].status).toBe("pending");
@@ -561,8 +542,8 @@ describe("JSON to SQLite migration", () => {
       status: "in_progress",
       priority: "medium"
     }]));
-    await JsonMigration.run(db);
-    const todos = db.select().from(TodoTable).orderBy(TodoTable.position).all();
+    await JsonMigration.run();
+    const todos = await rows("Todo", { order: [["position", "ASC"]] });
     expect(todos.length).toBe(3);
     expect(todos[0].content).toBe("Third");
     expect(todos[0].position).toBe(0);
@@ -597,9 +578,9 @@ describe("JSON to SQLite migration", () => {
       action: "deny"
     }];
     await bunWrite(path.join(storageDir, "permission", "proj_test123abc.json"), JSON.stringify(permissionData));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.permissions).toBe(1);
-    const permissions = db.select().from(PermissionTable).all();
+    const permissions = await rows("Permission");
     expect(permissions.length).toBe(1);
     expect(permissions[0].project_id).toBe("proj_test123abc");
     expect(permissions[0].data).toEqual(permissionData);
@@ -624,9 +605,9 @@ describe("JSON to SQLite migration", () => {
       secret: "supersecretkey",
       url: "https://share.example.com/ses_test456def"
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats?.shares).toBe(1);
-    const shares = db.select().from(SessionShareTable).all();
+    const shares = await rows("SessionShare");
     expect(shares.length).toBe(1);
     expect(shares[0].session_id).toBe("ses_test456def");
     expect(shares[0].id).toBe("share_123");
@@ -638,7 +619,7 @@ describe("JSON to SQLite migration", () => {
       recursive: true,
       force: true
     });
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats.projects).toBe(0);
     expect(stats.sessions).toBe(0);
     expect(stats.messages).toBe(0);
@@ -659,10 +640,10 @@ describe("JSON to SQLite migration", () => {
       sandboxes: []
     });
     await bunWrite(path.join(storageDir, "project", "broken.json"), "{ invalid json");
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats.projects).toBe(1);
     expect(stats.errors.some(x => x.includes("failed to read") && x.includes("broken.json"))).toBe(true);
-    const projects = db.select().from(ProjectTable).all();
+    const projects = await rows("Project");
     expect(projects.length).toBe(1);
     expect(projects[0].id).toBe(ProjectID.make("proj_test123abc"));
   });
@@ -691,9 +672,9 @@ describe("JSON to SQLite migration", () => {
       status: "completed",
       priority: "medium"
     }]));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats.todos).toBe(2);
-    const todos = db.select().from(TodoTable).orderBy(TodoTable.position).all();
+    const todos = await rows("Todo", { order: [["position", "ASC"]] });
     expect(todos.length).toBe(2);
     expect(todos[0].content).toBe("keep-0");
     expect(todos[0].position).toBe(0);
@@ -739,13 +720,13 @@ describe("JSON to SQLite migration", () => {
       secret: "secret",
       url: "https://missing.example.com"
     }));
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
     expect(stats.todos).toBe(1);
     expect(stats.permissions).toBe(1);
     expect(stats.shares).toBe(1);
-    expect(db.select().from(TodoTable).all().length).toBe(1);
-    expect(db.select().from(PermissionTable).all().length).toBe(1);
-    expect(db.select().from(SessionShareTable).all().length).toBe(1);
+    expect((await rows("Todo")).length).toBe(1);
+    expect((await rows("Permission")).length).toBe(1);
+    expect((await rows("SessionShare")).length).toBe(1);
   });
   test("handles mixed corruption and partial validity in one migration run", async () => {
     await writeProject(storageDir, {
@@ -843,7 +824,7 @@ describe("JSON to SQLite migration", () => {
       url: "https://missing.example.com"
     }));
     await bunWrite(path.join(storageDir, "session_share", "ses_broken.json"), "{ nope");
-    const stats = await JsonMigration.run(db);
+    const stats = await JsonMigration.run();
 
     // Projects: proj_test123abc (valid), proj_missing_id (now derives id from filename)
     // Sessions: ses_test456def (valid), ses_missing_project (now uses dir path),
@@ -856,12 +837,12 @@ describe("JSON to SQLite migration", () => {
     expect(stats.permissions).toBe(1);
     expect(stats.shares).toBe(1);
     expect(stats.errors.length).toBeGreaterThanOrEqual(6);
-    expect(db.select().from(ProjectTable).all().length).toBe(2);
-    expect(db.select().from(SessionTable).all().length).toBe(3);
-    expect(db.select().from(MessageTable).all().length).toBe(1);
-    expect(db.select().from(PartTable).all().length).toBe(1);
-    expect(db.select().from(TodoTable).all().length).toBe(1);
-    expect(db.select().from(PermissionTable).all().length).toBe(1);
-    expect(db.select().from(SessionShareTable).all().length).toBe(1);
+    expect((await rows("Project")).length).toBe(2);
+    expect((await rows("Session")).length).toBe(3);
+    expect((await rows("Message")).length).toBe(1);
+    expect((await rows("Part")).length).toBe(1);
+    expect((await rows("Todo")).length).toBe(1);
+    expect((await rows("Permission")).length).toBe(1);
+    expect((await rows("SessionShare")).length).toBe(1);
   });
 });

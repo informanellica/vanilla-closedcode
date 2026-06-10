@@ -6,10 +6,9 @@ import {  Account  } from "../../src/account/account.js"
 import {  AccessToken, AccountID, AccountTransportError, DeviceCode, Login, Org, OrgID, RefreshToken, UserCode  } from "../../src/account/schema.js"
 import {  Database  } from "#storage/db.js"
 import {  expect, beforeAll  } from "@jest/globals"
-const truncate = Layer.effectDiscard(Effect.sync(() => {
-  const db = Database.Client();
-  db.run(/*sql*/`DELETE FROM account_state`);
-  db.run(/*sql*/`DELETE FROM account`);
+const truncate = Layer.effectDiscard(Effect.promise(async () => {
+  await Database.useAsync(h => h.sequelize.query("DELETE FROM account_state"));
+  await Database.useAsync(h => h.sequelize.query("DELETE FROM account"));
 }));
 const it = testEffect(Layer.merge(AccountRepo.layer, truncate));
 const insideEagerRefreshWindow = Duration.toMillis(Duration.minutes(1));

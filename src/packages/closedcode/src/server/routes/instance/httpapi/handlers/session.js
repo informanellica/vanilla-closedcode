@@ -82,11 +82,11 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
         });
       }
       yield* session.get(ctx.params.sessionID);
-      const page = MessageV2.page({
+      const page = yield* Effect.promise(() => MessageV2.page({
         sessionID: ctx.params.sessionID,
         limit: ctx.query.limit,
         before: ctx.query.before
-      });
+      }));
       if (!page.cursor) return page.items;
       const request = yield* HttpServerRequest.HttpServerRequest;
       // toURL() honors the Host + x-forwarded-proto headers, so the Link
@@ -104,7 +104,7 @@ export const sessionHandlers = HttpApiBuilder.group(InstanceHttpApi, "session", 
     }));
   });
   const message = Effect.fn("SessionHttpApi.message")(function* (ctx) {
-    return yield* mapNotFound(Effect.sync(() => MessageV2.get({
+    return yield* mapNotFound(Effect.promise(() => MessageV2.get({
       sessionID: ctx.params.sessionID,
       messageID: ctx.params.messageID
     })));

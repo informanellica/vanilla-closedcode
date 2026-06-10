@@ -1,6 +1,5 @@
 import { spawn } from "child_process";
 import { Database } from "#storage/db.js";
-import { drizzle } from "drizzle-orm/node-sqlite";
 import { DatabaseSync } from "node:sqlite";
 import { UI } from "../ui.js";
 import { cmd } from "./cmd.js";
@@ -62,7 +61,8 @@ const MigrateCommand = cmd({
   command: "migrate",
   describe: "migrate JSON data to SQLite (merges with existing data)",
   handler: async () => {
-    const sqlite = new DatabaseSync(Database.Path);
+    // ORM migration S3: JsonMigration runs on the shared Sequelize layer
+    // (same database file as Database.Path) instead of an ad-hoc DatabaseSync.
     const tty = process.stderr.isTTY;
     const width = 36;
     const orange = "\x1b[38;5;214m";
@@ -71,9 +71,7 @@ const MigrateCommand = cmd({
     let last = -1;
     if (tty) process.stderr.write("\x1b[?25l");
     try {
-      const stats = await JsonMigration.run(drizzle({
-        client: sqlite
-      }), {
+      const stats = await JsonMigration.run({
         progress: event => {
           const percent = Math.floor(event.current / event.total * 100);
           if (percent === last) return;
@@ -98,7 +96,7 @@ const MigrateCommand = cmd({
       UI.error(`Migration failed: ${errorMessage(err)}`);
       process.exit(1);
     } finally {
-      sqlite.close();
+      await Database.closeAsync();
     }
   }
 });
