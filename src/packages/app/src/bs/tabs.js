@@ -156,7 +156,7 @@ function createTabsState(props) {
       let target = e.target instanceof Element ? e.target : null;
       const trigger = target?.closest('[data-slot="tabs-trigger"]');
       if (!trigger || !ownedBy(trigger)) return;
-      if (target?.closest('[data-slot="tabs-trigger-close"]')) return;
+      if (target?.closest('[data-slot="tabs-trigger-close-button"]')) return;
       api.select(trigger.dataset.value);
     });
     sync();
@@ -286,7 +286,7 @@ function TabsTrigger(props) {
   appendChildren(triggerEl, split.children);
 
   if (closeButton) {
-    const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close>`);
+    const closeEl = template(`<span class="d-inline-flex align-items-center" data-slot=tabs-trigger-close-button>`);
     closeEl.textContent = typeof closeButton === "function" ? String(closeButton()) : String(closeButton);
     if (split.hideCloseButton) {
       closeEl.setAttribute("data-hidden", "true");
