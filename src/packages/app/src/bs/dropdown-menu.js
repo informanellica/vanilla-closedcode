@@ -267,10 +267,21 @@ function DropdownMenuTrigger(props) {
   const ctx = useDropdown();
   const [local, rest] = splitProps(props, ["as", "class", "classList", "onClick", "children", "ref"]);
   const tag = local.as || "button";
-  const triggerEl = document.createElement(tag);
-
-  if (tag === "button") {
-    triggerEl.type = "button";
+  // `as` may be a component function (e.g. IconButton), not a tag name —
+  // passing a function to document.createElement throws InvalidCharacterError
+  // and takes the whole app down at boot. Invoke component `as` with the rest
+  // props (icon/variant/…) and use the returned element as the trigger; class/
+  // classList/children are applied by the shared code below either way.
+  const asComponent = typeof tag === "function";
+  let triggerEl;
+  if (asComponent) {
+    const produced = tag({ ...rest });
+    triggerEl = produced instanceof Node ? produced : document.createElement("button");
+  } else {
+    triggerEl = document.createElement(tag);
+    if (tag === "button") {
+      triggerEl.type = "button";
+    }
   }
   triggerEl.setAttribute("data-slot", "dropdown-menu-trigger");
   triggerEl.setAttribute("aria-haspopup", "menu");
@@ -280,7 +291,7 @@ function DropdownMenuTrigger(props) {
     triggerEl.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
   }
   applyClassList(triggerEl, local.classList);
-  applyRestProps(triggerEl, rest);
+  if (!asComponent) applyRestProps(triggerEl, rest);
 
   triggerEl.addEventListener("click", event => {
     local.onClick?.(event);
