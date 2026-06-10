@@ -1514,9 +1514,10 @@ export default function Page() {
                                   name = `untitled-${n}.md`;
                                   abs = base + "/" + name;
                                 }
-                                try {
-                                  await window.api?.writeFile?.(abs, "");
-                                } catch {}
+                                // Do NOT touch the disk here: creating the empty file on
+                                // "+" wrote to the project before the user asked. The tab
+                                // opens against the (not-yet-existing) path; the file is
+                                // only written when the Save button (bindSave) is pressed.
                                 openFileFromTree(abs);
                               })();
                             },

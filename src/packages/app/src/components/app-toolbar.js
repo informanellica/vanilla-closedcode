@@ -36,7 +36,7 @@ function EditModeToggle(props) {
     const can = !!props.editorCanEdit?.();
     const editing = !!props.editorEditing?.();
     _btn.style.display = can ? "" : "none";
-    _icon.className = "bi " + (editing ? "bi-pencil-square" : "bi-eye");
+    _icon.className = "bi " + (editing ? "bi-pencil-square" : "bi-file-earmark-lock");
     const label = editing ? "閲覧モードに戻す" : "このファイルを編集";
     _btn.title = label;
     _btn.setAttribute("aria-label", label);
