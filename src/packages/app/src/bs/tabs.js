@@ -172,16 +172,26 @@ function createTabsState(props) {
     if (_solidGetOwner()) {
       _solidEffect(watch);
     } else {
+      // isConnected is NOT reactive, so an effect alone would only notice the
+      // unmount if some signal happened to fire afterwards. Watch the DOM
+      // itself: once the tabs root has been in the document and leaves it,
+      // dispose the standalone reactive root. (In-app Tabs always have an
+      // owner; this path exists for detached/manual usage only.)
       let wasConnected = false;
       _solidRoot(dispose => {
-        _solidEffect(() => {
-          if (rootEl?.isConnected) wasConnected = true;
-          else if (wasConnected) {
-            dispose();
+        _solidEffect(watch);
+        const observer = new MutationObserver(() => {
+          if (!rootEl) return;
+          if (rootEl.isConnected) {
+            wasConnected = true;
             return;
           }
-          watch();
+          if (wasConnected) {
+            observer.disconnect();
+            dispose();
+          }
         });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
       });
     }
     // Click delegation on the root: trigger elements may have been created

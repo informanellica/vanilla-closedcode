@@ -133,6 +133,26 @@ Development line following `0.1.0-preview`.
   The e2e-hook gate validates `CLOSEDCODE_REMOTE_DEBUG` as a real TCP port
   instead of string truthiness (`"0"`/`"false"` no longer count).
 
+- **Review feedback round 4 — vanilla DropdownMenu lifecycle and reactivity.**
+  The document-level `pointerdown`/`keydown` listeners are removed with the
+  owning component (`onCleanup`) and additionally self-heal on the first event
+  after the menu has left the document; the body-mounted Portal node is removed
+  with its owner and registered with the dropdown state; clicks inside the
+  portaled content (search box, checkbox/radio items) are no longer treated as
+  outside clicks — the duplicated `rootEl.contains` check now consults
+  content/portal. The file-local `splitProps` forwards **getters** instead of
+  copying values (matching Solid's semantics), so controlled props
+  (`open`/`checked`/`disabled`/radio `value`/`placement`/`gutter`) stay live;
+  checkbox/radio items re-apply their checked/disabled state in render effects
+  and read `checked` live in the click handler (no more repeating the same
+  inverted value). The standalone Tabs fallback root now disposes via a
+  MutationObserver (`isConnected` is not reactive, so the previous self-dispose
+  only ran if another signal fired); `TextShimmer` clears its class when it
+  turns null, like `AnimatedCountLabel`. *Note for diff-only reviewers:*
+  `undici` has been a declared direct dependency of `packages/closedcode`
+  (`"undici": "5.29.0"`) since `v0.1.0-preview`, so the
+  `import { Agent } from "undici"` addition needs no manifest change.
+
 ## [0.1.0-preview] — 2026-06-07
 
 First public preview release (git tag `v0.1.0-preview`): Windows (64-bit) installer

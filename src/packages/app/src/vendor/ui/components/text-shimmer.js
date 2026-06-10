@@ -23,7 +23,7 @@ export const TextShimmer = props => {
   outer.appendChild(charEl);
 
   _solidRenderEffect(() => {
-    if (props.class != null) outer.className = props.class;
+    outer.className = props.class ?? "";
   });
 
   _solidRenderEffect(() => {
