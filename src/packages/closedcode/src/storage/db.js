@@ -110,6 +110,14 @@ export const Client = lazy(() => {
   return db;
 });
 export function close() {
+  // Also drop the Sequelize layer: test teardowns call this sync close to get
+  // a fresh :memory: db per test — without resetting Orm the async layer's
+  // :memory: instance would leak rows across tests (order-dependent failures).
+  if (Orm.loaded()) {
+    void Orm().sequelize.close().catch(() => {});
+    Orm.reset();
+    ormReady = null;
+  }
   if (!Client.loaded()) return;
   Client().$client.close();
   Client.reset();

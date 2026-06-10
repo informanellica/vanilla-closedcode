@@ -50,7 +50,7 @@ export function createSequelize(storagePath) {
   const sequelize = new Sequelize({
     dialect: "sqlite",
     storage: storagePath,
-    logging: false,
+    logging: process.env.CLOSEDCODE_ORM_LOG ? q => require("node:fs").appendFileSync(process.env.CLOSEDCODE_ORM_LOG, q.slice(0, 500) + String.fromCharCode(10)) : false,
     define: { timestamps: false, freezeTableName: true, underscored: false },
     // single connection: sqlite + WAL; mirrors the previous DatabaseSync usage
     pool: { max: 1, min: 0, idle: 60_000 },
