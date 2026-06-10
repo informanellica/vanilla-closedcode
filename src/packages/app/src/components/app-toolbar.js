@@ -7,6 +7,8 @@ var _tmplTheme = /*#__PURE__*/_$template(`<button type="button" class="btn btn-l
 var _tmplEditToggle = /*#__PURE__*/_$template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center"><i class="bi"></i></button>`);
 var _tmplSave = /*#__PURE__*/_$template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center" title="保存" aria-label="保存"><i class="bi bi-floppy"></i></button>`);
 import { IconButton } from "@/bs/icon-button.js";
+import { Select } from "@/bs/select.js";
+import { useLanguage } from "@/context/language.js";
 // Light/Dark toggle button in the toolbar. The icon shows the current theme
 // (sun = light, moon = dark) and clicking flips to the other one.
 function ThemeToggle(props) {
@@ -190,6 +192,26 @@ export function AppToolbar(props) {
       },
       get onSetTheme() {
         return props.onSetTheme;
+      }
+    }), null);
+    // UI language switcher (far right): compact native select showing the
+    // locale code (JA/EN/…); switching re-renders all reactive i18n text live.
+    const language = useLanguage();
+    _$insert(_rightGroup, _$createComponent(Select, {
+      get options() {
+        return language.locales;
+      },
+      get current() {
+        return language.locale();
+      },
+      label: locale => locale.toUpperCase(),
+      value: locale => locale,
+      onSelect: locale => locale && language.setLocale(locale),
+      variant: "ghost",
+      size: "small",
+      "class": "ms-1",
+      get title() {
+        return language.t("settings.general.language") ?? "Language";
       }
     }), null);
     return _el$;
