@@ -49,11 +49,12 @@ function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
     if (!cls) continue;
-    if (classList[cls]) {
-      el.classList.add(cls);
-    } else {
-      el.classList.remove(cls);
-    }
+    // Solid's classList contract allows space-separated multi-class keys;
+    // DOMTokenList.add/remove reject tokens containing spaces.
+    const tokens = cls.split(/\s+/).filter(Boolean);
+    if (!tokens.length) continue;
+    if (classList[cls]) el.classList.add(...tokens);
+    else el.classList.remove(...tokens);
   }
 }
 
