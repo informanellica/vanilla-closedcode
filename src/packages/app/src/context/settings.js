@@ -99,6 +99,16 @@ export const {
       const root = document.documentElement;
       root.style.setProperty("--font-family-mono", monoFontFamily(store.appearance?.mono));
       root.style.setProperty("--font-family-sans", sansFontFamily(store.appearance?.sans));
+      root.style.setProperty("--editor-font-size", `${store.appearance?.fontSize ?? defaultSettings.appearance.fontSize}px`);
+      // CodeMirror ships its own `font-family: monospace` rule, so the editor
+      // ignores inherited fonts — pin it to our variables once, here, next to
+      // the code that drives them (toolbar font/size selects).
+      if (!document.getElementById("closedcode-editor-font")) {
+        const style = document.createElement("style");
+        style.id = "closedcode-editor-font";
+        style.textContent = ".CodeMirror{font-family:var(--font-family-mono)!important;font-size:var(--editor-font-size,14px)!important;}";
+        document.head.appendChild(style);
+      }
     });
     createEffect(() => {
       if (store.general?.followup !== "queue") return;

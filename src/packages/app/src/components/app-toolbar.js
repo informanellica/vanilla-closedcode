@@ -8,6 +8,7 @@ var _tmplEditToggle = /*#__PURE__*/_$template(`<button type="button" class="btn 
 var _tmplSave = /*#__PURE__*/_$template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center" title="保存" aria-label="保存"><i class="bi bi-floppy"></i></button>`);
 import { IconButton } from "@/bs/icon-button.js";
 import { Select } from "@/bs/select.js";
+import { useSettings } from "@/context/settings.js";
 import { useLanguage } from "@/context/language.js";
 // Light/Dark toggle button in the toolbar. The icon shows the current theme
 // (sun = light, moon = dark) and clicking flips to the other one.
@@ -110,6 +111,35 @@ export function AppToolbar(props) {
       get onToggleEdit() {
         return props.onToggleEdit;
       }
+    }), null);
+    // Editor font family / size selects. They write straight to the settings
+    // store; settings.js applies them via --font-family-mono/--editor-font-size.
+    const settings = useSettings();
+    const EDITOR_FONTS = ["", "Consolas", "Cascadia Code", "JetBrains Mono", "Source Code Pro", "Noto Sans Mono", "MS Gothic"];
+    const EDITOR_SIZES = [10, 11, 12, 13, 14, 15, 16, 18, 20, 22];
+    _$insert(_editGroup, _$createComponent(Select, {
+      options: EDITOR_FONTS,
+      get current() {
+        return settings.appearance.font();
+      },
+      label: f => f === "" ? "Font" : f,
+      value: f => f,
+      onSelect: f => settings.appearance.setFont(f ?? ""),
+      variant: "ghost",
+      size: "small",
+      title: "エディタのフォント"
+    }), null);
+    _$insert(_editGroup, _$createComponent(Select, {
+      options: EDITOR_SIZES,
+      get current() {
+        return settings.appearance.fontSize();
+      },
+      label: n => `${n}px`,
+      value: n => String(n),
+      onSelect: n => n != null && settings.appearance.setFontSize(Number(n)),
+      variant: "ghost",
+      size: "small",
+      title: "エディタの文字サイズ"
     }), null);
     _$insert(_editGroup, _$createComponent(SaveButton, {
       get editorEditing() {
