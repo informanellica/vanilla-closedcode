@@ -1,4 +1,4 @@
-import { createEffect as _solidEffect, createRoot as _solidRoot } from "solid-js";
+import { createEffect as _solidEffect, createRenderEffect as _solidRenderEffect, createRoot as _solidRoot, getOwner as _solidGetOwner } from "solid-js";
 import { insert as _solidInsert } from "solid-js/web";
 function template(html) {
   const wrapper = document.createElement("div");
@@ -160,13 +160,30 @@ function createTabsState(props) {
   let rootEl = null;
   api.registerRoot = el => {
     rootEl = el;
-    // Track external (controlled) value changes reactively.
-    _solidRoot(() => {
-      _solidEffect(() => {
-        void props.value;
-        sync();
+    // Track external (controlled) value changes reactively. Prefer the caller's
+    // owner so the effect is disposed together with the component that created
+    // the Tabs (dialogs that re-open repeatedly must not accumulate effects).
+    // Only when there is no owner do we create a standalone root — and then it
+    // self-disposes once the tabs root has left the document.
+    const watch = () => {
+      void props.value;
+      sync();
+    };
+    if (_solidGetOwner()) {
+      _solidEffect(watch);
+    } else {
+      let wasConnected = false;
+      _solidRoot(dispose => {
+        _solidEffect(() => {
+          if (rootEl?.isConnected) wasConnected = true;
+          else if (wasConnected) {
+            dispose();
+            return;
+          }
+          watch();
+        });
       });
-    });
+    }
     // Click delegation on the root: trigger elements may have been created
     // before this state existed (so their own listeners hold tabs=null) —
     // the root handles selection for every descendant trigger it owns.
@@ -236,9 +253,13 @@ function TabsList(props) {
 
   listEl.setAttribute("role", "tablist");
   listEl.setAttribute("data-slot", "tabs-list");
-  listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
   listEl.classList.add("nav", "nav-pills");
-  listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
+  // Render effect (runs immediately, then re-runs) so the list follows a
+  // dynamically changing orientation instead of freezing the initial value.
+  _solidRenderEffect(() => {
+    listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
+    listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
+  });
 
   if (split.class) {
     listEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));

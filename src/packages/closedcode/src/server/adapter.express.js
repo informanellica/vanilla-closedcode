@@ -24,9 +24,10 @@ async function listen(app, opts, inject) {
       // Long agent loops run inside a single request, so the default 5-minute
       // requestTimeout would abort them — but zeroing the timeouts also lets a
       // client hold a connection open forever (slow-header DoS). Only disable
-      // them for loopback binds; an externally reachable serve keeps Node's
-      // defaults.
-      const loopback = !opts.hostname || ["127.0.0.1", "localhost", "::1", "::ffff:127.0.0.1"].includes(opts.hostname);
+      // them for EXPLICIT loopback binds: an omitted hostname makes Node listen
+      // on all interfaces, so it must keep the defaults too. (The CLI defaults
+      // --hostname to 127.0.0.1, so local serves still get the long-run fix.)
+      const loopback = ["127.0.0.1", "localhost", "::1", "::ffff:127.0.0.1"].includes(opts.hostname);
       if (loopback) {
         server.requestTimeout = 0;
         server.headersTimeout = 0;
