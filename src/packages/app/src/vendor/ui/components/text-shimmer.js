@@ -1,58 +1,64 @@
-import { insert as _solidInsert } from "solid-js/web";
-function appendChildren(parent, children) {
-  if (children == null || children === false) return;
-  if (Array.isArray(children)) {
-    for (const child of children) appendChildren(parent, child);
-    return;
-  }
-  if (children instanceof Node) {
-    parent.appendChild(children);
-    return;
-  }
-  if (typeof children === "function") {
-    // Reactive child (Solid Show/For/components return accessors): let
-    // solid-js/web insert() track it so updates re-render instead of freezing.
-    _solidInsert(parent, children);
-    return;
-  }
-  parent.appendChild(document.createTextNode(String(children)));
-}
+import { createRenderEffect as _solidRenderEffect, onCleanup } from "solid-js";
 
 export const TextShimmer = props => {
   const swap = 220;
-  const active = props.active ?? true;
-  const text = props.text ?? "";
-  const offset = props.offset ?? 0;
   const outer = document.createElement(props.as || "span");
+  const charEl = document.createElement("span");
   const base = document.createElement("span");
   const shimmer = document.createElement("span");
 
   outer.setAttribute("data-component", "text-shimmer");
-  outer.setAttribute("aria-label", text);
-  outer.setAttribute("data-active", active ? "true" : "false");
-  outer.className = props.class || "";
   outer.style.setProperty("--text-shimmer-swap", `${swap}ms`);
-  outer.style.setProperty("--text-shimmer-index", `${offset}`);
 
-  base.setAttribute("data-slot", "text-shimmer-char");
+  // The CSS overlays char-base and char-shimmer via grid-area 1/1 inside the
+  // char container — both carry the same text, only one is visible at a time.
+  charEl.setAttribute("data-slot", "text-shimmer-char");
+  base.setAttribute("data-slot", "text-shimmer-char-base");
   base.setAttribute("aria-hidden", "true");
-  base.setAttribute("data-run", active ? "true" : "false");
-
-  shimmer.setAttribute("data-slot", "text-shimmer-char");
+  shimmer.setAttribute("data-slot", "text-shimmer-char-shimmer");
   shimmer.setAttribute("aria-hidden", "true");
-  shimmer.setAttribute("data-run", active ? "true" : "false");
 
-  appendChildren(base, text);
-  appendChildren(shimmer, text);
-  outer.appendChild(base);
-  outer.appendChild(shimmer);
+  charEl.appendChild(base);
+  charEl.appendChild(shimmer);
+  outer.appendChild(charEl);
 
-  if (!active) {
-    setTimeout(() => {
-      base.setAttribute("data-run", "false");
+  _solidRenderEffect(() => {
+    if (props.class != null) outer.className = props.class;
+  });
+
+  _solidRenderEffect(() => {
+    const text = props.text ?? "";
+    base.textContent = text;
+    shimmer.textContent = text;
+    outer.setAttribute("aria-label", text);
+  });
+
+  _solidRenderEffect(() => {
+    outer.style.setProperty("--text-shimmer-index", `${props.offset ?? 0}`);
+  });
+
+  // data-run keeps the sweep animation going for one extra swap period after
+  // deactivation so the fade-out isn't cut short (mirrors the Solid original).
+  let timer;
+  _solidRenderEffect(() => {
+    const active = props.active ?? true;
+    outer.setAttribute("data-active", active ? "true" : "false");
+    if (timer) {
+      clearTimeout(timer);
+      timer = undefined;
+    }
+    if (active) {
+      shimmer.setAttribute("data-run", "true");
+      return;
+    }
+    timer = setTimeout(() => {
+      timer = undefined;
       shimmer.setAttribute("data-run", "false");
     }, swap);
-  }
+  });
+  onCleanup(() => {
+    if (timer) clearTimeout(timer);
+  });
 
   return outer;
 };
