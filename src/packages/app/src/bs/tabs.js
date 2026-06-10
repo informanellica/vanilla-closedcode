@@ -1,3 +1,4 @@
+import { insert as _solidInsert } from "solid-js/web";
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -28,7 +29,11 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    appendChildren(parent, children());
+    // Reactive child (Solid's Show/For return a memo accessor): let
+    // solid-js/web insert() track it so later updates re-render. Calling it
+    // once and appending froze conditional UI (e.g. the provider edit form
+    // behind the settings pencil never appeared after setEditor()).
+    _solidInsert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
