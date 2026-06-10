@@ -184,45 +184,49 @@ function createTabsState(props) {
 }
 
 function TabsRoot(props) {
-  const [split, rest] = splitProps(props, [
-    "class",
-    "classList",
-    "variant",
-    "orientation",
-    "value",
-    "defaultValue",
-    "onChange",
-    "children"
-  ]);
-
   const previousContext = TabsContext;
   // Pass the ORIGINAL props (not the copied split) so value/onChange getters stay reactive.
   const state = createTabsState(props);
+  // Set the context BEFORE touching props: splitProps copies getter props by
+  // evaluating them, and the children getter instantiates Tabs.List/Trigger/
+  // Content right there — with the context still unset they would build as
+  // horizontal (orientation fell back to the default).
   TabsContext = state;
 
-  const rootEl = template(`<div data-component=tabs>`);
-  state.registerRoot(rootEl);
-
-  rootEl.setAttribute("data-variant", state.variant());
-  rootEl.setAttribute("data-orientation", state.orientation());
-  // NOTE: no layout classes here — upstream's Tabs root only carries data
-  // attributes; layout belongs to the caller/CSS. Forcing d-flex flex-column
-  // broke the file-tab layout (tab bar rendered BELOW the editor).
-
-  if (split.class) {
-    rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
-  }
-  applyClassList(rootEl, split.classList);
-  applyRestProps(rootEl, rest);
-
   try {
+    const [split, rest] = splitProps(props, [
+      "class",
+      "classList",
+      "variant",
+      "orientation",
+      "value",
+      "defaultValue",
+      "onChange",
+      "children"
+    ]);
+
+    const rootEl = template(`<div data-component=tabs>`);
+    state.registerRoot(rootEl);
+
+    rootEl.setAttribute("data-variant", state.variant());
+    rootEl.setAttribute("data-orientation", state.orientation());
+    // NOTE: no layout classes here — upstream's Tabs root only carries data
+    // attributes; layout belongs to the caller/CSS. Forcing d-flex flex-column
+    // broke the file-tab layout (tab bar rendered BELOW the editor).
+
+    if (split.class) {
+      rootEl.classList.add(...String(split.class).split(/\s+/).filter(Boolean));
+    }
+    applyClassList(rootEl, split.classList);
+    applyRestProps(rootEl, rest);
+
     appendChildren(rootEl, split.children);
+
+    state.sync();
+    return rootEl;
   } finally {
     TabsContext = previousContext;
   }
-
-  state.sync();
-  return rootEl;
 }
 
 function TabsList(props) {

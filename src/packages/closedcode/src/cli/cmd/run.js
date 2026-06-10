@@ -2,6 +2,7 @@ import path from "path";
 import { pathToFileURL } from "url";
 import { Effect } from "effect";
 import { UI } from "../ui.js";
+import { readPipedStdin } from "../stdin.js";
 import { effectCmd } from "../effect-cmd.js";
 import { Flag } from "core/flag/flag";
 import { EOL } from "os";
@@ -20,49 +21,6 @@ function props(part) {
     metadata: "metadata" in state ? state.metadata : {},
     part
   };
-}
-// Read piped stdin without blocking forever. `for await (const chunk of process.stdin)`
-// only returns on EOF; when closedcode is launched in the background or inherits a
-// pipe/tty that never closes (CI, `&`, redirected harnesses), stdin never reaches EOF
-// and the whole run wedges BEFORE the server/agent loop starts (looks like a hang with
-// an empty log).
-//
-// The grace window applies ONLY until the first byte: if nothing arrives within it we
-// conclude there is no piped input and proceed (this is what rescues the idle/open
-// stdin). Once any data has arrived we cancel the timer and read to real EOF — so a
-// genuine producer (even one that streams with long gaps between chunks) is NEVER
-// truncated. `echo "msg" | closedcode run` keeps working. Grace is overridable via
-// CLOSEDCODE_STDIN_IDLE_MS (default 250ms); only the no-input-at-all case is affected.
-function readPipedStdin(firstByteGraceMs = Number(process.env.CLOSEDCODE_STDIN_IDLE_MS) || 250) {
-  const stdin = process.stdin;
-  return new Promise(resolve => {
-    let data = "";
-    let started = false;
-    const finish = () => {
-      clearTimeout(timer);
-      stdin.off("data", onData);
-      stdin.off("end", finish);
-      stdin.off("error", finish);
-      stdin.pause();
-      resolve(data);
-    };
-    const onData = chunk => {
-      // First byte means stdin really is piped: stop the grace timer and let the
-      // stream run to EOF so nothing is dropped, however slowly it trickles in.
-      if (!started) {
-        started = true;
-        clearTimeout(timer);
-      }
-      data += chunk.toString("utf8");
-    };
-    const timer = setTimeout(() => {
-      if (!started) finish();
-    }, firstByteGraceMs);
-    stdin.on("data", onData);
-    stdin.on("end", finish);
-    stdin.on("error", finish);
-    stdin.resume();
-  });
 }
 function inline(info) {
   const suffix = info.description ? UI.Style.TEXT_DIM + ` ${info.description}` + UI.Style.TEXT_NORMAL : "";
@@ -300,7 +258,11 @@ export const RunCommand = effectCmd({
         }
       }
       if (!process.stdin.isTTY) {
-        const stdinText = await readPipedStdin();
+        // With an argv message stdin is auxiliary and may be an inherited pipe
+        // that never reaches EOF (background runs) — use the first-byte grace
+        // window. Without one, stdin is the only input source: wait for real
+        // EOF however slow the producer's first byte is.
+        const stdinText = await readPipedStdin(message.trim().length > 0 ? undefined : Infinity);
         if (stdinText) message += "\n" + stdinText;
       }
       if (message.trim().length === 0 && !args.command) {
