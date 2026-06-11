@@ -241,7 +241,10 @@ test.describe("desktop provider settings", () => {
 
     const page = await rendererPage(browser);
     const providerResponse = page.waitForResponse(
-      (response) => response.url().includes("/provider") && response.status() === 200,
+      // Sidecar API only: module files served over oc:// (e.g.
+      // /src/controllers/providers.js) also contain "/provider" and would
+      // otherwise win the race and explode response.json().
+      (response) => response.url().startsWith("http") && response.url().includes("/provider") && response.status() === 200,
       { timeout: 30_000 },
     );
 
