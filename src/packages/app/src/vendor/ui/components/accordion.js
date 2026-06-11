@@ -1,76 +1,30 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
 import { Accordion as Kobalte } from "@kobalte/core/accordion";
-import { splitProps } from "solid-js";
-function AccordionRoot(props) {
-  const [split, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte, _$mergeProps(rest, {
-    "data-component": "accordion",
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    }
-  }));
+import { createComponent, mergeProps, splitProps } from "solid-js";
+
+// Thin Kobalte wrappers: tag each part with a data attribute and fold the
+// `class` prop into `classList` (live via splitProps getters). All other
+// props — including children and ref — pass straight through to Kobalte.
+function withClassList(Component, dataAttr, dataValue) {
+  return function (props) {
+    const [split, rest] = splitProps(props, ["class", "classList"]);
+    return createComponent(Component, mergeProps(rest, {
+      [dataAttr]: dataValue,
+      get classList() {
+        return {
+          ...split.classList,
+          [split.class ?? ""]: !!split.class
+        };
+      }
+    }));
+  };
 }
-function AccordionItem(props) {
-  const [split, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.Item, _$mergeProps(rest, {
-    "data-slot": "accordion-item",
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    }
-  }));
-}
-function AccordionHeader(props) {
-  const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Header, _$mergeProps(rest, {
-    "data-slot": "accordion-header",
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    },
-    get children() {
-      return split.children;
-    }
-  }));
-}
-function AccordionTrigger(props) {
-  const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Trigger, _$mergeProps(rest, {
-    "data-slot": "accordion-trigger",
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    },
-    get children() {
-      return split.children;
-    }
-  }));
-}
-function AccordionContent(props) {
-  const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Content, _$mergeProps(rest, {
-    "data-slot": "accordion-content",
-    get classList() {
-      return {
-        ...split.classList,
-        [split.class ?? ""]: !!split.class
-      };
-    },
-    get children() {
-      return split.children;
-    }
-  }));
-}
+
+const AccordionRoot = withClassList(Kobalte, "data-component", "accordion");
+const AccordionItem = withClassList(Kobalte.Item, "data-slot", "accordion-item");
+const AccordionHeader = withClassList(Kobalte.Header, "data-slot", "accordion-header");
+const AccordionTrigger = withClassList(Kobalte.Trigger, "data-slot", "accordion-trigger");
+const AccordionContent = withClassList(Kobalte.Content, "data-slot", "accordion-content");
+
 export const Accordion = Object.assign(AccordionRoot, {
   Item: AccordionItem,
   Header: AccordionHeader,

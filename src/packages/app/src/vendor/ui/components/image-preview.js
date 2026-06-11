@@ -1,51 +1,60 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=image-preview-header>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=image-preview-body><img data-slot=image-preview-image>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-component=image-preview><div data-slot=image-preview-container>`);
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createRenderEffect } from "solid-js";
 import { Dialog as Kobalte } from "@kobalte/core/dialog";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
 export function ImagePreview(props) {
   const i18n = useI18n();
-  return (() => {
-    var _el$ = _tmpl$3(),
-      _el$2 = _el$.firstChild;
-    _$insert(_el$2, _$createComponent(Kobalte.Content, {
-      "data-slot": "image-preview-content",
-      get children() {
-        return [(() => {
-          var _el$3 = _tmpl$();
-          _$insert(_el$3, _$createComponent(Kobalte.CloseButton, {
-            "data-slot": "image-preview-close",
-            as: IconButton,
-            icon: "close",
-            variant: "ghost",
-            get ["aria-label"]() {
-              return i18n.t("ui.common.close");
-            }
-          }));
-          return _el$3;
-        })(), (() => {
-          var _el$4 = _tmpl$2(),
-            _el$5 = _el$4.firstChild;
-          _$effect(_p$ => {
-            var _v$ = props.src,
-              _v$2 = props.alt ?? i18n.t("ui.imagePreview.alt");
-            _v$ !== _p$.e && _$setAttribute(_el$5, "src", _p$.e = _v$);
-            _v$2 !== _p$.t && _$setAttribute(_el$5, "alt", _p$.t = _v$2);
-            return _p$;
-          }, {
-            e: undefined,
-            t: undefined
-          });
-          return _el$4;
-        })()];
-      }
-    }));
-    return _el$;
-  })();
+  const root = template(`<div data-component="image-preview"><div data-slot="image-preview-container"></div></div>`);
+  const container = root.querySelector('[data-slot="image-preview-container"]');
+
+  // Kobalte Dialog.Content is presence-gated (its result is a reactive
+  // accessor that only resolves while the dialog is open), so it must go
+  // through solid's insert() to stay live; a one-shot appendChild would
+  // freeze it.
+  _solidInsert(container, createComponent(Kobalte.Content, {
+    "data-slot": "image-preview-content",
+    get children() {
+      const header = template(`<div data-slot="image-preview-header"></div>`);
+      _solidInsert(header, createComponent(Kobalte.CloseButton, {
+        "data-slot": "image-preview-close",
+        as: IconButton,
+        icon: "close",
+        variant: "ghost",
+        get ["aria-label"]() {
+          return i18n.t("ui.common.close");
+        }
+      }));
+      const body = template(`<div data-slot="image-preview-body"><img data-slot="image-preview-image"></div>`);
+      const img = body.querySelector('[data-slot="image-preview-image"]');
+      // Change-guarded like the compiled effect, so e.g. an unchanged src
+      // never re-triggers the image loading algorithm. The alt fallback reads
+      // i18n.t inside the effect so it follows live language switches.
+      let prevSrc;
+      let prevAlt;
+      createRenderEffect(() => {
+        const src = props.src;
+        const alt = props.alt ?? i18n.t("ui.imagePreview.alt");
+        if (src !== prevSrc) setAttr(img, "src", prevSrc = src);
+        if (alt !== prevAlt) setAttr(img, "alt", prevAlt = alt);
+      });
+      return [header, body];
+    }
+  }));
+  return root;
 }

@@ -1,11 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span>│`);
-import { createEffect, onCleanup, Show } from "solid-js";
+import { createEffect, createRenderEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Dynamic } from "solid-js/web";
+
 export const Typewriter = props => {
   const [store, setStore] = createStore({
     typing: false,
@@ -41,24 +36,34 @@ export const Typewriter = props => {
       for (const timeout of timeouts) clearTimeout(timeout);
     });
   });
-  return _$createComponent(Dynamic, {
-    get component() {
-      return props.as || "p";
-    },
-    get ["class"]() {
-      return props.class;
-    },
-    get children() {
-      return [_$memo(() => store.displayed), _$createComponent(Show, {
-        get when() {
-          return store.cursor;
-        },
-        get children() {
-          var _el$ = _tmpl$();
-          _$effect(() => _el$.classList.toggle("blinking-cursor", !store.typing));
-          return _el$;
-        }
-      })];
-    }
+
+  // The original wrapped this in <Dynamic>; `as` is a static tag in practice,
+  // so create the element once (same approach as text-shimmer.js).
+  const el = document.createElement(props.as || "p");
+  const textNode = document.createTextNode("");
+  const cursorEl = document.createElement("span");
+  cursorEl.textContent = "│";
+  el.appendChild(textNode);
+
+  createRenderEffect(() => {
+    const value = props.class;
+    // Mirror Solid's className(): null/undefined removes the attribute.
+    if (value == null) el.removeAttribute("class");
+    else el.className = value;
   });
+  createRenderEffect(() => {
+    textNode.data = store.displayed;
+  });
+  // Show equivalent: attach/detach the cursor span after the text node. The
+  // original rebuilt the span on re-show; its only state is the class kept in
+  // sync by the dedicated effect below, so reattaching the same node is
+  // behaviorally identical.
+  createRenderEffect(() => {
+    if (store.cursor) el.appendChild(cursorEl);
+    else cursorEl.remove();
+  });
+  createRenderEffect(() => {
+    cursorEl.classList.toggle("blinking-cursor", !store.typing);
+  });
+  return el;
 };
