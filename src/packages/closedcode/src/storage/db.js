@@ -129,16 +129,27 @@ export async function transactionAsync(callback, options) {
   if (ambient) return callback({ ...ambient.handle });
   const { sequelize, models } = await ormInit();
   const effects = [];
-  // sqlite BEGIN behavior parity with the legacy layer: "immediate"/"exclusive"
-  // take the write lock at BEGIN (drizzle's { behavior } option).
+  // Hand-rolled BEGIN/COMMIT instead of sequelize.transaction(): the managed
+  // transaction pins the single pooled connection (pool max:1) for its whole
+  // body, so any nested query that lost the AsyncLocalStorage context (the
+  // Effect runtime does not propagate ALS across fiber scheduling) waits for
+  // a second connection that can never come — a deterministic boot deadlock.
+  // With plain queries every statement serializes onto the one connection,
+  // where sqlite transactions are connection-level state — nested calls land
+  // inside the open transaction exactly like the legacy synchronous layer.
   const types = { immediate: "IMMEDIATE", exclusive: "EXCLUSIVE", deferred: "DEFERRED" };
-  const txOptions = options?.behavior ? { type: types[options.behavior] ?? "DEFERRED" } : {};
-  const result = await sequelize.transaction(txOptions, async tx => {
-    const handle = { models, sequelize, tx };
-    return transactionStorage.run({ tx, effects, handle }, () => callback(handle));
-  });
-  for (const fn of effects) fn();
-  return result;
+  const behavior = types[options?.behavior] ?? "DEFERRED";
+  await sequelize.query(`BEGIN ${behavior} TRANSACTION`);
+  const handle = { models, sequelize, tx: undefined };
+  try {
+    const result = await transactionStorage.run({ effects, handle }, () => callback(handle));
+    await sequelize.query("COMMIT");
+    for (const fn of effects) fn();
+    return result;
+  } catch (error) {
+    await sequelize.query("ROLLBACK").catch(() => {});
+    throw error;
+  }
 }
 // Commit-deferred side effects (parity with effect() above): inside an
 // ambient transaction they run after commit, otherwise immediately.
