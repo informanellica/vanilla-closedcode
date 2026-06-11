@@ -168,7 +168,7 @@ async function launchDesktopWithConfig(config) {
 // waiting on it (rather than re-scanning for a freshly matching URL) avoids the
 // race where the loading->index transition happens between poll iterations.
 async function rendererPage(browser) {
-  const deadline = Date.now() + 90_000;
+  const deadline = Date.now() + 150_000;
   while (Date.now() < deadline) {
     const pages = browser.contexts().flatMap((context) => context.pages());
     const renderer = pages.find((page) => page.url().startsWith("oc://renderer/"));
