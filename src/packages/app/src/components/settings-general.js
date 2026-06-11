@@ -1,39 +1,11 @@
-import { template as _$template } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-action=settings-auto-accept-permissions>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-action=settings-feed-reasoning-summaries>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-action=settings-feed-shell-tool-parts-expanded>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-action=settings-feed-edit-tool-parts-expanded>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-action=settings-show-session-progress-bar>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-action=settings-show-file-tree>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div data-action=settings-show-navigation>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div data-action=settings-show-search>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div data-action=settings-show-terminal>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div data-action=settings-show-status>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1"><h3 class="fw-medium text-body-emphasis pb-2">`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div style="width:220px;max-width:100%">`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<div data-action=settings-notifications-agent>`),
-  _tmpl$13 = /*#__PURE__*/_$template(`<div data-action=settings-notifications-permissions>`),
-  _tmpl$14 = /*#__PURE__*/_$template(`<div data-action=settings-notifications-errors>`),
-  _tmpl$15 = /*#__PURE__*/_$template(`<div data-action=settings-updates-startup>`),
-  _tmpl$16 = /*#__PURE__*/_$template(`<div data-action=settings-release-notes>`),
-  _tmpl$17 = /*#__PURE__*/_$template(`<div data-action=settings-wayland>`),
-  _tmpl$18 = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10"><div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]"><div class="d-flex flex-column gap-1 pt-6 pb-8"><h2 class="fs-6 fw-medium text-body-emphasis"></h2></div></div><div class="d-flex flex-column gap-8 w-100">`),
-  _tmpl$19 = /*#__PURE__*/_$template(`<span class=text-secondary>`),
-  _tmpl$20 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span>`),
-  _tmpl$21 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-4 p-4 rounded-3 bg-body-tertiary"><div class="d-flex min-w-0 flex-1 flex-column gap-0.5"><span class="fw-medium text-body-emphasis"></span><span class="small fw-normal text-secondary"></span></div><div class="d-flex justify-content-end flex-shrink-0">`);
-import { Show, createMemo, createResource, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
 import { Button } from "@/bs/button.js";
 import { Icon } from "@/bs/icon.js";
 import { Select } from "@/bs/select.js";
 import { Switch } from "@/bs/switch.js";
 import { TextField } from "@/bs/text-field.js";
 import { Tooltip } from "@/bs/tooltip.js";
+import { createComponent, createEffect, createMemo, createResource } from "solid-js";
+import { createStore } from "solid-js/store";
 import { env, envAll } from "@/lib/env.js";
 import { useTheme } from "@/lib/theme.js";
 import { showToast } from "@/lib/toast.js";
@@ -76,6 +48,13 @@ const playDemoSound = id => {
     });
   }, 100);
 };
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export const SettingsGeneral = () => {
   const theme = useTheme();
   const language = useLanguage();
@@ -246,675 +225,460 @@ export const SettingsGeneral = () => {
     size: "small",
     triggerVariant: "settings"
   });
-  const GeneralSection = () => (() => {
-    var _el$ = _tmpl$6();
-    _$insert(_el$, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.language.title");
+
+  // ---- vanilla building blocks ----
+
+  // A pass-through wrapper used as a stable insertion point for nodes that
+  // need to be rebuilt by an effect.
+  const contentsSlot = () => {
+    const el = document.createElement("div");
+    el.style.display = "contents";
+    return el;
+  };
+
+  // Section box with a translated (locale-live) heading.
+  const section = headingKey => {
+    const el = template(`
+      <div class="d-flex flex-column gap-1">
+        <h3 class="fw-medium text-body-emphasis pb-2" data-slot="heading"></h3>
+      </div>`);
+    const heading = el.querySelector('[data-slot="heading"]');
+    createEffect(() => {
+      heading.textContent = language.t(headingKey);
+    });
+    return el;
+  };
+
+  // Standard row whose title/description come from i18n keys.
+  const row = (titleKey, descriptionKey, control) => createComponent(SettingsRow, {
+    get title() {
+      return language.t(titleKey);
+    },
+    get description() {
+      return language.t(descriptionKey);
+    },
+    children: control
+  });
+
+  // The vanilla Switch wires onChange twice: on its input (called with the
+  // checked boolean) and, through its generic on* prop loop, on the container
+  // (called with the bubbled change Event). Accept only the boolean call so a
+  // toggle never runs the handler twice (a doubled toggleAccept would undo
+  // itself; a doubled setter would store the Event object).
+  const onSwitchToggle = handler => value => {
+    if (typeof value === "boolean") handler(value);
+  };
+
+  // A switch inside its data-action wrapper. The vanilla Switch reads props
+  // once, so keep the native checkbox in sync with the controlled value in an
+  // effect — external changes (e.g. auto-accept toggled via a command) must
+  // update the visual state like the original reactive Switch did.
+  const switchBox = (action, props) => {
+    const box = document.createElement("div");
+    box.setAttribute("data-action", action);
+    const sw = createComponent(Switch, {
+      get checked() {
+        return props.checked;
+      },
+      get disabled() {
+        return props.disabled;
+      },
+      onChange: onSwitchToggle(props.onChange)
+    });
+    const input = sw.querySelector('input[data-slot="input"]');
+    createEffect(() => {
+      input.checked = !!props.checked;
+      input.disabled = !!props.disabled;
+    });
+    box.appendChild(sw);
+    return box;
+  };
+
+  // The vanilla Select builds its options/selection once, so rebuild it
+  // whenever anything it renders (options, current, locale) changes. build()
+  // is called inside the effect so its signal reads are tracked.
+  const selectSlot = (action, build) => {
+    const slot = contentsSlot();
+    createEffect(() => {
+      // Option label functions may resolve language.t lazily inside the
+      // (untracked) component build, so track the locale explicitly.
+      void language.locale();
+      const sel = createComponent(Select, build());
+      // Set as an attribute so [data-action=...] selectors keep working.
+      sel.setAttribute("data-action", action);
+      slot.replaceChildren(sel);
+    });
+    return slot;
+  };
+
+  const soundSelect = (action, enabled, current, setEnabled, set) => selectSlot(action, () => soundSelectProps(enabled, current, setEnabled, set));
+
+  // Font input in its fixed-width box. Built once so typing never loses
+  // focus; the live font preview is applied on the field root (it cascades
+  // into the input) because the vanilla TextField ignores the style prop.
+  const fontField = (action, labelKey, opts) => {
+    const box = template(`<div style="width:220px;max-width:100%"></div>`);
+    const field = createComponent(TextField, {
+      get label() {
+        return language.t(labelKey);
+      },
+      hideLabel: true,
+      type: "text",
+      get value() {
+        return opts.value();
+      },
+      onChange: opts.onChange,
+      placeholder: opts.placeholder,
+      spellcheck: false,
+      autocorrect: "off",
+      autocomplete: "off",
+      autocapitalize: "off",
+      class: "small fw-normal"
+    });
+    field.setAttribute("data-action", action);
+    createEffect(() => {
+      field.style.fontFamily = opts.family() ?? "";
+    });
+    // The vanilla TextField reads value once; push external value changes
+    // into the input like the original controlled binding did. The equality
+    // guard keeps the caret stable while the user is typing (their own input
+    // round-trips through the setting unchanged).
+    const input = field.querySelector("input");
+    createEffect(() => {
+      const next = opts.value() ?? "";
+      if (input.value !== next) input.value = next;
+    });
+    box.appendChild(field);
+    return box;
+  };
+
+  // ---- sections ----
+
+  const GeneralSection = () => {
+    const el = template(`<div class="d-flex flex-column gap-1"></div>`);
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.general.row.language.title", "settings.general.row.language.description", selectSlot("settings-language", () => ({
+        options: languageOptions(),
+        current: languageOptions().find(o => o.value === language.locale()),
+        value: o => o.value,
+        label: o => o.label,
+        onSelect: option => option && language.setLocale(option.value),
+        variant: "secondary",
+        size: "small",
+        triggerVariant: "settings"
+      }))), row("command.permissions.autoaccept.enable", "toast.permissions.autoaccept.on.description", switchBox("settings-auto-accept-permissions", {
+        get checked() {
+          return accepting();
+        },
+        get disabled() {
+          return !dir();
+        },
+        onChange: toggleAccept
+      })), row("settings.general.row.shell.title", "settings.general.row.shell.description", selectSlot("settings-shell", () => ({
+        options: shellOptions(),
+        current: shellOptions().find(o => o.value === currentShell()) ?? autoOption,
+        value: o => o.id,
+        label: o => o.label,
+        onSelect: option => {
+          if (!option) return;
+          settingsController.setShell(option.value);
+        },
+        variant: "secondary",
+        size: "small",
+        triggerVariant: "settings",
+        triggerStyle: {
+          "min-width": "180px"
+        }
+      }))), row("settings.general.row.reasoningSummaries.title", "settings.general.row.reasoningSummaries.description", switchBox("settings-feed-reasoning-summaries", {
+        get checked() {
+          return settings.general.showReasoningSummaries();
+        },
+        onChange: checked => settings.general.setShowReasoningSummaries(checked)
+      })), row("settings.general.row.shellToolPartsExpanded.title", "settings.general.row.shellToolPartsExpanded.description", switchBox("settings-feed-shell-tool-parts-expanded", {
+        get checked() {
+          return settings.general.shellToolPartsExpanded();
+        },
+        onChange: checked => settings.general.setShellToolPartsExpanded(checked)
+      })), row("settings.general.row.editToolPartsExpanded.title", "settings.general.row.editToolPartsExpanded.description", switchBox("settings-feed-edit-tool-parts-expanded", {
+        get checked() {
+          return settings.general.editToolPartsExpanded();
+        },
+        onChange: checked => settings.general.setEditToolPartsExpanded(checked)
+      })), row("settings.general.row.showSessionProgressBar.title", "settings.general.row.showSessionProgressBar.description", switchBox("settings-show-session-progress-bar", {
+        get checked() {
+          return settings.general.showSessionProgressBar();
+        },
+        onChange: checked => settings.general.setShowSessionProgressBar(checked)
+      })), createComponent(SettingsRow, {
+        title: "Ollama GPU/CPU 配置を表示",
+        description: "ステータスバーに、Ollama でロード中のモデルの VRAM/RAM 配置比率（GPU/CPU）を定期取得して表示します。",
+        children: switchBox("settings-ollama-stats", {
+          get checked() {
+            return settings.general.ollamaStats();
           },
-          get description() {
-            return language.t("settings.general.row.language.description");
-          },
-          get children() {
-            return _$createComponent(Select, {
-              "data-action": "settings-language",
-              get options() {
-                return languageOptions();
-              },
-              get current() {
-                return languageOptions().find(o => o.value === language.locale());
-              },
-              value: o => o.value,
-              label: o => o.label,
-              onSelect: option => option && language.setLocale(option.value),
-              variant: "secondary",
-              size: "small",
-              triggerVariant: "settings"
-            });
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("command.permissions.autoaccept.enable");
-          },
-          get description() {
-            return language.t("toast.permissions.autoaccept.on.description");
-          },
-          get children() {
-            var _el$2 = _tmpl$();
-            _$insert(_el$2, _$createComponent(Switch, {
-              get checked() {
-                return accepting();
-              },
-              get disabled() {
-                return !dir();
-              },
-              onChange: toggleAccept
-            }));
-            return _el$2;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.shell.title");
-          },
-          get description() {
-            return language.t("settings.general.row.shell.description");
-          },
-          get children() {
-            return _$createComponent(Select, {
-              "data-action": "settings-shell",
-              get options() {
-                return shellOptions();
-              },
-              get current() {
-                return shellOptions().find(o => o.value === currentShell()) ?? autoOption;
-              },
-              value: o => o.id,
-              label: o => o.label,
-              onSelect: option => {
-                if (!option) return;
-                settingsController.setShell(option.value);
-              },
-              variant: "secondary",
-              size: "small",
-              triggerVariant: "settings",
-              triggerStyle: {
-                "min-width": "180px"
-              }
-            });
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.reasoningSummaries.title");
-          },
-          get description() {
-            return language.t("settings.general.row.reasoningSummaries.description");
-          },
-          get children() {
-            var _el$3 = _tmpl$2();
-            _$insert(_el$3, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showReasoningSummaries();
-              },
-              onChange: checked => settings.general.setShowReasoningSummaries(checked)
-            }));
-            return _el$3;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.shellToolPartsExpanded.title");
-          },
-          get description() {
-            return language.t("settings.general.row.shellToolPartsExpanded.description");
-          },
-          get children() {
-            var _el$4 = _tmpl$3();
-            _$insert(_el$4, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.shellToolPartsExpanded();
-              },
-              onChange: checked => settings.general.setShellToolPartsExpanded(checked)
-            }));
-            return _el$4;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.editToolPartsExpanded.title");
-          },
-          get description() {
-            return language.t("settings.general.row.editToolPartsExpanded.description");
-          },
-          get children() {
-            var _el$5 = _tmpl$4();
-            _$insert(_el$5, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.editToolPartsExpanded();
-              },
-              onChange: checked => settings.general.setEditToolPartsExpanded(checked)
-            }));
-            return _el$5;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showSessionProgressBar.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showSessionProgressBar.description");
-          },
-          get children() {
-            var _el$6 = _tmpl$5();
-            _$insert(_el$6, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showSessionProgressBar();
-              },
-              onChange: checked => settings.general.setShowSessionProgressBar(checked)
-            }));
-            return _el$6;
-          }
-        }), _$createComponent(SettingsRow, {
-          title: "Ollama GPU/CPU 配置を表示",
-          description: "ステータスバーに、Ollama でロード中のモデルの VRAM/RAM 配置比率（GPU/CPU）を定期取得して表示します。",
-          get children() {
-            var _ollamaToggle = document.createElement("div");
-            _ollamaToggle.setAttribute("data-action", "settings-ollama-stats");
-            _$insert(_ollamaToggle, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.ollamaStats();
-              },
-              onChange: checked => settings.general.setOllamaStats(checked)
-            }));
-            return _ollamaToggle;
-          }
-        })];
-      }
+          onChange: checked => settings.general.setOllamaStats(checked)
+        })
+      })]
     }));
-    return _el$;
-  })();
-  const AdvancedSection = () => (() => {
-    var _el$7 = _tmpl$10(),
-      _el$8 = _el$7.firstChild;
-    _$insert(_el$8, () => language.t("settings.general.section.advanced"));
-    _$insert(_el$7, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showFileTree.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showFileTree.description");
-          },
-          get children() {
-            var _el$9 = _tmpl$7();
-            _$insert(_el$9, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showFileTree();
-              },
-              onChange: checked => settings.general.setShowFileTree(checked)
-            }));
-            return _el$9;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showNavigation.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showNavigation.description");
-          },
-          get children() {
-            var _el$0 = _tmpl$8();
-            _$insert(_el$0, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showNavigation();
-              },
-              onChange: checked => settings.general.setShowNavigation(checked)
-            }));
-            return _el$0;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showSearch.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showSearch.description");
-          },
-          get children() {
-            var _el$1 = _tmpl$9();
-            _$insert(_el$1, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showSearch();
-              },
-              onChange: checked => settings.general.setShowSearch(checked)
-            }));
-            return _el$1;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showTerminal.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showTerminal.description");
-          },
-          get children() {
-            var _el$10 = _tmpl$0();
-            _$insert(_el$10, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showTerminal();
-              },
-              onChange: checked => settings.general.setShowTerminal(checked)
-            }));
-            return _el$10;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.showStatus.title");
-          },
-          get description() {
-            return language.t("settings.general.row.showStatus.description");
-          },
-          get children() {
-            var _el$11 = _tmpl$1();
-            _$insert(_el$11, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.showStatus();
-              },
-              onChange: checked => settings.general.setShowStatus(checked)
-            }));
-            return _el$11;
-          }
-        })];
-      }
-    }), null);
-    return _el$7;
-  })();
-  const AppearanceSection = () => (() => {
-    var _el$12 = _tmpl$10(),
-      _el$13 = _el$12.firstChild;
-    _$insert(_el$13, () => language.t("settings.general.section.appearance"));
-    _$insert(_el$12, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.colorScheme.title");
-          },
-          get description() {
-            return language.t("settings.general.row.colorScheme.description");
-          },
-          get children() {
-            return _$createComponent(Select, {
-              "data-action": "settings-color-scheme",
-              get options() {
-                return colorSchemeOptions();
-              },
-              get current() {
-                return colorSchemeOptions().find(o => o.value === theme.colorScheme());
-              },
-              value: o => o.value,
-              label: o => o.label,
-              onSelect: option => option && theme.setColorScheme(option.value),
-              onHighlight: option => {
-                if (!option) return;
-                theme.previewColorScheme(option.value);
-                return () => theme.cancelPreview();
-              },
-              variant: "secondary",
-              size: "small",
-              triggerVariant: "settings",
-              triggerStyle: {
-                "min-width": "220px"
-              }
-            });
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.uiFont.title");
-          },
-          get description() {
-            return language.t("settings.general.row.uiFont.description");
-          },
-          get children() {
-            var _el$14 = _tmpl$11();
-            _$insert(_el$14, _$createComponent(TextField, {
-              "data-action": "settings-ui-font",
-              get label() {
-                return language.t("settings.general.row.uiFont.title");
-              },
-              hideLabel: true,
-              type: "text",
-              get value() {
-                return sans();
-              },
-              onChange: value => settings.appearance.setUIFont(value),
-              placeholder: sansDefault,
-              spellcheck: false,
-              autocorrect: "off",
-              autocomplete: "off",
-              autocapitalize: "off",
-              "class": "small fw-normal",
-              get style() {
-                return {
-                  "font-family": sansFontFamily(settings.appearance.uiFont())
-                };
-              }
-            }));
-            return _el$14;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.font.title");
-          },
-          get description() {
-            return language.t("settings.general.row.font.description");
-          },
-          get children() {
-            var _el$15 = _tmpl$11();
-            _$insert(_el$15, _$createComponent(TextField, {
-              "data-action": "settings-code-font",
-              get label() {
-                return language.t("settings.general.row.font.title");
-              },
-              hideLabel: true,
-              type: "text",
-              get value() {
-                return mono();
-              },
-              onChange: value => settings.appearance.setFont(value),
-              placeholder: monoDefault,
-              spellcheck: false,
-              autocorrect: "off",
-              autocomplete: "off",
-              autocapitalize: "off",
-              "class": "small fw-normal",
-              get style() {
-                return {
-                  "font-family": monoFontFamily(settings.appearance.font())
-                };
-              }
-            }));
-            return _el$15;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.terminalFont.title");
-          },
-          get description() {
-            return language.t("settings.general.row.terminalFont.description");
-          },
-          get children() {
-            var _el$16 = _tmpl$11();
-            _$insert(_el$16, _$createComponent(TextField, {
-              "data-action": "settings-terminal-font",
-              get label() {
-                return language.t("settings.general.row.terminalFont.title");
-              },
-              hideLabel: true,
-              type: "text",
-              get value() {
-                return terminal();
-              },
-              onChange: value => settings.appearance.setTerminalFont(value),
-              placeholder: terminalDefault,
-              spellcheck: false,
-              autocorrect: "off",
-              autocomplete: "off",
-              autocapitalize: "off",
-              "class": "small fw-normal",
-              get style() {
-                return {
-                  "font-family": terminalFontFamily(settings.appearance.terminalFont())
-                };
-              }
-            }));
-            return _el$16;
-          }
-        })];
-      }
-    }), null);
-    return _el$12;
-  })();
-  const NotificationsSection = () => (() => {
-    var _el$17 = _tmpl$10(),
-      _el$18 = _el$17.firstChild;
-    _$insert(_el$18, () => language.t("settings.general.section.notifications"));
-    _$insert(_el$17, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.notifications.agent.title");
-          },
-          get description() {
-            return language.t("settings.general.notifications.agent.description");
-          },
-          get children() {
-            var _el$19 = _tmpl$12();
-            _$insert(_el$19, _$createComponent(Switch, {
-              get checked() {
-                return settings.notifications.agent();
-              },
-              onChange: checked => settings.notifications.setAgent(checked)
-            }));
-            return _el$19;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.notifications.permissions.title");
-          },
-          get description() {
-            return language.t("settings.general.notifications.permissions.description");
-          },
-          get children() {
-            var _el$20 = _tmpl$13();
-            _$insert(_el$20, _$createComponent(Switch, {
-              get checked() {
-                return settings.notifications.permissions();
-              },
-              onChange: checked => settings.notifications.setPermissions(checked)
-            }));
-            return _el$20;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.notifications.errors.title");
-          },
-          get description() {
-            return language.t("settings.general.notifications.errors.description");
-          },
-          get children() {
-            var _el$21 = _tmpl$14();
-            _$insert(_el$21, _$createComponent(Switch, {
-              get checked() {
-                return settings.notifications.errors();
-              },
-              onChange: checked => settings.notifications.setErrors(checked)
-            }));
-            return _el$21;
-          }
-        })];
-      }
-    }), null);
-    return _el$17;
-  })();
-  const SoundsSection = () => (() => {
-    var _el$22 = _tmpl$10(),
-      _el$23 = _el$22.firstChild;
-    _$insert(_el$23, () => language.t("settings.general.section.sounds"));
-    _$insert(_el$22, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.sounds.agent.title");
-          },
-          get description() {
-            return language.t("settings.general.sounds.agent.description");
-          },
-          get children() {
-            return _$createComponent(Select, _$mergeProps({
-              "data-action": "settings-sounds-agent"
-            }, () => soundSelectProps(() => settings.sounds.agentEnabled(), () => settings.sounds.agent(), value => settings.sounds.setAgentEnabled(value), id => settings.sounds.setAgent(id))));
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.sounds.permissions.title");
-          },
-          get description() {
-            return language.t("settings.general.sounds.permissions.description");
-          },
-          get children() {
-            return _$createComponent(Select, _$mergeProps({
-              "data-action": "settings-sounds-permissions"
-            }, () => soundSelectProps(() => settings.sounds.permissionsEnabled(), () => settings.sounds.permissions(), value => settings.sounds.setPermissionsEnabled(value), id => settings.sounds.setPermissions(id))));
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.sounds.errors.title");
-          },
-          get description() {
-            return language.t("settings.general.sounds.errors.description");
-          },
-          get children() {
-            return _$createComponent(Select, _$mergeProps({
-              "data-action": "settings-sounds-errors"
-            }, () => soundSelectProps(() => settings.sounds.errorsEnabled(), () => settings.sounds.errors(), value => settings.sounds.setErrorsEnabled(value), id => settings.sounds.setErrors(id))));
-          }
-        })];
-      }
-    }), null);
-    return _el$22;
-  })();
-  const UpdatesSection = () => (() => {
-    var _el$24 = _tmpl$10(),
-      _el$25 = _el$24.firstChild;
-    _$insert(_el$25, () => language.t("settings.general.section.updates"));
-    _$insert(_el$24, _$createComponent(SettingsList, {
-      get children() {
-        return [_$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.updates.row.startup.title");
-          },
-          get description() {
-            return language.t("settings.updates.row.startup.description");
-          },
-          get children() {
-            var _el$26 = _tmpl$15();
-            _$insert(_el$26, _$createComponent(Switch, {
-              get checked() {
-                return settings.updates.startup();
-              },
-              get disabled() {
-                return !platform.checkUpdate;
-              },
-              onChange: checked => settings.updates.setStartup(checked)
-            }));
-            return _el$26;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.general.row.releaseNotes.title");
-          },
-          get description() {
-            return language.t("settings.general.row.releaseNotes.description");
-          },
-          get children() {
-            var _el$27 = _tmpl$16();
-            _$insert(_el$27, _$createComponent(Switch, {
-              get checked() {
-                return settings.general.releaseNotes();
-              },
-              onChange: checked => settings.general.setReleaseNotes(checked)
-            }));
-            return _el$27;
-          }
-        }), _$createComponent(SettingsRow, {
-          get title() {
-            return language.t("settings.updates.row.check.title");
-          },
-          get description() {
-            return language.t("settings.updates.row.check.description");
-          },
-          get children() {
-            return _$createComponent(Button, {
-              size: "small",
-              variant: "secondary",
-              get disabled() {
-                return store.checking || !platform.checkUpdate;
-              },
-              onClick: check,
-              get children() {
-                return _$memo(() => !!store.checking)() ? language.t("settings.updates.action.checking") : language.t("settings.updates.action.checkNow");
-              }
-            });
-          }
-        })];
-      }
-    }), null);
-    return _el$24;
-  })();
+    return el;
+  };
+
+  const AdvancedSection = () => {
+    const el = section("settings.general.section.advanced");
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.general.row.showFileTree.title", "settings.general.row.showFileTree.description", switchBox("settings-show-file-tree", {
+        get checked() {
+          return settings.general.showFileTree();
+        },
+        onChange: checked => settings.general.setShowFileTree(checked)
+      })), row("settings.general.row.showNavigation.title", "settings.general.row.showNavigation.description", switchBox("settings-show-navigation", {
+        get checked() {
+          return settings.general.showNavigation();
+        },
+        onChange: checked => settings.general.setShowNavigation(checked)
+      })), row("settings.general.row.showSearch.title", "settings.general.row.showSearch.description", switchBox("settings-show-search", {
+        get checked() {
+          return settings.general.showSearch();
+        },
+        onChange: checked => settings.general.setShowSearch(checked)
+      })), row("settings.general.row.showTerminal.title", "settings.general.row.showTerminal.description", switchBox("settings-show-terminal", {
+        get checked() {
+          return settings.general.showTerminal();
+        },
+        onChange: checked => settings.general.setShowTerminal(checked)
+      })), row("settings.general.row.showStatus.title", "settings.general.row.showStatus.description", switchBox("settings-show-status", {
+        get checked() {
+          return settings.general.showStatus();
+        },
+        onChange: checked => settings.general.setShowStatus(checked)
+      }))]
+    }));
+    return el;
+  };
+
+  const AppearanceSection = () => {
+    const el = section("settings.general.section.appearance");
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.general.row.colorScheme.title", "settings.general.row.colorScheme.description", selectSlot("settings-color-scheme", () => ({
+        options: colorSchemeOptions(),
+        current: colorSchemeOptions().find(o => o.value === theme.colorScheme()),
+        value: o => o.value,
+        label: o => o.label,
+        onSelect: option => option && theme.setColorScheme(option.value),
+        onHighlight: option => {
+          if (!option) return;
+          theme.previewColorScheme(option.value);
+          return () => theme.cancelPreview();
+        },
+        variant: "secondary",
+        size: "small",
+        triggerVariant: "settings",
+        triggerStyle: {
+          "min-width": "220px"
+        }
+      }))), row("settings.general.row.uiFont.title", "settings.general.row.uiFont.description", fontField("settings-ui-font", "settings.general.row.uiFont.title", {
+        value: sans,
+        onChange: value => settings.appearance.setUIFont(value),
+        placeholder: sansDefault,
+        family: () => sansFontFamily(settings.appearance.uiFont())
+      })), row("settings.general.row.font.title", "settings.general.row.font.description", fontField("settings-code-font", "settings.general.row.font.title", {
+        value: mono,
+        onChange: value => settings.appearance.setFont(value),
+        placeholder: monoDefault,
+        family: () => monoFontFamily(settings.appearance.font())
+      })), row("settings.general.row.terminalFont.title", "settings.general.row.terminalFont.description", fontField("settings-terminal-font", "settings.general.row.terminalFont.title", {
+        value: terminal,
+        onChange: value => settings.appearance.setTerminalFont(value),
+        placeholder: terminalDefault,
+        family: () => terminalFontFamily(settings.appearance.terminalFont())
+      }))]
+    }));
+    return el;
+  };
+
+  const NotificationsSection = () => {
+    const el = section("settings.general.section.notifications");
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.general.notifications.agent.title", "settings.general.notifications.agent.description", switchBox("settings-notifications-agent", {
+        get checked() {
+          return settings.notifications.agent();
+        },
+        onChange: checked => settings.notifications.setAgent(checked)
+      })), row("settings.general.notifications.permissions.title", "settings.general.notifications.permissions.description", switchBox("settings-notifications-permissions", {
+        get checked() {
+          return settings.notifications.permissions();
+        },
+        onChange: checked => settings.notifications.setPermissions(checked)
+      })), row("settings.general.notifications.errors.title", "settings.general.notifications.errors.description", switchBox("settings-notifications-errors", {
+        get checked() {
+          return settings.notifications.errors();
+        },
+        onChange: checked => settings.notifications.setErrors(checked)
+      }))]
+    }));
+    return el;
+  };
+
+  const SoundsSection = () => {
+    const el = section("settings.general.section.sounds");
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.general.sounds.agent.title", "settings.general.sounds.agent.description", soundSelect("settings-sounds-agent", () => settings.sounds.agentEnabled(), () => settings.sounds.agent(), value => settings.sounds.setAgentEnabled(value), id => settings.sounds.setAgent(id))), row("settings.general.sounds.permissions.title", "settings.general.sounds.permissions.description", soundSelect("settings-sounds-permissions", () => settings.sounds.permissionsEnabled(), () => settings.sounds.permissions(), value => settings.sounds.setPermissionsEnabled(value), id => settings.sounds.setPermissions(id))), row("settings.general.sounds.errors.title", "settings.general.sounds.errors.description", soundSelect("settings-sounds-errors", () => settings.sounds.errorsEnabled(), () => settings.sounds.errors(), value => settings.sounds.setErrorsEnabled(value), id => settings.sounds.setErrors(id)))]
+    }));
+    return el;
+  };
+
+  const UpdatesSection = () => {
+    const el = section("settings.general.section.updates");
+    // The vanilla Button renders its children once, so rebuild the check
+    // button whenever its label (checking state or locale) changes.
+    const checkSlot = contentsSlot();
+    createEffect(() => {
+      const label = store.checking ? language.t("settings.updates.action.checking") : language.t("settings.updates.action.checkNow");
+      checkSlot.replaceChildren(createComponent(Button, {
+        size: "small",
+        variant: "secondary",
+        get disabled() {
+          return store.checking || !platform.checkUpdate;
+        },
+        onClick: check,
+        get children() {
+          return label;
+        }
+      }));
+    });
+    el.appendChild(createComponent(SettingsList, {
+      children: [row("settings.updates.row.startup.title", "settings.updates.row.startup.description", switchBox("settings-updates-startup", {
+        get checked() {
+          return settings.updates.startup();
+        },
+        get disabled() {
+          return !platform.checkUpdate;
+        },
+        onChange: checked => settings.updates.setStartup(checked)
+      })), row("settings.general.row.releaseNotes.title", "settings.general.row.releaseNotes.description", switchBox("settings-release-notes", {
+        get checked() {
+          return settings.general.releaseNotes();
+        },
+        onChange: checked => settings.general.setReleaseNotes(checked)
+      })), row("settings.updates.row.check.title", "settings.updates.row.check.description", checkSlot)]
+    }));
+    return el;
+  };
+
+  const DisplaySection = () => {
+    const el = section("settings.general.section.display");
+    // Row title: translated label + a help icon with a tooltip.
+    const title = template(`<div class="d-flex align-items-center gap-2"><span data-slot="label"></span></div>`);
+    const label = title.querySelector('[data-slot="label"]');
+    createEffect(() => {
+      label.textContent = language.t("settings.general.row.wayland.title");
+    });
+    const help = template(`<span class="text-secondary"></span>`);
+    help.appendChild(createComponent(Icon, {
+      name: "help",
+      size: "small"
+    }));
+    title.appendChild(createComponent(Tooltip, {
+      get value() {
+        return language.t("settings.general.row.wayland.tooltip");
+      },
+      placement: "top",
+      children: help
+    }));
+    // The backend resolves through an async resource, so rebuild the switch
+    // whenever a (re)fetch settles; this also snaps the switch back if a
+    // change request failed and the refetch returns the old value.
+    const control = document.createElement("div");
+    control.setAttribute("data-action", "settings-wayland");
+    createEffect(() => {
+      void displayBackend.loading;
+      const backend = displayBackend.latest;
+      control.replaceChildren(createComponent(Switch, {
+        checked: backend === "wayland",
+        onChange: onSwitchToggle(onDisplayBackendChange)
+      }));
+    });
+    el.appendChild(createComponent(SettingsList, {
+      children: createComponent(SettingsRow, {
+        title,
+        get description() {
+          return language.t("settings.general.row.wayland.description");
+        },
+        children: control
+      })
+    }));
+    return el;
+  };
+
   console.log(envAll());
-  return (() => {
-    var _el$28 = _tmpl$18(),
-      _el$29 = _el$28.firstChild,
-      _el$30 = _el$29.firstChild,
-      _el$31 = _el$30.firstChild,
-      _el$32 = _el$29.nextSibling;
-    _$insert(_el$31, () => language.t("settings.tab.general"));
-    _$insert(_el$32, _$createComponent(GeneralSection, {}), null);
-    _$insert(_el$32, _$createComponent(AppearanceSection, {}), null);
-    _$insert(_el$32, _$createComponent(NotificationsSection, {}), null);
-    _$insert(_el$32, _$createComponent(SoundsSection, {}), null);
-    _$insert(_el$32, _$createComponent(UpdatesSection, {}), null);
-    _$insert(_el$32, _$createComponent(Show, {
-      get when() {
-        return linux();
-      },
-      get children() {
-        var _el$33 = _tmpl$10(),
-          _el$34 = _el$33.firstChild;
-        _$insert(_el$34, () => language.t("settings.general.section.display"));
-        _$insert(_el$33, _$createComponent(SettingsList, {
-          get children() {
-            return _$createComponent(SettingsRow, {
-              get title() {
-                return (() => {
-                  var _el$36 = _tmpl$20(),
-                    _el$37 = _el$36.firstChild;
-                  _$insert(_el$37, () => language.t("settings.general.row.wayland.title"));
-                  _$insert(_el$36, _$createComponent(Tooltip, {
-                    get value() {
-                      return language.t("settings.general.row.wayland.tooltip");
-                    },
-                    placement: "top",
-                    get children() {
-                      var _el$38 = _tmpl$19();
-                      _$insert(_el$38, _$createComponent(Icon, {
-                        name: "help",
-                        size: "small"
-                      }));
-                      return _el$38;
-                    }
-                  }), null);
-                  return _el$36;
-                })();
-              },
-              get description() {
-                return language.t("settings.general.row.wayland.description");
-              },
-              get children() {
-                var _el$35 = _tmpl$17();
-                _$insert(_el$35, _$createComponent(Switch, {
-                  get checked() {
-                    return displayBackend.latest === "wayland";
-                  },
-                  onChange: onDisplayBackendChange
-                }));
-                return _el$35;
-              }
-            });
-          }
-        }), null);
-        return _el$33;
-      }
-    }), null);
-    _$insert(_el$32, _$createComponent(Show, {
-      get when() {
-        return _$memo(() => !!desktop())() && env("VITE_CLOSEDCODE_CHANNEL") === "beta";
-      },
-      get children() {
-        return _$createComponent(AdvancedSection, {});
-      }
-    }), null);
-    return _el$28;
-  })();
+
+  const root = template(`
+    <div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10">
+      <div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]">
+        <div class="d-flex flex-column gap-1 pt-6 pb-8">
+          <h2 class="fs-6 fw-medium text-body-emphasis" data-slot="title"></h2>
+        </div>
+      </div>
+      <div class="d-flex flex-column gap-8 w-100" data-slot="content"></div>
+    </div>`);
+  const titleEl = root.querySelector('[data-slot="title"]');
+  const content = root.querySelector('[data-slot="content"]');
+  createEffect(() => {
+    titleEl.textContent = language.t("settings.tab.general");
+  });
+  content.appendChild(GeneralSection());
+  content.appendChild(AppearanceSection());
+  content.appendChild(NotificationsSection());
+  content.appendChild(SoundsSection());
+  content.appendChild(UpdatesSection());
+  // Show: the display (Wayland) section only exists on desktop Linux.
+  const displaySlot = contentsSlot();
+  content.appendChild(displaySlot);
+  createEffect(() => {
+    if (linux()) {
+      displaySlot.replaceChildren(DisplaySection());
+    } else {
+      displaySlot.replaceChildren();
+    }
+  });
+  // Show: the advanced section only exists on the desktop beta channel.
+  const advancedSlot = contentsSlot();
+  content.appendChild(advancedSlot);
+  createEffect(() => {
+    if (desktop() && env("VITE_CLOSEDCODE_CHANNEL") === "beta") {
+      advancedSlot.replaceChildren(AdvancedSection());
+    } else {
+      advancedSlot.replaceChildren();
+    }
+  });
+  return root;
 };
 const SettingsRow = props => {
-  return (() => {
-    var _el$39 = _tmpl$21(),
-      _el$40 = _el$39.firstChild,
-      _el$41 = _el$40.firstChild,
-      _el$42 = _el$41.nextSibling,
-      _el$43 = _el$40.nextSibling;
-    _$insert(_el$41, () => props.title);
-    _$insert(_el$42, () => props.description);
-    _$insert(_el$43, () => props.children);
-    return _el$39;
-  })();
+  const el = template(`
+    <div class="d-flex align-items-center gap-4 p-4 rounded-3 bg-body-tertiary">
+      <div class="d-flex min-w-0 flex-1 flex-column gap-0.5">
+        <span class="fw-medium text-body-emphasis" data-slot="title"></span>
+        <span class="small fw-normal text-secondary" data-slot="description"></span>
+      </div>
+      <div class="d-flex justify-content-end flex-shrink-0" data-slot="control"></div>
+    </div>`);
+  const titleEl = el.querySelector('[data-slot="title"]');
+  const descriptionEl = el.querySelector('[data-slot="description"]');
+  const controlEl = el.querySelector('[data-slot="control"]');
+  // Title/description may be plain (translated) strings — set via textContent,
+  // never innerHTML — or prebuilt DOM nodes (the Wayland row title).
+  createEffect(() => {
+    const title = props.title;
+    if (title instanceof Node) titleEl.replaceChildren(title);
+    else titleEl.textContent = title ?? "";
+  });
+  createEffect(() => {
+    const description = props.description;
+    if (description instanceof Node) descriptionEl.replaceChildren(description);
+    else descriptionEl.textContent = description ?? "";
+  });
+  const children = props.children;
+  const nodes = (Array.isArray(children) ? children : [children]).filter(child => child != null && typeof child !== "boolean");
+  controlEl.replaceChildren(...nodes.map(child => child instanceof Node ? child : document.createTextNode(String(child))));
+  return el;
 };

@@ -289,21 +289,6 @@ async function buildImportMap() {
     }
   };
   for (const r of roots) walk(r);
-  // URL-form canonicalization: app/renderer files are reachable both through
-  // the route aliases (/src/, /renderer/ — used by the HTML entry, relative
-  // imports and the "@/" prefix) and through /@fs/. A module loaded under two
-  // URLs is instantiated twice and Solid context identity breaks ("Platform
-  // context must be used within a context provider", white screen) — so every
-  // import-map value under APP_SRC / DT_RENDERER must use the same route form.
-  const toRouteUrl = file => {
-    let real = file;
-    try { real = realpathSync(file); } catch {}
-    for (const [base, route] of [[APP_SRC, "/src/"], [DT_RENDERER, "/renderer/"]]) {
-      const rel = relative(base, real);
-      if (rel && !rel.startsWith("..") && !isAbsolute(rel)) return route + rel.replace(/\\/g, "/");
-    }
-    return toOcPath(real);
-  };
   const imports = { "@/": "/src/" };
   for (const spec of [...bare].sort()) {
     const abs = resolveBare(spec, APP_SRC);
@@ -347,6 +332,19 @@ function toOcPath(abs) {
   }
   return null;
 }
+// Canonical first-party URL form: files under the app/renderer trees use the
+// route aliases (/src/, /renderer/) — the same form the HTML entry, relative
+// imports and the import map produce. Mixing them with /@fs/ double-
+// instantiates modules and breaks Solid context identity (white screen).
+function toRouteUrl(file) {
+  let real = file;
+  try { real = realpathSync(file); } catch {}
+  for (const [base, route] of [[APP_SRC, "/src/"], [DT_RENDERER, "/renderer/"]]) {
+    const rel = relative(base, real);
+    if (rel && !rel.startsWith("..") && !isAbsolute(rel)) return route + rel.replace(/\\/g, "/");
+  }
+  return toOcPath(real);
+}
 async function rewriteModule(code, diskPath) {
   await lexerInit;
   let imports, exports;
@@ -367,15 +365,17 @@ async function rewriteModule(code, diskPath) {
     const isRel = /^\.\.?\//.test(spec);
     const isAbs = /^(\/|[a-z][a-z0-9+.-]*:)/i.test(spec);
     let url = null;
-    if (isRel) {
+    if (spec.startsWith("@/")) {
+      url = toRouteUrl(resolveFile(join(APP_SRC, spec.slice(2))));
+    } else if (isRel) {
       // Resolve relative imports to a real file (handles extensionless / dir/index.js).
-      url = toOcPath(resolveFile(resolve(fromDir, spec)));
+      url = toRouteUrl(resolveFile(resolve(fromDir, spec)));
     } else if (isAbs) {
       continue;
     } else {
       const abs = resolveBare(spec, fromDir);
       const file = abs ? resolveFile(abs) : null;
-      url = file ? toOcPath(file) : null;
+      url = file ? toRouteUrl(file) : null;
       if (!abs) process.stderr.write(`[oc-resolve] MISS "${spec}" from ${diskPath}\n`);
       else if (!url) process.stderr.write(`[oc-resolve] OUTSIDE "${spec}" -> ${abs}\n`);
     }
@@ -446,10 +446,15 @@ export function registerRendererProtocol() {
         const code = await readFile(disk, "utf8");
         // First-party (workspace) modules are standard ESM: extension-complete
         // relative imports + bare/"@/" specifiers covered by the import map —
-        // serve them verbatim. Only third-party files under node_modules/ get
-        // the import-rewriting/CJS-interop treatment.
-        const thirdParty = !relative(NODE_MODULES, disk).startsWith("..");
-        const out = thirdParty ? await rewriteModule(code, disk) : code;
+        // serve them verbatim. Files under node_modules/ keep the rewriter
+        // (CJS interop, deep transitive specifiers). The loading overlay's
+        // scripts (DT_RENDERER) are ALSO rewritten: loading.html must work
+        // before/without the import map (its module graph dying silently
+        // leaves the app stuck on the splash forever — main waits for
+        // loadingWindowComplete), so they keep the resolver treatment.
+        const rewrite = !relative(NODE_MODULES, disk).startsWith("..")
+          || !relative(DT_RENDERER, disk).startsWith("..");
+        const out = rewrite ? await rewriteModule(code, disk) : code;
         return new Response(out, { headers: { "content-type": "text/javascript" } });
       } catch (e) {
         process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);

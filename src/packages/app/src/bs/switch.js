@@ -40,6 +40,10 @@ export function Switch(props) {
 
   Object.keys(props).forEach(key => {
     if (key === "class" || key === "classList") return;
+    // onChange is wired to the INPUT above with the boolean value — adding it
+    // again here (bubbled change Event on the container) double-fired every
+    // toggle (net no-op for boolean setters, Event object for the rest).
+    if (key === "onChange") return;
     if (/^on[A-Z]/.test(key)) {
       const eventName = key.charAt(2).toLowerCase() + key.slice(3);
       const handler = props[key];
