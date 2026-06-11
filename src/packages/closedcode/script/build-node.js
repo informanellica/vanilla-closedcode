@@ -39,7 +39,6 @@ const migrations = await Promise.all(
 console.log(`Loaded ${migrations.length} migrations`)
 
 const ALIASES = [
-  { prefix: "#db", replace: path.join(dir, "src/storage/db.node.js") },
   { prefix: "#pty", replace: path.join(dir, "src/pty/pty.node.js") },
   { prefix: "#tui/", replace: path.join(dir, "src/cli/cmd/tui") + "/" },
   { prefix: "#test/", replace: path.join(dir, "test") + "/" },

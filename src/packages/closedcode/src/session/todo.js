@@ -5,9 +5,6 @@ import { zod } from "#util/effect-zod.js";
 import { withStatics } from "#util/schema.js";
 import { Effect, Layer, Context, Schema } from "effect";
 import { Database } from "#storage/db.js";
-import { eq } from "drizzle-orm";
-import { asc } from "drizzle-orm";
-import { TodoTable } from "./session.sql.js";
 export const Info = Schema.Struct({
   content: Schema.String.annotate({
     description: "Brief description of the task"
@@ -33,21 +30,25 @@ export class Service extends Context.Service()("@closedcode/SessionTodo") {}
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const update = Effect.fn("Todo.update")(function* (input) {
-    yield* Effect.sync(() => Database.transaction(db => {
-      db.delete(TodoTable).where(eq(TodoTable.session_id, input.sessionID)).run();
+    yield* Effect.promise(() => Database.transactionAsync(async h => {
+      await h.models.Todo.destroy({ where: { session_id: input.sessionID }, transaction: h.tx });
       if (input.todos.length === 0) return;
-      db.insert(TodoTable).values(input.todos.map((todo, position) => ({
+      await h.models.Todo.bulkCreate(input.todos.map((todo, position) => ({
         session_id: input.sessionID,
         content: todo.content,
         status: todo.status,
         priority: todo.priority,
         position
-      }))).run();
+      })), { transaction: h.tx });
     }));
     yield* bus.publish(Event.Updated, input);
   });
   const get = Effect.fn("Todo.get")(function* (sessionID) {
-    const rows = yield* Effect.sync(() => Database.use(db => db.select().from(TodoTable).where(eq(TodoTable.session_id, sessionID)).orderBy(asc(TodoTable.position)).all()));
+    const rows = yield* Effect.promise(() => Database.useAsync(async h => (await h.models.Todo.findAll({
+      where: { session_id: sessionID },
+      order: [["position", "ASC"]],
+      transaction: h.tx
+    })).map(row => row.get({ plain: true }))));
     return rows.map(row => ({
       content: row.content,
       status: row.status,

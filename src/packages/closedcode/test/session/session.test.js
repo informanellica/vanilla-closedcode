@@ -11,7 +11,6 @@ import path from "path";
 import { fileURLToPath as __toPath } from "node:url";
 const __dirname = path.dirname(__toPath(import.meta.url));
 
-let SessionNs;
 
 const projectRoot = path.join(__dirname, "../..");
 void Log.init({

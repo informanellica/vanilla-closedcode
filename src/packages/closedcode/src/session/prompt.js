@@ -56,9 +56,7 @@ import { EventV2 } from "#v2/event.js";
 import { SessionEvent } from "#v2/session-event.js";
 import { AgentAttachment, FileAttachment, Source } from "#v2/session-prompt.js";
 import * as DateTime from "effect/DateTime";
-import { eq } from "#storage/db.js";
 import * as Database from "#storage/db.js";
-import { SessionTable } from "./session.sql.js";
 globalThis.AI_SDK_LOG_WARNINGS = false;
 const STRUCTURED_OUTPUT_DESCRIPTION = `Use this tool to return your final response in the requested structured format.
 
@@ -962,10 +960,22 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       system: input.system,
       format: input.format
     };
-    const current = Database.use(db => db.select({
-      agent: SessionTable.agent,
-      model: SessionTable.model
-    }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)).get());
+    const current = yield* Effect.promise(() => Database.useAsync(async h => {
+      const row = await h.models.Session.findOne({
+        attributes: ["agent", "model"],
+        where: { id: input.sessionID },
+        transaction: h.tx
+      });
+      if (!row) return undefined;
+      const found = row.get({ plain: true });
+      return {
+        agent: found.agent,
+        // The migration DDL declares JSON columns as `text`, and sequelize's
+        // sqlite parser keys off the declared column type, so DataTypes.JSON
+        // values come back as raw strings; parse to match drizzle mode:"json".
+        model: typeof found.model === "string" ? JSON.parse(found.model) : found.model
+      };
+    }));
     if (current?.agent !== info.agent) {
       EventV2.run(SessionEvent.AgentSwitched.Sync, {
         sessionID: input.sessionID,

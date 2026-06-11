@@ -2,7 +2,6 @@ import { Session } from "#session/session.js";
 import { MessageV2 } from "../../session/message-v2.js";
 import { CliError, effectCmd } from "../effect-cmd.js";
 import { Database } from "#storage/db.js";
-import { SessionTable, MessageTable, PartTable } from "../../session/session.sql.js";
 import { InstanceRef } from "#effect/instance-ref.js";
 import { ShareNext } from "#share/share-next.js";
 import { EOL } from "os";
@@ -136,12 +135,15 @@ const runImport = Effect.fn("Cli.import.body")(function* (file, projectID) {
     projectID
   });
   const row = Session.toRow(info);
-  Database.use(db => db.insert(SessionTable).values(row).onConflictDoUpdate({
-    target: SessionTable.id,
-    set: {
-      project_id: row.project_id
-    }
-  }).run());
+  // Raw upsert (Sequelize layer): drizzle's onConflictDoUpdate only touched
+  // project_id (plus the $onUpdate time_updated column) — model.upsert would
+  // overwrite every column of an existing session, so keep the partial
+  // ON CONFLICT DO UPDATE as raw SQL. JSON columns are stringified manually.
+  const json = value => (value == null ? null : JSON.stringify(value));
+  yield* Effect.promise(() => Database.useAsync(h => h.sequelize.query("INSERT INTO session (id, project_id, workspace_id, parent_id, slug, directory, path, title, agent, model, version, share_url, summary_additions, summary_deletions, summary_files, summary_diffs, revert, permission, time_created, time_updated, time_compacting, time_archived) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET project_id = excluded.project_id, time_updated = ?", {
+    replacements: [row.id, row.project_id, row.workspace_id ?? null, row.parent_id ?? null, row.slug, row.directory, row.path ?? null, row.title, row.agent ?? null, json(row.model), row.version, row.share_url ?? null, row.summary_additions ?? null, row.summary_deletions ?? null, row.summary_files ?? null, json(row.summary_diffs), json(row.revert), json(row.permission), row.time_created ?? Date.now(), row.time_updated ?? Date.now(), row.time_compacting ?? null, row.time_archived ?? null, Date.now()],
+    transaction: h.tx
+  })));
   for (const msg of exportData.messages) {
     const msgInfo = decodeMessageInfo(msg.info);
     const {
@@ -149,12 +151,17 @@ const runImport = Effect.fn("Cli.import.body")(function* (file, projectID) {
       sessionID: _,
       ...msgData
     } = msgInfo;
-    Database.use(db => db.insert(MessageTable).values({
+    // bulkCreate + ignoreDuplicates emits INSERT OR IGNORE (onConflictDoNothing);
+    // the model hooks fill time_updated like drizzle's $onUpdate did on insert.
+    yield* Effect.promise(() => Database.useAsync(h => h.models.Message.bulkCreate([{
       id,
       session_id: row.id,
       time_created: msgInfo.time?.created ?? Date.now(),
       data: msgData
-    }).onConflictDoNothing().run());
+    }], {
+      ignoreDuplicates: true,
+      transaction: h.tx
+    })));
     for (const part of msg.parts) {
       const partInfo = decodePart(part);
       const {
@@ -163,12 +170,15 @@ const runImport = Effect.fn("Cli.import.body")(function* (file, projectID) {
         messageID,
         ...partData
       } = partInfo;
-      Database.use(db => db.insert(PartTable).values({
+      yield* Effect.promise(() => Database.useAsync(h => h.models.Part.bulkCreate([{
         id: partId,
         message_id: messageID,
         session_id: row.id,
         data: partData
-      }).onConflictDoNothing().run());
+      }], {
+        ignoreDuplicates: true,
+        transaction: h.tx
+      })));
     }
   }
   process.stdout.write(`Imported session: ${exportData.info.id}`);

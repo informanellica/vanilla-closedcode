@@ -1,8 +1,6 @@
 import { Bus } from "#bus/index.js";
 import { TuiEvent } from "#cli/cmd/tui/event.js";
-import { SessionTable } from "#session/session.sql.js";
 import * as Database from "#storage/db.js";
-import { eq } from "drizzle-orm";
 import { Effect } from "effect";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";
 import { nextTuiRequest, submitTuiResponse } from "../../../express/tui.js";
@@ -73,9 +71,14 @@ export const tuiHandlers = HttpApiBuilder.group(InstanceHttpApi, "tui", handlers
   });
   const selectSession = Effect.fn("TuiHttpApi.selectSession")(function* (ctx) {
     if (!ctx.payload.sessionID.startsWith("ses")) return yield* new HttpApiError.BadRequest({});
-    const row = yield* Effect.sync(() => Database.use(db => db.select({
-      id: SessionTable.id
-    }).from(SessionTable).where(eq(SessionTable.id, ctx.payload.sessionID)).get()));
+    const row = yield* Effect.promise(() => Database.useAsync(async h => {
+      const found = await h.models.Session.findOne({
+        attributes: ["id"],
+        where: { id: ctx.payload.sessionID },
+        transaction: h.tx
+      });
+      return found == null ? undefined : found.get({ plain: true });
+    }));
     if (!row) return yield* new HttpApiError.NotFound({});
     yield* bus.publish(TuiEvent.SessionSelect, ctx.payload);
     return true;

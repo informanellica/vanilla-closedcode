@@ -2,7 +2,6 @@ import { Effect } from "effect";
 import { effectCmd } from "../effect-cmd.js";
 import { Session } from "#session/session.js";
 import { Database } from "#storage/db.js";
-import { SessionTable } from "../../session/session.sql.js";
 import { InstanceRef } from "#effect/instance-ref.js";
 export const StatsCommand = effectCmd({
   command: "stats",
@@ -32,7 +31,13 @@ export const StatsCommand = effectCmd({
     displayStats(stats, args.tools, modelLimit);
   })
 });
-const getAllSessions = Effect.sync(() => Database.use(db => db.select().from(SessionTable).all()).map(row => Session.fromRow(row)));
+// Sequelize layer: Effect.promise keeps the defect-on-failure semantics the
+// previous Effect.sync wrapper had.
+const getAllSessions = Effect.promise(() => Database.useAsync(async h => (await h.models.Session.findAll({
+  transaction: h.tx
+})).map(row => Session.fromRow(row.get({
+  plain: true
+})))));
 const aggregateSessionStats = Effect.fn("Cli.stats.aggregate")(function* (days, projectFilter, currentProject) {
   const svc = yield* Session.Service;
   const sessions = yield* getAllSessions;

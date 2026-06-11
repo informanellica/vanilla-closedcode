@@ -1,6 +1,5 @@
 import { Database } from "#storage/db.js";
-import { inArray } from "drizzle-orm";
-import { EventSequenceTable } from "#sync/event.sql.js";
+import { Op } from "#storage/sequelize.js";
 import { Workspace } from "#control-plane/workspace.js";
 import * as Log from "core/util/log";
 import { AppRuntime } from "#effect/app-runtime.js";
@@ -9,12 +8,13 @@ const HEADER = "x-closedcode-sync";
 const log = Log.create({
   service: "fence"
 });
-export function load(ids) {
-  const rows = Database.use(db => {
-    if (!ids?.length) {
-      return db.select().from(EventSequenceTable).all();
-    }
-    return db.select().from(EventSequenceTable).where(inArray(EventSequenceTable.aggregate_id, ids)).all();
+export async function load(ids) {
+  const rows = await Database.useAsync(async h => {
+    const found = await h.models.EventSequence.findAll({
+      where: ids?.length ? { aggregate_id: { [Op.in]: ids } } : undefined,
+      transaction: h.tx
+    });
+    return found.map(r => r.get({ plain: true }));
   });
   return Object.fromEntries(rows.map(row => [row.aggregate_id, row.seq]));
 }
@@ -56,9 +56,9 @@ export async function wait(workspaceID, state, signal) {
 }
 export const FenceMiddleware = async (c, next) => {
   if (c.req.method === "GET" || c.req.method === "HEAD" || c.req.method === "OPTIONS") return next();
-  const prev = load();
+  const prev = await load();
   await next();
-  const current = diff(prev, load());
+  const current = diff(prev, await load());
   if (Object.keys(current).length > 0) {
     log.info("header", {
       diff: current

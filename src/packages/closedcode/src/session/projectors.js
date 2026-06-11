@@ -1,19 +1,22 @@
 import { NotFoundError } from "#storage/storage.js";
-import { eq } from "drizzle-orm";
-import { and } from "drizzle-orm";
 import { SyncEvent } from "#sync/index.js";
 import * as Session from "./session.js";
 import { MessageV2 } from "./message-v2.js";
-import { SessionTable, MessageTable, PartTable } from "./session.sql.js";
 import { Log } from "core/util/log";
 import nextProjectors from "./projectors-next.js";
 const log = Log.create({
   service: "session.projector"
 });
+// Projectors receive the sequelize handle h = { models, sequelize, tx } from
+// the SyncEvent dispatcher and are awaited; every model call passes
+// { transaction: h.tx }.
 function foreign(err) {
   if (typeof err !== "object" || err === null) return false;
   if ("code" in err && err.code === "SQLITE_CONSTRAINT_FOREIGNKEY") return true;
-  return "message" in err && typeof err.message === "string" && err.message.includes("FOREIGN KEY constraint failed");
+  if ("message" in err && typeof err.message === "string" && err.message.includes("FOREIGN KEY constraint failed")) return true;
+  // sequelize wraps driver errors (SequelizeForeignKeyConstraintError); the
+  // underlying sqlite error is preserved on `original`.
+  return "original" in err && err.original !== err && foreign(err.original);
 }
 function grab(obj, field1, cb) {
   if (obj == undefined || !(field1 in obj)) return undefined;
@@ -51,17 +54,20 @@ export function toPartialRow(info) {
   };
   return Object.fromEntries(Object.entries(obj).filter(([_, val]) => val !== undefined));
 }
-export default [SyncEvent.project(Session.Event.Created, (db, data) => {
-  db.insert(SessionTable).values(Session.toRow(data.info)).run();
-}), SyncEvent.project(Session.Event.Updated, (db, data) => {
+export default [SyncEvent.project(Session.Event.Created, async (h, data) => {
+  await h.models.Session.create(Session.toRow(data.info), { transaction: h.tx });
+}), SyncEvent.project(Session.Event.Updated, async (h, data) => {
   const info = data.info;
-  const row = db.update(SessionTable).set(toPartialRow(info)).where(eq(SessionTable.id, data.sessionID)).returning().get();
-  if (!row) throw new NotFoundError({
+  const [count] = await h.models.Session.update(toPartialRow(info), {
+    where: { id: data.sessionID },
+    transaction: h.tx
+  });
+  if (!count) throw new NotFoundError({
     message: `Session not found: ${data.sessionID}`
   });
-}), SyncEvent.project(Session.Event.Deleted, (db, data) => {
-  db.delete(SessionTable).where(eq(SessionTable.id, data.sessionID)).run();
-}), SyncEvent.project(MessageV2.Event.Updated, (db, data) => {
+}), SyncEvent.project(Session.Event.Deleted, async (h, data) => {
+  await h.models.Session.destroy({ where: { id: data.sessionID }, transaction: h.tx });
+}), SyncEvent.project(MessageV2.Event.Updated, async (h, data) => {
   const time_created = data.info.time.created;
   const {
     id,
@@ -69,17 +75,12 @@ export default [SyncEvent.project(Session.Event.Created, (db, data) => {
     ...rest
   } = data.info;
   try {
-    db.insert(MessageTable).values({
+    await h.models.Message.upsert({
       id,
       session_id: sessionID,
       time_created,
       data: rest
-    }).onConflictDoUpdate({
-      target: MessageTable.id,
-      set: {
-        data: rest
-      }
-    }).run();
+    }, { transaction: h.tx });
   } catch (err) {
     if (!foreign(err)) throw err;
     log.warn("ignored late message update", {
@@ -87,11 +88,17 @@ export default [SyncEvent.project(Session.Event.Created, (db, data) => {
       sessionID
     });
   }
-}), SyncEvent.project(MessageV2.Event.Removed, (db, data) => {
-  db.delete(MessageTable).where(and(eq(MessageTable.id, data.messageID), eq(MessageTable.session_id, data.sessionID))).run();
-}), SyncEvent.project(MessageV2.Event.PartRemoved, (db, data) => {
-  db.delete(PartTable).where(and(eq(PartTable.id, data.partID), eq(PartTable.session_id, data.sessionID))).run();
-}), SyncEvent.project(MessageV2.Event.PartUpdated, (db, data) => {
+}), SyncEvent.project(MessageV2.Event.Removed, async (h, data) => {
+  await h.models.Message.destroy({
+    where: { id: data.messageID, session_id: data.sessionID },
+    transaction: h.tx
+  });
+}), SyncEvent.project(MessageV2.Event.PartRemoved, async (h, data) => {
+  await h.models.Part.destroy({
+    where: { id: data.partID, session_id: data.sessionID },
+    transaction: h.tx
+  });
+}), SyncEvent.project(MessageV2.Event.PartUpdated, async (h, data) => {
   const {
     id,
     messageID,
@@ -99,18 +106,13 @@ export default [SyncEvent.project(Session.Event.Created, (db, data) => {
     ...rest
   } = data.part;
   try {
-    db.insert(PartTable).values({
+    await h.models.Part.upsert({
       id,
       message_id: messageID,
       session_id: sessionID,
       time_created: data.time,
       data: rest
-    }).onConflictDoUpdate({
-      target: PartTable.id,
-      set: {
-        data: rest
-      }
-    }).run();
+    }, { transaction: h.tx });
   } catch (err) {
     if (!foreign(err)) throw err;
     log.warn("ignored late part update", {

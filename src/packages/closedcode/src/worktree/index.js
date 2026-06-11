@@ -5,8 +5,6 @@ import { InstanceLayer } from "#project/instance-layer.js";
 import { InstanceStore } from "#project/instance-store.js";
 import { Project } from "#project/project.js";
 import { Database } from "#storage/db.js";
-import { eq } from "drizzle-orm";
-import { ProjectTable } from "../project/project.sql.js";
 import * as Log from "core/util/log";
 import { Slug } from "core/util/slug";
 import { errorMessage } from "../util/error.js";
@@ -406,7 +404,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return false;
   });
   const runStartScripts = Effect.fnUntraced(function* (directory, input) {
-    const row = yield* Effect.sync(() => Database.use(db => db.select().from(ProjectTable).where(eq(ProjectTable.id, input.projectID)).get()));
+    // Sequelize layer (ORM migration S3): plain row keeps JSON columns parsed.
+    const row = yield* Effect.promise(() => Database.useAsync(async h => {
+      const found = await h.models.Project.findOne({ where: { id: input.projectID }, transaction: h.tx });
+      return found == null ? undefined : found.get({ plain: true });
+    }));
     const project = row ? Project.fromRow(row) : undefined;
     const startup = project?.commands?.start?.trim() ?? "";
     const ok = yield* runStartScript(directory, startup, "project");

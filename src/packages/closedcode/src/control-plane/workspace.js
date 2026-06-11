@@ -1,25 +1,20 @@
 import { Context, Effect, FiberMap, Layer, Schema, Stream } from "effect";
 import { FetchHttpClient, HttpBody, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import { Database } from "#storage/db.js";
-import { asc } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { inArray } from "drizzle-orm";
+import { Op } from "#storage/sequelize.js";
 import { BusEvent } from "#bus/bus-event.js";
 import { GlobalBus } from "#bus/global.js";
 import { Auth } from "#auth/index.js";
 import { SyncEvent } from "#sync/index.js";
-import { EventSequenceTable, EventTable } from "#sync/event.sql.js";
 import { Flag } from "core/flag/flag";
 import * as Log from "core/util/log";
 import { Filesystem } from "#util/filesystem.js";
 import { ProjectID } from "#project/schema.js";
 import { Slug } from "core/util/slug";
-import { WorkspaceTable } from "./workspace.sql.js";
 import { getAdapter } from "./adapters/index.js";
 import { WorkspaceInfo as WorkspaceInfoSchema } from "./types.js";
 import { WorkspaceID } from "./schema.js";
 import { Session } from "#session/session.js";
-import { SessionTable } from "#session/session.sql.js";
 import { SessionID } from "#session/schema.js";
 import { errorData } from "#util/error.js";
 import { waitEvent } from "./util.js";
@@ -48,6 +43,10 @@ export const Event = {
   Restore: BusEvent.define("workspace.restore", Restore),
   Status: BusEvent.define("workspace.status", ConnectionStatus)
 };
+// sequelize v6's sqlite dialect stores DataTypes.JSON as TEXT but hands the
+// raw string back on reads; decode like drizzle's { mode: "json" } did. The
+// typeof guard keeps this a no-op if the layer ever starts parsing itself.
+const json = value => (typeof value === "string" ? JSON.parse(value) : value);
 function fromRow(row) {
   return {
     id: row.id,
@@ -55,11 +54,15 @@ function fromRow(row) {
     branch: row.branch,
     name: row.name,
     directory: row.directory,
-    extra: row.extra,
+    extra: json(row.extra),
     projectID: row.project_id
   };
 }
-const db = fn => Effect.sync(() => Database.use(fn));
+// Sequelize call-site conventions (ORM migration S3): Database.useAsync hands
+// a handle { models, sequelize, tx }; every model call passes
+// { transaction: h.tx } (undefined outside a tx). Reads return plain rows.
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
+const db = fn => Effect.promise(() => Database.useAsync(fn));
 const log = Log.create({
   service: "workspace-sync"
 });
@@ -204,10 +207,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }), Stream.runForEach(onEvent));
   });
   const syncHistory = Effect.fn("Workspace.syncHistory")(function* (space, url, headers) {
-    const sessionIDs = yield* db(db => db.select({
-      id: SessionTable.id
-    }).from(SessionTable).where(eq(SessionTable.workspace_id, space.id)).all().map(row => row.id));
-    const state = sessionIDs.length ? Object.fromEntries((yield* db(db => db.select().from(EventSequenceTable).where(inArray(EventSequenceTable.aggregate_id, sessionIDs)).all())).map(row => [row.aggregate_id, row.seq])) : {};
+    const sessionIDs = yield* db(async h => (await h.models.Session.findAll({
+      attributes: ["id"],
+      where: { workspace_id: space.id },
+      transaction: h.tx
+    })).map(row => row.get("id")));
+    const state = sessionIDs.length ? Object.fromEntries((yield* db(async h => (await h.models.EventSequence.findAll({
+      where: { aggregate_id: { [Op.in]: sessionIDs } },
+      transaction: h.tx
+    })).map(row => row.get({ plain: true })))).map(row => [row.aggregate_id, row.seq])) : {};
     log.info("syncing workspace history", {
       workspaceID: space.id,
       sessions: sessionIDs.length,
@@ -356,8 +364,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       extra: config.extra ?? null,
       projectID: input.projectID
     };
-    yield* db(db => {
-      db.insert(WorkspaceTable).values({
+    yield* db(async h => {
+      await h.models.Workspace.create({
         id: info.id,
         type: info.type,
         branch: info.branch,
@@ -365,7 +373,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         directory: info.directory,
         extra: info.extra,
         project_id: info.projectID
-      }).run();
+      }, { transaction: h.tx });
     });
     const env = {
       CLOSEDCODE_AUTH_CONTENT: JSON.stringify(yield* auth.all()),
@@ -412,13 +420,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
           workspaceID: input.workspaceID
         }
       });
-      const rows = yield* db(db => db.select({
-        id: EventTable.id,
-        aggregateID: EventTable.aggregate_id,
-        seq: EventTable.seq,
-        type: EventTable.type,
-        data: EventTable.data
-      }).from(EventTable).where(eq(EventTable.aggregate_id, input.sessionID)).orderBy(asc(EventTable.seq)).all());
+      const rows = yield* db(async h => (await h.models.Event.findAll({
+        where: { aggregate_id: input.sessionID },
+        order: [["seq", "ASC"]],
+        transaction: h.tx
+      })).map(instance => {
+        const row = instance.get({ plain: true });
+        return {
+          id: row.id,
+          aggregateID: row.aggregate_id,
+          seq: row.seq,
+          type: row.type,
+          data: json(row.data)
+        };
+      }));
       if (rows.length === 0) return yield* new SessionEventsNotFoundError({
         message: `No events found for session: ${input.sessionID}`,
         sessionID: input.sessionID
@@ -537,21 +552,26 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }))));
   });
   const list = Effect.fn("Workspace.list")(function* (project) {
-    return yield* db(db => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.project_id, project.id)).all().map(fromRow).sort((a, b) => a.id.localeCompare(b.id)));
+    return yield* db(async h => (await h.models.Workspace.findAll({
+      where: { project_id: project.id },
+      transaction: h.tx
+    })).map(row => fromRow(row.get({ plain: true }))).sort((a, b) => a.id.localeCompare(b.id)));
   });
   const get = Effect.fn("Workspace.get")(function* (id) {
-    const row = yield* db(db => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Workspace.findOne({ where: { id }, transaction: h.tx })));
     if (!row) return;
     return fromRow(row);
   });
   const remove = Effect.fn("Workspace.remove")(function* (id) {
-    const sessions = yield* db(db => db.select({
-      id: SessionTable.id
-    }).from(SessionTable).where(eq(SessionTable.workspace_id, id)).all());
+    const sessions = yield* db(async h => (await h.models.Session.findAll({
+      attributes: ["id"],
+      where: { workspace_id: id },
+      transaction: h.tx
+    })).map(row => row.get({ plain: true })));
     yield* Effect.forEach(sessions, sessionInfo => session.remove(sessionInfo.id), {
       discard: true
     });
-    const row = yield* db(db => db.select().from(WorkspaceTable).where(eq(WorkspaceTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Workspace.findOne({ where: { id }, transaction: h.tx })));
     if (!row) return;
     yield* stopSync(id);
     const info = fromRow(row);
@@ -563,7 +583,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         type: row.type
       });
     }));
-    yield* db(db => db.delete(WorkspaceTable).where(eq(WorkspaceTable.id, id)).run());
+    yield* db(h => h.models.Workspace.destroy({ where: { id }, transaction: h.tx }));
     return info;
   });
   const status = Effect.fn("Workspace.status")(function* () {
@@ -574,17 +594,28 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return exists && connections.get(workspaceID)?.status !== "error";
   });
   const waitForSync = Effect.fn("Workspace.waitForSync")(function* (workspaceID, state, signal) {
-    if (synced(state)) return;
-    yield* Effect.catch(waitEvent({
-      timeout: TIMEOUT,
-      signal,
-      fn(event) {
-        if (event.workspace !== workspaceID && event.payload.type !== "sync") {
-          return false;
-        }
-        return synced(state);
+    if (yield* Effect.promise(() => synced(state))) return;
+    // synced() is async now, so it cannot run inside waitEvent's synchronous
+    // event callback. Wait for a relevant event, then re-check the fence;
+    // repeat within the original TIMEOUT budget.
+    const deadline = Date.now() + TIMEOUT;
+    const wait = Effect.gen(function* () {
+      while (true) {
+        yield* waitEvent({
+          timeout: Math.max(0, deadline - Date.now()),
+          signal,
+          fn(event) {
+            return !(event.workspace !== workspaceID && event.payload.type !== "sync");
+          }
+        });
+        const done = yield* Effect.tryPromise({
+          try: () => synced(state),
+          catch: error => error
+        });
+        if (done) return;
       }
-    }), () => signal?.aborted ? Effect.fail(new SyncAbortedError({
+    });
+    yield* Effect.catch(wait, () => signal?.aborted ? Effect.fail(new SyncAbortedError({
       message: signal.reason instanceof Error ? signal.reason.message : "Request aborted",
       cause: signal.reason
     })) : Effect.fail(new SyncTimeoutError({
@@ -594,10 +625,17 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   });
   const startWorkspaceSyncing = Effect.fn("Workspace.startWorkspaceSyncing")(function* (projectID) {
     // This session table join makes this query only return
-    // workspaces that have sessions
-    const rows = yield* db(db => db.selectDistinct({
-      workspace: WorkspaceTable
-    }).from(WorkspaceTable).innerJoin(SessionTable, eq(SessionTable.workspace_id, WorkspaceTable.id)).where(eq(WorkspaceTable.project_id, projectID)).all());
+    // workspaces that have sessions. Models define no associations, so the
+    // JOIN runs as raw SQL; fromRow decodes the JSON `extra` column.
+    const rows = yield* db(async h => {
+      const [found] = await h.sequelize.query("SELECT DISTINCT w.* FROM workspace w INNER JOIN session s ON s.workspace_id = w.id WHERE w.project_id = ?", {
+        replacements: [projectID],
+        transaction: h.tx
+      });
+      return found.map(workspace => ({
+        workspace
+      }));
+    });
     for (const {
       workspace
     } of rows) {
@@ -624,13 +662,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
 }));
 export const defaultLayer = layer.pipe(Layer.provide(Auth.defaultLayer), Layer.provide(Session.defaultLayer), Layer.provide(SyncEvent.defaultLayer), Layer.provide(FetchHttpClient.layer));
 const TIMEOUT = 5000;
-function synced(state) {
+async function synced(state) {
   const ids = Object.keys(state);
   if (ids.length === 0) return true;
-  const done = Object.fromEntries(Database.use(db => db.select({
-    id: EventSequenceTable.aggregate_id,
-    seq: EventSequenceTable.seq
-  }).from(EventSequenceTable).where(inArray(EventSequenceTable.aggregate_id, ids)).all()).map(row => [row.id, row.seq]));
+  const rows = await Database.useAsync(async h => (await h.models.EventSequence.findAll({
+    where: { aggregate_id: { [Op.in]: ids } },
+    transaction: h.tx
+  })).map(row => row.get({ plain: true })));
+  const done = Object.fromEntries(rows.map(row => [row.aggregate_id, row.seq]));
   return ids.every(id => {
     return (done[id] ?? -1) >= state[id];
   });

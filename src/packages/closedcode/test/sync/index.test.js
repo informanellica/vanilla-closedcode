@@ -5,12 +5,15 @@ import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  Bus  } from "../../src/bus/index.js"
 import {  SyncEvent  } from "../../src/sync/index.js"
 import {  Database  } from "#storage/db.js"
-import {  EventTable  } from "../../src/sync/event.sql.js"
 import {  MessageID  } from "../../src/session/schema.js"
 import {  Flag  } from "core/flag/flag"
 import {  initProjectors  } from "../../src/server/projectors.js"
 import {  describe, expect, beforeEach, afterEach, afterAll, beforeAll  } from "@jest/globals"
 const original = Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES;
+// The module under test moved to the Sequelize layer (ORM migration S3) —
+// fixtures must read the SAME database (with :memory:, the legacy sync layer
+// and the async layer hold two different databases).
+const eventRows = () => Effect.promise(() => Database.useAsync(async h => (await h.models.Event.findAll({ transaction: h.tx })).map(row => row.get({ plain: true }))));
 const it = testEffect(Layer.mergeAll(SyncEvent.defaultLayer, CrossSpawnSpawner.defaultLayer));
 beforeEach(() => {
   Database.close();
@@ -68,7 +71,7 @@ describe("SyncEvent", () => {
         id: "evt_1",
         name: "first"
       });
-      const rows = Database.use(db => db.select().from(EventTable).all());
+      const rows = yield* eventRows();
       expect(rows).toHaveLength(1);
       expect(rows[0].type).toBe("item.created.1");
       expect(rows[0].aggregate_id).toBe("evt_1");
@@ -85,7 +88,7 @@ describe("SyncEvent", () => {
         id: "evt_1",
         name: "second"
       });
-      const rows = Database.use(db => db.select().from(EventTable).all());
+      const rows = yield* eventRows();
       expect(rows).toHaveLength(2);
       expect(rows[1].seq).toBe(rows[0].seq + 1);
     })));
@@ -97,7 +100,7 @@ describe("SyncEvent", () => {
         item_id: "evt_1",
         to: "james"
       });
-      const rows = Database.use(db => db.select().from(EventTable).all());
+      const rows = yield* eventRows();
       expect(rows).toHaveLength(1);
       expect(rows[0].aggregate_id).toBe("evt_1");
     })));
@@ -146,7 +149,7 @@ describe("SyncEvent", () => {
           name: "replayed"
         }
       });
-      const rows = Database.use(db => db.select().from(EventTable).all());
+      const rows = yield* eventRows();
       expect(rows).toHaveLength(1);
       expect(rows[0].aggregate_id).toBe(id);
     })));
@@ -227,7 +230,7 @@ describe("SyncEvent", () => {
       }]);
       expect(one).toBe(id);
       expect(two).toBe(id);
-      const rows = Database.use(db => db.select().from(EventTable).all());
+      const rows = yield* eventRows();
       expect(rows.map(row => row.seq)).toEqual([0, 1, 2, 3]);
     })));
   });
