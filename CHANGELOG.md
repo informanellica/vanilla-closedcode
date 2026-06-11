@@ -37,6 +37,34 @@ Development line following `0.1.0-preview`.
   harness), so it does not exist on a normal run.
 
 ### Changed
+- **ORM migrated: Drizzle -> Sequelize** (roadmap backlog item). The data layer
+  now runs on `sequelize@6` + `sqlite3` (N-API; ABI-stable for both plain Node
+  and the Electron-main sidecar import — no rebuild step). The SQL migration
+  journal remains the single source of schema truth: the same
+  `migration/*/migration.sql` files are applied through the Sequelize
+  connection (journal table kept), and the models are pure mappers
+  (`tableName` explicit, `timestamps: false`, `sync()` never used). The legacy
+  synchronous ambient-transaction layer (`node:sqlite` + LocalContext) became
+  an async one: `Database.useAsync` / `transactionAsync` (AsyncLocalStorage
+  ambient transactions, commit-deferred `effectAsync`, `BEGIN IMMEDIATE`
+  support). All 28 modules converted; async-ness propagated through
+  `MessageV2.page/get/parts/stream`, `Session.listGlobal`, `Project.list/get`,
+  `SyncEvent.*` and their callers. drizzle-orm / drizzle-kit and the `*.sql.js`
+  table definitions are gone. **Data preservation proven** on a copy of a real
+  user database (all 15 tables / every row identical across the swap).
+  Notable layer findings (documented in
+  `docs/milestones/orm-sequelize-migration.md`): the sqlite dialect type-parses
+  by DECLARED column type so JSON columns are parsed in model getters;
+  attribute descriptors must be per-model factories (Sequelize mutates them);
+  `notNull` validation precedes create hooks (timestamps via `beforeValidate`);
+  and managed `sequelize.transaction()` deadlocks with a 1-connection pool when
+  the Effect runtime drops AsyncLocalStorage context — transactions are
+  hand-rolled `BEGIN/COMMIT` on the single shared connection, the same
+  execution model as the old synchronous layer. Accepted deltas: bulk
+  `Model.update` does not auto-bump `time_updated`; `upsert` rewrites all
+  provided columns on conflict.
+
+### Changed
 - **Pure Vanilla Standardization stages 1–4 implemented** (roadmap milestone).
   *Engine/CLI:* the `@/` / `@tui/` aliases (1,400 sites) moved to standard
   `package.json#imports` — specifiers are `#util/x.js` style because `#/...` is
