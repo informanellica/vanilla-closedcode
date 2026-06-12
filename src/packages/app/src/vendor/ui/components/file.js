@@ -1,19 +1,12 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=file class="relative outline-none"tabindex=0><div></div><div class="pointer-events-none absolute inset-0 z-0">`);
+// insert() is the established exception for reactive/component-valued
+// children: the presence-gated search bar (Show + Portal-backed FileSearchBar)
+// must stay reconciled by Solid instead of being frozen at mount.
+import { insert as _solidInsert } from "solid-js/web";
 import { sampledChecksum } from "core/util/encode";
 import { DEFAULT_VIRTUAL_FILE_METRICS, File as PierreFile, FileDiff, VirtualizedFile, VirtualizedFileDiff, Virtualizer } from "@pierre/diffs";
 import { createMediaQuery } from "@solid-primitives/media";
 import { makeEventListener } from "@solid-primitives/event-listener";
-import { createEffect, createMemo, createSignal, onCleanup, onMount, Show, splitProps } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, onMount, Show, splitProps } from "solid-js";
 import { createDefaultOptions, styleVariables } from "../pierre/index.js";
 import { markCommentedDiffLines, markCommentedFileLines } from "../pierre/commented-lines.js";
 import { fixDiffSelection, findDiffSide } from "../pierre/diff-selection.js";
@@ -25,6 +18,44 @@ import { acquireVirtualizer, virtualMetrics } from "../pierre/virtualizer.js";
 import { getWorkerPool } from "../pierre/worker.js";
 import { FileMedia } from "./file-media.js";
 import { FileSearchBar } from "./file-search.js";
+
+// Build a detached element from compact, fully static HTML (no inter-element
+// whitespace, matching the compiled Solid template). Translated or
+// user-provided strings are never interpolated here.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Faithful port of solid-js/web classList(): each key may hold multiple
+// space-separated class names; keys that turned falsy are removed, truthy
+// keys are added, and `prev` carries the applied state between runs.
+function toggleClassKey(node, key, value) {
+  const classNames = key.trim().split(/\s+/);
+  for (let i = 0, nameLen = classNames.length; i < nameLen; i++) {
+    node.classList.toggle(classNames[i], value);
+  }
+}
+function applyClassList(node, value, prev) {
+  const classKeys = Object.keys(value || {});
+  const prevKeys = Object.keys(prev);
+  let i, len;
+  for (i = 0, len = prevKeys.length; i < len; i++) {
+    const key = prevKeys[i];
+    if (!key || key === "undefined" || value[key]) continue;
+    toggleClassKey(node, key, false);
+    delete prev[key];
+  }
+  for (i = 0, len = classKeys.length; i < len; i++) {
+    const key = classKeys[i];
+    const classValue = !!value[key];
+    if (!key || key === "undefined" || prev[key] === classValue || !classValue) continue;
+    toggleClassKey(node, key, true);
+    prev[key] = classValue;
+  }
+  return prev;
+}
 const VIRTUALIZE_BYTES = 500_000;
 const codeMetrics = {
   ...DEFAULT_VIRTUAL_FILE_METRICS,
@@ -418,68 +449,82 @@ function diffSelectionSide(node) {
 // ---------------------------------------------------------------------------
 
 function ViewerShell(props) {
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.nextSibling;
-    _$addEventListener(_el$, "focus", props.viewer.find.onFocus);
-    _$addEventListener(_el$, "pointerdown", props.viewer.find.onPointerDown, true);
-    _$use(el => props.viewer.wrapper = el, _el$);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return props.viewer.find.open();
-      },
-      get children() {
-        return _$createComponent(FileSearchBar, {
-          get pos() {
-            return props.viewer.find.pos;
-          },
-          get query() {
-            return props.viewer.find.query;
-          },
-          get count() {
-            return props.viewer.find.count;
-          },
-          get index() {
-            return props.viewer.find.index;
-          },
-          get setInput() {
-            return props.viewer.find.setInput;
-          },
-          get onInput() {
-            return props.viewer.find.setQuery;
-          },
-          get onKeyDown() {
-            return props.viewer.find.onInputKeyDown;
-          },
-          get onClose() {
-            return props.viewer.find.close;
-          },
-          onPrev: () => props.viewer.find.next(-1),
-          onNext: () => props.viewer.find.next(1)
-        });
-      }
-    }), _el$2);
-    _$use(el => props.viewer.container = el, _el$2);
-    _$use(el => props.viewer.overlay = el, _el$3);
-    _$effect(_p$ => {
-      var _v$ = props.mode,
-        _v$2 = styleVariables,
-        _v$3 = {
-          ...props.classList,
-          [props.class ?? ""]: !!props.class
-        };
-      _v$ !== _p$.e && _$setAttribute(_el$, "data-mode", _p$.e = _v$);
-      _p$.t = _$style(_el$, _v$2, _p$.t);
-      _p$.a = _$classList(_el$, _v$3, _p$.a);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined
-    });
-    return _el$;
-  })();
+  const el = template(`<div data-component="file" class="relative outline-none" tabindex="0"><div></div><div class="pointer-events-none absolute inset-0 z-0"></div></div>`);
+  const container = el.firstChild;
+  const overlay = container.nextSibling;
+  el.addEventListener("focus", props.viewer.find.onFocus);
+  // The compiled output registered onPointerDown as a *delegated* pointerdown
+  // ($$pointerdown + delegateEvents). A native listener is equivalent here:
+  // pointerdown is composed, so events from inside the viewer shadow root
+  // still bubble to this wrapper, while events inside the portal-mounted
+  // search bar never reach it natively — the same outcome the bar's own
+  // delegated stopPropagation produced (see file-search.js), and the handler
+  // never reads the event object.
+  el.addEventListener("pointerdown", props.viewer.find.onPointerDown);
+  props.viewer.wrapper = el;
+  // Presence-gated search bar: Show + Portal-backed FileSearchBar placed
+  // before the container element. insert() keeps when() live and rebuilds
+  // the bar once per truthiness flip, as compiled.
+  _solidInsert(el, createComponent(Show, {
+    get when() {
+      return props.viewer.find.open();
+    },
+    get children() {
+      return createComponent(FileSearchBar, {
+        get pos() {
+          return props.viewer.find.pos;
+        },
+        get query() {
+          return props.viewer.find.query;
+        },
+        get count() {
+          return props.viewer.find.count;
+        },
+        get index() {
+          return props.viewer.find.index;
+        },
+        get setInput() {
+          return props.viewer.find.setInput;
+        },
+        get onInput() {
+          return props.viewer.find.setQuery;
+        },
+        get onKeyDown() {
+          return props.viewer.find.onInputKeyDown;
+        },
+        get onClose() {
+          return props.viewer.find.close;
+        },
+        onPrev: () => props.viewer.find.next(-1),
+        onNext: () => props.viewer.find.next(1)
+      });
+    }
+  }), container);
+  props.viewer.container = container;
+  props.viewer.overlay = overlay;
+  // styleVariables is a module-level constant object, so the compiled style()
+  // diff only ever applied it once; a one-shot application is equivalent.
+  for (const [name, value] of Object.entries(styleVariables)) {
+    el.style.setProperty(name, String(value));
+  }
+  // Change-guarded data-mode + classList, mirroring the compiled effect block
+  // (setAttribute semantics: nullish removes the attribute).
+  let prevMode;
+  const prevClasses = {};
+  createRenderEffect(() => {
+    const mode = props.mode;
+    const classes = {
+      ...props.classList,
+      [props.class ?? ""]: !!props.class
+    };
+    if (mode !== prevMode) {
+      prevMode = mode;
+      if (mode == null) el.removeAttribute("data-mode");
+      else el.setAttribute("data-mode", mode);
+    }
+    applyClassList(el, classes, prevClasses);
+  });
+  return el;
 }
 
 // ---------------------------------------------------------------------------
@@ -677,7 +722,7 @@ function TextViewer(props) {
     instance = undefined;
     virtuals.cleanup();
   });
-  return _$createComponent(ViewerShell, {
+  return createComponent(ViewerShell, {
     mode: "text",
     viewer: viewer,
     get ["class"]() {
@@ -896,7 +941,7 @@ function DiffViewer(props) {
     dragSide = undefined;
     dragEndSide = undefined;
   });
-  return _$createComponent(ViewerShell, {
+  return createComponent(ViewerShell, {
     mode: "diff",
     viewer: viewer,
     get ["class"]() {
@@ -914,18 +959,17 @@ function DiffViewer(props) {
 
 export function File(props) {
   if (props.mode === "text") {
-    return _$createComponent(FileMedia, {
+    return createComponent(FileMedia, {
       get media() {
         return props.media;
       },
       fallback: () => TextViewer(props)
     });
   }
-  return _$createComponent(FileMedia, {
+  return createComponent(FileMedia, {
     get media() {
       return props.media;
     },
     fallback: () => DiffViewer(props)
   });
 }
-_$delegateEvents(["pointerdown"]);
