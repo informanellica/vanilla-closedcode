@@ -69,9 +69,24 @@ Keep the PoC as the reference scaffold for Stage T2.
 
 ```
 T0  [DONE] de-risking PoC (terminal-kit: CJK / scroll / input / resize / delta).
-T1  [free] Reuse lib/reactivity.js for TUI state. Its API already covers every
-    solid-js name the TUI imports — only the flip remains. No new reactivity code.
-T2  Build a thin first-party TUI layer on terminal-kit:
+T1  [DONE, revised] The TUI uses the self-written reactive core DIRECTLY (not a
+    later flip). KEY FINDING: real `solid-js` resolves to its SSR build in Node,
+    where createEffect is NOT fine-grained-reactive (verified: 0 effect re-runs
+    after a signal change). lib/reactivity.js is environment-agnostic
+    (node-reactive), so the TUI runtime imports IT, not solid-js — making TUI
+    reactivity solid-free from the start. (The runtime currently holds a COPY of
+    app/src/lib/reactivity.js at tui/runtime/reactivity.js — TODO: consolidate
+    the desktop + TUI copies into one shared module, e.g. packages/core.)
+T2  [IN PROGRESS] thin first-party TUI layer on terminal-kit. **Foundation DONE**
+    (packages/closedcode/src/cli/cmd/tui/runtime/, 25 node tests green):
+    - text.js: CJK-aware width/wrap/wordWrap/truncate/sliceCols/fit
+    - layout.js: Region (clipped draw) + column/row (fixed+flex) + box
+    - scroll.js: bottom-pinned scroll windowing for the chat timeline
+    - screen.js: createApp = ScreenBuffer + reactive render loop
+      (createRenderEffect -> paint -> delta draw; input dispatched in batch())
+    **Remaining T2 widgets:** Input (cursor/editing/CJK), List/Select (roving
+    focus + typeahead), Dialog/overlay region, a focus model + keymap router.
+    Original T2 design notes:
     - a single ScreenBuffer sized to the terminal, redrawn on resize;
     - a render() loop: state -> draw functions -> ScreenBuffer.draw({delta:true});
     - reactivity glue: lib/reactivity effects/memos schedule a (coalesced) render;
