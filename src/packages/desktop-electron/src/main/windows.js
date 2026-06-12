@@ -299,6 +299,24 @@ async function buildImportMap() {
     // the app never loads) are skipped — the map only needs runtime modules.
     else process.stderr.write(`[oc-importmap] skip "${spec}" (unresolved)\n`);
   }
+  // Stage R2/R4 (solid-free reactivity): re-point first-party solid-js /
+  // solid-js/web / solid-js/store at our self-written core (lib/reactivity.js,
+  // lib/store.js) instead of node_modules. This affects ONLY first-party
+  // modules — third-party packages under node_modules/ go through the
+  // import-rewriting resolver (not this map) and keep the real solid-js until
+  // each is internalized (Stage R3). Gated by CLOSEDCODE_SOLID_FREE=1 so the
+  // global flip is opt-in until R3 removes every third-party that would
+  // otherwise hand first-party code a foreign-runtime context across the
+  // (plain-DOM) component boundary. lib/reactivity.js covers the union of the
+  // solid-js core + solid-js/web runtime subset the app imports, so one URL
+  // serves both specifiers.
+  if (process.env.CLOSEDCODE_SOLID_FREE === "1") {
+    const coreUrl = toRouteUrl(resolveFile(join(APP_SRC, "lib/reactivity.js")));
+    const storeUrl = toRouteUrl(resolveFile(join(APP_SRC, "lib/store.js")));
+    if (coreUrl) { imports["solid-js"] = coreUrl; imports["solid-js/web"] = coreUrl; }
+    if (storeUrl) imports["solid-js/store"] = storeUrl;
+    process.stderr.write(`[oc-importmap] SOLID-FREE: solid-js->${coreUrl} store->${storeUrl}\n`);
+  }
   importMapJson = JSON.stringify({ imports });
   return importMapJson;
 }
