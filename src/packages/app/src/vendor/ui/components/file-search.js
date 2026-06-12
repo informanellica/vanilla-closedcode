@@ -1,89 +1,111 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="fixed z-50 d-flex h-8 align-items-center gap-2 rounded-2 border bg-body px-3 shadow-md"><input class="w-40 bg-transparent outline-none fw-normal text-body-emphasis placeholder:text-secondary"><div class="shrink-0 small fw-normal text-secondary tabular-nums text-end"style=width:10ch></div><div class="d-flex align-items-center"><button type=button class="size-6 grid place-items-center rounded-2 text-secondary disabled:opacity-40 disabled:pointer-events-none"></button><button type=button class="size-6 grid place-items-center rounded-2 text-secondary disabled:opacity-40 disabled:pointer-events-none"></button></div><button type=button class="size-6 grid place-items-center rounded-2 text-secondary">`);
+import { createComponent, createRenderEffect } from "solid-js";
 import { Portal } from "solid-js/web";
 import { useI18n } from "../context/i18n.js";
 import { Icon } from "./icon.js";
+
+// Build the static skeleton from fully static, trusted markup. Line breaks
+// only ever appear inside tags so the resulting DOM has no whitespace text
+// nodes, matching the compiled template exactly. All dynamic text goes in
+// via textContent / setAttribute, never into the markup string.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export function FileSearchBar(props) {
   const i18n = useI18n();
-  return _$createComponent(Portal, {
+  // Solid's Portal is kept on purpose: it mounts the bar in a plain <div>
+  // container appended to document.body, removes it on dispose, and wires the
+  // container's host link back to the bar's place in the component tree so
+  // delegated events from compiled modules keep retargeting through it.
+  return createComponent(Portal, {
     get children() {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.nextSibling,
-        _el$4 = _el$3.nextSibling,
-        _el$5 = _el$4.firstChild,
-        _el$6 = _el$5.nextSibling,
-        _el$7 = _el$4.nextSibling;
-      _el$.$$pointerdown = e => e.stopPropagation();
-      _$insert(_el$, _$createComponent(Icon, {
+      const el = template(
+        `<div class="fixed z-50 d-flex h-8 align-items-center gap-2 rounded-2 border bg-body px-3 shadow-md"><input
+          class="w-40 bg-transparent outline-none fw-normal text-body-emphasis placeholder:text-secondary"><div
+          class="shrink-0 small fw-normal text-secondary tabular-nums text-end" style="width:10ch"></div><div
+          class="d-flex align-items-center"><button type="button"
+          class="size-6 grid place-items-center rounded-2 text-secondary disabled:opacity-40 disabled:pointer-events-none"></button><button
+          type="button"
+          class="size-6 grid place-items-center rounded-2 text-secondary disabled:opacity-40 disabled:pointer-events-none"></button></div><button
+          type="button" class="size-6 grid place-items-center rounded-2 text-secondary"></button></div>`
+      );
+      const input = el.querySelector("input");
+      const counter = input.nextElementSibling;
+      const nav = counter.nextElementSibling;
+      const prevBtn = nav.firstElementChild;
+      const nextBtn = prevBtn.nextElementSibling;
+      const closeBtn = nav.nextElementSibling;
+
+      // The compiled output registered this handler as a *delegated*
+      // pointerdown: an `$$pointerdown` expando read by Solid's
+      // document-level delegation, whose walk goes from the event target up
+      // through the Portal container's host link into the viewer wrapper
+      // in file.js. The wrapper's own delegated pointerdown refocuses the
+      // viewer — stealing focus from this input — so the bar stops the walk
+      // before it gets there. Keeping the expando (instead of a native
+      // listener calling stopPropagation) preserves both halves of the
+      // original behavior: the walk stops before reaching the wrapper, while
+      // the native event still bubbles to document/window-level listeners
+      // such as popover outside-dismiss. file.js (the only consumer) still
+      // registers pointerdown delegation; once it is converted to native
+      // listeners this expando becomes inert, which is then also correct
+      // because portal events never bubble to the wrapper natively.
+      el.$$pointerdown = e => e.stopPropagation();
+
+      el.insertBefore(createComponent(Icon, {
         name: "magnifying-glass",
         size: "small",
-        "class": "text-secondary shrink-0"
-      }), _el$2);
-      _el$2.$$keydown = e => props.onKeyDown(e);
-      _el$2.$$input = e => props.onInput(e.currentTarget.value);
-      var _ref$ = props.setInput;
-      typeof _ref$ === "function" ? _$use(_ref$, _el$2) : props.setInput = _el$2;
-      _$insert(_el$3, (() => {
-        var _c$ = _$memo(() => !!props.count());
-        return () => _c$() ? `${props.index() + 1}/${props.count()}` : "0/0";
-      })());
-      _$addEventListener(_el$5, "click", props.onPrev, true);
-      _$insert(_el$5, _$createComponent(Icon, {
+        class: "text-secondary shrink-0"
+      }), input);
+
+      input.addEventListener("keydown", e => props.onKeyDown(e));
+      input.addEventListener("input", e => props.onInput(e.currentTarget.value));
+      const ref = props.setInput;
+      if (typeof ref === "function") ref(input);
+      else props.setInput = input;
+
+      prevBtn.addEventListener("click", e => props.onPrev(e));
+      prevBtn.appendChild(createComponent(Icon, {
         name: "chevron-down",
         size: "small",
-        "class": "rotate-180"
+        class: "rotate-180"
       }));
-      _$addEventListener(_el$6, "click", props.onNext, true);
-      _$insert(_el$6, _$createComponent(Icon, {
+      nextBtn.addEventListener("click", e => props.onNext(e));
+      nextBtn.appendChild(createComponent(Icon, {
         name: "chevron-down",
         size: "small"
       }));
-      _$addEventListener(_el$7, "click", props.onClose, true);
-      _$insert(_el$7, _$createComponent(Icon, {
+      closeBtn.addEventListener("click", e => props.onClose(e));
+      closeBtn.appendChild(createComponent(Icon, {
         name: "close-small",
         size: "small"
       }));
-      _$effect(_p$ => {
-        var _v$ = `${props.pos().top}px`,
-          _v$2 = `${props.pos().right}px`,
-          _v$3 = i18n.t("ui.fileSearch.placeholder"),
-          _v$4 = props.count() === 0,
-          _v$5 = i18n.t("ui.fileSearch.previousMatch"),
-          _v$6 = props.count() === 0,
-          _v$7 = i18n.t("ui.fileSearch.nextMatch"),
-          _v$8 = i18n.t("ui.fileSearch.close");
-        _v$ !== _p$.e && _$setStyleProperty(_el$, "top", _p$.e = _v$);
-        _v$2 !== _p$.t && _$setStyleProperty(_el$, "right", _p$.t = _v$2);
-        _v$3 !== _p$.a && _$setAttribute(_el$2, "placeholder", _p$.a = _v$3);
-        _v$4 !== _p$.o && (_el$5.disabled = _p$.o = _v$4);
-        _v$5 !== _p$.i && _$setAttribute(_el$5, "aria-label", _p$.i = _v$5);
-        _v$6 !== _p$.n && (_el$6.disabled = _p$.n = _v$6);
-        _v$7 !== _p$.s && _$setAttribute(_el$6, "aria-label", _p$.s = _v$7);
-        _v$8 !== _p$.h && _$setAttribute(_el$7, "aria-label", _p$.h = _v$8);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined,
-        a: undefined,
-        o: undefined,
-        i: undefined,
-        n: undefined,
-        s: undefined,
-        h: undefined
+
+      createRenderEffect(() => {
+        const pos = props.pos();
+        el.style.setProperty("top", `${pos.top}px`);
+        el.style.setProperty("right", `${pos.right}px`);
       });
-      _$effect(() => _el$2.value = props.query());
-      return _el$;
+      createRenderEffect(() => {
+        counter.textContent = props.count() ? `${props.index() + 1}/${props.count()}` : "0/0";
+      });
+      createRenderEffect(() => {
+        const none = props.count() === 0;
+        prevBtn.disabled = none;
+        nextBtn.disabled = none;
+      });
+      createRenderEffect(() => {
+        input.setAttribute("placeholder", i18n.t("ui.fileSearch.placeholder"));
+        prevBtn.setAttribute("aria-label", i18n.t("ui.fileSearch.previousMatch"));
+        nextBtn.setAttribute("aria-label", i18n.t("ui.fileSearch.nextMatch"));
+        closeBtn.setAttribute("aria-label", i18n.t("ui.fileSearch.close"));
+      });
+      createRenderEffect(() => {
+        input.value = props.query();
+      });
+      return el;
     }
   });
 }
-_$delegateEvents(["pointerdown", "input", "keydown", "click"]);

@@ -1,17 +1,17 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=permission-row><span data-slot=permission-spacer aria-hidden=true></span><div data-slot=permission-hint>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=permission-row><span data-slot=permission-spacer aria-hidden=true></span><div data-slot=permission-patterns>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=permission-row data-variant=header><span data-slot=permission-icon></span><div data-slot=permission-header-title>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-slot=permission-footer-actions>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<code class="small fw-normal text-body break-all">`);
-import { For, Show } from "solid-js";
+import { createComponent, createRenderEffect } from "solid-js";
 import { Button } from "@/bs/button.js";
 import { DockPrompt } from "@/vendor/ui/components/dock-prompt.js";
 import { Icon } from "@/bs/icon.js";
 import { useLanguage } from "@/context/language.js";
+
+// Build a detached element from static markup. Only static skeletons go
+// through here; translated/user strings are assigned via textContent.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export function SessionPermissionDock(props) {
   const language = useLanguage();
   const toolDescription = () => {
@@ -20,93 +20,80 @@ export function SessionPermissionDock(props) {
     if (value === key) return "";
     return value;
   };
-  return _$createComponent(DockPrompt, {
-    kind: "permission",
-    get header() {
-      return (() => {
-        var _el$7 = _tmpl$3(),
-          _el$8 = _el$7.firstChild,
-          _el$9 = _el$8.nextSibling;
-        _$insert(_el$8, _$createComponent(Icon, {
-          name: "warning",
-          size: "normal"
-        }));
-        _$insert(_el$9, () => language.t("notification.permission.title"));
-        return _el$7;
-      })();
-    },
-    get footer() {
-      return [_tmpl$4(), (() => {
-        var _el$1 = _tmpl$5();
-        _$insert(_el$1, _$createComponent(Button, {
-          variant: "ghost",
-          size: "normal",
-          onClick: () => props.onDecide("reject"),
-          get disabled() {
-            return props.responding;
-          },
-          get children() {
-            return language.t("ui.permission.deny");
-          }
-        }), null);
-        _$insert(_el$1, _$createComponent(Button, {
-          variant: "secondary",
-          size: "normal",
-          onClick: () => props.onDecide("always"),
-          get disabled() {
-            return props.responding;
-          },
-          get children() {
-            return language.t("ui.permission.allowAlways");
-          }
-        }), null);
-        _$insert(_el$1, _$createComponent(Button, {
-          variant: "primary",
-          size: "normal",
-          onClick: () => props.onDecide("once"),
-          get disabled() {
-            return props.responding;
-          },
-          get children() {
-            return language.t("ui.permission.allowOnce");
-          }
-        }), null);
-        return _el$1;
-      })()];
+
+  // Header row: built once; the title tracks the locale through its own
+  // effect, so the DockPrompt header slot never re-renders.
+  const header = template(`<div data-slot="permission-row" data-variant="header"><span data-slot="permission-icon"></span><div data-slot="permission-header-title"></div></div>`);
+  header.querySelector('[data-slot="permission-icon"]').appendChild(createComponent(Icon, {
+    name: "warning",
+    size: "normal"
+  }));
+  const headerTitle = header.querySelector('[data-slot="permission-header-title"]');
+  createRenderEffect(() => {
+    headerTitle.textContent = language.t("notification.permission.title");
+  });
+
+  // Description row (Show equivalent): mounted only while a translation
+  // exists; the text itself updates in place so the row is never remounted
+  // on a truthy-to-truthy change.
+  const hintSlot = template(`<div style="display: contents"></div>`);
+  const hintRow = template(`<div data-slot="permission-row"><span data-slot="permission-spacer" aria-hidden="true"></span><div data-slot="permission-hint"></div></div>`);
+  const hintText = hintRow.querySelector('[data-slot="permission-hint"]');
+  createRenderEffect(() => {
+    const text = toolDescription();
+    hintText.textContent = text;
+    const mounted = hintRow.parentNode === hintSlot;
+    if (text && !mounted) hintSlot.appendChild(hintRow);
+    else if (!text && mounted) hintRow.remove();
+  });
+
+  // Patterns row (Show + For equivalent): the scrollable container stays
+  // mounted across list updates so its scroll position is preserved; only
+  // the <code> entries are rebuilt.
+  const patternsSlot = template(`<div style="display: contents"></div>`);
+  const patternsRow = template(`<div data-slot="permission-row"><span data-slot="permission-spacer" aria-hidden="true"></span><div data-slot="permission-patterns"></div></div>`);
+  const patternsList = patternsRow.querySelector('[data-slot="permission-patterns"]');
+  createRenderEffect(() => {
+    const patterns = props.request.patterns;
+    patternsList.replaceChildren(...patterns.map(pattern => {
+      const code = document.createElement("code");
+      code.className = "small fw-normal text-body break-all";
+      code.textContent = pattern;
+      return code;
+    }));
+    const mounted = patternsRow.parentNode === patternsSlot;
+    if (patterns.length > 0 && !mounted) patternsSlot.appendChild(patternsRow);
+    else if (patterns.length === 0 && mounted) patternsRow.remove();
+  });
+
+  const decideButton = (variant, decision, label) => createComponent(Button, {
+    variant: variant,
+    size: "normal",
+    onClick: () => props.onDecide(decision),
+    get disabled() {
+      return props.responding;
     },
     get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return toolDescription();
-        },
-        get children() {
-          var _el$ = _tmpl$(),
-            _el$2 = _el$.firstChild,
-            _el$3 = _el$2.nextSibling;
-          _$insert(_el$3, toolDescription);
-          return _el$;
-        }
-      }), _$createComponent(Show, {
-        get when() {
-          return props.request.patterns.length > 0;
-        },
-        get children() {
-          var _el$4 = _tmpl$2(),
-            _el$5 = _el$4.firstChild,
-            _el$6 = _el$5.nextSibling;
-          _$insert(_el$6, _$createComponent(For, {
-            get each() {
-              return props.request.patterns;
-            },
-            children: pattern => (() => {
-              var _el$10 = _tmpl$6();
-              _$insert(_el$10, pattern);
-              return _el$10;
-            })()
-          }));
-          return _el$4;
-        }
-      })];
+      return language.t(label);
     }
+  });
+
+  return createComponent(DockPrompt, {
+    kind: "permission",
+    header: header,
+    // Built inside the getter (like the compiled output) so the labels are
+    // read within the tray's render effect and follow locale changes; the
+    // leading empty div keeps the actions pushed right by the footer's
+    // space-between layout.
+    get footer() {
+      const actions = template(`<div data-slot="permission-footer-actions"></div>`);
+      actions.append(
+        decideButton("ghost", "reject", "ui.permission.deny"),
+        decideButton("secondary", "always", "ui.permission.allowAlways"),
+        decideButton("primary", "once", "ui.permission.allowOnce")
+      );
+      return [document.createElement("div"), actions];
+    },
+    children: [hintSlot, patternsSlot]
   });
 }
