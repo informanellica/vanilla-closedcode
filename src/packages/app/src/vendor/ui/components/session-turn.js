@@ -3,7 +3,7 @@
 // reactive/component-valued children (Kobalte presence-gated Accordion
 // content, memo-accessor returns) so Solid keeps reconciling accessors
 // instead of freezing them.
-import { Dynamic, insert as _solidInsert } from "solid-js/web";
+import { Dynamic, insert } from "solid-js/web";
 import { useData } from "../context/index.js";
 import { useFileComponent } from "../context/file.js";
 import { Binary } from "core/util/binary";
@@ -346,7 +346,7 @@ export function SessionTurn(props) {
                 }
                 filename.textContent = getFilename(diff.file);
                 // DiffChanges returns a memo accessor; insert() resolves it.
-                _solidInsert(changes, createComponent(DiffChanges, {
+                insert(changes, createComponent(DiffChanges, {
                   changes: diff
                 }));
                 chevron.appendChild(createComponent(Icon, {
@@ -366,7 +366,7 @@ export function SessionTurn(props) {
               },
               get children() {
                 const viewEl = template(`<div data-slot="session-turn-diff-view" data-scrollable></div>`);
-                _solidInsert(viewEl, createComponent(Dynamic, {
+                insert(viewEl, createComponent(Dynamic, {
                   component: fileComponent,
                   mode: "diff",
                   get fileDiff() {
@@ -404,13 +404,13 @@ export function SessionTurn(props) {
       fileText.data = i18n.t(edited() === 1 ? "ui.common.file.one" : "ui.common.file.other");
     });
     // Aggregate +/- counts (memo accessor; insert() resolves it).
-    _solidInsert(header, createComponent(DiffChanges, {
+    insert(header, createComponent(DiffChanges, {
       get changes() {
         return diffs();
       }
     }), null);
     // Show all / show less toggle.
-    _solidInsert(header, createComponent(Show, {
+    insert(header, createComponent(Show, {
       get when() {
         return overflow() > 0;
       },
@@ -424,7 +424,7 @@ export function SessionTurn(props) {
       }
     }), null);
     // Per-file accordion.
-    _solidInsert(content, createComponent(Accordion, {
+    insert(content, createComponent(Accordion, {
       multiple: true,
       style: {
         "--sticky-accordion-offset": "44px"
@@ -443,7 +443,7 @@ export function SessionTurn(props) {
       }
     }), null);
     // "+N more" hint while collapsed.
-    _solidInsert(content, createComponent(Show, {
+    insert(content, createComponent(Show, {
       get when() {
         return !showAll() && overflow() > 0;
       },
@@ -479,7 +479,7 @@ export function SessionTurn(props) {
     else autoScroll.contentRef = container;
     // User message. Message (compiled) returns Show accessors, so it must be
     // reconciled through solid's insert().
-    _solidInsert(messageHost, createComponent(Message, {
+    insert(messageHost, createComponent(Message, {
       get message() {
         return message();
       },
@@ -491,13 +491,13 @@ export function SessionTurn(props) {
       }
     }));
     // Compaction/interruption divider.
-    _solidInsert(container, createComponent(Show, {
+    insert(container, createComponent(Show, {
       get when() {
         return divider();
       },
       get children() {
         const el = template(`<div data-slot="session-turn-compaction"></div>`);
-        _solidInsert(el, createComponent(MessageDivider, {
+        insert(el, createComponent(MessageDivider, {
           get label() {
             return divider();
           }
@@ -506,13 +506,13 @@ export function SessionTurn(props) {
       }
     }), null);
     // Assistant parts.
-    _solidInsert(container, createComponent(Show, {
+    insert(container, createComponent(Show, {
       get when() {
         return assistantMessages().length > 0;
       },
       get children() {
         const el = template(`<div data-slot="session-turn-assistant-content"></div>`);
-        _solidInsert(el, createComponent(AssistantParts, {
+        insert(el, createComponent(AssistantParts, {
           get messages() {
             return assistantMessages();
           },
@@ -544,7 +544,7 @@ export function SessionTurn(props) {
       }
     }), null);
     // Thinking shimmer (+ reasoning heading reveal when summaries are hidden).
-    _solidInsert(container, createComponent(Show, {
+    insert(container, createComponent(Show, {
       get when() {
         return showThinking();
       },
@@ -555,7 +555,7 @@ export function SessionTurn(props) {
             return i18n.t("ui.sessionTurn.status.thinking");
           }
         }));
-        _solidInsert(el, createComponent(Show, {
+        insert(el, createComponent(Show, {
           get when() {
             return !showReasoningSummaries();
           },
@@ -574,7 +574,7 @@ export function SessionTurn(props) {
       }
     }), null);
     // Retry banner. SessionRetry returns a memo accessor; insert() resolves it.
-    _solidInsert(container, createComponent(SessionRetry, {
+    insert(container, createComponent(SessionRetry, {
       get status() {
         return status();
       },
@@ -583,7 +583,7 @@ export function SessionTurn(props) {
       }
     }), null);
     // Diffs summary group: only after the turn settled.
-    _solidInsert(container, createComponent(Show, {
+    insert(container, createComponent(Show, {
       get when() {
         return edited() > 0 && !working();
       },
@@ -593,7 +593,7 @@ export function SessionTurn(props) {
     }), null);
     // Assistant error card. The children getter is read once per mount by the
     // vanilla Card (mount-time snapshot), matching current behavior.
-    _solidInsert(container, createComponent(Show, {
+    insert(container, createComponent(Show, {
       get when() {
         return error();
       },
@@ -639,7 +639,7 @@ export function SessionTurn(props) {
   innerEl.addEventListener("click", autoScroll.handleInteraction);
   // Show(message()), non-keyed: the turn body remounts only when the message
   // appears/disappears, exactly like the compiled Show.
-  _solidInsert(innerEl, createComponent(Show, {
+  insert(innerEl, createComponent(Show, {
     get when() {
       return message();
     },
@@ -648,7 +648,7 @@ export function SessionTurn(props) {
     }
   }), null);
   // Forwarded children stay reactive through insert(), as compiled.
-  _solidInsert(innerEl, () => props.children, null);
+  insert(innerEl, () => props.children, null);
   // Change-guarded root/content classes (compiled className() semantics).
   let prevRootClass;
   let prevContentClass;

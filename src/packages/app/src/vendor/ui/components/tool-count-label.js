@@ -1,5 +1,5 @@
-import { createComponent, createRenderEffect as _solidRenderEffect } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createRenderEffect } from "solid-js";
+import { insert } from "solid-js/web";
 import { AnimatedNumber } from "./animated-number.js";
 
 function split(text) {
@@ -55,13 +55,13 @@ export function AnimatedCountLabel(props) {
     }
   });
   if (number instanceof Node) root.appendChild(number);
-  else _solidInsert(root, number);
+  else insert(root, number);
 
   root.appendChild(wordEl);
 
   // props.count/one/other are signal-backed getters — derive the label pieces
   // in an effect so the singular/plural form follows the live count.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const one = split(props.one ?? "");
     const other = split(props.other ?? "");
     const singular = Math.round(props.count) === 1;
@@ -76,7 +76,7 @@ export function AnimatedCountLabel(props) {
     suffixEl.setAttribute("data-active", splitSuffix && tail.length > 0 ? "true" : "false");
   });
 
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     root.className = props.class ?? "";
   });
 

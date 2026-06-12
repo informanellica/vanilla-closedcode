@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { useFileComponent } from "@/vendor/ui/context/file.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "@/vendor/ui/pierre/selection-bridge.js";
@@ -539,7 +539,7 @@ export function FileTabContent(props) {
     // snapshots props.component once (createSimpleContext init), so the
     // component is static and Dynamic is unnecessary: create it directly and
     // let insert() reconcile the result as the sole content of the wrapper.
-    _solidInsert(el, createComponent(fileComponent, {
+    insert(el, createComponent(fileComponent, {
       mode: "text",
       get file() {
         return {
@@ -675,7 +675,7 @@ export function FileTabContent(props) {
                   const el = template(`<div class="px-6 py-4 text-secondary"></div>`);
                   // err is a live accessor (non-keyed Match function child);
                   // insert() tracks it as the sole content of this div.
-                  _solidInsert(el, err);
+                  insert(el, err);
                   return el;
                 }
               })];
@@ -695,7 +695,7 @@ export function FileTabContent(props) {
   // reconciles only its own nodes (a marker-less insert would clear the whole
   // pane when the fallback-less reply Show turns off). Order matches the
   // original children array: [reply button, editor/view].
-  _solidInsert(content, replyShow, null);
-  _solidInsert(content, editorShow, null);
+  insert(content, replyShow, null);
+  insert(content, editorShow, null);
   return content;
 }

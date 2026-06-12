@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, mergeProps, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { autoPosition } from "./floating.js";
@@ -23,8 +23,8 @@ export function TooltipKeybind(props) {
       // title/keybind are arbitrary (possibly reactive) children rendered
       // inside the tooltip content, so they go through solid's insert() to
       // stay live (established exception).
-      _solidInsert(titleEl, () => local.title);
-      _solidInsert(keybindEl, () => local.keybind);
+      insert(titleEl, () => local.title);
+      insert(keybindEl, () => local.keybind);
       return root;
     }
   }));
@@ -152,7 +152,7 @@ export function Tooltip(props) {
   } else if (children instanceof Node) {
     triggerEl.appendChild(children);
   } else if (children != null) {
-    _solidInsert(triggerEl, () => local.children);
+    insert(triggerEl, () => local.children);
   }
 
   // Watch the trigger subtree for expand/collapse of inner controls (Kobalte
@@ -188,7 +188,7 @@ export function Tooltip(props) {
       for (const key in local.contentStyle) popEl.style[key] = local.contentStyle[key];
     }
     // `value` may be a reactive/component child — keep it live through insert().
-    _solidInsert(popEl, () => local.value);
+    insert(popEl, () => local.value);
     return popEl;
   };
 

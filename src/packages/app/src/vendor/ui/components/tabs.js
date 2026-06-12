@@ -6,7 +6,7 @@ import {
   splitProps,
   untrack
 } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 
 // Vanilla reimplementation of the Kobalte Tabs compound component. Mirrors the
 // Kobalte tabs primitive: a roving-focus tablist with single selection, the
@@ -71,7 +71,7 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -345,7 +345,7 @@ function TabsTrigger(props) {
   // Optional close button slot (rebuilt when truthiness flips, like the original
   // Show), kept live so its content tracks.
   const hasCloseButton = createMemo(() => !!local.closeButton);
-  _solidInsert(wrapper, createMemo(() => {
+  insert(wrapper, createMemo(() => {
     if (!hasCloseButton()) return undefined;
     const closeEl = template(`<div data-slot="tabs-trigger-close-button"></div>`);
     appendChildren(closeEl, local.closeButton);

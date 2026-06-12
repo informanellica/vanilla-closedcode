@@ -5,7 +5,7 @@ import {
   splitProps,
   untrack
 } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 
 // Vanilla reimplementation of the Kobalte Accordion compound component, modelled
 // as a set of collapsibles with single/multiple expansion plus roving focus.
@@ -13,7 +13,7 @@ import { insert as _solidInsert } from "solid-js/web";
 // content, aria-expanded/aria-controls on each trigger, the data-expanded/
 // data-closed/data-disabled dataset on item/header/trigger/content, data-key /
 // data-value on the trigger, ArrowUp/ArrowDown/Home/End roving focus (wrapping),
-// and the --kb-accordion-content-height var. There is no src/bs twin, so the
+// and the --vcc-accordion-content-height var. There is no src/bs twin, so the
 // selection + keyboard model mirrors the Kobalte Accordion directly.
 //
 // Architecture mirrors src/bs/tabs.js: the Root owns delegated click + keydown
@@ -67,7 +67,7 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -219,7 +219,7 @@ function AccordionRoot(props) {
       const trigger = item?.querySelector('[data-slot="accordion-trigger"]');
       if (trigger?.id) content.setAttribute("aria-labelledby", trigger.id);
       const rect = content.getBoundingClientRect?.();
-      if (rect && rect.height) content.style.setProperty("--kb-collapsible-content-height", `${rect.height}px`);
+      if (rect && rect.height) content.style.setProperty("--vcc-collapsible-content-height", `${rect.height}px`);
     }
   };
 
@@ -356,8 +356,8 @@ function AccordionContent(props) {
   el.setAttribute("role", "region");
   el.id = local.id ?? `accordion-content-${createUniqueId()}`;
   // Bridge the collapsible height var to the accordion var, like Kobalte.
-  el.style.setProperty("--kb-accordion-content-height", "var(--kb-collapsible-content-height)");
-  el.style.setProperty("--kb-accordion-content-width", "var(--kb-collapsible-content-width)");
+  el.style.setProperty("--vcc-accordion-content-height", "var(--vcc-collapsible-content-height)");
+  el.style.setProperty("--vcc-accordion-content-width", "var(--vcc-collapsible-content-width)");
 
   applyClassProp(el, local);
   if (local.style != null) {

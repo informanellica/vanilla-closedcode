@@ -9,7 +9,7 @@
   padding: 4px;
   box-shadow: var(--shadow-md);
   z-index: 50;
-  transform-origin: var(--kb-menu-content-transform-origin);
+  transform-origin: var(--vcc-menu-content-transform-origin);
 
   &:focus,
   &:focus-visible {

@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "solid-js";
 import { useSync } from "@/context/sync.js";
 import { checksum } from "core/util/encode";
@@ -134,7 +134,7 @@ function RawMessage(props) {
           // File resolves through FileMedia (a Show) to a possibly-function
           // value and remounts whenever this presence-gated Kobalte Content
           // reopens, so it stays on solid's insert() (established exception).
-          _solidInsert(body, createComponent(RawMessageContent, {
+          insert(body, createComponent(RawMessageContent, {
             get message() {
               return props.message;
             },

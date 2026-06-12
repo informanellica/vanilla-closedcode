@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { autoPosition } from "./floating.js";
@@ -76,7 +76,7 @@ export function HoverCard(props) {
   const trigger = local.trigger;
   if (trigger instanceof Node) triggerEl.appendChild(trigger);
   else if (typeof trigger === "string") triggerEl.textContent = trigger;
-  else if (trigger != null) _solidInsert(triggerEl, () => local.trigger);
+  else if (trigger != null) insert(triggerEl, () => local.trigger);
 
   // ----- Content -----
   const buildContent = () => {
@@ -94,7 +94,7 @@ export function HoverCard(props) {
     contentEl.addEventListener("pointerleave", requestClose);
     const body = document.createElement("div");
     body.setAttribute("data-slot", "hover-card-body");
-    _solidInsert(body, () => local.children);
+    insert(body, () => local.children);
     contentEl.appendChild(body);
     return contentEl;
   };

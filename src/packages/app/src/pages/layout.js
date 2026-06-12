@@ -2,7 +2,7 @@
 // component-valued children (Show branches, forwarded router children,
 // portal-backed components): Solid keeps reconciling the accessors instead of
 // freezing a one-time snapshot.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { useLocation, useNavigate, useParams } from "../lib/router/index.js";
@@ -1573,7 +1573,7 @@ export default function Layout(props) {
     const gsLine1 = gsTitle.nextSibling;
     const gsLine2 = gsLine1.nextSibling;
     const gsActions = gsText.nextSibling;
-    _solidInsert(panelRoot, createComponent(Show, {
+    insert(panelRoot, createComponent(Show, {
       get when() {
         return project();
       },
@@ -1610,7 +1610,7 @@ export default function Layout(props) {
         const header = template(`<div class="shrink-0 pl-1 py-1"><div class="group/project d-flex align-items-start justify-content-between gap-2 py-2 pl-2 pr-0"><div class="d-flex flex-column min-w-0"></div></div></div>`);
         const headerRow = header.firstChild;
         const nameColumn = headerRow.firstChild;
-        _solidInsert(nameColumn, createComponent(InlineEditor, {
+        insert(nameColumn, createComponent(InlineEditor, {
           get id() {
             return `project:${projectId()}`;
           },
@@ -1624,7 +1624,7 @@ export default function Layout(props) {
           displayClass: "fw-medium text-body-emphasis truncate",
           stopPropagation: true
         }), null);
-        _solidInsert(nameColumn, createComponent(Tooltip, {
+        insert(nameColumn, createComponent(Tooltip, {
           placement: "bottom",
           gutter: 2,
           get value() {
@@ -1643,7 +1643,7 @@ export default function Layout(props) {
             return pathEl;
           }
         }), null);
-        _solidInsert(headerRow, createComponent(DropdownMenu, {
+        insert(headerRow, createComponent(DropdownMenu, {
           get modal() {
             return !sidebarHovering();
           },
@@ -1750,7 +1750,7 @@ export default function Layout(props) {
       })(), (() => {
         // Sessions/workspaces body below the header.
         const bodyEl = template(`<div class="flex-1 min-h-0 d-flex flex-column"></div>`);
-        _solidInsert(bodyEl, createComponent(Show, {
+        insert(bodyEl, createComponent(Show, {
           get when() {
             return workspacesEnabled();
           },
@@ -1773,7 +1773,7 @@ export default function Layout(props) {
               return row;
             })(), (() => {
               const host = template(`<div class="flex-1 min-h-0"></div>`);
-              _solidInsert(host, createComponent(LocalWorkspace, {
+              insert(host, createComponent(LocalWorkspace, {
                 ctx: workspaceSidebarCtx,
                 get project() {
                   return project();
@@ -1805,7 +1805,7 @@ export default function Layout(props) {
               return row;
             })(), (() => {
               const host = template(`<div class="relative flex-1 min-h-0"></div>`);
-              _solidInsert(host, createComponent(DragDropProvider, {
+              insert(host, createComponent(DragDropProvider, {
                 onDragStart: handleWorkspaceDragStart,
                 onDragEnd: handleWorkspaceDragEnd,
                 onDragOver: handleWorkspaceDragOver,
@@ -1817,7 +1817,7 @@ export default function Layout(props) {
                     if (!panelProps.mobile) scrollContainerRef = scroller;
                     // Runtime For keeps workspace rows stable across reorders,
                     // which solid-dnd's sortable transforms rely on.
-                    _solidInsert(scroller, createComponent(SortableProvider, {
+                    insert(scroller, createComponent(SortableProvider, {
                       get ids() {
                         return workspaces();
                       },
@@ -1965,7 +1965,7 @@ export default function Layout(props) {
   const peekHost = mainHost.nextSibling;
   const peekShadow = peekHost.nextSibling;
   // Subscribe the autoselect resource; it only ever renders an empty string.
-  _solidInsert(appRoot, () => autoselecting() ?? "", contentRow);
+  insert(appRoot, () => autoselecting() ?? "", contentRow);
   desktopNav.addEventListener("mouseleave", () => {
     aim.reset();
     if (!sidebarHovering()) return;
@@ -1980,8 +1980,8 @@ export default function Layout(props) {
   desktopNav.classList.add("hidden", "xl:block", "absolute", "inset-y-0", "left-0", "z-10");
   // insert() invokes the accessor with no argument, so the desktop variant
   // renders with mobile undefined, exactly like the compiled output.
-  _solidInsert(desktopNavInner, sidebarContent);
-  _solidInsert(viewport, createComponent(Show, {
+  insert(desktopNavInner, sidebarContent);
+  insert(viewport, createComponent(Show, {
     get when() {
       return layout.sidebar.opened();
     },
@@ -2022,13 +2022,13 @@ export default function Layout(props) {
   // the backdrop (whose handler also target-guards), so nothing changes
   // without it. A native stopPropagation() here would newly hide clicks from
   // document-level listeners that always saw them before, so it is dropped.
-  _solidInsert(mobileNav, () => sidebarContent(true));
+  insert(mobileNav, () => sidebarContent(true));
   // Static classList from the compiled output.
   mainEl.classList.add("size-full", "overflow-x-hidden", "flex", "flex-col", "items-start", "contain-strict", "border-t", "border", "bg-body", "xl:border-l", "xl:rounded-tl-[12px]");
   // Router children stay mounted through the live getter: the chat pane (and
   // the rest of the session page) must persist across reloads exactly as
   // before (provider-visibility reload e2e covers this).
-  _solidInsert(mainEl, createComponent(Show, {
+  insert(mainEl, createComponent(Show, {
     get when() {
       return !autoselecting.loading;
     },
@@ -2050,7 +2050,7 @@ export default function Layout(props) {
     aim.reset();
   });
   peekHost.addEventListener("mousemove", disarm);
-  _solidInsert(peekHost, createComponent(Show, {
+  insert(peekHost, createComponent(Show, {
     get when() {
       return peekProject();
     },
@@ -2063,8 +2063,8 @@ export default function Layout(props) {
   }));
   // __APP_ENV__.DEV is fixed at startup; the compiled memo around it could
   // never change, so a plain conditional append is equivalent.
-  if (globalThis.__APP_ENV__?.DEV) _solidInsert(contentRow, createComponent(DebugBar, {}), null);
-  _solidInsert(appRoot, createComponent(Toast.Region, {}), null);
+  if (globalThis.__APP_ENV__?.DEV) insert(contentRow, createComponent(DebugBar, {}), null);
+  insert(appRoot, createComponent(Toast.Region, {}), null);
   /* sidebar hidden for now (see styles.css); reclaim its left offset.
      Original: layout.sidebar.opened() ? `${side()}px` : "4rem" */
   mainHost.style.setProperty("--main-left", "0px");
@@ -2126,7 +2126,7 @@ export default function Layout(props) {
   const shell = template(`<div class="d-flex flex-column h-100"><div class="app-topbar shrink-0 d-flex align-items-center gap-1 border-bottom bg-body-tertiary px-1"></div><div class="flex-fill min-h-0 d-flex"></div></div>`);
   const barRow = shell.firstChild;
   const panesRow = barRow.nextSibling;
-  _solidInsert(barRow, createComponent(AppToolbar, {
+  insert(barRow, createComponent(AppToolbar, {
       onHome: () => navigate("/"),
       onNewSession: startNewSession,
       onOpenProject: chooseProject,

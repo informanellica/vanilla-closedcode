@@ -1,5 +1,5 @@
-import { createRenderEffect as _solidRenderEffect, splitProps } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { createRenderEffect, splitProps } from "solid-js";
+import { insert } from "solid-js/web";
 import { usePlatform } from "@/context/platform.js";
 
 // Assign one forwarded (rest) prop onto the anchor, mirroring Solid's spread
@@ -51,24 +51,24 @@ export function Link(props) {
 
   // href and class are signal-backed getters at the call sites — bind them in
   // effects so e.g. OAuth URLs arriving later still populate the anchor.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const href = local.href;
     if (href == null) el.removeAttribute("href");
     else el.setAttribute("href", href);
   });
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     el.className = `text-body-emphasis underline ${local.class ?? ""}`;
   });
 
   // Forwarded ref: Solid's spread invokes function refs with the node.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     if (typeof rest.ref === "function") rest.ref(el);
   });
 
   // Remaining props spread onto the anchor in a single effect with per-key
   // diffing, like Solid's compiled spread (children/ref handled above).
   const prev = {};
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     for (const key in rest) {
       if (key === "ref" || key === "children") continue;
       const value = rest[key];
@@ -80,7 +80,7 @@ export function Link(props) {
 
   // children is typically a getter returning a translated label — insert it
   // reactively so the text follows live language switches.
-  _solidInsert(el, () => local.children);
+  insert(el, () => local.children);
 
   return el;
 }

@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
@@ -153,7 +153,7 @@ export function Popover(props) {
     } else if (typeof content === "string") {
       el.textContent = content;
     } else {
-      _solidInsert(el, () => local.trigger);
+      insert(el, () => local.trigger);
     }
   }
 
@@ -186,7 +186,7 @@ export function Popover(props) {
       const header = template(`<div data-slot="popover-header"></div>`);
       const titleEl = document.createElement("h2");
       titleEl.setAttribute("data-slot", "popover-title");
-      _solidInsert(titleEl, () => local.title);
+      insert(titleEl, () => local.title);
       header.appendChild(titleEl);
       const closeBtn = IconButton({
         "data-slot": "popover-close-button",
@@ -208,13 +208,13 @@ export function Popover(props) {
     if (local.description != null && local.description !== false) {
       const descEl = document.createElement("p");
       descEl.setAttribute("data-slot", "popover-description");
-      _solidInsert(descEl, () => local.description);
+      insert(descEl, () => local.description);
       contentEl.appendChild(descEl);
     }
 
     // Body — children may be reactive (an accessor/component), keep live.
     const body = template(`<div data-slot="popover-body"></div>`);
-    _solidInsert(body, () => local.children);
+    insert(body, () => local.children);
     contentEl.appendChild(body);
 
     return contentEl;

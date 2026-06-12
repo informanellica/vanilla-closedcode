@@ -1,4 +1,4 @@
-import { createRenderEffect as _solidRenderEffect, onCleanup } from "solid-js";
+import { createRenderEffect, onCleanup } from "solid-js";
 
 export const TextShimmer = props => {
   const swap = 220;
@@ -22,25 +22,25 @@ export const TextShimmer = props => {
   charEl.appendChild(shimmer);
   outer.appendChild(charEl);
 
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     outer.className = props.class ?? "";
   });
 
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const text = props.text ?? "";
     base.textContent = text;
     shimmer.textContent = text;
     outer.setAttribute("aria-label", text);
   });
 
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     outer.style.setProperty("--text-shimmer-index", `${props.offset ?? 0}`);
   });
 
   // data-run keeps the sweep animation going for one extra swap period after
   // deactivation so the fade-out isn't cut short (mirrors the Solid original).
   let timer;
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const active = props.active ?? true;
     outer.setAttribute("data-active", active ? "true" : "false");
     if (timer) {

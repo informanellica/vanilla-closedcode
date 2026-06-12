@@ -1,7 +1,7 @@
 // insert() from solid-js/web is the established exception for reactive and
 // component-valued children (runtime Show/For/Switch return memo accessors),
 // so Solid keeps reconciling accessors instead of freezing them.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { useDialog } from "@/lib/dialog.js";
 import { createQuery, skipToken } from "../lib/query/index.js";
 import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "solid-js";
@@ -1031,7 +1031,7 @@ export default function Page() {
     // Review panel shell (_tmpl$5); reviewContent() returns a Show accessor,
     // so it stays a live insert.
     const root = template(`<div class="d-flex flex-column h-full overflow-hidden bg-body contain-strict"><div class="relative pt-2 flex-1 min-h-0 overflow-hidden"></div></div>`);
-    _solidInsert(root.firstChild, () => reviewContent({
+    insert(root.firstChild, () => reviewContent({
       diffStyle: layout.review.diffStyle(),
       onDiffStyleChange: layout.review.setDiffStyle,
       loadingClass: "px-6 py-4 text-secondary",
@@ -1410,12 +1410,12 @@ export default function Page() {
   const editorEl = centerEl.firstChild;
   const chatPaneEl = editorEl.nextSibling;
   // The resource read stays a live insert (before the row), as compiled.
-  _solidInsert(rootEl, () => sessionSync() ?? "", rowEl);
-  _solidInsert(rootEl, createComponent(SessionHeader, {}), rowEl);
+  insert(rootEl, () => sessionSync() ?? "", rowEl);
+  insert(rootEl, createComponent(SessionHeader, {}), rowEl);
   // Session tab bar lives at the TOP of the bottom chat pane (chatPaneEl),
   // replacing the in-chat session title. Inserted while chatPaneEl is still
   // empty so it ends up above the message timeline + composer.
-  _solidInsert(chatPaneEl, createComponent(SessionTabBar, {
+  insert(chatPaneEl, createComponent(SessionTabBar, {
     sessions: sessionTabList,
     currentId: () => params.id,
     onSelect: session => navigate(`/${base64Encode(session.directory)}/session/${session.id}`),
@@ -1427,7 +1427,7 @@ export default function Page() {
     onClose: () => view().chatPanel.close()
   }), null);
   // Mobile session/changes switcher, inserted before the center column.
-  _solidInsert(rowEl, createComponent(Show, {
+  insert(rowEl, createComponent(Show, {
     get when() {
       return !isDesktop() && !!params.id;
     },
@@ -1470,7 +1470,7 @@ export default function Page() {
     }
   }), centerEl);
   // --- TOP: editor area (editorEl) with center file tab bar ---
-  _solidInsert(editorEl, createComponent(DragDropProvider, {
+  insert(editorEl, createComponent(DragDropProvider, {
     onDragStart: handleFileDragStart,
     onDragEnd: handleFileDragEnd,
     onDragOver: handleFileDragOver,
@@ -1490,7 +1490,7 @@ export default function Page() {
             get children() {
               // Sticky file tab bar (_tmpl$8).
               const bar = template(`<div class="sticky top-0 shrink-0 d-flex bg-body z-10 border-bottom"></div>`);
-              _solidInsert(bar, createComponent(Tabs.List, {
+              insert(bar, createComponent(Tabs.List, {
                 ref: el => {
                   const stop = createFileTabListSync({
                     el,
@@ -1570,7 +1570,7 @@ export default function Page() {
           }), (() => {
             // Active tab content host (_tmpl$11).
             const contentWrap = template(`<div class="flex-1 min-h-0 overflow-hidden"></div>`);
-            _solidInsert(contentWrap, createComponent(Switch, {
+            insert(contentWrap, createComponent(Switch, {
               get children() {
                 return [createComponent(Match, {
                   get when() {
@@ -1599,7 +1599,7 @@ export default function Page() {
                     createRenderEffect(() => {
                       hintEl.textContent = language.t("session.files.selectToOpen");
                     });
-                    _solidInsert(fileListEl, createComponent(Show, {
+                    insert(fileListEl, createComponent(Show, {
                       get when() {
                         return diffs().length > 0;
                       },
@@ -1655,7 +1655,7 @@ export default function Page() {
               const path = file.pathFromTab(tab);
               // Floating copy of the dragged tab's label (_tmpl$10).
               const preview = template(`<div data-component="tabs-drag-preview"></div>`);
-              _solidInsert(preview, createComponent(Show, {
+              insert(preview, createComponent(Show, {
                 when: path,
                 children: p => createComponent(FileVisual, {
                   active: true,
@@ -1672,13 +1672,13 @@ export default function Page() {
     }
   }));
   // --- Vertical resize handle between editor and chat ---
-  _solidInsert(centerEl, createComponent(Show, {
+  insert(centerEl, createComponent(Show, {
     get when() {
       return params.id && view().chatPanel.opened();
     },
     get children() {
       const host = template(`<div></div>`);
-      _solidInsert(host, createComponent(ResizeHandle, {
+      insert(host, createComponent(ResizeHandle, {
         direction: "vertical",
         edge: "start",
         // The handle is absolute within the center column; anchor it to the
@@ -1711,7 +1711,7 @@ export default function Page() {
   const chatTimelinePane = document.createElement("div");
   chatTimelinePane.className = "flex-1 min-h-0 overflow-hidden";
   chatPaneEl.appendChild(chatTimelinePane);
-  _solidInsert(chatTimelinePane, createComponent(Show, {
+  insert(chatTimelinePane, createComponent(Show, {
     get when() {
       return params.id && view().chatPanel.opened();
     },
@@ -1786,7 +1786,7 @@ export default function Page() {
       });
     }
   }));
-  _solidInsert(chatPaneEl, createComponent(SessionComposerRegion, {
+  insert(chatPaneEl, createComponent(SessionComposerRegion, {
     state: composer,
     get ready() {
       return !store.deferRender && messagesReady();
@@ -1836,7 +1836,7 @@ export default function Page() {
     }
   }), null);
   // --- Horizontal resize handle for review panel width ---
-  _solidInsert(centerEl, createComponent(Show, {
+  insert(centerEl, createComponent(Show, {
     get when() {
       return desktopReviewOpen();
     },
@@ -1845,7 +1845,7 @@ export default function Page() {
       // Compiled delegated $$pointerdown -> direct listener (pointerdown always
       // precedes the handle's own mousedown handling, so ordering is unchanged).
       host.addEventListener("pointerdown", () => size.start());
-      _solidInsert(host, createComponent(ResizeHandle, {
+      insert(host, createComponent(ResizeHandle, {
         direction: "horizontal",
         // edge:"start" gives the DIRECTION (drag-left-grows). The default CSS
         // for edge=start anchors the handle to the LEFT of its container; we
@@ -1869,7 +1869,7 @@ export default function Page() {
       return host;
     }
   }), null);
-  _solidInsert(rowEl, createComponent(FileTreePane, {
+  insert(rowEl, createComponent(FileTreePane, {
     diffs: reviewDiffs,
     diffsReady: reviewReady,
     hasReview: hasReview,
@@ -1886,7 +1886,7 @@ export default function Page() {
     }),
     size: size
   }), centerEl);
-  _solidInsert(rowEl, createComponent(SessionSidePanel, {
+  insert(rowEl, createComponent(SessionSidePanel, {
     canReview: canReview,
     diffs: reviewDiffs,
     diffsReady: reviewReady,
@@ -1903,7 +1903,7 @@ export default function Page() {
     },
     size: size
   }), null);
-  _solidInsert(rootEl, createComponent(TerminalPanel, {}), null);
+  insert(rootEl, createComponent(TerminalPanel, {}), null);
   // Change-guarded center-column classes/width, mirroring the compiled
   // classList()/setStyleProperty() effect block. The first class group is
   // always true, so it is applied once.

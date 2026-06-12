@@ -1,4 +1,4 @@
-import { createRenderEffect as _solidRenderEffect, untrack } from "solid-js";
+import { createRenderEffect, untrack } from "solid-js";
 
 // Brand mark: Bootstrap `c-square` icon as an inline SVG. Rendered as SVG (not
 // an <i> font glyph) so it scales with the width utility classes the callers
@@ -21,7 +21,7 @@ function cSquare() {
 // must go through (set|remove)Attribute. props.class is read inside a render
 // effect so a signal-backed class keeps updating live.
 function bindClass(el, props) {
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const cls = props.class;
     if (cls) el.setAttribute("class", cls);
     else el.removeAttribute("class");

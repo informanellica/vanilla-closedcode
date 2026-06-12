@@ -18,7 +18,7 @@ import { createStore } from "solid-js/store";
 // insert() is the established exception for reactive/component-valued children
 // (most of them rendered inside Kobalte presence-gated Accordion content) so
 // Solid keeps reconciling accessors instead of freezing them.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { mediaKindFromPath } from "../pierre/media.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "../pierre/selection-bridge.js";
 import { createLineCommentController } from "./line-comment-annotations.js";
@@ -86,7 +86,7 @@ function ReviewCommentMenu(props) {
   root.addEventListener("mousedown", event => event.stopPropagation());
   // Kobalte component tree (portal + presence-gated content): insert() keeps
   // its accessor output live, exactly like the compiled insert().
-  _solidInsert(root, createComponent(DropdownMenu, {
+  insert(root, createComponent(DropdownMenu, {
     gutter: 4,
     placement: "bottom-end",
     get children() {
@@ -291,10 +291,10 @@ export const SessionReview = props => {
   // Title: props.title may be any renderable (component, string, null), so it
   // goes through insert(); the memo mirrors the compiled condition wrapper.
   const defaultTitle = createMemo(() => props.title === undefined);
-  _solidInsert(titleEl, () => defaultTitle() ? i18n.t("ui.sessionReview.title") : props.title);
+  insert(titleEl, () => defaultTitle() ? i18n.t("ui.sessionReview.title") : props.title);
   // Actions: three dynamic regions appended in order; each insert() with a
   // null marker tracks its own nodes, like the compiled inserts.
-  _solidInsert(actionsEl, createComponent(Show, {
+  insert(actionsEl, createComponent(Show, {
     get when() {
       return hasDiffs() && props.onDiffStyleChange;
     },
@@ -311,7 +311,7 @@ export const SessionReview = props => {
       });
     }
   }), null);
-  _solidInsert(actionsEl, createComponent(Show, {
+  insert(actionsEl, createComponent(Show, {
     get when() {
       return hasDiffs();
     },
@@ -345,7 +345,7 @@ export const SessionReview = props => {
       });
     }
   }), null);
-  _solidInsert(actionsEl, () => props.actions, null);
+  insert(actionsEl, () => props.actions, null);
   // ScrollView is a vanilla component returning a concrete element; appended
   // after the header like the compiled insert with a null marker.
   root.appendChild(createComponent(ScrollView, {
@@ -363,7 +363,7 @@ export const SessionReview = props => {
     },
     get children() {
       const container = template(`<div data-slot="session-review-container"></div>`);
-      _solidInsert(container, createComponent(Show, {
+      insert(container, createComponent(Show, {
         get when() {
           return hasDiffs();
         },
@@ -372,7 +372,7 @@ export const SessionReview = props => {
         },
         get children() {
           const listEl = template(`<div class="pb-6"></div>`);
-          _solidInsert(listEl, createComponent(Accordion, {
+          insert(listEl, createComponent(Accordion, {
             multiple: true,
             get value() {
               return open();
@@ -547,7 +547,7 @@ export const SessionReview = props => {
                                 // Show(when onViewFile && diffCanRender()):
                                 // Tooltip is a Solid component tree, so the
                                 // runtime Show keeps its mount/dispose contract.
-                                _solidInsert(nameContainer, createComponent(Show, {
+                                insert(nameContainer, createComponent(Show, {
                                   get when() {
                                     return !!props.onViewFile && diffCanRender();
                                   },
@@ -597,7 +597,7 @@ export const SessionReview = props => {
                                   // DiffChanges returns a Show-like accessor,
                                   // appended after the label like the compiled
                                   // insert with a null marker.
-                                  _solidInsert(group, createComponent(DiffChanges, {
+                                  insert(group, createComponent(DiffChanges, {
                                     changes: diff
                                   }), null);
                                   triggerActions.appendChild(group);
@@ -614,7 +614,7 @@ export const SessionReview = props => {
                                   });
                                   triggerActions.appendChild(label);
                                 } else {
-                                  _solidInsert(triggerActions, createComponent(DiffChanges, {
+                                  insert(triggerActions, createComponent(DiffChanges, {
                                     changes: diff
                                   }), null);
                                 }
@@ -642,7 +642,7 @@ export const SessionReview = props => {
                             anchors.set(file, wrapper);
                             nodes.set(file, wrapper);
                             queue();
-                            _solidInsert(wrapper, createComponent(Show, {
+                            insert(wrapper, createComponent(Show, {
                               get when() {
                                 return expanded();
                               },

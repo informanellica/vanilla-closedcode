@@ -13,7 +13,7 @@
   background-clip: padding-box;
   box-shadow: var(--shadow-md);
 
-  transform-origin: var(--kb-popover-content-transform-origin);
+  transform-origin: var(--vcc-popover-content-transform-origin);
 
   &:focus-within {
     outline: none;

@@ -1,5 +1,5 @@
 import { createComponent, createRenderEffect, createSignal, splitProps } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
 import { Tooltip } from "./tooltip.js";
@@ -172,7 +172,7 @@ export function TextField(props) {
       // the IconButton reads icon/label once per (re)build, so we hand it the
       // current values inside the tooltip's tracked children scope — a copied()
       // flip re-runs it with a fresh icon + aria-label.
-      _solidInsert(wrapper, createComponent(Tooltip, {
+      insert(wrapper, createComponent(Tooltip, {
         get value() {
           return label();
         },

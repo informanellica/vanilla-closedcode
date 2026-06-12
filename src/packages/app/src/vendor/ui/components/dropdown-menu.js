@@ -1,5 +1,5 @@
-import { createRenderEffect as _solidRenderEffect, getOwner as _solidGetOwner, onCleanup as _solidOnCleanup } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { createRenderEffect, getOwner, onCleanup } from "solid-js";
+import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
 // Vanilla DropdownMenu (no Kobalte dependency): mirrors bs/dropdown-menu.js
@@ -50,7 +50,7 @@ function appendChildren(parent, children, wrap) {
     // `wrap` re-establishes the module-variable context around each lazy
     // evaluation — Show/For re-create their children long after the synchronous
     // build restored the previous context.
-    _solidInsert(parent, wrap ? () => wrap(children) : children);
+    insert(parent, wrap ? () => wrap(children) : children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -309,11 +309,11 @@ function DropdownMenuRoot(props) {
 
   document.addEventListener("pointerdown", onDocPointer, true);
   document.addEventListener("keydown", onDocKeyDown, true);
-  if (_solidGetOwner()) _solidOnCleanup(removeDocListeners);
+  if (getOwner()) onCleanup(removeDocListeners);
 
   // Controlled props are live getters — re-sync when the owner changes them.
   // placement/gutter affect the position computation.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     void local.open;
     void local.placement;
     void local.gutter;
@@ -427,7 +427,7 @@ function DropdownMenuPortal(props) {
   // remove the body-mounted node with the owning component (it would otherwise
   // accumulate under <body> on every re-render).
   ctx?.registerPortal?.(portal);
-  if (_solidGetOwner()) _solidOnCleanup(() => portal.remove());
+  if (getOwner()) onCleanup(() => portal.remove());
   return document.createComment("dropdown-menu-portal");
 }
 
@@ -532,7 +532,7 @@ function DropdownMenuItem(props) {
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
   // disabled is signal-backed — track it like CheckboxItem/RadioItem do.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const disabled = !!local.disabled;
     el.disabled = disabled;
     if (disabled) el.setAttribute("data-disabled", "");
@@ -608,7 +608,7 @@ function DropdownMenuRadioGroup(props) {
   RadioContext = previous;
   // Controlled group value is a live getter — re-sync the items when the parent
   // changes it (not only via our own onChange).
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     void local.value;
     state.sync();
   });
@@ -626,13 +626,13 @@ function DropdownMenuRadioItem(props) {
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
   // disabled and the selected state are signal-backed — track them.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const disabled = !!local.disabled;
     el.disabled = disabled;
     if (disabled) el.setAttribute("data-disabled", "");
     else el.removeAttribute("data-disabled");
   });
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const selected = !!group?.isSelected?.(value);
     el.setAttribute("aria-checked", selected ? "true" : "false");
     if (selected) el.setAttribute("data-checked", "");
@@ -677,7 +677,7 @@ function DropdownMenuCheckboxItem(props) {
     isSelected: () => !!local.checked,
     registerIndicator: entry => {
       // checked is a live getter — keep the indicator following it.
-      _solidRenderEffect(() => {
+      createRenderEffect(() => {
         entry.el.style.display = radio.isSelected() || entry.forceMount ? "" : "none";
       });
     }
@@ -690,7 +690,7 @@ function DropdownMenuCheckboxItem(props) {
   // checked/disabled are signal-backed (controlled by the parent's store);
   // reading them once would freeze the checkbox. Re-apply reactively, read live
   // in the click handler.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const checked = !!local.checked;
     const disabled = !!local.disabled;
     el.disabled = disabled;

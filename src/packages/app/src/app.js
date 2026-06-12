@@ -1,7 +1,7 @@
 // insert() from solid-js/web is the established exception for reactive /
 // component-valued children (Suspense/Show branches, For-mapped rows): Solid
 // keeps reconciling the accessors instead of freezing a one-time snapshot.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import * as Sentry from "@sentry/browser";
 import { I18nProvider } from "@/lib/context.js";
 import { DialogProvider } from "@/lib/dialog.js";
@@ -325,7 +325,7 @@ function ConnectionError(props) {
   // Other-servers block. Show + For are kept so row DOM identity survives
   // list updates; appended after the message column via insert() with an
   // explicit null marker (append mode, established exception).
-  _solidInsert(root, createComponent(Show, {
+  insert(root, createComponent(Show, {
     get when() {
       return others().length > 0;
     },
@@ -336,7 +336,7 @@ function ConnectionError(props) {
       createRenderEffect(() => {
         label.textContent = language.t("app.server.otherServers");
       });
-      _solidInsert(list, createComponent(For, {
+      insert(list, createComponent(For, {
         get each() {
           return others();
         },

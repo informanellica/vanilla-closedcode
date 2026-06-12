@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createMemo, createRenderEffect, onCleanup, onMount } from "solid-js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
@@ -137,18 +137,18 @@ export function Dialog(props) {
   // only when the condition's truthiness flips, not on every title/action
   // change. The title text and action stay live via insert().
   const hasHeader = createMemo(() => !!(props.title || props.action));
-  _solidInsert(content, createMemo(() => {
+  insert(content, createMemo(() => {
     if (!hasHeader()) return undefined;
     const header = template(`<div data-slot="dialog-header"></div>`);
 
     // Show(title): mount the title only while a title exists; the text itself
     // stays live through the accessor.
     const hasTitle = createMemo(() => !!props.title);
-    _solidInsert(header, createMemo(() => {
+    insert(header, createMemo(() => {
       if (!hasTitle()) return undefined;
       const titleEl = template(`<div data-slot="dialog-title"></div>`);
       content.setAttribute("aria-labelledby", (titleEl.id ||= `dialog-title-${Math.random().toString(36).slice(2)}`));
-      _solidInsert(titleEl, () => props.title);
+      insert(titleEl, () => props.title);
       onCleanup(() => content.removeAttribute("aria-labelledby"));
       return titleEl;
     }), null);
@@ -157,7 +157,7 @@ export function Dialog(props) {
     // The truthiness memo keeps falsy-to-falsy action changes from rebuilding
     // the close button.
     const hasAction = createMemo(() => !!props.action);
-    _solidInsert(header, createMemo(() => hasAction()
+    insert(header, createMemo(() => hasAction()
       ? props.action
       : IconButton({
         "data-slot": "dialog-close-button",
@@ -171,18 +171,18 @@ export function Dialog(props) {
 
   // Show(description).
   const hasDescription = createMemo(() => !!props.description);
-  _solidInsert(content, createMemo(() => {
+  insert(content, createMemo(() => {
     if (!hasDescription()) return undefined;
     const descriptionEl = template(`<div data-slot="dialog-description"></div>`);
     descriptionEl.style.marginLeft = "-4px";
     content.setAttribute("aria-describedby", (descriptionEl.id ||= `dialog-desc-${Math.random().toString(36).slice(2)}`));
-    _solidInsert(descriptionEl, () => props.description);
+    insert(descriptionEl, () => props.description);
     onCleanup(() => content.removeAttribute("aria-describedby"));
     return descriptionEl;
   }), null);
 
   const body = template(`<div data-slot="dialog-body"></div>`);
-  _solidInsert(body, () => props.children);
+  insert(body, () => props.children);
   content.appendChild(body);
 
   container.appendChild(content);

@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, on, onCleanup } from "solid-js";
 import { animate } from "motion";
 import { useI18n } from "../context/i18n.js";
@@ -154,7 +154,7 @@ export function BasicTool(props) {
       // Show(!pending): subtitle + args, appended after the title span. The
       // inner regions are created per truthy period, matching the compiled
       // Show children getter.
-      _solidInsert(main, createMemo(() => {
+      insert(main, createMemo(() => {
         if (!notPending()) return undefined;
 
         // Show(subtitle)
@@ -170,7 +170,7 @@ export function BasicTool(props) {
               props.onSubtitleClick();
             }
           });
-          _solidInsert(span, () => title().subtitle);
+          insert(span, () => title().subtitle);
           const cls = {};
           createRenderEffect(() => applyClassList(span, {
             [title().subtitleClass ?? ""]: !!title().subtitleClass,
@@ -189,7 +189,7 @@ export function BasicTool(props) {
             },
             children: arg => {
               const span = template(`<span data-slot="basic-tool-tool-arg"></span>`);
-              _solidInsert(span, arg);
+              insert(span, arg);
               const cls = {};
               createRenderEffect(() => applyClassList(span, {
                 [title().argsClass ?? ""]: !!title().argsClass
@@ -204,10 +204,10 @@ export function BasicTool(props) {
       // Show(!pending && action), appended after the main row. The span is
       // rebuilt only on truthiness flips; the action content stays live.
       const actionVisible = createMemo(() => !!(notPending() && title().action));
-      _solidInsert(box, createMemo(() => {
+      insert(box, createMemo(() => {
         if (!actionVisible()) return undefined;
         const span = template(`<span data-slot="basic-tool-tool-action"></span>`);
-        _solidInsert(span, () => title().action);
+        insert(span, () => title().action);
         return span;
       }), null);
       const titleCls = {};
@@ -216,13 +216,13 @@ export function BasicTool(props) {
       }, titleCls));
       return box;
     };
-    _solidInsert(info, createMemo(() => structured() ? buildStructured() : () => props.trigger));
+    insert(info, createMemo(() => structured() ? buildStructured() : () => props.trigger));
 
     // Show: collapsible arrow. The inner memo keeps status changes from
     // re-evaluating props.children, like the compiled condition.
     const arrowOn = createMemo(() => !!(props.children && !props.hideDetails && !props.locked));
     const arrowVisible = createMemo(() => !!(arrowOn() && !pending()));
-    _solidInsert(root, createMemo(() => arrowVisible() ? createComponent(Collapsible.Arrow, {}) : undefined), null);
+    insert(root, createMemo(() => arrowVisible() ? createComponent(Collapsible.Arrow, {}) : undefined), null);
 
     // Change-guarded data attributes, like the compiled effect().
     let prevClickable;
@@ -288,7 +288,7 @@ export function BasicTool(props) {
         contentRef = el;
         el.style.setProperty("height", initialOpen ? "auto" : "0px");
         el.style.setProperty("overflow", initialOpen ? "visible" : "hidden");
-        _solidInsert(el, () => props.children);
+        insert(el, () => props.children);
         return el;
       });
 

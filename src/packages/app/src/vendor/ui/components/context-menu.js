@@ -1,5 +1,5 @@
-import { createRenderEffect as _solidRenderEffect, getOwner as _solidGetOwner, onCleanup as _solidOnCleanup } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { createRenderEffect, getOwner, onCleanup } from "solid-js";
+import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
 // Vanilla ContextMenu (no Kobalte dependency): the same menu primitive as
@@ -51,7 +51,7 @@ function appendChildren(parent, children, wrap) {
     // solid-js/web insert() track it so updates re-render instead of freezing.
     // `wrap` re-establishes the module-variable context around each lazy
     // evaluation.
-    _solidInsert(parent, wrap ? () => wrap(children) : children);
+    insert(parent, wrap ? () => wrap(children) : children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -295,10 +295,10 @@ function ContextMenuRoot(props) {
 
   document.addEventListener("pointerdown", onDocPointer, true);
   document.addEventListener("keydown", onDocKeyDown, true);
-  if (_solidGetOwner()) _solidOnCleanup(removeDocListeners);
+  if (getOwner()) onCleanup(removeDocListeners);
 
   // Controlled open is a live getter — re-sync when the owner changes it.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     void local.open;
     void local.modal;
     state.sync();
@@ -376,7 +376,7 @@ function ContextMenuPortal(props) {
   document.body.appendChild(portal);
   appendChildren(portal, props.children);
   ctx?.registerPortal?.(portal);
-  if (_solidGetOwner()) _solidOnCleanup(() => portal.remove());
+  if (getOwner()) onCleanup(() => portal.remove());
   return document.createComment("context-menu-portal");
 }
 
@@ -477,7 +477,7 @@ function ContextMenuItem(props) {
   applyClassProp(el, local.class);
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const disabled = !!local.disabled;
     el.disabled = disabled;
     if (disabled) el.setAttribute("data-disabled", "");
@@ -551,7 +551,7 @@ function ContextMenuRadioGroup(props) {
   applyRestProps(el, rest);
   appendChildren(el, local.children);
   RadioContext = previous;
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     void local.value;
     state.sync();
   });
@@ -568,13 +568,13 @@ function ContextMenuRadioItem(props) {
   applyClassProp(el, local.class);
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const disabled = !!local.disabled;
     el.disabled = disabled;
     if (disabled) el.setAttribute("data-disabled", "");
     else el.removeAttribute("data-disabled");
   });
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const selected = !!group?.isSelected?.(value);
     el.setAttribute("aria-checked", selected ? "true" : "false");
     if (selected) el.setAttribute("data-checked", "");
@@ -615,7 +615,7 @@ function ContextMenuCheckboxItem(props) {
   const radio = {
     isSelected: () => !!local.checked,
     registerIndicator: entry => {
-      _solidRenderEffect(() => {
+      createRenderEffect(() => {
         entry.el.style.display = radio.isSelected() || entry.forceMount ? "" : "none";
       });
     }
@@ -625,7 +625,7 @@ function ContextMenuCheckboxItem(props) {
   applyClassProp(el, local.class);
   applyClassList(el, local.classList);
   applyRestProps(el, rest);
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const checked = !!local.checked;
     const disabled = !!local.disabled;
     el.disabled = disabled;

@@ -1,4 +1,4 @@
-import { insert as _solidInsert, Portal } from "solid-js/web";
+import { insert, Portal } from "solid-js/web";
 import {
   createComponent,
   createContext,
@@ -30,7 +30,7 @@ import { IconButton } from "./icon-button.js";
 // `showToast`/`showPromiseToast` helpers — so existing consumers and the story
 // keep working unchanged. The DOM mirrors what toast.css targets
 // (`data-component`, `data-slot`, `data-opened`/`data-closed`/`data-swipe`
-// attributes and the `--kb-toast-*` custom properties).
+// attributes and the `--vcc-toast-*` custom properties).
 //
 // Reactivity stays inside the flip-safe primitive set: the toaster store is a
 // plain `createSignal` holding an immutable array (Kobalte uses a solid-js
@@ -147,7 +147,7 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.append(String(children));
@@ -437,7 +437,7 @@ function ToastRegionImpl(props) {
   // Keyed list of toast roots. For keys by toast identity, so existing toasts
   // keep their live DOM (focus, hover, swipe state) across store updates —
   // matching the compiled insert(list, For(...)).
-  _solidInsert(
+  insert(
     list,
     createComponent(ToastRegionContext.Provider, {
       value: context,
@@ -588,8 +588,8 @@ function ToastRootImpl(props) {
     if (hasSwipeMoveStarted) {
       swipeDelta = delta;
       el.setAttribute("data-swipe", "move");
-      el.style.setProperty("--kb-toast-swipe-move-x", `${delta.x}px`);
-      el.style.setProperty("--kb-toast-swipe-move-y", `${delta.y}px`);
+      el.style.setProperty("--vcc-toast-swipe-move-x", `${delta.x}px`);
+      el.style.setProperty("--vcc-toast-swipe-move-y", `${delta.y}px`);
     } else if (isDeltaInDirection(delta, direction, moveStartBuffer)) {
       swipeDelta = delta;
       el.setAttribute("data-swipe", "start");
@@ -611,17 +611,17 @@ function ToastRootImpl(props) {
 
     if (isDeltaInDirection(delta, rootContext.swipeDirection(), rootContext.swipeThreshold())) {
       el.setAttribute("data-swipe", "end");
-      el.style.removeProperty("--kb-toast-swipe-move-x");
-      el.style.removeProperty("--kb-toast-swipe-move-y");
-      el.style.setProperty("--kb-toast-swipe-end-x", `${delta.x}px`);
-      el.style.setProperty("--kb-toast-swipe-end-y", `${delta.y}px`);
+      el.style.removeProperty("--vcc-toast-swipe-move-x");
+      el.style.removeProperty("--vcc-toast-swipe-move-y");
+      el.style.setProperty("--vcc-toast-swipe-end-x", `${delta.x}px`);
+      el.style.setProperty("--vcc-toast-swipe-end-y", `${delta.y}px`);
       close();
     } else {
       el.setAttribute("data-swipe", "cancel");
-      el.style.removeProperty("--kb-toast-swipe-move-x");
-      el.style.removeProperty("--kb-toast-swipe-move-y");
-      el.style.removeProperty("--kb-toast-swipe-end-x");
-      el.style.removeProperty("--kb-toast-swipe-end-y");
+      el.style.removeProperty("--vcc-toast-swipe-move-x");
+      el.style.removeProperty("--vcc-toast-swipe-move-y");
+      el.style.removeProperty("--vcc-toast-swipe-end-x");
+      el.style.removeProperty("--vcc-toast-swipe-end-y");
     }
     // Prevent a click from firing on items within the toast when the pointer up
     // is part of a swipe gesture.
@@ -714,7 +714,7 @@ function ToastRootImpl(props) {
 
   // Children first, then the remaining prop spread — same effect order as the
   // compiled spread + insert pair.
-  _solidInsert(
+  insert(
     el,
     createComponent(ToastContext.Provider, {
       value: context,
@@ -765,7 +765,7 @@ function ToastContent(props) {
   // Children may include reactive accessors (lazy state-gated promise parts),
   // so they go through solid's insert() to stay live — same effect order as the
   // compiled spread (children first).
-  _solidInsert(el, () => props.children);
+  insert(el, () => props.children);
   spreadProps(el, props);
   return el;
 }
@@ -780,7 +780,7 @@ function ToastTitle(props) {
   el.id = local.id;
   // Register the id for aria-labelledby; unregister on disposal.
   createEffect(() => onCleanup(context.registerTitleId(local.id)));
-  _solidInsert(el, () => others.children);
+  insert(el, () => others.children);
   spreadProps(el, others);
   return el;
 }
@@ -795,14 +795,14 @@ function ToastDescription(props) {
   el.id = local.id;
   // Register the id for aria-describedby; unregister on disposal.
   createEffect(() => onCleanup(context.registerDescriptionId(local.id)));
-  _solidInsert(el, () => others.children);
+  insert(el, () => others.children);
   spreadProps(el, others);
   return el;
 }
 function ToastActions(props) {
   const el = document.createElement("div");
   el.setAttribute("data-slot", "toast-actions");
-  _solidInsert(el, () => props.children);
+  insert(el, () => props.children);
   spreadProps(el, props);
   return el;
 }
@@ -835,7 +835,7 @@ function ToastProgressTrack(props) {
   el.setAttribute("data-slot", "toast-progress-track");
   el.setAttribute("aria-hidden", "true");
   el.setAttribute("role", "presentation");
-  _solidInsert(el, () => props.children);
+  insert(el, () => props.children);
   spreadProps(el, props);
   return el;
 }
@@ -864,10 +864,10 @@ function ToastProgressFill(props) {
     });
   });
   createRenderEffect(() => {
-    el.style.setProperty("--kb-toast-progress-fill-width", `${lifeTime()}%`);
+    el.style.setProperty("--vcc-toast-progress-fill-width", `${lifeTime()}%`);
   });
 
-  _solidInsert(el, () => props.children);
+  insert(el, () => props.children);
   spreadProps(el, props);
   return el;
 }

@@ -6,13 +6,13 @@ import {
   splitProps,
   untrack
 } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
 // Vanilla reimplementation of the Kobalte Collapsible compound component.
 // Mirrors the Kobalte collapsible behaviour: a controllable open state, the
 // data-expanded/data-closed/data-disabled dataset on root + trigger + content,
-// aria-expanded/aria-controls on the trigger, the --kb-collapsible-content-height
+// aria-expanded/aria-controls on the trigger, the --vcc-collapsible-content-height
 // CSS var, a polymorphic trigger (`as`), and content that is hidden while closed.
 //
 // Architecture mirrors the hand-written src/bs/collapsible.js: the Root owns a
@@ -83,7 +83,7 @@ function appendChildren(parent, children) {
     return;
   }
   if (typeof children === "function") {
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -204,7 +204,7 @@ function CollapsibleRoot(props) {
       if (!open && !local.forceMount) content.setAttribute("hidden", "");
       else content.removeAttribute("hidden");
       const rect = content.getBoundingClientRect?.();
-      if (rect && rect.height) content.style.setProperty("--kb-collapsible-content-height", `${rect.height}px`);
+      if (rect && rect.height) content.style.setProperty("--vcc-collapsible-content-height", `${rect.height}px`);
     }
   };
 

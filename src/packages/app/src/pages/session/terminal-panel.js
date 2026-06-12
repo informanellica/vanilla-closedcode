@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
@@ -247,7 +247,7 @@ export function TerminalPanel() {
     // non-keyed Show keeps it mounted while the pty still exists, feeding the
     // live pty accessor through the props getter. insert() reconciles so the
     // terminal node is never re-attached without an actual branch change.
-    _solidInsert(body, createComponent(Show, {
+    insert(body, createComponent(Show, {
       get when() {
         return terminal.active();
       },
@@ -350,7 +350,7 @@ export function TerminalPanel() {
   // Ready/loading switch appended after the resize-handle host. insert() with
   // a null marker keeps append semantics and reconciles the provider output
   // (sensors/overlay markers + the area element) without remounting it.
-  _solidInsert(column, createComponent(Show, {
+  insert(column, createComponent(Show, {
     get when() {
       return terminal.ready();
     },

@@ -5,7 +5,7 @@
 // updates. insert() reconciles that nested array/accessor shape in place
 // instead of detaching live rows (established exception, same as
 // sidebar-project.js).
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { useNavigate, useParams } from "../../lib/router/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
@@ -364,7 +364,7 @@ const WorkspaceSessionList = props => {
   // Session rows: For + insert() so row identity survives list updates and
   // the nested child-session accessor each SessionItem returns stays live
   // (established exception, see header note).
-  _solidInsert(nav, createComponent(For, {
+  insert(nav, createComponent(For, {
     get each() {
       return props.sessions();
     },
