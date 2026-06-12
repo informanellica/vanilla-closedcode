@@ -3,7 +3,7 @@ import {  disposeAllInstances, provideInstance, reloadTestInstance, tmpdirScoped
 import {  testEffect  } from "../lib/effect.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  $  } from "script/shell"
-import {  InstanceState  } from "@/effect/instance-state.js"
+import {  InstanceState  } from "#effect/instance-state.js"
 import {  afterEach, expect, beforeAll  } from "@jest/globals"
 import { sleep } from "../lib/io.js";
 

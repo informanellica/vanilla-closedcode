@@ -5,13 +5,13 @@ import { insertNode as _$insertNode } from "@opentui/solid";
 import { insert as _$insert } from "@opentui/solid";
 import { setProp as _$setProp } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
-import { useProject } from "@tui/context/project.js";
-import { useSync } from "@tui/context/sync.js";
+import { useProject } from "#tui/context/project.js";
+import { useSync } from "#tui/context/sync.js";
 import { createMemo, Show } from "solid-js";
 import { useTheme } from "../../context/theme.js";
 import { useTuiConfig } from "../../context/tui-config.js";
 import { InstallationChannel, InstallationVersion } from "core/installation/version";
-import { TuiPluginRuntime } from "@/cli/cmd/tui/plugin/runtime.js";
+import { TuiPluginRuntime } from "#cli/cmd/tui/plugin/runtime.js";
 import { getScrollAcceleration } from "../../util/scroll.js";
 export function Sidebar(props) {
   const project = useProject();

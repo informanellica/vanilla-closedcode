@@ -1,16 +1,15 @@
-import { SessionMessageTable, SessionTable } from "@/session/session.sql.js";
-import { SessionID } from "@/session/schema.js";
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { and, asc, desc, eq, gt, gte, isNull, like, lt, or } from "@/storage/db.js";
-import * as Database from "@/storage/db.js";
+import { SessionID } from "#session/schema.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { Op } from "#storage/sequelize.js";
+import * as Database from "#storage/db.js";
 import { Context, DateTime, Effect, Layer, Schema } from "effect";
 import { SessionMessage } from "./session-message.js";
 import { EventV2 } from "./event.js";
-import { ProjectID } from "@/project/schema.js";
-import { ModelID, ProviderID } from "@/provider/schema.js";
+import { ProjectID } from "#project/schema.js";
+import { ModelID, ProviderID } from "#provider/schema.js";
 import { SessionEvent } from "./session-event.js";
 import { V2Schema } from "./schema.js";
-import { optionalOmitUndefined } from "@/util/schema.js";
+import { optionalOmitUndefined } from "#util/schema.js";
 export const Delivery = Schema.Union([Schema.Literal("immediate"), Schema.Literal("deferred")]).annotate({
   identifier: "Session.Delivery"
 });
@@ -48,6 +47,10 @@ export class Info extends Schema.Class("Session.Info")({
   */
 }) {}
 export class Service extends Context.Service()("@closedcode/v2/Session") {}
+// Sequelize call-site conventions (ORM migration S3): reads go through
+// Database.useAsync with the handle { models, sequelize, tx }; rows are
+// returned plain (JSON columns parsed) to match the previous drizzle shapes.
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const decodeMessage = Schema.decodeUnknownSync(SessionMessage.Message);
   const decode = row => decodeMessage({
@@ -84,17 +87,73 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       if (direction === "previous" && order === "asc") order = "desc";
       if (direction === "previous" && order === "desc") order = "asc";
       const conditions = [];
-      if (input.directory) conditions.push(eq(SessionTable.directory, input.directory));
-      if (input.path) conditions.push(or(eq(SessionTable.path, input.path), like(SessionTable.path, `${input.path}/%`)));
-      if (input.workspaceID) conditions.push(eq(SessionTable.workspace_id, input.workspaceID));
-      if (input.roots) conditions.push(isNull(SessionTable.parent_id));
-      if (input.start) conditions.push(gte(SessionTable.time_created, input.start));
-      if (input.search) conditions.push(like(SessionTable.title, `%${input.search}%`));
+      if (input.directory) conditions.push({
+        directory: input.directory
+      });
+      if (input.path) conditions.push({
+        [Op.or]: [{
+          path: input.path
+        }, {
+          path: {
+            [Op.like]: `${input.path}/%`
+          }
+        }]
+      });
+      if (input.workspaceID) conditions.push({
+        workspace_id: input.workspaceID
+      });
+      if (input.roots) conditions.push({
+        parent_id: {
+          [Op.is]: null
+        }
+      });
+      if (input.start) conditions.push({
+        time_created: {
+          [Op.gte]: input.start
+        }
+      });
+      if (input.search) conditions.push({
+        title: {
+          [Op.like]: `%${input.search}%`
+        }
+      });
       if (input.cursor) {
-        conditions.push(order === "asc" ? or(gt(SessionTable.time_created, input.cursor.time), and(eq(SessionTable.time_created, input.cursor.time), gt(SessionTable.id, input.cursor.id))) : or(lt(SessionTable.time_created, input.cursor.time), and(eq(SessionTable.time_created, input.cursor.time), lt(SessionTable.id, input.cursor.id))));
+        conditions.push(order === "asc" ? {
+          [Op.or]: [{
+            time_created: {
+              [Op.gt]: input.cursor.time
+            }
+          }, {
+            time_created: input.cursor.time,
+            id: {
+              [Op.gt]: input.cursor.id
+            }
+          }]
+        } : {
+          [Op.or]: [{
+            time_created: {
+              [Op.lt]: input.cursor.time
+            }
+          }, {
+            time_created: input.cursor.time,
+            id: {
+              [Op.lt]: input.cursor.id
+            }
+          }]
+        });
       }
-      const query = Database.Client().select().from(SessionTable).where(conditions.length > 0 ? and(...conditions) : undefined).orderBy(order === "asc" ? asc(SessionTable.time_created) : desc(SessionTable.time_created), order === "asc" ? asc(SessionTable.id) : desc(SessionTable.id));
-      const rows = input.limit === undefined ? query.all() : query.limit(input.limit).all();
+      const rows = yield* Effect.promise(() => Database.useAsync(async h => (await h.models.Session.findAll({
+        where: conditions.length > 0 ? {
+          [Op.and]: conditions
+        } : undefined,
+        order: [["time_created", order === "asc" ? "ASC" : "DESC"], ["id", order === "asc" ? "ASC" : "DESC"]],
+        ...(input.limit === undefined ? {} : {
+          limit: input.limit
+        }),
+        transaction: h.tx
+      })).map(r => r.get({
+        plain: true
+      }))));
       return (direction === "previous" ? rows.toReversed() : rows).map(row => fromRow(row));
     }),
     messages: Effect.fn("V2Session.messages")(function* (input) {
@@ -103,20 +162,86 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       // Query the adjacent rows in reverse, then flip them back into the requested order below.
       if (direction === "previous" && order === "asc") order = "desc";
       if (direction === "previous" && order === "desc") order = "asc";
-      const boundary = input.cursor ? order === "asc" ? or(gt(SessionMessageTable.time_created, input.cursor.time), and(eq(SessionMessageTable.time_created, input.cursor.time), gt(SessionMessageTable.id, input.cursor.id))) : or(lt(SessionMessageTable.time_created, input.cursor.time), and(eq(SessionMessageTable.time_created, input.cursor.time), lt(SessionMessageTable.id, input.cursor.id))) : undefined;
-      const where = boundary ? and(eq(SessionMessageTable.session_id, input.sessionID), boundary) : eq(SessionMessageTable.session_id, input.sessionID);
-      const rows = Database.use(db => {
-        const query = db.select().from(SessionMessageTable).where(where).orderBy(order === "asc" ? asc(SessionMessageTable.time_created) : desc(SessionMessageTable.time_created), order === "asc" ? asc(SessionMessageTable.id) : desc(SessionMessageTable.id));
-        const rows = input.limit === undefined ? query.all() : query.limit(input.limit).all();
-        return direction === "previous" ? rows.toReversed() : rows;
-      });
+      const boundary = input.cursor ? order === "asc" ? {
+        [Op.or]: [{
+          time_created: {
+            [Op.gt]: input.cursor.time
+          }
+        }, {
+          time_created: input.cursor.time,
+          id: {
+            [Op.gt]: input.cursor.id
+          }
+        }]
+      } : {
+        [Op.or]: [{
+          time_created: {
+            [Op.lt]: input.cursor.time
+          }
+        }, {
+          time_created: input.cursor.time,
+          id: {
+            [Op.lt]: input.cursor.id
+          }
+        }]
+      } : undefined;
+      const where = boundary ? {
+        [Op.and]: [{
+          session_id: input.sessionID
+        }, boundary]
+      } : {
+        session_id: input.sessionID
+      };
+      const rows = yield* Effect.promise(() => Database.useAsync(async h => {
+        const found = (await h.models.SessionMessage.findAll({
+          where,
+          order: [["time_created", order === "asc" ? "ASC" : "DESC"], ["id", order === "asc" ? "ASC" : "DESC"]],
+          ...(input.limit === undefined ? {} : {
+            limit: input.limit
+          }),
+          transaction: h.tx
+        })).map(r => r.get({
+          plain: true
+        }));
+        return direction === "previous" ? found.toReversed() : found;
+      }));
       return rows.map(row => decode(row));
     }),
     context: Effect.fn("V2Session.context")(function* (sessionID) {
-      const rows = Database.use(db => {
-        const compaction = db.select().from(SessionMessageTable).where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction"))).orderBy(desc(SessionMessageTable.time_created), desc(SessionMessageTable.id)).limit(1).get();
-        return db.select().from(SessionMessageTable).where(and(eq(SessionMessageTable.session_id, sessionID), compaction ? or(gt(SessionMessageTable.time_created, compaction.time_created), and(eq(SessionMessageTable.time_created, compaction.time_created), gte(SessionMessageTable.id, compaction.id))) : undefined)).orderBy(asc(SessionMessageTable.time_created), asc(SessionMessageTable.id)).all();
-      });
+      const rows = yield* Effect.promise(() => Database.useAsync(async h => {
+        const compaction = plain(await h.models.SessionMessage.findOne({
+          where: {
+            session_id: sessionID,
+            type: "compaction"
+          },
+          order: [["time_created", "DESC"], ["id", "DESC"]],
+          transaction: h.tx
+        }));
+        return (await h.models.SessionMessage.findAll({
+          where: compaction ? {
+            [Op.and]: [{
+              session_id: sessionID
+            }, {
+              [Op.or]: [{
+                time_created: {
+                  [Op.gt]: compaction.time_created
+                }
+              }, {
+                time_created: compaction.time_created,
+                id: {
+                  [Op.gte]: compaction.id
+                }
+              }]
+            }]
+          } : {
+            session_id: sessionID
+          },
+          order: [["time_created", "ASC"], ["id", "ASC"]],
+          transaction: h.tx
+        })).map(r => r.get({
+          plain: true
+        }));
+      }));
       return rows.map(row => decode(row));
     }),
     prompt: Effect.fn("V2Session.prompt")(function* (_input) {

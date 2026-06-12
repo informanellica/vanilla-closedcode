@@ -1,15 +1,13 @@
-import { Bus } from "@/bus/index.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { ProjectID } from "@/project/schema.js";
-import { MessageID, SessionID } from "@/session/schema.js";
-import { PermissionTable } from "@/session/session.sql.js";
-import { Database } from "@/storage/db.js";
-import { eq } from "drizzle-orm";
-import { zod } from "@/util/effect-zod.js";
+import { Bus } from "#bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { ProjectID } from "#project/schema.js";
+import { MessageID, SessionID } from "#session/schema.js";
+import { Database } from "#storage/db.js";
+import { zod } from "#util/effect-zod.js";
 import * as Log from "core/util/log";
-import { withStatics } from "@/util/schema.js";
-import { Wildcard } from "@/util/wildcard.js";
+import { withStatics } from "#util/schema.js";
+import { Wildcard } from "#util/wildcard.js";
 import { Deferred, Effect, Layer, Schema, Context } from "effect";
 import os from "os";
 import { evaluate as evalRule } from "./evaluate.js";
@@ -119,7 +117,22 @@ export class Service extends Context.Service()("@closedcode/Permission") {}
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const state = yield* InstanceState.make(Effect.fn("Permission.state")(function* (ctx) {
-    const row = Database.use(db => db.select().from(PermissionTable).where(eq(PermissionTable.project_id, ctx.project.id)).get());
+    // Sequelize layer (ORM migration S3): reads return plain rows. The JSON
+    // `data` column comes back as raw TEXT from sequelize's sqlite dialect,
+    // so decode it like drizzle's { mode: "json" } did; the typeof guard
+    // keeps this a no-op if the layer ever starts parsing itself.
+    const row = yield* Effect.promise(() => Database.useAsync(async h => {
+      const found = await h.models.Permission.findOne({
+        where: { project_id: ctx.project.id },
+        transaction: h.tx
+      });
+      if (found == null) return undefined;
+      const data = found.get("data");
+      return {
+        ...found.get({ plain: true }),
+        data: typeof data === "string" ? JSON.parse(data) : data
+      };
+    }));
     const state = {
       pending: new Map(),
       approved: row?.data ?? []

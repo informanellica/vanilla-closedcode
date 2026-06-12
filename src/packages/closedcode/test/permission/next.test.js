@@ -916,6 +916,9 @@ it.live("ask - publishes asked event", () => withDir({
       ruleset: []
     }).pipe(Effect.forkScoped);
     expect(yield* waitForPending(1)).toHaveLength(1);
+    // Permission state now initializes through the async Sequelize layer, so
+    // the bus callback can be delivered a tick after the pending list updates.
+    for (let i = 0; i < 100 && seen === undefined; i++) yield* Effect.sleep("10 millis");
     expect(seen).toBeDefined();
     expect(seen).toMatchObject({
       sessionID: SessionID.make("session_test"),

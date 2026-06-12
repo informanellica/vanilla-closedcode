@@ -1,76 +1,12 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-component=shell-submessage><span data-slot=shell-submessage-width><span data-slot=basic-tool-tool-subtitle><span data-slot=shell-submessage-value>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-component=diagnostics>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=diagnostic><span data-slot=diagnostic-label></span><span data-slot=diagnostic-location>[<!>:<!>]</span><span data-slot=diagnostic-message>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-component=exa-tool-output><div data-slot=exa-tool-links>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<a data-slot=exa-tool-link target=_blank rel="noopener noreferrer">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-component=context-tool-group-trigger><span data-slot=context-tool-group-title class="min-w-0 d-flex align-items-center gap-2 fw-medium text-body-emphasis"><span data-slot=context-tool-group-label class=shrink-0></span><span data-slot=context-tool-group-summary class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-normal text-body">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-component=context-tool-group-list>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-subtitle>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div data-slot=context-tool-group-item><div data-component=tool-trigger><div data-slot=basic-tool-tool-trigger-content><div data-slot=basic-tool-tool-info><div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-arg>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div data-slot=user-message-attachments>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div data-slot=user-message-body><div data-slot=user-message-text>`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<span data-slot=user-message-meta class="small fw-normal text-secondary cursor-default">`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<span data-slot=user-message-meta-sep class="small fw-normal text-secondary cursor-default"> · `),
-  _tmpl$13 = /*#__PURE__*/_$template(`<span data-slot=user-message-meta-tail class="small fw-normal text-secondary cursor-default">`),
-  _tmpl$14 = /*#__PURE__*/_$template(`<span data-slot=user-message-meta-wrap>`),
-  _tmpl$15 = /*#__PURE__*/_$template(`<div data-slot=user-message-copy-wrapper>`),
-  _tmpl$16 = /*#__PURE__*/_$template(`<div data-component=user-message>`),
-  _tmpl$17 = /*#__PURE__*/_$template(`<img data-slot=user-message-attachment-image>`),
-  _tmpl$18 = /*#__PURE__*/_$template(`<div data-slot=user-message-attachment>`),
-  _tmpl$19 = /*#__PURE__*/_$template(`<div data-slot=user-message-attachment-file><span data-slot=user-message-attachment-name>`),
-  _tmpl$20 = /*#__PURE__*/_$template(`<span>`),
-  _tmpl$21 = /*#__PURE__*/_$template(`<span data-slot=apply-patch-directory>`),
-  _tmpl$22 = /*#__PURE__*/_$template(`<div data-slot=apply-patch-trigger-content><div data-slot=apply-patch-file-info><div data-slot=apply-patch-file-name-container><span data-slot=apply-patch-filename></span></div></div><div data-slot=apply-patch-trigger-actions>`),
-  _tmpl$23 = /*#__PURE__*/_$template(`<div data-component=tool-part-wrapper>`),
-  _tmpl$24 = /*#__PURE__*/_$template(`<div style=width:100%;display:flex;justify-content:flex-end><span class="fw-normal text-secondary cursor-default">`),
-  _tmpl$25 = /*#__PURE__*/_$template(`<div data-component=compaction-part><div data-slot=compaction-part-divider><span data-slot=compaction-part-line></span><span data-slot=compaction-part-label class="small fw-normal text-secondary"></span><span data-slot=compaction-part-line>`),
-  _tmpl$26 = /*#__PURE__*/_$template(`<span data-slot=text-part-meta class="small fw-normal text-secondary cursor-default">`),
-  _tmpl$27 = /*#__PURE__*/_$template(`<div data-slot=text-part-copy-wrapper>`),
-  _tmpl$28 = /*#__PURE__*/_$template(`<div data-component=text-part><div data-slot=text-part-body>`),
-  _tmpl$29 = /*#__PURE__*/_$template(`<div data-component=reasoning-part>`),
-  _tmpl$30 = /*#__PURE__*/_$template(`<div data-component=tool-loaded-file><span> `),
-  _tmpl$31 = /*#__PURE__*/_$template(`<div data-component=tool-output data-scrollable>`),
-  _tmpl$32 = /*#__PURE__*/_$template(`<a data-slot=basic-tool-tool-subtitle class="clickable subagent-link"target=_blank rel="noopener noreferrer">`),
-  _tmpl$33 = /*#__PURE__*/_$template(`<div data-component=tool-action>`),
-  _tmpl$34 = /*#__PURE__*/_$template(`<div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title>`),
-  _tmpl$35 = /*#__PURE__*/_$template(`<span data-component=task-tool-spinner>`),
-  _tmpl$36 = /*#__PURE__*/_$template(`<div data-component=task-tool-action>`),
-  _tmpl$37 = /*#__PURE__*/_$template(`<div data-component=task-tool-card><div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-component=task-tool-title>`),
-  _tmpl$38 = /*#__PURE__*/_$template(`<div data-component=bash-output><div data-slot=bash-copy></div><div data-slot=bash-scroll data-scrollable><pre data-slot=bash-pre><code>`),
-  _tmpl$39 = /*#__PURE__*/_$template(`<div data-component=edit-content>`),
-  _tmpl$40 = /*#__PURE__*/_$template(`<div data-component=edit-tool>`),
-  _tmpl$41 = /*#__PURE__*/_$template(`<span data-slot=message-part-title-filename>`),
-  _tmpl$42 = /*#__PURE__*/_$template(`<div data-slot=message-part-path><span data-slot=message-part-directory>`),
-  _tmpl$43 = /*#__PURE__*/_$template(`<div data-component=edit-trigger><div data-slot=message-part-title-area><div data-slot=message-part-title><span data-slot=message-part-title-text></span></div></div><div data-slot=message-part-actions>`),
-  _tmpl$44 = /*#__PURE__*/_$template(`<div data-component=write-content>`),
-  _tmpl$45 = /*#__PURE__*/_$template(`<div data-component=write-tool>`),
-  _tmpl$46 = /*#__PURE__*/_$template(`<div data-component=write-trigger><div data-slot=message-part-title-area><div data-slot=message-part-title><span data-slot=message-part-title-text></span></div></div><div data-slot=message-part-actions>`),
-  _tmpl$47 = /*#__PURE__*/_$template(`<div data-component=apply-patch-file-diff>`),
-  _tmpl$48 = /*#__PURE__*/_$template(`<div data-component=apply-patch-tool>`),
-  _tmpl$49 = /*#__PURE__*/_$template(`<span data-slot=apply-patch-change data-type=added>`),
-  _tmpl$50 = /*#__PURE__*/_$template(`<span data-slot=apply-patch-change data-type=removed>`),
-  _tmpl$51 = /*#__PURE__*/_$template(`<span data-slot=apply-patch-change data-type=modified>`),
-  _tmpl$52 = /*#__PURE__*/_$template(`<div data-component=todos>`),
-  _tmpl$53 = /*#__PURE__*/_$template(`<span data-slot=message-part-todo-content>`),
-  _tmpl$54 = /*#__PURE__*/_$template(`<div data-component=question-answers>`),
-  _tmpl$55 = /*#__PURE__*/_$template(`<div data-slot=question-answer-item><div data-slot=question-text></div><div data-slot=answer-text>`),
-  _tmpl$56 = /*#__PURE__*/_$template(`<div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title class="capitalize agent-title">`);
-import { createEffect, createMemo, createSignal, For, Match, onMount, Show, Switch, onCleanup, Index } from "solid-js";
+// Dynamic is a runtime component, not a compiled template helper (it is only
+// exported from solid-js/web). insert() is the established exception for
+// reactive/component-valued children (Kobalte presence-gated Collapsible and
+// Accordion content, Dynamic and memo-accessor returns) so Solid keeps
+// reconciling accessors instead of freezing them.
+import { Dynamic, insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, Match, mergeProps, onMount, Show, Switch, onCleanup, Index } from "solid-js";
 import { createStore } from "solid-js/store";
 import stripAnsi from "strip-ansi";
-import { Dynamic } from "solid-js/web";
 import { useData } from "../context/index.js";
 import { useFileComponent } from "../context/file.js";
 import { useDialog } from "../context/dialog.js";
@@ -98,6 +34,52 @@ import { patchFiles } from "./apply-patch-file.js";
 import { animate } from "motion";
 import { useLocation } from "@solidjs/router";
 import { attached, inline, kind } from "./message-file.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated or
+// user-provided strings are always assigned via textContent/text nodes.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
+// Mirror solid-js/web style(): diff an object/string style value against the
+// previous one, removing dropped keys and applying changed ones.
+function applyStyle(el, value, prev) {
+  if (!value) {
+    if (prev) el.removeAttribute("style");
+    return value;
+  }
+  const nodeStyle = el.style;
+  if (typeof value === "string") {
+    nodeStyle.cssText = value;
+    return value;
+  }
+  if (typeof prev === "string") {
+    nodeStyle.cssText = "";
+    prev = undefined;
+  }
+  prev = prev || {};
+  for (const key in prev) {
+    if (value[key] == null) nodeStyle.removeProperty(key);
+    delete prev[key];
+  }
+  for (const key in value) {
+    const next = value[key];
+    if (next !== prev[key]) {
+      nodeStyle.setProperty(key, next);
+      prev[key] = next;
+    }
+  }
+  return prev;
+}
 function ShellSubmessage(props) {
   let widthRef;
   let valueRef;
@@ -124,31 +106,40 @@ function ShellSubmessage(props) {
       }
     });
   });
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild;
-    var _ref$ = widthRef;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$2) : widthRef = _el$2;
-    var _ref$2 = valueRef;
-    typeof _ref$2 === "function" ? _$use(_ref$2, _el$4) : valueRef = _el$4;
-    _$insert(_el$4, () => props.text);
-    _$effect(_p$ => {
-      var _v$ = props.animate ? "0px" : undefined,
-        _v$2 = props.animate ? {
-          opacity: 0,
-          filter: "blur(2px)"
-        } : undefined;
-      _v$ !== _p$.e && _$setStyleProperty(_el$2, "width", _p$.e = _v$);
-      _p$.t = _$style(_el$4, _v$2, _p$.t);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$;
-  })();
+  const root = template(`<span data-component="shell-submessage"><span data-slot="shell-submessage-width"><span data-slot="basic-tool-tool-subtitle"><span data-slot="shell-submessage-value"></span></span></span></span>`);
+  const widthEl = root.firstChild;
+  const subtitleEl = widthEl.firstChild;
+  const valueEl = subtitleEl.firstChild;
+  // Ref bindings, mirroring the compiled use() branches (the locals are only
+  // ever undefined or an element here).
+  const refWidth = widthRef;
+  if (typeof refWidth === "function") refWidth(widthEl);
+  else widthRef = widthEl;
+  const refValue = valueRef;
+  if (typeof refValue === "function") refValue(valueEl);
+  else valueRef = valueEl;
+  createRenderEffect(() => {
+    valueEl.textContent = props.text ?? "";
+  });
+  // Change-guarded width + diffed style object, mirroring the compiled effect
+  // block. The motion animations above overwrite these inline styles later,
+  // and this effect only re-runs if props.animate actually changes.
+  let prevWidth;
+  let prevValueStyle;
+  createRenderEffect(() => {
+    const width = props.animate ? "0px" : undefined;
+    const valueStyle = props.animate ? {
+      opacity: 0,
+      filter: "blur(2px)"
+    } : undefined;
+    if (width !== prevWidth) {
+      prevWidth = width;
+      if (width == null) widthEl.style.removeProperty("width");
+      else widthEl.style.setProperty("width", width);
+    }
+    prevValueStyle = applyStyle(valueEl, valueStyle, prevValueStyle);
+  });
+  return root;
 }
 function getDiagnostics(diagnosticsByFile, filePath) {
   if (!diagnosticsByFile || !filePath) return [];
@@ -157,34 +148,42 @@ function getDiagnostics(diagnosticsByFile, filePath) {
 }
 function DiagnosticsDisplay(props) {
   const i18n = useI18n();
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return props.diagnostics.length > 0;
     },
     get children() {
-      var _el$5 = _tmpl$2();
-      _$insert(_el$5, _$createComponent(For, {
+      const root = template(`<div data-component="diagnostics"></div>`);
+      _solidInsert(root, createComponent(For, {
         get each() {
           return props.diagnostics;
         },
-        children: diagnostic => (() => {
-          var _el$6 = _tmpl$3(),
-            _el$7 = _el$6.firstChild,
-            _el$8 = _el$7.nextSibling,
-            _el$9 = _el$8.firstChild,
-            _el$10 = _el$9.nextSibling,
-            _el$0 = _el$10.nextSibling,
-            _el$11 = _el$0.nextSibling,
-            _el$1 = _el$11.nextSibling,
-            _el$12 = _el$8.nextSibling;
-          _$insert(_el$7, () => i18n.t("ui.messagePart.diagnostic.error"));
-          _$insert(_el$8, () => diagnostic.range.start.line + 1, _el$10);
-          _$insert(_el$8, () => diagnostic.range.start.character + 1, _el$11);
-          _$insert(_el$12, () => diagnostic.message);
-          return _el$6;
-        })()
+        children: diagnostic => {
+          const row = template(`<div data-slot="diagnostic"><span data-slot="diagnostic-label"></span><span data-slot="diagnostic-location"></span><span data-slot="diagnostic-message"></span></div>`);
+          const label = row.firstChild;
+          const location = label.nextSibling;
+          const message = location.nextSibling;
+          // "[line:character]" as live text nodes around the static brackets,
+          // matching the compiled inserts between the comment markers.
+          const lineText = document.createTextNode("");
+          const charText = document.createTextNode("");
+          location.replaceChildren("[", lineText, ":", charText, "]");
+          createRenderEffect(() => {
+            label.textContent = i18n.t("ui.messagePart.diagnostic.error");
+          });
+          createRenderEffect(() => {
+            lineText.data = String(diagnostic.range.start.line + 1);
+          });
+          createRenderEffect(() => {
+            charText.data = String(diagnostic.range.start.character + 1);
+          });
+          createRenderEffect(() => {
+            message.textContent = diagnostic.message ?? "";
+          });
+          return row;
+        }
       }));
-      return _el$5;
+      return root;
     }
   });
 }
@@ -255,12 +254,12 @@ function createPacedValue(getValue, live) {
 }
 function PacedMarkdown(props) {
   const value = createPacedValue(() => props.text, () => props.streaming);
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return value();
     },
     get children() {
-      return _$createComponent(Markdown, {
+      return createComponent(Markdown, {
         get text() {
           return value();
         },
@@ -543,13 +542,13 @@ export function AssistantParts(props) {
     equals: sameGroups
   });
   const last = createMemo(() => grouped().at(-1)?.key);
-  return _$createComponent(Index, {
+  return createComponent(Index, {
     get each() {
       return grouped();
     },
     children: entryAccessor => {
       const entryType = createMemo(() => entryAccessor().type);
-      return [_$createComponent(Show, {
+      return [createComponent(Show, {
         get when() {
           return entryType() === "context";
         },
@@ -563,12 +562,12 @@ export function AssistantParts(props) {
               equals: same
             });
             const busy = createMemo(() => props.working && last() === entryAccessor().key);
-            return _$createComponent(Show, {
+            return createComponent(Show, {
               get when() {
                 return parts().length > 0;
               },
               get children() {
-                return _$createComponent(ContextToolGroup, {
+                return createComponent(ContextToolGroup, {
                   get parts() {
                     return parts();
                   },
@@ -580,7 +579,7 @@ export function AssistantParts(props) {
             });
           })();
         }
-      }), _$createComponent(Show, {
+      }), createComponent(Show, {
         get when() {
           return entryType() === "part";
         },
@@ -596,17 +595,17 @@ export function AssistantParts(props) {
               if (entry.type !== "part") return;
               return part().get(entry.ref.messageID)?.get(entry.ref.partID);
             });
-            return _$createComponent(Show, {
+            return createComponent(Show, {
               get when() {
                 return message();
               },
               get children() {
-                return _$createComponent(Show, {
+                return createComponent(Show, {
                   get when() {
                     return item();
                   },
                   get children() {
-                    return _$createComponent(Part, {
+                    return createComponent(Part, {
                       get part() {
                         return item();
                       },
@@ -710,26 +709,28 @@ function contextToolSummary(parts) {
 }
 function ExaOutput(props) {
   const links = createMemo(() => urls(props.output));
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return links().length > 0;
     },
     get children() {
-      var _el$13 = _tmpl$4(),
-        _el$14 = _el$13.firstChild;
-      _$insert(_el$14, _$createComponent(For, {
+      const root = template(`<div data-component="exa-tool-output"><div data-slot="exa-tool-links"></div></div>`);
+      const linksEl = root.firstChild;
+      _solidInsert(linksEl, createComponent(For, {
         get each() {
           return links();
         },
-        children: url => (() => {
-          var _el$15 = _tmpl$5();
-          _el$15.$$click = event => event.stopPropagation();
-          _$setAttribute(_el$15, "href", url);
-          _$insert(_el$15, url);
-          return _el$15;
-        })()
+        children: url => {
+          // url is a plain string row value (For is reference-keyed), so the
+          // href/text writes are one-shot like the compiled thunks.
+          const link = template(`<a data-slot="exa-tool-link" target="_blank" rel="noopener noreferrer"></a>`);
+          link.addEventListener("click", event => event.stopPropagation());
+          link.setAttribute("href", url);
+          link.textContent = url;
+          return link;
+        }
       }));
-      return _el$13;
+      return root;
     }
   });
 }
@@ -737,12 +738,12 @@ export function registerPartComponent(type, component) {
   PART_MAPPING[type] = component;
 }
 export function Message(props) {
-  return [_$createComponent(Show, {
+  return [createComponent(Show, {
     get when() {
       return props.message?.role === "user";
     },
     get children() {
-      return _$createComponent(UserMessageDisplay, {
+      return createComponent(UserMessageDisplay, {
         get message() {
           return props.message;
         },
@@ -754,12 +755,12 @@ export function Message(props) {
         }
       });
     }
-  }), _$createComponent(Show, {
+  }), createComponent(Show, {
     get when() {
       return props.message?.role === "assistant";
     },
     get children() {
-      return _$createComponent(AssistantMessageDisplay, {
+      return createComponent(AssistantMessageDisplay, {
         get message() {
           return props.message;
         },
@@ -785,15 +786,15 @@ export function AssistantMessageDisplay(props) {
   }))), [], {
     equals: sameGroups
   });
-  return _$createComponent(Index, {
+  return createComponent(Index, {
     get each() {
       return grouped();
     },
     children: entryAccessor => {
       const entryType = createMemo(() => entryAccessor().type);
-      return _$createComponent(Switch, {
+      return createComponent(Switch, {
         get children() {
-          return [_$createComponent(Match, {
+          return [createComponent(Match, {
             get when() {
               return entryType() === "context";
             },
@@ -806,12 +807,12 @@ export function AssistantMessageDisplay(props) {
                 }, emptyTools, {
                   equals: same
                 });
-                return _$createComponent(Show, {
+                return createComponent(Show, {
                   get when() {
                     return parts().length > 0;
                   },
                   get children() {
-                    return _$createComponent(ContextToolGroup, {
+                    return createComponent(ContextToolGroup, {
                       get parts() {
                         return parts();
                       }
@@ -820,7 +821,7 @@ export function AssistantMessageDisplay(props) {
                 });
               })();
             }
-          }), _$createComponent(Match, {
+          }), createComponent(Match, {
             get when() {
               return entryType() === "part";
             },
@@ -831,12 +832,12 @@ export function AssistantMessageDisplay(props) {
                   if (entry.type !== "part") return;
                   return part().get(entry.ref.partID);
                 });
-                return _$createComponent(Show, {
+                return createComponent(Show, {
                   get when() {
                     return item();
                   },
                   get children() {
-                    return _$createComponent(Part, {
+                    return createComponent(Part, {
                       get part() {
                         return item();
                       },
@@ -862,7 +863,7 @@ function ContextToolGroup(props) {
   const [open, setOpen] = createSignal(false);
   const pending = createMemo(() => !!props.busy || props.parts.some(part => part.state.status === "pending" || part.state.status === "running"));
   const summary = createMemo(() => contextToolSummary(props.parts));
-  return _$createComponent(Collapsible, {
+  return createComponent(Collapsible, {
     get open() {
       return open();
     },
@@ -870,13 +871,13 @@ function ContextToolGroup(props) {
     variant: "ghost",
     "class": "tool-collapsible",
     get children() {
-      return [_$createComponent(Collapsible.Trigger, {
+      return [createComponent(Collapsible.Trigger, {
         get children() {
-          var _el$16 = _tmpl$6(),
-            _el$17 = _el$16.firstChild,
-            _el$18 = _el$17.firstChild,
-            _el$19 = _el$18.nextSibling;
-          _$insert(_el$18, _$createComponent(ToolStatusTitle, {
+          const root = template(`<div data-component="context-tool-group-trigger"><span data-slot="context-tool-group-title" class="min-w-0 d-flex align-items-center gap-2 fw-medium text-body-emphasis"><span data-slot="context-tool-group-label" class="shrink-0"></span><span data-slot="context-tool-group-summary" class="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap font-normal text-body"></span></span></div>`);
+          const title = root.firstChild;
+          const label = title.firstChild;
+          const summaryEl = label.nextSibling;
+          _solidInsert(label, createComponent(ToolStatusTitle, {
             get active() {
               return pending();
             },
@@ -888,7 +889,7 @@ function ContextToolGroup(props) {
             },
             split: false
           }));
-          _$insert(_el$19, _$createComponent(AnimatedCountList, {
+          _solidInsert(summaryEl, createComponent(AnimatedCountList, {
             get items() {
               return [{
                 key: "read",
@@ -909,67 +910,65 @@ function ContextToolGroup(props) {
             },
             fallback: ""
           }));
-          _$insert(_el$16, _$createComponent(Collapsible.Arrow, {}), null);
-          return _el$16;
+          _solidInsert(root, createComponent(Collapsible.Arrow, {}), null);
+          return root;
         }
-      }), _$createComponent(Collapsible.Content, {
+      }), createComponent(Collapsible.Content, {
         get children() {
-          var _el$20 = _tmpl$7();
-          _$insert(_el$20, _$createComponent(Index, {
+          const listEl = template(`<div data-component="context-tool-group-list"></div>`);
+          _solidInsert(listEl, createComponent(Index, {
             get each() {
               return props.parts;
             },
             children: partAccessor => {
               const trigger = createMemo(() => contextToolTrigger(partAccessor(), i18n));
               const running = createMemo(() => partAccessor().state.status === "pending" || partAccessor().state.status === "running");
-              return (() => {
-                var _el$21 = _tmpl$9(),
-                  _el$22 = _el$21.firstChild,
-                  _el$23 = _el$22.firstChild,
-                  _el$24 = _el$23.firstChild,
-                  _el$25 = _el$24.firstChild,
-                  _el$26 = _el$25.firstChild,
-                  _el$27 = _el$26.firstChild;
-                _$insert(_el$27, _$createComponent(TextShimmer, {
-                  get text() {
-                    return trigger().title;
-                  },
-                  get active() {
-                    return running();
-                  }
-                }));
-                _$insert(_el$26, _$createComponent(Show, {
-                  get when() {
-                    return _$memo(() => !!!running())() && trigger().subtitle;
-                  },
-                  get children() {
-                    var _el$28 = _tmpl$8();
-                    _$insert(_el$28, () => trigger().subtitle);
-                    return _el$28;
-                  }
-                }), null);
-                _$insert(_el$26, _$createComponent(Show, {
-                  get when() {
-                    return _$memo(() => !!!running())() && trigger().args?.length;
-                  },
-                  get children() {
-                    return _$createComponent(For, {
-                      get each() {
-                        return trigger().args;
-                      },
-                      children: arg => (() => {
-                        var _el$29 = _tmpl$0();
-                        _$insert(_el$29, arg);
-                        return _el$29;
-                      })()
-                    });
-                  }
-                }), null);
-                return _el$21;
-              })();
+              const item = template(`<div data-slot="context-tool-group-item"><div data-component="tool-trigger"><div data-slot="basic-tool-tool-trigger-content"><div data-slot="basic-tool-tool-info"><div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div></div></div></div></div>`);
+              const main = item.firstChild.firstChild.firstChild.firstChild.firstChild;
+              const titleEl = main.firstChild;
+              _solidInsert(titleEl, createComponent(TextShimmer, {
+                get text() {
+                  return trigger().title;
+                },
+                get active() {
+                  return running();
+                }
+              }));
+              _solidInsert(main, createComponent(Show, {
+                get when() {
+                  return !running() && trigger().subtitle;
+                },
+                get children() {
+                  const subtitle = template(`<span data-slot="basic-tool-tool-subtitle"></span>`);
+                  createRenderEffect(() => {
+                    subtitle.textContent = trigger().subtitle ?? "";
+                  });
+                  return subtitle;
+                }
+              }), null);
+              _solidInsert(main, createComponent(Show, {
+                get when() {
+                  return !running() && trigger().args?.length;
+                },
+                get children() {
+                  return createComponent(For, {
+                    get each() {
+                      return trigger().args;
+                    },
+                    children: arg => {
+                      // arg is a plain string row value (For is
+                      // reference-keyed): one-shot write.
+                      const argEl = template(`<span data-slot="basic-tool-tool-arg"></span>`);
+                      argEl.textContent = arg;
+                      return argEl;
+                    }
+                  });
+                }
+              }), null);
+              return item;
             }
           }));
-          return _el$20;
+          return listEl;
         }
       })];
     }
@@ -1013,7 +1012,7 @@ export function UserMessageDisplay(props) {
   });
   const metaTail = stamp;
   const openImagePreview = (url, alt) => {
-    dialog.show(() => _$createComponent(ImagePreview, {
+    dialog.show(() => createComponent(ImagePreview, {
       src: url,
       alt: alt
     }));
@@ -1034,180 +1033,176 @@ export function UserMessageDisplay(props) {
       messageID: props.message?.id
     })).finally(() => setState("busy", false));
   };
-  return (() => {
-    var _el$30 = _tmpl$16();
-    _$insert(_el$30, _$createComponent(Show, {
-      get when() {
-        return attachments().length > 0;
-      },
-      get children() {
-        var _el$31 = _tmpl$1();
-        _$insert(_el$31, _$createComponent(For, {
-          get each() {
-            return attachments();
-          },
-          children: file => {
-            const type = kind(file);
-            const name = file.filename ?? i18n.t("ui.message.attachment.alt");
-            return (() => {
-              var _el$39 = _tmpl$18();
-              _el$39.$$click = () => {
-                if (type === "image") openImagePreview(file.url, name);
-              };
-              _$setAttribute(_el$39, "data-type", type);
-              _$setAttribute(_el$39, "data-clickable", type === "image" ? "true" : undefined);
-              _$setAttribute(_el$39, "title", type === "file" ? name : undefined);
-              _$insert(_el$39, _$createComponent(Show, {
-                when: type === "image",
-                get fallback() {
-                  return (() => {
-                    var _el$41 = _tmpl$19(),
-                      _el$42 = _el$41.firstChild;
-                    _$insert(_el$41, _$createComponent(FileIcon, {
-                      node: {
-                        path: name,
-                        type: "file"
-                      }
-                    }), _el$42);
-                    _$insert(_el$42, name);
-                    return _el$41;
-                  })();
-                },
-                get children() {
-                  var _el$40 = _tmpl$17();
-                  _$setAttribute(_el$40, "alt", name);
-                  _$effect(() => _$setAttribute(_el$40, "src", file.url));
-                  return _el$40;
+  const root = template(`<div data-component="user-message"></div>`);
+  _solidInsert(root, createComponent(Show, {
+    get when() {
+      return attachments().length > 0;
+    },
+    get children() {
+      const wrap = template(`<div data-slot="user-message-attachments"></div>`);
+      _solidInsert(wrap, createComponent(For, {
+        get each() {
+          return attachments();
+        },
+        children: file => {
+          // type/name are static per row (For is reference-keyed), so the
+          // attribute writes are one-shot like the compiled thunks.
+          const type = kind(file);
+          const name = file.filename ?? i18n.t("ui.message.attachment.alt");
+          const item = template(`<div data-slot="user-message-attachment"></div>`);
+          item.addEventListener("click", () => {
+            if (type === "image") openImagePreview(file.url, name);
+          });
+          setAttr(item, "data-type", type);
+          setAttr(item, "data-clickable", type === "image" ? "true" : undefined);
+          setAttr(item, "title", type === "file" ? name : undefined);
+          _solidInsert(item, createComponent(Show, {
+            when: type === "image",
+            get fallback() {
+              const fileEl = template(`<div data-slot="user-message-attachment-file"><span data-slot="user-message-attachment-name"></span></div>`);
+              const nameEl = fileEl.firstChild;
+              _solidInsert(fileEl, createComponent(FileIcon, {
+                node: {
+                  path: name,
+                  type: "file"
                 }
-              }));
-              return _el$39;
-            })();
-          }
-        }));
-        return _el$31;
-      }
-    }), null);
-    _$insert(_el$30, _$createComponent(Show, {
-      get when() {
-        return text();
-      },
-      get children() {
-        return [(() => {
-          var _el$32 = _tmpl$10(),
-            _el$33 = _el$32.firstChild;
-          _$insert(_el$33, _$createComponent(HighlightedText, {
-            get text() {
-              return text();
+              }), nameEl);
+              nameEl.textContent = name;
+              return fileEl;
             },
-            get references() {
-              return inlineFiles();
-            },
-            get agents() {
-              return agents();
+            get children() {
+              const img = template(`<img data-slot="user-message-attachment-image">`);
+              img.setAttribute("alt", name);
+              createRenderEffect(() => setAttr(img, "src", file.url));
+              return img;
             }
           }));
-          return _el$32;
-        })(), (() => {
-          var _el$34 = _tmpl$15();
-          _$insert(_el$34, _$createComponent(Show, {
+          return item;
+        }
+      }));
+      return wrap;
+    }
+  }), null);
+  _solidInsert(root, createComponent(Show, {
+    get when() {
+      return text();
+    },
+    get children() {
+      const body = template(`<div data-slot="user-message-body"><div data-slot="user-message-text"></div></div>`);
+      const textEl = body.firstChild;
+      _solidInsert(textEl, createComponent(HighlightedText, {
+        get text() {
+          return text();
+        },
+        get references() {
+          return inlineFiles();
+        },
+        get agents() {
+          return agents();
+        }
+      }));
+      const copyWrap = template(`<div data-slot="user-message-copy-wrapper"></div>`);
+      _solidInsert(copyWrap, createComponent(Show, {
+        get when() {
+          return metaHead() || metaTail();
+        },
+        get children() {
+          const metaWrap = template(`<span data-slot="user-message-meta-wrap"></span>`);
+          _solidInsert(metaWrap, createComponent(Show, {
             get when() {
-              return metaHead() || metaTail();
+              return metaHead();
             },
             get children() {
-              var _el$35 = _tmpl$14();
-              _$insert(_el$35, _$createComponent(Show, {
-                get when() {
-                  return metaHead();
-                },
-                get children() {
-                  var _el$36 = _tmpl$11();
-                  _$insert(_el$36, metaHead);
-                  return _el$36;
-                }
-              }), null);
-              _$insert(_el$35, _$createComponent(Show, {
-                get when() {
-                  return _$memo(() => !!metaHead())() && metaTail();
-                },
-                get children() {
-                  return _tmpl$12();
-                }
-              }), null);
-              _$insert(_el$35, _$createComponent(Show, {
-                get when() {
-                  return metaTail();
-                },
-                get children() {
-                  var _el$38 = _tmpl$13();
-                  _$insert(_el$38, metaTail);
-                  return _el$38;
-                }
-              }), null);
-              return _el$35;
-            }
-          }), null);
-          _$insert(_el$34, _$createComponent(Show, {
-            get when() {
-              return props.actions?.revert;
-            },
-            get children() {
-              return _$createComponent(Tooltip, {
-                get value() {
-                  return i18n.t("ui.message.revertMessage");
-                },
-                placement: "top",
-                gutter: 4,
-                get children() {
-                  return _$createComponent(IconButton, {
-                    icon: "reset",
-                    size: "normal",
-                    variant: "ghost",
-                    get disabled() {
-                      return !!busy();
-                    },
-                    onMouseDown: e => e.preventDefault(),
-                    onClick: event => {
-                      event.stopPropagation();
-                      revert();
-                    },
-                    get ["aria-label"]() {
-                      return i18n.t("ui.message.revertMessage");
-                    }
-                  });
-                }
+              const head = template(`<span data-slot="user-message-meta" class="small fw-normal text-secondary cursor-default"></span>`);
+              createRenderEffect(() => {
+                head.textContent = metaHead();
               });
+              return head;
             }
           }), null);
-          _$insert(_el$34, _$createComponent(Tooltip, {
+          _solidInsert(metaWrap, createComponent(Show, {
+            get when() {
+              return !!metaHead() && metaTail();
+            },
+            get children() {
+              return template(`<span data-slot="user-message-meta-sep" class="small fw-normal text-secondary cursor-default"> · </span>`);
+            }
+          }), null);
+          _solidInsert(metaWrap, createComponent(Show, {
+            get when() {
+              return metaTail();
+            },
+            get children() {
+              const tail = template(`<span data-slot="user-message-meta-tail" class="small fw-normal text-secondary cursor-default"></span>`);
+              createRenderEffect(() => {
+                tail.textContent = metaTail();
+              });
+              return tail;
+            }
+          }), null);
+          return metaWrap;
+        }
+      }), null);
+      _solidInsert(copyWrap, createComponent(Show, {
+        get when() {
+          return props.actions?.revert;
+        },
+        get children() {
+          return createComponent(Tooltip, {
             get value() {
-              return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyMessage");
+              return i18n.t("ui.message.revertMessage");
             },
             placement: "top",
             gutter: 4,
             get children() {
-              return _$createComponent(IconButton, {
-                get icon() {
-                  return copied() ? "check" : "copy";
-                },
+              return createComponent(IconButton, {
+                icon: "reset",
                 size: "normal",
                 variant: "ghost",
+                get disabled() {
+                  return !!busy();
+                },
                 onMouseDown: e => e.preventDefault(),
                 onClick: event => {
                   event.stopPropagation();
-                  void handleCopy();
+                  revert();
                 },
                 get ["aria-label"]() {
-                  return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyMessage");
+                  return i18n.t("ui.message.revertMessage");
                 }
               });
             }
-          }), null);
-          return _el$34;
-        })()];
-      }
-    }), null);
-    return _el$30;
-  })();
+          });
+        }
+      }), null);
+      _solidInsert(copyWrap, createComponent(Tooltip, {
+        get value() {
+          return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyMessage");
+        },
+        placement: "top",
+        gutter: 4,
+        get children() {
+          return createComponent(IconButton, {
+            get icon() {
+              return copied() ? "check" : "copy";
+            },
+            size: "normal",
+            variant: "ghost",
+            onMouseDown: e => e.preventDefault(),
+            onClick: event => {
+              event.stopPropagation();
+              void handleCopy();
+            },
+            get ["aria-label"]() {
+              return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyMessage");
+            }
+          });
+        }
+      }), null);
+      return [body, copyWrap];
+    }
+  }), null);
+  return root;
 }
 function HighlightedText(props) {
   const segments = createMemo(() => {
@@ -1245,26 +1240,28 @@ function HighlightedText(props) {
     }
     return result;
   });
-  return _$createComponent(For, {
+  return createComponent(For, {
     get each() {
       return segments();
     },
-    children: segment => (() => {
-      var _el$43 = _tmpl$20();
-      _$insert(_el$43, () => segment.text);
-      _$effect(() => _$setAttribute(_el$43, "data-highlight", segment.type));
-      return _el$43;
-    })()
+    children: segment => {
+      // segment is a fresh plain object per memo evaluation (For is
+      // reference-keyed), so its fields are static for the row's lifetime.
+      const span = template(`<span></span>`);
+      span.textContent = segment.text;
+      setAttr(span, "data-highlight", segment.type);
+      return span;
+    }
   });
 }
 export function Part(props) {
   const component = createMemo(() => PART_MAPPING[props.part.type]);
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return component();
     },
     get children() {
-      return _$createComponent(Dynamic, {
+      return createComponent(Dynamic, {
         get component() {
           return component();
         },
@@ -1304,7 +1301,7 @@ export const ToolRegistry = {
 };
 function ToolFileAccordion(props) {
   const value = createMemo(() => props.path || "tool-file");
-  return _$createComponent(Accordion, {
+  return createComponent(Accordion, {
     multiple: true,
     "data-scope": "apply-patch",
     style: {
@@ -1314,49 +1311,53 @@ function ToolFileAccordion(props) {
       return [value()];
     },
     get children() {
-      return _$createComponent(Accordion.Item, {
+      return createComponent(Accordion.Item, {
         get value() {
           return value();
         },
         get children() {
-          return [_$createComponent(StickyAccordionHeader, {
+          return [createComponent(StickyAccordionHeader, {
             get children() {
-              return _$createComponent(Accordion.Trigger, {
+              return createComponent(Accordion.Trigger, {
                 get children() {
-                  var _el$44 = _tmpl$22(),
-                    _el$45 = _el$44.firstChild,
-                    _el$46 = _el$45.firstChild,
-                    _el$48 = _el$46.firstChild,
-                    _el$49 = _el$45.nextSibling;
-                  _$insert(_el$45, _$createComponent(FileIcon, {
+                  const trigger = template(`<div data-slot="apply-patch-trigger-content"><div data-slot="apply-patch-file-info"><div data-slot="apply-patch-file-name-container"><span data-slot="apply-patch-filename"></span></div></div><div data-slot="apply-patch-trigger-actions"></div></div>`);
+                  const info = trigger.firstChild;
+                  const nameContainer = info.firstChild;
+                  const filename = nameContainer.firstChild;
+                  const actions = info.nextSibling;
+                  _solidInsert(info, createComponent(FileIcon, {
                     get node() {
                       return {
                         path: props.path,
                         type: "file"
                       };
                     }
-                  }), _el$46);
-                  _$insert(_el$46, _$createComponent(Show, {
+                  }), nameContainer);
+                  _solidInsert(nameContainer, createComponent(Show, {
                     get when() {
                       return props.path.includes("/");
                     },
                     get children() {
-                      var _el$47 = _tmpl$21();
-                      _$insert(_el$47, () => `\u202A${getDirectory(props.path)}\u202C`);
-                      return _el$47;
+                      const directory = template(`<span data-slot="apply-patch-directory"></span>`);
+                      createRenderEffect(() => {
+                        directory.textContent = `\u202A${getDirectory(props.path)}\u202C`;
+                      });
+                      return directory;
                     }
-                  }), _el$48);
-                  _$insert(_el$48, () => getFilename(props.path));
-                  _$insert(_el$49, () => props.actions, null);
-                  _$insert(_el$49, _$createComponent(Icon, {
+                  }), filename);
+                  createRenderEffect(() => {
+                    filename.textContent = getFilename(props.path);
+                  });
+                  _solidInsert(actions, () => props.actions, null);
+                  _solidInsert(actions, createComponent(Icon, {
                     name: "chevron-grabber-vertical",
                     size: "small"
                   }), null);
-                  return _el$44;
+                  return trigger;
                 }
               });
             }
-          }), _$createComponent(Accordion.Content, {
+          }), createComponent(Accordion.Content, {
             get children() {
               return props.children;
             }
@@ -1392,29 +1393,29 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
     return taskId();
   });
   const render = createMemo(() => ToolRegistry.render(part().tool) ?? GenericTool);
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return !hideQuestion();
     },
     get children() {
-      var _el$50 = _tmpl$23();
-      _$insert(_el$50, _$createComponent(Switch, {
+      const wrapper = template(`<div data-component="tool-part-wrapper"></div>`);
+      _solidInsert(wrapper, createComponent(Switch, {
         get children() {
-          return [_$createComponent(Match, {
+          return [createComponent(Match, {
             get when() {
-              return _$memo(() => part().state.status === "error")() && part().state.error;
+              return part().state.status === "error" && part().state.error;
             },
             children: error => {
               const cleaned = error().replace("Error: ", "");
               if (part().tool === "question" && cleaned.includes("dismissed this question")) {
-                return (() => {
-                  var _el$51 = _tmpl$24(),
-                    _el$52 = _el$51.firstChild;
-                  _$insert(_el$52, () => i18n.t("ui.messagePart.questions.dismissed"));
-                  return _el$51;
-                })();
+                const dismissed = template(`<div style="width:100%;display:flex;justify-content:flex-end"><span class="fw-normal text-secondary cursor-default"></span></div>`);
+                const dismissedLabel = dismissed.firstChild;
+                createRenderEffect(() => {
+                  dismissedLabel.textContent = i18n.t("ui.messagePart.questions.dismissed");
+                });
+                return dismissed;
               }
-              return _$createComponent(ToolErrorCard, {
+              return createComponent(ToolErrorCard, {
                 get tool() {
                   return part().tool;
                 },
@@ -1432,10 +1433,10 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
                 }
               });
             }
-          }), _$createComponent(Match, {
+          }), createComponent(Match, {
             when: true,
             get children() {
-              return _$createComponent(Dynamic, {
+              return createComponent(Dynamic, {
                 get component() {
                   return render();
                 },
@@ -1465,23 +1466,22 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
           })];
         }
       }));
-      return _el$50;
+      return wrapper;
     }
   });
 };
 export function MessageDivider(props) {
-  return (() => {
-    var _el$53 = _tmpl$25(),
-      _el$54 = _el$53.firstChild,
-      _el$55 = _el$54.firstChild,
-      _el$56 = _el$55.nextSibling;
-    _$insert(_el$56, () => props.label);
-    return _el$53;
-  })();
+  const root = template(`<div data-component="compaction-part"><div data-slot="compaction-part-divider"><span data-slot="compaction-part-line"></span><span data-slot="compaction-part-label" class="small fw-normal text-secondary"></span><span data-slot="compaction-part-line"></span></div></div>`);
+  const divider = root.firstChild;
+  const label = divider.firstChild.nextSibling;
+  createRenderEffect(() => {
+    label.textContent = props.label ?? "";
+  });
+  return root;
 }
 PART_MAPPING["compaction"] = function CompactionPartDisplay() {
   const i18n = useI18n();
-  return _$createComponent(MessageDivider, {
+  return createComponent(MessageDivider, {
     get label() {
       return i18n.t("ui.messagePart.compaction");
     }
@@ -1543,19 +1543,19 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return text();
     },
     get children() {
-      var _el$57 = _tmpl$28(),
-        _el$58 = _el$57.firstChild;
-      _$insert(_el$58, _$createComponent(Show, {
+      const root = template(`<div data-component="text-part"><div data-slot="text-part-body"></div></div>`);
+      const body = root.firstChild;
+      _solidInsert(body, createComponent(Show, {
         get when() {
           return streaming();
         },
         get fallback() {
-          return _$createComponent(Markdown, {
+          return createComponent(Markdown, {
             get text() {
               return text();
             },
@@ -1566,7 +1566,7 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
           });
         },
         get children() {
-          return _$createComponent(PacedMarkdown, {
+          return createComponent(PacedMarkdown, {
             get text() {
               return text();
             },
@@ -1579,20 +1579,20 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
           });
         }
       }));
-      _$insert(_el$57, _$createComponent(Show, {
+      _solidInsert(root, createComponent(Show, {
         get when() {
           return showCopy();
         },
         get children() {
-          var _el$59 = _tmpl$27();
-          _$insert(_el$59, _$createComponent(Tooltip, {
+          const copyWrap = template(`<div data-slot="text-part-copy-wrapper"></div>`);
+          _solidInsert(copyWrap, createComponent(Tooltip, {
             get value() {
-              return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse");
+              return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse");
             },
             placement: "top",
             gutter: 4,
             get children() {
-              return _$createComponent(IconButton, {
+              return createComponent(IconButton, {
                 get icon() {
                   return copied() ? "check" : "copy";
                 },
@@ -1601,26 +1601,28 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
                 onMouseDown: e => e.preventDefault(),
                 onClick: handleCopy,
                 get ["aria-label"]() {
-                  return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse");
+                  return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse");
                 }
               });
             }
           }), null);
-          _$insert(_el$59, _$createComponent(Show, {
+          _solidInsert(copyWrap, createComponent(Show, {
             get when() {
               return meta();
             },
             get children() {
-              var _el$60 = _tmpl$26();
-              _$insert(_el$60, meta);
-              return _el$60;
+              const metaEl = template(`<span data-slot="text-part-meta" class="small fw-normal text-secondary cursor-default"></span>`);
+              createRenderEffect(() => {
+                metaEl.textContent = meta();
+              });
+              return metaEl;
             }
           }), null);
-          _$effect(() => _$setAttribute(_el$59, "data-interrupted", interrupted() ? "" : undefined));
-          return _el$59;
+          createRenderEffect(() => setAttr(copyWrap, "data-interrupted", interrupted() ? "" : undefined));
+          return copyWrap;
         }
       }), null);
-      return _el$57;
+      return root;
     }
   });
 };
@@ -1628,18 +1630,18 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
   const part = () => props.part;
   const streaming = createMemo(() => props.message?.role === "assistant" && typeof props.message?.time.completed !== "number");
   const text = () => part().text.trim();
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return text();
     },
     get children() {
-      var _el$61 = _tmpl$29();
-      _$insert(_el$61, _$createComponent(Show, {
+      const root = template(`<div data-component="reasoning-part"></div>`);
+      _solidInsert(root, createComponent(Show, {
         get when() {
           return streaming();
         },
         get fallback() {
-          return _$createComponent(Markdown, {
+          return createComponent(Markdown, {
             get text() {
               return text();
             },
@@ -1650,7 +1652,7 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
           });
         },
         get children() {
-          return _$createComponent(PacedMarkdown, {
+          return createComponent(PacedMarkdown, {
             get text() {
               return text();
             },
@@ -1663,7 +1665,7 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
           });
         }
       }));
-      return _el$61;
+      return root;
     }
   });
 };
@@ -1681,7 +1683,7 @@ ToolRegistry.register({
       if (!value || !Array.isArray(value)) return [];
       return value.filter(p => typeof p === "string");
     });
-    return [_$createComponent(BasicTool, _$mergeProps(props, {
+    return [createComponent(BasicTool, mergeProps(props, {
       icon: "glasses",
       get trigger() {
         return {
@@ -1690,22 +1692,32 @@ ToolRegistry.register({
           args
         };
       }
-    })), _$createComponent(For, {
+    })), createComponent(For, {
       get each() {
         return loaded();
       },
-      children: filepath => (() => {
-        var _el$62 = _tmpl$30(),
-          _el$63 = _el$62.firstChild,
-          _el$64 = _el$63.firstChild;
-        _$insert(_el$62, _$createComponent(Icon, {
+      children: filepath => {
+        const row = template(`<div data-component="tool-loaded-file"><span> </span></div>`);
+        const span = row.firstChild;
+        const space = span.firstChild;
+        _solidInsert(row, createComponent(Icon, {
           name: "enter",
           size: "small"
-        }), _el$63);
-        _$insert(_el$63, () => i18n.t("ui.tool.loaded"), _el$64);
-        _$insert(_el$63, () => relativizeProjectPath(filepath, data.directory), null);
-        return _el$62;
-      })()
+        }), span);
+        // "<loaded> <path>" as live text nodes around the static space,
+        // matching the compiled inserts.
+        const labelText = document.createTextNode("");
+        span.insertBefore(labelText, space);
+        const pathText = document.createTextNode("");
+        span.appendChild(pathText);
+        createRenderEffect(() => {
+          labelText.data = i18n.t("ui.tool.loaded");
+        });
+        createRenderEffect(() => {
+          pathText.data = relativizeProjectPath(filepath, data.directory);
+        });
+        return row;
+      }
     })];
   }
 });
@@ -1713,7 +1725,7 @@ ToolRegistry.register({
   name: "list",
   render(props) {
     const i18n = useI18n();
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       icon: "bullet-list",
       get trigger() {
         return {
@@ -1722,18 +1734,18 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(Show, {
+        return createComponent(Show, {
           get when() {
             return props.output;
           },
           get children() {
-            var _el$65 = _tmpl$31();
-            _$insert(_el$65, _$createComponent(Markdown, {
+            const output = template(`<div data-component="tool-output" data-scrollable></div>`);
+            _solidInsert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
             }));
-            return _el$65;
+            return output;
           }
         });
       }
@@ -1744,7 +1756,7 @@ ToolRegistry.register({
   name: "glob",
   render(props) {
     const i18n = useI18n();
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       icon: "magnifying-glass-menu",
       get trigger() {
         return {
@@ -1754,18 +1766,18 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(Show, {
+        return createComponent(Show, {
           get when() {
             return props.output;
           },
           get children() {
-            var _el$66 = _tmpl$31();
-            _$insert(_el$66, _$createComponent(Markdown, {
+            const output = template(`<div data-component="tool-output" data-scrollable></div>`);
+            _solidInsert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
             }));
-            return _el$66;
+            return output;
           }
         });
       }
@@ -1779,7 +1791,7 @@ ToolRegistry.register({
     const args = [];
     if (props.input.pattern) args.push("pattern=" + props.input.pattern);
     if (props.input.include) args.push("include=" + props.input.include);
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       icon: "magnifying-glass-menu",
       get trigger() {
         return {
@@ -1789,18 +1801,18 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(Show, {
+        return createComponent(Show, {
           get when() {
             return props.output;
           },
           get children() {
-            var _el$67 = _tmpl$31();
-            _$insert(_el$67, _$createComponent(Markdown, {
+            const output = template(`<div data-component="tool-output" data-scrollable></div>`);
+            _solidInsert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
             }));
-            return _el$67;
+            return output;
           }
         });
       }
@@ -1817,49 +1829,49 @@ ToolRegistry.register({
       if (typeof value !== "string") return "";
       return value;
     });
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       hideDetails: true,
       icon: "window-cursor",
       get trigger() {
-        return (() => {
-          var _el$68 = _tmpl$34(),
-            _el$69 = _el$68.firstChild,
-            _el$70 = _el$69.firstChild;
-          _$insert(_el$70, _$createComponent(TextShimmer, {
-            get text() {
-              return i18n.t("ui.tool.webfetch");
-            },
-            get active() {
-              return pending();
-            }
-          }));
-          _$insert(_el$69, _$createComponent(Show, {
-            get when() {
-              return _$memo(() => !!!pending())() && url();
-            },
-            get children() {
-              var _el$71 = _tmpl$32();
-              _el$71.$$click = event => event.stopPropagation();
-              _$insert(_el$71, url);
-              _$effect(() => _$setAttribute(_el$71, "href", url()));
-              return _el$71;
-            }
-          }), null);
-          _$insert(_el$68, _$createComponent(Show, {
-            get when() {
-              return _$memo(() => !!!pending())() && url();
-            },
-            get children() {
-              var _el$72 = _tmpl$33();
-              _$insert(_el$72, _$createComponent(Icon, {
-                name: "square-arrow-top-right",
-                size: "small"
-              }));
-              return _el$72;
-            }
-          }), null);
-          return _el$68;
-        })();
+        const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div>`);
+        const main = box.firstChild;
+        const titleEl = main.firstChild;
+        _solidInsert(titleEl, createComponent(TextShimmer, {
+          get text() {
+            return i18n.t("ui.tool.webfetch");
+          },
+          get active() {
+            return pending();
+          }
+        }));
+        _solidInsert(main, createComponent(Show, {
+          get when() {
+            return !pending() && url();
+          },
+          get children() {
+            const link = template(`<a data-slot="basic-tool-tool-subtitle" class="clickable subagent-link" target="_blank" rel="noopener noreferrer"></a>`);
+            link.addEventListener("click", event => event.stopPropagation());
+            createRenderEffect(() => {
+              link.textContent = url();
+            });
+            createRenderEffect(() => setAttr(link, "href", url()));
+            return link;
+          }
+        }), null);
+        _solidInsert(box, createComponent(Show, {
+          get when() {
+            return !pending() && url();
+          },
+          get children() {
+            const action = template(`<div data-component="tool-action"></div>`);
+            _solidInsert(action, createComponent(Icon, {
+              name: "square-arrow-top-right",
+              size: "small"
+            }));
+            return action;
+          }
+        }), null);
+        return box;
       }
     }));
   }
@@ -1873,7 +1885,7 @@ ToolRegistry.register({
       if (typeof value !== "string") return "";
       return value;
     });
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       icon: "window-cursor",
       get trigger() {
         return {
@@ -1883,7 +1895,7 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(ExaOutput, {
+        return createComponent(ExaOutput, {
           get output() {
             return props.output;
           }
@@ -1930,50 +1942,58 @@ ToolRegistry.register({
       event.preventDefault();
       open();
     };
-    const trigger = () => (() => {
-      var _el$73 = _tmpl$37(),
-        _el$74 = _el$73.firstChild,
-        _el$75 = _el$74.firstChild,
-        _el$77 = _el$75.firstChild;
-      _$insert(_el$75, _$createComponent(Show, {
+    const trigger = () => {
+      const card = template(`<div data-component="task-tool-card"><div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-component="task-tool-title"></span></div></div></div>`);
+      const structured = card.firstChild;
+      const main = structured.firstChild;
+      const titleEl = main.firstChild;
+      _solidInsert(main, createComponent(Show, {
         get when() {
           return running();
         },
         get children() {
-          var _el$76 = _tmpl$35();
-          _$insert(_el$76, _$createComponent(Spinner, {}));
-          _$effect(_$p => _$setStyleProperty(_el$76, "color", tone() ?? "var(--icon-interactive-base)"));
-          return _el$76;
+          const spinner = template(`<span data-component="task-tool-spinner"></span>`);
+          _solidInsert(spinner, createComponent(Spinner, {}));
+          createRenderEffect(() => {
+            spinner.style.setProperty("color", tone() ?? "var(--icon-interactive-base)");
+          });
+          return spinner;
         }
-      }), _el$77);
-      _$insert(_el$77, title);
-      _$insert(_el$75, _$createComponent(Show, {
+      }), titleEl);
+      createRenderEffect(() => {
+        titleEl.textContent = title();
+      });
+      _solidInsert(main, createComponent(Show, {
         get when() {
           return subtitle();
         },
         get children() {
-          var _el$78 = _tmpl$8();
-          _$insert(_el$78, subtitle);
-          return _el$78;
+          const sub = template(`<span data-slot="basic-tool-tool-subtitle"></span>`);
+          createRenderEffect(() => {
+            sub.textContent = subtitle() ?? "";
+          });
+          return sub;
         }
       }), null);
-      _$insert(_el$73, _$createComponent(Show, {
+      _solidInsert(card, createComponent(Show, {
         get when() {
           return clickable();
         },
         get children() {
-          var _el$79 = _tmpl$36();
-          _$insert(_el$79, _$createComponent(Icon, {
+          const action = template(`<div data-component="task-tool-action"></div>`);
+          _solidInsert(action, createComponent(Icon, {
             name: "square-arrow-top-right",
             size: "small"
           }));
-          return _el$79;
+          return action;
         }
       }), null);
-      _$effect(_$p => _$setStyleProperty(_el$77, "color", tone() ?? "var(--text-strong)"));
-      return _el$73;
-    })();
-    return _$createComponent(BasicTool, {
+      createRenderEffect(() => {
+        titleEl.style.setProperty("color", tone() ?? "var(--text-strong)");
+      });
+      return card;
+    };
+    return createComponent(BasicTool, {
       icon: "task",
       get status() {
         return props.status;
@@ -2011,51 +2031,49 @@ ToolRegistry.register({
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     };
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       icon: "console",
       get trigger() {
-        return (() => {
-          var _el$85 = _tmpl$34(),
-            _el$86 = _el$85.firstChild,
-            _el$87 = _el$86.firstChild;
-          _$insert(_el$87, _$createComponent(TextShimmer, {
-            get text() {
-              return i18n.t("ui.tool.shell");
-            },
-            get active() {
-              return pending();
-            }
-          }));
-          _$insert(_el$86, _$createComponent(Show, {
-            get when() {
-              return _$memo(() => !!!pending())() && props.input.description;
-            },
-            get children() {
-              return _$createComponent(ShellSubmessage, {
-                get text() {
-                  return props.input.description;
-                },
-                animate: sawPending
-              });
-            }
-          }), null);
-          return _el$85;
-        })();
+        const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div>`);
+        const main = box.firstChild;
+        const titleEl = main.firstChild;
+        _solidInsert(titleEl, createComponent(TextShimmer, {
+          get text() {
+            return i18n.t("ui.tool.shell");
+          },
+          get active() {
+            return pending();
+          }
+        }));
+        _solidInsert(main, createComponent(Show, {
+          get when() {
+            return !pending() && props.input.description;
+          },
+          get children() {
+            return createComponent(ShellSubmessage, {
+              get text() {
+                return props.input.description;
+              },
+              animate: sawPending
+            });
+          }
+        }), null);
+        return box;
       },
       get children() {
-        var _el$80 = _tmpl$38(),
-          _el$81 = _el$80.firstChild,
-          _el$82 = _el$81.nextSibling,
-          _el$83 = _el$82.firstChild,
-          _el$84 = _el$83.firstChild;
-        _$insert(_el$81, _$createComponent(Tooltip, {
+        const output = template(`<div data-component="bash-output"><div data-slot="bash-copy"></div><div data-slot="bash-scroll" data-scrollable><pre data-slot="bash-pre"><code></code></pre></div></div>`);
+        const copyEl = output.firstChild;
+        const scrollEl = copyEl.nextSibling;
+        const preEl = scrollEl.firstChild;
+        const codeEl = preEl.firstChild;
+        _solidInsert(copyEl, createComponent(Tooltip, {
           get value() {
-            return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy");
+            return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy");
           },
           placement: "top",
           gutter: 4,
           get children() {
-            return _$createComponent(IconButton, {
+            return createComponent(IconButton, {
               get icon() {
                 return copied() ? "check" : "copy";
               },
@@ -2064,13 +2082,15 @@ ToolRegistry.register({
               onMouseDown: e => e.preventDefault(),
               onClick: handleCopy,
               get ["aria-label"]() {
-                return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy");
+                return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy");
               }
             });
           }
         }));
-        _$insert(_el$84, text);
-        return _el$80;
+        createRenderEffect(() => {
+          codeEl.textContent = text();
+        });
+        return output;
       }
     }));
   }
@@ -2084,117 +2104,117 @@ ToolRegistry.register({
     const path = createMemo(() => props.metadata?.filediff?.file || props.input.filePath || "");
     const filename = () => getFilename(props.input.filePath ?? "");
     const pending = () => props.status === "pending" || props.status === "running";
-    return (() => {
-      var _el$88 = _tmpl$40();
-      _$insert(_el$88, _$createComponent(BasicTool, _$mergeProps(props, {
-        icon: "code-lines",
-        defer: true,
-        get trigger() {
-          return (() => {
-            var _el$90 = _tmpl$43(),
-              _el$91 = _el$90.firstChild,
-              _el$92 = _el$91.firstChild,
-              _el$93 = _el$92.firstChild,
-              _el$97 = _el$91.nextSibling;
-            _$insert(_el$93, _$createComponent(TextShimmer, {
-              get text() {
-                return i18n.t("ui.messagePart.title.edit");
-              },
-              get active() {
-                return pending();
+    const root = template(`<div data-component="edit-tool"></div>`);
+    _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+      icon: "code-lines",
+      defer: true,
+      get trigger() {
+        const trigger = template(`<div data-component="edit-trigger"><div data-slot="message-part-title-area"><div data-slot="message-part-title"><span data-slot="message-part-title-text"></span></div></div><div data-slot="message-part-actions"></div></div>`);
+        const titleArea = trigger.firstChild;
+        const titleRow = titleArea.firstChild;
+        const titleText = titleRow.firstChild;
+        const actionsEl = titleArea.nextSibling;
+        _solidInsert(titleText, createComponent(TextShimmer, {
+          get text() {
+            return i18n.t("ui.messagePart.title.edit");
+          },
+          get active() {
+            return pending();
+          }
+        }));
+        _solidInsert(titleRow, createComponent(Show, {
+          get when() {
+            return !pending();
+          },
+          get children() {
+            const name = template(`<span data-slot="message-part-title-filename"></span>`);
+            createRenderEffect(() => {
+              name.textContent = filename();
+            });
+            return name;
+          }
+        }), null);
+        _solidInsert(titleArea, createComponent(Show, {
+          get when() {
+            return !pending() && props.input.filePath?.includes("/");
+          },
+          get children() {
+            const pathEl = template(`<div data-slot="message-part-path"><span data-slot="message-part-directory"></span></div>`);
+            const directory = pathEl.firstChild;
+            createRenderEffect(() => {
+              directory.textContent = getDirectory(props.input.filePath);
+            });
+            return pathEl;
+          }
+        }), null);
+        _solidInsert(actionsEl, createComponent(Show, {
+          get when() {
+            return !pending() && props.metadata.filediff;
+          },
+          get children() {
+            return createComponent(DiffChanges, {
+              get changes() {
+                return props.metadata.filediff;
               }
-            }));
-            _$insert(_el$92, _$createComponent(Show, {
-              get when() {
-                return !pending();
+            });
+          }
+        }));
+        return trigger;
+      },
+      get children() {
+        return [createComponent(Show, {
+          get when() {
+            return path();
+          },
+          get children() {
+            return createComponent(ToolFileAccordion, {
+              get path() {
+                return path();
               },
-              get children() {
-                var _el$94 = _tmpl$41();
-                _$insert(_el$94, filename);
-                return _el$94;
-              }
-            }), null);
-            _$insert(_el$91, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!!pending())() && props.input.filePath?.includes("/");
-              },
-              get children() {
-                var _el$95 = _tmpl$42(),
-                  _el$96 = _el$95.firstChild;
-                _$insert(_el$96, () => getDirectory(props.input.filePath));
-                return _el$95;
-              }
-            }), null);
-            _$insert(_el$97, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!!pending())() && props.metadata.filediff;
-              },
-              get children() {
-                return _$createComponent(DiffChanges, {
-                  get changes() {
-                    return props.metadata.filediff;
+              get actions() {
+                return createComponent(Show, {
+                  get when() {
+                    return !pending() && props.metadata.filediff;
+                  },
+                  get children() {
+                    return createComponent(DiffChanges, {
+                      get changes() {
+                        return props.metadata.filediff;
+                      }
+                    });
                   }
                 });
+              },
+              get children() {
+                const content = template(`<div data-component="edit-content"></div>`);
+                _solidInsert(content, createComponent(Dynamic, {
+                  component: fileComponent,
+                  mode: "diff",
+                  get before() {
+                    return {
+                      name: props.metadata?.filediff?.file || props.input.filePath,
+                      contents: props.metadata?.filediff?.before || props.input.oldString
+                    };
+                  },
+                  get after() {
+                    return {
+                      name: props.metadata?.filediff?.file || props.input.filePath,
+                      contents: props.metadata?.filediff?.after || props.input.newString
+                    };
+                  }
+                }));
+                return content;
               }
-            }));
-            return _el$90;
-          })();
-        },
-        get children() {
-          return [_$createComponent(Show, {
-            get when() {
-              return path();
-            },
-            get children() {
-              return _$createComponent(ToolFileAccordion, {
-                get path() {
-                  return path();
-                },
-                get actions() {
-                  return _$createComponent(Show, {
-                    get when() {
-                      return _$memo(() => !!!pending())() && props.metadata.filediff;
-                    },
-                    get children() {
-                      return _$createComponent(DiffChanges, {
-                        get changes() {
-                          return props.metadata.filediff;
-                        }
-                      });
-                    }
-                  });
-                },
-                get children() {
-                  var _el$89 = _tmpl$39();
-                  _$insert(_el$89, _$createComponent(Dynamic, {
-                    component: fileComponent,
-                    mode: "diff",
-                    get before() {
-                      return {
-                        name: props.metadata?.filediff?.file || props.input.filePath,
-                        contents: props.metadata?.filediff?.before || props.input.oldString
-                      };
-                    },
-                    get after() {
-                      return {
-                        name: props.metadata?.filediff?.file || props.input.filePath,
-                        contents: props.metadata?.filediff?.after || props.input.newString
-                      };
-                    }
-                  }));
-                  return _el$89;
-                }
-              });
-            }
-          }), _$createComponent(DiagnosticsDisplay, {
-            get diagnostics() {
-              return diagnostics();
-            }
-          })];
-        }
-      })));
-      return _el$88;
-    })();
+            });
+          }
+        }), createComponent(DiagnosticsDisplay, {
+          get diagnostics() {
+            return diagnostics();
+          }
+        })];
+      }
+    })));
+    return root;
   }
 });
 ToolRegistry.register({
@@ -2206,86 +2226,86 @@ ToolRegistry.register({
     const path = createMemo(() => props.input.filePath || "");
     const filename = () => getFilename(props.input.filePath ?? "");
     const pending = () => props.status === "pending" || props.status === "running";
-    return (() => {
-      var _el$98 = _tmpl$45();
-      _$insert(_el$98, _$createComponent(BasicTool, _$mergeProps(props, {
-        icon: "code-lines",
-        defer: true,
-        get trigger() {
-          return (() => {
-            var _el$100 = _tmpl$46(),
-              _el$101 = _el$100.firstChild,
-              _el$102 = _el$101.firstChild,
-              _el$103 = _el$102.firstChild;
-            _$insert(_el$103, _$createComponent(TextShimmer, {
-              get text() {
-                return i18n.t("ui.messagePart.title.write");
-              },
-              get active() {
-                return pending();
-              }
-            }));
-            _$insert(_el$102, _$createComponent(Show, {
-              get when() {
-                return !pending();
+    const root = template(`<div data-component="write-tool"></div>`);
+    _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+      icon: "code-lines",
+      defer: true,
+      get trigger() {
+        const trigger = template(`<div data-component="write-trigger"><div data-slot="message-part-title-area"><div data-slot="message-part-title"><span data-slot="message-part-title-text"></span></div></div><div data-slot="message-part-actions"></div></div>`);
+        const titleArea = trigger.firstChild;
+        const titleRow = titleArea.firstChild;
+        const titleText = titleRow.firstChild;
+        _solidInsert(titleText, createComponent(TextShimmer, {
+          get text() {
+            return i18n.t("ui.messagePart.title.write");
+          },
+          get active() {
+            return pending();
+          }
+        }));
+        _solidInsert(titleRow, createComponent(Show, {
+          get when() {
+            return !pending();
+          },
+          get children() {
+            const name = template(`<span data-slot="message-part-title-filename"></span>`);
+            createRenderEffect(() => {
+              name.textContent = filename();
+            });
+            return name;
+          }
+        }), null);
+        _solidInsert(titleArea, createComponent(Show, {
+          get when() {
+            return !pending() && props.input.filePath?.includes("/");
+          },
+          get children() {
+            const pathEl = template(`<div data-slot="message-part-path"><span data-slot="message-part-directory"></span></div>`);
+            const directory = pathEl.firstChild;
+            createRenderEffect(() => {
+              directory.textContent = getDirectory(props.input.filePath);
+            });
+            return pathEl;
+          }
+        }), null);
+        return trigger;
+      },
+      get children() {
+        return [createComponent(Show, {
+          get when() {
+            return !!props.input.content && path();
+          },
+          get children() {
+            return createComponent(ToolFileAccordion, {
+              get path() {
+                return path();
               },
               get children() {
-                var _el$104 = _tmpl$41();
-                _$insert(_el$104, filename);
-                return _el$104;
+                const content = template(`<div data-component="write-content"></div>`);
+                _solidInsert(content, createComponent(Dynamic, {
+                  component: fileComponent,
+                  mode: "text",
+                  get file() {
+                    return {
+                      name: props.input.filePath,
+                      contents: props.input.content,
+                      cacheKey: checksum(props.input.content)
+                    };
+                  },
+                  overflow: "scroll"
+                }));
+                return content;
               }
-            }), null);
-            _$insert(_el$101, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!!pending())() && props.input.filePath?.includes("/");
-              },
-              get children() {
-                var _el$105 = _tmpl$42(),
-                  _el$106 = _el$105.firstChild;
-                _$insert(_el$106, () => getDirectory(props.input.filePath));
-                return _el$105;
-              }
-            }), null);
-            return _el$100;
-          })();
-        },
-        get children() {
-          return [_$createComponent(Show, {
-            get when() {
-              return _$memo(() => !!props.input.content)() && path();
-            },
-            get children() {
-              return _$createComponent(ToolFileAccordion, {
-                get path() {
-                  return path();
-                },
-                get children() {
-                  var _el$99 = _tmpl$44();
-                  _$insert(_el$99, _$createComponent(Dynamic, {
-                    component: fileComponent,
-                    mode: "text",
-                    get file() {
-                      return {
-                        name: props.input.filePath,
-                        contents: props.input.content,
-                        cacheKey: checksum(props.input.content)
-                      };
-                    },
-                    overflow: "scroll"
-                  }));
-                  return _el$99;
-                }
-              });
-            }
-          }), _$createComponent(DiagnosticsDisplay, {
-            get diagnostics() {
-              return diagnostics();
-            }
-          })];
-        }
-      })));
-      return _el$98;
-    })();
+            });
+          }
+        }), createComponent(DiagnosticsDisplay, {
+          get diagnostics() {
+            return diagnostics();
+          }
+        })];
+      }
+    })));
+    return root;
   }
 });
 ToolRegistry.register({
@@ -2314,14 +2334,13 @@ ToolRegistry.register({
       if (count === 0) return "";
       return `${count} ${i18n.t(count > 1 ? "ui.common.file.other" : "ui.common.file.one")}`;
     });
-    return _$createComponent(Show, {
+    return createComponent(Show, {
       get when() {
         return single();
       },
       get fallback() {
-        return (() => {
-          var _el$109 = _tmpl$48();
-          _$insert(_el$109, _$createComponent(BasicTool, _$mergeProps(props, {
+        const root = template(`<div data-component="apply-patch-tool"></div>`);
+        _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
             icon: "code-lines",
             defer: true,
             get trigger() {
@@ -2331,12 +2350,12 @@ ToolRegistry.register({
               };
             },
             get children() {
-              return _$createComponent(Show, {
+              return createComponent(Show, {
                 get when() {
                   return files().length > 0;
                 },
                 get children() {
-                  return _$createComponent(Accordion, {
+                  return createComponent(Accordion, {
                     multiple: true,
                     "data-scope": "apply-patch",
                     style: {
@@ -2347,7 +2366,7 @@ ToolRegistry.register({
                     },
                     onChange: value => setExpanded(Array.isArray(value) ? value : value ? [value] : []),
                     get children() {
-                      return _$createComponent(For, {
+                      return createComponent(For, {
                         get each() {
                           return files();
                         },
@@ -2364,7 +2383,7 @@ ToolRegistry.register({
                               setVisible(true);
                             });
                           });
-                          return _$createComponent(Accordion.Item, {
+                          return createComponent(Accordion.Item, {
                             get value() {
                               return file.filePath;
                             },
@@ -2372,102 +2391,96 @@ ToolRegistry.register({
                               return file.type;
                             },
                             get children() {
-                              return [_$createComponent(StickyAccordionHeader, {
+                              return [createComponent(StickyAccordionHeader, {
                                 get children() {
-                                  return _$createComponent(Accordion.Trigger, {
+                                  return createComponent(Accordion.Trigger, {
                                     get children() {
-                                      var _el$110 = _tmpl$22(),
-                                        _el$111 = _el$110.firstChild,
-                                        _el$112 = _el$111.firstChild,
-                                        _el$114 = _el$112.firstChild,
-                                        _el$115 = _el$111.nextSibling;
-                                      _$insert(_el$111, _$createComponent(FileIcon, {
+                                      // file is static per row (For is
+                                      // reference-keyed), so path writes and
+                                      // the type switch are one-shot; only
+                                      // the i18n labels stay live.
+                                      const trigger = template(`<div data-slot="apply-patch-trigger-content"><div data-slot="apply-patch-file-info"><div data-slot="apply-patch-file-name-container"><span data-slot="apply-patch-filename"></span></div></div><div data-slot="apply-patch-trigger-actions"></div></div>`);
+                                      const info = trigger.firstChild;
+                                      const nameContainer = info.firstChild;
+                                      const filename = nameContainer.firstChild;
+                                      const actions = info.nextSibling;
+                                      _solidInsert(info, createComponent(FileIcon, {
                                         get node() {
                                           return {
                                             path: file.relativePath,
                                             type: "file"
                                           };
                                         }
-                                      }), _el$112);
-                                      _$insert(_el$112, _$createComponent(Show, {
-                                        get when() {
-                                          return file.relativePath.includes("/");
-                                        },
-                                        get children() {
-                                          var _el$113 = _tmpl$21();
-                                          _$insert(_el$113, () => `\u202A${getDirectory(file.relativePath)}\u202C`);
-                                          return _el$113;
-                                        }
-                                      }), _el$114);
-                                      _$insert(_el$114, () => getFilename(file.relativePath));
-                                      _$insert(_el$115, _$createComponent(Switch, {
-                                        get children() {
-                                          return [_$createComponent(Match, {
-                                            get when() {
-                                              return file.type === "add";
-                                            },
-                                            get children() {
-                                              var _el$116 = _tmpl$49();
-                                              _$insert(_el$116, () => i18n.t("ui.patch.action.created"));
-                                              return _el$116;
-                                            }
-                                          }), _$createComponent(Match, {
-                                            get when() {
-                                              return file.type === "delete";
-                                            },
-                                            get children() {
-                                              var _el$117 = _tmpl$50();
-                                              _$insert(_el$117, () => i18n.t("ui.patch.action.deleted"));
-                                              return _el$117;
-                                            }
-                                          }), _$createComponent(Match, {
-                                            get when() {
-                                              return file.type === "move";
-                                            },
-                                            get children() {
-                                              var _el$118 = _tmpl$51();
-                                              _$insert(_el$118, () => i18n.t("ui.patch.action.moved"));
-                                              return _el$118;
-                                            }
-                                          }), _$createComponent(Match, {
-                                            when: true,
-                                            get children() {
-                                              return _$createComponent(DiffChanges, {
-                                                get changes() {
-                                                  return {
-                                                    additions: file.additions,
-                                                    deletions: file.deletions
-                                                  };
-                                                }
-                                              });
-                                            }
-                                          })];
-                                        }
-                                      }), null);
-                                      _$insert(_el$115, _$createComponent(Icon, {
+                                      }), nameContainer);
+                                      // Show(static condition) -> plain if.
+                                      // The text stays live: getDirectory
+                                      // reads the reactive data.directory.
+                                      if (file.relativePath.includes("/")) {
+                                        const directory = template(`<span data-slot="apply-patch-directory"></span>`);
+                                        createRenderEffect(() => {
+                                          directory.textContent = `\u202A${getDirectory(file.relativePath)}\u202C`;
+                                        });
+                                        nameContainer.insertBefore(directory, filename);
+                                      }
+                                      filename.textContent = getFilename(file.relativePath);
+                                      // Switch over the static file.type ->
+                                      // plain if/else chain.
+                                      if (file.type === "add") {
+                                        const change = template(`<span data-slot="apply-patch-change" data-type="added"></span>`);
+                                        createRenderEffect(() => {
+                                          change.textContent = i18n.t("ui.patch.action.created");
+                                        });
+                                        actions.appendChild(change);
+                                      } else if (file.type === "delete") {
+                                        const change = template(`<span data-slot="apply-patch-change" data-type="removed"></span>`);
+                                        createRenderEffect(() => {
+                                          change.textContent = i18n.t("ui.patch.action.deleted");
+                                        });
+                                        actions.appendChild(change);
+                                      } else if (file.type === "move") {
+                                        const change = template(`<span data-slot="apply-patch-change" data-type="modified"></span>`);
+                                        createRenderEffect(() => {
+                                          change.textContent = i18n.t("ui.patch.action.moved");
+                                        });
+                                        actions.appendChild(change);
+                                      } else {
+                                        // DiffChanges returns a memo
+                                        // accessor; insert() resolves it.
+                                        _solidInsert(actions, createComponent(DiffChanges, {
+                                          get changes() {
+                                            return {
+                                              additions: file.additions,
+                                              deletions: file.deletions
+                                            };
+                                          }
+                                        }), null);
+                                      }
+                                      _solidInsert(actions, createComponent(Icon, {
                                         name: "chevron-grabber-vertical",
                                         size: "small"
                                       }), null);
-                                      return _el$110;
+                                      return trigger;
                                     }
                                   });
                                 }
-                              }), _$createComponent(Accordion.Content, {
+                              }), createComponent(Accordion.Content, {
                                 get children() {
-                                  return _$createComponent(Show, {
+                                  // Kobalte presence-gated content: keep the
+                                  // Show + insert() path.
+                                  return createComponent(Show, {
                                     get when() {
                                       return visible();
                                     },
                                     get children() {
-                                      var _el$119 = _tmpl$47();
-                                      _$insert(_el$119, _$createComponent(Dynamic, {
+                                      const view = template(`<div data-component="apply-patch-file-diff"></div>`);
+                                      _solidInsert(view, createComponent(Dynamic, {
                                         component: fileComponent,
                                         mode: "diff",
                                         get fileDiff() {
                                           return file.view.fileDiff;
                                         }
                                       }));
-                                      return _el$119;
+                                      return view;
                                     }
                                   });
                                 }
@@ -2482,107 +2495,115 @@ ToolRegistry.register({
               });
             }
           })));
-          return _el$109;
-        })();
+        return root;
       },
       get children() {
-        var _el$107 = _tmpl$48();
-        _$insert(_el$107, _$createComponent(BasicTool, _$mergeProps(props, {
+        const root = template(`<div data-component="apply-patch-tool"></div>`);
+        _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
           icon: "code-lines",
           defer: true,
           get trigger() {
-            return (() => {
-              var _el$120 = _tmpl$43(),
-                _el$121 = _el$120.firstChild,
-                _el$122 = _el$121.firstChild,
-                _el$123 = _el$122.firstChild,
-                _el$127 = _el$121.nextSibling;
-              _$insert(_el$123, _$createComponent(TextShimmer, {
-                get text() {
-                  return i18n.t("ui.tool.patch");
-                },
-                get active() {
-                  return pending();
-                }
-              }));
-              _$insert(_el$122, _$createComponent(Show, {
-                get when() {
-                  return !pending();
-                },
-                get children() {
-                  var _el$124 = _tmpl$41();
-                  _$insert(_el$124, () => getFilename(single().relativePath));
-                  return _el$124;
-                }
-              }), null);
-              _$insert(_el$121, _$createComponent(Show, {
-                get when() {
-                  return _$memo(() => !!!pending())() && single().relativePath.includes("/");
-                },
-                get children() {
-                  var _el$125 = _tmpl$42(),
-                    _el$126 = _el$125.firstChild;
-                  _$insert(_el$126, () => getDirectory(single().relativePath));
-                  return _el$125;
-                }
-              }), null);
-              _$insert(_el$127, _$createComponent(Show, {
-                get when() {
-                  return !pending();
-                },
-                get children() {
-                  return _$createComponent(DiffChanges, {
-                    get changes() {
-                      return {
-                        additions: single().additions,
-                        deletions: single().deletions
-                      };
-                    }
-                  });
-                }
-              }));
-              return _el$120;
-            })();
+            const trigger = template(`<div data-component="edit-trigger"><div data-slot="message-part-title-area"><div data-slot="message-part-title"><span data-slot="message-part-title-text"></span></div></div><div data-slot="message-part-actions"></div></div>`);
+            const titleArea = trigger.firstChild;
+            const titleRow = titleArea.firstChild;
+            const titleText = titleRow.firstChild;
+            const actionsEl = titleArea.nextSibling;
+            _solidInsert(titleText, createComponent(TextShimmer, {
+              get text() {
+                return i18n.t("ui.tool.patch");
+              },
+              get active() {
+                return pending();
+              }
+            }));
+            _solidInsert(titleRow, createComponent(Show, {
+              get when() {
+                return !pending();
+              },
+              get children() {
+                const name = template(`<span data-slot="message-part-title-filename"></span>`);
+                createRenderEffect(() => {
+                  name.textContent = getFilename(single().relativePath);
+                });
+                return name;
+              }
+            }), null);
+            _solidInsert(titleArea, createComponent(Show, {
+              get when() {
+                return !pending() && single().relativePath.includes("/");
+              },
+              get children() {
+                const pathEl = template(`<div data-slot="message-part-path"><span data-slot="message-part-directory"></span></div>`);
+                const directory = pathEl.firstChild;
+                createRenderEffect(() => {
+                  directory.textContent = getDirectory(single().relativePath);
+                });
+                return pathEl;
+              }
+            }), null);
+            _solidInsert(actionsEl, createComponent(Show, {
+              get when() {
+                return !pending();
+              },
+              get children() {
+                return createComponent(DiffChanges, {
+                  get changes() {
+                    return {
+                      additions: single().additions,
+                      deletions: single().deletions
+                    };
+                  }
+                });
+              }
+            }));
+            return trigger;
           },
           get children() {
-            return _$createComponent(ToolFileAccordion, {
+            return createComponent(ToolFileAccordion, {
               get path() {
                 return single().relativePath;
               },
               get actions() {
-                return _$createComponent(Switch, {
+                // single() is reactive here, so keep the runtime Switch.
+                return createComponent(Switch, {
                   get children() {
-                    return [_$createComponent(Match, {
+                    return [createComponent(Match, {
                       get when() {
                         return single().type === "add";
                       },
                       get children() {
-                        var _el$128 = _tmpl$49();
-                        _$insert(_el$128, () => i18n.t("ui.patch.action.created"));
-                        return _el$128;
+                        const change = template(`<span data-slot="apply-patch-change" data-type="added"></span>`);
+                        createRenderEffect(() => {
+                          change.textContent = i18n.t("ui.patch.action.created");
+                        });
+                        return change;
                       }
-                    }), _$createComponent(Match, {
+                    }), createComponent(Match, {
                       get when() {
                         return single().type === "delete";
                       },
                       get children() {
-                        var _el$129 = _tmpl$50();
-                        _$insert(_el$129, () => i18n.t("ui.patch.action.deleted"));
-                        return _el$129;
+                        const change = template(`<span data-slot="apply-patch-change" data-type="removed"></span>`);
+                        createRenderEffect(() => {
+                          change.textContent = i18n.t("ui.patch.action.deleted");
+                        });
+                        return change;
                       }
-                    }), _$createComponent(Match, {
+                    }), createComponent(Match, {
                       get when() {
                         return single().type === "move";
                       },
                       get children() {
-                        var _el$130 = _tmpl$51();
-                        _$insert(_el$130, () => i18n.t("ui.patch.action.moved"));
-                        return _el$130;
+                        const change = template(`<span data-slot="apply-patch-change" data-type="modified"></span>`);
+                        createRenderEffect(() => {
+                          change.textContent = i18n.t("ui.patch.action.moved");
+                        });
+                        return change;
                       }
-                    }), _$createComponent(Match, {
+                    }), createComponent(Match, {
                       when: true,
                       get children() {
-                        return _$createComponent(DiffChanges, {
+                        return createComponent(DiffChanges, {
                           get changes() {
                             return {
                               additions: single().additions,
@@ -2596,20 +2617,20 @@ ToolRegistry.register({
                 });
               },
               get children() {
-                var _el$108 = _tmpl$47();
-                _$insert(_el$108, _$createComponent(Dynamic, {
+                const view = template(`<div data-component="apply-patch-file-diff"></div>`);
+                _solidInsert(view, createComponent(Dynamic, {
                   component: fileComponent,
                   mode: "diff",
                   get fileDiff() {
                     return single().view.fileDiff;
                   }
                 }));
-                return _el$108;
+                return view;
               }
             });
           }
         })));
-        return _el$107;
+        return root;
       }
     });
   }
@@ -2630,7 +2651,7 @@ ToolRegistry.register({
       if (list.length === 0) return "";
       return `${list.filter(t => t.status === "completed").length}/${list.length}`;
     });
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       defaultOpen: true,
       icon: "checklist",
       get trigger() {
@@ -2640,30 +2661,32 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(Show, {
+        return createComponent(Show, {
           get when() {
             return todos().length;
           },
           get children() {
-            var _el$131 = _tmpl$52();
-            _$insert(_el$131, _$createComponent(For, {
+            const listEl = template(`<div data-component="todos"></div>`);
+            _solidInsert(listEl, createComponent(For, {
               get each() {
                 return todos();
               },
-              children: todo => _$createComponent(Checkbox, {
+              children: todo => createComponent(Checkbox, {
                 readOnly: true,
                 get checked() {
                   return todo.status === "completed";
                 },
                 get children() {
-                  var _el$132 = _tmpl$53();
-                  _$insert(_el$132, () => todo.content);
-                  _$effect(() => _$setAttribute(_el$132, "data-completed", todo.status === "completed" ? "completed" : undefined));
-                  return _el$132;
+                  const content = template(`<span data-slot="message-part-todo-content"></span>`);
+                  createRenderEffect(() => {
+                    content.textContent = todo.content ?? "";
+                  });
+                  createRenderEffect(() => setAttr(content, "data-completed", todo.status === "completed" ? "completed" : undefined));
+                  return content;
                 }
               })
             }));
-            return _el$131;
+            return listEl;
           }
         });
       }
@@ -2685,7 +2708,7 @@ ToolRegistry.register({
       });
       return `${count} ${i18n.t(count > 1 ? "ui.common.question.other" : "ui.common.question.one")}`;
     });
-    return _$createComponent(BasicTool, _$mergeProps(props, {
+    return createComponent(BasicTool, mergeProps(props, {
       get defaultOpen() {
         return completed();
       },
@@ -2697,29 +2720,31 @@ ToolRegistry.register({
         };
       },
       get children() {
-        return _$createComponent(Show, {
+        return createComponent(Show, {
           get when() {
             return completed();
           },
           get children() {
-            var _el$133 = _tmpl$54();
-            _$insert(_el$133, _$createComponent(For, {
+            const listEl = template(`<div data-component="question-answers"></div>`);
+            _solidInsert(listEl, createComponent(For, {
               get each() {
                 return questions();
               },
               children: (q, i) => {
                 const answer = () => answers()[i()] ?? [];
-                return (() => {
-                  var _el$134 = _tmpl$55(),
-                    _el$135 = _el$134.firstChild,
-                    _el$136 = _el$135.nextSibling;
-                  _$insert(_el$135, () => q.question);
-                  _$insert(_el$136, () => answer().join(", ") || i18n.t("ui.question.answer.none"));
-                  return _el$134;
-                })();
+                const item = template(`<div data-slot="question-answer-item"><div data-slot="question-text"></div><div data-slot="answer-text"></div></div>`);
+                const questionEl = item.firstChild;
+                const answerEl = questionEl.nextSibling;
+                createRenderEffect(() => {
+                  questionEl.textContent = q.question ?? "";
+                });
+                createRenderEffect(() => {
+                  answerEl.textContent = answer().join(", ") || i18n.t("ui.question.answer.none");
+                });
+                return item;
               }
             }));
-            return _el$133;
+            return listEl;
           }
         });
       }
@@ -2732,7 +2757,7 @@ ToolRegistry.register({
     const i18n = useI18n();
     const title = createMemo(() => props.input.name || i18n.t("ui.tool.skill"));
     const running = createMemo(() => props.status === "pending" || props.status === "running");
-    const titleContent = () => _$createComponent(TextShimmer, {
+    const titleContent = () => createComponent(TextShimmer, {
       get text() {
         return title();
       },
@@ -2740,14 +2765,13 @@ ToolRegistry.register({
         return running();
       }
     });
-    const trigger = () => (() => {
-      var _el$137 = _tmpl$56(),
-        _el$138 = _el$137.firstChild,
-        _el$139 = _el$138.firstChild;
-      _$insert(_el$139, titleContent);
-      return _el$137;
-    })();
-    return _$createComponent(BasicTool, {
+    const trigger = () => {
+      const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title" class="capitalize agent-title"></span></div></div>`);
+      const titleEl = box.firstChild.firstChild;
+      _solidInsert(titleEl, titleContent);
+      return box;
+    };
+    return createComponent(BasicTool, {
       icon: "brain",
       get status() {
         return props.status;
@@ -2759,4 +2783,3 @@ ToolRegistry.register({
     });
   }
 });
-_$delegateEvents(["click"]);

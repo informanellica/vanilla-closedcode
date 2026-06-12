@@ -1,5 +1,5 @@
-import { Config } from "@/config/config.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Config } from "#config/config.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 const options = {
   port: {
     type: "number",

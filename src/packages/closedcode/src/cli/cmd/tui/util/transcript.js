@@ -1,4 +1,4 @@
-import { Locale } from "@/util/locale.js";
+import { Locale } from "#util/locale.js";
 import * as Model from "./model.js";
 export function formatTranscript(session, messages, options) {
   const providers = Model.index(options.providers);

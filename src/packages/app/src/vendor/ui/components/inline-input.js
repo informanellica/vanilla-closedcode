@@ -1,8 +1,23 @@
-import { template as _$template } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<input data-component=inline-input>`);
+import { createRenderEffect } from "solid-js";
 import { splitProps } from "solid-js";
+
+function applyStyle(el, style) {
+  if (style == null) {
+    el.removeAttribute("style");
+    return;
+  }
+  if (typeof style === "string") {
+    el.style.cssText = style;
+    return;
+  }
+  el.removeAttribute("style");
+  for (const [key, value] of Object.entries(style)) {
+    if (value == null) continue;
+    if (key.startsWith("--")) el.style.setProperty(key, String(value));
+    else el.style[key] = value;
+  }
+}
+
 export function InlineInput(props) {
   const [local, others] = splitProps(props, ["class", "width", "style"]);
   const style = () => {
@@ -19,16 +34,38 @@ export function InlineInput(props) {
       width: local.width
     };
   };
-  return (() => {
-    var _el$ = _tmpl$();
-    _$spread(_el$, _$mergeProps({
-      get ["class"]() {
-        return local.class;
-      },
-      get style() {
-        return style();
+  const el = document.createElement("input");
+  el.dataset.component = "inline-input";
+
+  // Solid's splitProps keeps getters live; mirror the compiled spread():
+  // listeners once, everything else re-applied reactively.
+  for (const key in others) {
+    if (/^on[A-Z]/.test(key) && typeof others[key] === "function") {
+      el.addEventListener(key.slice(2).toLowerCase(), others[key]);
+    }
+  }
+  createRenderEffect(() => {
+    el.className = local.class ?? "";
+  });
+  createRenderEffect(() => {
+    applyStyle(el, style());
+  });
+  createRenderEffect(() => {
+    for (const key in others) {
+      if (/^on[A-Z]/.test(key)) continue;
+      const value = others[key];
+      if (key === "value") {
+        const next = value == null ? "" : String(value);
+        if (el.value !== next) el.value = next;
+        continue;
       }
-    }, others), false, false);
-    return _el$;
-  })();
+      if (key === "ref") {
+        continue;
+      }
+      if (value == null || value === false) el.removeAttribute(key);
+      else el.setAttribute(key, value === true ? "" : String(value));
+    }
+  });
+  if (typeof others.ref === "function") others.ref(el);
+  return el;
 }

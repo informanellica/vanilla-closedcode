@@ -1,13 +1,7 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class=size-full>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="h-dvh w-screen d-flex flex-column align-items-center justify-content-center bg-body">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-2 w-100 max-w-sm"><span class="small fw-normal text-body text-center"></span><div class="d-flex flex-column gap-1 bg-body-tertiary rounded-3 p-2">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="h-dvh w-screen d-flex flex-column align-items-center justify-content-center bg-body gap-6 p-6"><div class="d-flex flex-column align-items-center max-w-md text-center"><p class="text-body"><span class="text-body-emphasis font-medium"></span></p><p class="mt-1 small fw-normal text-secondary">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<button type=button class="d-flex align-items-center gap-3 w-100 px-3 py-2 rounded-2 transition-colors text-left"><span class="text-body-emphasis truncate">`);
+// insert() from solid-js/web is the established exception for reactive /
+// component-valued children (Suspense/Show branches, For-mapped rows): Solid
+// keeps reconciling the accessors instead of freezing a one-time snapshot.
+import { insert as _solidInsert } from "solid-js/web";
 import * as Sentry from "@sentry/solid";
 import { I18nProvider } from "@/lib/context.js";
 import { DialogProvider } from "@/lib/dialog.js";
@@ -21,7 +15,7 @@ import { MetaProvider } from "@solidjs/meta";
 import { Navigate, Route, Router } from "@solidjs/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { Effect } from "effect";
-import { createMemo, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import { CommandProvider } from "@/context/command.js";
 import { CommentsProvider } from "@/context/comments.js";
@@ -42,16 +36,26 @@ import DirectoryLayout from "@/pages/directory-layout.js";
 import Layout from "@/pages/layout.js";
 import { ErrorPage } from "./pages/error.js";
 import { useCheckServerHealth } from "./utils/server-health.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Static markup only — translated or user-provided strings are always
+// assigned via textContent/text nodes, never interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 const HomeRoute = lazy(() => import("@/pages/home.js"));
 const loadSession = () => import("@/pages/session.js");
 const Session = lazy(loadSession);
-const Loading = () => _tmpl$();
+const Loading = () => template(`<div class="size-full"></div>`);
 if (typeof location === "object" && /\/session(?:\/|$)/.test(location.pathname)) {
   void loadSession();
 }
-const SessionRoute = () => _$createComponent(SessionProviders, {
+const SessionRoute = () => createComponent(SessionProviders, {
   get children() {
-    return _$createComponent(ErrorBoundary, {
+    return createComponent(ErrorBoundary, {
       fallback: error => {
         console.error("[SessionRoute] caught:", error)
         const el = document.createElement("div")
@@ -60,17 +64,17 @@ const SessionRoute = () => _$createComponent(SessionProviders, {
         return el
       },
       get children() {
-        return _$createComponent(Session, {});
+        return createComponent(Session, {});
       }
     });
   }
 });
-const SessionIndexRoute = () => _$createComponent(Navigate, {
+const SessionIndexRoute = () => createComponent(Navigate, {
   href: "session"
 });
 function UiI18nBridge(props) {
   const language = useLanguage();
-  return _$createComponent(I18nProvider, {
+  return createComponent(I18nProvider, {
     get value() {
       return {
         locale: language.intl,
@@ -92,7 +96,7 @@ function QueryProvider(props) {
       }
     }
   });
-  return _$createComponent(QueryClientProvider, {
+  return createComponent(QueryClientProvider, {
     client: client,
     get children() {
       return props.children;
@@ -100,21 +104,21 @@ function QueryProvider(props) {
   });
 }
 function AppShellProviders(props) {
-  return _$createComponent(SettingsProvider, {
+  return createComponent(SettingsProvider, {
     get children() {
-      return _$createComponent(PermissionProvider, {
+      return createComponent(PermissionProvider, {
         get children() {
-          return _$createComponent(LayoutProvider, {
+          return createComponent(LayoutProvider, {
             get children() {
-              return _$createComponent(NotificationProvider, {
+              return createComponent(NotificationProvider, {
                 get children() {
-                  return _$createComponent(ModelsProvider, {
+                  return createComponent(ModelsProvider, {
                     get children() {
-                      return _$createComponent(CommandProvider, {
+                      return createComponent(CommandProvider, {
                         get children() {
-                          return _$createComponent(HighlightsProvider, {
+                          return createComponent(HighlightsProvider, {
                             get children() {
-                              return _$createComponent(Layout, {
+                              return createComponent(Layout, {
                                 get children() {
                                   return props.children;
                                 }
@@ -135,13 +139,13 @@ function AppShellProviders(props) {
   });
 }
 function SessionProviders(props) {
-  return _$createComponent(TerminalProvider, {
+  return createComponent(TerminalProvider, {
     get children() {
-      return _$createComponent(FileProvider, {
+      return createComponent(FileProvider, {
         get children() {
-          return _$createComponent(PromptProvider, {
+          return createComponent(PromptProvider, {
             get children() {
-              return _$createComponent(CommentsProvider, {
+              return createComponent(CommentsProvider, {
                 get children() {
                   return props.children;
                 }
@@ -154,44 +158,45 @@ function SessionProviders(props) {
   });
 }
 function RouterRoot(props) {
-  return _$createComponent(AppShellProviders, {
+  return createComponent(AppShellProviders, {
     get children() {
-      return [_$memo(() => props.appChildren), _$memo(() => props.children)];
+      // Memo accessors keep the forwarded router children live downstream.
+      return [createMemo(() => props.appChildren), createMemo(() => props.children)];
     }
   });
 }
 export function AppBaseProviders(props) {
-  return _$createComponent(MetaProvider, {
+  return createComponent(MetaProvider, {
     get children() {
-      return [_$createComponent(Font, {}), _$createComponent(ThemeProvider, {
+      return [createComponent(Font, {}), createComponent(ThemeProvider, {
         onThemeApplied: (_, mode) => {
           void window.api?.setTitlebar?.({
             mode
           });
         },
         get children() {
-          return _$createComponent(LanguageProvider, {
+          return createComponent(LanguageProvider, {
             get locale() {
               return props.locale;
             },
             get children() {
-              return _$createComponent(UiI18nBridge, {
+              return createComponent(UiI18nBridge, {
                 get children() {
-                  return _$createComponent(ErrorBoundary, {
+                  return createComponent(ErrorBoundary, {
                     fallback: error => {
                       Sentry.captureException(error);
-                      return _$createComponent(ErrorPage, {
+                      return createComponent(ErrorPage, {
                         error: error
                       });
                     },
                     get children() {
-                      return _$createComponent(QueryProvider, {
+                      return createComponent(QueryProvider, {
                         get children() {
-                          return _$createComponent(DialogProvider, {
+                          return createComponent(DialogProvider, {
                             get children() {
-                              return _$createComponent(MarkedProvider, {
+                              return createComponent(MarkedProvider, {
                                 get children() {
-                                  return _$createComponent(FileComponentProvider, {
+                                  return createComponent(FileComponentProvider, {
                                     component: File,
                                     get children() {
                                       return props.children;
@@ -236,23 +241,25 @@ function ConnectionGate(props) {
     duration: "10 seconds",
     orElse: () => Effect.succeed(false)
   }), Effect.ensuring(Effect.sync(() => setCheckMode("background"))), Effect.runPromise));
-  return _$createComponent(Suspense, {
+  return createComponent(Suspense, {
     get fallback() {
-      return (() => {
-        var _el$2 = _tmpl$2();
-        _$insert(_el$2, _$createComponent(Splash, {
-          "class": "w-16 h-20 opacity-50 animate-pulse"
-        }));
-        return _el$2;
-      })();
+      const el = template(`<div class="h-dvh w-screen d-flex flex-column align-items-center justify-content-center bg-body"></div>`);
+      // Splash returns a concrete element, so a plain append suffices.
+      el.appendChild(createComponent(Splash, {
+        "class": "w-16 h-20 opacity-50 animate-pulse"
+      }));
+      return el;
     },
     get children() {
-      return [_$memo(() => _$memo(() => checkMode() === "blocking")() ? startupHealthCheck() : startupHealthCheck.latest), _$createComponent(Show, {
+      // The leading memo child re-reads the health-check resource so Suspense
+      // keeps tracking it; its boolean value itself renders nothing, exactly
+      // like the compiled expression child.
+      return [createMemo(() => checkMode() === "blocking" ? startupHealthCheck() : startupHealthCheck.latest), createComponent(Show, {
         get when() {
           return startupHealthCheck();
         },
         get fallback() {
-          return _$createComponent(ConnectionError, {
+          return createComponent(ConnectionError, {
             onRetry: () => {
               if (checkMode() === "background") void healthCheckActions.refetch();
             },
@@ -281,52 +288,77 @@ function ConnectionError(props) {
   }).split(serverToken));
   const timer = setInterval(() => props.onRetry?.(), 1000);
   onCleanup(() => clearInterval(timer));
-  return (() => {
-    var _el$3 = _tmpl$4(),
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.firstChild,
-      _el$6 = _el$5.firstChild,
-      _el$7 = _el$5.nextSibling;
-    _$insert(_el$4, _$createComponent(Splash, {
-      "class": "w-12 h-15 mb-4"
-    }), _el$5);
-    _$insert(_el$5, () => unreachable()[0], _el$6);
-    _$insert(_el$6, name);
-    _$insert(_el$5, () => unreachable()[1], null);
-    _$insert(_el$7, () => language.t("app.server.retrying"));
-    _$insert(_el$3, _$createComponent(Show, {
-      get when() {
-        return others().length > 0;
-      },
-      get children() {
-        var _el$8 = _tmpl$3(),
-          _el$9 = _el$8.firstChild,
-          _el$0 = _el$9.nextSibling;
-        _$insert(_el$9, () => language.t("app.server.otherServers"));
-        _$insert(_el$0, _$createComponent(For, {
-          get each() {
-            return others();
-          },
-          children: conn => {
-            const key = ServerConnection.key(conn);
-            return (() => {
-              var _el$1 = _tmpl$5(),
-                _el$10 = _el$1.firstChild;
-              _el$1.$$click = () => props.onServerSelected?.(key);
-              _$insert(_el$10, () => serverName(conn));
-              return _el$1;
-            })();
-          }
-        }));
-        return _el$8;
-      }
-    }), null);
-    return _el$3;
-  })();
+
+  // Static skeleton. All translated/server strings are bound via text nodes
+  // or textContent below, never interpolated into the markup.
+  const root = template(`<div class="h-dvh w-screen d-flex flex-column align-items-center justify-content-center bg-body gap-6 p-6"><div class="d-flex flex-column align-items-center max-w-md text-center" data-slot="column"><p class="text-body" data-slot="message"><span class="text-body-emphasis font-medium" data-slot="name"></span></p><p class="mt-1 small fw-normal text-secondary" data-slot="retrying"></p></div></div>`);
+  const column = root.querySelector('[data-slot="column"]');
+  const message = root.querySelector('[data-slot="message"]');
+  const nameEl = root.querySelector('[data-slot="name"]');
+  const retryingEl = root.querySelector('[data-slot="retrying"]');
+
+  // Splash mark before the message block (Splash returns a concrete element).
+  column.insertBefore(createComponent(Splash, {
+    "class": "w-12 h-15 mb-4"
+  }), message);
+
+  // "<prefix><server name><suffix>" — live text nodes around the static span,
+  // matching the compiled insert order. Render-effects keep every translated
+  // string live across locale switches.
+  const prefixText = document.createTextNode("");
+  message.insertBefore(prefixText, nameEl);
+  const suffixText = document.createTextNode("");
+  message.appendChild(suffixText);
+  createRenderEffect(() => {
+    prefixText.data = unreachable()[0] ?? "";
+  });
+  createRenderEffect(() => {
+    suffixText.data = unreachable()[1] ?? "";
+  });
+  createRenderEffect(() => {
+    nameEl.textContent = name() ?? "";
+  });
+  createRenderEffect(() => {
+    retryingEl.textContent = language.t("app.server.retrying");
+  });
+
+  // Other-servers block. Show + For are kept so row DOM identity survives
+  // list updates; appended after the message column via insert() with an
+  // explicit null marker (append mode, established exception).
+  _solidInsert(root, createComponent(Show, {
+    get when() {
+      return others().length > 0;
+    },
+    get children() {
+      const block = template(`<div class="d-flex flex-column gap-2 w-100 max-w-sm"><span class="small fw-normal text-body text-center" data-slot="label"></span><div class="d-flex flex-column gap-1 bg-body-tertiary rounded-3 p-2" data-slot="list"></div></div>`);
+      const label = block.querySelector('[data-slot="label"]');
+      const list = block.querySelector('[data-slot="list"]');
+      createRenderEffect(() => {
+        label.textContent = language.t("app.server.otherServers");
+      });
+      _solidInsert(list, createComponent(For, {
+        get each() {
+          return others();
+        },
+        children: conn => {
+          const key = ServerConnection.key(conn);
+          const button = template(`<button type="button" class="d-flex align-items-center gap-3 w-100 px-3 py-2 rounded-2 transition-colors text-left"><span class="text-body-emphasis truncate"></span></button>`);
+          const nameSpan = button.firstChild;
+          button.addEventListener("click", () => props.onServerSelected?.(key));
+          createRenderEffect(() => {
+            nameSpan.textContent = serverName(conn);
+          });
+          return button;
+        }
+      }));
+      return block;
+    }
+  }), null);
+  return root;
 }
 function ServerKey(props) {
   const server = useServer();
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return server.key;
     },
@@ -337,7 +369,7 @@ function ServerKey(props) {
   });
 }
 export function AppInterface(props) {
-  return _$createComponent(ServerProvider, {
+  return createComponent(ServerProvider, {
     get defaultServer() {
       return props.defaultServer;
     },
@@ -348,24 +380,24 @@ export function AppInterface(props) {
       return props.servers;
     },
     get children() {
-      return _$createComponent(ConnectionGate, {
+      return createComponent(ConnectionGate, {
         get disableHealthCheck() {
           return props.disableHealthCheck;
         },
         get children() {
-          return _$createComponent(ServerKey, {
+          return createComponent(ServerKey, {
             get children() {
-              return _$createComponent(QueryProvider, {
+              return createComponent(QueryProvider, {
                 get children() {
-                  return _$createComponent(GlobalSDKProvider, {
+                  return createComponent(GlobalSDKProvider, {
                     get children() {
-                      return _$createComponent(GlobalSyncProvider, {
+                      return createComponent(GlobalSyncProvider, {
                         get children() {
-                          return _$createComponent(Dynamic, {
+                          return createComponent(Dynamic, {
                             get component() {
                               return props.router ?? Router;
                             },
-                            root: routerProps => _$createComponent(RouterRoot, {
+                            root: routerProps => createComponent(RouterRoot, {
                               get appChildren() {
                                 return props.children;
                               },
@@ -374,17 +406,17 @@ export function AppInterface(props) {
                               }
                             }),
                             get children() {
-                              return [_$createComponent(Route, {
+                              return [createComponent(Route, {
                                 path: "/",
                                 component: HomeRoute
-                              }), _$createComponent(Route, {
+                              }), createComponent(Route, {
                                 path: "/:dir",
                                 component: DirectoryLayout,
                                 get children() {
-                                  return [_$createComponent(Route, {
+                                  return [createComponent(Route, {
                                     path: "/",
                                     component: SessionIndexRoute
-                                  }), _$createComponent(Route, {
+                                  }), createComponent(Route, {
                                     path: "/session/:id?",
                                     component: SessionRoute
                                   })];
@@ -405,4 +437,3 @@ export function AppInterface(props) {
     }
   });
 }
-_$delegateEvents(["click"]);

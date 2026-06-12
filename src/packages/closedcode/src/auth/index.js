@@ -1,7 +1,7 @@
 import path from "path";
 import { Effect, Layer, Record, Result, Schema, Context } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt } from "#util/schema.js";
 import { Global } from "core/global";
 import { AppFileSystem } from "core/filesystem";
 export const OAUTH_DUMMY_KEY = "closedcode-oauth-dummy-key";

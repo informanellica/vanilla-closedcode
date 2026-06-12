@@ -1,4 +1,4 @@
-import {  Keybind  } from "@/util/keybind.js"
+import {  Keybind  } from "#util/keybind.js"
 import {  describe, test, expect, beforeAll  } from "@jest/globals"
 describe("Keybind.toString", () => {
   test("should convert simple key to string", () => {

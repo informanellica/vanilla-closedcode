@@ -1,11 +1,11 @@
 import { Effect, Layer, Schema, Context, Stream } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { withTransientReadRetry } from "@/util/effect-http-client.js";
+import { withTransientReadRetry } from "#util/effect-http-client.js";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import path from "path";
 import z from "zod";
-import { BusEvent } from "@/bus/bus-event.js";
+import { BusEvent } from "#bus/bus-event.js";
 import { Flag } from "core/flag/flag";
 import * as Log from "core/util/log";
 import { makeRuntime } from "core/effect/runtime";

@@ -1,10 +1,10 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createMemo, createSignal } from "solid-js";
-import { useLocal } from "@tui/context/local.js";
-import { useSync } from "@tui/context/sync.js";
+import { useLocal } from "#tui/context/local.js";
+import { useSync } from "#tui/context/sync.js";
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useDialog } from "@tui/ui/dialog.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useDialog } from "#tui/ui/dialog.js";
 import { createDialogProviderOptions, DialogProvider } from "./dialog-provider.js";
 import { DialogVariant } from "./dialog-variant.js";
 import { useKeybind } from "../context/keybind.js";

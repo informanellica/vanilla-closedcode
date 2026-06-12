@@ -1,13 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-component=text-reveal><span data-slot=text-reveal-track><span data-slot=text-reveal-entering></span><span data-slot=text-reveal-leaving>`);
-import { createEffect, on, onCleanup, onMount } from "solid-js";
+import { createEffect, createRenderEffect, on, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 const px = (value, fallback) => {
   if (typeof value === "number") return `${value}px`;
@@ -94,56 +85,83 @@ export function TextReveal(props) {
     if (frame === undefined || typeof cancelAnimationFrame !== "function") return;
     cancelAnimationFrame(frame);
   });
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.nextSibling;
-    var _ref$ = rootRef;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : rootRef = _el$;
-    var _ref$2 = inRef;
-    typeof _ref$2 === "function" ? _$use(_ref$2, _el$3) : inRef = _el$3;
-    _$insert(_el$3, () => cur() ?? "\u00A0");
-    var _ref$3 = outRef;
-    typeof _ref$3 === "function" ? _$use(_ref$3, _el$4) : outRef = _el$4;
-    _$insert(_el$4, () => old() ?? "\u00A0");
-    _$effect(_p$ => {
-      var _v$ = ready() ? "true" : "false",
-        _v$2 = swapping() ? "true" : "false",
-        _v$3 = props.truncate ? "true" : "false",
-        _v$4 = props.class,
-        _v$5 = props.text ?? "",
-        _v$6 = ms(props.duration, 450),
-        _v$7 = pct(props.edge, 17),
-        _v$8 = px(props.travel, 0),
-        _v$9 = props.spring ?? "cubic-bezier(0.34, 1.08, 0.64, 1)",
-        _v$0 = props.springSoft ?? "cubic-bezier(0.34, 1, 0.64, 1)",
-        _v$1 = props.truncate ? "100%" : width();
-      _v$ !== _p$.e && _$setAttribute(_el$, "data-ready", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$, "data-swapping", _p$.t = _v$2);
-      _v$3 !== _p$.a && _$setAttribute(_el$, "data-truncate", _p$.a = _v$3);
-      _v$4 !== _p$.o && _$className(_el$, _p$.o = _v$4);
-      _v$5 !== _p$.i && _$setAttribute(_el$, "aria-label", _p$.i = _v$5);
-      _v$6 !== _p$.n && _$setStyleProperty(_el$, "--text-reveal-duration", _p$.n = _v$6);
-      _v$7 !== _p$.s && _$setStyleProperty(_el$, "--text-reveal-edge", _p$.s = _v$7);
-      _v$8 !== _p$.h && _$setStyleProperty(_el$, "--text-reveal-travel", _p$.h = _v$8);
-      _v$9 !== _p$.r && _$setStyleProperty(_el$, "--text-reveal-spring", _p$.r = _v$9);
-      _v$0 !== _p$.d && _$setStyleProperty(_el$, "--text-reveal-spring-soft", _p$.d = _v$0);
-      _v$1 !== _p$.l && _$setStyleProperty(_el$2, "width", _p$.l = _v$1);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined,
-      i: undefined,
-      n: undefined,
-      s: undefined,
-      h: undefined,
-      r: undefined,
-      d: undefined,
-      l: undefined
-    });
-    return _el$;
-  })();
+
+  // Static skeleton, mirroring the compiled template:
+  //   <span data-component=text-reveal>
+  //     <span data-slot=text-reveal-track>
+  //       <span data-slot=text-reveal-entering></span>
+  //       <span data-slot=text-reveal-leaving></span>
+  //     </span>
+  //   </span>
+  const root = document.createElement("span");
+  root.setAttribute("data-component", "text-reveal");
+  const track = document.createElement("span");
+  track.setAttribute("data-slot", "text-reveal-track");
+  const entering = document.createElement("span");
+  entering.setAttribute("data-slot", "text-reveal-entering");
+  const leaving = document.createElement("span");
+  leaving.setAttribute("data-slot", "text-reveal-leaving");
+  track.appendChild(entering);
+  track.appendChild(leaving);
+  root.appendChild(track);
+
+  // Internal (non-function) refs, as in the compiled output.
+  rootRef = root;
+  inRef = entering;
+  outRef = leaving;
+
+  // Reactive text content. The compiled insert() wrote the signal value
+  // directly; replicate with textContent (no HTML interpolation). The
+  // non-breaking space placeholder keeps the spans from collapsing.
+  createRenderEffect(() => {
+    entering.textContent = cur() ?? " ";
+  });
+  createRenderEffect(() => {
+    leaving.textContent = old() ?? " ";
+  });
+
+  // Change-guarded dynamic attributes / style, like the compiled effect(): an
+  // unchanged value never re-touches the DOM. className mirrors solid-js/web
+  // semantics (nullish removes the class attribute; the guard skips the
+  // initial undefined, as compiled).
+  let prevReady;
+  let prevSwapping;
+  let prevTruncate;
+  let prevClass;
+  let prevLabel;
+  let prevDuration;
+  let prevEdge;
+  let prevTravel;
+  let prevSpring;
+  let prevSpringSoft;
+  let prevWidth;
+  createRenderEffect(() => {
+    const nextReady = ready() ? "true" : "false";
+    const nextSwapping = swapping() ? "true" : "false";
+    const nextTruncate = props.truncate ? "true" : "false";
+    const nextClass = props.class;
+    const nextLabel = props.text ?? "";
+    const nextDuration = ms(props.duration, 450);
+    const nextEdge = pct(props.edge, 17);
+    const nextTravel = px(props.travel, 0);
+    const nextSpring = props.spring ?? "cubic-bezier(0.34, 1.08, 0.64, 1)";
+    const nextSpringSoft = props.springSoft ?? "cubic-bezier(0.34, 1, 0.64, 1)";
+    const nextWidth = props.truncate ? "100%" : width();
+    if (nextReady !== prevReady) root.setAttribute("data-ready", prevReady = nextReady);
+    if (nextSwapping !== prevSwapping) root.setAttribute("data-swapping", prevSwapping = nextSwapping);
+    if (nextTruncate !== prevTruncate) root.setAttribute("data-truncate", prevTruncate = nextTruncate);
+    if (nextClass !== prevClass) {
+      prevClass = nextClass;
+      if (nextClass == null) root.removeAttribute("class");
+      else root.className = nextClass;
+    }
+    if (nextLabel !== prevLabel) root.setAttribute("aria-label", prevLabel = nextLabel);
+    if (nextDuration !== prevDuration) root.style.setProperty("--text-reveal-duration", prevDuration = nextDuration);
+    if (nextEdge !== prevEdge) root.style.setProperty("--text-reveal-edge", prevEdge = nextEdge);
+    if (nextTravel !== prevTravel) root.style.setProperty("--text-reveal-travel", prevTravel = nextTravel);
+    if (nextSpring !== prevSpring) root.style.setProperty("--text-reveal-spring", prevSpring = nextSpring);
+    if (nextSpringSoft !== prevSpringSoft) root.style.setProperty("--text-reveal-spring-soft", prevSpringSoft = nextSpringSoft);
+    if (nextWidth !== prevWidth) track.style.setProperty("width", prevWidth = nextWidth);
+  });
+  return root;
 }

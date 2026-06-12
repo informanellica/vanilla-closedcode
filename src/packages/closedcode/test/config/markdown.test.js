@@ -1,4 +1,4 @@
-import {  ConfigMarkdown  } from "@/config/markdown.js"
+import {  ConfigMarkdown  } from "#config/markdown.js"
 import {  expect, test, describe, beforeAll  } from "@jest/globals"
 import { fileURLToPath as __toPath } from "node:url";
 import path from "node:path";

@@ -1,5 +1,5 @@
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Flock } from "core/util/flock";
 import { rename, rm } from "fs/promises";
 import { createSignal } from "solid-js";

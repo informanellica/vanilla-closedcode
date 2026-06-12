@@ -1,6 +1,6 @@
 import {  Effect  } from "effect"
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  Server  } from "../../src/server/server.js"

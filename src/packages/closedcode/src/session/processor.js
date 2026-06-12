@@ -1,11 +1,11 @@
 import { Cause, Deferred, Effect, Layer, Context, Scope } from "effect";
 import * as Stream from "effect/Stream";
-import { Agent } from "@/agent/agent.js";
-import { Bus } from "@/bus/index.js";
-import { Config } from "@/config/config.js";
-import { Permission } from "@/permission/index.js";
-import { Plugin } from "@/plugin/index.js";
-import { Snapshot } from "@/snapshot/index.js";
+import { Agent } from "#agent/agent.js";
+import { Bus } from "#bus/index.js";
+import { Config } from "#config/config.js";
+import { Permission } from "#permission/index.js";
+import { Plugin } from "#plugin/index.js";
+import { Snapshot } from "#snapshot/index.js";
 import * as Session from "./session.js";
 import { LLM } from "./llm.js";
 import { MessageV2 } from "./message-v2.js";
@@ -14,12 +14,12 @@ import { PartID } from "./schema.js";
 import { SessionRetry } from "./retry.js";
 import { SessionStatus } from "./status.js";
 import { SessionSummary } from "./summary.js";
-import { Question } from "@/question/index.js";
-import { errorMessage } from "@/util/error.js";
+import { Question } from "#question/index.js";
+import { errorMessage } from "#util/error.js";
 import * as Log from "core/util/log";
-import { isRecord } from "@/util/record.js";
-import { EventV2 } from "@/v2/event.js";
-import { SessionEvent } from "@/v2/session-event.js";
+import { isRecord } from "#util/record.js";
+import { EventV2 } from "#v2/event.js";
+import { SessionEvent } from "#v2/session-event.js";
 import * as DateTime from "effect/DateTime";
 const DOOM_LOOP_THRESHOLD = 3;
 const log = Log.create({
@@ -278,7 +278,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
                 providerExecuted: true
               } : value.providerMetadata
             }));
-            const parts = MessageV2.parts(ctx.assistantMessage.id);
+            const parts = yield* Effect.promise(() => MessageV2.parts(ctx.assistantMessage.id));
             const recentParts = parts.slice(-DOOM_LOOP_THRESHOLD);
             if (recentParts.length !== DOOM_LOOP_THRESHOLD || !recentParts.every(part => part.type === "tool" && part.tool === value.toolName && part.state.status !== "pending" && JSON.stringify(part.state.input) === JSON.stringify(value.input))) {
               return;

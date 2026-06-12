@@ -1,6 +1,6 @@
 import { useRenderer } from "@opentui/solid";
 import { createSimpleContext } from "./helper.js";
-import { FormatError, FormatUnknownError } from "@/cli/error.js";
+import { FormatError, FormatUnknownError } from "#cli/error.js";
 import { win32FlushInputBuffer } from "../win32.js";
 export const {
   use: useExit,

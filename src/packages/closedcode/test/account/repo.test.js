@@ -2,12 +2,14 @@ import {  Effect, Layer, Option  } from "effect"
 import {  testEffect  } from "../lib/effect.js"
 import {  AccountRepo  } from "../../src/account/repo.js"
 import {  AccessToken, AccountID, OrgID, RefreshToken  } from "../../src/account/schema.js"
-import {  Database  } from "@/storage/db.js"
+import {  Database  } from "#storage/db.js"
 import {  expect, beforeAll  } from "@jest/globals"
-const truncate = Layer.effectDiscard(Effect.sync(() => {
-  const db = Database.Client();
-  db.run(/*sql*/`DELETE FROM account_state`);
-  db.run(/*sql*/`DELETE FROM account`);
+// The module under test moved to the Sequelize layer (ORM migration S3) —
+// fixtures must clean the SAME database (with :memory:, the legacy sync layer
+// and the async layer hold two different databases).
+const truncate = Layer.effectDiscard(Effect.promise(async () => {
+  await Database.useAsync(h => h.sequelize.query("DELETE FROM account_state"));
+  await Database.useAsync(h => h.sequelize.query("DELETE FROM account"));
 }));
 const it = testEffect(Layer.merge(AccountRepo.layer, truncate));
 it.live("list returns empty when no accounts exist", () => Effect.gen(function* () {

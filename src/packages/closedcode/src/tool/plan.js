@@ -1,15 +1,16 @@
+import { assetText } from "#util/asset.js";
 import path from "path";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
 import { Question } from "../question/index.js";
-import { Session } from "@/session/session.js";
+import { Session } from "#session/session.js";
 import { MessageV2 } from "../session/message-v2.js";
-import { Provider } from "@/provider/provider.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Provider } from "#provider/provider.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { MessageID, PartID } from "../session/schema.js";
-import EXIT_DESCRIPTION from "./plan-exit.txt";
-function getLastModel(sessionID) {
-  for (const item of MessageV2.stream(sessionID)) {
+const EXIT_DESCRIPTION = assetText("tool/plan-exit.txt");
+async function getLastModel(sessionID) {
+  for await (const item of MessageV2.stream(sessionID)) {
     if (item.info.role === "user" && item.info.model) return item.info.model;
   }
   return undefined;
@@ -46,7 +47,7 @@ export const PlanExitTool = Tool.define("plan_exit", Effect.gen(function* () {
         } : undefined
       });
       if (answers[0]?.[0] === "No") yield* new Question.RejectedError();
-      const model = getLastModel(ctx.sessionID) ?? (yield* provider.defaultModel());
+      const model = (yield* Effect.promise(() => getLastModel(ctx.sessionID))) ?? (yield* provider.defaultModel());
       const msg = {
         id: MessageID.ascending(),
         sessionID: ctx.sessionID,

@@ -1,5 +1,5 @@
 import {  Shell  } from "../../src/shell/shell.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  which  } from "../../src/util/which.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";

@@ -1,6 +1,6 @@
 import { Cache, Clock, Duration, Effect, Layer, Option, Schema, SchemaGetter, Context } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientError, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
-import { withTransientReadRetry } from "@/util/effect-http-client.js";
+import { withTransientReadRetry } from "#util/effect-http-client.js";
 import { AccountRepo } from "./repo.js";
 import { normalizeServerUrl } from "./url.js";
 import { AccessToken, AccountID, DeviceCode, RefreshToken, AccountServiceError, AccountTransportError, Login, Org, PollDenied, PollError, PollExpired, PollPending, PollSlow, PollSuccess, UserCode } from "./schema.js";

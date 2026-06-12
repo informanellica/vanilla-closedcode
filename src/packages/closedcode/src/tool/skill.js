@@ -1,3 +1,4 @@
+import { assetText } from "#util/asset.js";
 import path from "path";
 import { pathToFileURL } from "url";
 import { Effect, Schema } from "effect";
@@ -5,7 +6,7 @@ import * as Stream from "effect/Stream";
 import { Ripgrep } from "../file/ripgrep.js";
 import { Skill } from "../skill/index.js";
 import * as Tool from "./tool.js";
-import DESCRIPTION from "./skill.txt";
+const DESCRIPTION = assetText("tool/skill.txt");
 export const Parameters = Schema.Struct({
   name: Schema.String.annotate({
     description: "The name of the skill from available_skills"

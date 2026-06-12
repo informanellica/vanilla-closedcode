@@ -1,8 +1,8 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
 import { createResource, createMemo } from "solid-js";
-import { useDialog } from "@tui/ui/dialog.js";
-import { useSDK } from "@tui/context/sdk.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { useSDK } from "#tui/context/sdk.js";
 export function DialogSkill(props) {
   const dialog = useDialog();
   const sdk = useSDK();

@@ -3,7 +3,7 @@ import { createRequire } from "node:module";
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { readFile } from "node:fs/promises";
-import { readFileSync, realpathSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, realpathSync, statSync } from "node:fs";
 import { init as lexerInit, parse as lexerParse } from "es-module-lexer";
 // Electron 41 ESM does not expose the runtime API via `import` from "electron";
 // use a CommonJS require() so build-less execution from src works.
@@ -252,6 +252,56 @@ function resolveBare(spec, fromDir) {
   return join(pkgDir, rel);
 }
 const FS_ROOT_FWD = FS_ROOT.replace(/\\/g, "/");
+// ---- Stage 3: import map for first-party modules ---------------------------
+// First-party module routes (/src/, /renderer/, /@fs/ workspace trees) are
+// served VERBATIM: their relative imports are extension-complete, and their
+// bare / "@/" specifiers resolve through the import map injected into the
+// served HTML. Only files that physically live under node_modules/ still go
+// through the import-rewriting resolver (third-party CJS/UMD interop, deep
+// transitive specifiers, and module workers — import maps do not apply inside
+// workers). That resolver is the documented third-party interop wall.
+let importMapJson = null;
+async function buildImportMap() {
+  if (importMapJson) return importMapJson;
+  await lexerInit;
+  const roots = PACKAGED
+    ? [APP_SRC, DT_RENDERER, join(PKG_ROOT, "out/core-src"), join(PKG_ROOT, "out/sdk-src")]
+    : [APP_SRC, DT_RENDERER, join(REPO, "packages/core/src"), join(REPO, "packages/sdk/js/src")];
+  const bare = new Set();
+  const walk = dir => {
+    let entries;
+    try { entries = readdirSync(dir, { withFileTypes: true }); } catch { return; }
+    for (const e of entries) {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) { walk(p); continue; }
+      if (!e.name.endsWith(".js") && !e.name.endsWith(".mjs")) continue;
+      let code;
+      try { code = readFileSync(p, "utf8"); } catch { continue; }
+      let imports;
+      try { [imports] = lexerParse(code); } catch { continue; }
+      for (const imp of imports) {
+        const spec = imp.n;
+        if (!spec || imp.s < 0) continue;
+        if (/^\.\.?\//.test(spec) || /^(\/|[a-z][a-z0-9+.-]*:)/i.test(spec)) continue;
+        if (spec.startsWith("@/")) continue;
+        bare.add(spec);
+      }
+    }
+  };
+  for (const r of roots) walk(r);
+  const imports = { "@/": "/src/" };
+  for (const spec of [...bare].sort()) {
+    const abs = resolveBare(spec, APP_SRC);
+    const file = abs ? resolveFile(abs) : null;
+    const url = file ? toRouteUrl(file) : null;
+    if (url) imports[spec] = url;
+    // Unresolved specifiers (test-only/storybook imports collected from files
+    // the app never loads) are skipped — the map only needs runtime modules.
+    else process.stderr.write(`[oc-importmap] skip "${spec}" (unresolved)\n`);
+  }
+  importMapJson = JSON.stringify({ imports });
+  return importMapJson;
+}
 // Map any disk path under the repo (dev) or asar (packaged) to a canonical
 // /@fs/<repo-relative> URL. In packaged mode, asar-internal paths are reverse-
 // mapped to their repo-relative equivalents so URLs stay consistent between modes.
@@ -282,6 +332,19 @@ function toOcPath(abs) {
   }
   return null;
 }
+// Canonical first-party URL form: files under the app/renderer trees use the
+// route aliases (/src/, /renderer/) — the same form the HTML entry, relative
+// imports and the import map produce. Mixing them with /@fs/ double-
+// instantiates modules and breaks Solid context identity (white screen).
+function toRouteUrl(file) {
+  let real = file;
+  try { real = realpathSync(file); } catch {}
+  for (const [base, route] of [[APP_SRC, "/src/"], [DT_RENDERER, "/renderer/"]]) {
+    const rel = relative(base, real);
+    if (rel && !rel.startsWith("..") && !isAbsolute(rel)) return route + rel.replace(/\\/g, "/");
+  }
+  return toOcPath(real);
+}
 async function rewriteModule(code, diskPath) {
   await lexerInit;
   let imports, exports;
@@ -302,16 +365,17 @@ async function rewriteModule(code, diskPath) {
     const isRel = /^\.\.?\//.test(spec);
     const isAbs = /^(\/|[a-z][a-z0-9+.-]*:)/i.test(spec);
     let url = null;
-    if (spec.startsWith("@/")) url = toOcPath(resolveFile(join(APP_SRC, spec.slice(2))));
-    else if (isRel) {
+    if (spec.startsWith("@/")) {
+      url = toRouteUrl(resolveFile(join(APP_SRC, spec.slice(2))));
+    } else if (isRel) {
       // Resolve relative imports to a real file (handles extensionless / dir/index.js).
-      url = toOcPath(resolveFile(resolve(fromDir, spec)));
+      url = toRouteUrl(resolveFile(resolve(fromDir, spec)));
     } else if (isAbs) {
       continue;
     } else {
       const abs = resolveBare(spec, fromDir);
       const file = abs ? resolveFile(abs) : null;
-      url = file ? toOcPath(file) : null;
+      url = file ? toRouteUrl(file) : null;
       if (!abs) process.stderr.write(`[oc-resolve] MISS "${spec}" from ${diskPath}\n`);
       else if (!url) process.stderr.write(`[oc-resolve] OUTSIDE "${spec}" -> ${abs}\n`);
     }
@@ -380,8 +444,33 @@ export function registerRendererProtocol() {
     if (moduleRoute && (ext === ".js" || ext === ".mjs" || ext === ".cjs")) {
       try {
         const code = await readFile(disk, "utf8");
-        const rewritten = await rewriteModule(code, disk);
-        return new Response(rewritten, { headers: { "content-type": "text/javascript" } });
+        // First-party (workspace) modules are standard ESM: extension-complete
+        // relative imports + bare/"@/" specifiers covered by the import map —
+        // serve them verbatim. Files under node_modules/ keep the rewriter
+        // (CJS interop, deep transitive specifiers). The loading overlay's
+        // scripts (DT_RENDERER) are ALSO rewritten: loading.html must work
+        // before/without the import map (its module graph dying silently
+        // leaves the app stuck on the splash forever — main waits for
+        // loadingWindowComplete), so they keep the resolver treatment.
+        const rewrite = !relative(NODE_MODULES, disk).startsWith("..")
+          || !relative(DT_RENDERER, disk).startsWith("..");
+        const out = rewrite ? await rewriteModule(code, disk) : code;
+        return new Response(out, { headers: { "content-type": "text/javascript" } });
+      } catch (e) {
+        process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
+        return new Response("Not found", { status: 404 });
+      }
+    }
+    // Inject the generated import map into served HTML (before any module
+    // script) so first-party modules resolve bare specifiers natively.
+    if (ext === ".html") {
+      try {
+        let html = await readFile(disk, "utf8");
+        const tag = `<script type="importmap">${await buildImportMap()}</script>`;
+        html = html.includes("</title>")
+          ? html.replace("</title>", `</title>\n    ${tag}`)
+          : `${tag}\n${html}`;
+        return new Response(html, { headers: { "content-type": "text/html" } });
       } catch (e) {
         process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
         return new Response("Not found", { status: 404 });

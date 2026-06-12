@@ -1,20 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=tool-trigger><div data-slot=basic-tool-tool-trigger-content><div data-slot=basic-tool-tool-info>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-subtitle>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-action>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-arg>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-slot=collapsible-content data-animated>`);
-import { createEffect, For, Match, on, onCleanup, Show, Switch } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, on, onCleanup } from "solid-js";
 import { animate } from "motion";
 import { useI18n } from "../context/i18n.js";
 import { createStore } from "solid-js/store";
@@ -28,6 +13,45 @@ const SPRING = {
   visualDuration: 0.35,
   bounce: 0
 };
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
+// classList keys may hold several space-separated class names; toggle each.
+function toggleClassKey(el, key, value) {
+  for (const name of key.trim().split(/\s+/)) {
+    if (name) el.classList.toggle(name, value);
+  }
+}
+
+// Mirror solid-js/web classList(): diff `value` against the mutable `prev`
+// snapshot, removing classes that turned falsy and adding ones that turned
+// truthy. Empty keys (a nullish class prop collapses to "") are skipped.
+function applyClassList(el, value, prev) {
+  for (const key of Object.keys(prev)) {
+    if (!key || key === "undefined" || value[key]) continue;
+    toggleClassKey(el, key, false);
+    delete prev[key];
+  }
+  for (const key of Object.keys(value)) {
+    const classValue = !!value[key];
+    if (!key || key === "undefined" || prev[key] === classValue || !classValue) continue;
+    toggleClassKey(el, key, true);
+    prev[key] = classValue;
+  }
+  return prev;
+}
 export function BasicTool(props) {
   const [state, setState] = createStore({
     open: props.defaultOpen ?? false,
@@ -97,130 +121,139 @@ export function BasicTool(props) {
     if (props.locked && !value) return;
     setState("open", value);
   };
-  const trigger = () => (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild;
-    _$insert(_el$3, _$createComponent(Switch, {
-      get children() {
-        return [_$createComponent(Match, {
-          get when() {
-            return _$memo(() => !!isTriggerTitle(props.trigger))() && props.trigger;
-          },
-          children: title => (() => {
-            var _el$4 = _tmpl$4(),
-              _el$5 = _el$4.firstChild,
-              _el$6 = _el$5.firstChild;
-            _$insert(_el$6, _$createComponent(TextShimmer, {
-              get text() {
-                return title().title;
-              },
-              get active() {
-                return pending();
-              }
-            }));
-            _$insert(_el$5, _$createComponent(Show, {
-              get when() {
-                return !pending();
-              },
-              get children() {
-                return [_$createComponent(Show, {
-                  get when() {
-                    return title().subtitle;
-                  },
-                  get children() {
-                    var _el$7 = _tmpl$2();
-                    _el$7.$$click = e => {
-                      if (props.onSubtitleClick) {
-                        e.stopPropagation();
-                        props.onSubtitleClick();
-                      }
-                    };
-                    _$insert(_el$7, () => title().subtitle);
-                    _$effect(_$p => _$classList(_el$7, {
-                      [title().subtitleClass ?? ""]: !!title().subtitleClass,
-                      clickable: !!props.onSubtitleClick
-                    }, _$p));
-                    return _el$7;
-                  }
-                }), _$createComponent(Show, {
-                  get when() {
-                    return title().args?.length;
-                  },
-                  get children() {
-                    return _$createComponent(For, {
-                      get each() {
-                        return title().args;
-                      },
-                      children: arg => (() => {
-                        var _el$9 = _tmpl$5();
-                        _$insert(_el$9, arg);
-                        _$effect(_$p => _$classList(_el$9, {
-                          [title().argsClass ?? ""]: !!title().argsClass
-                        }, _$p));
-                        return _el$9;
-                      })()
-                    });
-                  }
-                })];
-              }
-            }), null);
-            _$insert(_el$4, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!!pending())() && title().action;
-              },
-              get children() {
-                var _el$8 = _tmpl$3();
-                _$insert(_el$8, () => title().action);
-                return _el$8;
-              }
-            }), null);
-            _$effect(_$p => _$classList(_el$6, {
-              [title().titleClass ?? ""]: !!title().titleClass
-            }, _$p));
-            return _el$4;
-          })()
-        }), _$createComponent(Match, {
-          when: true,
-          get children() {
-            return props.trigger;
-          }
-        })];
-      }
-    }));
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return _$memo(() => !!(props.children && !props.hideDetails && !props.locked))() && !pending();
-      },
-      get children() {
-        return _$createComponent(Collapsible.Arrow, {});
-      }
-    }), null);
-    _$effect(_p$ => {
-      var _v$ = props.clickable ? "true" : undefined,
-        _v$2 = props.hideDetails ? "true" : undefined;
-      _v$ !== _p$.e && _$setAttribute(_el$, "data-clickable", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$, "data-hide-details", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
+
+  // Builds the trigger row. Called once per Collapsible.Trigger mount, like
+  // the compiled output.
+  const trigger = () => {
+    const root = template(`<div data-component="tool-trigger"><div data-slot="basic-tool-tool-trigger-content"><div data-slot="basic-tool-tool-info"></div></div></div>`);
+    const info = root.firstChild.firstChild;
+
+    // Switch over props.trigger: structured title object vs raw content.
+    // `condition` mirrors the compiled Match condition (false | trigger
+    // object, identity equality, short-circuits the second read when not
+    // structured); `structured` is its truthiness, so the structured branch
+    // persists across trigger object identity changes (non-keyed Match) and
+    // only its inner effects re-run via the `title` accessor.
+    const condition = createMemo(() => isTriggerTitle(props.trigger) && props.trigger);
+    const structured = createMemo(() => !!condition());
+    const title = () => condition();
+    const buildStructured = () => {
+      const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div>`);
+      const main = box.firstChild;
+      const titleSpan = main.firstChild;
+      titleSpan.appendChild(createComponent(TextShimmer, {
+        get text() {
+          return title().title;
+        },
+        get active() {
+          return pending();
+        }
+      }));
+      const notPending = createMemo(() => !pending());
+
+      // Show(!pending): subtitle + args, appended after the title span. The
+      // inner regions are created per truthy period, matching the compiled
+      // Show children getter.
+      _solidInsert(main, createMemo(() => {
+        if (!notPending()) return undefined;
+
+        // Show(subtitle)
+        const hasSubtitle = createMemo(() => !!title().subtitle);
+        const subtitleRegion = createMemo(() => {
+          if (!hasSubtitle()) return undefined;
+          const span = template(`<span data-slot="basic-tool-tool-subtitle"></span>`);
+          // Replaces the compiled delegated click handler: stop the click from
+          // toggling the collapsible only when a subtitle handler exists.
+          span.addEventListener("click", e => {
+            if (props.onSubtitleClick) {
+              e.stopPropagation();
+              props.onSubtitleClick();
+            }
+          });
+          _solidInsert(span, () => title().subtitle);
+          const cls = {};
+          createRenderEffect(() => applyClassList(span, {
+            [title().subtitleClass ?? ""]: !!title().subtitleClass,
+            clickable: !!props.onSubtitleClick
+          }, cls));
+          return span;
+        });
+
+        // Show(args?.length) -> For over the args (keyed by item identity).
+        const hasArgs = createMemo(() => !!title().args?.length);
+        const argsRegion = createMemo(() => {
+          if (!hasArgs()) return undefined;
+          return createComponent(For, {
+            get each() {
+              return title().args;
+            },
+            children: arg => {
+              const span = template(`<span data-slot="basic-tool-tool-arg"></span>`);
+              _solidInsert(span, arg);
+              const cls = {};
+              createRenderEffect(() => applyClassList(span, {
+                [title().argsClass ?? ""]: !!title().argsClass
+              }, cls));
+              return span;
+            }
+          });
+        });
+        return [subtitleRegion, argsRegion];
+      }), null);
+
+      // Show(!pending && action), appended after the main row. The span is
+      // rebuilt only on truthiness flips; the action content stays live.
+      const actionVisible = createMemo(() => !!(notPending() && title().action));
+      _solidInsert(box, createMemo(() => {
+        if (!actionVisible()) return undefined;
+        const span = template(`<span data-slot="basic-tool-tool-action"></span>`);
+        _solidInsert(span, () => title().action);
+        return span;
+      }), null);
+      const titleCls = {};
+      createRenderEffect(() => applyClassList(titleSpan, {
+        [title().titleClass ?? ""]: !!title().titleClass
+      }, titleCls));
+      return box;
+    };
+    _solidInsert(info, createMemo(() => structured() ? buildStructured() : () => props.trigger));
+
+    // Show: collapsible arrow. The inner memo keeps status changes from
+    // re-evaluating props.children, like the compiled condition.
+    const arrowOn = createMemo(() => !!(props.children && !props.hideDetails && !props.locked));
+    const arrowVisible = createMemo(() => !!(arrowOn() && !pending()));
+    _solidInsert(root, createMemo(() => arrowVisible() ? createComponent(Collapsible.Arrow, {}) : undefined), null);
+
+    // Change-guarded data attributes, like the compiled effect().
+    let prevClickable;
+    let prevHide;
+    createRenderEffect(() => {
+      const clickable = props.clickable ? "true" : undefined;
+      const hide = props.hideDetails ? "true" : undefined;
+      if (clickable !== prevClickable) setAttr(root, "data-clickable", prevClickable = clickable);
+      if (hide !== prevHide) setAttr(root, "data-hide-details", prevHide = hide);
     });
-    return _el$;
-  })();
-  return _$createComponent(Collapsible, {
+    return root;
+  };
+  return createComponent(Collapsible, {
     get open() {
       return open();
     },
     onOpenChange: handleOpenChange,
     "class": "tool-collapsible",
     get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return props.triggerHref;
-        },
-        get fallback() {
-          return _$createComponent(Collapsible.Trigger, {
+      // Show(triggerHref): anchor trigger when a href exists, plain button
+      // trigger otherwise. `href` mirrors the compiled condition memo so the
+      // anchor updates in place while the value stays truthy.
+      const href = createMemo(() => props.triggerHref);
+      const hasHref = createMemo(() => !!href());
+      const triggerRegion = createMemo(() => {
+        if (hasHref()) {
+          return createComponent(Collapsible.Trigger, {
+            as: "a",
+            get href() {
+              return href();
+            },
             get ["data-hide-details"]() {
               return props.hideDetails ? "true" : undefined;
             },
@@ -231,12 +264,8 @@ export function BasicTool(props) {
               return trigger();
             }
           });
-        },
-        children: href => _$createComponent(Collapsible.Trigger, {
-          as: "a",
-          get href() {
-            return href();
-          },
+        }
+        return createComponent(Collapsible.Trigger, {
           get ["data-hide-details"]() {
             return props.hideDetails ? "true" : undefined;
           },
@@ -246,39 +275,40 @@ export function BasicTool(props) {
           get children() {
             return trigger();
           }
-        })
-      }), _$createComponent(Show, {
-        get when() {
-          return _$memo(() => !!(props.animated && props.children))() && !props.hideDetails;
-        },
-        get children() {
-          var _el$0 = _tmpl$6();
-          var _ref$ = contentRef;
-          typeof _ref$ === "function" ? _$use(_ref$, _el$0) : contentRef = _el$0;
-          _$setStyleProperty(_el$0, "height", initialOpen ? "auto" : "0px");
-          _$setStyleProperty(_el$0, "overflow", initialOpen ? "visible" : "hidden");
-          _$insert(_el$0, () => props.children);
-          return _el$0;
-        }
-      }), _$createComponent(Show, {
-        get when() {
-          return _$memo(() => !!(!props.animated && props.children))() && !props.hideDetails;
-        },
-        get children() {
-          return _$createComponent(Collapsible.Content, {
-            get children() {
-              return _$createComponent(Show, {
-                get when() {
-                  return !props.defer || ready();
-                },
-                get children() {
-                  return props.children;
-                }
-              });
-            }
-          });
-        }
-      })];
+        });
+      });
+
+      // Show(animated && children && !hideDetails): manually height-animated
+      // body, always mounted (the open effect above drives the animation).
+      const animatedOn = createMemo(() => !!(props.animated && props.children));
+      const animatedVisible = createMemo(() => !!(animatedOn() && !props.hideDetails));
+      const animatedRegion = createMemo(() => {
+        if (!animatedVisible()) return undefined;
+        const el = template(`<div data-slot="collapsible-content" data-animated></div>`);
+        contentRef = el;
+        el.style.setProperty("height", initialOpen ? "auto" : "0px");
+        el.style.setProperty("overflow", initialOpen ? "visible" : "hidden");
+        _solidInsert(el, () => props.children);
+        return el;
+      });
+
+      // Show(!animated && children && !hideDetails): Kobalte presence-gated
+      // Content (children resolve only while open), so the gate memo below is
+      // created once per Content mount.
+      const plainOn = createMemo(() => !!(!props.animated && props.children));
+      const plainVisible = createMemo(() => !!(plainOn() && !props.hideDetails));
+      const plainRegion = createMemo(() => {
+        if (!plainVisible()) return undefined;
+        return createComponent(Collapsible.Content, {
+          get children() {
+            // Show(!defer || ready()): props.children stays tracked here, so
+            // children re-render on their own reactive changes, like Show.
+            const gate = createMemo(() => !props.defer || ready());
+            return createMemo(() => gate() ? props.children : undefined);
+          }
+        });
+      });
+      return [triggerRegion, animatedRegion, plainRegion];
     }
   });
 }
@@ -298,7 +328,7 @@ function args(input) {
 }
 export function GenericTool(props) {
   const i18n = useI18n();
-  return _$createComponent(BasicTool, {
+  return createComponent(BasicTool, {
     icon: "mcp",
     get status() {
       return props.status;
@@ -317,4 +347,3 @@ export function GenericTool(props) {
     }
   });
 }
-_$delegateEvents(["click"]);

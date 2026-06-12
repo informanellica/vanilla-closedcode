@@ -1,10 +1,11 @@
+import { assetText } from "#util/asset.js";
 import * as Tool from "./tool.js";
-import DESCRIPTION from "./task.txt";
-import { Session } from "@/session/session.js";
+const DESCRIPTION = assetText("tool/task.txt");
+import { Session } from "#session/session.js";
 import { SessionID, MessageID } from "../session/schema.js";
 import { MessageV2 } from "../session/message-v2.js";
 import { Agent } from "../agent/agent.js";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Effect, Schema } from "effect";
 const id = "task";
 export const Parameters = Schema.Struct({
@@ -67,7 +68,7 @@ export const TaskTool = Tool.define(id, Effect.gen(function* () {
         permission: item
       })) ?? [])]
     }));
-    const msg = yield* Effect.sync(() => MessageV2.get({
+    const msg = yield* Effect.promise(() => MessageV2.get({
       sessionID: ctx.sessionID,
       messageID: ctx.messageID
     }));

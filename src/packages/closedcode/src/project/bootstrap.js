@@ -1,16 +1,16 @@
 import { Plugin } from "../plugin/index.js";
 import { Format } from "../format/index.js";
-import { LSP } from "@/lsp/lsp.js";
+import { LSP } from "#lsp/lsp.js";
 import { File } from "../file/index.js";
 import { Snapshot } from "../snapshot/index.js";
 import * as Project from "./project.js";
 import * as Vcs from "./vcs.js";
 import { Bus } from "../bus/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { FileWatcher } from "@/file/watcher.js";
-import { ShareNext } from "@/share/share-next.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { FileWatcher } from "#file/watcher.js";
+import { ShareNext } from "#share/share-next.js";
 import { Effect, Layer } from "effect";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import { Service } from "./bootstrap-service.js";
 export { Service } from "./bootstrap-service.js";
 export const layer = Layer.effect(Service, Effect.gen(function* () {

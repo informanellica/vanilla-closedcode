@@ -1,10 +1,10 @@
 import { Effect, Fiber, Layer, ManagedRuntime } from "effect";
 import * as Context from "effect/Context";
-import { Instance } from "@/project/instance.js";
-import { LocalContext } from "@/util/local-context.js";
+import { Instance } from "#project/instance.js";
+import { LocalContext } from "#util/local-context.js";
 import { InstanceRef, WorkspaceRef } from "./instance-ref.js";
 import * as Observability from "core/effect/observability";
-import { WorkspaceContext } from "@/control-plane/workspace-context.js";
+import { WorkspaceContext } from "#control-plane/workspace-context.js";
 import { memoMap } from "core/effect/memo-map";
 export function attachWith(effect, refs) {
   if (!refs.instance && !refs.workspace) return effect;

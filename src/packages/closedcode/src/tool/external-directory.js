@@ -1,7 +1,7 @@
 import path from "path";
 import { Effect } from "effect";
 import * as EffectLogger from "core/effect/logger";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { containsPath } from "../project/instance-context.js";
 import { AppFileSystem } from "core/filesystem";
 export const assertExternalDirectoryEffect = Effect.fn("Tool.assertExternalDirectory")(function* (ctx, target, options) {

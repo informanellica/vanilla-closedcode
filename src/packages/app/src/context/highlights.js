@@ -1,5 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createEffect, onCleanup } from "solid-js";
+import { createComponent, createEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSimpleContext } from "@/lib/context.js";
 import { useDialog } from "@/lib/dialog.js";
@@ -183,7 +182,7 @@ export const {
         timer = setTimeout(() => {
           timer = undefined;
           markSeen();
-          dialog.show(() => _$createComponent(DialogReleaseNotes, {
+          dialog.show(() => createComponent(DialogReleaseNotes, {
             highlights: highlights
           }));
         }, 500);

@@ -1,10 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="px-1.25 w-100 d-flex align-items-center gap-x-3"><span>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="text-secondary">`);
-import { Show } from "solid-js";
+import { createComponent } from "solid-js";
 import { useDialog } from "@/lib/dialog.js";
 import { popularProviders, useProviders } from "@/hooks/use-providers.js";
 import { Dialog } from "@/bs/dialog.js";
@@ -36,13 +30,63 @@ export const DialogSelectProvider = () => {
     id: p.id,
     name: p.name
   }));
-  return _$createComponent(Dialog, {
+
+  // Row renderer for List items. Items are static snapshots (List re-renders
+  // rows itself), so plain DOM construction is enough; user/provider strings
+  // go through textContent, never into markup.
+  const renderItem = i => {
+    const preset = localPresetMap.get(i.id);
+    const row = document.createElement("div");
+    row.className = "px-1.25 w-100 d-flex align-items-center gap-x-3";
+
+    row.appendChild(createComponent(ProviderIcon, {
+      "data-slot": "list-item-extra-icon",
+      id: preset ? "synthetic" : i.id
+    }));
+
+    const nameEl = document.createElement("span");
+    nameEl.textContent = i.name ?? "";
+    row.appendChild(nameEl);
+
+    if (preset) {
+      const descEl = document.createElement("div");
+      descEl.className = "text-secondary";
+      descEl.textContent = preset.description ?? "";
+      row.appendChild(descEl);
+    }
+
+    if (i.id === CUSTOM_ID) {
+      row.appendChild(createComponent(Tag, {
+        get children() {
+          return language.t("settings.providers.tag.custom");
+        }
+      }));
+    }
+
+    if (preset) {
+      row.appendChild(createComponent(Tag, {
+        children: "local"
+      }));
+    }
+
+    const noteValue = note(i.id);
+    if (noteValue) {
+      const noteEl = document.createElement("div");
+      noteEl.className = "text-secondary";
+      noteEl.textContent = noteValue;
+      row.appendChild(noteEl);
+    }
+
+    return row;
+  };
+
+  return createComponent(Dialog, {
     get title() {
       return language.t("command.provider.connect");
     },
     transition: true,
     get children() {
-      return _$createComponent(List, {
+      return createComponent(List, {
         get search() {
           return {
             placeholder: language.t("dialog.provider.search.placeholder"),
@@ -85,14 +129,14 @@ export const DialogSelectProvider = () => {
         onSelect: x => {
           if (!x) return;
           if (x.id === CUSTOM_ID) {
-            dialog.show(() => _$createComponent(DialogCustomProvider, {
+            dialog.show(() => createComponent(DialogCustomProvider, {
               back: "providers"
             }));
             return;
           }
           const preset = localPresetMap.get(x.id);
           if (preset) {
-            dialog.show(() => _$createComponent(DialogCustomProvider, {
+            dialog.show(() => createComponent(DialogCustomProvider, {
               back: "providers",
               get initial() {
                 return presetToFormState(preset);
@@ -100,65 +144,13 @@ export const DialogSelectProvider = () => {
             }));
             return;
           }
-          dialog.show(() => _$createComponent(DialogConnectProvider, {
+          dialog.show(() => createComponent(DialogConnectProvider, {
             get provider() {
               return x.id;
             }
           }));
         },
-        children: i => {
-          const preset = localPresetMap.get(i.id);
-          return (() => {
-            var _el$ = _tmpl$(),
-              _el$2 = _el$.firstChild;
-            _$insert(_el$, _$createComponent(ProviderIcon, {
-              "data-slot": "list-item-extra-icon",
-              get id() {
-                return preset ? "synthetic" : i.id;
-              }
-            }), _el$2);
-            _$insert(_el$2, () => i.name);
-            _$insert(_el$, _$createComponent(Show, {
-              when: preset,
-              children: p => (() => {
-                var _el$3 = _tmpl$2();
-                _$insert(_el$3, () => p().description);
-                return _el$3;
-              })()
-            }), null);
-            _$insert(_el$, _$createComponent(Show, {
-              get when() {
-                return i.id === CUSTOM_ID;
-              },
-              get children() {
-                return _$createComponent(Tag, {
-                  get children() {
-                    return language.t("settings.providers.tag.custom");
-                  }
-                });
-              }
-            }), null);
-            _$insert(_el$, _$createComponent(Show, {
-              when: preset,
-              get children() {
-                return _$createComponent(Tag, {
-                  children: "local"
-                });
-              }
-            }), null);
-            _$insert(_el$, _$createComponent(Show, {
-              get when() {
-                return note(i.id);
-              },
-              children: value => (() => {
-                var _el$4 = _tmpl$2();
-                _$insert(_el$4, value);
-                return _el$4;
-              })()
-            }), null);
-            return _el$;
-          })();
-        }
+        children: renderItem
       });
     }
   });

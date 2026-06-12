@@ -5,7 +5,7 @@ import {  Question  } from "../../src/question/index.js"
 import {  SessionID, MessageID  } from "../../src/session/schema.js"
 import {  Agent  } from "../../src/agent/agent.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
-import {  Truncate  } from "@/tool/truncate.js"
+import {  Truncate  } from "#tool/truncate.js"
 import {  describe, expect, beforeAll  } from "@jest/globals"
 const ctx = {
   sessionID: SessionID.make("ses_test-session"),

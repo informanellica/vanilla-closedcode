@@ -1,6 +1,6 @@
 import {  APICallError  } from "ai"
 import {  MessageV2  } from "../../src/session/message-v2.js"
-import {  ProviderTransform  } from "@/provider/transform.js"
+import {  ProviderTransform  } from "#provider/transform.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 import {  SessionID, MessageID, PartID  } from "../../src/session/schema.js"
 import {  Question  } from "../../src/question/index.js"

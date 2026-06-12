@@ -1,16 +1,19 @@
-import { template as _$template } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=popover-header>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=popover-body>`);
-import { Popover as Kobalte } from "@kobalte/core/popover";
-import { Show, createEffect, splitProps } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, mergeProps, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@solid-primitives/event-listener";
+import { Popover as Kobalte } from "@kobalte/core/popover";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export function Popover(props) {
   const i18n = useI18n();
   const [local, rest] = splitProps(props, ["trigger", "triggerAs", "triggerProps", "title", "description", "class", "classList", "style", "children", "portal", "open", "defaultOpen", "onOpenChange", "modal"]);
@@ -73,7 +76,12 @@ export function Popover(props) {
       capture: true
     });
   });
-  const content = () => _$createComponent(Kobalte.Content, {
+
+  // Kobalte Popover.Content is presence-gated (its result is a reactive
+  // accessor that only resolves while the popover is open), so its regions
+  // must go through solid's insert() to stay live; a one-shot appendChild
+  // would freeze them (established exception).
+  const content = () => createComponent(Kobalte.Content, {
     ref: el => setState("contentRef", el),
     "data-component": "popover-content",
     get classList() {
@@ -90,49 +98,54 @@ export function Popover(props) {
       setState("dismiss", null);
     },
     get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return local.title;
-        },
-        get children() {
-          var _el$ = _tmpl$();
-          _$insert(_el$, _$createComponent(Kobalte.Title, {
-            "data-slot": "popover-title",
-            get children() {
-              return local.title;
-            }
-          }), null);
-          _$insert(_el$, _$createComponent(Kobalte.CloseButton, {
-            "data-slot": "popover-close-button",
-            as: IconButton,
-            icon: "close",
-            variant: "ghost",
-            get ["aria-label"]() {
-              return i18n.t("ui.common.close");
-            }
-          }), null);
-          return _el$;
-        }
-      }), _$createComponent(Show, {
-        get when() {
-          return local.description;
-        },
-        get children() {
-          return _$createComponent(Kobalte.Description, {
-            "data-slot": "popover-description",
-            get children() {
-              return local.description;
-            }
-          });
-        }
-      }), (() => {
-        var _el$2 = _tmpl$2();
-        _$insert(_el$2, () => local.children);
-        return _el$2;
-      })()];
+      // Runs once per Content mount (it reads no signals directly). The memos
+      // below reproduce the compiled Show regions; Kobalte's own child
+      // insertion resolves them reactively, keeping stable siblings (the body
+      // div) mounted across header/description updates.
+
+      // Show(title), non-keyed: the header (title + close button) is rebuilt
+      // only when the title's truthiness flips, not on every title change;
+      // the title text itself stays live through the children getter.
+      const hasTitle = createMemo(() => !!local.title);
+      const headerRegion = createMemo(() => {
+        if (!hasTitle()) return undefined;
+        const header = template(`<div data-slot="popover-header"></div>`);
+        _solidInsert(header, createComponent(Kobalte.Title, {
+          "data-slot": "popover-title",
+          get children() {
+            return local.title;
+          }
+        }), null);
+        _solidInsert(header, createComponent(Kobalte.CloseButton, {
+          "data-slot": "popover-close-button",
+          as: IconButton,
+          icon: "close",
+          variant: "ghost",
+          get ["aria-label"]() {
+            return i18n.t("ui.common.close");
+          }
+        }), null);
+        return header;
+      });
+
+      // Show(description).
+      const hasDescription = createMemo(() => !!local.description);
+      const descriptionRegion = createMemo(() => hasDescription()
+        ? createComponent(Kobalte.Description, {
+          "data-slot": "popover-description",
+          get children() {
+            return local.description;
+          }
+        })
+        : undefined);
+
+      const body = template(`<div data-slot="popover-body"></div>`);
+      _solidInsert(body, () => local.children);
+
+      return [headerRegion, descriptionRegion, body];
     }
   });
-  return _$createComponent(Kobalte, _$mergeProps({
+  return createComponent(Kobalte, mergeProps({
     gutter: 4
   }, rest, {
     get open() {
@@ -143,7 +156,18 @@ export function Popover(props) {
       return local.modal ?? false;
     },
     get children() {
-      return [_$createComponent(Kobalte.Trigger, _$mergeProps({
+      // Show(portal ?? true) with fallback, non-keyed: portal vs inline
+      // content is decided by truthiness; each flip re-creates the Content,
+      // matching the compiled Show.
+      const usePortal = createMemo(() => !!(local.portal ?? true));
+      const contentRegion = createMemo(() => usePortal()
+        ? createComponent(Kobalte.Portal, {
+          get children() {
+            return content();
+          }
+        })
+        : content());
+      return [createComponent(Kobalte.Trigger, mergeProps({
         ref: el => setState("triggerRef", el),
         get as() {
           return local.triggerAs ?? "div";
@@ -153,21 +177,7 @@ export function Popover(props) {
         get children() {
           return local.trigger;
         }
-      })), _$createComponent(Show, {
-        get when() {
-          return local.portal ?? true;
-        },
-        get fallback() {
-          return content();
-        },
-        get children() {
-          return _$createComponent(Kobalte.Portal, {
-            get children() {
-              return content();
-            }
-          });
-        }
-      })];
+      })), contentRegion];
     }
   }));
 }

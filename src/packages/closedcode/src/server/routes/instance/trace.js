@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 
 // Build the base span attributes for an HTTP handler: method, path, and every
 // matched route param. Names follow OTel attribute-naming guidance:

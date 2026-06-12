@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import z from "zod";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 const ZedEditorRowSchema = z.object({
   item_kind: z.string(),
   editor_id: z.number().nullable(),

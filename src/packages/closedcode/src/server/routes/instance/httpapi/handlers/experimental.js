@@ -1,13 +1,13 @@
-import { Account } from "@/account/account.js";
-import { Agent } from "@/agent/agent.js";
-import { Config } from "@/config/config.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { MCP } from "@/mcp/index.js";
-import { Project } from "@/project/project.js";
-import { Session } from "@/session/session.js";
-import { ToolRegistry } from "@/tool/registry.js";
-import * as EffectZod from "@/util/effect-zod.js";
-import { Worktree } from "@/worktree/index.js";
+import { Account } from "#account/account.js";
+import { Agent } from "#agent/agent.js";
+import { Config } from "#config/config.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { MCP } from "#mcp/index.js";
+import { Project } from "#project/project.js";
+import { Session } from "#session/session.js";
+import { ToolRegistry } from "#tool/registry.js";
+import * as EffectZod from "#util/effect-zod.js";
+import { Worktree } from "#worktree/index.js";
 import { Effect, Option } from "effect";
 import * as HttpServerResponse from "effect/unstable/http/HttpServerResponse";
 import { HttpApiBuilder, HttpApiError } from "effect/unstable/httpapi";
@@ -86,7 +86,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
   });
   const session = Effect.fn("ExperimentalHttpApi.session")(function* (ctx) {
     const limit = ctx.query.limit ?? 100;
-    const sessions = Array.from(Session.listGlobal({
+    const sessions = yield* Effect.promise(() => Array.fromAsync(Session.listGlobal({
       directory: ctx.query.directory,
       roots: ctx.query.roots,
       start: ctx.query.start,
@@ -94,7 +94,7 @@ export const experimentalHandlers = HttpApiBuilder.group(InstanceHttpApi, "exper
       search: ctx.query.search,
       limit: limit + 1,
       archived: ctx.query.archived
-    }));
+    })));
     const list = sessions.length > limit ? sessions.slice(0, limit) : sessions;
     return HttpServerResponse.jsonUnsafe(list, {
       headers: sessions.length > limit && list.length > 0 ? {

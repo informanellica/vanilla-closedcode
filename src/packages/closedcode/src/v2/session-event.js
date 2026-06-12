@@ -1,11 +1,11 @@
-import { SessionID } from "@/session/schema.js";
-import { NonNegativeInt } from "@/util/schema.js";
+import { SessionID } from "#session/schema.js";
+import { NonNegativeInt } from "#util/schema.js";
 import { EventV2 } from "./event.js";
 import { FileAttachment, Prompt } from "./session-prompt.js";
 import { Schema } from "effect";
 export { FileAttachment };
 import { ToolOutput } from "./tool-output.js";
-import { ModelID, ProviderID } from "@/provider/schema.js";
+import { ModelID, ProviderID } from "#provider/schema.js";
 import { V2Schema } from "./schema.js";
 export const Source = Schema.Struct({
   start: NonNegativeInt,

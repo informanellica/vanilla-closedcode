@@ -1,10 +1,10 @@
 import path from "path";
 import { applyEdits, modify, parse as parseJsonc, printParseErrorCode } from "jsonc-parser";
-import * as ConfigPaths from "@/config/paths.js";
+import * as ConfigPaths from "#config/paths.js";
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Flock } from "core/util/flock";
-import { isRecord } from "@/util/record.js";
+import { isRecord } from "#util/record.js";
 import { parsePluginSpecifier, readPackageThemes, readPluginPackage, resolvePluginTarget } from "./shared.js";
 const defaultInstallDeps = {
   resolve: spec => resolvePluginTarget(spec)

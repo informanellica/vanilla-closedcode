@@ -1,7 +1,7 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
-import { Git } from "@/git/index.js";
+import { Git } from "#git/index.js";
 import { Effect, Layer, Context, Schema, Scope } from "effect";
 import * as Stream from "effect/Stream";
 import { formatPatch, structuredPatch } from "diff";
@@ -13,8 +13,8 @@ import { containsPath } from "../project/instance-context.js";
 import * as Log from "core/util/log";
 import { Protected } from "./protected.js";
 import { Ripgrep } from "./ripgrep.js";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
 export const Info = Schema.Struct({
   path: Schema.String,
   added: NonNegativeInt,

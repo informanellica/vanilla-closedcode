@@ -1,25 +1,9 @@
-import { template as _$template } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span class=text-white>v`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span class="d-flex align-items-center gap-2"><span>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div><div class="d-flex flex-column align-items-start min-w-0 w-100"><div class="d-flex flex-row align-items-center gap-2 min-w-0 w-100"><span>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<span>v`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="d-flex flex-row gap-3"><span>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<span class=text-secondary>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<span class=text-body-secondary>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<span class=text-secondary>••••••••`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div>`);
 import { Tooltip } from "@/bs/tooltip.js";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
-import { children, createEffect, createMemo, createSignal, onMount, Show } from "solid-js";
+import { children, createComponent, createEffect, createMemo, createRenderEffect, createSignal, onMount } from "solid-js";
 import { useLanguage } from "@/context/language.js";
 import { serverName } from "@/context/server.js";
+
 export function ServerRow(props) {
   const language = useLanguage();
   const [truncated, setTruncated] = createSignal(false);
@@ -42,120 +26,315 @@ export function ServerRow(props) {
     createResizeObserver([nameRef, versionRef], check);
     check();
   });
-  const tooltipValue = () => (() => {
-    var _el$ = _tmpl$2(),
-      _el$2 = _el$.firstChild;
-    _$insert(_el$2, () => serverName(props.conn, true));
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return props.status?.version;
-      },
-      get children() {
-        var _el$3 = _tmpl$(),
-          _el$4 = _el$3.firstChild;
-        _$insert(_el$3, () => props.status?.version, null);
-        return _el$3;
-      }
-    }), null);
-    return _el$;
-  })();
+
+  // Tooltip content: full server name + optional version. Rebuilt on each call
+  // (the Tooltip reads `value` lazily when it opens and clones the node), so
+  // here we just snapshot the current signal values into a fresh subtree.
+  const tooltipValue = () => {
+    const root = document.createElement("span");
+    root.className = "d-flex align-items-center gap-2";
+    const nameSpan = document.createElement("span");
+    nameSpan.textContent = serverName(props.conn, true);
+    root.appendChild(nameSpan);
+    // <Show when={props.status?.version}>: only append the version span when set.
+    const version = props.status?.version;
+    if (version) {
+      const versionSpan = document.createElement("span");
+      versionSpan.className = "text-white";
+      versionSpan.textContent = `v${version}`;
+      root.appendChild(versionSpan);
+    }
+    return root;
+  };
+
+  // `children()` memoizes the badge accessor like the compiled output.
   const badge = children(() => props.badge);
-  return _$createComponent(Tooltip, {
-    "class": "flex-1 min-w-0",
+
+  // Static skeleton mirroring _tmpl$3.
+  const root = document.createElement("div");
+  const column = document.createElement("div");
+  column.className = "d-flex flex-column align-items-start min-w-0 w-100";
+  const nameRow = document.createElement("div");
+  nameRow.className = "d-flex flex-row align-items-center gap-2 min-w-0 w-100";
+  const nameSpan = document.createElement("span");
+  nameRow.appendChild(nameSpan);
+  column.appendChild(nameRow);
+  root.appendChild(column);
+
+  // ref to the name span (used for truncation measurement).
+  nameRef = nameSpan;
+
+  // Name text (signal-backed).
+  createRenderEffect(() => {
+    const value = name();
+    nameSpan.textContent = value == null ? "" : String(value);
+  });
+
+  // Badge / version slot inside nameRow: <Show when={badge()} fallback={
+  //   <Show when={status?.version}>version span</Show>}>badge</Show>.
+  // When the badge is present it wins; otherwise show the version span when a
+  // version exists. versionRef is rebound to whatever version span is mounted.
+  const badgeSlot = document.createTextNode("");
+  nameRow.appendChild(badgeSlot);
+  let prevBadgeKey;
+  let versionEl = null;
+  // Bumped whenever a fresh version span mounts, so the (separately tracked)
+  // version-class effect re-binds its target like the compiled nested effect.
+  const [versionEpoch, setVersionEpoch] = createSignal(0);
+  createRenderEffect(() => {
+    const badgeNode = badge();
+    if (badgeNode) {
+      // Badge branch: render the badge node, drop any version span.
+      if (prevBadgeKey !== "badge") {
+        prevBadgeKey = "badge";
+        versionEl = null;
+        versionRef = undefined;
+        setVersionEpoch(e => e + 1);
+      }
+      replaceSlot(badgeSlot, badgeNode);
+      return;
+    }
+    const version = props.status?.version;
+    if (version) {
+      if (prevBadgeKey !== "version") {
+        prevBadgeKey = "version";
+        // _tmpl$4 is `<span>v` → a span whose static text is "v" followed by
+        // the live version value.
+        versionEl = document.createElement("span");
+        versionRef = versionEl;
+        versionEl.appendChild(document.createTextNode("v"));
+        const versionText = document.createTextNode("");
+        versionEl.appendChild(versionText);
+        versionEl._text = versionText;
+        replaceSlot(badgeSlot, versionEl);
+        setVersionEpoch(e => e + 1);
+      }
+      versionEl._text.textContent = props.status?.version ?? "";
+    } else {
+      if (prevBadgeKey !== "empty") {
+        prevBadgeKey = "empty";
+        versionEl = null;
+        versionRef = undefined;
+        replaceSlot(badgeSlot, null);
+        setVersionEpoch(e => e + 1);
+      }
+    }
+  });
+
+  // versionClass for the version span (change-guarded, like the compiled
+  // effect). Re-runs when versionClass changes OR a new version span mounts.
+  // A new target resets the guard so the fresh span always gets its class.
+  let prevVersionClass;
+  let prevVersionTarget = null;
+  createRenderEffect(() => {
+    versionEpoch();
+    const target = versionEl;
+    const next = `${props.versionClass ?? "text-secondary fw-normal truncate"} min-w-0`;
+    if (target !== prevVersionTarget) {
+      prevVersionTarget = target;
+      prevVersionClass = undefined;
+    }
+    if (!target) return;
+    if (next !== prevVersionClass) {
+      prevVersionClass = next;
+      target.className = next;
+    }
+  });
+
+  // Credentials slot inside the column (after nameRow): shown only for http
+  // connections when showCredentials is set.
+  const credSlot = document.createTextNode("");
+  column.appendChild(credSlot);
+  let prevCred;
+  let credUserText = null;
+  let credUserKind;
+  let credPasswordEl = null;
+  createRenderEffect(() => {
+    const show = !!(props.showCredentials && props.conn.type === "http") && props.conn;
+    if (!show) {
+      if (prevCred !== false) {
+        prevCred = false;
+        credUserText = null;
+        credUserKind = undefined;
+        credPasswordEl = null;
+        replaceSlot(credSlot, null);
+      }
+      return;
+    }
+    if (prevCred !== true) {
+      prevCred = true;
+      const wrap = document.createElement("div");
+      wrap.className = "d-flex flex-row gap-3";
+      // First child: username span (or "no username" placeholder).
+      const userSlot = document.createElement("span");
+      wrap.appendChild(userSlot);
+      // Second child: masked password span when a password is present.
+      const passSlot = document.createTextNode("");
+      wrap.appendChild(passSlot);
+      wrap._userSlot = userSlot;
+      wrap._passSlot = passSlot;
+      credSlot._wrap = wrap;
+      credUserText = null;
+      credUserKind = undefined;
+      credPasswordEl = null;
+      replaceSlot(credSlot, wrap);
+    }
+    const wrap = credSlot._wrap;
+    const conn = props.conn;
+    // Username: <Show when={username}> name span </Show> else "no username".
+    const hasUser = !!conn.http.username;
+    if (hasUser) {
+      if (credUserKind !== "user") {
+        credUserKind = "user";
+        const span = document.createElement("span");
+        span.className = "text-secondary";
+        const text = document.createTextNode("");
+        span.appendChild(text);
+        credUserText = text;
+        wrap._userSlot.replaceChildren(span);
+      }
+      credUserText.textContent = conn.http.username ?? "";
+    } else {
+      if (credUserKind !== "empty") {
+        credUserKind = "empty";
+        const span = document.createElement("span");
+        span.className = "text-body-secondary";
+        const text = document.createTextNode("");
+        span.appendChild(text);
+        credUserText = text;
+        wrap._userSlot.replaceChildren(span);
+      }
+      // language.t is live across language switch.
+      credUserText.textContent = language.t("server.row.noUsername");
+    }
+    // Password: masked dots only when a password is present.
+    const hasPassword = !!conn.http.password;
+    if (hasPassword) {
+      if (!credPasswordEl) {
+        credPasswordEl = document.createElement("span");
+        credPasswordEl.className = "text-secondary";
+        credPasswordEl.textContent = "••••••••";
+        replaceSlot(wrap._passSlot, credPasswordEl);
+      }
+    } else if (credPasswordEl) {
+      credPasswordEl = null;
+      replaceSlot(wrap._passSlot, null);
+    }
+  });
+
+  // props.children appended after the column (root's last slot).
+  const childrenSlot = document.createTextNode("");
+  root.appendChild(childrenSlot);
+  let prevChildrenNodes = [];
+  createRenderEffect(() => {
+    let value = props.children;
+    while (typeof value === "function") value = value();
+    prevChildrenNodes = insertChildren(root, childrenSlot, prevChildrenNodes, value);
+  });
+
+  // Root + name span dynamic classes (change-guarded, mirroring the compiled
+  // effect with its e/t/a slots).
+  let prevClass;
+  let prevDimmed;
+  let prevNameClass;
+  createRenderEffect(() => {
+    const nextClass = props.class;
+    const nextDimmed = !!props.dimmed;
+    const nextNameClass = `${props.nameClass ?? "truncate"} min-w-0`;
+    if (nextClass !== prevClass) {
+      prevClass = nextClass;
+      if (nextClass == null) root.removeAttribute("class");
+      else root.className = nextClass;
+    }
+    if (nextDimmed !== prevDimmed) {
+      prevDimmed = nextDimmed;
+      root.classList.toggle("opacity-50", nextDimmed);
+    }
+    if (nextNameClass !== prevNameClass) {
+      prevNameClass = nextNameClass;
+      nameSpan.className = nextNameClass;
+    }
+  });
+
+  // inactive: skip the tooltip wrapper when the row is neither truncated nor a
+  // custom display name. Read live so Tooltip's early-return branch matches the
+  // compiled `!truncated() && !displayName` memo expression.
+  return createComponent(Tooltip, {
+    class: "flex-1 min-w-0",
     get value() {
       return tooltipValue();
     },
+    // Preserve the original object value verbatim (behavior-identical to the
+    // compiled output); the bs/ Tooltip consumes contentStyle as-is.
     contentStyle: {
       "max-width": "none",
       "white-space": "nowrap"
     },
     placement: "top-start",
     get inactive() {
-      return _$memo(() => !!!truncated())() && !props.conn.displayName;
+      return !truncated() && !props.conn.displayName;
     },
-    get children() {
-      var _el$5 = _tmpl$3(),
-        _el$6 = _el$5.firstChild,
-        _el$7 = _el$6.firstChild,
-        _el$8 = _el$7.firstChild;
-      var _ref$ = nameRef;
-      typeof _ref$ === "function" ? _$use(_ref$, _el$8) : nameRef = _el$8;
-      _$insert(_el$8, name);
-      _$insert(_el$7, _$createComponent(Show, {
-        get when() {
-          return badge();
-        },
-        get fallback() {
-          return _$createComponent(Show, {
-            get when() {
-              return props.status?.version;
-            },
-            get children() {
-              var _el$9 = _tmpl$4(),
-                _el$0 = _el$9.firstChild;
-              var _ref$2 = versionRef;
-              typeof _ref$2 === "function" ? _$use(_ref$2, _el$9) : versionRef = _el$9;
-              _$insert(_el$9, () => props.status?.version, null);
-              _$effect(() => _$className(_el$9, `${props.versionClass ?? "text-secondary fw-normal truncate"} min-w-0`));
-              return _el$9;
-            }
-          });
-        },
-        children: badge => badge()
-      }), null);
-      _$insert(_el$6, _$createComponent(Show, {
-        get when() {
-          return _$memo(() => !!(props.showCredentials && props.conn.type === "http"))() && props.conn;
-        },
-        children: conn => (() => {
-          var _el$1 = _tmpl$5(),
-            _el$10 = _el$1.firstChild;
-          _$insert(_el$10, (() => {
-            var _c$ = _$memo(() => !!conn().http.username);
-            return () => _c$() ? (() => {
-              var _el$11 = _tmpl$6();
-              _$insert(_el$11, () => conn().http.username);
-              return _el$11;
-            })() : (() => {
-              var _el$12 = _tmpl$7();
-              _$insert(_el$12, () => language.t("server.row.noUsername"));
-              return _el$12;
-            })();
-          })());
-          _$insert(_el$1, (() => {
-            var _c$2 = _$memo(() => !!conn().http.password);
-            return () => _c$2() && _tmpl$8();
-          })(), null);
-          return _el$1;
-        })()
-      }), null);
-      _$insert(_el$5, () => props.children, null);
-      _$effect(_p$ => {
-        var _v$ = props.class,
-          _v$2 = !!props.dimmed,
-          _v$3 = `${props.nameClass ?? "truncate"} min-w-0`;
-        _v$ !== _p$.e && _$className(_el$5, _p$.e = _v$);
-        _v$2 !== _p$.t && _el$5.classList.toggle("opacity-50", _p$.t = _v$2);
-        _v$3 !== _p$.a && _$className(_el$8, _p$.a = _v$3);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined,
-        a: undefined
-      });
-      return _el$5;
-    }
+    children: root
   });
 }
+
+// Replace the node currently rendered at `slot` with `node` (or nothing).
+// `slot` is a marker text node that stays in the DOM; the rendered node is
+// tracked on slot._node.
+function replaceSlot(slot, node) {
+  const parent = slot.parentNode;
+  if (slot._node && slot._node.parentNode === parent) slot._node.remove();
+  slot._node = null;
+  if (node == null || node === false) return;
+  parent.insertBefore(node, slot);
+  slot._node = node;
+}
+
+// Insert/replace a (possibly array) children value before `marker`, returning
+// the new node list so the next run can clean up exactly what it inserted.
+function insertChildren(parent, marker, prev, value) {
+  for (const node of prev) {
+    if (node.parentNode === parent) node.remove();
+  }
+  const next = [];
+  const append = v => {
+    if (v == null || v === false || v === true) return;
+    if (Array.isArray(v)) {
+      v.forEach(append);
+      return;
+    }
+    if (v instanceof Node) {
+      parent.insertBefore(v, marker);
+      next.push(v);
+      return;
+    }
+    const text = document.createTextNode(String(v));
+    parent.insertBefore(text, marker);
+    next.push(text);
+  };
+  append(value);
+  return next;
+}
+
 export function ServerHealthIndicator(props) {
-  return (() => {
-    var _el$14 = _tmpl$9();
-    _$effect(_$p => _$classList(_el$14, {
+  // <div> whose classList toggles a health-colored dot. Mirrors the compiled
+  // the compiled classList: base class always on, color depends on health.
+  const el = document.createElement("div");
+  createRenderEffect(() => {
+    const classes = {
       "size-1.5 rounded-circle shrink-0": true,
       "bg-success": props.health?.healthy === true,
       "bg-danger": props.health?.healthy === false,
       "bg-secondary": props.health === undefined
-    }, _$p));
-    return _el$14;
-  })();
+    };
+    const tokens = [];
+    for (const key of Object.keys(classes)) {
+      if (!key || !classes[key]) continue;
+      for (const token of key.split(/\s+/)) {
+        if (token) tokens.push(token);
+      }
+    }
+    el.className = tokens.join(" ");
+  });
+  return el;
 }

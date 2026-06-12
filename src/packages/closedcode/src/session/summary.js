@@ -1,9 +1,9 @@
 import { Effect, Layer, Context, Schema } from "effect";
-import { Bus } from "@/bus/index.js";
-import { Snapshot } from "@/snapshot/index.js";
-import { Storage } from "@/storage/storage.js";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { Bus } from "#bus/index.js";
+import { Snapshot } from "#snapshot/index.js";
+import { Storage } from "#storage/storage.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 import * as Session from "./session.js";
 import { SessionID, MessageID } from "./schema.js";
 function unquoteGitPath(input) {

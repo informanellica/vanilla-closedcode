@@ -2,7 +2,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { Flag } from "core/flag/flag";
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
+import { Filesystem } from "#util/filesystem.js";
 import { Flock } from "core/util/flock";
 import { parsePluginSpecifier, pluginSource } from "./shared.js";
 function storePath() {

@@ -1,12 +1,12 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createMemo, onMount } from "solid-js";
-import { useSync } from "@tui/context/sync.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { Locale } from "@/util/locale.js";
-import { useSDK } from "@tui/context/sdk.js";
-import { useRoute } from "@tui/context/route.js";
+import { useSync } from "#tui/context/sync.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { Locale } from "#util/locale.js";
+import { useSDK } from "#tui/context/sdk.js";
+import { useRoute } from "#tui/context/route.js";
 import { useDialog } from "../../ui/dialog.js";
-import { strip } from "@tui/component/prompt/part.js";
+import { strip } from "#tui/component/prompt/part.js";
 export function DialogForkFromTimeline(props) {
   const sync = useSync();
   const dialog = useDialog();

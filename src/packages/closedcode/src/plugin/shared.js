@@ -2,8 +2,8 @@ import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 import npa from "npm-package-arg";
 import semver from "semver";
-import { Filesystem } from "@/util/filesystem.js";
-import { isRecord } from "@/util/record.js";
+import { Filesystem } from "#util/filesystem.js";
+import { isRecord } from "#util/record.js";
 import { Npm } from "core/npm";
 export const DEPRECATED_PLUGIN_PACKAGES = ["opencode-openai-codex-auth", "opencode-copilot-auth"];
 export function isDeprecatedPlugin(spec) {

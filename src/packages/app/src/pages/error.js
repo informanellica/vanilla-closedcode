@@ -1,17 +1,8 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="relative flex-1 h-screen w-screen min-h-0 d-flex flex-column align-items-center justify-content-center bg-body font-sans"><div class="w-2/3 max-w-3xl d-flex flex-column align-items-center justify-content-center gap-8"><div class="d-flex flex-column align-items-center gap-2 text-center"><h1 class="text-lg font-medium text-body-emphasis"></h1><p class="text-sm text-secondary"></p></div><div class="d-flex flex-row align-items-center justify-content-center gap-3 flex-wrap max-w-64"></div><div class="d-flex flex-column align-items-center gap-2"><div class="d-flex align-items-center justify-content-center gap-1"><button type=button class="d-flex align-items-center text-primary gap-1"><div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<p class="text-xs text-danger text-center max-w-2xl">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<p class="text-xs text-secondary">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<button type=button class="d-flex align-items-center text-primary gap-1"><div>`);
 import { TextField } from "@/bs/text-field.js";
 import * as Sentry from "@sentry/solid";
 import { Logo } from "@/vendor/ui/components/logo.js";
 import { Button } from "@/bs/button.js";
-import { createSignal, Show } from "solid-js";
+import { createComponent, createRenderEffect, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { usePlatform } from "@/context/platform.js";
 import { useLanguage } from "@/context/language.js";
@@ -211,6 +202,16 @@ function formatErrorChain(error, t, depth = 0, parentMessage) {
 function formatError(error, t) {
   return formatErrorChain(error, t, 0);
 }
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid template). Static markup only — error/translated
+// strings are always assigned via textContent, never interpolated.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export const ErrorPage = props => {
   const platform = usePlatform();
   const language = useLanguage();
@@ -237,139 +238,164 @@ export const ErrorPage = props => {
       setStore("actionError", formatError(err, language.t));
     });
   }
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.nextSibling,
-      _el$6 = _el$3.nextSibling,
-      _el$7 = _el$6.nextSibling,
-      _el$8 = _el$7.firstChild,
-      _el$9 = _el$8.firstChild,
-      _el$0 = _el$9.firstChild;
-    _$insert(_el$2, _$createComponent(Logo, {
-      "class": "w-58.5 opacity-12 shrink-0"
-    }), _el$3);
-    _$insert(_el$4, () => language.t("error.page.title"));
-    _$insert(_el$5, () => language.t("error.page.description"));
-    _$insert(_el$2, _$createComponent(TextField, {
-      get value() {
-        return formatError(props.error, language.t);
-      },
+
+  // Static skeleton. The `display: contents` slots host reactive sections
+  // without introducing extra flex items, so gaps/wrapping match the original
+  // flat children list.
+  const root = template(`<div class="relative flex-1 h-screen w-screen min-h-0 d-flex flex-column align-items-center justify-content-center bg-body font-sans"><div class="w-2/3 max-w-3xl d-flex flex-column align-items-center justify-content-center gap-8" data-slot="main"><div class="d-flex flex-column align-items-center gap-2 text-center"><h1 class="text-lg font-medium text-body-emphasis" data-slot="title"></h1><p class="text-sm text-secondary" data-slot="description"></p></div><div style="display: contents" data-slot="details"></div><div class="d-flex flex-row align-items-center justify-content-center gap-3 flex-wrap max-w-64"><div style="display: contents" data-slot="action-restart"></div><div style="display: contents" data-slot="action-report"></div><div style="display: contents" data-slot="action-update"></div></div><div style="display: contents" data-slot="action-error"></div><div class="d-flex flex-column align-items-center gap-2"><div class="d-flex align-items-center justify-content-center gap-1" data-slot="report-row"><button type="button" class="d-flex align-items-center text-primary gap-1" data-slot="discord"><div data-slot="discord-label"></div></button><button type="button" class="d-flex align-items-center text-primary gap-1" data-slot="github"><div data-slot="github-label"></div></button></div><div style="display: contents" data-slot="version"></div></div></div></div>`);
+  const main = root.querySelector('[data-slot="main"]');
+  const titleEl = root.querySelector('[data-slot="title"]');
+  const descriptionEl = root.querySelector('[data-slot="description"]');
+  const detailsSlot = root.querySelector('[data-slot="details"]');
+  const restartSlot = root.querySelector('[data-slot="action-restart"]');
+  const reportSlot = root.querySelector('[data-slot="action-report"]');
+  const updateSlot = root.querySelector('[data-slot="action-update"]');
+  const actionErrorSlot = root.querySelector('[data-slot="action-error"]');
+  const reportRow = root.querySelector('[data-slot="report-row"]');
+  const discordBtn = root.querySelector('[data-slot="discord"]');
+  const discordLabel = root.querySelector('[data-slot="discord-label"]');
+  const githubBtn = root.querySelector('[data-slot="github"]');
+  const githubLabel = root.querySelector('[data-slot="github-label"]');
+  const versionSlot = root.querySelector('[data-slot="version"]');
+
+  // Brand watermark before the title block.
+  main.insertBefore(createComponent(Logo, {
+    "class": "w-58.5 opacity-12 shrink-0"
+  }), main.firstElementChild);
+
+  // Render-effects mirror the compiled insert() timing (synchronous on first
+  // run) and keep every translated string live: at boot the locale dictionary
+  // may resolve after this page is already shown.
+  createRenderEffect(() => {
+    titleEl.textContent = language.t("error.page.title");
+  });
+  createRenderEffect(() => {
+    descriptionEl.textContent = language.t("error.page.description");
+  });
+
+  // Error details. The vanilla TextField reads its props once, so rebuild it
+  // when the locale dictionary changes to keep value/label translated.
+  createRenderEffect(() => {
+    detailsSlot.replaceChildren(createComponent(TextField, {
+      value: formatError(props.error, language.t),
       readOnly: true,
       copyable: true,
       multiline: true,
       "class": "max-h-96 w-full font-mono text-xs no-scrollbar",
-      get label() {
-        return language.t("error.page.details.label");
-      },
+      label: language.t("error.page.details.label"),
       hideLabel: true
-    }), _el$6);
-    _$insert(_el$6, _$createComponent(Button, {
+    }));
+  });
+
+  // Restart action. The vanilla Button renders its children once — rebuild on
+  // locale change.
+  createRenderEffect(() => {
+    const label = language.t("error.page.action.restart");
+    restartSlot.replaceChildren(createComponent(Button, {
       size: "large",
-      get onClick() {
-        return platform.restart;
-      },
-      get children() {
-        return language.t("error.page.action.restart");
-      }
-    }), null);
-    _$insert(_el$6, _$createComponent(Show, {
-      when: Sentry.isEnabled(),
-      children: _ => {
-        const [reported, setReported] = createSignal(false);
-        return _$createComponent(Button, {
+      onClick: platform.restart,
+      children: label
+    }));
+  });
+
+  // Crash reporting (Show when Sentry.isEnabled() — static condition, like the
+  // original's non-getter `when`). The reported flag lives outside the effect
+  // so rebuilds keep its state, matching the original render-prop scope.
+  if (Sentry.isEnabled()) {
+    const [reported, setReported] = createSignal(false);
+    createRenderEffect(() => {
+      const label = language.t(reported() ? "error.page.action.reported" : "error.page.action.report");
+      reportSlot.replaceChildren(createComponent(Button, {
+        size: "large",
+        disabled: reported(),
+        onClick: () => {
+          Sentry.captureException(props.error);
+          setReported(true);
+        },
+        children: label
+      }));
+    });
+  }
+
+  // Update actions (Show when platform.checkUpdate — platform is a plain
+  // context value, so the condition is static). Inner state (version/checking)
+  // is reactive: rebuild the button when it or the locale changes.
+  if (platform.checkUpdate) {
+    createRenderEffect(() => {
+      if (store.version) {
+        updateSlot.replaceChildren(createComponent(Button, {
           size: "large",
-          get disabled() {
-            return reported();
-          },
-          onClick: () => {
-            Sentry.captureException(props.error);
-            setReported(true);
-          },
-          get children() {
-            return language.t(reported() ? "error.page.action.reported" : "error.page.action.report");
-          }
-        });
-      }
-    }), null);
-    _$insert(_el$6, _$createComponent(Show, {
-      get when() {
-        return platform.checkUpdate;
-      },
-      get children() {
-        return _$createComponent(Show, {
-          get when() {
-            return store.version;
-          },
-          get fallback() {
-            return _$createComponent(Button, {
-              size: "large",
-              variant: "ghost",
-              onClick: checkForUpdates,
-              get disabled() {
-                return store.checking;
-              },
-              get children() {
-                return _$memo(() => !!store.checking)() ? language.t("error.page.action.checking") : language.t("error.page.action.checkUpdates");
-              }
-            });
-          },
-          get children() {
-            return _$createComponent(Button, {
-              size: "large",
-              onClick: installUpdate,
-              get children() {
-                return language.t("error.page.action.updateTo", {
-                  version: store.version ?? ""
-                });
-              }
-            });
-          }
-        });
-      }
-    }), null);
-    _$insert(_el$2, _$createComponent(Show, {
-      get when() {
-        return store.actionError;
-      },
-      children: message => (() => {
-        var _el$1 = _tmpl$2();
-        _$insert(_el$1, message);
-        return _el$1;
-      })()
-    }), _el$7);
-    _$insert(_el$8, () => language.t("error.page.report.prefix"), _el$9);
-    _el$9.$$click = () => platform.openLink("https://discord.gg/6bvnqcH3");
-    _$insert(_el$0, () => language.t("error.page.report.discord"));
-    _$insert(_el$9, _$createComponent(Icon, {
-      name: "discord",
-      "class": "text-primary"
-    }), null);
-    var _el$11 = _tmpl$4(),
-      _el$12 = _el$11.firstChild;
-    _el$11.$$click = () => platform.openLink("https://github.com/informanellica/vanilla-closedcode/issues/new");
-    _$insert(_el$12, () => language.t("error.page.report.github"));
-    _$insert(_el$11, _$createComponent(Icon, {
-      name: "github",
-      "class": "text-primary"
-    }), null);
-    _$insert(_el$8, _el$11, null);
-    _$insert(_el$8, () => language.t("error.page.report.separator"), _el$11);
-    _$insert(_el$7, _$createComponent(Show, {
-      get when() {
-        return platform.version;
-      },
-      children: version => (() => {
-        var _el$10 = _tmpl$3();
-        _$insert(_el$10, () => language.t("error.page.version", {
-          version: version()
+          onClick: installUpdate,
+          children: language.t("error.page.action.updateTo", {
+            version: store.version ?? ""
+          })
         }));
-        return _el$10;
-      })()
-    }), null);
-    return _el$;
-  })();
+        return;
+      }
+      updateSlot.replaceChildren(createComponent(Button, {
+        size: "large",
+        variant: "ghost",
+        onClick: checkForUpdates,
+        disabled: store.checking,
+        children: store.checking ? language.t("error.page.action.checking") : language.t("error.page.action.checkUpdates")
+      }));
+    });
+  }
+
+  // Error from the update actions (Show when store.actionError).
+  createRenderEffect(() => {
+    const message = store.actionError;
+    if (!message) {
+      actionErrorSlot.replaceChildren();
+      return;
+    }
+    const el = template(`<p class="text-xs text-danger text-center max-w-2xl"></p>`);
+    el.textContent = message;
+    actionErrorSlot.replaceChildren(el);
+  });
+
+  // Report links row: [prefix text, discord button, separator text, github
+  // button] — same order the compiled inserts produced. The labels are plain
+  // text nodes, exactly like the original anonymous flex items.
+  const prefixText = document.createTextNode("");
+  reportRow.insertBefore(prefixText, discordBtn);
+  const separatorText = document.createTextNode("");
+  reportRow.insertBefore(separatorText, githubBtn);
+  createRenderEffect(() => {
+    prefixText.textContent = language.t("error.page.report.prefix");
+  });
+  createRenderEffect(() => {
+    separatorText.textContent = language.t("error.page.report.separator");
+  });
+  createRenderEffect(() => {
+    discordLabel.textContent = language.t("error.page.report.discord");
+  });
+  createRenderEffect(() => {
+    githubLabel.textContent = language.t("error.page.report.github");
+  });
+  discordBtn.addEventListener("click", () => platform.openLink("https://discord.gg/6bvnqcH3"));
+  githubBtn.addEventListener("click", () => platform.openLink("https://github.com/informanellica/vanilla-closedcode/issues/new"));
+  discordBtn.appendChild(createComponent(Icon, {
+    name: "discord",
+    "class": "text-primary"
+  }));
+  githubBtn.appendChild(createComponent(Icon, {
+    name: "github",
+    "class": "text-primary"
+  }));
+
+  // App version (Show when platform.version — static value, live translation).
+  createRenderEffect(() => {
+    if (!platform.version) {
+      versionSlot.replaceChildren();
+      return;
+    }
+    const el = template(`<p class="text-xs text-secondary"></p>`);
+    el.textContent = language.t("error.page.version", {
+      version: platform.version
+    });
+    versionSlot.replaceChildren(el);
+  });
+
+  return root;
 };
-_$delegateEvents(["click"]);

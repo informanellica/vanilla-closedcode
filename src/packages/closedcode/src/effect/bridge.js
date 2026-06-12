@@ -1,7 +1,7 @@
 import { Effect, Exit } from "effect";
-import { WorkspaceContext } from "@/control-plane/workspace-context.js";
-import { Instance } from "@/project/instance.js";
-import { LocalContext } from "@/util/local-context.js";
+import { WorkspaceContext } from "#control-plane/workspace-context.js";
+import { Instance } from "#project/instance.js";
+import { LocalContext } from "#util/local-context.js";
 import { InstanceRef, WorkspaceRef } from "./instance-ref.js";
 import { attachWith } from "./run-service.js";
 function restore(instance, workspace, fn) {

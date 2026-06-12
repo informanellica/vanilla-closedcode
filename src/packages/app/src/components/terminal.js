@@ -1,12 +1,7 @@
-import { template as _$template } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=terminal data-prevent-autofocus tabindex=-1>`);
 import { withAlpha, useTheme } from "@/lib/theme.js";
 import { showToast } from "@/lib/toast.js";
 import { env } from "@/lib/env.js";
-import { createEffect, createMemo, onCleanup, onMount, splitProps } from "solid-js";
+import { createEffect, createMemo, createRenderEffect, mergeProps, onCleanup, onMount, splitProps } from "solid-js";
 import { SerializeAddon } from "@/addons/serialize.js";
 import { matchKeybind, parseKeybind } from "@/context/command.js";
 import { useLanguage } from "@/context/language.js";
@@ -154,6 +149,99 @@ const persistTerminal = input => {
     scrollY: input.term.getViewportY()
   });
 };
+// Reactive spread for the root <div>, mirroring the compiled
+// spread(el, mergeProps({ style, classList }, others), false, false): re-run
+// on any prop change and diff per key against the previous snapshot. classList
+// toggles each space-separated class token, style diffs object/string values
+// per property — both matching solid-js/web's assign() semantics. `children`
+// is skipped (Terminal is never given children; xterm owns the subtree).
+function applyClassList(el, value, prev) {
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!name || name in nextObj || !prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.remove(cls);
+    }
+  }
+  for (const name of Object.keys(nextObj)) {
+    const on = !!nextObj[name];
+    if (!name || on === !!prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.toggle(cls, on);
+    }
+  }
+  return { ...nextObj };
+}
+function applyStyle(el, value, prev) {
+  if (typeof value === "string") {
+    if (value !== prev) el.style.cssText = value;
+    return value;
+  }
+  if (typeof prev === "string") {
+    el.style.cssText = "";
+    prev = undefined;
+  }
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!(name in nextObj)) el.style.removeProperty(name);
+  }
+  for (const name of Object.keys(nextObj)) {
+    if (nextObj[name] !== prevObj[name]) el.style.setProperty(name, nextObj[name]);
+  }
+  return { ...nextObj };
+}
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+function assignProp(el, key, value, prev, listeners) {
+  if (key === "style") return applyStyle(el, value, prev);
+  if (key === "classList") return applyClassList(el, value, prev);
+  if (value === prev) return prev;
+  if (key === "ref") {
+    if (typeof value === "function") value(el);
+    return value;
+  }
+  if (key.startsWith("on") && key.length > 2) {
+    const name = key.startsWith("on:") ? key.slice(3) : key.slice(2).toLowerCase();
+    const existing = listeners.get(key);
+    if (existing) el.removeEventListener(name, existing);
+    let handler;
+    if (typeof value === "function") handler = value;
+    else if (Array.isArray(value)) handler = event => value[0](value[1], event);
+    if (handler) {
+      el.addEventListener(name, handler);
+      listeners.set(key, handler);
+    } else {
+      listeners.delete(key);
+    }
+    return value;
+  }
+  if (key === "class" || key === "className") {
+    if (value == null) el.removeAttribute("class");
+    else el.className = value;
+    return value;
+  }
+  setAttr(el, key, value);
+  return value;
+}
+function spreadProps(el, props) {
+  const prev = {};
+  const listeners = new Map();
+  createRenderEffect(() => {
+    for (const key of Object.keys(prev)) {
+      if (key === "children" || key in props) continue;
+      assignProp(el, key, null, prev[key], listeners);
+      delete prev[key];
+    }
+    for (const key of Object.keys(props)) {
+      if (key === "children") continue;
+      prev[key] = assignProp(el, key, props[key], prev[key], listeners);
+    }
+  });
+}
 export const Terminal = props => {
   const platform = usePlatform();
   const settings = useSettings();
@@ -555,25 +643,30 @@ export const Terminal = props => {
     }
     output.flush(finalize);
   });
-  return (() => {
-    var _el$ = _tmpl$();
-    var _ref$ = container;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : container = _el$;
-    _$spread(_el$, _$mergeProps({
-      get style() {
-        return {
-          "background-color": terminalColors().background
-        };
-      },
-      get classList() {
-        return {
-          ...local.classList,
-          "select-text": true,
-          "size-full px-6 py-3 font-mono relative overflow-hidden": true,
-          [local.class ?? ""]: !!local.class
-        };
-      }
-    }, others), false, false);
-    return _el$;
-  })();
+  // Static skeleton: <div data-component=terminal data-prevent-autofocus
+  // tabindex=-1>. The compiled output captured this element as the local
+  // `container` ref (always a plain variable here, never a function) and
+  // applied a reactive spread; reproduce both. xterm renders into this div
+  // once onMount's async setup calls term.open(container).
+  const el = document.createElement("div");
+  el.setAttribute("data-component", "terminal");
+  el.setAttribute("data-prevent-autofocus", "");
+  el.setAttribute("tabindex", "-1");
+  container = el;
+  spreadProps(el, mergeProps({
+    get style() {
+      return {
+        "background-color": terminalColors().background
+      };
+    },
+    get classList() {
+      return {
+        ...local.classList,
+        "select-text": true,
+        "size-full px-6 py-3 font-mono relative overflow-hidden": true,
+        [local.class ?? ""]: !!local.class
+      };
+    }
+  }, others));
+  return el;
 };

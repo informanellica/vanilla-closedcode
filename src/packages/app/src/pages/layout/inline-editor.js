@@ -1,12 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span>`);
+import { createComponent, createMemo, createRenderEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { onCleanup, Show } from "solid-js";
 import { InlineInput } from "@/vendor/ui/components/inline-input.js";
 export function createInlineEditorController() {
   // This controller intentionally supports one active inline editor at a time.
@@ -64,54 +57,64 @@ export function createInlineEditorController() {
       stopPropagation(event);
       openEditor(props.id, props.value());
     };
-    return _$createComponent(Show, {
-      get when() {
-        return isEditing();
-      },
-      get fallback() {
-        return (() => {
-          var _el$ = _tmpl$();
-          _el$.$$touchstart = stopPropagation;
-          _el$.$$click = stopPropagation;
-          _el$.$$mousedown = stopPropagation;
-          _el$.$$pointerdown = stopPropagation;
-          _el$.$$dblclick = handleDblClick;
-          _$insert(_el$, () => props.value());
-          _$effect(() => _$className(_el$, props.displayClass ?? props.class));
-          return _el$;
-        })();
-      },
-      get children() {
-        return _$createComponent(InlineInput, {
-          ref: el => {
-            if (frame !== undefined) cancelAnimationFrame(frame);
-            frame = requestAnimationFrame(() => {
-              frame = undefined;
-              if (!el.isConnected) return;
-              el.focus();
-            });
-          },
-          get value() {
-            return editorValue();
-          },
-          get ["class"]() {
-            return props.class;
-          },
-          onInput: event => setEditor("value", event.currentTarget.value),
-          onKeyDown: event => {
-            event.stopPropagation();
-            editorKeyDown(event, props.onSave);
-          },
-          onBlur: closeEditor,
-          onPointerDown: stopPropagation,
-          onClick: stopPropagation,
-          onDblClick: stopPropagation,
-          onMouseDown: stopPropagation,
-          onMouseUp: stopPropagation,
-          onTouchStart: stopPropagation
+    // Read-only display: the compiled fallback span. The compiled output used
+    // delegated events; direct listeners are the vanilla equivalent. Text and
+    // class update in nested render effects so the span never remounts on a
+    // value or class change, exactly like the compiled insert()/className().
+    const buildDisplay = () => {
+      const el = document.createElement("span");
+      el.addEventListener("touchstart", stopPropagation);
+      el.addEventListener("click", stopPropagation);
+      el.addEventListener("mousedown", stopPropagation);
+      el.addEventListener("pointerdown", stopPropagation);
+      el.addEventListener("dblclick", handleDblClick);
+      createRenderEffect(() => {
+        const value = props.value();
+        el.textContent = value == null || value === true || value === false ? "" : String(value);
+      });
+      createRenderEffect(() => {
+        const name = props.displayClass ?? props.class;
+        if (name == null) el.removeAttribute("class");
+        else el.className = name;
+      });
+      return el;
+    };
+    // Edit mode: a fresh InlineInput per open, so the rAF focus ref re-runs
+    // every time the editor is (re)mounted.
+    const buildInput = () => createComponent(InlineInput, {
+      ref: el => {
+        if (frame !== undefined) cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          frame = undefined;
+          if (!el.isConnected) return;
+          el.focus();
         });
-      }
+      },
+      get value() {
+        return editorValue();
+      },
+      get ["class"]() {
+        return props.class;
+      },
+      onInput: event => setEditor("value", event.currentTarget.value),
+      onKeyDown: event => {
+        event.stopPropagation();
+        editorKeyDown(event, props.onSave);
+      },
+      onBlur: closeEditor,
+      onPointerDown: stopPropagation,
+      onClick: stopPropagation,
+      onDblClick: stopPropagation,
+      onMouseDown: stopPropagation,
+      onMouseUp: stopPropagation,
+      onTouchStart: stopPropagation
     });
+    // Show equivalent: a truthiness-deduped condition feeding a memo, so a
+    // branch only remounts when editing actually toggles. Callers consume the
+    // returned accessor reactively (compiled Show returned a memo as well),
+    // and branch-local effects are owned by the memo run, disposing on swap.
+    const editing = createMemo(() => !!isEditing());
+    return createMemo(() => editing() ? buildInput() : buildDisplay());
   };
   return {
     editor,
@@ -125,4 +128,3 @@ export function createInlineEditorController() {
     InlineEditor
   };
 }
-_$delegateEvents(["dblclick", "pointerdown", "mousedown", "click", "touchstart"]);

@@ -1,11 +1,12 @@
+import { assetText } from "#util/asset.js";
 import path from "path";
 import { Schema } from "effect";
 import { Effect, Option } from "effect";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
 import { Ripgrep } from "../file/ripgrep.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
-import DESCRIPTION from "./grep.txt";
+const DESCRIPTION = assetText("tool/grep.txt");
 import * as Tool from "./tool.js";
 const MAX_LINE_LENGTH = 2000;
 export const Parameters = Schema.Struct({

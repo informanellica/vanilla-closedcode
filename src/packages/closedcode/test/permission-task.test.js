@@ -1,6 +1,6 @@
 import {  disposeAllInstances, tmpdir  } from "./fixture/fixture.js"
 import {  Permission  } from "../src/permission/index.js"
-import {  Config  } from "@/config/config.js"
+import {  Config  } from "#config/config.js"
 import {  WithInstance  } from "../src/project/with-instance.js"
 import {  AppRuntime  } from "../src/effect/app-runtime.js"
 import {  afterEach, describe, test, expect, beforeAll  } from "@jest/globals"

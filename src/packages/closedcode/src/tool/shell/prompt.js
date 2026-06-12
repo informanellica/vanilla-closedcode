@@ -1,6 +1,7 @@
+import { assetText } from "#util/asset.js";
 import { Schema } from "effect";
-import DESCRIPTION from "./shell.txt";
-import { PositiveInt } from "@/util/schema.js";
+const DESCRIPTION = assetText("tool/shell/shell.txt");
+import { PositiveInt } from "#util/schema.js";
 import { Global } from "core/global";
 import { ShellID } from "./id.js";
 const PS = new Set(["powershell", "pwsh"]);

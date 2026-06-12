@@ -1,27 +1,10 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"><div class="text-secondary max-w-56">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div><div class="d-flex flex-column gap-3"><div class="fw-medium text-body-emphasis"></div><div class="text-body max-w-md"style=line-height:var(--line-height-normal)>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div><div class="text-secondary max-w-56">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full overflow-hidden bg-body contain-strict"><div class="relative pt-2 flex-1 min-h-0 overflow-hidden">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="relative bg-body size-full overflow-hidden d-flex flex-column"><div class="flex-1 min-h-0 d-flex flex-row"><div><div class="flex-1 min-h-0 overflow-hidden"></div><div class="d-flex flex-column overflow-hidden shrink-0">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="h-full d-flex flex-column align-items-center justify-content-center text-center gap-3"><i class="bi bi-code-square" style="font-size:3rem;opacity:0.12"></i><div class="text-secondary small"></div><div class="text-start w-100" style="max-width:320px">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="sticky top-0 shrink-0 d-flex bg-body z-10 border-bottom">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="bg-body h-100 shrink-0 sticky right-0 z-10 d-flex align-items-center justify-content-center px-2">`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div data-component=tabs-drag-preview>`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div class="flex-1 min-h-0 overflow-hidden">`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<button class="btn btn-sm text-start w-100 py-1 px-2 d-flex align-items-center gap-2 text-body-secondary border-0 rounded empty-state-file" type=button style=background:transparent><i class="bi small"></i><span class="text-truncate flex-1 small">`);
+// insert() from solid-js/web is the established exception for reactive and
+// component-valued children (runtime Show/For/Switch return memo accessors),
+// so Solid keeps reconciling accessors instead of freezing them.
+import { insert as _solidInsert } from "solid-js/web";
 import { useDialog } from "@/lib/dialog.js";
 import { createQuery, skipToken } from "@tanstack/solid-query";
-import { onCleanup, Show, Match, Switch, For, createMemo, createEffect, createComputed, on, onMount, untrack, createResource } from "solid-js";
+import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "solid-js";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { createMediaQuery } from "@solid-primitives/media";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
@@ -74,6 +57,15 @@ import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";
 import { extractPromptFromParts } from "@/utils/prompt.js";
 import { same } from "@/utils/same.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Static markup only — translated/user strings are assigned via textContent.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 const emptyUserMessages = [];
 const emptyFollowups = [];
 /**
@@ -880,7 +872,7 @@ export default function Page() {
       if (option === "branch") return language.t("ui.sessionReview.title.branch");
       return language.t("ui.sessionReview.title.lastTurn");
     };
-    return _$createComponent(Select, {
+    return createComponent(Select, {
       get options() {
         return changesOptions();
       },
@@ -894,32 +886,48 @@ export default function Page() {
       valueClass: "fw-medium"
     });
   };
-  const empty = text => (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild;
-    _$insert(_el$2, text);
-    return _el$;
-  })();
-  const createGit = input => (() => {
-    var _el$3 = _tmpl$2(),
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.firstChild,
-      _el$6 = _el$5.nextSibling;
-    _$insert(_el$5, () => language.t("session.review.noVcs.createGit.title"));
-    _$insert(_el$6, () => language.t("session.review.noVcs.createGit.description"));
-    _$insert(_el$3, _$createComponent(Button, {
+  // Empty-state container (_tmpl$): callers pass an already-evaluated string,
+  // matching the compiled static insert.
+  const empty = text => {
+    const root = template(`<div class="h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"><div class="text-secondary max-w-56"></div></div>`);
+    root.firstChild.textContent = text;
+    return root;
+  };
+  // "Create git repo" empty state (_tmpl$2).
+  const createGit = input => {
+    const root = template(`<div><div class="d-flex flex-column gap-3"><div class="fw-medium text-body-emphasis"></div><div class="text-body max-w-md" style="line-height:var(--line-height-normal)"></div></div></div>`);
+    const column = root.firstChild;
+    const titleEl = column.firstChild;
+    const descriptionEl = titleEl.nextSibling;
+    createRenderEffect(() => {
+      titleEl.textContent = language.t("session.review.noVcs.createGit.title");
+    });
+    createRenderEffect(() => {
+      descriptionEl.textContent = language.t("session.review.noVcs.createGit.description");
+    });
+    // Button (bs) returns a concrete element; its children getter is read once
+    // at creation, exactly as it was for the compiled getter.
+    root.appendChild(createComponent(Button, {
       size: "large",
       get disabled() {
         return controller.gitPending();
       },
       onClick: initGit,
       get children() {
-        return _$memo(() => !!controller.gitPending())() ? language.t("session.review.noVcs.createGit.actionLoading") : language.t("session.review.noVcs.createGit.action");
+        return controller.gitPending() ? language.t("session.review.noVcs.createGit.actionLoading") : language.t("session.review.noVcs.createGit.action");
       }
-    }), null);
-    _$effect(() => _$className(_el$3, input.emptyClass));
-    return _el$3;
-  })();
+    }));
+    // Change-guarded className, mirroring the compiled className() effect.
+    let prevClass;
+    createRenderEffect(() => {
+      const next = input.emptyClass;
+      if (next === prevClass) return;
+      prevClass = next;
+      if (next == null) root.removeAttribute("class");
+      else root.className = next;
+    });
+    return root;
+  };
   const reviewEmptyText = createMemo(() => {
     if (store.changes === "git") return language.t("session.review.noUncommittedChanges");
     if (store.changes === "branch") return language.t("session.review.noBranchChanges");
@@ -927,32 +935,50 @@ export default function Page() {
   });
   const reviewEmpty = input => {
     if (store.changes === "git" || store.changes === "branch") {
-      if (!reviewReady()) return (() => {
-        var _el$7 = _tmpl$3();
-        _$insert(_el$7, () => language.t("session.review.loadingChanges"));
-        _$effect(() => _$className(_el$7, input.loadingClass));
-        return _el$7;
-      })();
+      if (!reviewReady()) {
+        // Loading placeholder (_tmpl$3) with a live translated label.
+        const loading = template(`<div></div>`);
+        createRenderEffect(() => {
+          loading.textContent = language.t("session.review.loadingChanges");
+        });
+        let prevClass;
+        createRenderEffect(() => {
+          const next = input.loadingClass;
+          if (next === prevClass) return;
+          prevClass = next;
+          if (next == null) loading.removeAttribute("class");
+          else loading.className = next;
+        });
+        return loading;
+      }
       return empty(reviewEmptyText());
     }
     if (store.changes === "turn") {
       if (nogit()) return createGit(input);
       return empty(reviewEmptyText());
     }
-    return (() => {
-      var _el$8 = _tmpl$4(),
-        _el$9 = _el$8.firstChild;
-      _$insert(_el$9, reviewEmptyText);
-      _$effect(() => _$className(_el$8, input.emptyClass));
-      return _el$8;
-    })();
+    // Fallback empty state (_tmpl$4) with a live message.
+    const root = template(`<div><div class="text-secondary max-w-56"></div></div>`);
+    const messageEl = root.firstChild;
+    createRenderEffect(() => {
+      messageEl.textContent = reviewEmptyText();
+    });
+    let prevClass;
+    createRenderEffect(() => {
+      const next = input.emptyClass;
+      if (next === prevClass) return;
+      prevClass = next;
+      if (next == null) root.removeAttribute("class");
+      else root.className = next;
+    });
+    return root;
   };
-  const reviewContent = input => _$createComponent(Show, {
+  const reviewContent = input => createComponent(Show, {
     get when() {
       return !store.deferRender;
     },
     get children() {
-      return _$createComponent(SessionReviewTab, {
+      return createComponent(SessionReviewTab, {
         get title() {
           return changesTitle();
         },
@@ -1001,17 +1027,18 @@ export default function Page() {
       });
     }
   });
-  const reviewPanel = () => (() => {
-    var _el$0 = _tmpl$5(),
-      _el$1 = _el$0.firstChild;
-    _$insert(_el$1, () => reviewContent({
+  const reviewPanel = () => {
+    // Review panel shell (_tmpl$5); reviewContent() returns a Show accessor,
+    // so it stays a live insert.
+    const root = template(`<div class="d-flex flex-column h-full overflow-hidden bg-body contain-strict"><div class="relative pt-2 flex-1 min-h-0 overflow-hidden"></div></div>`);
+    _solidInsert(root.firstChild, () => reviewContent({
       diffStyle: layout.review.diffStyle(),
       onDiffStyleChange: layout.review.setDiffStyle,
       loadingClass: "px-6 py-4 text-secondary",
       emptyClass: "h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"
     }));
-    return _el$0;
-  })();
+    return root;
+  };
   createEffect(on(activeFileTab, active => {
     if (!active) return;
     if (fileTreeTab() !== "changes") return;
@@ -1375,528 +1402,547 @@ export default function Page() {
     if (scrollStateFrame !== undefined) cancelAnimationFrame(scrollStateFrame);
     if (fillFrame !== undefined) cancelAnimationFrame(fillFrame);
   });
-  return (() => {
-    var _el$10 = _tmpl$6(),
-      _el$11 = _el$10.firstChild,
-      _el$12 = _el$11.firstChild,
-      _el$13 = _el$12.firstChild,
-      _el$14 = _el$13.nextSibling;
-    _$insert(_el$10, () => sessionSync() ?? "", _el$11);
-    _$insert(_el$10, _$createComponent(SessionHeader, {}), _el$11);
-    // Session tab bar lives at the TOP of the bottom chat pane (_el$14),
-    // replacing the in-chat session title. Inserted while _el$14 is still
-    // empty so it ends up above the message timeline + composer.
-    _$insert(_el$14, _$createComponent(SessionTabBar, {
-      sessions: sessionTabList,
-      currentId: () => params.id,
-      onSelect: session => navigate(`/${base64Encode(session.directory)}/session/${session.id}`),
-      onNew: () => {
-        const dir = sdk.directory;
-        if (dir) navigate(`/${base64Encode(dir)}/session`);
-      },
-      // "×" hides the bottom chat pane (reopen via the toolbar chat button).
-      onClose: () => view().chatPanel.close()
-    }), null);
-    _$insert(_el$11, _$createComponent(Show, {
-      get when() {
-        return _$memo(() => !!!isDesktop())() && !!params.id;
-      },
-      get children() {
-        return _$createComponent(Tabs, {
-          get value() {
-            return store.mobileTab;
-          },
-          "class": "h-auto",
-          get children() {
-            return _$createComponent(Tabs.List, {
-              get children() {
-                return [_$createComponent(Tabs.Trigger, {
-                  value: "session",
-                  "class": "!w-1/2 !max-w-none",
-                  classes: {
-                    button: "w-100"
-                  },
-                  onClick: () => setStore("mobileTab", "session"),
-                  get children() {
-                    return language.t("session.tab.session");
-                  }
-                }), _$createComponent(Tabs.Trigger, {
-                  value: "changes",
-                  "class": "!w-1/2 !max-w-none !border-r-0",
-                  classes: {
-                    button: "w-100"
-                  },
-                  onClick: () => setStore("mobileTab", "changes"),
-                  get children() {
-                    return _$memo(() => !!hasReview())() ? language.t("session.review.filesChanged", {
-                      count: reviewCount()
-                    }) : language.t("session.review.change.other");
-                  }
-                })];
-              }
-            });
-          }
-        });
-      }
-    }), _el$12);
-    // --- TOP: editor area (_el$13) with center file tab bar ---
-    _$insert(_el$13, _$createComponent(DragDropProvider, {
-      onDragStart: handleFileDragStart,
-      onDragEnd: handleFileDragEnd,
-      onDragOver: handleFileDragOver,
-      collisionDetector: closestCenter,
-      get children() {
-        return [_$createComponent(DragDropSensors, {}), _$createComponent(ConstrainDragYAxis, {}), _$createComponent(Tabs, {
-          get value() {
-            return activeFileTab();
-          },
-          onChange: openFileTab,
-          "class": "h-full",
-          get children() {
-            return [_$createComponent(Show, {
-              get when() {
-                return openedTabs().length > 0;
-              },
-              get children() {
-                var _el$tb = _tmpl$8();
-                _$insert(_el$tb, _$createComponent(Tabs.List, {
-                  ref: el => {
-                    const stop = createFileTabListSync({
-                      el,
-                      contextOpen
-                    });
-                    onCleanup(stop);
-                  },
-                  get children() {
-                    return [_$createComponent(SortableProvider, {
-                      get ids() {
-                        return openedTabs();
-                      },
-                      get children() {
-                        return _$createComponent(For, {
-                          get each() {
-                            return openedTabs();
-                          },
-                          children: tab => _$createComponent(SortableTab, {
-                            tab: tab,
-                            get onTabClose() {
-                              return tabs().close;
-                            }
-                          })
-                        });
-                      }
-                    }), (() => {
-                      var _el$pb = _tmpl$9();
-                      _$insert(_el$pb, _$createComponent(TooltipKeybind, {
-                        get title() {
-                          return language.t("command.file.open");
-                        },
-                        get keybind() {
-                          return command.keybind("file.open");
-                        },
-                        "class": "d-flex align-items-center",
-                        get children() {
-                          return _$createComponent(IconButton, {
-                            icon: "plus-small",
-                            variant: "ghost",
-                            iconSize: "large",
-                            "class": "!rounded-md",
-                            onClick: () => {
-                              // Create a blank untitled file in the project dir and open it
-                              // as a new tab (no file-picker modal).
-                              void (async () => {
-                                const dir = sdk.directory;
-                                if (!dir) return;
-                                const base = dir.replace(/[\\/]+$/, "");
-                                let name = "untitled.md", abs = base + "/" + name, n = 1;
-                                while (openedTabs().some(t => t.endsWith("/" + name)) && n < 100) {
-                                  n++;
-                                  name = `untitled-${n}.md`;
-                                  abs = base + "/" + name;
-                                }
-                                // Do NOT touch the disk here: creating the empty file on
-                                // "+" wrote to the project before the user asked. The tab
-                                // opens against the (not-yet-existing) path; the file is
-                                // only written when the Save button (bindSave) is pressed.
-                                openFileFromTree(abs);
-                              })();
-                            },
-                            get ["aria-label"]() {
-                              return language.t("command.file.open");
-                            }
-                          });
-                        }
-                      }));
-                      return _el$pb;
-                    })()];
-                  }
-                }));
-                return _el$tb;
-              }
-            }), (() => {
-              var _el$cw = _tmpl$11();
-              _$insert(_el$cw, _$createComponent(Switch, {
+  // ----- Static skeleton (_tmpl$6): root > row > center column with the
+  // editor area on top and the chat pane below -----
+  const rootEl = template(`<div class="relative bg-body size-full overflow-hidden d-flex flex-column"><div class="flex-1 min-h-0 d-flex flex-row"><div><div class="flex-1 min-h-0 overflow-hidden"></div><div class="d-flex flex-column overflow-hidden shrink-0"></div></div></div></div>`);
+  const rowEl = rootEl.firstChild;
+  const centerEl = rowEl.firstChild;
+  const editorEl = centerEl.firstChild;
+  const chatPaneEl = editorEl.nextSibling;
+  // The resource read stays a live insert (before the row), as compiled.
+  _solidInsert(rootEl, () => sessionSync() ?? "", rowEl);
+  _solidInsert(rootEl, createComponent(SessionHeader, {}), rowEl);
+  // Session tab bar lives at the TOP of the bottom chat pane (chatPaneEl),
+  // replacing the in-chat session title. Inserted while chatPaneEl is still
+  // empty so it ends up above the message timeline + composer.
+  _solidInsert(chatPaneEl, createComponent(SessionTabBar, {
+    sessions: sessionTabList,
+    currentId: () => params.id,
+    onSelect: session => navigate(`/${base64Encode(session.directory)}/session/${session.id}`),
+    onNew: () => {
+      const dir = sdk.directory;
+      if (dir) navigate(`/${base64Encode(dir)}/session`);
+    },
+    // "×" hides the bottom chat pane (reopen via the toolbar chat button).
+    onClose: () => view().chatPanel.close()
+  }), null);
+  // Mobile session/changes switcher, inserted before the center column.
+  _solidInsert(rowEl, createComponent(Show, {
+    get when() {
+      return !isDesktop() && !!params.id;
+    },
+    get children() {
+      return createComponent(Tabs, {
+        get value() {
+          return store.mobileTab;
+        },
+        "class": "h-auto",
+        get children() {
+          return createComponent(Tabs.List, {
+            get children() {
+              return [createComponent(Tabs.Trigger, {
+                value: "session",
+                "class": "!w-1/2 !max-w-none",
+                classes: {
+                  button: "w-100"
+                },
+                onClick: () => setStore("mobileTab", "session"),
                 get children() {
-                  return [_$createComponent(Match, {
-                    get when() {
-                      return activeFileTab();
+                  return language.t("session.tab.session");
+                }
+              }), createComponent(Tabs.Trigger, {
+                value: "changes",
+                "class": "!w-1/2 !max-w-none !border-r-0",
+                classes: {
+                  button: "w-100"
+                },
+                onClick: () => setStore("mobileTab", "changes"),
+                get children() {
+                  return hasReview() ? language.t("session.review.filesChanged", {
+                    count: reviewCount()
+                  }) : language.t("session.review.change.other");
+                }
+              })];
+            }
+          });
+        }
+      });
+    }
+  }), centerEl);
+  // --- TOP: editor area (editorEl) with center file tab bar ---
+  _solidInsert(editorEl, createComponent(DragDropProvider, {
+    onDragStart: handleFileDragStart,
+    onDragEnd: handleFileDragEnd,
+    onDragOver: handleFileDragOver,
+    collisionDetector: closestCenter,
+    get children() {
+      return [createComponent(DragDropSensors, {}), createComponent(ConstrainDragYAxis, {}), createComponent(Tabs, {
+        get value() {
+          return activeFileTab();
+        },
+        onChange: openFileTab,
+        "class": "h-full",
+        get children() {
+          return [createComponent(Show, {
+            get when() {
+              return openedTabs().length > 0;
+            },
+            get children() {
+              // Sticky file tab bar (_tmpl$8).
+              const bar = template(`<div class="sticky top-0 shrink-0 d-flex bg-body z-10 border-bottom"></div>`);
+              _solidInsert(bar, createComponent(Tabs.List, {
+                ref: el => {
+                  const stop = createFileTabListSync({
+                    el,
+                    contextOpen
+                  });
+                  onCleanup(stop);
+                },
+                get children() {
+                  return [createComponent(SortableProvider, {
+                    get ids() {
+                      return openedTabs();
                     },
                     get children() {
-                      return _$createComponent(Show, {
-                        get when() {
-                          return activeFileTab();
+                      // Runtime For keeps tab nodes stable across reorders,
+                      // which solid-dnd's sortable transforms rely on.
+                      return createComponent(For, {
+                        get each() {
+                          return openedTabs();
                         },
-                        keyed: true,
-                        children: tab => _$createComponent(FileTabContent, {
-                          tab: tab
+                        children: tab => createComponent(SortableTab, {
+                          tab: tab,
+                          get onTabClose() {
+                            return tabs().close;
+                          }
                         })
                       });
                     }
-                  }), _$createComponent(Match, {
-                    get when() {
-                      return params.id;
-                    },
-                    get children() {
-                      var _el$e1 = _tmpl$7(),
-                        _el$e2 = _el$e1.firstChild.nextSibling,
-                        _el$e3 = _el$e2.nextSibling;
-                      _$insert(_el$e2, () => language.t("session.files.selectToOpen"));
-                      _$insert(_el$e3, _$createComponent(Show, {
-                        get when() {
-                          return diffs().length > 0;
-                        },
-                        get children() {
-                          return _$createComponent(For, {
-                            get each() {
-                              return diffs().slice(0, 10);
-                            },
-                            children: d => {
-                              var _el$fi = _tmpl$12(),
-                                _el$fi_icon = _el$fi.firstChild,
-                                _el$fi_name = _el$fi_icon.nextSibling;
-                              _el$fi.addEventListener("click", () => openFileFromTree(d.file));
-                              _el$fi.title = d.file;
-                              _$effect(() => {
-                                _el$fi_icon.className = "bi " + (d.status === "added" ? "bi-file-earmark-plus text-success" : d.status === "deleted" ? "bi-file-earmark-minus text-danger" : "bi-file-earmark-diff text-warning") + " small";
-                              });
-                              _$insert(_el$fi_name, d.file);
-                              return _el$fi;
-                            }
-                          });
-                        }
-                      }));
-                      return _el$e1;
-                    }
-                  }), _$createComponent(Match, {
-                    when: true,
-                    get children() {
-                      return _$createComponent(NewSessionView, {
-                        get worktree() {
-                          return newSessionWorktree();
-                        }
-                      });
-                    }
-                  })];
+                  }), (() => {
+                    // "+" cell pinned at the right edge of the bar (_tmpl$9).
+                    const plusCell = template(`<div class="bg-body h-100 shrink-0 sticky right-0 z-10 d-flex align-items-center justify-content-center px-2"></div>`);
+                    plusCell.appendChild(createComponent(TooltipKeybind, {
+                      get title() {
+                        return language.t("command.file.open");
+                      },
+                      get keybind() {
+                        return command.keybind("file.open");
+                      },
+                      "class": "d-flex align-items-center",
+                      get children() {
+                        return createComponent(IconButton, {
+                          icon: "plus-small",
+                          variant: "ghost",
+                          iconSize: "large",
+                          "class": "!rounded-md",
+                          onClick: () => {
+                            // Create a blank untitled file in the project dir and open it
+                            // as a new tab (no file-picker modal).
+                            void (async () => {
+                              const dir = sdk.directory;
+                              if (!dir) return;
+                              const base = dir.replace(/[\\/]+$/, "");
+                              let name = "untitled.md", abs = base + "/" + name, n = 1;
+                              while (openedTabs().some(t => t.endsWith("/" + name)) && n < 100) {
+                                n++;
+                                name = `untitled-${n}.md`;
+                                abs = base + "/" + name;
+                              }
+                              // Do NOT touch the disk here: creating the empty file on
+                              // "+" wrote to the project before the user asked. The tab
+                              // opens against the (not-yet-existing) path; the file is
+                              // only written when the Save button (bindSave) is pressed.
+                              openFileFromTree(abs);
+                            })();
+                          },
+                          get ["aria-label"]() {
+                            return language.t("command.file.open");
+                          }
+                        });
+                      }
+                    }));
+                    return plusCell;
+                  })()];
                 }
               }));
-              return _el$cw;
-            })()];
-          }
-        }), _$createComponent(DragOverlay, {
-          get children() {
-            return _$createComponent(Show, {
-              get when() {
-                return fileDnd.activeDraggable;
-              },
-              keyed: true,
-              children: tab => {
-                const path = file.pathFromTab(tab);
-                return (() => {
-                  var _el$dp = _tmpl$10();
-                  _$insert(_el$dp, _$createComponent(Show, {
-                    when: path,
-                    children: p => _$createComponent(FileVisual, {
-                      active: true,
-                      get path() {
-                        return p();
-                      }
-                    })
-                  }));
-                  return _el$dp;
-                })();
-              }
-            });
-          }
-        })];
-      }
-    }));
-    // --- Vertical resize handle between editor and chat ---
-    _$insert(_el$12, _$createComponent(Show, {
-      get when() {
-        return params.id && view().chatPanel.opened();
-      },
-      get children() {
-        var _rh$ = _tmpl$3();
-        _$insert(_rh$, _$createComponent(ResizeHandle, {
-          direction: "vertical",
-          edge: "start",
-          // The handle is absolute within the center column; anchor it to the
-          // TOP edge of the chat pane (which is `chatPanel.height()` tall at the
-          // bottom) so it sits on the editor/chat boundary. Default CSS would
-          // pin it to the center's top (unreachable).
-          get style() {
-            return `inset-block-start:auto;inset-block-end:${layout.chatPanel.height()}px;transform:translateY(50%);`;
-          },
-          get size() {
-            return layout.chatPanel.height();
-          },
-          min: 120,
-          get max() {
-            return typeof window === "undefined" ? 600 : Math.floor(window.innerHeight * 0.7);
-          },
-          onResize: height => {
-            size.touch();
-            layout.chatPanel.resize(height);
-          },
-          onCollapse: () => view().chatPanel.close(),
-          collapseThreshold: 80
-        }));
-        return _rh$;
-      }
-    }), _el$14);
-    // --- BOTTOM: chat pane (_el$14) ---
-    // Keep the timeline inside the remaining flex space so the composer stays
-    // inside the chat pane instead of being pushed below the viewport.
-    const _chatTimelinePane = document.createElement("div");
-    _chatTimelinePane.className = "flex-1 min-h-0 overflow-hidden";
-    _$insert(_el$14, _chatTimelinePane);
-    _$insert(_chatTimelinePane, _$createComponent(Show, {
-      get when() {
-        return params.id && view().chatPanel.opened();
-      },
-      get children() {
-        return _$createComponent(Show, {
-          get when() {
-            return messagesReady();
-          },
-          get children() {
-            return _$createComponent(MessageTimeline, {
-              get mobileChanges() {
-                return mobileChanges();
-              },
-              get mobileFallback() {
-                return reviewContent({
-                  diffStyle: "unified",
-                  classes: {
-                    root: "pb-8",
-                    header: "px-4",
-                    container: "px-4"
+              return bar;
+            }
+          }), (() => {
+            // Active tab content host (_tmpl$11).
+            const contentWrap = template(`<div class="flex-1 min-h-0 overflow-hidden"></div>`);
+            _solidInsert(contentWrap, createComponent(Switch, {
+              get children() {
+                return [createComponent(Match, {
+                  get when() {
+                    return activeFileTab();
                   },
-                  loadingClass: "px-4 py-4 text-secondary",
-                  emptyClass: "h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"
-                });
-              },
-              actions: actions,
-              get scroll() {
-                return ui.scroll;
-              },
-              onResumeScroll: resumeScroll,
-              setScrollRef: setScrollRef,
-              onScheduleScrollState: scheduleScrollState,
-              get onAutoScrollHandleScroll() {
-                return autoScroll.handleScroll;
-              },
-              onMarkScrollGesture: markScrollGesture,
-              hasScrollGesture: hasScrollGesture,
-              onUserScroll: markUserScroll,
-              get onTurnBackfillScroll() {
-                return historyWindow.onScrollerScroll;
-              },
-              get onAutoScrollInteraction() {
-                return autoScroll.handleInteraction;
-              },
-              get centered() {
-                return centered();
-              },
-              setContentRef: el => {
-                content = el;
-                autoScroll.contentRef(el);
-                const root = scroller;
-                if (root) scheduleScrollState(root);
-              },
-              get turnStart() {
-                return historyWindow.turnStart();
-              },
-              get historyMore() {
-                return historyMore();
-              },
-              get historyLoading() {
-                return historyLoading();
-              },
-              onLoadEarlier: () => {
-                void historyWindow.loadAndReveal();
-              },
-              get renderedUserMessages() {
-                return historyWindow.renderedUserMessages();
-              },
-              anchor: anchor
-            });
-          }
-        });
-      }
-    }));
-    _$insert(_el$14, _$createComponent(SessionComposerRegion, {
-      state: composer,
-      get ready() {
-        return _$memo(() => !!!store.deferRender)() && messagesReady();
-      },
-      get centered() {
-        return centered();
-      },
-      inputRef: el => {
-        inputRef = el;
-      },
-      get newSessionWorktree() {
-        return newSessionWorktree();
-      },
-      onNewSessionWorktreeReset: () => setStore("newSessionWorktree", "main"),
-      onSubmit: () => {
-        comments.clear();
-        resumeScroll();
-      },
-      onResponseSubmit: resumeScroll,
-      get followup() {
-        return _$memo(() => !!(params.id && !isChildSession()))() ? {
-          queue: queueEnabled,
-          items: followupDock(),
-          sending: sendingFollowup(),
-          edit: editingFollowup(),
-          onQueue: queueFollowup,
-          onAbort: () => controller.pauseFollowup(),
-          onSend: id => {
-            void sendFollowup(params.id, id, {
-              manual: true
-            });
-          },
-          onEdit: editFollowup,
-          onEditLoaded: clearFollowupEdit
-        } : undefined;
-      },
-      get revert() {
-        return _$memo(() => rolled().length > 0)() ? {
-          items: rolled(),
-          restoring: restoring(),
-          disabled: reverting(),
-          onRestore: restore
-        } : undefined;
-      },
-      setPromptDockRef: el => {
-        promptDock = el;
-      }
-    }), null);
-    // --- Horizontal resize handle for review panel width ---
-    _$insert(_el$12, _$createComponent(Show, {
-      get when() {
-        return desktopReviewOpen();
-      },
-      get children() {
-        var _el$rh = _tmpl$3();
-        _el$rh.$$pointerdown = () => size.start();
-        _$insert(_el$rh, _$createComponent(ResizeHandle, {
-          direction: "horizontal",
-          // edge:"start" gives the DIRECTION (drag-left-grows). The default CSS
-          // for edge=start anchors the handle to the LEFT of its container; we
-          // override the position to the center's RIGHT edge (= the boundary
-          // with the right review panel) so the handle is actually grabbable
-          // there. Without this it rendered at x≈200 (unreachable).
-          edge: "start",
-          style: "inset-inline-start:auto;inset-inline-end:0;transform:translateX(50%);",
-          get size() {
-            return layout.session.width();
-          },
-          min: 180,
-          get max() {
-            return typeof window === "undefined" ? 1000 : window.innerWidth * 0.45;
-          },
-          onResize: width => {
-            size.touch();
-            layout.session.resize(width);
-          }
-        }));
-        return _el$rh;
-      }
-    }), null);
-    _$insert(_el$11, _$createComponent(FileTreePane, {
-      diffs: reviewDiffs,
-      diffsReady: reviewReady,
-      hasReview: hasReview,
-      reviewCount: reviewCount,
-      get activeDiff() {
-        return tree.activeDiff;
-      },
-      onChangedFileClick: focusReviewDiff,
-      onFileClick: openFileFromTree,
-      onContextMenu: (node, event) => showFileContextMenu(node, event, {
-        directory: sdk.directory,
-        refresh: dir => file.tree.refresh(dir),
-        openFile: path => openFileFromTree(path)
-      }),
-      size: size
-    }), _el$12);
-    _$insert(_el$11, _$createComponent(SessionSidePanel, {
-      canReview: canReview,
-      diffs: reviewDiffs,
-      diffsReady: reviewReady,
-      empty: reviewEmptyText,
-      hasReview: hasReview,
-      reviewCount: reviewCount,
-      reviewPanel: reviewPanel,
-      get activeDiff() {
-        return tree.activeDiff;
-      },
-      focusReviewDiff: focusReviewDiff,
-      get reviewSnap() {
-        return ui.reviewSnap;
-      },
-      size: size
-    }), null);
-    _$insert(_el$10, _$createComponent(TerminalPanel, {}), null);
-    _$effect(_p$ => {
-      var _v$ = {
-          "@container relative flex flex-col min-h-0 h-full bg-body flex-1 min-w-0": true,
-          "transition-[width] duration-[240ms] ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none": !size.active() && !ui.reviewSnap
+                  get children() {
+                    return createComponent(Show, {
+                      get when() {
+                        return activeFileTab();
+                      },
+                      keyed: true,
+                      children: tab => createComponent(FileTabContent, {
+                        tab: tab
+                      })
+                    });
+                  }
+                }), createComponent(Match, {
+                  get when() {
+                    return params.id;
+                  },
+                  get children() {
+                    // Empty editor state (_tmpl$7): icon + hint + recent diffs.
+                    const emptyState = template(`<div class="h-full d-flex flex-column align-items-center justify-content-center text-center gap-3"><i class="bi bi-code-square" style="font-size:3rem;opacity:0.12"></i><div class="text-secondary small"></div><div class="text-start w-100" style="max-width:320px"></div></div>`);
+                    const hintEl = emptyState.firstChild.nextSibling;
+                    const fileListEl = hintEl.nextSibling;
+                    createRenderEffect(() => {
+                      hintEl.textContent = language.t("session.files.selectToOpen");
+                    });
+                    _solidInsert(fileListEl, createComponent(Show, {
+                      get when() {
+                        return diffs().length > 0;
+                      },
+                      get children() {
+                        return createComponent(For, {
+                          get each() {
+                            return diffs().slice(0, 10);
+                          },
+                          children: d => {
+                            // Changed-file shortcut row (_tmpl$12).
+                            const row = template(`<button class="btn btn-sm text-start w-100 py-1 px-2 d-flex align-items-center gap-2 text-body-secondary border-0 rounded empty-state-file" type="button" style="background:transparent"><i class="bi small"></i><span class="text-truncate flex-1 small"></span></button>`);
+                            const iconEl = row.firstChild;
+                            const nameEl = iconEl.nextSibling;
+                            row.addEventListener("click", () => openFileFromTree(d.file));
+                            row.title = d.file;
+                            // d may be a store proxy, so the status-driven icon
+                            // class stays reactive, like the compiled effect.
+                            createRenderEffect(() => {
+                              iconEl.className = "bi " + (d.status === "added" ? "bi-file-earmark-plus text-success" : d.status === "deleted" ? "bi-file-earmark-minus text-danger" : "bi-file-earmark-diff text-warning") + " small";
+                            });
+                            // d.file was read once by the compiled insert.
+                            nameEl.textContent = d.file;
+                            return row;
+                          }
+                        });
+                      }
+                    }));
+                    return emptyState;
+                  }
+                }), createComponent(Match, {
+                  when: true,
+                  get children() {
+                    return createComponent(NewSessionView, {
+                      get worktree() {
+                        return newSessionWorktree();
+                      }
+                    });
+                  }
+                })];
+              }
+            }));
+            return contentWrap;
+          })()];
+        }
+      }), createComponent(DragOverlay, {
+        get children() {
+          return createComponent(Show, {
+            get when() {
+              return fileDnd.activeDraggable;
+            },
+            keyed: true,
+            children: tab => {
+              const path = file.pathFromTab(tab);
+              // Floating copy of the dragged tab's label (_tmpl$10).
+              const preview = template(`<div data-component="tabs-drag-preview"></div>`);
+              _solidInsert(preview, createComponent(Show, {
+                when: path,
+                children: p => createComponent(FileVisual, {
+                  active: true,
+                  get path() {
+                    return p();
+                  }
+                })
+              }));
+              return preview;
+            }
+          });
+        }
+      })];
+    }
+  }));
+  // --- Vertical resize handle between editor and chat ---
+  _solidInsert(centerEl, createComponent(Show, {
+    get when() {
+      return params.id && view().chatPanel.opened();
+    },
+    get children() {
+      const host = template(`<div></div>`);
+      _solidInsert(host, createComponent(ResizeHandle, {
+        direction: "vertical",
+        edge: "start",
+        // The handle is absolute within the center column; anchor it to the
+        // TOP edge of the chat pane (which is `chatPanel.height()` tall at the
+        // bottom) so it sits on the editor/chat boundary. Default CSS would
+        // pin it to the center's top (unreachable).
+        get style() {
+          return `inset-block-start:auto;inset-block-end:${layout.chatPanel.height()}px;transform:translateY(50%);`;
         },
-        _v$2 = sessionPanelWidth();
-      _p$.e = _$classList(_el$12, _v$, _p$.e);
-      _v$2 !== _p$.t && _$setStyleProperty(_el$12, "width", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    // chat pane height + visibility (the "×" closes the pane entirely; the
-    // toolbar chat button reopens it)
-    _$effect(_p$ => {
-      var _open = params.id && view().chatPanel.opened(),
-        _v$ch = _open ? `${layout.chatPanel.height()}px` : "",
-        _v$bt = _open ? "1px solid var(--bs-border-color)" : "",
-        _v$d = view().chatPanel.opened() ? "" : "none";
-      _v$ch !== _p$.e && _$setStyleProperty(_el$14, "height", _p$.e = _v$ch);
-      _v$bt !== _p$.t && _$setStyleProperty(_el$14, "border-top", _p$.t = _v$bt);
-      // The pane carries a `display:flex !important` utility class, so inline
-      // display must use !important to override it when hiding.
-      if (_v$d !== _p$.d) {
-        _p$.d = _v$d;
-        if (_v$d === "none") _el$14.style.setProperty("display", "none", "important");
-        else _el$14.style.removeProperty("display");
-      }
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      d: undefined
-    });
-    return _el$10;
-  })();
+        get size() {
+          return layout.chatPanel.height();
+        },
+        min: 120,
+        get max() {
+          return typeof window === "undefined" ? 600 : Math.floor(window.innerHeight * 0.7);
+        },
+        onResize: height => {
+          size.touch();
+          layout.chatPanel.resize(height);
+        },
+        onCollapse: () => view().chatPanel.close(),
+        collapseThreshold: 80
+      }));
+      return host;
+    }
+  }), chatPaneEl);
+  // --- BOTTOM: chat pane (chatPaneEl) ---
+  // Keep the timeline inside the remaining flex space so the composer stays
+  // inside the chat pane instead of being pushed below the viewport.
+  const chatTimelinePane = document.createElement("div");
+  chatTimelinePane.className = "flex-1 min-h-0 overflow-hidden";
+  chatPaneEl.appendChild(chatTimelinePane);
+  _solidInsert(chatTimelinePane, createComponent(Show, {
+    get when() {
+      return params.id && view().chatPanel.opened();
+    },
+    get children() {
+      return createComponent(Show, {
+        get when() {
+          return messagesReady();
+        },
+        get children() {
+          return createComponent(MessageTimeline, {
+            get mobileChanges() {
+              return mobileChanges();
+            },
+            get mobileFallback() {
+              return reviewContent({
+                diffStyle: "unified",
+                classes: {
+                  root: "pb-8",
+                  header: "px-4",
+                  container: "px-4"
+                },
+                loadingClass: "px-4 py-4 text-secondary",
+                emptyClass: "h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"
+              });
+            },
+            actions: actions,
+            get scroll() {
+              return ui.scroll;
+            },
+            onResumeScroll: resumeScroll,
+            setScrollRef: setScrollRef,
+            onScheduleScrollState: scheduleScrollState,
+            get onAutoScrollHandleScroll() {
+              return autoScroll.handleScroll;
+            },
+            onMarkScrollGesture: markScrollGesture,
+            hasScrollGesture: hasScrollGesture,
+            onUserScroll: markUserScroll,
+            get onTurnBackfillScroll() {
+              return historyWindow.onScrollerScroll;
+            },
+            get onAutoScrollInteraction() {
+              return autoScroll.handleInteraction;
+            },
+            get centered() {
+              return centered();
+            },
+            setContentRef: el => {
+              content = el;
+              autoScroll.contentRef(el);
+              const root = scroller;
+              if (root) scheduleScrollState(root);
+            },
+            get turnStart() {
+              return historyWindow.turnStart();
+            },
+            get historyMore() {
+              return historyMore();
+            },
+            get historyLoading() {
+              return historyLoading();
+            },
+            onLoadEarlier: () => {
+              void historyWindow.loadAndReveal();
+            },
+            get renderedUserMessages() {
+              return historyWindow.renderedUserMessages();
+            },
+            anchor: anchor
+          });
+        }
+      });
+    }
+  }));
+  _solidInsert(chatPaneEl, createComponent(SessionComposerRegion, {
+    state: composer,
+    get ready() {
+      return !store.deferRender && messagesReady();
+    },
+    get centered() {
+      return centered();
+    },
+    inputRef: el => {
+      inputRef = el;
+    },
+    get newSessionWorktree() {
+      return newSessionWorktree();
+    },
+    onNewSessionWorktreeReset: () => setStore("newSessionWorktree", "main"),
+    onSubmit: () => {
+      comments.clear();
+      resumeScroll();
+    },
+    onResponseSubmit: resumeScroll,
+    get followup() {
+      return params.id && !isChildSession() ? {
+        queue: queueEnabled,
+        items: followupDock(),
+        sending: sendingFollowup(),
+        edit: editingFollowup(),
+        onQueue: queueFollowup,
+        onAbort: () => controller.pauseFollowup(),
+        onSend: id => {
+          void sendFollowup(params.id, id, {
+            manual: true
+          });
+        },
+        onEdit: editFollowup,
+        onEditLoaded: clearFollowupEdit
+      } : undefined;
+    },
+    get revert() {
+      return rolled().length > 0 ? {
+        items: rolled(),
+        restoring: restoring(),
+        disabled: reverting(),
+        onRestore: restore
+      } : undefined;
+    },
+    setPromptDockRef: el => {
+      promptDock = el;
+    }
+  }), null);
+  // --- Horizontal resize handle for review panel width ---
+  _solidInsert(centerEl, createComponent(Show, {
+    get when() {
+      return desktopReviewOpen();
+    },
+    get children() {
+      const host = template(`<div></div>`);
+      // Compiled delegated $$pointerdown -> direct listener (pointerdown always
+      // precedes the handle's own mousedown handling, so ordering is unchanged).
+      host.addEventListener("pointerdown", () => size.start());
+      _solidInsert(host, createComponent(ResizeHandle, {
+        direction: "horizontal",
+        // edge:"start" gives the DIRECTION (drag-left-grows). The default CSS
+        // for edge=start anchors the handle to the LEFT of its container; we
+        // override the position to the center's RIGHT edge (= the boundary
+        // with the right review panel) so the handle is actually grabbable
+        // there. Without this it rendered at x≈200 (unreachable).
+        edge: "start",
+        style: "inset-inline-start:auto;inset-inline-end:0;transform:translateX(50%);",
+        get size() {
+          return layout.session.width();
+        },
+        min: 180,
+        get max() {
+          return typeof window === "undefined" ? 1000 : window.innerWidth * 0.45;
+        },
+        onResize: width => {
+          size.touch();
+          layout.session.resize(width);
+        }
+      }));
+      return host;
+    }
+  }), null);
+  _solidInsert(rowEl, createComponent(FileTreePane, {
+    diffs: reviewDiffs,
+    diffsReady: reviewReady,
+    hasReview: hasReview,
+    reviewCount: reviewCount,
+    get activeDiff() {
+      return tree.activeDiff;
+    },
+    onChangedFileClick: focusReviewDiff,
+    onFileClick: openFileFromTree,
+    onContextMenu: (node, event) => showFileContextMenu(node, event, {
+      directory: sdk.directory,
+      refresh: dir => file.tree.refresh(dir),
+      openFile: path => openFileFromTree(path)
+    }),
+    size: size
+  }), centerEl);
+  _solidInsert(rowEl, createComponent(SessionSidePanel, {
+    canReview: canReview,
+    diffs: reviewDiffs,
+    diffsReady: reviewReady,
+    empty: reviewEmptyText,
+    hasReview: hasReview,
+    reviewCount: reviewCount,
+    reviewPanel: reviewPanel,
+    get activeDiff() {
+      return tree.activeDiff;
+    },
+    focusReviewDiff: focusReviewDiff,
+    get reviewSnap() {
+      return ui.reviewSnap;
+    },
+    size: size
+  }), null);
+  _solidInsert(rootEl, createComponent(TerminalPanel, {}), null);
+  // Change-guarded center-column classes/width, mirroring the compiled
+  // classList()/setStyleProperty() effect block. The first class group is
+  // always true, so it is applied once.
+  centerEl.classList.add("@container", "relative", "flex", "flex-col", "min-h-0", "h-full", "bg-body", "flex-1", "min-w-0");
+  const centerAnimationClasses = ["transition-[width]", "duration-[240ms]", "ease-[cubic-bezier(0.22,1,0.36,1)]", "will-change-[width]", "motion-reduce:transition-none"];
+  let prevCenterAnimate;
+  let prevCenterWidth;
+  createRenderEffect(() => {
+    const animate = !size.active() && !ui.reviewSnap;
+    const width = sessionPanelWidth();
+    if (animate !== prevCenterAnimate) {
+      prevCenterAnimate = animate;
+      for (const cls of centerAnimationClasses) centerEl.classList.toggle(cls, animate);
+    }
+    if (width !== prevCenterWidth) {
+      prevCenterWidth = width;
+      if (width == null) centerEl.style.removeProperty("width");
+      else centerEl.style.setProperty("width", width);
+    }
+  });
+  // chat pane height + visibility (the "×" closes the pane entirely; the
+  // toolbar chat button reopens it)
+  let prevChatHeight;
+  let prevChatBorder;
+  let prevChatDisplay;
+  createRenderEffect(() => {
+    const open = params.id && view().chatPanel.opened();
+    const height = open ? `${layout.chatPanel.height()}px` : "";
+    const borderTop = open ? "1px solid var(--bs-border-color)" : "";
+    const display = view().chatPanel.opened() ? "" : "none";
+    if (height !== prevChatHeight) chatPaneEl.style.setProperty("height", prevChatHeight = height);
+    if (borderTop !== prevChatBorder) chatPaneEl.style.setProperty("border-top", prevChatBorder = borderTop);
+    // The pane carries a `display:flex !important` utility class, so inline
+    // display must use !important to override it when hiding.
+    if (display !== prevChatDisplay) {
+      prevChatDisplay = display;
+      if (display === "none") chatPaneEl.style.setProperty("display", "none", "important");
+      else chatPaneEl.style.removeProperty("display");
+    }
+  });
+  return rootEl;
 }
-_$delegateEvents(["pointerdown"]);

@@ -1,30 +1,9 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span><span class="small fw-normal text-secondary"></span></div><div class="d-flex justify-content-end gap-2">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span><span class="small fw-normal text-secondary"> <!> </span></div><div class="d-flex justify-content-end gap-2">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div><div class="shrink-0 px-3 py-3"><div class="rounded-3 bg-body shadow-xs-border-base"data-component=getting-started><div class="p-3 d-flex flex-column gap-6"><div class="d-flex flex-column gap-2"><div class="fw-medium text-body-emphasis"></div><div class="text-body"style=line-height:var(--line-height-normal)></div><div class="text-body"style=line-height:var(--line-height-normal)></div></div><div data-component=getting-started-actions>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="flex-1 min-h-0 -mt-4 d-flex align-items-center justify-content-center px-6 pb-64 text-center"><div class="mt-8 d-flex max-w-60 flex-column align-items-center gap-6 text-center"><div class="d-flex flex-column gap-3"><div class="fw-medium text-body-emphasis"></div><div class="text-body"style=line-height:var(--line-height-normal)>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<span class="small fw-normal text-body truncate select-text">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="shrink-0 pl-1 py-1"><div class="group/project d-flex align-items-start justify-content-between gap-2 py-2 pl-2 pr-0"><div class="d-flex flex-column min-w-0">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="shrink-0 py-4">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="size-full d-flex flex-column py-2 gap-4 overflow-y-auto no-scrollbar [overflow-anchor:none]">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="relative flex-1 min-h-0">`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div class="flex-1 min-h-0 d-flex flex-column">`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div class="flex-1 min-h-0">`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div class="hidden xl:block absolute inset-y-0 z-30 w-0 overflow-visible">`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div class="relative bg-body flex-1 min-h-0 min-w-0 d-flex flex-column select-none [&amp;_input]:select-text [&amp;_textarea]:select-text [&amp;_[contenteditable]]:select-text"><div class="flex-1 min-h-0 min-w-0 d-flex"><div class="flex-1 min-h-0 relative"><div class="size-full relative overflow-x-hidden"><nav data-component=sidebar-nav-desktop><div class="@container w-full h-full contain-strict"></div></nav><div class="hidden xl:block pointer-events-none absolute top-0 right-0 z-0 border-t border"style="left:calc(4rem + 12px)"></div><div class=xl:hidden><div></div><nav data-component=sidebar-nav-mobile></nav></div><div><main></main></div><div></div><div><div class="h-full w-px"style=box-shadow:var(--shadow-sidebar-overlay)>`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<div class=size-full>`),
-  _tmpl$classicShell = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-100"><div class="app-topbar shrink-0 d-flex align-items-center gap-1 border-bottom bg-body-tertiary px-1"></div><div class="flex-fill min-h-0 d-flex">`),
-  _tmpl$statusbar = /*#__PURE__*/_$template(`<footer class="app-statusbar shrink-0 d-flex align-items-center gap-3 border-top bg-body-tertiary px-2 small text-secondary" style="height:24px"><span class="d-flex align-items-center gap-1"><span class="rounded-circle" style="width:8px;height:8px"></span><span></span></span><span class="text-truncate" style="max-width:200px"></span><span class="ms-auto d-flex align-items-center gap-3"></span><span></span></footer>`);
-import { createEffect, createMemo, createResource, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
+// insert() from solid-js/web is the established exception for reactive /
+// component-valued children (Show branches, forwarded router children,
+// portal-backed components): Solid keeps reconciling the accessors instead of
+// freezing a one-time snapshot.
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { useLayout } from "@/context/layout.js";
@@ -41,7 +20,6 @@ import { Dialog } from "@/bs/dialog.js";
 import { getFilename } from "core/util/path";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
-import { createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
 import { useProviders } from "@/hooks/use-providers.js";
@@ -70,6 +48,42 @@ import { createInlineEditorController } from "./layout/inline-editor.js";
 import { LocalWorkspace, SortableWorkspace, WorkspaceDragOverlay } from "./layout/sidebar-workspace.js";
 import { ProjectDragOverlay, SortableProject } from "./layout/sidebar-project.js";
 import { SidebarContent } from "./layout/sidebar-shell.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Static markup only — translated or user-provided strings are always
+// assigned via textContent/text nodes, never interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web classList(): change-guarded class toggling against the
+// previous map; a key may hold several space-separated class names and empty
+// keys are skipped.
+function toggleClassKey(node, key, value) {
+  const names = key.trim().split(/\s+/);
+  for (let i = 0; i < names.length; i++) node.classList.toggle(names[i], value);
+}
+function applyClassList(node, value, prev = {}) {
+  const classKeys = Object.keys(value || {});
+  const prevKeys = Object.keys(prev);
+  for (let i = 0; i < prevKeys.length; i++) {
+    const key = prevKeys[i];
+    if (!key || key === "undefined" || value[key]) continue;
+    toggleClassKey(node, key, false);
+    delete prev[key];
+  }
+  for (let i = 0; i < classKeys.length; i++) {
+    const key = classKeys[i];
+    const classValue = !!value[key];
+    if (!key || key === "undefined" || prev[key] === classValue || !classValue) continue;
+    toggleClassKey(node, key, true);
+    prev[key] = classValue;
+  }
+  return prev;
+}
 export default function Layout(props) {
   const [store, setStore,, ready] = persisted(Persist.global("layout.page", ["layout.page.v1"]), createStore({
     lastProjectSession: {},
@@ -882,21 +896,21 @@ export default function Layout(props) {
     const run = ++dialogRun;
     void import("@/components/dialog-select-provider.js").then(x => {
       if (dialogDead || dialogRun !== run) return;
-      dialog.show(() => _$createComponent(x.DialogSelectProvider, {}));
+      dialog.show(() => createComponent(x.DialogSelectProvider, {}));
     });
   }
   function openServer() {
     const run = ++dialogRun;
     void import("@/components/dialog-select-server.js").then(x => {
       if (dialogDead || dialogRun !== run) return;
-      dialog.show(() => _$createComponent(x.DialogSelectServer, {}));
+      dialog.show(() => createComponent(x.DialogSelectServer, {}));
     });
   }
   function openSettings() {
     const run = ++dialogRun;
     void import("@/components/dialog-settings.js").then(x => {
       if (dialogDead || dialogRun !== run) return;
-      dialog.show(() => _$createComponent(x.DialogSettings, {}));
+      dialog.show(() => createComponent(x.DialogSettings, {}));
     });
   }
   function startNewSession() {
@@ -1110,7 +1124,7 @@ export default function Layout(props) {
     const run = ++dialogRun;
     void import("@/components/dialog-edit-project.js").then(x => {
       if (dialogDead || dialogRun !== run) return;
-      dialog.show(() => _$createComponent(x.DialogEditProject, {
+      dialog.show(() => createComponent(x.DialogEditProject, {
         project: project
       }));
     });
@@ -1136,7 +1150,7 @@ export default function Layout(props) {
       const run = ++dialogRun;
       void import("@/components/dialog-select-directory.js").then(x => {
         if (dialogDead || dialogRun !== run) return;
-        dialog.show(() => _$createComponent(x.DialogSelectDirectory, {
+        dialog.show(() => createComponent(x.DialogSelectDirectory, {
           multiple: true,
           onSelect: resolve
         }), () => resolve(null));
@@ -1177,30 +1191,35 @@ export default function Layout(props) {
       if (!data.dirty) return language.t("workspace.status.clean");
       return language.t("workspace.status.dirty");
     };
-    return _$createComponent(Dialog, {
+    return createComponent(Dialog, {
       get title() {
         return language.t("workspace.delete.title");
       },
       fit: true,
       get children() {
-        var _el$ = _tmpl$(),
-          _el$2 = _el$.firstChild,
-          _el$3 = _el$2.firstChild,
-          _el$4 = _el$3.nextSibling,
-          _el$5 = _el$2.nextSibling;
-        _$insert(_el$3, () => language.t("workspace.delete.confirm", {
-          name: name()
-        }));
-        _$insert(_el$4, description);
-        _$insert(_el$5, _$createComponent(Button, {
+        const body = template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span><span class="small fw-normal text-secondary"></span></div><div class="d-flex justify-content-end gap-2"></div></div>`);
+        const column = body.firstChild;
+        const confirmEl = column.firstChild;
+        const statusEl = confirmEl.nextSibling;
+        const actions = column.nextSibling;
+        createRenderEffect(() => {
+          confirmEl.textContent = language.t("workspace.delete.confirm", {
+            name: name()
+          });
+        });
+        createRenderEffect(() => {
+          statusEl.textContent = description();
+        });
+        // bs/ Button returns a concrete element, so plain appends suffice.
+        actions.appendChild(createComponent(Button, {
           variant: "ghost",
           size: "large",
           onClick: () => dialog.close(),
           get children() {
             return language.t("common.cancel");
           }
-        }), null);
-        _$insert(_el$5, _$createComponent(Button, {
+        }));
+        actions.appendChild(createComponent(Button, {
           variant: "primary",
           size: "large",
           get disabled() {
@@ -1210,8 +1229,8 @@ export default function Layout(props) {
           get children() {
             return language.t("workspace.delete.button");
           }
-        }), null);
-        return _el$;
+        }));
+        return body;
       }
     });
   }
@@ -1263,35 +1282,47 @@ export default function Layout(props) {
         count
       });
     };
-    return _$createComponent(Dialog, {
+    return createComponent(Dialog, {
       get title() {
         return language.t("workspace.reset.title");
       },
       fit: true,
       get children() {
-        var _el$6 = _tmpl$2(),
-          _el$7 = _el$6.firstChild,
-          _el$8 = _el$7.firstChild,
-          _el$9 = _el$8.nextSibling,
-          _el$0 = _el$9.firstChild,
-          _el$10 = _el$0.nextSibling,
-          _el$1 = _el$10.nextSibling,
-          _el$11 = _el$7.nextSibling;
-        _$insert(_el$8, () => language.t("workspace.reset.confirm", {
-          name: name()
-        }));
-        _$insert(_el$9, description, _el$0);
-        _$insert(_el$9, archivedLabel, _el$10);
-        _$insert(_el$9, () => language.t("workspace.reset.note"), null);
-        _$insert(_el$11, _$createComponent(Button, {
+        const body = template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span><span class="small fw-normal text-secondary"></span></div><div class="d-flex justify-content-end gap-2"></div></div>`);
+        const column = body.firstChild;
+        const confirmEl = column.firstChild;
+        const detailEl = confirmEl.nextSibling;
+        const actions = column.nextSibling;
+        createRenderEffect(() => {
+          confirmEl.textContent = language.t("workspace.reset.confirm", {
+            name: name()
+          });
+        });
+        // "<description> <archived> <note>" as three live text nodes around
+        // the static spaces, matching the compiled inserts into the span.
+        const descriptionText = document.createTextNode("");
+        const archivedText = document.createTextNode("");
+        const noteText = document.createTextNode("");
+        detailEl.replaceChildren(descriptionText, document.createTextNode(" "), archivedText, document.createTextNode(" "), noteText);
+        createRenderEffect(() => {
+          descriptionText.data = description();
+        });
+        createRenderEffect(() => {
+          archivedText.data = archivedLabel();
+        });
+        createRenderEffect(() => {
+          noteText.data = language.t("workspace.reset.note");
+        });
+        // bs/ Button returns a concrete element, so plain appends suffice.
+        actions.appendChild(createComponent(Button, {
           variant: "ghost",
           size: "large",
           onClick: () => dialog.close(),
           get children() {
             return language.t("common.cancel");
           }
-        }), null);
-        _$insert(_el$11, _$createComponent(Button, {
+        }));
+        actions.appendChild(createComponent(Button, {
           variant: "primary",
           size: "large",
           get disabled() {
@@ -1301,8 +1332,8 @@ export default function Layout(props) {
           get children() {
             return language.t("workspace.reset.button");
           }
-        }), null);
-        return _el$6;
+        }));
+        return body;
       }
     });
   }
@@ -1457,11 +1488,11 @@ export default function Layout(props) {
     isBusy,
     workspaceExpanded: (directory, local) => store.workspaceExpanded[directory] ?? local,
     setWorkspaceExpanded: (directory, value) => setStore("workspaceExpanded", directory, value),
-    showResetWorkspaceDialog: (root, directory) => dialog.show(() => _$createComponent(DialogResetWorkspace, {
+    showResetWorkspaceDialog: (root, directory) => dialog.show(() => createComponent(DialogResetWorkspace, {
       root: root,
       directory: directory
     })),
-    showDeleteWorkspaceDialog: (root, directory) => dialog.show(() => _$createComponent(DialogDeleteWorkspace, {
+    showDeleteWorkspaceDialog: (root, directory) => dialog.show(() => createComponent(DialogDeleteWorkspace, {
       root: root,
       directory: directory
     })),
@@ -1534,86 +1565,90 @@ export default function Layout(props) {
       return item.vcs === "git" || layout.sidebar.workspaces(item.worktree)();
     });
     const homedir = createMemo(() => globalSync.data.path.home);
-    return (() => {
-      var _el$12 = _tmpl$3(),
-        _el$13 = _el$12.firstChild,
-        _el$14 = _el$13.firstChild,
-        _el$15 = _el$14.firstChild,
-        _el$16 = _el$15.firstChild,
-        _el$17 = _el$16.firstChild,
-        _el$18 = _el$17.nextSibling,
-        _el$19 = _el$18.nextSibling,
-        _el$20 = _el$16.nextSibling;
-      _$insert(_el$12, _$createComponent(Show, {
-        get when() {
-          return project();
-        },
-        get fallback() {
-          return _$createComponent(Show, {
-            get when() {
-              return empty();
-            },
+    // Static skeleton: panel root > getting-started card.
+    const panelRoot = template(`<div><div class="shrink-0 px-3 py-3"><div class="rounded-3 bg-body shadow-xs-border-base" data-component="getting-started"><div class="p-3 d-flex flex-column gap-6"><div class="d-flex flex-column gap-2"><div class="fw-medium text-body-emphasis"></div><div class="text-body" style="line-height:var(--line-height-normal)"></div><div class="text-body" style="line-height:var(--line-height-normal)"></div></div><div data-component="getting-started-actions"></div></div></div></div></div>`);
+    const gettingStarted = panelRoot.firstChild;
+    const gsText = gettingStarted.firstChild.firstChild.firstChild;
+    const gsTitle = gsText.firstChild;
+    const gsLine1 = gsTitle.nextSibling;
+    const gsLine2 = gsLine1.nextSibling;
+    const gsActions = gsText.nextSibling;
+    _solidInsert(panelRoot, createComponent(Show, {
+      get when() {
+        return project();
+      },
+      get fallback() {
+        return createComponent(Show, {
+          get when() {
+            return empty();
+          },
+          get children() {
+            const emptyEl = template(`<div class="flex-1 min-h-0 -mt-4 d-flex align-items-center justify-content-center px-6 pb-64 text-center"><div class="mt-8 d-flex max-w-60 flex-column align-items-center gap-6 text-center"><div class="d-flex flex-column gap-3"><div class="fw-medium text-body-emphasis"></div><div class="text-body" style="line-height:var(--line-height-normal)"></div></div></div></div>`);
+            const emptyInner = emptyEl.firstChild;
+            const emptyTitle = emptyInner.firstChild.firstChild;
+            const emptyDescription = emptyTitle.nextSibling;
+            createRenderEffect(() => {
+              emptyTitle.textContent = language.t("sidebar.empty.title");
+            });
+            createRenderEffect(() => {
+              emptyDescription.textContent = language.t("sidebar.empty.description");
+            });
+            emptyInner.appendChild(createComponent(Button, {
+              size: "large",
+              icon: "folder-add-left",
+              onClick: chooseProject,
+              get children() {
+                return language.t("command.project.open");
+              }
+            }));
+            return emptyEl;
+          }
+        });
+      },
+      children: project => [(() => {
+        // Project name row: inline editor + path tooltip + actions menu.
+        const header = template(`<div class="shrink-0 pl-1 py-1"><div class="group/project d-flex align-items-start justify-content-between gap-2 py-2 pl-2 pr-0"><div class="d-flex flex-column min-w-0"></div></div></div>`);
+        const headerRow = header.firstChild;
+        const nameColumn = headerRow.firstChild;
+        _solidInsert(nameColumn, createComponent(InlineEditor, {
+          get id() {
+            return `project:${projectId()}`;
+          },
+          value: projectName,
+          onSave: next => {
+            const item = project();
+            if (!item) return;
+            void renameProject(item, next);
+          },
+          "class": "fw-medium text-body-emphasis truncate",
+          displayClass: "fw-medium text-body-emphasis truncate",
+          stopPropagation: true
+        }), null);
+        _solidInsert(nameColumn, createComponent(Tooltip, {
+          placement: "bottom",
+          gutter: 2,
+          get value() {
+            return worktree();
+          },
+          "class": "shrink-0",
+          contentStyle: {
+            "max-width": "640px",
+            transform: "translate3d(52px, 0, 0)"
+          },
+          get children() {
+            const pathEl = template(`<span class="small fw-normal text-body truncate select-text"></span>`);
+            createRenderEffect(() => {
+              pathEl.textContent = worktree().replace(homedir(), "~");
+            });
+            return pathEl;
+          }
+        }), null);
+        _solidInsert(headerRow, createComponent(DropdownMenu, {
+          get modal() {
+            return !sidebarHovering();
+          },
             get children() {
-              var _el$21 = _tmpl$4(),
-                _el$22 = _el$21.firstChild,
-                _el$23 = _el$22.firstChild,
-                _el$24 = _el$23.firstChild,
-                _el$25 = _el$24.nextSibling;
-              _$insert(_el$24, () => language.t("sidebar.empty.title"));
-              _$insert(_el$25, () => language.t("sidebar.empty.description"));
-              _$insert(_el$22, _$createComponent(Button, {
-                size: "large",
-                icon: "folder-add-left",
-                onClick: chooseProject,
-                get children() {
-                  return language.t("command.project.open");
-                }
-              }), null);
-              return _el$21;
-            }
-          });
-        },
-        children: project => [(() => {
-          var _el$26 = _tmpl$6(),
-            _el$27 = _el$26.firstChild,
-            _el$28 = _el$27.firstChild;
-          _$insert(_el$28, _$createComponent(InlineEditor, {
-            get id() {
-              return `project:${projectId()}`;
-            },
-            value: projectName,
-            onSave: next => {
-              const item = project();
-              if (!item) return;
-              void renameProject(item, next);
-            },
-            "class": "fw-medium text-body-emphasis truncate",
-            displayClass: "fw-medium text-body-emphasis truncate",
-            stopPropagation: true
-          }), null);
-          _$insert(_el$28, _$createComponent(Tooltip, {
-            placement: "bottom",
-            gutter: 2,
-            get value() {
-              return worktree();
-            },
-            "class": "shrink-0",
-            contentStyle: {
-              "max-width": "640px",
-              transform: "translate3d(52px, 0, 0)"
-            },
-            get children() {
-              var _el$29 = _tmpl$5();
-              _$insert(_el$29, () => worktree().replace(homedir(), "~"));
-              return _el$29;
-            }
-          }), null);
-          _$insert(_el$27, _$createComponent(DropdownMenu, {
-            get modal() {
-              return !sidebarHovering();
-            },
-            get children() {
-              return [_$createComponent(DropdownMenu.Trigger, {
+              return [createComponent(DropdownMenu.Trigger, {
                 as: IconButton,
                 icon: "dot-grid",
                 variant: "ghost",
@@ -1631,25 +1666,25 @@ export default function Layout(props) {
                 get ["aria-label"]() {
                   return language.t("common.moreOptions");
                 }
-              }), _$createComponent(DropdownMenu.Portal, {
+              }), createComponent(DropdownMenu.Portal, {
                 get children() {
-                  return _$createComponent(DropdownMenu.Content, {
+                  return createComponent(DropdownMenu.Content, {
                     "class": "mt-1",
                     get children() {
-                      return [_$createComponent(DropdownMenu.Item, {
+                      return [createComponent(DropdownMenu.Item, {
                         onSelect: () => {
                           const item = project();
                           if (!item) return;
                           showEditProjectDialog(item);
                         },
                         get children() {
-                          return _$createComponent(DropdownMenu.ItemLabel, {
+                          return createComponent(DropdownMenu.ItemLabel, {
                             get children() {
                               return language.t("common.edit");
                             }
                           });
                         }
-                      }), _$createComponent(DropdownMenu.Item, {
+                      }), createComponent(DropdownMenu.Item, {
                         "data-action": "project-workspaces-toggle",
                         get ["data-project"]() {
                           return slug();
@@ -1663,13 +1698,15 @@ export default function Layout(props) {
                           toggleProjectWorkspaces(item);
                         },
                         get children() {
-                          return _$createComponent(DropdownMenu.ItemLabel, {
+                          return createComponent(DropdownMenu.ItemLabel, {
                             get children() {
-                              return _$memo(() => !!workspacesEnabled())() ? language.t("sidebar.workspaces.disable") : language.t("sidebar.workspaces.enable");
+                              // workspacesEnabled() is already a boolean memo,
+                              // so the compiled memo wrapper was redundant.
+                              return workspacesEnabled() ? language.t("sidebar.workspaces.disable") : language.t("sidebar.workspaces.enable");
                             }
                           });
                         }
-                      }), _$createComponent(DropdownMenu.Item, {
+                      }), createComponent(DropdownMenu.Item, {
                         "data-action": "project-clear-notifications",
                         get ["data-project"]() {
                           return slug();
@@ -1679,13 +1716,13 @@ export default function Layout(props) {
                         },
                         onSelect: clearNotifications,
                         get children() {
-                          return _$createComponent(DropdownMenu.ItemLabel, {
+                          return createComponent(DropdownMenu.ItemLabel, {
                             get children() {
                               return language.t("sidebar.project.clearNotifications");
                             }
                           });
                         }
-                      }), _$createComponent(DropdownMenu.Separator, {}), _$createComponent(DropdownMenu.Item, {
+                      }), createComponent(DropdownMenu.Separator, {}), createComponent(DropdownMenu.Item, {
                         "data-action": "project-close-menu",
                         get ["data-project"]() {
                           return slug();
@@ -1696,7 +1733,7 @@ export default function Layout(props) {
                           closeProject(dir);
                         },
                         get children() {
-                          return _$createComponent(DropdownMenu.ItemLabel, {
+                          return createComponent(DropdownMenu.ItemLabel, {
                             get children() {
                               return language.t("common.close");
                             }
@@ -1708,173 +1745,182 @@ export default function Layout(props) {
                 }
               })];
             }
-          }), null);
-          return _el$26;
-        })(), (() => {
-          var _el$30 = _tmpl$0();
-          _$insert(_el$30, _$createComponent(Show, {
-            get when() {
-              return workspacesEnabled();
-            },
-            get fallback() {
-              return [(() => {
-                var _el$34 = _tmpl$7();
-                _$insert(_el$34, _$createComponent(Button, {
-                  size: "large",
-                  icon: "new-session",
-                  "class": "w-full",
-                  onClick: () => {
-                    const dir = worktree();
-                    if (!dir) return;
-                    navigateWithSidebarReset(`/${base64Encode(dir)}/session`);
-                  },
-                  get children() {
-                    return language.t("command.session.new");
-                  }
-                }));
-                return _el$34;
-              })(), (() => {
-                var _el$35 = _tmpl$1();
-                _$insert(_el$35, _$createComponent(LocalWorkspace, {
-                  ctx: workspaceSidebarCtx,
-                  get project() {
-                    return project();
-                  },
-                  sortNow: sortNow,
-                  get mobile() {
-                    return panelProps.mobile;
-                  }
-                }));
-                return _el$35;
-              })()];
-            },
-            get children() {
-              return [(() => {
-                var _el$31 = _tmpl$7();
-                _$insert(_el$31, _$createComponent(Button, {
-                  size: "large",
-                  icon: "plus-small",
-                  "class": "w-full",
-                  onClick: () => {
-                    const item = project();
-                    if (!item) return;
-                    void createWorkspace(item);
-                  },
-                  get children() {
-                    return language.t("workspace.new");
-                  }
-                }));
-                return _el$31;
-              })(), (() => {
-                var _el$32 = _tmpl$9();
-                _$insert(_el$32, _$createComponent(DragDropProvider, {
-                  onDragStart: handleWorkspaceDragStart,
-                  onDragEnd: handleWorkspaceDragEnd,
-                  onDragOver: handleWorkspaceDragOver,
-                  collisionDetector: closestCenter,
-                  get children() {
-                    return [_$createComponent(DragDropSensors, {}), _$createComponent(ConstrainDragXAxis, {}), (() => {
-                      var _el$33 = _tmpl$8();
-                      _$use(el => {
-                        if (!panelProps.mobile) scrollContainerRef = el;
-                      }, _el$33);
-                      _$insert(_el$33, _$createComponent(SortableProvider, {
-                        get ids() {
-                          return workspaces();
-                        },
-                        get children() {
-                          return _$createComponent(For, {
-                            get each() {
-                              return workspaces();
-                            },
-                            children: directory => _$createComponent(SortableWorkspace, {
-                              ctx: workspaceSidebarCtx,
-                              directory: directory,
-                              get project() {
-                                return project();
-                              },
-                              sortNow: sortNow,
-                              get mobile() {
-                                return panelProps.mobile;
-                              }
-                            })
-                          });
-                        }
-                      }));
-                      return _el$33;
-                    })(), _$createComponent(DragOverlay, {
+        }), null);
+        return header;
+      })(), (() => {
+        // Sessions/workspaces body below the header.
+        const bodyEl = template(`<div class="flex-1 min-h-0 d-flex flex-column"></div>`);
+        _solidInsert(bodyEl, createComponent(Show, {
+          get when() {
+            return workspacesEnabled();
+          },
+          get fallback() {
+            return [(() => {
+              const row = template(`<div class="shrink-0 py-4"></div>`);
+              row.appendChild(createComponent(Button, {
+                size: "large",
+                icon: "new-session",
+                "class": "w-full",
+                onClick: () => {
+                  const dir = worktree();
+                  if (!dir) return;
+                  navigateWithSidebarReset(`/${base64Encode(dir)}/session`);
+                },
+                get children() {
+                  return language.t("command.session.new");
+                }
+              }));
+              return row;
+            })(), (() => {
+              const host = template(`<div class="flex-1 min-h-0"></div>`);
+              _solidInsert(host, createComponent(LocalWorkspace, {
+                ctx: workspaceSidebarCtx,
+                get project() {
+                  return project();
+                },
+                sortNow: sortNow,
+                get mobile() {
+                  return panelProps.mobile;
+                }
+              }));
+              return host;
+            })()];
+          },
+          get children() {
+            return [(() => {
+              const row = template(`<div class="shrink-0 py-4"></div>`);
+              row.appendChild(createComponent(Button, {
+                size: "large",
+                icon: "plus-small",
+                "class": "w-full",
+                onClick: () => {
+                  const item = project();
+                  if (!item) return;
+                  void createWorkspace(item);
+                },
+                get children() {
+                  return language.t("workspace.new");
+                }
+              }));
+              return row;
+            })(), (() => {
+              const host = template(`<div class="relative flex-1 min-h-0"></div>`);
+              _solidInsert(host, createComponent(DragDropProvider, {
+                onDragStart: handleWorkspaceDragStart,
+                onDragEnd: handleWorkspaceDragEnd,
+                onDragOver: handleWorkspaceDragOver,
+                collisionDetector: closestCenter,
+                get children() {
+                  return [createComponent(DragDropSensors, {}), createComponent(ConstrainDragXAxis, {}), (() => {
+                    const scroller = template(`<div class="size-full d-flex flex-column py-2 gap-4 overflow-y-auto no-scrollbar [overflow-anchor:none]"></div>`);
+                    // Ref binding (compiled use()).
+                    if (!panelProps.mobile) scrollContainerRef = scroller;
+                    // Runtime For keeps workspace rows stable across reorders,
+                    // which solid-dnd's sortable transforms rely on.
+                    _solidInsert(scroller, createComponent(SortableProvider, {
+                      get ids() {
+                        return workspaces();
+                      },
                       get children() {
-                        return _$createComponent(WorkspaceDragOverlay, {
-                          sidebarProject: sidebarProject,
-                          activeWorkspace: () => store.activeWorkspace,
-                          workspaceLabel: workspaceLabel
+                        return createComponent(For, {
+                          get each() {
+                            return workspaces();
+                          },
+                          children: directory => createComponent(SortableWorkspace, {
+                            ctx: workspaceSidebarCtx,
+                            directory: directory,
+                            get project() {
+                              return project();
+                            },
+                            sortNow: sortNow,
+                            get mobile() {
+                              return panelProps.mobile;
+                            }
+                          })
                         });
                       }
-                    })];
-                  }
-                }));
-                return _el$32;
-              })()];
-            }
-          }));
-          return _el$30;
-        })()]
-      }), _el$13);
-      _$insert(_el$17, () => language.t("sidebar.gettingStarted.title"));
-      _$insert(_el$18, () => language.t("sidebar.gettingStarted.line1"));
-      _$insert(_el$19, () => language.t("sidebar.gettingStarted.line2"));
-      _$insert(_el$20, _$createComponent(Button, {
-        size: "large",
-        icon: "plus-small",
-        onClick: connectProvider,
-        get children() {
-          return language.t("command.provider.connect");
-        }
-      }), null);
-      _$insert(_el$20, _$createComponent(Button, {
-        size: "large",
-        variant: "ghost",
-        onClick: () => setStore("gettingStartedDismissed", true),
-        get children() {
-          return language.t("toast.update.action.notYet");
-        }
-      }), null);
-      _$effect(_p$ => {
-        var _v$ = {
-            "flex flex-col min-h-0 min-w-0 box-border rounded-tl-[12px] px-3": true,
-            "border border-b-0": !merged(),
-            "border-l border-t border": merged(),
-            "bg-body": true,
-            "flex-1 min-w-0": panelProps.mobile,
-            "max-w-full overflow-hidden": panelProps.mobile
-          },
-          _v$2 = panelProps.mobile ? undefined : `${panel()}px`,
-          _v$3 = !!(store.gettingStartedDismissed || !(providers.all().length > 0 && providers.connected().length === 0));
-        _p$.e = _$classList(_el$12, _v$, _p$.e);
-        _v$2 !== _p$.t && _$setStyleProperty(_el$12, "width", _p$.t = _v$2);
-        _v$3 !== _p$.a && _el$13.classList.toggle("hidden", _p$.a = _v$3);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined,
-        a: undefined
-      });
-      return _el$12;
-    })();
+                    }));
+                    return scroller;
+                  })(), createComponent(DragOverlay, {
+                    get children() {
+                      return createComponent(WorkspaceDragOverlay, {
+                        sidebarProject: sidebarProject,
+                        activeWorkspace: () => store.activeWorkspace,
+                        workspaceLabel: workspaceLabel
+                      });
+                    }
+                  })];
+                }
+              }));
+              return host;
+            })()];
+          }
+        }));
+        return bodyEl;
+      })()]
+    }), gettingStarted);
+    createRenderEffect(() => {
+      gsTitle.textContent = language.t("sidebar.gettingStarted.title");
+    });
+    createRenderEffect(() => {
+      gsLine1.textContent = language.t("sidebar.gettingStarted.line1");
+    });
+    createRenderEffect(() => {
+      gsLine2.textContent = language.t("sidebar.gettingStarted.line2");
+    });
+    gsActions.appendChild(createComponent(Button, {
+      size: "large",
+      icon: "plus-small",
+      onClick: connectProvider,
+      get children() {
+        return language.t("command.provider.connect");
+      }
+    }));
+    gsActions.appendChild(createComponent(Button, {
+      size: "large",
+      variant: "ghost",
+      onClick: () => setStore("gettingStartedDismissed", true),
+      get children() {
+        return language.t("toast.update.action.notYet");
+      }
+    }));
+    // Change-guarded reactive classes/styles, mirroring the compiled effect().
+    const panelClassPrev = {};
+    let prevWidth;
+    let prevDismissed;
+    createRenderEffect(() => {
+      applyClassList(panelRoot, {
+        "flex flex-col min-h-0 min-w-0 box-border rounded-tl-[12px] px-3": true,
+        "border border-b-0": !merged(),
+        "border-l border-t border": merged(),
+        "bg-body": true,
+        "flex-1 min-w-0": panelProps.mobile,
+        "max-w-full overflow-hidden": panelProps.mobile
+      }, panelClassPrev);
+      const width = panelProps.mobile ? undefined : `${panel()}px`;
+      const dismissed = !!(store.gettingStartedDismissed || !(providers.all().length > 0 && providers.connected().length === 0));
+      if (width !== prevWidth) {
+        prevWidth = width;
+        if (width == null) panelRoot.style.removeProperty("width");
+        else panelRoot.style.setProperty("width", width);
+      }
+      if (dismissed !== prevDismissed) gettingStarted.classList.toggle("hidden", prevDismissed = dismissed);
+    });
+    return panelRoot;
   };
   const projects = () => layout.projects.list();
-  const projectOverlay = () => _$createComponent(ProjectDragOverlay, {
+  const projectOverlay = () => createComponent(ProjectDragOverlay, {
     projects: projects,
     activeProject: () => store.activeProject
   });
-  const sidebarContent = mobile => _$createComponent(SidebarContent, {
+  const sidebarContent = mobile => createComponent(SidebarContent, {
     mobile: mobile,
     opened: () => layout.sidebar.opened(),
     get aimMove() {
       return aim.move;
     },
     projects: projects,
-    renderProject: project => _$createComponent(SortableProject, {
+    renderProject: project => createComponent(SortableProject, {
       ctx: projectSidebarCtx,
       project: project,
       sortNow: sortNow,
@@ -1894,186 +1940,193 @@ export default function Layout(props) {
     onOpenSettings: openSettings,
     helpLabel: () => language.t("sidebar.help"),
     onOpenHelp: () => platform.openLink("https://github.com/informanellica/vanilla-closedcode"),
-    renderPanel: () => mobile ? _$createComponent(SidebarPanel, {
+    renderPanel: () => mobile ? createComponent(SidebarPanel, {
       project: currentProject,
       mobile: true
-    }) : _$createComponent(SidebarPanel, {
+    }) : createComponent(SidebarPanel, {
       project: currentProject,
       merged: true
     })
   });
-  return (() => {
-    var _el$36 = _tmpl$11(),
-      _el$37 = _el$36.firstChild,
-      _el$38 = _el$37.firstChild,
-      _el$39 = _el$38.firstChild,
-      _el$40 = _el$39.firstChild,
-      _el$41 = _el$40.firstChild,
-      _el$43 = _el$40.nextSibling,
-      _el$44 = _el$43.nextSibling,
-      _el$45 = _el$44.firstChild,
-      _el$46 = _el$45.nextSibling,
-      _el$47 = _el$44.nextSibling,
-      _el$48 = _el$47.firstChild,
-      _el$49 = _el$47.nextSibling,
-      _el$50 = _el$49.nextSibling,
-      _el$51 = _el$50.firstChild;
-    _$insert(_el$36, () => autoselecting() ?? "", _el$37);
-    _el$40.addEventListener("mouseleave", () => {
-      aim.reset();
-      if (!sidebarHovering()) return;
-      arm();
-    });
-    _el$40.addEventListener("mouseenter", () => {
-      disarm();
-    });
-    _$use(el => {
-      setState("nav", el);
-    }, _el$40);
-    _$classList(_el$40, {
-      "hidden xl:block": true,
-      "absolute inset-y-0 left-0": true,
-      "z-10": true
-    });
-    _$insert(_el$41, sidebarContent);
-    _$insert(_el$39, _$createComponent(Show, {
-      get when() {
-        return layout.sidebar.opened();
-      },
-      get children() {
-        var _el$42 = _tmpl$10();
-        _el$42.$$pointerdown = () => setState("sizing", true);
-        _$insert(_el$42, _$createComponent(ResizeHandle, {
-          direction: "horizontal",
-          get size() {
-            return layout.sidebar.width();
-          },
-          min: 244,
-          get max() {
-            return typeof window === "undefined" ? 1000 : window.innerWidth * 0.3 + 64;
-          },
-          onResize: w => {
-            setState("sizing", true);
-            if (sizet !== undefined) clearTimeout(sizet);
-            sizet = window.setTimeout(() => setState("sizing", false), 120);
-            layout.sidebar.resize(w);
-          }
-        }));
-        _$effect(_$p => _$setStyleProperty(_el$42, "left", `${side()}px`));
-        return _el$42;
-      }
-    }), _el$43);
-    _el$45.$$click = e => {
-      if (e.target === e.currentTarget) layout.mobileSidebar.hide();
-    };
-    _el$46.$$click = e => e.stopPropagation();
-    _$insert(_el$46, () => sidebarContent(true));
-    _$classList(_el$48, {
-      "size-full overflow-x-hidden flex flex-col items-start contain-strict border-t border bg-body xl:border-l xl:rounded-tl-[12px]": true
-    });
-    _$insert(_el$48, _$createComponent(Show, {
-      get when() {
-        return !autoselecting.loading;
-      },
-      get fallback() {
-        return _tmpl$12();
-      },
-      get children() {
-        return props.children;
-      }
-    }));
-    _el$49.addEventListener("mouseleave", () => {
-      arm();
-    });
-    _el$49.$$pointerdown = disarm;
-    _el$49.addEventListener("mouseenter", () => {
-      disarm();
-      aim.reset();
-    });
-    _el$49.$$mousemove = disarm;
-    _$insert(_el$49, _$createComponent(Show, {
-      get when() {
-        return peekProject();
-      },
-      get children() {
-        return _$createComponent(SidebarPanel, {
-          project: peekProject,
-          merged: false
-        });
-      }
-    }));
-    _$insert(_el$37, (() => {
-      var _c$ = _$memo(() => !!globalThis.__APP_ENV__?.DEV);
-      return () => _c$() && _$createComponent(DebugBar, {});
-    })(), null);
-    _$insert(_el$36, _$createComponent(Toast.Region, {}), null);
-    _$effect(_p$ => {
-      var _v$4 = language.t("sidebar.nav.projectsAndSessions"),
-        _v$5 = `${side()}px`,
-        _v$6 = {
-          "fixed inset-x-0 top-10 bottom-0 z-40 transition-opacity duration-200": true,
-          "opacity-100 pointer-events-auto": layout.mobileSidebar.opened(),
-          "opacity-0 pointer-events-none": !layout.mobileSidebar.opened()
+  // ----- Static skeleton: app content root -----
+  // viewport children: desktop nav, top border, mobile sidebar wrap, main
+  // host, peek panel host, peek shadow.
+  const appRoot = template(`<div class="relative bg-body flex-1 min-h-0 min-w-0 d-flex flex-column select-none [&amp;_input]:select-text [&amp;_textarea]:select-text [&amp;_[contenteditable]]:select-text"><div class="flex-1 min-h-0 min-w-0 d-flex"><div class="flex-1 min-h-0 relative"><div class="size-full relative overflow-x-hidden"><nav data-component="sidebar-nav-desktop"><div class="@container w-full h-full contain-strict"></div></nav><div class="hidden xl:block pointer-events-none absolute top-0 right-0 z-0 border-t border" style="left:calc(4rem + 12px)"></div><div class="xl:hidden"><div></div><nav data-component="sidebar-nav-mobile"></nav></div><div><main></main></div><div></div><div><div class="h-full w-px" style="box-shadow:var(--shadow-sidebar-overlay)"></div></div></div></div></div></div>`);
+  const contentRow = appRoot.firstChild;
+  const viewport = contentRow.firstChild.firstChild;
+  const desktopNav = viewport.firstChild;
+  const desktopNavInner = desktopNav.firstChild;
+  const topBorder = desktopNav.nextSibling;
+  const mobileWrap = topBorder.nextSibling;
+  const mobileOverlay = mobileWrap.firstChild;
+  const mobileNav = mobileOverlay.nextSibling;
+  const mainHost = mobileWrap.nextSibling;
+  const mainEl = mainHost.firstChild;
+  const peekHost = mainHost.nextSibling;
+  const peekShadow = peekHost.nextSibling;
+  // Subscribe the autoselect resource; it only ever renders an empty string.
+  _solidInsert(appRoot, () => autoselecting() ?? "", contentRow);
+  desktopNav.addEventListener("mouseleave", () => {
+    aim.reset();
+    if (!sidebarHovering()) return;
+    arm();
+  });
+  desktopNav.addEventListener("mouseenter", () => {
+    disarm();
+  });
+  // Ref binding (compiled use()).
+  setState("nav", desktopNav);
+  // Static classList from the compiled output.
+  desktopNav.classList.add("hidden", "xl:block", "absolute", "inset-y-0", "left-0", "z-10");
+  // insert() invokes the accessor with no argument, so the desktop variant
+  // renders with mobile undefined, exactly like the compiled output.
+  _solidInsert(desktopNavInner, sidebarContent);
+  _solidInsert(viewport, createComponent(Show, {
+    get when() {
+      return layout.sidebar.opened();
+    },
+    get children() {
+      const handleHost = template(`<div class="hidden xl:block absolute inset-y-0 z-30 w-0 overflow-visible"></div>`);
+      // Compiled delegated $$pointerdown -> direct listener (pointerdown
+      // always precedes the handle's own mousedown handling, so ordering is
+      // unchanged).
+      handleHost.addEventListener("pointerdown", () => setState("sizing", true));
+      // ResizeHandle returns a concrete element.
+      handleHost.appendChild(createComponent(ResizeHandle, {
+        direction: "horizontal",
+        get size() {
+          return layout.sidebar.width();
         },
-        _v$7 = language.t("sidebar.nav.projectsAndSessions"),
-        _v$8 = {
-          "@container fixed top-10 bottom-0 left-0 z-50 w-full max-w-[400px] overflow-hidden border-r border bg-body transition-transform duration-200 ease-out": true,
-          "translate-x-0": layout.mobileSidebar.opened(),
-          "-translate-x-full": !layout.mobileSidebar.opened()
+        min: 244,
+        get max() {
+          return typeof window === "undefined" ? 1000 : window.innerWidth * 0.3 + 64;
         },
-        _v$9 = {
-          "absolute inset-0": true,
-          "xl:inset-y-0 xl:right-0 xl:left-[var(--main-left)]": true,
-          "z-20": true,
-          "transition-[left] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[left] motion-reduce:transition-none": !state.sizing
-        },
-        _v$0 = "0px",
-        /* sidebar hidden for now (see styles.css); reclaim its left offset.
-           Original: layout.sidebar.opened() ? `${side()}px` : "4rem" */
-        _v$1 = {
-          "hidden xl:flex absolute inset-y-0 left-16 z-30": true,
-          "opacity-100 translate-x-0 pointer-events-auto": state.peeked && !layout.sidebar.opened(),
-          "opacity-0 -translate-x-2 pointer-events-none": !state.peeked || layout.sidebar.opened(),
-          "transition-[opacity,transform] motion-reduce:transition-none": true,
-          "duration-180 ease-out": state.peeked && !layout.sidebar.opened(),
-          "duration-120 ease-in": !state.peeked || layout.sidebar.opened()
-        },
-        _v$10 = {
-          "hidden xl:block pointer-events-none absolute inset-y-0 right-0 z-25 overflow-hidden": true,
-          "opacity-100 translate-x-0": state.peeked && !layout.sidebar.opened(),
-          "opacity-0 -translate-x-2": !state.peeked || layout.sidebar.opened(),
-          "transition-[opacity,transform] motion-reduce:transition-none": true,
-          "duration-180 ease-out": state.peeked && !layout.sidebar.opened(),
-          "duration-120 ease-in": !state.peeked || layout.sidebar.opened()
-        },
-        _v$11 = `calc(4rem + ${panel()}px)`;
-      _v$4 !== _p$.e && _$setAttribute(_el$40, "aria-label", _p$.e = _v$4);
-      _v$5 !== _p$.t && _$setStyleProperty(_el$40, "width", _p$.t = _v$5);
-      _p$.a = _$classList(_el$45, _v$6, _p$.a);
-      _v$7 !== _p$.o && _$setAttribute(_el$46, "aria-label", _p$.o = _v$7);
-      _p$.i = _$classList(_el$46, _v$8, _p$.i);
-      _p$.n = _$classList(_el$47, _v$9, _p$.n);
-      _v$0 !== _p$.s && _$setStyleProperty(_el$47, "--main-left", _p$.s = _v$0);
-      _p$.h = _$classList(_el$49, _v$1, _p$.h);
-      _p$.r = _$classList(_el$50, _v$10, _p$.r);
-      _v$11 !== _p$.d && _$setStyleProperty(_el$50, "left", _p$.d = _v$11);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined,
-      i: undefined,
-      n: undefined,
-      s: undefined,
-      h: undefined,
-      r: undefined,
-      d: undefined
-    });
-    var _shell = _tmpl$classicShell(),
-      _barRow = _shell.firstChild,
-      _panesRow = _barRow.nextSibling;
-    _$insert(_barRow, _$createComponent(AppToolbar, {
+        onResize: w => {
+          setState("sizing", true);
+          if (sizet !== undefined) clearTimeout(sizet);
+          sizet = window.setTimeout(() => setState("sizing", false), 120);
+          layout.sidebar.resize(w);
+        }
+      }));
+      createRenderEffect(() => handleHost.style.setProperty("left", `${side()}px`));
+      return handleHost;
+    }
+  }), topBorder);
+  // Compiled delegated $$click -> direct listener; the target guard already
+  // restricts the handler to clicks on the backdrop itself.
+  mobileOverlay.addEventListener("click", e => {
+    if (e.target === e.currentTarget) layout.mobileSidebar.hide();
+  });
+  // The compiled mobile nav had a delegated $$click that only called
+  // stopPropagation() to halt Solid's synthetic walk; the nav is a sibling of
+  // the backdrop (whose handler also target-guards), so nothing changes
+  // without it. A native stopPropagation() here would newly hide clicks from
+  // document-level listeners that always saw them before, so it is dropped.
+  _solidInsert(mobileNav, () => sidebarContent(true));
+  // Static classList from the compiled output.
+  mainEl.classList.add("size-full", "overflow-x-hidden", "flex", "flex-col", "items-start", "contain-strict", "border-t", "border", "bg-body", "xl:border-l", "xl:rounded-tl-[12px]");
+  // Router children stay mounted through the live getter: the chat pane (and
+  // the rest of the session page) must persist across reloads exactly as
+  // before (provider-visibility reload e2e covers this).
+  _solidInsert(mainEl, createComponent(Show, {
+    get when() {
+      return !autoselecting.loading;
+    },
+    get fallback() {
+      return template(`<div class="size-full"></div>`);
+    },
+    get children() {
+      return props.children;
+    }
+  }));
+  peekHost.addEventListener("mouseleave", () => {
+    arm();
+  });
+  // Compiled delegated $$pointerdown/$$mousemove -> direct listeners (disarm
+  // is idempotent, so relative ordering does not matter).
+  peekHost.addEventListener("pointerdown", disarm);
+  peekHost.addEventListener("mouseenter", () => {
+    disarm();
+    aim.reset();
+  });
+  peekHost.addEventListener("mousemove", disarm);
+  _solidInsert(peekHost, createComponent(Show, {
+    get when() {
+      return peekProject();
+    },
+    get children() {
+      return createComponent(SidebarPanel, {
+        project: peekProject,
+        merged: false
+      });
+    }
+  }));
+  // __APP_ENV__.DEV is fixed at startup; the compiled memo around it could
+  // never change, so a plain conditional append is equivalent.
+  if (globalThis.__APP_ENV__?.DEV) _solidInsert(contentRow, createComponent(DebugBar, {}), null);
+  _solidInsert(appRoot, createComponent(Toast.Region, {}), null);
+  /* sidebar hidden for now (see styles.css); reclaim its left offset.
+     Original: layout.sidebar.opened() ? `${side()}px` : "4rem" */
+  mainHost.style.setProperty("--main-left", "0px");
+  // Change-guarded reactive attributes/classes/styles, mirroring the compiled
+  // effect() block.
+  const overlayClassPrev = {};
+  const mobileNavClassPrev = {};
+  const mainHostClassPrev = {};
+  const peekClassPrev = {};
+  const peekShadowClassPrev = {};
+  let prevNavLabel;
+  let prevNavWidth;
+  let prevMobileNavLabel;
+  let prevPeekShadowLeft;
+  createRenderEffect(() => {
+    const navLabel = language.t("sidebar.nav.projectsAndSessions");
+    const navWidth = `${side()}px`;
+    const mobileOpened = layout.mobileSidebar.opened();
+    const peeking = state.peeked && !layout.sidebar.opened();
+    const peekShadowLeft = `calc(4rem + ${panel()}px)`;
+    if (navLabel !== prevNavLabel) desktopNav.setAttribute("aria-label", prevNavLabel = navLabel);
+    if (navWidth !== prevNavWidth) desktopNav.style.setProperty("width", prevNavWidth = navWidth);
+    applyClassList(mobileOverlay, {
+      "fixed inset-x-0 top-10 bottom-0 z-40 transition-opacity duration-200": true,
+      "opacity-100 pointer-events-auto": mobileOpened,
+      "opacity-0 pointer-events-none": !mobileOpened
+    }, overlayClassPrev);
+    if (navLabel !== prevMobileNavLabel) mobileNav.setAttribute("aria-label", prevMobileNavLabel = navLabel);
+    applyClassList(mobileNav, {
+      "@container fixed top-10 bottom-0 left-0 z-50 w-full max-w-[400px] overflow-hidden border-r border bg-body transition-transform duration-200 ease-out": true,
+      "translate-x-0": mobileOpened,
+      "-translate-x-full": !mobileOpened
+    }, mobileNavClassPrev);
+    applyClassList(mainHost, {
+      "absolute inset-0": true,
+      "xl:inset-y-0 xl:right-0 xl:left-[var(--main-left)]": true,
+      "z-20": true,
+      "transition-[left] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[left] motion-reduce:transition-none": !state.sizing
+    }, mainHostClassPrev);
+    applyClassList(peekHost, {
+      "hidden xl:flex absolute inset-y-0 left-16 z-30": true,
+      "opacity-100 translate-x-0 pointer-events-auto": peeking,
+      "opacity-0 -translate-x-2 pointer-events-none": !peeking,
+      "transition-[opacity,transform] motion-reduce:transition-none": true,
+      "duration-180 ease-out": peeking,
+      "duration-120 ease-in": !peeking
+    }, peekClassPrev);
+    applyClassList(peekShadow, {
+      "hidden xl:block pointer-events-none absolute inset-y-0 right-0 z-25 overflow-hidden": true,
+      "opacity-100 translate-x-0": peeking,
+      "opacity-0 -translate-x-2": !peeking,
+      "transition-[opacity,transform] motion-reduce:transition-none": true,
+      "duration-180 ease-out": peeking,
+      "duration-120 ease-in": !peeking
+    }, peekShadowClassPrev);
+    if (peekShadowLeft !== prevPeekShadowLeft) peekShadow.style.setProperty("left", prevPeekShadowLeft = peekShadowLeft);
+  });
+  // ----- Classic shell: top toolbar row + panes row + status bar -----
+  const shell = template(`<div class="d-flex flex-column h-100"><div class="app-topbar shrink-0 d-flex align-items-center gap-1 border-bottom bg-body-tertiary px-1"></div><div class="flex-fill min-h-0 d-flex"></div></div>`);
+  const barRow = shell.firstChild;
+  const panesRow = barRow.nextSibling;
+  _solidInsert(barRow, createComponent(AppToolbar, {
       onHome: () => navigate("/"),
       onNewSession: startNewSession,
       onOpenProject: chooseProject,
@@ -2136,51 +2189,49 @@ export default function Layout(props) {
         else document.execCommand("paste");
       }
     }));
-    _$insert(_panesRow, _el$36);
-    // Bottom status bar: connection + project (left); editor info + version (right).
-    _$insert(_shell, (() => {
-      var _sb = _tmpl$statusbar();
-      var _conn = _sb.firstChild,
-        _dot = _conn.firstChild,
-        _name = _dot.nextSibling,
-        _proj = _conn.nextSibling,
-        _editor = _proj.nextSibling,
-        _ver = _editor.nextSibling;
-      _$effect(() => {
-        const h = server.healthy();
-        _dot.classList.toggle("bg-success", h === true);
-        _dot.classList.toggle("bg-danger", h === false);
-        _dot.classList.toggle("bg-secondary", h !== true && h !== false);
-        _name.textContent = server.name || "—";
-        _conn.title = server.isLocal() ? "ローカルサーバー" : "リモートサーバー";
-      });
-      _$effect(() => {
-        const p = currentProject();
-        _proj.textContent = p ? p.name || (p.worktree || "").split(/[\\/]/).pop() || "" : "";
-      });
-      // Notepad++-style editor info, shown only while editing a file.
-      _$effect(() => {
-        const info = layout.editor.info();
-        if (!layout.editor.editing() || !info) {
-          _editor.textContent = "";
-          return;
-        }
-        const sel = info.selChars > 0 ? ` (${info.selChars} 選択)` : "";
-        _editor.textContent = [`行 ${info.line}, 列 ${info.col}${sel}`, `${info.chars} 文字`, info.eol, info.encoding, info.readonly ? "読み取り専用" : "編集可"].join(" | ");
-      });
-      // Optional Ollama GPU/CPU placement readout (right side, before version).
-      const _ollama = document.createElement("span");
-      _ollama.className = "d-flex align-items-center gap-1";
-      _$effect(() => {
-        const text = ollamaStat();
-        _ollama.textContent = text;
-        _ollama.style.display = text ? "" : "none";
-      });
-      _sb.insertBefore(_ollama, _ver);
-      _ver.textContent = platform.version ? "v" + platform.version : "";
-      return _sb;
-    })(), null);
-    return _shell;
-  })();
+  panesRow.appendChild(appRoot);
+  // Bottom status bar: connection + project (left); editor info + version (right).
+  shell.appendChild((() => {
+    const statusBar = template(`<footer class="app-statusbar shrink-0 d-flex align-items-center gap-3 border-top bg-body-tertiary px-2 small text-secondary" style="height:24px"><span class="d-flex align-items-center gap-1"><span class="rounded-circle" style="width:8px;height:8px"></span><span></span></span><span class="text-truncate" style="max-width:200px"></span><span class="ms-auto d-flex align-items-center gap-3"></span><span></span></footer>`);
+    const connEl = statusBar.firstChild;
+    const dotEl = connEl.firstChild;
+    const nameEl = dotEl.nextSibling;
+    const projEl = connEl.nextSibling;
+    const editorEl = projEl.nextSibling;
+    const versionEl = editorEl.nextSibling;
+    createRenderEffect(() => {
+      const h = server.healthy();
+      dotEl.classList.toggle("bg-success", h === true);
+      dotEl.classList.toggle("bg-danger", h === false);
+      dotEl.classList.toggle("bg-secondary", h !== true && h !== false);
+      nameEl.textContent = server.name || "—";
+      connEl.title = server.isLocal() ? "ローカルサーバー" : "リモートサーバー";
+    });
+    createRenderEffect(() => {
+      const p = currentProject();
+      projEl.textContent = p ? p.name || (p.worktree || "").split(/[\\/]/).pop() || "" : "";
+    });
+    // Notepad++-style editor info, shown only while editing a file.
+    createRenderEffect(() => {
+      const info = layout.editor.info();
+      if (!layout.editor.editing() || !info) {
+        editorEl.textContent = "";
+        return;
+      }
+      const sel = info.selChars > 0 ? ` (${info.selChars} 選択)` : "";
+      editorEl.textContent = [`行 ${info.line}, 列 ${info.col}${sel}`, `${info.chars} 文字`, info.eol, info.encoding, info.readonly ? "読み取り専用" : "編集可"].join(" | ");
+    });
+    // Optional Ollama GPU/CPU placement readout (right side, before version).
+    const ollamaEl = document.createElement("span");
+    ollamaEl.className = "d-flex align-items-center gap-1";
+    createRenderEffect(() => {
+      const text = ollamaStat();
+      ollamaEl.textContent = text;
+      ollamaEl.style.display = text ? "" : "none";
+    });
+    statusBar.insertBefore(ollamaEl, versionEl);
+    versionEl.textContent = platform.version ? "v" + platform.version : "";
+    return statusBar;
+  })());
+  return shell;
 }
-_$delegateEvents(["pointerdown", "click", "mousemove"]);

@@ -7,10 +7,10 @@ import { createTextNode as _$createTextNode } from "@opentui/solid";
 import { insertNode as _$insertNode } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { createMemo, createSignal, onMount, Show } from "solid-js";
-import { useSync } from "@tui/context/sync.js";
+import { useSync } from "#tui/context/sync.js";
 import { map, pipe, sortBy } from "remeda";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useDialog } from "@tui/ui/dialog.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useDialog } from "#tui/ui/dialog.js";
 import { useSDK } from "../context/sdk.js";
 import { DialogPrompt } from "../ui/dialog-prompt.js";
 import { Link } from "../ui/link.js";
@@ -18,9 +18,9 @@ import { useTheme } from "../context/theme.js";
 import { TextAttributes } from "@opentui/core";
 import { DialogModel } from "./dialog-model.js";
 import { useKeyboard } from "@opentui/solid";
-import * as Clipboard from "@tui/util/clipboard.js";
+import * as Clipboard from "#tui/util/clipboard.js";
 import { useToast } from "../ui/toast.js";
-import { isConsoleManagedProvider } from "@tui/util/provider-origin.js";
+import { isConsoleManagedProvider } from "#tui/util/provider-origin.js";
 import { useConnected } from "./use-connected.js";
 const PROVIDER_PRIORITY = {
   lmstudio: 0,

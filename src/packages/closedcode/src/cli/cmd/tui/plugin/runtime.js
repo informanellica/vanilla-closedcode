@@ -1,24 +1,24 @@
 import "@opentui/solid/runtime-plugin-support";
 import path from "path";
 import { fileURLToPath } from "url";
-import { TuiConfig } from "@/cli/cmd/tui/config/tui.js";
+import { TuiConfig } from "#cli/cmd/tui/config/tui.js";
 import * as Log from "core/util/log";
-import { errorData, errorMessage } from "@/util/error.js";
-import { isRecord } from "@/util/record.js";
-import { WithInstance } from "@/project/with-instance.js";
-import { readPackageThemes, readPluginId, readV1Plugin, resolvePluginId } from "@/plugin/shared.js";
-import { PluginLoader } from "@/plugin/loader.js";
-import { PluginMeta } from "@/plugin/meta.js";
-import { installPlugin as installModulePlugin, patchPluginConfig, readPluginManifest } from "@/plugin/install.js";
+import { errorData, errorMessage } from "#util/error.js";
+import { isRecord } from "#util/record.js";
+import { WithInstance } from "#project/with-instance.js";
+import { readPackageThemes, readPluginId, readV1Plugin, resolvePluginId } from "#plugin/shared.js";
+import { PluginLoader } from "#plugin/loader.js";
+import { PluginMeta } from "#plugin/meta.js";
+import { installPlugin as installModulePlugin, patchPluginConfig, readPluginManifest } from "#plugin/install.js";
 import { hasTheme, upsertTheme } from "../context/theme.js";
 import { Global } from "core/global";
-import { Filesystem } from "@/util/filesystem.js";
-import { Process } from "@/util/process.js";
+import { Filesystem } from "#util/filesystem.js";
+import { Process } from "#util/process.js";
 import { Flock } from "core/util/flock";
 import { Flag } from "core/flag/flag";
 import { INTERNAL_TUI_PLUGINS } from "./internal.js";
 import { setupSlots, Slot as View } from "./slots.js";
-import { ConfigPlugin } from "@/config/plugin.js";
+import { ConfigPlugin } from "#config/plugin.js";
 const log = Log.create({
   service: "tui.plugin"
 });

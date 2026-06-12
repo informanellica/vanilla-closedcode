@@ -1,26 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-slot=question-option-check aria-hidden=true><span data-slot=question-option-box>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span data-slot=question-option-radio-dot>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span data-slot=option-description>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<button type=button data-slot=question-option><span data-slot=question-option-main><span data-slot=option-label>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-slot=question-text>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-slot=question-hint>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<form data-slot=question-option data-custom=true><span data-slot=question-option-main><span data-slot=option-label></span><textarea data-slot=question-custom-input rows=1>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div data-slot=question-options>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div data-slot=question-header-title>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div data-slot=question-progress>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<button type=button data-slot=question-progress-segment>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div data-slot=question-footer-actions>`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<button type=button data-slot=question-option data-custom=true><span data-slot=question-option-main><span data-slot=option-label></span><span data-slot=option-description>`);
-import { For, Show, createMemo, onCleanup, onMount } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useMutation } from "@tanstack/solid-query";
 import { Button } from "@/bs/button.js";
@@ -32,84 +10,95 @@ import { useComposerController } from "@/controllers/session-composer.js";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
 const cache = new Map();
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated and
+// user-provided strings are always assigned via textContent, never
+// interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 function Mark(props) {
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild;
-    _$addEventListener(_el$, "click", props.onClick, true);
-    _$insert(_el$2, _$createComponent(Show, {
-      get when() {
-        return props.multi;
-      },
-      get fallback() {
-        return _tmpl$2();
-      },
-      get children() {
-        return _$createComponent(Icon, {
-          name: "check-small",
-          size: "small"
-        });
-      }
-    }));
-    _$effect(_p$ => {
-      var _v$ = props.multi ? "checkbox" : "radio",
-        _v$2 = props.picked;
-      _v$ !== _p$.e && _$setAttribute(_el$2, "data-type", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$2, "data-picked", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$;
-  })();
+  const root = template(`<span data-slot="question-option-check" aria-hidden="true"><span data-slot="question-option-box"></span></span>`);
+  const box = root.firstChild;
+  // onClick is a static prop (set only on the custom row); the compiled
+  // delegated listener was a no-op when it was undefined.
+  if (props.onClick) root.addEventListener("click", props.onClick);
+  // Show(when=multi): swap the inner mark between the check icon and the
+  // radio dot. props.multi is a memo-backed boolean, so this re-runs only
+  // when the branch actually changes, like the original Show.
+  createRenderEffect(() => {
+    box.replaceChildren(props.multi ? createComponent(Icon, {
+      name: "check-small",
+      size: "small"
+    }) : template(`<span data-slot="question-option-radio-dot"></span>`));
+  });
+  // Change-guarded reactive attributes, mirroring the compiled effect().
+  let prevType;
+  let prevPicked;
+  createRenderEffect(() => {
+    const type = props.multi ? "checkbox" : "radio";
+    const picked = props.picked;
+    if (type !== prevType) box.setAttribute("data-type", prevType = type);
+    if (picked !== prevPicked) box.setAttribute("data-picked", prevPicked = picked);
+  });
+  return root;
 }
 function Option(props) {
-  return (() => {
-    var _el$4 = _tmpl$4(),
-      _el$5 = _el$4.firstChild,
-      _el$6 = _el$5.firstChild;
-    _$addEventListener(_el$4, "click", props.onClick, true);
-    _$addEventListener(_el$4, "focus", props.onFocus);
-    var _ref$ = props.ref;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$4) : props.ref = _el$4;
-    _$insert(_el$4, _$createComponent(Mark, {
-      get multi() {
-        return props.multi;
-      },
-      get picked() {
-        return props.picked;
+  const root = template(`<button type="button" data-slot="question-option"><span data-slot="question-option-main"><span data-slot="option-label"></span></span></button>`);
+  const main = root.firstChild;
+  const labelEl = main.firstChild;
+  // onClick/onFocus are static props, like the compiled listeners.
+  root.addEventListener("click", props.onClick);
+  root.addEventListener("focus", props.onFocus);
+  if (typeof props.ref === "function") props.ref(root);
+  else props.ref = root;
+  root.insertBefore(createComponent(Mark, {
+    get multi() {
+      return props.multi;
+    },
+    get picked() {
+      return props.picked;
+    }
+  }), main);
+  createRenderEffect(() => {
+    labelEl.textContent = props.label ?? "";
+  });
+  // Show(when=description): mount the description span only while truthy;
+  // its text updates in place on truthy-to-truthy changes.
+  let descEl;
+  createRenderEffect(() => {
+    const description = props.description;
+    if (description) {
+      if (!descEl) {
+        descEl = template(`<span data-slot="option-description"></span>`);
+        main.appendChild(descEl);
       }
-    }), _el$5);
-    _$insert(_el$6, () => props.label);
-    _$insert(_el$5, _$createComponent(Show, {
-      get when() {
-        return props.description;
-      },
-      get children() {
-        var _el$7 = _tmpl$3();
-        _$insert(_el$7, () => props.description);
-        return _el$7;
-      }
-    }), null);
-    _$effect(_p$ => {
-      var _v$3 = props.picked,
-        _v$4 = props.multi ? "checkbox" : "radio",
-        _v$5 = props.picked,
-        _v$6 = props.disabled;
-      _v$3 !== _p$.e && _$setAttribute(_el$4, "data-picked", _p$.e = _v$3);
-      _v$4 !== _p$.t && _$setAttribute(_el$4, "role", _p$.t = _v$4);
-      _v$5 !== _p$.a && _$setAttribute(_el$4, "aria-checked", _p$.a = _v$5);
-      _v$6 !== _p$.o && (_el$4.disabled = _p$.o = _v$6);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined
-    });
-    return _el$4;
-  })();
+      descEl.textContent = description;
+      return;
+    }
+    if (descEl) {
+      descEl.remove();
+      descEl = undefined;
+    }
+  });
+  // Change-guarded reactive attributes, mirroring the compiled effect().
+  let prevPicked;
+  let prevRole;
+  let prevChecked;
+  let prevDisabled;
+  createRenderEffect(() => {
+    const picked = props.picked;
+    const role = props.multi ? "checkbox" : "radio";
+    const disabled = props.disabled;
+    if (picked !== prevPicked) root.setAttribute("data-picked", prevPicked = picked);
+    if (role !== prevRole) root.setAttribute("role", prevRole = role);
+    if (picked !== prevChecked) root.setAttribute("aria-checked", prevChecked = picked);
+    if (disabled !== prevDisabled) root.disabled = prevDisabled = disabled;
+  });
+  return root;
 }
 export const SessionQuestionDock = props => {
   const composer = useComposerController();
@@ -321,6 +310,12 @@ export const SessionQuestionDock = props => {
   const nav = event => {
     if (event.defaultPrevented) return;
     if (event.key === "Escape") {
+      // The compiled original delegated this handler, so the custom
+      // textarea's own keydown listener ran first and its preventDefault()
+      // made the defaultPrevented guard above skip the reject. The vanilla
+      // DockPrompt dispatches onKeyDown in the capture phase instead, so
+      // skip explicitly: Escape inside the textarea only exits editing.
+      if (event.target instanceof HTMLElement && event.target.matches('[data-slot="question-custom-input"]')) return;
       event.preventDefault();
       void reject();
       return;
@@ -416,258 +411,278 @@ export const SessionQuestionDock = props => {
     setStore("editing", false);
     focus(pickFocus(tab));
   };
-  return _$createComponent(DockPrompt, {
+  // ---- header: title + progress segments ----
+  const titleEl = template(`<div data-slot="question-header-title"></div>`);
+  createRenderEffect(() => {
+    titleEl.textContent = summary();
+  });
+  const progressEl = template(`<div data-slot="question-progress"></div>`);
+  // For over questions(): the array identity only changes with the request,
+  // so a wholesale rebuild matches the compiled For; per-segment state tracks
+  // through nested effects on stable nodes.
+  createRenderEffect(() => {
+    progressEl.replaceChildren(...questions().map((_, i) => {
+      const seg = template(`<button type="button" data-slot="question-progress-segment"></button>`);
+      seg.addEventListener("click", () => jump(i));
+      let prevActive;
+      let prevAnswered;
+      let prevDisabled;
+      let prevLabel;
+      createRenderEffect(() => {
+        const active = i === store.tab;
+        const done = answered(i);
+        const disabled = sending();
+        const label = `${language.t("ui.tool.questions")} ${i + 1}`;
+        if (active !== prevActive) seg.setAttribute("data-active", prevActive = active);
+        if (done !== prevAnswered) seg.setAttribute("data-answered", prevAnswered = done);
+        if (disabled !== prevDisabled) seg.disabled = prevDisabled = disabled;
+        if (label !== prevLabel) seg.setAttribute("aria-label", prevLabel = label);
+      });
+      return seg;
+    }));
+  });
+
+  // ---- footer: dismiss + (back?) + next/submit ----
+  // The vanilla Button reads `children` and `variant` once at creation, so
+  // each button is rebuilt in place when its label or variant changes (locale
+  // switch, tab moves); `disabled` stays live through its getter.
+  let dismissBtn;
+  createRenderEffect(() => {
+    const label = language.t("ui.common.dismiss");
+    const btn = createComponent(Button, {
+      variant: "ghost",
+      size: "large",
+      get disabled() {
+        return sending();
+      },
+      onClick: reject,
+      "aria-keyshortcuts": "Escape",
+      children: label
+    });
+    if (dismissBtn) dismissBtn.replaceWith(btn);
+    dismissBtn = btn;
+  });
+  const actionsEl = template(`<div data-slot="question-footer-actions"></div>`);
+  // Show(when=store.tab > 0): the back button mounts before the next button.
+  const showBack = createMemo(() => store.tab > 0);
+  let backBtn;
+  createRenderEffect(() => {
+    if (!showBack()) {
+      if (backBtn) {
+        backBtn.remove();
+        backBtn = undefined;
+      }
+      return;
+    }
+    const label = language.t("ui.common.back");
+    const btn = createComponent(Button, {
+      variant: "secondary",
+      size: "large",
+      get disabled() {
+        return sending();
+      },
+      onClick: back,
+      children: label
+    });
+    if (backBtn) backBtn.replaceWith(btn);
+    else actionsEl.insertBefore(btn, actionsEl.firstChild);
+    backBtn = btn;
+  });
+  let nextBtn;
+  createRenderEffect(() => {
+    const isLast = last();
+    const label = isLast ? language.t("ui.common.submit") : language.t("ui.common.next");
+    const btn = createComponent(Button, {
+      variant: isLast ? "primary" : "secondary",
+      size: "large",
+      get disabled() {
+        return sending();
+      },
+      onClick: next,
+      "aria-keyshortcuts": "Meta+Enter Control+Enter",
+      children: label
+    });
+    if (nextBtn) nextBtn.replaceWith(btn);
+    else actionsEl.appendChild(btn);
+    nextBtn = btn;
+  });
+
+  // ---- content: question text + hint + options ----
+  const questionTextEl = template(`<div data-slot="question-text"></div>`);
+  createRenderEffect(() => {
+    questionTextEl.textContent = question()?.question ?? "";
+  });
+  // Show(when=multi()): both branches rendered the same hint element, so keep
+  // one node and swap the translated text (no mount-keyed styles exist).
+  const hintEl = template(`<div data-slot="question-hint"></div>`);
+  createRenderEffect(() => {
+    hintEl.textContent = multi() ? language.t("ui.question.multiHint") : language.t("ui.question.singleHint");
+  });
+  const optionsEl = template(`<div data-slot="question-options"></div>`);
+
+  // Custom row, fallback branch of Show(when=store.editing): the "type your
+  // own answer" button.
+  const buildCustomButton = () => {
+    const row = template(`<button type="button" data-slot="question-option" data-custom="true"><span data-slot="question-option-main"><span data-slot="option-label"></span><span data-slot="option-description"></span></span></button>`);
+    const main = row.firstChild;
+    const labelEl = main.firstChild;
+    const previewEl = labelEl.nextSibling;
+    row.addEventListener("click", customOpen);
+    row.addEventListener("focus", () => setStore("focus", options().length));
+    customRef = row;
+    row.insertBefore(createComponent(Mark, {
+      get multi() {
+        return multi();
+      },
+      get picked() {
+        return on();
+      },
+      onClick: toggleCustomMark
+    }), main);
+    createRenderEffect(() => {
+      labelEl.textContent = customLabel();
+    });
+    createRenderEffect(() => {
+      previewEl.textContent = input() || customPlaceholder();
+    });
+    let prevPicked;
+    let prevRole;
+    let prevChecked;
+    let prevDisabled;
+    createRenderEffect(() => {
+      const pickedNow = on();
+      const role = multi() ? "checkbox" : "radio";
+      const disabledNow = sending();
+      if (pickedNow !== prevPicked) row.setAttribute("data-picked", prevPicked = pickedNow);
+      if (role !== prevRole) row.setAttribute("role", prevRole = role);
+      if (pickedNow !== prevChecked) row.setAttribute("aria-checked", prevChecked = pickedNow);
+      if (disabledNow !== prevDisabled) row.disabled = prevDisabled = disabledNow;
+    });
+    return row;
+  };
+  // Custom row, editing branch: label + autosizing textarea inside a form.
+  const buildCustomForm = () => {
+    const row = template(`<form data-slot="question-option" data-custom="true"><span data-slot="question-option-main"><span data-slot="option-label"></span><textarea data-slot="question-custom-input" rows="1"></textarea></span></form>`);
+    const main = row.firstChild;
+    const labelEl = main.firstChild;
+    const inputEl = labelEl.nextSibling;
+    row.addEventListener("submit", e => {
+      e.preventDefault();
+      commitCustom();
+    });
+    row.addEventListener("mousedown", e => {
+      if (sending()) {
+        e.preventDefault();
+        return;
+      }
+      if (e.target instanceof HTMLTextAreaElement) return;
+      const field = e.currentTarget.querySelector('[data-slot="question-custom-input"]');
+      if (field instanceof HTMLTextAreaElement) field.focus();
+    });
+    row.insertBefore(createComponent(Mark, {
+      get multi() {
+        return multi();
+      },
+      get picked() {
+        return on();
+      },
+      onClick: toggleCustomMark
+    }), main);
+    createRenderEffect(() => {
+      labelEl.textContent = customLabel();
+    });
+    inputEl.addEventListener("input", e => {
+      customUpdate(e.currentTarget.value);
+      resizeInput(e.currentTarget);
+    });
+    inputEl.addEventListener("keydown", e => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        setStore("editing", false);
+        focus(options().length);
+        return;
+      }
+      if ((e.metaKey || e.ctrlKey) && !e.altKey) return;
+      if (e.key !== "Enter" || e.shiftKey) return;
+      e.preventDefault();
+      commitCustom();
+    });
+    // use:focusCustom ran at creation in the compiled output.
+    focusCustom(inputEl);
+    let prevPicked;
+    let prevRole;
+    let prevChecked;
+    let prevPlaceholder;
+    let prevDisabled;
+    createRenderEffect(() => {
+      const pickedNow = on();
+      const role = multi() ? "checkbox" : "radio";
+      const placeholder = customPlaceholder();
+      const disabledNow = sending();
+      if (pickedNow !== prevPicked) row.setAttribute("data-picked", prevPicked = pickedNow);
+      if (role !== prevRole) row.setAttribute("role", prevRole = role);
+      if (pickedNow !== prevChecked) row.setAttribute("aria-checked", prevChecked = pickedNow);
+      if (placeholder !== prevPlaceholder) inputEl.setAttribute("placeholder", prevPlaceholder = placeholder);
+      if (disabledNow !== prevDisabled) inputEl.disabled = prevDisabled = disabledNow;
+    });
+    createRenderEffect(() => {
+      inputEl.value = input();
+    });
+    return row;
+  };
+  let customRow;
+  let optionRows = [];
+  // For over options(): rebuild rows when the array identity changes (tab
+  // switch). picked/disabled/role updates flow through nested effects, so the
+  // rows (and DOM focus) stay stable across answer changes.
+  createRenderEffect(() => {
+    const opts = options();
+    const rows = opts.map((opt, i) => createComponent(Option, {
+      get multi() {
+        return multi();
+      },
+      get picked() {
+        return picked(opt.label);
+      },
+      get label() {
+        return opt.label;
+      },
+      get description() {
+        return opt.description;
+      },
+      get disabled() {
+        return sending();
+      },
+      ref: el => optsRef[i] = el,
+      onFocus: () => setStore("focus", i),
+      onClick: () => selectOption(i)
+    }));
+    for (const row of optionRows) row.remove();
+    optionRows = rows;
+    const anchor = customRow ?? null;
+    for (const row of rows) optionsEl.insertBefore(row, anchor);
+  });
+  // Show(when=store.editing): swap between the custom button and the inline
+  // form, remounting per toggle exactly like the original (the form refocuses
+  // its textarea on each mount).
+  createRenderEffect(() => {
+    const row = store.editing ? buildCustomForm() : buildCustomButton();
+    if (customRow) customRow.replaceWith(row);
+    else optionsEl.appendChild(row);
+    customRow = row;
+  });
+  return createComponent(DockPrompt, {
     kind: "question",
     ref: el => root = el,
     onKeyDown: nav,
     get header() {
-      return [(() => {
-        var _el$13 = _tmpl$9();
-        _$insert(_el$13, summary);
-        return _el$13;
-      })(), (() => {
-        var _el$14 = _tmpl$0();
-        _$insert(_el$14, _$createComponent(For, {
-          get each() {
-            return questions();
-          },
-          children: (_, i) => (() => {
-            var _el$15 = _tmpl$1();
-            _el$15.$$click = () => jump(i());
-            _$effect(_p$ => {
-              var _v$10 = i() === store.tab,
-                _v$11 = answered(i()),
-                _v$12 = sending(),
-                _v$13 = `${language.t("ui.tool.questions")} ${i() + 1}`;
-              _v$10 !== _p$.e && _$setAttribute(_el$15, "data-active", _p$.e = _v$10);
-              _v$11 !== _p$.t && _$setAttribute(_el$15, "data-answered", _p$.t = _v$11);
-              _v$12 !== _p$.a && (_el$15.disabled = _p$.a = _v$12);
-              _v$13 !== _p$.o && _$setAttribute(_el$15, "aria-label", _p$.o = _v$13);
-              return _p$;
-            }, {
-              e: undefined,
-              t: undefined,
-              a: undefined,
-              o: undefined
-            });
-            return _el$15;
-          })()
-        }));
-        return _el$14;
-      })()];
+      return [titleEl, progressEl];
     },
     get footer() {
-      return [_$createComponent(Button, {
-        variant: "ghost",
-        size: "large",
-        get disabled() {
-          return sending();
-        },
-        onClick: reject,
-        "aria-keyshortcuts": "Escape",
-        get children() {
-          return language.t("ui.common.dismiss");
-        }
-      }), (() => {
-        var _el$16 = _tmpl$10();
-        _$insert(_el$16, _$createComponent(Show, {
-          get when() {
-            return store.tab > 0;
-          },
-          get children() {
-            return _$createComponent(Button, {
-              variant: "secondary",
-              size: "large",
-              get disabled() {
-                return sending();
-              },
-              onClick: back,
-              get children() {
-                return language.t("ui.common.back");
-              }
-            });
-          }
-        }), null);
-        _$insert(_el$16, _$createComponent(Button, {
-          get variant() {
-            return last() ? "primary" : "secondary";
-          },
-          size: "large",
-          get disabled() {
-            return sending();
-          },
-          onClick: next,
-          "aria-keyshortcuts": "Meta+Enter Control+Enter",
-          get children() {
-            return _$memo(() => !!last())() ? language.t("ui.common.submit") : language.t("ui.common.next");
-          }
-        }), null);
-        return _el$16;
-      })()];
+      return [dismissBtn, actionsEl];
     },
     get children() {
-      return [(() => {
-        var _el$8 = _tmpl$5();
-        _$insert(_el$8, () => question()?.question);
-        return _el$8;
-      })(), _$createComponent(Show, {
-        get when() {
-          return multi();
-        },
-        get fallback() {
-          return (() => {
-            var _el$17 = _tmpl$6();
-            _$insert(_el$17, () => language.t("ui.question.singleHint"));
-            return _el$17;
-          })();
-        },
-        get children() {
-          var _el$9 = _tmpl$6();
-          _$insert(_el$9, () => language.t("ui.question.multiHint"));
-          return _el$9;
-        }
-      }), (() => {
-        var _el$0 = _tmpl$8();
-        _$insert(_el$0, _$createComponent(For, {
-          get each() {
-            return options();
-          },
-          children: (opt, i) => _$createComponent(Option, {
-            get multi() {
-              return multi();
-            },
-            get picked() {
-              return picked(opt.label);
-            },
-            get label() {
-              return opt.label;
-            },
-            get description() {
-              return opt.description;
-            },
-            get disabled() {
-              return sending();
-            },
-            ref: el => optsRef[i()] = el,
-            onFocus: () => setStore("focus", i()),
-            onClick: () => selectOption(i())
-          })
-        }), null);
-        _$insert(_el$0, _$createComponent(Show, {
-          get when() {
-            return store.editing;
-          },
-          get fallback() {
-            return (() => {
-              var _el$18 = _tmpl$11(),
-                _el$19 = _el$18.firstChild,
-                _el$20 = _el$19.firstChild,
-                _el$21 = _el$20.nextSibling;
-              _el$18.$$click = customOpen;
-              _el$18.addEventListener("focus", () => setStore("focus", options().length));
-              var _ref$2 = customRef;
-              typeof _ref$2 === "function" ? _$use(_ref$2, _el$18) : customRef = _el$18;
-              _$insert(_el$18, _$createComponent(Mark, {
-                get multi() {
-                  return multi();
-                },
-                get picked() {
-                  return on();
-                },
-                onClick: toggleCustomMark
-              }), _el$19);
-              _$insert(_el$20, customLabel);
-              _$insert(_el$21, () => input() || customPlaceholder());
-              _$effect(_p$ => {
-                var _v$14 = on(),
-                  _v$15 = multi() ? "checkbox" : "radio",
-                  _v$16 = on(),
-                  _v$17 = sending();
-                _v$14 !== _p$.e && _$setAttribute(_el$18, "data-picked", _p$.e = _v$14);
-                _v$15 !== _p$.t && _$setAttribute(_el$18, "role", _p$.t = _v$15);
-                _v$16 !== _p$.a && _$setAttribute(_el$18, "aria-checked", _p$.a = _v$16);
-                _v$17 !== _p$.o && (_el$18.disabled = _p$.o = _v$17);
-                return _p$;
-              }, {
-                e: undefined,
-                t: undefined,
-                a: undefined,
-                o: undefined
-              });
-              return _el$18;
-            })();
-          },
-          get children() {
-            var _el$1 = _tmpl$7(),
-              _el$10 = _el$1.firstChild,
-              _el$11 = _el$10.firstChild,
-              _el$12 = _el$11.nextSibling;
-            _el$1.addEventListener("submit", e => {
-              e.preventDefault();
-              commitCustom();
-            });
-            _el$1.$$mousedown = e => {
-              if (sending()) {
-                e.preventDefault();
-                return;
-              }
-              if (e.target instanceof HTMLTextAreaElement) return;
-              const input = e.currentTarget.querySelector('[data-slot="question-custom-input"]');
-              if (input instanceof HTMLTextAreaElement) input.focus();
-            };
-            _$insert(_el$1, _$createComponent(Mark, {
-              get multi() {
-                return multi();
-              },
-              get picked() {
-                return on();
-              },
-              onClick: toggleCustomMark
-            }), _el$10);
-            _$insert(_el$11, customLabel);
-            _el$12.$$input = e => {
-              customUpdate(e.currentTarget.value);
-              resizeInput(e.currentTarget);
-            };
-            _el$12.$$keydown = e => {
-              if (e.key === "Escape") {
-                e.preventDefault();
-                setStore("editing", false);
-                focus(options().length);
-                return;
-              }
-              if ((e.metaKey || e.ctrlKey) && !e.altKey) return;
-              if (e.key !== "Enter" || e.shiftKey) return;
-              e.preventDefault();
-              commitCustom();
-            };
-            _$use(focusCustom, _el$12);
-            _$effect(_p$ => {
-              var _v$7 = on(),
-                _v$8 = multi() ? "checkbox" : "radio",
-                _v$9 = on(),
-                _v$0 = customPlaceholder(),
-                _v$1 = sending();
-              _v$7 !== _p$.e && _$setAttribute(_el$1, "data-picked", _p$.e = _v$7);
-              _v$8 !== _p$.t && _$setAttribute(_el$1, "role", _p$.t = _v$8);
-              _v$9 !== _p$.a && _$setAttribute(_el$1, "aria-checked", _p$.a = _v$9);
-              _v$0 !== _p$.o && _$setAttribute(_el$12, "placeholder", _p$.o = _v$0);
-              _v$1 !== _p$.i && (_el$12.disabled = _p$.i = _v$1);
-              return _p$;
-            }, {
-              e: undefined,
-              t: undefined,
-              a: undefined,
-              o: undefined,
-              i: undefined
-            });
-            _$effect(() => _el$12.value = input());
-            return _el$1;
-          }
-        }), null);
-        return _el$0;
-      })()];
+      return [questionTextEl, hintEl, optionsEl];
     }
   });
 };
-_$delegateEvents(["click", "mousedown", "keydown", "input"]);

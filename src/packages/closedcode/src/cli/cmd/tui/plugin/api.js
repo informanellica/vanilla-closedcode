@@ -1,6 +1,6 @@
 import { mergeProps as _$mergeProps } from "@opentui/solid";
 import { createComponent as _$createComponent } from "@opentui/solid";
-import { Dialog as DialogUI } from "@tui/ui/dialog.js";
+import { Dialog as DialogUI } from "#tui/ui/dialog.js";
 import { createPluginKeybind } from "../context/plugin-keybinds.js";
 import { DialogAlert } from "../ui/dialog-alert.js";
 import { DialogConfirm } from "../ui/dialog-confirm.js";

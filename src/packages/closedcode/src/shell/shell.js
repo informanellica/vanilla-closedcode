@@ -1,7 +1,7 @@
 import { Flag } from "core/flag/flag";
-import { lazy } from "@/util/lazy.js";
-import { Filesystem } from "@/util/filesystem.js";
-import { which } from "@/util/which.js";
+import { lazy } from "#util/lazy.js";
+import { Filesystem } from "#util/filesystem.js";
+import { which } from "#util/which.js";
 import path from "path";
 import { spawn } from "child_process";
 import { setTimeout as sleep } from "node:timers/promises";

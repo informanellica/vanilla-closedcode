@@ -1,7 +1,7 @@
 import {  Effect, Layer  } from "effect"
 import {  provideTmpdirInstance  } from "../fixture/fixture.js"
 import {  testEffect  } from "../lib/effect.js"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 import {  SessionRevert  } from "../../src/session/revert.js"
 import {  Snapshot  } from "../../src/snapshot/index.js"

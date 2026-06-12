@@ -2,7 +2,6 @@
 import {  NodeFileSystem  } from "@effect/platform-node"
 import {  Effect, Exit, Layer, Option  } from "effect"
 import {  HttpClient, HttpClientResponse  } from "effect/unstable/http"
-import {  eq  } from "drizzle-orm"
 import {  provideTmpdirInstance  } from "../fixture/fixture.js"
 import {  resetDatabase  } from "../fixture/db.js"
 import {  testEffect  } from "../lib/effect.js"
@@ -11,12 +10,11 @@ import {  Account  } from "../../src/account/account.js"
 import {  AccountRepo  } from "../../src/account/repo.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  Bus  } from "../../src/bus/index.js"
-import {  Config  } from "@/config/config.js"
-import {  Provider  } from "@/provider/provider.js"
-import {  Session  } from "@/session/session.js"
-import {  ShareNext  } from "@/share/share-next.js"
-import {  SessionShareTable  } from "../../src/share/share.sql.js"
-import {  Database  } from "@/storage/db.js"
+import {  Config  } from "#config/config.js"
+import {  Provider  } from "#provider/provider.js"
+import {  Session  } from "#session/session.js"
+import {  ShareNext  } from "#share/share-next.js"
+import {  Database  } from "#storage/db.js"
 import {  beforeEach, describe, expect, beforeAll  } from "@jest/globals"
 const env = Layer.mergeAll(Session.defaultLayer, AccountRepo.layer, NodeFileSystem.layer, CrossSpawnSpawner.defaultLayer);
 const it = testEffect(env);
@@ -35,7 +33,13 @@ function wired(client) {
   const http = Layer.succeed(HttpClient.HttpClient, client);
   return Layer.mergeAll(Bus.layer, ShareNext.layer, Session.defaultLayer, AccountRepo.layer, NodeFileSystem.layer, CrossSpawnSpawner.defaultLayer).pipe(Layer.provide(Bus.layer), Layer.provide(Account.layer.pipe(Layer.provide(AccountRepo.layer), Layer.provide(http))), Layer.provide(Config.defaultLayer), Layer.provide(http), Layer.provide(Provider.defaultLayer));
 }
-const share = id => Database.use(db => db.select().from(SessionShareTable).where(eq(SessionShareTable.session_id, id)).get());
+// The module under test moved to the Sequelize layer (ORM migration S3) —
+// fixtures must read/write the SAME database (with :memory:, the legacy sync
+// layer and the async layer hold two different databases).
+const share = id => Effect.promise(() => Database.useAsync(async h => {
+  const row = await h.models.SessionShare.findOne({ where: { session_id: id }, transaction: h.tx });
+  return row == null ? undefined : row.get({ plain: true });
+}));
 const seed = (url, org) => AccountRepo.Service.use(repo => repo.persistAccount({
   id: AccountID.make("account-1"),
   email: "user@example.com",
@@ -103,7 +107,7 @@ describe("ShareNext", () => {
     expect(result.id).toBe("shr_abc");
     expect(result.url).toBe("https://legacy-share.example.com/share/abc");
     expect(result.secret).toBe("sec_123");
-    const row = share(session.id);
+    const row = yield* share(session.id);
     expect(row?.id).toBe("shr_abc");
     expect(row?.url).toBe("https://legacy-share.example.com/share/abc");
     expect(row?.secret).toBe("sec_123");
@@ -139,7 +143,7 @@ describe("ShareNext", () => {
       yield* ShareNext.Service.use(svc => svc.create(session.id));
       yield* ShareNext.Service.use(svc => svc.remove(session.id));
     }).pipe(Effect.provide(live(client)));
-    expect(share(session.id)).toBeUndefined();
+    expect(yield* share(session.id)).toBeUndefined();
     expect(seen.map(req => [req.method, req.url])).toEqual([["POST", "https://legacy-share.example.com/api/share"], ["DELETE", "https://legacy-share.example.com/api/share/shr_abc"]]);
   }), {
     config: {
@@ -157,7 +161,7 @@ describe("ShareNext", () => {
     }, 500)));
     const exit = yield* ShareNext.Service.use(svc => Effect.exit(svc.create(session.id))).pipe(Effect.provide(live(client)));
     expect(Exit.isFailure(exit)).toBe(true);
-    expect(share(session.id)).toBeUndefined();
+    expect(yield* share(session.id)).toBeUndefined();
   })));
   it.live("ShareNext coalesces rapid diff events into one delayed sync with latest data", () => provideTmpdirInstance(() => {
     const seen = [];
@@ -181,12 +185,12 @@ describe("ShareNext", () => {
       });
       yield* share.init();
       yield* Effect.sleep(50);
-      yield* Effect.sync(() => Database.use(db => db.insert(SessionShareTable).values({
+      yield* Effect.promise(() => Database.useAsync(h => h.models.SessionShare.create({
         session_id: info.id,
         id: "shr_abc",
         url: "https://legacy-share.example.com/share/abc",
         secret: "sec_123"
-      }).run()));
+      }, { transaction: h.tx })));
       yield* bus.publish(Session.Event.Diff, {
         sessionID: info.id,
         diff: [{

@@ -1,13 +1,14 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { For, Show } from "solid-js";
+import { createComponent } from "solid-js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";
 import { Icon } from "@/bs/icon.js";
 
-var _tmplBar$ = /*#__PURE__*/_$template(`<nav data-component=app-menubar class="d-flex align-items-center"><ul class="navbar-nav flex-row mb-0">`);
-var _tmplTrigger$ = /*#__PURE__*/_$template(`<span class="nav-link px-2 py-1 d-flex align-items-center gap-1">`);
-var _tmplItemLabel$ = /*#__PURE__*/_$template(`<span class="flex-grow-1">`);
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 
 // Build the static menu definition. Each item's `action` resolves a prop
 // callback lazily at click-time so optional callbacks can be guarded with ?.().
@@ -63,61 +64,50 @@ function buildMenus(props) {
 }
 
 function Menu(props) {
-  return _$createComponent(DropdownMenu, {
+  // props.menu is a static definition built once in AppMenubar — the trigger
+  // label/icon and the item list never change after creation, so everything
+  // below is decided at build time (no effects needed).
+  return createComponent(DropdownMenu, {
     "class": "nav-item",
     get children() {
+      // Built lazily through the children getter so Trigger/Content mount
+      // inside this DropdownMenu's context (the bs root exposes its state
+      // only while it appends its own children).
       return [
-        _$createComponent(DropdownMenu.Trigger, {
+        createComponent(DropdownMenu.Trigger, {
           as: "a",
           "class": "p-0 border-0 bg-transparent",
           get children() {
-            var _trig = _tmplTrigger$();
-            _trig.setAttribute("title", props.menu.label);
-            _trig.setAttribute("aria-label", props.menu.label);
-            _$insert(_trig, _$createComponent(Icon, {
-              get name() {
-                return props.menu.icon;
-              }
-            }));
-            return _trig;
+            const trigger = template(`<span class="nav-link px-2 py-1 d-flex align-items-center gap-1"></span>`);
+            trigger.setAttribute("title", props.menu.label);
+            trigger.setAttribute("aria-label", props.menu.label);
+            trigger.appendChild(createComponent(Icon, { name: props.menu.icon }));
+            return trigger;
           }
         }),
-        _$createComponent(DropdownMenu.Content, {
+        createComponent(DropdownMenu.Content, {
           get children() {
-            return _$createComponent(For, {
-              get each() {
-                return props.menu.items;
-              },
-              children: item =>
-                _$createComponent(DropdownMenu.Item, {
-                  onSelect: () => item.action?.(),
-                  get children() {
-                    return [
-                      _$createComponent(Show, {
-                        get when() {
-                          return item.icon;
-                        },
-                        get children() {
-                          return _$createComponent(DropdownMenu.Icon, {
-                            get children() {
-                              return _$createComponent(Icon, {
-                                get name() {
-                                  return item.icon;
-                                }
-                              });
-                            }
-                          });
-                        }
-                      }),
-                      (() => {
-                        var _lbl = _tmplItemLabel$();
-                        _$insert(_lbl, () => item.label);
-                        return _lbl;
-                      })()
-                    ];
+            // For(props.menu.items): the list is static — map once.
+            return props.menu.items.map(item =>
+              createComponent(DropdownMenu.Item, {
+                onSelect: () => item.action?.(),
+                get children() {
+                  const children = [];
+                  // Show(item.icon): static per item — decide once at build.
+                  if (item.icon) {
+                    children.push(createComponent(DropdownMenu.Icon, {
+                      get children() {
+                        return createComponent(Icon, { name: item.icon });
+                      }
+                    }));
                   }
-                })
-            });
+                  const label = template(`<span class="flex-grow-1"></span>`);
+                  label.textContent = item.label;
+                  children.push(label);
+                  return children;
+                }
+              })
+            );
           }
         })
       ];
@@ -127,16 +117,13 @@ function Menu(props) {
 
 export function AppMenubar(props) {
   const menus = buildMenus(props);
-  return (() => {
-    var _bar = _tmplBar$(),
-      _list = _bar.firstChild;
-    _$insert(
-      _list,
-      _$createComponent(For, {
-        each: menus,
-        children: menu => _$createComponent(Menu, { menu: menu })
-      })
-    );
-    return _bar;
-  })();
+  const bar = template(`<nav data-component="app-menubar" class="d-flex align-items-center"><ul data-slot="menus" class="navbar-nav flex-row mb-0"></ul></nav>`);
+  // Named slot instead of positional firstElementChild (guide: insertion by
+  // querySelector("[data-slot=…]"), not positional wiring).
+  const list = bar.querySelector("[data-slot=menus]");
+  // For(menus): the menu set is static — append one dropdown per definition.
+  for (const menu of menus) {
+    list.appendChild(createComponent(Menu, { menu: menu }));
+  }
+  return bar;
 }

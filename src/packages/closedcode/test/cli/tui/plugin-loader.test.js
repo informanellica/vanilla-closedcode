@@ -2,7 +2,7 @@ import { useWaitForDependencies } from "../../fixture/mock-tui-config.js"
 import {  tmpdir  } from "../../fixture/fixture.js"
 import {  createTuiPluginApi  } from "../../fixture/tui-plugin.js"
 import {  Global  } from "core/global"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  beforeAll, describe, expect, test, jest  } from "@jest/globals"
 import fs from "fs/promises";
 import path from "path";

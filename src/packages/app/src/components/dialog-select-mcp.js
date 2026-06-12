@@ -1,25 +1,24 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span class="small fw-normal text-body-secondary">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span class="small fw-normal text-secondary">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span class="small fw-normal text-body-secondary truncate">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between gap-x-3"><div class="d-flex flex-column gap-0.5 min-w-0"><div class="d-flex align-items-center gap-2"><span class=truncate></span></div></div><div>`);
-import { createMemo, Show } from "solid-js";
+import { createComponent, createMemo, createRenderEffect } from "solid-js";
 import { useSync } from "@/context/sync.js";
 import { Dialog } from "@/bs/dialog.js";
 import { List } from "@/bs/list.js";
 import { Switch } from "@/bs/switch.js";
 import { useLanguage } from "@/context/language.js";
 import { useMcpController } from "@/controllers/mcp.js";
+
 const statusLabels = {
   connected: "mcp.status.connected",
   failed: "mcp.status.failed",
   needs_auth: "mcp.status.needs_auth",
   disabled: "mcp.status.disabled"
 };
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export const DialogSelectMcp = () => {
   const sync = useSync();
   const language = useLanguage();
@@ -30,7 +29,85 @@ export const DialogSelectMcp = () => {
   })).sort((a, b) => a.name.localeCompare(b.name)));
   const enabledCount = createMemo(() => items().filter(i => i.status === "connected").length);
   const totalCount = createMemo(() => items().length);
-  return _$createComponent(Dialog, {
+
+  // One list row. `i` is a plain snapshot object from the items memo, so the
+  // name is static; the status/loading/error pieces read the live sync store
+  // (and the locale) through render effects, mirroring the original Show +
+  // insert reactivity. The conditional spans stay in the DOM and toggle
+  // display so the original element order is always preserved (display:none
+  // spans create no flex item, hence no extra gap).
+  const renderItem = i => {
+    const mcpStatus = () => sync.data?.mcp?.[i.name];
+    const status = () => mcpStatus()?.status;
+    const statusLabel = () => {
+      const key = status() ? statusLabels[status()] : undefined;
+      if (!key) return;
+      return language.t(key);
+    };
+    const error = () => {
+      const s = mcpStatus();
+      return s?.status === "failed" ? s.error : undefined;
+    };
+    const enabled = () => status() === "connected";
+    const pending = () => !!mcp.isPending && mcp.pendingName === i.name;
+
+    const root = template(`
+      <div class="w-100 d-flex align-items-center justify-content-between gap-x-3">
+        <div class="d-flex flex-column gap-0.5 min-w-0">
+          <div class="d-flex align-items-center gap-2">
+            <span class="truncate" data-slot="name"></span>
+            <span class="small fw-normal text-body-secondary" data-slot="status" style="display: none"></span>
+            <span class="small fw-normal text-secondary" data-slot="loading" style="display: none"></span>
+          </div>
+          <span class="small fw-normal text-body-secondary truncate" data-slot="error" style="display: none"></span>
+        </div>
+        <div data-slot="actions"></div>
+      </div>`);
+    const nameEl = root.querySelector('[data-slot="name"]');
+    const statusEl = root.querySelector('[data-slot="status"]');
+    const loadingEl = root.querySelector('[data-slot="loading"]');
+    const errorEl = root.querySelector('[data-slot="error"]');
+    const actionsEl = root.querySelector('[data-slot="actions"]');
+
+    nameEl.textContent = i.name;
+
+    createRenderEffect(() => {
+      const label = statusLabel();
+      statusEl.textContent = label ?? "";
+      statusEl.style.display = label ? "" : "none";
+    });
+
+    createRenderEffect(() => {
+      const isPending = pending();
+      loadingEl.textContent = isPending ? language.t("common.loading.ellipsis") : "";
+      loadingEl.style.display = isPending ? "" : "none";
+    });
+
+    createRenderEffect(() => {
+      const message = error();
+      errorEl.textContent = message ?? "";
+      errorEl.style.display = message ? "" : "none";
+    });
+
+    // Keep switch clicks from also triggering the row's onSelect (the
+    // compiled version used a delegated $$click stopPropagation for this).
+    actionsEl.addEventListener("click", e => e.stopPropagation());
+    actionsEl.appendChild(createComponent(Switch, {
+      get checked() {
+        return enabled();
+      },
+      get disabled() {
+        return pending();
+      },
+      onChange: () => {
+        mcp.toggle(i.name);
+      }
+    }));
+
+    return root;
+  };
+
+  return createComponent(Dialog, {
     get title() {
       return language.t("dialog.mcp.title");
     },
@@ -41,7 +118,7 @@ export const DialogSelectMcp = () => {
       });
     },
     get children() {
-      return _$createComponent(List, {
+      return createComponent(List, {
         get search() {
           return {
             placeholder: language.t("common.search.placeholder"),
@@ -59,73 +136,8 @@ export const DialogSelectMcp = () => {
           if (!x) return;
           mcp.toggle(x.name);
         },
-        children: i => {
-          const mcpStatus = () => sync.data?.mcp?.[i.name];
-          const status = () => mcpStatus()?.status;
-          const statusLabel = () => {
-            const key = status() ? statusLabels[status()] : undefined;
-            if (!key) return;
-            return language.t(key);
-          };
-          const error = () => {
-            const s = mcpStatus();
-            return s?.status === "failed" ? s.error : undefined;
-          };
-          const enabled = () => status() === "connected";
-          return (() => {
-            var _el$ = _tmpl$4(),
-              _el$2 = _el$.firstChild,
-              _el$3 = _el$2.firstChild,
-              _el$4 = _el$3.firstChild,
-              _el$8 = _el$2.nextSibling;
-            _$insert(_el$4, () => i.name);
-            _$insert(_el$3, _$createComponent(Show, {
-              get when() {
-                return statusLabel();
-              },
-              get children() {
-                var _el$5 = _tmpl$();
-                _$insert(_el$5, statusLabel);
-                return _el$5;
-              }
-            }), null);
-            _$insert(_el$3, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!mcp.isPending)() && mcp.pendingName === i.name;
-              },
-              get children() {
-                var _el$6 = _tmpl$2();
-                _$insert(_el$6, () => language.t("common.loading.ellipsis"));
-                return _el$6;
-              }
-            }), null);
-            _$insert(_el$2, _$createComponent(Show, {
-              get when() {
-                return error();
-              },
-              get children() {
-                var _el$7 = _tmpl$3();
-                _$insert(_el$7, error);
-                return _el$7;
-              }
-            }), null);
-            _el$8.$$click = e => e.stopPropagation();
-            _$insert(_el$8, _$createComponent(Switch, {
-              get checked() {
-                return enabled();
-              },
-              get disabled() {
-                return _$memo(() => !!mcp.isPending)() && mcp.pendingName === i.name;
-              },
-              onChange: () => {
-                mcp.toggle(i.name);
-              }
-            }));
-            return _el$;
-          })();
-        }
+        children: renderItem
       });
     }
   });
 };
-_$delegateEvents(["click"]);

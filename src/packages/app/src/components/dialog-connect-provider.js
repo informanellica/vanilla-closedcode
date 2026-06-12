@@ -1,21 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-100 d-flex flex-column gap-1.5"><div class="text-body"></div><div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<form class="d-flex flex-column align-items-start gap-4">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center gap-x-2"><div class="w-4 h-2 rounded-[1px] bg-input-base shadow-xs-border-base d-flex align-items-center justify-content-center"><div class="w-2.5 h-0.5 ml-0 bg-icon-strong-base d-none"data-slot=list-item-extra-icon></div></div><span></span><span class="fw-normal text-secondary">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="text-body">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center gap-x-2"><div class="w-4 h-2 rounded-[1px] bg-input-base shadow-xs-border-base d-flex align-items-center justify-content-center"><div class="w-2.5 h-0.5 ml-0 bg-icon-strong-base d-none"data-slot=list-item-extra-icon></div></div><span>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-4"><div class="text-body"></div><div class="text-body"></div><div class="text-body">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-6"><form class="d-flex flex-column align-items-start gap-4">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-6"><div class="text-body"></div><form class="d-flex flex-column align-items-start gap-4">`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-6"><div class="text-body"></div><div class="text-body d-flex align-items-center gap-4"><span>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div class="text-body"><div class="d-flex align-items-center gap-x-2"><span>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-6 px-2.5 pb-3"><div class="px-2.5 d-flex gap-4 align-items-center"><div class="fs-6 fw-medium text-body-emphasis"></div></div><div class="px-2.5 pb-10 d-flex flex-column gap-6"><div tabindex=0>`);
 import { Button } from "@/bs/button.js";
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
@@ -26,12 +8,32 @@ import { ProviderIcon } from "@/vendor/ui/components/provider-icon.js";
 import { Spinner } from "@/bs/spinner.js";
 import { TextField } from "@/bs/text-field.js";
 import { showToast } from "@/lib/toast.js";
-import { createEffect, createMemo, createResource, Match, onCleanup, onMount, Switch } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createResource, getOwner, onCleanup, onMount, runWithOwner } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { Link } from "@/components/link.js";
 import { useLanguage } from "@/context/language.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { useProvidersController } from "@/controllers/providers.js";
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
+// Row used by the method/option lists: a small "key" pictogram, a label and an
+// optional hint span. Templates are single-line to avoid whitespace text nodes.
+function listRow(withHint) {
+  const row = template(`<div class="w-100 d-flex align-items-center gap-x-2"><div class="w-4 h-2 rounded-[1px] bg-input-base shadow-xs-border-base d-flex align-items-center justify-content-center"><div class="w-2.5 h-0.5 ml-0 bg-icon-strong-base d-none" data-slot="list-item-extra-icon"></div></div><span data-slot="label"></span></div>`);
+  if (withHint) {
+    const hint = document.createElement("span");
+    hint.className = "fw-normal text-secondary";
+    hint.dataset.slot = "hint";
+    row.appendChild(hint);
+  }
+  return row;
+}
+
 export function DialogConnectProvider(props) {
   const dialog = useDialog();
   const language = useLanguage();
@@ -39,7 +41,7 @@ export function DialogConnectProvider(props) {
   const controller = useProvidersController();
   const all = () => {
     void import("./dialog-select-provider.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSelectProvider, {}));
+      dialog.show(() => createComponent(x.DialogSelectProvider, {}));
     });
   };
   const alive = {
@@ -228,6 +230,8 @@ export function DialogConnectProvider(props) {
       await next(item.index, formStore.value);
     }
     const item = () => current();
+    // Kept for parity with the original component: it defined this memo but
+    // never rendered a text-prompt UI (submission flows through handleSubmit).
     const text = createMemo(() => {
       const prompt = item()?.prompt;
       if (!prompt || prompt.type !== "text") return;
@@ -238,56 +242,53 @@ export function DialogConnectProvider(props) {
       if (!prompt || prompt.type !== "select") return;
       return prompt;
     });
-    return (() => {
-      var _el$ = _tmpl$2();
-      _el$.addEventListener("submit", handleSubmit);
-      _$insert(_el$, _$createComponent(Switch, {
-        get children() {
-          return [_$createComponent(Match, {
-            get when() {
-              return item()?.prompt.type === "select";
-            },
-            get children() {
-              var _el$2 = _tmpl$(),
-                _el$3 = _el$2.firstChild,
-                _el$4 = _el$3.nextSibling;
-              _$insert(_el$3, () => select()?.message);
-              _$insert(_el$4, _$createComponent(List, {
-                get items() {
-                  return select()?.options ?? [];
-                },
-                key: x => x.value,
-                get current() {
-                  return select()?.options.find(x => x.value === formStore.value[select().key]);
-                },
-                onSelect: value => {
-                  if (!value) return;
-                  const prompt = select();
-                  if (!prompt) return;
-                  const nextValue = {
-                    ...formStore.value,
-                    [prompt.key]: value.value
-                  };
-                  setFormStore("value", prompt.key, value.value);
-                  void next(item().index, nextValue);
-                },
-                children: option => (() => {
-                  var _el$5 = _tmpl$3(),
-                    _el$6 = _el$5.firstChild,
-                    _el$7 = _el$6.nextSibling,
-                    _el$8 = _el$7.nextSibling;
-                  _$insert(_el$7, () => option.label);
-                  _$insert(_el$8, () => option.hint);
-                  return _el$5;
-                })()
-              }));
-              return _el$2;
-            }
-          })];
+    void text;
+
+    const form = template(`<form class="d-flex flex-column align-items-start gap-4"></form>`);
+    form.addEventListener("submit", handleSubmit);
+    // The original Switch had a single Match: mount the select UI while the
+    // current prompt is a select, otherwise render nothing. Key the rebuild on
+    // the prompt object (stable identity, default memo equality) so the List
+    // survives unrelated store updates but is rebuilt when navigation reaches
+    // a different select prompt. createComponent untracks, so the vanilla List
+    // reads its items once at creation — a boolean key would freeze the
+    // options of the first select prompt across prompt-to-prompt transitions.
+    createEffect(() => {
+      const prompt = select();
+      if (!prompt) {
+        form.replaceChildren();
+        return;
+      }
+      const box = template(`<div class="w-100 d-flex flex-column gap-1.5"><div class="text-body" data-slot="message"></div><div data-slot="options"></div></div>`);
+      const message = box.querySelector('[data-slot="message"]');
+      const options = box.querySelector('[data-slot="options"]');
+      // The message belongs to this prompt, so it is static per rebuild.
+      message.textContent = prompt.message ?? "";
+      options.appendChild(createComponent(List, {
+        items: prompt.options ?? [],
+        key: x => x.value,
+        get current() {
+          return prompt.options?.find(x => x.value === formStore.value[prompt.key]);
+        },
+        onSelect: value => {
+          if (!value) return;
+          const nextValue = {
+            ...formStore.value,
+            [prompt.key]: value.value
+          };
+          setFormStore("value", prompt.key, value.value);
+          void next(item().index, nextValue);
+        },
+        children: option => {
+          const row = listRow(true);
+          row.querySelector('[data-slot="label"]').textContent = option.label ?? "";
+          row.querySelector('[data-slot="hint"]').textContent = option.hint ?? "";
+          return row;
         }
       }));
-      return _el$;
-    })();
+      form.replaceChildren(box);
+    });
+    return form;
   }
   let listRef;
   function handleKey(e) {
@@ -339,34 +340,45 @@ export function DialogConnectProvider(props) {
     all();
   }
   function MethodSelection() {
-    return [(() => {
-      var _el$9 = _tmpl$4();
-      _$insert(_el$9, () => language.t("provider.connect.selectMethod", {
+    const heading = template(`<div class="text-body"></div>`);
+    createEffect(() => {
+      heading.textContent = language.t("provider.connect.selectMethod", {
         provider: provider().name
-      }));
-      return _el$9;
-    })(), (() => {
-      var _el$0 = _tmpl$5();
-      _$insert(_el$0, _$createComponent(List, {
+      });
+    });
+    const listHost = document.createElement("div");
+    // The vanilla List reads `items` once at creation (createComponent
+    // untracks), so rebuild it when the method set changes — e.g. when cached
+    // auth methods are replaced by the freshly fetched ones.
+    createEffect(() => {
+      const items = methods();
+      // List renders asynchronously, so effects created inside `children`
+      // would be ownerless (never disposed); re-attach them to this effect's
+      // owner so they are cleaned up on rebuild/unmount.
+      const owner = getOwner();
+      listHost.replaceChildren(createComponent(List, {
         ref: ref => {
           listRef = ref;
         },
-        items: methods,
+        items,
         key: m => m?.label,
         onSelect: async (selected, index) => {
           if (!selected) return;
           void selectMethod(index);
         },
-        children: i => (() => {
-          var _el$1 = _tmpl$6(),
-            _el$10 = _el$1.firstChild,
-            _el$11 = _el$10.nextSibling;
-          _$insert(_el$11, () => methodLabel(i));
-          return _el$1;
-        })()
+        children: i => {
+          const row = listRow(false);
+          const label = row.querySelector('[data-slot="label"]');
+          // methodLabel() goes through language.t for API-key methods, so keep
+          // it live across locale switches.
+          runWithOwner(owner, () => createEffect(() => {
+            label.textContent = methodLabel(i);
+          }));
+          return row;
+        }
       }));
-      return _el$0;
-    })()];
+    });
+    return [heading, listHost];
   }
   function ApiAuthView() {
     const [formStore, setFormStore] = createStore({
@@ -386,58 +398,65 @@ export function DialogConnectProvider(props) {
       await controller.connect(props.provider, apiKey);
       complete();
     }
-    return (() => {
-      var _el$12 = _tmpl$8(),
-        _el$18 = _el$12.firstChild;
-      _$insert(_el$12, _$createComponent(Switch, {
-        get children() {
-          return [_$createComponent(Match, {
-            when: true,
-            get children() {
-              var _el$17 = _tmpl$4();
-              _$insert(_el$17, () => language.t("provider.connect.apiKey.description", {
-                provider: provider().name
-              }));
-              return _el$17;
-            }
-          })];
-        }
-      }), _el$18);
-      _el$18.addEventListener("submit", handleSubmit);
-      _$insert(_el$18, _$createComponent(TextField, {
-        autofocus: true,
-        type: "text",
-        get label() {
-          return language.t("provider.connect.apiKey.label", {
-            provider: provider().name
-          });
-        },
-        get placeholder() {
-          return language.t("provider.connect.apiKey.placeholder");
-        },
-        name: "apiKey",
-        get value() {
-          return formStore.value;
-        },
-        onChange: v => setFormStore("value", v),
-        get validationState() {
-          return formStore.error ? "invalid" : undefined;
-        },
-        get error() {
-          return formStore.error;
-        }
-      }), null);
-      _$insert(_el$18, _$createComponent(Button, {
-        "class": "w-auto",
-        type: "submit",
-        size: "large",
-        variant: "primary",
-        get children() {
-          return language.t("common.continue");
-        }
-      }), null);
-      return _el$12;
-    })();
+    const root = template(`<div class="d-flex flex-column gap-6"><form class="d-flex flex-column align-items-start gap-4"></form></div>`);
+    const form = root.firstElementChild;
+    // The original wrapped this description in a Switch with a single
+    // always-true Match, so it is effectively a static block before the form.
+    const description = template(`<div class="text-body"></div>`);
+    createEffect(() => {
+      description.textContent = language.t("provider.connect.apiKey.description", {
+        provider: provider().name
+      });
+    });
+    root.insertBefore(description, form);
+    form.addEventListener("submit", handleSubmit);
+    const field = createComponent(TextField, {
+      autofocus: true,
+      type: "text",
+      get label() {
+        return language.t("provider.connect.apiKey.label", {
+          provider: provider().name
+        });
+      },
+      get placeholder() {
+        return language.t("provider.connect.apiKey.placeholder");
+      },
+      name: "apiKey",
+      get value() {
+        return formStore.value;
+      },
+      onChange: v => setFormStore("value", v)
+    });
+    // The vanilla TextField reads `error`/`validationState` once at creation,
+    // so mirror its invalid markup externally to keep the submit error live.
+    const input = field.querySelector("input");
+    const errorEl = document.createElement("div");
+    errorEl.className = "text-danger small mt-1";
+    createEffect(() => {
+      const error = formStore.error;
+      input.classList.toggle("is-invalid", !!error);
+      if (!error) {
+        errorEl.remove();
+        return;
+      }
+      errorEl.textContent = error;
+      if (!errorEl.parentNode) field.appendChild(errorEl);
+    });
+    form.appendChild(field);
+    // The vanilla Button renders its children once — pass a text node kept
+    // live by an effect so the label follows locale switches.
+    const submitLabel = document.createTextNode("");
+    createEffect(() => {
+      submitLabel.data = language.t("common.continue");
+    });
+    form.appendChild(createComponent(Button, {
+      "class": "w-auto",
+      type: "submit",
+      size: "large",
+      variant: "primary",
+      children: submitLabel
+    }));
+    return root;
   }
   function OAuthCodeView() {
     const [formStore, setFormStore] = createStore({
@@ -461,57 +480,77 @@ export function DialogConnectProvider(props) {
       }
       setFormStore("error", formatError(result.error, language.t("provider.connect.oauth.code.invalid")));
     }
-    return (() => {
-      var _el$19 = _tmpl$9(),
-        _el$20 = _el$19.firstChild,
-        _el$21 = _el$20.nextSibling;
-      _$insert(_el$20, () => language.t("provider.connect.oauth.code.visit.prefix"), null);
-      _$insert(_el$20, _$createComponent(Link, {
-        get href() {
-          return store.authorization.url;
-        },
-        get children() {
-          return language.t("provider.connect.oauth.code.visit.link");
-        }
-      }), null);
-      _$insert(_el$20, () => language.t("provider.connect.oauth.code.visit.suffix", {
+    const root = template(`<div class="d-flex flex-column gap-6"><div class="text-body" data-slot="visit"></div><form class="d-flex flex-column align-items-start gap-4"></form></div>`);
+    const visit = root.firstElementChild;
+    const form = visit.nextElementSibling;
+    const prefix = document.createTextNode("");
+    createEffect(() => {
+      prefix.data = language.t("provider.connect.oauth.code.visit.prefix");
+    });
+    visit.appendChild(prefix);
+    visit.appendChild(createComponent(Link, {
+      get href() {
+        return store.authorization.url;
+      },
+      get children() {
+        return language.t("provider.connect.oauth.code.visit.link");
+      }
+    }));
+    const suffix = document.createTextNode("");
+    createEffect(() => {
+      suffix.data = language.t("provider.connect.oauth.code.visit.suffix", {
         provider: provider().name
-      }), null);
-      _el$21.addEventListener("submit", handleSubmit);
-      _$insert(_el$21, _$createComponent(TextField, {
-        autofocus: true,
-        type: "text",
-        get label() {
-          return language.t("provider.connect.oauth.code.label", {
-            method: method()?.label ?? ""
-          });
-        },
-        get placeholder() {
-          return language.t("provider.connect.oauth.code.placeholder");
-        },
-        name: "code",
-        get value() {
-          return formStore.value;
-        },
-        onChange: v => setFormStore("value", v),
-        get validationState() {
-          return formStore.error ? "invalid" : undefined;
-        },
-        get error() {
-          return formStore.error;
-        }
-      }), null);
-      _$insert(_el$21, _$createComponent(Button, {
-        "class": "w-auto",
-        type: "submit",
-        size: "large",
-        variant: "primary",
-        get children() {
-          return language.t("common.continue");
-        }
-      }), null);
-      return _el$19;
-    })();
+      });
+    });
+    visit.appendChild(suffix);
+    form.addEventListener("submit", handleSubmit);
+    const field = createComponent(TextField, {
+      autofocus: true,
+      type: "text",
+      get label() {
+        return language.t("provider.connect.oauth.code.label", {
+          method: method()?.label ?? ""
+        });
+      },
+      get placeholder() {
+        return language.t("provider.connect.oauth.code.placeholder");
+      },
+      name: "code",
+      get value() {
+        return formStore.value;
+      },
+      onChange: v => setFormStore("value", v)
+    });
+    // The vanilla TextField reads `error`/`validationState` once at creation,
+    // so mirror its invalid markup externally to keep the submit error live.
+    const input = field.querySelector("input");
+    const errorEl = document.createElement("div");
+    errorEl.className = "text-danger small mt-1";
+    createEffect(() => {
+      const error = formStore.error;
+      input.classList.toggle("is-invalid", !!error);
+      if (!error) {
+        errorEl.remove();
+        return;
+      }
+      errorEl.textContent = error;
+      if (!errorEl.parentNode) field.appendChild(errorEl);
+    });
+    form.appendChild(field);
+    // The vanilla Button renders its children once — pass a text node kept
+    // live by an effect so the label follows locale switches.
+    const submitLabel = document.createTextNode("");
+    createEffect(() => {
+      submitLabel.data = language.t("common.continue");
+    });
+    form.appendChild(createComponent(Button, {
+      "class": "w-auto",
+      type: "submit",
+      size: "large",
+      variant: "primary",
+      children: submitLabel
+    }));
+    return root;
   }
   function OAuthAutoView() {
     const code = createMemo(() => {
@@ -536,162 +575,157 @@ export function DialogConnectProvider(props) {
         complete();
       })();
     });
-    return (() => {
-      var _el$22 = _tmpl$0(),
-        _el$23 = _el$22.firstChild,
-        _el$24 = _el$23.nextSibling,
-        _el$25 = _el$24.firstChild;
-      _$insert(_el$23, () => language.t("provider.connect.oauth.auto.visit.prefix"), null);
-      _$insert(_el$23, _$createComponent(Link, {
-        get href() {
-          return store.authorization.url;
-        },
-        get children() {
-          return language.t("provider.connect.oauth.auto.visit.link");
-        }
-      }), null);
-      _$insert(_el$23, () => language.t("provider.connect.oauth.auto.visit.suffix", {
+    const root = template(`<div class="d-flex flex-column gap-6"><div class="text-body" data-slot="visit"></div><div class="text-body d-flex align-items-center gap-4" data-slot="status"><span data-slot="waiting"></span></div></div>`);
+    const visit = root.firstElementChild;
+    const status = visit.nextElementSibling;
+    const waiting = status.querySelector('[data-slot="waiting"]');
+    const prefix = document.createTextNode("");
+    createEffect(() => {
+      prefix.data = language.t("provider.connect.oauth.auto.visit.prefix");
+    });
+    visit.appendChild(prefix);
+    visit.appendChild(createComponent(Link, {
+      get href() {
+        return store.authorization.url;
+      },
+      get children() {
+        return language.t("provider.connect.oauth.auto.visit.link");
+      }
+    }));
+    const suffix = document.createTextNode("");
+    createEffect(() => {
+      suffix.data = language.t("provider.connect.oauth.auto.visit.suffix", {
         provider: provider().name
-      }), null);
-      _$insert(_el$22, _$createComponent(TextField, {
-        get label() {
-          return language.t("provider.connect.oauth.auto.confirmationCode");
-        },
-        "class": "font-mono",
-        get value() {
-          return code();
-        },
-        readOnly: true,
-        copyable: true
-      }), _el$24);
-      _$insert(_el$24, _$createComponent(Spinner, {}), _el$25);
-      _$insert(_el$25, () => language.t("provider.connect.status.waiting"));
-      return _el$22;
-    })();
-  }
-  return _$createComponent(Dialog, {
-    get title() {
-      return _$createComponent(IconButton, {
-        tabIndex: -1,
-        icon: "arrow-left",
-        variant: "ghost",
-        onClick: goBack,
-        get ["aria-label"]() {
-          return language.t("common.goBack");
-        }
       });
-    },
+    });
+    visit.appendChild(suffix);
+    root.insertBefore(createComponent(TextField, {
+      get label() {
+        return language.t("provider.connect.oauth.auto.confirmationCode");
+      },
+      "class": "font-mono",
+      get value() {
+        return code();
+      },
+      readOnly: true,
+      copyable: true
+    }), status);
+    status.insertBefore(createComponent(Spinner, {}), waiting);
+    createEffect(() => {
+      waiting.textContent = language.t("provider.connect.status.waiting");
+    });
+    return root;
+  }
+  // Spinner + "in progress" line (used by both the loading and pending states).
+  function buildProgress() {
+    const root = template(`<div class="text-body"><div class="d-flex align-items-center gap-x-2"><span data-slot="text"></span></div></div>`);
+    const inner = root.firstElementChild;
+    const text = inner.querySelector('[data-slot="text"]');
+    inner.insertBefore(createComponent(Spinner, {}), text);
+    createEffect(() => {
+      text.textContent = language.t("provider.connect.status.inProgress");
+    });
+    return root;
+  }
+  function buildError() {
+    const root = template(`<div class="text-body"><div class="d-flex align-items-center gap-x-2"><span data-slot="text"></span></div></div>`);
+    const inner = root.firstElementChild;
+    const text = inner.querySelector('[data-slot="text"]');
+    inner.insertBefore(createComponent(Icon, {
+      name: "circle-ban-sign",
+      "class": "text-danger"
+    }), text);
+    createEffect(() => {
+      text.textContent = language.t("provider.connect.status.failed", {
+        error: store.error ?? ""
+      });
+    });
+    return root;
+  }
+  const dialogEl = createComponent(Dialog, {
+    // bs/Dialog renders `title` with textContent, so a Node passed here would
+    // be coerced to "[object HTMLButtonElement]". Pass a placeholder string to
+    // force the header, then swap the title slot for the back IconButton below.
+    title: " ",
     get children() {
-      var _el$26 = _tmpl$10(),
-        _el$27 = _el$26.firstChild,
-        _el$28 = _el$27.firstChild,
-        _el$29 = _el$27.nextSibling,
-        _el$30 = _el$29.firstChild;
-      _$insert(_el$27, _$createComponent(ProviderIcon, {
+      const root = template(`<div class="d-flex flex-column gap-6 px-2.5 pb-3"><div class="px-2.5 d-flex gap-4 align-items-center"><div class="fs-6 fw-medium text-body-emphasis" data-slot="title"></div></div><div class="px-2.5 pb-10 d-flex flex-column gap-6"><div tabindex="0" data-slot="body"></div></div></div>`);
+      const header = root.firstElementChild;
+      const titleEl = header.querySelector('[data-slot="title"]');
+      const body = root.querySelector('[data-slot="body"]');
+      header.insertBefore(createComponent(ProviderIcon, {
         get id() {
           return props.provider;
         },
         "class": "size-5 shrink-0 text-secondary"
-      }), _el$28);
-      _$insert(_el$28, () => language.t("provider.connect.title", {
-        provider: provider().name
-      }));
-      _el$30.$$keydown = handleKey;
-      _$insert(_el$30, _$createComponent(Switch, {
-        get children() {
-          return [_$createComponent(Match, {
-            get when() {
-              return loading();
-            },
-            get children() {
-              var _el$31 = _tmpl$1(),
-                _el$32 = _el$31.firstChild,
-                _el$33 = _el$32.firstChild;
-              _$insert(_el$32, _$createComponent(Spinner, {}), _el$33);
-              _$insert(_el$33, () => language.t("provider.connect.status.inProgress"));
-              return _el$31;
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return store.methodIndex === undefined;
-            },
-            get children() {
-              return _$createComponent(MethodSelection, {});
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return store.state === "pending";
-            },
-            get children() {
-              var _el$34 = _tmpl$1(),
-                _el$35 = _el$34.firstChild,
-                _el$36 = _el$35.firstChild;
-              _$insert(_el$35, _$createComponent(Spinner, {}), _el$36);
-              _$insert(_el$36, () => language.t("provider.connect.status.inProgress"));
-              return _el$34;
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return store.state === "prompt";
-            },
-            get children() {
-              return _$createComponent(OAuthPromptsView, {});
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return store.state === "error";
-            },
-            get children() {
-              var _el$37 = _tmpl$1(),
-                _el$38 = _el$37.firstChild,
-                _el$39 = _el$38.firstChild;
-              _$insert(_el$38, _$createComponent(Icon, {
-                name: "circle-ban-sign",
-                "class": "text-danger"
-              }), _el$39);
-              _$insert(_el$39, () => language.t("provider.connect.status.failed", {
-                error: store.error ?? ""
-              }));
-              return _el$37;
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return method()?.type === "api";
-            },
-            get children() {
-              return _$createComponent(ApiAuthView, {});
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return method()?.type === "oauth";
-            },
-            get children() {
-              return _$createComponent(Switch, {
-                get children() {
-                  return [_$createComponent(Match, {
-                    get when() {
-                      return store.authorization?.method === "code";
-                    },
-                    get children() {
-                      return _$createComponent(OAuthCodeView, {});
-                    }
-                  }), _$createComponent(Match, {
-                    get when() {
-                      return store.authorization?.method === "auto";
-                    },
-                    get children() {
-                      return _$createComponent(OAuthAutoView, {});
-                    }
-                  })];
-                }
-              });
-            }
-          })];
+      }), titleEl);
+      createEffect(() => {
+        titleEl.textContent = language.t("provider.connect.title", {
+          provider: provider().name
+        });
+      });
+      body.addEventListener("keydown", handleKey);
+      // Switch/Match replacement: pick the first matching branch (original
+      // Match order) and rebuild the body only when the branch key changes,
+      // so per-view state (forms, List selection) survives unrelated updates
+      // and views remount exactly when the original branches swapped.
+      const branch = createMemo(() => {
+        if (loading()) return "loading";
+        if (store.methodIndex === undefined) return "select";
+        if (store.state === "pending") return "pending";
+        if (store.state === "prompt") return "prompt";
+        if (store.state === "error") return "error";
+        if (method()?.type === "api") return "api";
+        if (method()?.type === "oauth") {
+          if (store.authorization?.method === "code") return "oauth-code";
+          if (store.authorization?.method === "auto") return "oauth-auto";
+          return "none";
         }
-      }));
-      _$effect(() => _el$30.autofocus = store.methodIndex === undefined ? true : undefined);
-      return _el$26;
+        return "none";
+      });
+      createEffect(() => {
+        switch (branch()) {
+          case "loading":
+          case "pending":
+            body.replaceChildren(buildProgress());
+            break;
+          case "select":
+            body.replaceChildren(...createComponent(MethodSelection, {}));
+            break;
+          case "prompt":
+            body.replaceChildren(createComponent(OAuthPromptsView, {}));
+            break;
+          case "error":
+            body.replaceChildren(buildError());
+            break;
+          case "api":
+            body.replaceChildren(createComponent(ApiAuthView, {}));
+            break;
+          case "oauth-code":
+            body.replaceChildren(createComponent(OAuthCodeView, {}));
+            break;
+          case "oauth-auto":
+            body.replaceChildren(createComponent(OAuthAutoView, {}));
+            break;
+          default:
+            body.replaceChildren();
+        }
+      });
+      // The compiled output bound this with a render effect; keep that timing
+      // so the attribute is in place before the dialog is shown.
+      createRenderEffect(() => {
+        body.autofocus = store.methodIndex === undefined ? true : undefined;
+      });
+      return root;
     }
   });
+  dialogEl.querySelector('[data-slot="dialog-title"]').replaceChildren(createComponent(IconButton, {
+    tabIndex: -1,
+    icon: "arrow-left",
+    variant: "ghost",
+    onClick: goBack,
+    get ["aria-label"]() {
+      return language.t("common.goBack");
+    }
+  }));
+  return dialogEl;
 }
-_$delegateEvents(["keydown"]);

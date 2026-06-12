@@ -1,8 +1,8 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createMemo } from "solid-js";
-import { useLocal } from "@tui/context/local.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useDialog } from "@tui/ui/dialog.js";
+import { useLocal } from "#tui/context/local.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useDialog } from "#tui/ui/dialog.js";
 export function DialogVariant() {
   const local = useLocal();
   const dialog = useDialog();

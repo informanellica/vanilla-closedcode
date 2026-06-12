@@ -1,4 +1,4 @@
-import { ProviderTransform } from "@/provider/transform.js";
+import { ProviderTransform } from "#provider/transform.js";
 const COMPACTION_BUFFER = 20_000;
 export function usable(input) {
   const context = input.model.limit.context;

@@ -1,17 +1,27 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between rounded-2"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center min-w-0"><span class="text-body-emphasis whitespace-nowrap">~</span><span class="text-secondary whitespace-nowrap">/`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between rounded-2"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center min-w-0"><span class="text-secondary whitespace-nowrap overflow-hidden overflow-ellipsis truncate min-w-0"></span><span class="text-body-emphasis whitespace-nowrap"></span><span class="text-secondary whitespace-nowrap">/`);
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { List } from "@/bs/list.js";
 import { getDirectory, getFilename } from "core/util/path";
-import { createSignal } from "solid-js";
+import { createComponent, createSignal } from "solid-js";
 import { cleanInput, displayPath, useProjectController } from "@/controllers/project.js";
 import { useLanguage } from "@/context/language.js";
+
+// Build a detached element from a static HTML skeleton. The markup is kept
+// whitespace-free between tags so the DOM matches the compiled template
+// output exactly.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
+// Row for the home directory: static "~/" label.
+const HOME_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-content-between rounded-2"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center min-w-0" data-slot="path"><span class="text-body-emphasis whitespace-nowrap">~</span><span class="text-secondary whitespace-nowrap">/</span></div></div></div>`;
+// Row for any other directory: truncated parent path, emphasized basename
+// and a trailing slash.
+const PATH_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-content-between rounded-2"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center min-w-0" data-slot="path"><span class="text-secondary whitespace-nowrap overflow-hidden overflow-ellipsis truncate min-w-0" data-slot="directory"></span><span class="text-body-emphasis whitespace-nowrap" data-slot="filename"></span><span class="text-secondary whitespace-nowrap">/</span></div></div></div>`;
+
 export function DialogSelectDirectory(props) {
   const dialog = useDialog();
   const language = useLanguage();
@@ -24,12 +34,37 @@ export function DialogSelectDirectory(props) {
     props.onSelect(props.multiple ? [absolute] : absolute);
     dialog.close();
   }
-  return _$createComponent(Dialog, {
+  // Per-item row renderer for List. `path` is fixed for a render pass (List
+  // rebuilds every row when the filter changes), so plain textContent is
+  // equivalent to the compiled insert() of a non-reactive expression.
+  function buildRow(item) {
+    const path = displayPath(item.absolute, filter(), home());
+    const row = template(path === "~" ? HOME_ROW_HTML : PATH_ROW_HTML);
+    const pathBox = row.querySelector('[data-slot="path"]');
+    pathBox.parentElement.insertBefore(
+      createComponent(FileIcon, {
+        get node() {
+          return {
+            path: item.absolute,
+            type: "directory"
+          };
+        },
+        class: "shrink-0 size-4"
+      }),
+      pathBox
+    );
+    if (path !== "~") {
+      row.querySelector('[data-slot="directory"]').textContent = getDirectory(path);
+      row.querySelector('[data-slot="filename"]').textContent = getFilename(path);
+    }
+    return row;
+  }
+  return createComponent(Dialog, {
     get title() {
       return props.title ?? language.t("command.project.open");
     },
     get children() {
-      return _$createComponent(List, {
+      return createComponent(List, {
         get search() {
           return {
             placeholder: language.t("dialog.directory.search.placeholder"),
@@ -66,45 +101,7 @@ export function DialogSelectDirectory(props) {
           if (!path) return;
           resolve(path.absolute);
         },
-        children: item => {
-          const path = displayPath(item.absolute, filter(), home());
-          if (path === "~") {
-            return (() => {
-              var _el$ = _tmpl$(),
-                _el$2 = _el$.firstChild,
-                _el$3 = _el$2.firstChild;
-              _$insert(_el$2, _$createComponent(FileIcon, {
-                get node() {
-                  return {
-                    path: item.absolute,
-                    type: "directory"
-                  };
-                },
-                "class": "shrink-0 size-4"
-              }), _el$3);
-              return _el$;
-            })();
-          }
-          return (() => {
-            var _el$4 = _tmpl$2(),
-              _el$5 = _el$4.firstChild,
-              _el$6 = _el$5.firstChild,
-              _el$7 = _el$6.firstChild,
-              _el$8 = _el$7.nextSibling;
-            _$insert(_el$5, _$createComponent(FileIcon, {
-              get node() {
-                return {
-                  path: item.absolute,
-                  type: "directory"
-                };
-              },
-              "class": "shrink-0 size-4"
-            }), _el$6);
-            _$insert(_el$7, () => getDirectory(path));
-            _$insert(_el$8, () => getFilename(path));
-            return _el$4;
-          })();
-        }
+        children: item => buildRow(item)
       });
     }
   });

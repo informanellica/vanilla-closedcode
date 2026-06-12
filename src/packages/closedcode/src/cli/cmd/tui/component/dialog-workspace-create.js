@@ -1,13 +1,13 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { memo as _$memo } from "@opentui/solid";
 import { createOpencodeClient } from "sdk/v2";
-import { useDialog } from "@tui/ui/dialog.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { useSync } from "@tui/context/sync.js";
-import { useProject } from "@tui/context/project.js";
+import { useDialog } from "#tui/ui/dialog.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { useSync } from "#tui/context/sync.js";
+import { useProject } from "#tui/context/project.js";
 import { createMemo, createSignal, onMount } from "solid-js";
 import { setTimeout as sleep } from "node:timers/promises";
-import { errorMessage } from "@/util/error.js";
+import { errorMessage } from "#util/error.js";
 import { useSDK } from "../context/sdk.js";
 import { useToast } from "../ui/toast.js";
 function scoped(sdk, sync, workspaceID) {

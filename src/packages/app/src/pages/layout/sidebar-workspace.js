@@ -1,23 +1,13 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="bg-body rounded-2 px-2 py-1 fw-medium text-body-emphasis">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-1 min-w-0 flex-1"><div class="d-flex align-items-center justify-content-center shrink-0 size-6"></div><span class="fw-medium text-body shrink-0"> :</span><div class="d-flex align-items-center justify-content-center shrink-0 overflow-hidden w-0 opacity-0 transition-all duration-200 group-hover/workspace:w-3.5 group-hover/workspace:opacity-100 group-focus-within/workspace:w-3.5 group-focus-within/workspace:opacity-100">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span class="fw-medium text-body min-w-0 truncate">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="absolute right-1 top-1/2 -translate-y-1/2 d-flex align-items-center gap-0.5 transition-opacity">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="relative w-full py-1">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<nav class="d-flex flex-column gap-1">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class=py-1><div class="group/workspace relative"data-component=workspace-item><div class="d-flex align-items-center gap-1">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="size-full d-flex flex-column py-2 overflow-y-auto no-scrollbar [overflow-anchor:none]">`);
+// The session list keeps solid-js/web insert() for one region only: the
+// For-reconciled SessionItem rows. SessionItem returns [row element, child
+// accessor] (the nested child-session subtree is a live memo), and For keys
+// rows by session identity so unchanged rows keep their DOM nodes across list
+// updates. insert() reconciles that nested array/accessor shape in place
+// instead of detaching live rows (established exception, same as
+// sidebar-project.js).
+import { insert as _solidInsert } from "solid-js/web";
 import { useNavigate, useParams } from "@solidjs/router";
-import { createEffect, createMemo, For, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSortable } from "@thisbeyond/solid-dnd";
 import { createMediaQuery } from "@solid-primitives/media";
@@ -36,6 +26,16 @@ import { pathKey } from "@/utils/path-key.js";
 import { NewSessionItem, SessionItem, SessionSkeleton } from "./sidebar-items.js";
 import { sortedRootSessions } from "./helpers.js";
 import { useQuery } from "@tanstack/solid-query";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Only static markup goes through here; user strings use textContent.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export const WorkspaceDragOverlay = props => {
   const globalSync = useGlobalSync();
   const language = useLanguage();
@@ -51,90 +51,125 @@ export const WorkspaceDragOverlay = props => {
     const name = props.workspaceLabel(directory, workspaceStore.vcs?.branch, project.id);
     return `${kind} : ${name}`;
   });
-  return _$createComponent(Show, {
+  // Show is the same runtime solid-js component the original used (its memo
+  // result is resolved by the DragOverlay's insertion). The callback child
+  // receives an accessor; a render effect replaces the compiled insert() for
+  // the badge text.
+  return createComponent(Show, {
     get when() {
       return label();
     },
-    children: value => (() => {
-      var _el$ = _tmpl$();
-      _$insert(_el$, value);
-      return _el$;
-    })()
+    children: value => {
+      const el = template(`<div class="bg-body rounded-2 px-2 py-1 fw-medium text-body-emphasis"></div>`);
+      createRenderEffect(() => {
+        let v = value;
+        while (typeof v === "function") v = v();
+        el.textContent = v == null ? "" : String(v);
+      });
+      return el;
+    }
   });
 };
-const WorkspaceHeader = props => (() => {
-  var _el$2 = _tmpl$2(),
-    _el$3 = _el$2.firstChild,
-    _el$4 = _el$3.nextSibling,
-    _el$5 = _el$4.firstChild,
-    _el$6 = _el$4.nextSibling;
-  _$insert(_el$3, _$createComponent(Show, {
-    get when() {
-      return props.busy();
-    },
-    get fallback() {
-      return _$createComponent(Icon, {
-        name: "branch",
-        size: "small"
+const WorkspaceHeader = props => {
+  // Static skeleton (_tmpl$2): status box + "<kind> :" span + chevron box; the
+  // name (editor or branch span) is inserted between the span and the chevron.
+  const root = template(`<div class="d-flex align-items-center gap-1 min-w-0 flex-1"><div class="d-flex align-items-center justify-content-center shrink-0 size-6"></div><span class="fw-medium text-body shrink-0"> :</span><div class="d-flex align-items-center justify-content-center shrink-0 overflow-hidden w-0 opacity-0 transition-all duration-200 group-hover/workspace:w-3.5 group-hover/workspace:opacity-100 group-focus-within/workspace:w-3.5 group-focus-within/workspace:opacity-100"></div></div>`);
+  const statusBox = root.firstChild;
+  const kindSpan = statusBox.nextSibling;
+  const chevronBox = kindSpan.nextSibling;
+
+  // Spinner while busy, branch icon otherwise (Show with fallback): rebuild
+  // only on truthiness flips, mirroring Show's condition memo.
+  let busyShown;
+  createRenderEffect(() => {
+    const value = !!props.busy();
+    if (value === busyShown) return;
+    busyShown = value;
+    statusBox.replaceChildren(value ? createComponent(Spinner, {
+      "class": "size-[15px]"
+    }) : createComponent(Icon, {
+      name: "branch",
+      size: "small"
+    }));
+  });
+
+  // Workspace kind label, inserted before the static " :" text node.
+  const kindText = document.createTextNode("");
+  kindSpan.insertBefore(kindText, kindSpan.firstChild);
+  createRenderEffect(() => {
+    kindText.data = props.local() ? props.language.t("workspace.type.local") : props.language.t("workspace.type.sandbox");
+  });
+
+  // Name region (Show when !local, fallback = read-only branch span): managed
+  // before the chevron box so membership flips keep the original DOM order.
+  let nameCurrent = null;
+  const mountName = node => {
+    if (node === nameCurrent) return;
+    if (nameCurrent) nameCurrent.remove();
+    if (node) root.insertBefore(node, chevronBox);
+    nameCurrent = node;
+  };
+  let nameSandbox;
+  createRenderEffect(() => {
+    const sandbox = !props.local();
+    if (sandbox === nameSandbox) return;
+    nameSandbox = sandbox;
+    if (!sandbox) {
+      const span = template(`<span class="fw-medium text-body min-w-0 truncate"></span>`);
+      createRenderEffect(() => {
+        const value = props.branch() ?? getFilename(props.directory);
+        span.textContent = value == null ? "" : String(value);
       });
-    },
-    get children() {
-      return _$createComponent(Spinner, {
-        "class": "size-[15px]"
-      });
+      mountName(span);
+      return;
     }
-  }));
-  _$insert(_el$4, (() => {
-    var _c$ = _$memo(() => !!props.local());
-    return () => _c$() ? props.language.t("workspace.type.local") : props.language.t("workspace.type.sandbox");
-  })(), _el$5);
-  _$insert(_el$2, _$createComponent(Show, {
-    get when() {
-      return !props.local();
-    },
-    get fallback() {
-      return (() => {
-        var _el$7 = _tmpl$3();
-        _$insert(_el$7, () => props.branch() ?? getFilename(props.directory));
-        return _el$7;
-      })();
-    },
-    get children() {
-      return _$createComponent(props.InlineEditor, {
-        get id() {
-          return `workspace:${props.directory}`;
-        },
-        get value() {
-          return props.workspaceValue;
-        },
-        onSave: next => {
-          const trimmed = next.trim();
-          if (!trimmed) return;
-          props.renameWorkspace(props.directory, trimmed, props.projectId, props.branch());
-          props.setEditor("value", props.workspaceValue());
-        },
-        "class": "fw-medium text-body min-w-0 truncate",
-        displayClass: "fw-medium text-body min-w-0 truncate",
-        get editing() {
-          return props.workspaceEditActive();
-        },
-        stopPropagation: false,
-        openOnDblClick: false
-      });
-    }
-  }), _el$6);
-  _$insert(_el$6, _$createComponent(Icon, {
+    const editor = createComponent(props.InlineEditor, {
+      get id() {
+        return `workspace:${props.directory}`;
+      },
+      get value() {
+        return props.workspaceValue;
+      },
+      onSave: next => {
+        const trimmed = next.trim();
+        if (!trimmed) return;
+        props.renameWorkspace(props.directory, trimmed, props.projectId, props.branch());
+        props.setEditor("value", props.workspaceValue());
+      },
+      "class": "fw-medium text-body min-w-0 truncate",
+      displayClass: "fw-medium text-body min-w-0 truncate",
+      get editing() {
+        return props.workspaceEditActive();
+      },
+      stopPropagation: false,
+      openOnDblClick: false
+    });
+    // InlineEditor returns a memo accessor that swaps between the display
+    // span and the input as editing toggles; resolve it reactively (this
+    // nested effect is owned by the branch run, disposing on swap).
+    createRenderEffect(() => {
+      let value = editor;
+      while (typeof value === "function") value = value();
+      mountName(value ?? null);
+    });
+  });
+
+  // Chevron: identical createComponent call; the vanilla Icon reads `name`
+  // once at creation, exactly as it did for the compiled caller.
+  chevronBox.appendChild(createComponent(Icon, {
     get name() {
       return props.open() ? "chevron-down" : "chevron-right";
     },
     size: "small",
     "class": "text-secondary"
   }));
-  return _el$2;
-})();
-const WorkspaceActions = props => (() => {
-  var _el$8 = _tmpl$4();
-  _$insert(_el$8, _$createComponent(DropdownMenu, {
+  return root;
+};
+const WorkspaceActions = props => {
+  const root = template(`<div class="absolute right-1 top-1/2 -translate-y-1/2 d-flex align-items-center gap-0.5 transition-opacity"></div>`);
+  // Static keys of the compiled classList effect (always true).
+  root.classList.add("group-hover/workspace:opacity-100", "group-hover/workspace:pointer-events-auto", "group-focus-within/workspace:opacity-100", "group-focus-within/workspace:pointer-events-auto");
+  root.appendChild(createComponent(DropdownMenu, {
     get modal() {
       return !props.sidebarHovering();
     },
@@ -143,13 +178,13 @@ const WorkspaceActions = props => (() => {
     },
     onOpenChange: open => props.setMenuOpen(open),
     get children() {
-      return [_$createComponent(Tooltip, {
+      return [createComponent(Tooltip, {
         get value() {
           return props.language.t("common.moreOptions");
         },
         placement: "top",
         get children() {
-          return _$createComponent(DropdownMenu.Trigger, {
+          return createComponent(DropdownMenu.Trigger, {
             as: IconButton,
             icon: "dot-grid",
             variant: "ghost",
@@ -163,9 +198,9 @@ const WorkspaceActions = props => (() => {
             }
           });
         }
-      }), _$createComponent(DropdownMenu.Portal, {
+      }), createComponent(DropdownMenu.Portal, {
         get children() {
-          return _$createComponent(DropdownMenu.Content, {
+          return createComponent(DropdownMenu.Content, {
             onCloseAutoFocus: event => {
               if (!props.pendingRename()) return;
               event.preventDefault();
@@ -173,7 +208,7 @@ const WorkspaceActions = props => (() => {
               props.openEditor(`workspace:${props.directory}`, props.workspaceValue());
             },
             get children() {
-              return [_$createComponent(DropdownMenu.Item, {
+              return [createComponent(DropdownMenu.Item, {
                 get disabled() {
                   return props.local();
                 },
@@ -182,31 +217,31 @@ const WorkspaceActions = props => (() => {
                   props.setMenuOpen(false);
                 },
                 get children() {
-                  return _$createComponent(DropdownMenu.ItemLabel, {
+                  return createComponent(DropdownMenu.ItemLabel, {
                     get children() {
                       return props.language.t("common.rename");
                     }
                   });
                 }
-              }), _$createComponent(DropdownMenu.Item, {
+              }), createComponent(DropdownMenu.Item, {
                 get disabled() {
                   return props.local() || props.busy();
                 },
                 onSelect: () => props.showResetWorkspaceDialog(props.root, props.directory),
                 get children() {
-                  return _$createComponent(DropdownMenu.ItemLabel, {
+                  return createComponent(DropdownMenu.ItemLabel, {
                     get children() {
                       return props.language.t("common.reset");
                     }
                   });
                 }
-              }), _$createComponent(DropdownMenu.Item, {
+              }), createComponent(DropdownMenu.Item, {
                 get disabled() {
                   return props.local() || props.busy();
                 },
                 onSelect: () => props.showDeleteWorkspaceDialog(props.root, props.directory),
                 get children() {
-                  return _$createComponent(DropdownMenu.ItemLabel, {
+                  return createComponent(DropdownMenu.ItemLabel, {
                     get children() {
                       return props.language.t("common.delete");
                     }
@@ -218,84 +253,122 @@ const WorkspaceActions = props => (() => {
         }
       })];
     }
-  }), null);
-  _$insert(_el$8, _$createComponent(Show, {
-    get when() {
-      return !props.touch();
-    },
-    get children() {
-      return _$createComponent(Tooltip, {
-        get value() {
-          return props.language.t("command.session.new");
-        },
-        placement: "top",
-        get children() {
-          return _$createComponent(IconButton, {
-            icon: "new-session",
-            variant: "ghost",
-            "class": "size-6 rounded-2 opacity-0 pointer-events-none group-hover/workspace:opacity-100 group-hover/workspace:pointer-events-auto group-focus-within/workspace:opacity-100 group-focus-within/workspace:pointer-events-auto",
-            "data-action": "workspace-new-session",
-            get ["data-workspace"]() {
-              return base64Encode(props.directory);
-            },
-            get ["aria-label"]() {
-              return props.language.t("command.session.new");
-            },
-            onClick: event => {
-              event.preventDefault();
-              event.stopPropagation();
-              props.clearHoverProjectSoon();
-              props.navigateToNewSession();
-            }
-          });
-        }
-      });
+  }));
+
+  // New-session shortcut (Show when !touch): last region of the row, so plain
+  // append/remove keeps the original order; rebuilt per truthiness flip.
+  let shortcutShown;
+  let shortcutNode = null;
+  createRenderEffect(() => {
+    const show = !props.touch();
+    if (show === shortcutShown) return;
+    shortcutShown = show;
+    if (shortcutNode) {
+      shortcutNode.remove();
+      shortcutNode = null;
     }
-  }), null);
-  _$effect(_$p => _$classList(_el$8, {
-    "opacity-100 pointer-events-auto": props.menuOpen(),
-    "opacity-0 pointer-events-none": !props.menuOpen(),
-    "group-hover/workspace:opacity-100 group-hover/workspace:pointer-events-auto": true,
-    "group-focus-within/workspace:opacity-100 group-focus-within/workspace:pointer-events-auto": true
-  }, _$p));
-  return _el$8;
-})();
-const WorkspaceSessionList = props => (() => {
-  var _el$9 = _tmpl$6();
-  _$insert(_el$9, _$createComponent(Show, {
-    get when() {
-      return props.showNew();
-    },
-    get children() {
-      return _$createComponent(NewSessionItem, {
-        get slug() {
-          return props.slug();
-        },
-        get mobile() {
-          return props.mobile;
-        },
-        get sidebarExpanded() {
-          return props.ctx.sidebarExpanded;
-        },
-        get clearHoverProjectSoon() {
-          return props.ctx.clearHoverProjectSoon;
-        }
-      });
+    if (!show) return;
+    shortcutNode = createComponent(Tooltip, {
+      get value() {
+        return props.language.t("command.session.new");
+      },
+      placement: "top",
+      get children() {
+        return createComponent(IconButton, {
+          icon: "new-session",
+          variant: "ghost",
+          "class": "size-6 rounded-2 opacity-0 pointer-events-none group-hover/workspace:opacity-100 group-hover/workspace:pointer-events-auto group-focus-within/workspace:opacity-100 group-focus-within/workspace:pointer-events-auto",
+          "data-action": "workspace-new-session",
+          get ["data-workspace"]() {
+            return base64Encode(props.directory);
+          },
+          get ["aria-label"]() {
+            return props.language.t("command.session.new");
+          },
+          onClick: event => {
+            event.preventDefault();
+            event.stopPropagation();
+            props.clearHoverProjectSoon();
+            props.navigateToNewSession();
+          }
+        });
+      }
+    });
+    root.appendChild(shortcutNode);
+  });
+
+  // Reactive keys of the compiled classList effect.
+  createRenderEffect(() => {
+    const open = !!props.menuOpen();
+    root.classList.toggle("opacity-100", open);
+    root.classList.toggle("pointer-events-auto", open);
+    root.classList.toggle("opacity-0", !open);
+    root.classList.toggle("pointer-events-none", !open);
+  });
+  return root;
+};
+const WorkspaceSessionList = props => {
+  const nav = template(`<nav class="d-flex flex-column gap-1"></nav>`);
+  // Empty text nodes keep the four dynamic regions in document order (the
+  // compiled insert() runtime used the same placeholder technique).
+  const newAnchor = nav.appendChild(document.createTextNode(""));
+  const skeletonAnchor = nav.appendChild(document.createTextNode(""));
+  const sessionsAnchor = nav.appendChild(document.createTextNode(""));
+  const moreAnchor = nav.appendChild(document.createTextNode(""));
+
+  // New-session row (Show when showNew): rebuilt per truthiness flip.
+  let newShown;
+  let newNode = null;
+  createRenderEffect(() => {
+    const show = !!props.showNew();
+    if (show === newShown) return;
+    newShown = show;
+    if (newNode) {
+      newNode.remove();
+      newNode = null;
     }
-  }), null);
-  _$insert(_el$9, _$createComponent(Show, {
-    get when() {
-      return props.loading();
-    },
-    get children() {
-      return _$createComponent(SessionSkeleton, {});
+    if (!show) return;
+    newNode = createComponent(NewSessionItem, {
+      get slug() {
+        return props.slug();
+      },
+      get mobile() {
+        return props.mobile;
+      },
+      get sidebarExpanded() {
+        return props.ctx.sidebarExpanded;
+      },
+      get clearHoverProjectSoon() {
+        return props.ctx.clearHoverProjectSoon;
+      }
+    });
+    nav.insertBefore(newNode, newAnchor);
+  });
+
+  // Loading skeleton (Show when loading).
+  let loadingShown;
+  let skeletonNode = null;
+  createRenderEffect(() => {
+    const show = !!props.loading();
+    if (show === loadingShown) return;
+    loadingShown = show;
+    if (skeletonNode) {
+      skeletonNode.remove();
+      skeletonNode = null;
     }
-  }), null);
-  _$insert(_el$9, _$createComponent(For, {
+    if (!show) return;
+    skeletonNode = createComponent(SessionSkeleton, {});
+    nav.insertBefore(skeletonNode, skeletonAnchor);
+  });
+
+  // Session rows: For + insert() so row identity survives list updates and
+  // the nested child-session accessor each SessionItem returns stays live
+  // (established exception, see header note).
+  _solidInsert(nav, createComponent(For, {
     get each() {
       return props.sessions();
     },
-    children: session => _$createComponent(SessionItem, {
+    children: session => createComponent(SessionItem, {
       session: session,
       get list() {
         return props.sessions();
@@ -323,30 +396,37 @@ const WorkspaceSessionList = props => (() => {
         return props.ctx.archiveSession;
       }
     })
-  }), null);
-  _$insert(_el$9, _$createComponent(Show, {
-    get when() {
-      return props.hasMore();
-    },
-    get children() {
-      var _el$0 = _tmpl$5();
-      _$insert(_el$0, _$createComponent(Button, {
-        variant: "ghost",
-        "class": "d-flex w-100 text-left justify-content-start text-secondary pl-2 pr-10",
-        size: "large",
-        onClick: e => {
-          void props.loadMore();
-          e.currentTarget.blur();
-        },
-        get children() {
-          return props.language.t("common.loadMore");
-        }
-      }));
-      return _el$0;
+  }), sessionsAnchor);
+
+  // Load-more row (Show when hasMore): rebuilt per truthiness flip.
+  let moreShown;
+  let moreNode = null;
+  createRenderEffect(() => {
+    const show = !!props.hasMore();
+    if (show === moreShown) return;
+    moreShown = show;
+    if (moreNode) {
+      moreNode.remove();
+      moreNode = null;
     }
-  }), null);
-  return _el$9;
-})();
+    if (!show) return;
+    moreNode = template(`<div class="relative w-full py-1"></div>`);
+    moreNode.appendChild(createComponent(Button, {
+      variant: "ghost",
+      "class": "d-flex w-100 text-left justify-content-start text-secondary pl-2 pr-10",
+      size: "large",
+      onClick: e => {
+        void props.loadMore();
+        e.currentTarget.blur();
+      },
+      get children() {
+        return props.language.t("common.loadMore");
+      }
+    }));
+    nav.insertBefore(moreNode, moreAnchor);
+  });
+  return nav;
+};
 export const SortableWorkspace = props => {
   const navigate = useNavigate();
   const params = useParams();
@@ -385,7 +465,7 @@ export const SortableWorkspace = props => {
     await globalSync.project.loadSessions(props.directory);
   };
   const workspaceEditActive = createMemo(() => props.ctx.editorOpen(`workspace:${props.directory}`));
-  const header = () => _$createComponent(WorkspaceHeader, {
+  const header = () => createComponent(WorkspaceHeader, {
     local: local,
     busy: busy,
     open: open,
@@ -420,108 +500,127 @@ export const SortableWorkspace = props => {
       bootstrap: true
     });
   });
-  return (() => {
-    var _el$1 = _tmpl$7();
-    _$use(sortable, _el$1, () => true);
-    _$insert(_el$1, _$createComponent(Collapsible, {
-      variant: "ghost",
-      get open() {
-        return open();
-      },
-      "class": "shrink-0",
-      onOpenChange: openWrapper,
-      get children() {
-        return [(() => {
-          var _el$10 = _tmpl$8(),
-            _el$11 = _el$10.firstChild,
-            _el$12 = _el$11.firstChild;
-          _$insert(_el$12, _$createComponent(Show, {
-            get when() {
-              return workspaceEditActive();
+
+  // Header row skeleton (_tmpl$8): py-1 wrapper > workspace-item > flex row.
+  const headerRow = template(`<div class="py-1"><div class="group/workspace relative" data-component="workspace-item"><div class="d-flex align-items-center gap-1"></div></div></div>`);
+  const workspaceItem = headerRow.firstChild;
+  const flexRow = workspaceItem.firstChild;
+
+  // Actions are static (appended first); the header region is kept before
+  // them so membership flips preserve the original order.
+  const actions = createComponent(WorkspaceActions, {
+    get directory() {
+      return props.directory;
+    },
+    local: local,
+    busy: busy,
+    menuOpen: () => menu.open,
+    pendingRename: () => menu.pendingRename,
+    setMenuOpen: open => setMenu("open", open),
+    setPendingRename: value => setMenu("pendingRename", value),
+    get sidebarHovering() {
+      return props.ctx.sidebarHovering;
+    },
+    touch: touch,
+    language: language,
+    workspaceValue: workspaceValue,
+    get openEditor() {
+      return props.ctx.openEditor;
+    },
+    get showResetWorkspaceDialog() {
+      return props.ctx.showResetWorkspaceDialog;
+    },
+    get showDeleteWorkspaceDialog() {
+      return props.ctx.showDeleteWorkspaceDialog;
+    },
+    get root() {
+      return props.project.worktree;
+    },
+    get clearHoverProjectSoon() {
+      return props.ctx.clearHoverProjectSoon;
+    },
+    navigateToNewSession: () => navigate(`/${slug()}/session`)
+  });
+  flexRow.appendChild(actions);
+
+  // Collapsible trigger (read mode) / plain div (while the inline editor is
+  // active), both hosting a fresh WorkspaceHeader (Show with fallback).
+  const headerClass = () => `d-flex align-items-center justify-content-between w-100 pl-2 py-1.5 rounded-2 transition-[padding] duration-200 ${menu.open ? "pr-16" : "pr-2"} group-hover/workspace:pr-16 group-focus-within/workspace:pr-16`;
+  let editShown;
+  let headerNode = null;
+  createRenderEffect(() => {
+    const editing = !!workspaceEditActive();
+    if (editing === editShown) return;
+    editShown = editing;
+    if (headerNode) headerNode.remove();
+    if (editing) {
+      const holder = document.createElement("div");
+      holder.appendChild(header());
+      // Compiled className effect: tracks menu.open while editing.
+      createRenderEffect(() => {
+        holder.className = headerClass();
+      });
+      headerNode = holder;
+    } else {
+      headerNode = createComponent(Collapsible.Trigger, {
+        get ["class"]() {
+          return headerClass();
+        },
+        "data-action": "workspace-toggle",
+        get ["data-workspace"]() {
+          return base64Encode(props.directory);
+        },
+        get children() {
+          return header();
+        }
+      });
+    }
+    flexRow.insertBefore(headerNode, actions);
+  });
+  createRenderEffect(() => {
+    workspaceItem.setAttribute("data-workspace", base64Encode(props.directory));
+  });
+
+  const root = document.createElement("div");
+  // use:sortable directive (compiled use() helper): run untracked, exactly
+  // like solid-js/web's use() does.
+  untrack(() => sortable(root, () => true));
+  root.appendChild(createComponent(Collapsible, {
+    variant: "ghost",
+    get open() {
+      return open();
+    },
+    "class": "shrink-0",
+    onOpenChange: openWrapper,
+    get children() {
+      return [headerRow, createComponent(Collapsible.Content, {
+        get children() {
+          return createComponent(WorkspaceSessionList, {
+            slug: slug,
+            get mobile() {
+              return props.mobile;
             },
-            get fallback() {
-              return _$createComponent(Collapsible.Trigger, {
-                get ["class"]() {
-                  return `d-flex align-items-center justify-content-between w-100 pl-2 py-1.5 rounded-2 transition-[padding] duration-200 ${menu.open ? "pr-16" : "pr-2"} group-hover/workspace:pr-16 group-focus-within/workspace:pr-16`;
-                },
-                "data-action": "workspace-toggle",
-                get ["data-workspace"]() {
-                  return base64Encode(props.directory);
-                },
-                get children() {
-                  return header();
-                }
-              });
+            get ctx() {
+              return props.ctx;
             },
-            get children() {
-              var _el$13 = _tmpl$7();
-              _$insert(_el$13, header);
-              _$effect(() => _$className(_el$13, `d-flex align-items-center justify-content-between w-100 pl-2 py-1.5 rounded-2 transition-[padding] duration-200 ${menu.open ? "pr-16" : "pr-2"} group-hover/workspace:pr-16 group-focus-within/workspace:pr-16`));
-              return _el$13;
-            }
-          }), null);
-          _$insert(_el$12, _$createComponent(WorkspaceActions, {
-            get directory() {
-              return props.directory;
-            },
-            local: local,
-            busy: busy,
-            menuOpen: () => menu.open,
-            pendingRename: () => menu.pendingRename,
-            setMenuOpen: open => setMenu("open", open),
-            setPendingRename: value => setMenu("pendingRename", value),
-            get sidebarHovering() {
-              return props.ctx.sidebarHovering;
-            },
-            touch: touch,
-            language: language,
-            workspaceValue: workspaceValue,
-            get openEditor() {
-              return props.ctx.openEditor;
-            },
-            get showResetWorkspaceDialog() {
-              return props.ctx.showResetWorkspaceDialog;
-            },
-            get showDeleteWorkspaceDialog() {
-              return props.ctx.showDeleteWorkspaceDialog;
-            },
-            get root() {
-              return props.project.worktree;
-            },
-            get clearHoverProjectSoon() {
-              return props.ctx.clearHoverProjectSoon;
-            },
-            navigateToNewSession: () => navigate(`/${slug()}/session`)
-          }), null);
-          _$effect(() => _$setAttribute(_el$11, "data-workspace", base64Encode(props.directory)));
-          return _el$10;
-        })(), _$createComponent(Collapsible.Content, {
-          get children() {
-            return _$createComponent(WorkspaceSessionList, {
-              slug: slug,
-              get mobile() {
-                return props.mobile;
-              },
-              get ctx() {
-                return props.ctx;
-              },
-              showNew: showNew,
-              loading: () => query.isLoading && count() === 0,
-              sessions: sessions,
-              hasMore: hasMore,
-              loadMore: loadMore,
-              language: language
-            });
-          }
-        })];
-      }
-    }));
-    _$effect(_$p => _$classList(_el$1, {
-      "opacity-30": sortable.isActiveDraggable,
-      "opacity-50 pointer-events-none": busy()
-    }, _$p));
-    return _el$1;
-  })();
+            showNew: showNew,
+            loading: () => query.isLoading && count() === 0,
+            sessions: sessions,
+            hasMore: hasMore,
+            loadMore: loadMore,
+            language: language
+          });
+        }
+      })];
+    }
+  }));
+  createRenderEffect(() => {
+    root.classList.toggle("opacity-30", !!sortable.isActiveDraggable);
+    const blocked = !!busy();
+    root.classList.toggle("opacity-50", blocked);
+    root.classList.toggle("pointer-events-none", blocked);
+  });
+  return root;
 };
 export const LocalWorkspace = props => {
   const globalSync = useGlobalSync();
@@ -545,24 +644,23 @@ export const LocalWorkspace = props => {
     workspace().setStore("limit", limit => (limit ?? 0) + 5);
     await globalSync.project.loadSessions(props.project.worktree);
   };
-  return (() => {
-    var _el$14 = _tmpl$9();
-    _$use(el => props.ctx.setScrollContainerRef(el, props.mobile), _el$14);
-    _$insert(_el$14, _$createComponent(WorkspaceSessionList, {
-      slug: slug,
-      get mobile() {
-        return props.mobile;
-      },
-      get ctx() {
-        return props.ctx;
-      },
-      showNew: () => false,
-      loading: loading,
-      sessions: sessions,
-      hasMore: hasMore,
-      loadMore: loadMore,
-      language: language
-    }));
-    return _el$14;
-  })();
+  const root = template(`<div class="size-full d-flex flex-column py-2 overflow-y-auto no-scrollbar [overflow-anchor:none]"></div>`);
+  // ref (compiled use() helper): run untracked like solid-js/web's use().
+  untrack(() => props.ctx.setScrollContainerRef(root, props.mobile));
+  root.appendChild(createComponent(WorkspaceSessionList, {
+    slug: slug,
+    get mobile() {
+      return props.mobile;
+    },
+    get ctx() {
+      return props.ctx;
+    },
+    showNew: () => false,
+    loading: loading,
+    sessions: sessions,
+    hasMore: hasMore,
+    loadMore: loadMore,
+    language: language
+  }));
+  return root;
 };

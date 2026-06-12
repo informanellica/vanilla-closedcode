@@ -1,17 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span class="fw-normal text-body-emphasis mt-1">"<!>"`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex flex-column align-items-center justify-content-center py-12 text-center"><span class="fw-normal text-secondary">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10"><div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]"><div class="d-flex flex-column gap-4 pt-6 pb-6 max-w-[720px]"><div class="d-flex align-items-center justify-content-between gap-4"><h2 class="fs-6 fw-medium text-body-emphasis"></h2></div><div class="d-flex align-items-center gap-2 px-3 h-9 rounded-3 bg-body-tertiary"></div></div></div><div class="d-flex flex-column gap-8 max-w-[720px]">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1"><h3 class="fw-medium text-body-emphasis pb-2">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center justify-content-between gap-4 p-4 rounded-3 bg-body-tertiary"><span class="fw-normal text-body-emphasis"></span><button type=button>`);
-import { For, Show, createMemo, onCleanup, onMount } from "solid-js";
+import { createComponent, createEffect, createMemo, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { Button } from "@/bs/button.js";
@@ -24,6 +11,7 @@ import { formatKeybind, parseKeybind, useCommand } from "@/context/command.js";
 import { useLanguage } from "@/context/language.js";
 import { useSettings } from "@/context/settings.js";
 import { SettingsList } from "./settings-list.js";
+
 const IS_MAC = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform);
 const PALETTE_ID = "command.palette";
 const DEFAULT_PALETTE_KEYBIND = "mod+shift+p";
@@ -199,6 +187,13 @@ function useKeyCapture(input) {
     });
   });
 }
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export const SettingsKeybinds = () => {
   const command = useCommand();
   const language = useLanguage();
@@ -294,131 +289,122 @@ export const SettingsKeybinds = () => {
   onCleanup(() => {
     if (store.active) command.keybinds(true);
   });
-  return (() => {
-    var _el$ = _tmpl$3(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.firstChild,
-      _el$6 = _el$4.nextSibling,
-      _el$7 = _el$2.nextSibling;
-    _$insert(_el$5, () => language.t("settings.shortcuts.title"));
-    _$insert(_el$4, _$createComponent(Button, {
+
+  const root = template(`
+    <div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10">
+      <div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]">
+        <div class="d-flex flex-column gap-4 pt-6 pb-6 max-w-[720px]">
+          <div class="d-flex align-items-center justify-content-between gap-4">
+            <h2 class="fs-6 fw-medium text-body-emphasis" data-slot="title"></h2>
+            <div style="display: contents" data-slot="reset"></div>
+          </div>
+          <div class="d-flex align-items-center gap-2 px-3 h-9 rounded-3 bg-body-tertiary" data-slot="search"></div>
+        </div>
+      </div>
+      <div class="d-flex flex-column gap-8 max-w-[720px]" data-slot="content"></div>
+    </div>`);
+  const titleEl = root.querySelector('[data-slot="title"]');
+  const resetSlot = root.querySelector('[data-slot="reset"]');
+  const search = root.querySelector('[data-slot="search"]');
+  const content = root.querySelector('[data-slot="content"]');
+
+  createEffect(() => { titleEl.textContent = language.t("settings.shortcuts.title"); });
+
+  // Reset-all button: the vanilla Button renders children once, so rebuild it
+  // when the label (locale) changes; disabled tracks hasOverrides reactively.
+  createEffect(() => {
+    const label = language.t("settings.shortcuts.reset.button");
+    resetSlot.replaceChildren(createComponent(Button, {
       size: "small",
       variant: "secondary",
       onClick: resetAll,
-      get disabled() {
-        return !hasOverrides();
-      },
-      get children() {
-        return language.t("settings.shortcuts.reset.button");
-      }
-    }), null);
-    _$insert(_el$6, _$createComponent(Icon, {
-      name: "magnifying-glass",
-      "class": "text-secondary flex-shrink-0"
-    }), null);
-    _$insert(_el$6, _$createComponent(TextField, {
-      variant: "ghost",
-      type: "text",
-      get value() {
-        return store.filter;
-      },
-      onChange: v => setStore("filter", v),
-      get placeholder() {
-        return language.t("settings.shortcuts.search.placeholder");
-      },
-      spellcheck: false,
-      autocorrect: "off",
-      autocomplete: "off",
-      autocapitalize: "off",
-      "class": "flex-fill"
-    }), null);
-    _$insert(_el$6, _$createComponent(Show, {
-      get when() {
-        return store.filter;
-      },
-      get children() {
-        return _$createComponent(IconButton, {
-          icon: "circle-x",
-          variant: "ghost",
-          onClick: () => setStore("filter", "")
-        });
-      }
-    }), null);
-    _$insert(_el$7, _$createComponent(For, {
-      each: GROUPS,
-      children: group => _$createComponent(Show, {
-        get when() {
-          return (filtered().get(group) ?? []).length > 0;
-        },
-        get children() {
-          var _el$12 = _tmpl$4(),
-            _el$13 = _el$12.firstChild;
-          _$insert(_el$13, () => language.t(groupKey[group]));
-          _$insert(_el$12, _$createComponent(SettingsList, {
-            get children() {
-              return _$createComponent(For, {
-                get each() {
-                  return filtered().get(group) ?? [];
-                },
-                children: id => (() => {
-                  var _el$14 = _tmpl$5(),
-                    _el$15 = _el$14.firstChild,
-                    _el$16 = _el$15.nextSibling;
-                  _$insert(_el$15, () => title(id));
-                  _el$16.$$click = () => start(id);
-                  _$setAttribute(_el$16, "data-keybind-id", id);
-                  _$insert(_el$16, _$createComponent(Show, {
-                    get when() {
-                      return store.active === id;
-                    },
-                    get fallback() {
-                      return command.keybind(id) || language.t("settings.shortcuts.unassigned");
-                    },
-                    get children() {
-                      return language.t("settings.shortcuts.pressKeys");
-                    }
-                  }));
-                  _$effect(_$p => _$classList(_el$16, {
-                    "h-8 px-3 rounded-2 small fw-normal": true,
-                    "bg-body-tertiary text-body-secondary": store.active !== id,
-                    "border bg-body-tertiary text-secondary": store.active === id
-                  }, _$p));
-                  return _el$14;
-                })()
-              });
-            }
-          }), null);
-          return _el$12;
-        }
-      })
-    }), null);
-    _$insert(_el$7, _$createComponent(Show, {
-      get when() {
-        return _$memo(() => !!store.filter)() && !hasResults();
-      },
-      get children() {
-        var _el$8 = _tmpl$2(),
-          _el$9 = _el$8.firstChild;
-        _$insert(_el$9, () => language.t("settings.shortcuts.search.empty"));
-        _$insert(_el$8, _$createComponent(Show, {
-          get when() {
-            return store.filter;
-          },
-          get children() {
-            var _el$0 = _tmpl$(),
-              _el$1 = _el$0.firstChild,
-              _el$11 = _el$1.nextSibling,
-              _el$10 = _el$11.nextSibling;
-            _$insert(_el$0, () => store.filter, _el$11);
-            return _el$0;
-          }
-        }), null);
-        return _el$8;
-      }
-    }), null);
-    return _el$;
-  })();
+      get disabled() { return !hasOverrides(); },
+      get children() { return label; }
+    }));
+  });
+
+  search.appendChild(createComponent(Icon, {
+    name: "magnifying-glass",
+    class: "text-secondary flex-shrink-0"
+  }));
+  search.appendChild(createComponent(TextField, {
+    variant: "ghost",
+    type: "text",
+    get value() { return store.filter; },
+    onChange: v => setStore("filter", v),
+    get placeholder() { return language.t("settings.shortcuts.search.placeholder"); },
+    spellcheck: false,
+    autocorrect: "off",
+    autocomplete: "off",
+    autocapitalize: "off",
+    class: "flex-fill"
+  }));
+  const clearSlot = document.createElement("div");
+  clearSlot.style.display = "contents";
+  search.appendChild(clearSlot);
+  createEffect(() => {
+    if (store.filter) {
+      clearSlot.replaceChildren(createComponent(IconButton, {
+        icon: "circle-x",
+        variant: "ghost",
+        onClick: () => setStore("filter", "")
+      }));
+    } else {
+      clearSlot.replaceChildren();
+    }
+  });
+
+  const buildRow = id => {
+    const row = template(`
+      <div class="d-flex align-items-center justify-content-between gap-4 p-4 rounded-3 bg-body-tertiary">
+        <span class="fw-normal text-body-emphasis" data-slot="name"></span>
+        <button type="button" data-slot="bind"></button>
+      </div>`);
+    row.querySelector('[data-slot="name"]').textContent = title(id);
+    const btn = row.querySelector('[data-slot="bind"]');
+    btn.setAttribute("data-keybind-id", id);
+    btn.addEventListener("click", () => start(id));
+    // The recording state changes the label and the styling of THIS row only.
+    createEffect(() => {
+      const recording = store.active === id;
+      btn.textContent = recording
+        ? language.t("settings.shortcuts.pressKeys")
+        : (command.keybind(id) || language.t("settings.shortcuts.unassigned"));
+      btn.className = "h-8 px-3 rounded-2 small fw-normal " + (recording
+        ? "border bg-body-tertiary text-secondary"
+        : "bg-body-tertiary text-body-secondary");
+    });
+    return row;
+  };
+
+  // Grouped shortcut list + the empty-search state. Rebuilt when the filter
+  // result set or the locale changes; per-row recording state stays reactive
+  // through each row's own effect.
+  createEffect(() => {
+    const sections = [];
+    for (const group of GROUPS) {
+      const ids = filtered().get(group) ?? [];
+      if (ids.length === 0) continue;
+      const section = template(`
+        <div class="d-flex flex-column gap-1">
+          <h3 class="fw-medium text-body-emphasis pb-2" data-slot="group"></h3>
+        </div>`);
+      section.querySelector('[data-slot="group"]').textContent = language.t(groupKey[group]);
+      section.appendChild(createComponent(SettingsList, { children: ids.map(buildRow) }));
+      sections.push(section);
+    }
+    if (store.filter && !hasResults()) {
+      const empty = template(`
+        <div class="d-flex flex-column align-items-center justify-content-center py-12 text-center">
+          <span class="fw-normal text-secondary" data-slot="message"></span>
+          <span class="fw-normal text-body-emphasis mt-1" data-slot="query"></span>
+        </div>`);
+      empty.querySelector('[data-slot="message"]').textContent = language.t("settings.shortcuts.search.empty");
+      empty.querySelector('[data-slot="query"]').textContent = `"${store.filter}"`;
+      sections.push(empty);
+    }
+    content.replaceChildren(...sections);
+  });
+
+  return root;
 };
-_$delegateEvents(["click"]);

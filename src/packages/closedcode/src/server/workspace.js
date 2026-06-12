@@ -1,9 +1,9 @@
-import { SessionID } from "@/session/schema.js";
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { Workspace } from "@/control-plane/workspace.js";
-import { getAdapter } from "@/control-plane/adapters/index.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { Session } from "@/session/session.js";
+import { SessionID } from "#session/schema.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { getAdapter } from "#control-plane/adapters/index.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { Session } from "#session/session.js";
 const RULES = [{
   path: "/experimental/workspace",
   action: "local"

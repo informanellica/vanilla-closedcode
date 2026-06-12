@@ -1,9 +1,9 @@
-import { BusEvent } from "@/bus/bus-event.js";
+import { BusEvent } from "#bus/bus-event.js";
 import z from "zod";
 import { Schema } from "effect";
 import { NamedError } from "core/util/error";
 import * as Log from "core/util/log";
-import { Process } from "@/util/process.js";
+import { Process } from "#util/process.js";
 const SUPPORTED_IDES = [{
   name: "Windsurf",
   cmd: "windsurf"

@@ -2,17 +2,17 @@ import path from "path";
 import { pathToFileURL } from "url";
 import z from "zod";
 import { Effect, Layer, Context, Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 import { NamedError } from "core/util/error";
-import { Bus } from "@/bus/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Bus } from "#bus/index.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { Flag } from "core/flag/flag";
 import { Global } from "core/global";
-import { Permission } from "@/permission/index.js";
+import { Permission } from "#permission/index.js";
 import { AppFileSystem } from "core/filesystem";
-import { Config } from "@/config/config.js";
-import { ConfigMarkdown } from "@/config/markdown.js";
+import { Config } from "#config/config.js";
+import { ConfigMarkdown } from "#config/markdown.js";
 import { Glob } from "core/util/glob";
 import * as Log from "core/util/log";
 import { Discovery } from "./discovery.js";
@@ -49,7 +49,7 @@ const add = Effect.fnUntraced(function* (state, match, bus) {
     const message = ConfigMarkdown.FrontmatterError.isInstance(err) ? err.data.message : `Failed to parse skill ${match}`;
     const {
       Session
-    } = yield* Effect.promise(() => import("@/session/session.js"));
+    } = yield* Effect.promise(() => import("#session/session.js"));
     yield* bus.publish(Session.Event.Error, {
       error: new NamedError.Unknown({
         message

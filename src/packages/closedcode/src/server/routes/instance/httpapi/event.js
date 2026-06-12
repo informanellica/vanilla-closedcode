@@ -1,4 +1,4 @@
-import { Bus } from "@/bus/index.js";
+import { Bus } from "#bus/index.js";
 import * as Log from "core/util/log";
 import { Effect, Schema } from "effect";
 import * as Stream from "effect/Stream";

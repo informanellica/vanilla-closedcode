@@ -1,14 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div><div class="text-[10px] leading-none font-black uppercase tracking-[0.04em] opacity-70"></div><div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<aside class="pointer-events-auto fixed bottom-3 right-3 z-50 w-[308px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-3 border bg-body-tertiary p-0.5 text-body-emphasis shadow-[var(--shadow-lg-border-base)] sm:bottom-4 sm:right-4 sm:w-[324px]"><div class="grid grid-cols-5 gap-px font-mono">`);
 import { useIsRouting, useLocation } from "@solidjs/router";
-import { batch, createEffect, onCleanup, onMount } from "solid-js";
+import { batch, createComponent, createEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { Tooltip } from "@/bs/tooltip.js";
@@ -32,37 +23,42 @@ const bad = (n, limit, low = false) => {
   return low ? n < limit : n > limit;
 };
 const session = path => path.includes("/session");
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 function Cell(props) {
-  return _$createComponent(Tooltip, {
+  // Static skeleton; conditional classes and text are wired below.
+  const root = template(
+    `<div class="d-flex min-h-[42px] w-100 min-w-0 flex-column align-items-center justify-content-center rounded-[8px] px-0.5 py-1 text-center"><div class="text-[10px] leading-none font-black uppercase tracking-[0.04em] opacity-70" data-slot="label"></div><div class="text-[13px] leading-none font-bold tabular-nums sm:text-[14px]" data-slot="value"></div></div>`,
+  );
+  const labelEl = root.querySelector('[data-slot="label"]');
+  const valueEl = root.querySelector('[data-slot="value"]');
+  createEffect(() => {
+    labelEl.textContent = props.label ?? "";
+  });
+  createEffect(() => {
+    valueEl.textContent = props.value ?? "";
+  });
+  createEffect(() => {
+    root.classList.toggle("col-span-2", !!props.wide);
+  });
+  createEffect(() => {
+    valueEl.classList.toggle("text-danger", !!props.bad);
+  });
+  createEffect(() => {
+    valueEl.classList.toggle("opacity-70", !!props.dim);
+  });
+  return createComponent(Tooltip, {
+    // Read lazily so the tooltip text is fresh (locale/state) each open.
     get value() {
       return props.tip;
     },
     placement: "top",
-    get children() {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.nextSibling;
-      _$insert(_el$2, () => props.label);
-      _$insert(_el$3, () => props.value);
-      _$effect(_p$ => {
-        var _v$ = {
-            "d-flex min-h-[42px] w-100 min-w-0 flex-column align-items-center justify-content-center rounded-[8px] px-0.5 py-1 text-center": true,
-            "col-span-2": !!props.wide
-          },
-          _v$2 = {
-            "text-[13px] leading-none font-bold tabular-nums sm:text-[14px]": true,
-            "text-danger": !!props.bad,
-            "opacity-70": !!props.dim
-          };
-        _p$.e = _$classList(_el$, _v$, _p$.e);
-        _p$.t = _$classList(_el$3, _v$2, _p$.t);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined
-      });
-      return _el$;
-    }
+    children: root,
   });
 }
 export function DebugBar() {
@@ -349,10 +345,15 @@ export function DebugBar() {
       for (const ob of obs) ob.disconnect();
     });
   });
-  return (() => {
-    var _el$4 = _tmpl$2(),
-      _el$5 = _el$4.firstChild;
-    _$insert(_el$5, _$createComponent(Cell, {
+  const root = template(
+    `<aside class="pointer-events-auto fixed bottom-3 right-3 z-50 w-[308px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-3 border bg-body-tertiary p-0.5 text-body-emphasis shadow-[var(--shadow-lg-border-base)] sm:bottom-4 sm:right-4 sm:w-[324px]"><div class="grid grid-cols-5 gap-px font-mono" data-slot="grid"></div></aside>`,
+  );
+  const grid = root.querySelector('[data-slot="grid"]');
+  createEffect(() => {
+    root.setAttribute("aria-label", language.t("debugBar.ariaLabel"));
+  });
+  grid.replaceChildren(
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.nav.label");
       },
@@ -366,10 +367,10 @@ export function DebugBar() {
         return bad(state.nav.dur, 400);
       },
       get dim() {
-        return _$memo(() => state.nav.dur === undefined)() && !state.nav.pending;
+        return state.nav.dur === undefined && !state.nav.pending;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.fps.label");
       },
@@ -377,7 +378,7 @@ export function DebugBar() {
         return language.t("debugBar.fps.tip");
       },
       get value() {
-        return _$memo(() => state.fps === undefined)() ? na() : `${Math.round(state.fps)}`;
+        return state.fps === undefined ? na() : `${Math.round(state.fps)}`;
       },
       get bad() {
         return bad(state.fps, 50, true);
@@ -385,8 +386,8 @@ export function DebugBar() {
       get dim() {
         return state.fps === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.frame.label");
       },
@@ -402,8 +403,8 @@ export function DebugBar() {
       get dim() {
         return state.gap === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.jank.label");
       },
@@ -411,7 +412,7 @@ export function DebugBar() {
         return language.t("debugBar.jank.tip");
       },
       get value() {
-        return _$memo(() => state.jank === undefined)() ? na() : `${state.jank}`;
+        return state.jank === undefined ? na() : `${state.jank}`;
       },
       get bad() {
         return bad(state.jank, 8);
@@ -419,8 +420,8 @@ export function DebugBar() {
       get dim() {
         return state.jank === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.long.label");
       },
@@ -438,8 +439,8 @@ export function DebugBar() {
       get dim() {
         return state.long.count === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.delay.label");
       },
@@ -455,8 +456,8 @@ export function DebugBar() {
       get dim() {
         return state.delay === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.inp.label");
       },
@@ -472,8 +473,8 @@ export function DebugBar() {
       get dim() {
         return state.inp === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.cls.label");
       },
@@ -481,7 +482,7 @@ export function DebugBar() {
         return language.t("debugBar.cls.tip");
       },
       get value() {
-        return _$memo(() => state.cls === undefined)() ? na() : state.cls.toFixed(2);
+        return state.cls === undefined ? na() : state.cls.toFixed(2);
       },
       get bad() {
         return bad(state.cls, 0.1);
@@ -489,13 +490,13 @@ export function DebugBar() {
       get dim() {
         return state.cls === undefined;
       }
-    }), null);
-    _$insert(_el$5, _$createComponent(Cell, {
+    }),
+    createComponent(Cell, {
       get label() {
         return language.t("debugBar.mem.label");
       },
       get tip() {
-        return _$memo(() => state.heap.used === undefined)() ? language.t("debugBar.mem.tipUnavailable") : language.t("debugBar.mem.tip", {
+        return state.heap.used === undefined ? language.t("debugBar.mem.tipUnavailable") : language.t("debugBar.mem.tip", {
           used: mb(state.heap.used) ?? na(),
           limit: mb(state.heap.limit) ?? na()
         });
@@ -510,8 +511,7 @@ export function DebugBar() {
         return state.heap.used === undefined;
       },
       wide: true
-    }), null);
-    _$effect(() => _$setAttribute(_el$4, "aria-label", language.t("debugBar.ariaLabel")));
-    return _el$4;
-  })();
+    })
+  );
+  return root;
 }

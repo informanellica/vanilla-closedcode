@@ -1,16 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex min-w-0 flex-1 align-items-center overflow-visible"><span class="flex-1 min-w-0 text-12-regular text-secondary truncate text-left">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex size-5 shrink-0 align-items-center justify-content-center [&amp;_[data-component=app-icon]]:size-5">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex size-5 shrink-0 align-items-center justify-content-center">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center"><div class="d-flex h-[24px] box-border align-items-center rounded-2 border bg-body-tertiary overflow-hidden">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="d-none xl:flex align-items-center">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="position-relative d-flex align-items-center justify-content-center size-4">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><div class="d-flex align-items-center gap-1"><div class="d-none md:flex align-items-center gap-1 shrink-0">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<span class="small fw-normal text-body-emphasis">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="d-flex h-[24px] box-border align-items-center rounded-2 border bg-body-tertiary overflow-hidden">`);
 import { AppIcon } from "@/vendor/ui/components/app-icon.js";
 import { Button } from "@/bs/button.js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";
@@ -22,9 +9,8 @@ import { showToast } from "@/lib/toast.js";
 import { Tooltip, TooltipKeybind } from "@/bs/tooltip.js";
 import { env } from "@/lib/env.js";
 import { getFilename } from "core/util/path";
-import { createEffect, createMemo, createSignal, For, onMount, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, onCleanup, onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Portal } from "solid-js/web";
 import { useCommand } from "@/context/command.js";
 import { useLanguage } from "@/context/language.js";
 import { useLayout } from "@/context/layout.js";
@@ -39,6 +25,33 @@ import { messageAgentColor } from "@/utils/agent.js";
 import { decode64 } from "@/utils/base64.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { StatusPopover } from "../status-popover.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated and
+// user-provided strings are always assigned via textContent, never
+// interpolated into the HTML.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Reactive single-region host standing in for the compiled insert(parent,
+// value, marker) calls: a persistent empty text node anchors the region so
+// sibling regions keep their relative order, and the previous branch's nodes
+// are removed before the next branch is inserted (matching Show's swap
+// semantics).
+function createRegion(parent, anchor) {
+  const placeholder = document.createTextNode("");
+  parent.insertBefore(placeholder, anchor);
+  let current = [];
+  return value => {
+    const next = (Array.isArray(value) ? value : [value]).filter(node => node instanceof Node);
+    for (const node of current) node.remove();
+    current = next;
+    for (const node of next) parent.insertBefore(node, placeholder);
+  };
+}
 const OPEN_APPS = ["vscode", "cursor", "zed", "textmate", "antigravity", "finder", "terminal", "iterm2", "ghostty", "warp", "xcode", "android-studio", "powershell", "sublime-text"];
 const MAC_APPS = [{
   id: "vscode",
@@ -294,393 +307,421 @@ export function SessionHeader() {
     setCenterMount(document.getElementById("closedcode-titlebar-center"));
     setRightMount(document.getElementById("closedcode-titlebar-right"));
   });
-  return [_$createComponent(Show, {
-    get when() {
-      return _$memo(() => !!search())() && centerMount();
-    },
-    children: mount => _$createComponent(Portal, {
-      get mount() {
-        return mount();
+
+  // Search button for the titlebar center slot (_tmpl$ + Button). Built once
+  // per portal mount, exactly like the compiled children getter.
+  const buildSearchButton = () => {
+    const label = template(`<div class="d-flex min-w-0 flex-1 align-items-center overflow-visible"><span class="flex-1 min-w-0 text-12-regular text-secondary truncate text-left"></span></div>`);
+    const labelText = label.firstChild;
+    // Compiled reactive insert: keep the placeholder live across locale and
+    // project-name changes.
+    createRenderEffect(() => {
+      labelText.textContent = language.t("session.header.search.placeholder", {
+        project: name()
+      });
+    });
+    return createComponent(Button, {
+      type: "button",
+      variant: "ghost",
+      size: "small",
+      "class": "d-none md:flex w-[240px] max-w-full min-w-0 align-items-center gap-2 justify-content-between rounded-2 border bg-body-tertiary shadow-none cursor-default",
+      onClick: () => command.trigger("file.open"),
+      get ["aria-label"]() {
+        return language.t("session.header.searchFiles");
       },
       get children() {
-        return _$createComponent(Button, {
-          type: "button",
-          variant: "ghost",
-          size: "small",
-          "class": "d-none md:flex w-[240px] max-w-full min-w-0 align-items-center gap-2 justify-content-between rounded-2 border bg-body-tertiary shadow-none cursor-default",
-          onClick: () => command.trigger("file.open"),
-          get ["aria-label"]() {
-            return language.t("session.header.searchFiles");
-          },
-          get children() {
-            return [(() => {
-              var _el$ = _tmpl$(),
-                _el$2 = _el$.firstChild;
-              _$insert(_el$2, () => language.t("session.header.search.placeholder", {
-                project: name()
-              }));
-              return _el$;
-            })(), _$createComponent(Show, {
-              get when() {
-                return hotkey();
-              },
-              children: keybind => _$createComponent(Keybind, {
-                "class": "shrink-0 !border-0 !bg-transparent !shadow-none px-0 text-body-secondary",
-                get children() {
-                  return keybind();
-                }
-              })
-            })];
-          }
-        });
-      }
-    })
-  }), _$createComponent(Show, {
-    get when() {
-      return rightMount();
-    },
-    children: mount => _$createComponent(Portal, {
-      get mount() {
-        return mount();
-      },
-      get children() {
-        var _el$3 = _tmpl$7(),
-          _el$9 = _el$3.firstChild,
-          _el$0 = _el$9.firstChild;
-        _$insert(_el$3, _$createComponent(Show, {
+        return [label, createComponent(Show, {
           get when() {
-            return projectDirectory();
+            return hotkey();
           },
+          children: keybind => createComponent(Keybind, {
+            "class": "shrink-0 !border-0 !bg-transparent !shadow-none px-0 text-body-secondary",
+            get children() {
+              return keybind();
+            }
+          })
+        })];
+      }
+    });
+  };
+
+  // Fallback when the directory cannot be opened locally (_tmpl$9 + _tmpl$8):
+  // a single copy-path button.
+  const buildCopyPathBox = () => {
+    const box = template(`<div class="d-flex h-[24px] box-border align-items-center rounded-2 border bg-body-tertiary overflow-hidden"></div>`);
+    const labelEl = template(`<span class="small fw-normal text-body-emphasis"></span>`);
+    // Compiled reactive insert: label follows locale changes.
+    createRenderEffect(() => {
+      labelEl.textContent = language.t("session.header.open.copyPath");
+    });
+    box.appendChild(createComponent(Button, {
+      variant: "ghost",
+      "class": "rounded-none h-full py-0 pr-3 pl-0.5 gap-1.5 border-none shadow-none",
+      onClick: copyPath,
+      get ["aria-label"]() {
+        return language.t("session.header.open.copyPath");
+      },
+      get children() {
+        return [createComponent(Icon, {
+          name: "copy",
+          size: "small",
+          "class": "text-secondary"
+        }), labelEl];
+      }
+    }));
+    return box;
+  };
+
+  // Open-in split button: main action + dropdown menu (_tmpl$4/_tmpl$2/_tmpl$3).
+  const buildOpenBox = () => {
+    const wrap = template(`<div class="d-flex align-items-center"><div class="d-flex h-[24px] box-border align-items-center rounded-2 border bg-body-tertiary overflow-hidden"></div></div>`);
+    const box = wrap.firstChild;
+    box.appendChild(createComponent(Button, {
+      variant: "ghost",
+      "class": "rounded-none h-full px-0.5 border-none shadow-none disabled:!cursor-default",
+      get classList() {
+        return {
+          "bg-primary-subtle": opening()
+        };
+      },
+      onClick: () => openDir(current().id),
+      get disabled() {
+        return opening();
+      },
+      get ["aria-label"]() {
+        return language.t("session.header.open.ariaLabel", {
+          app: current().label
+        });
+      },
+      get children() {
+        const iconHost = template(`<div class="d-flex size-5 shrink-0 align-items-center justify-content-center [&amp;_[data-component=app-icon]]:size-5"></div>`);
+        // Show(when=opening()): swap the app icon for a spinner while an open
+        // request is in flight. Branch construction stays untracked through
+        // createComponent, so this effect only tracks opening().
+        createRenderEffect(() => {
+          iconHost.replaceChildren(opening() ? createComponent(Spinner, {
+            "class": "size-3.5",
+            get style() {
+              return {
+                color: tint() ?? "var(--icon-base)"
+              };
+            }
+          }) : createComponent(AppIcon, {
+            get id() {
+              return current().icon;
+            }
+          }));
+        });
+        return iconHost;
+      }
+    }));
+    box.appendChild(createComponent(DropdownMenu, {
+      gutter: 4,
+      placement: "bottom-end",
+      get open() {
+        return menu.open;
+      },
+      onOpenChange: open => setMenu("open", open),
+      get children() {
+        return [createComponent(DropdownMenu.Trigger, {
+          as: IconButton,
+          icon: "chevron-down",
+          variant: "ghost",
+          get disabled() {
+            return opening();
+          },
+          "class": "rounded-none h-full w-[20px] p-0 border-none shadow-none disabled:!cursor-default",
+          get classList() {
+            return {
+              "bg-primary-subtle": opening()
+            };
+          },
+          get ["aria-label"]() {
+            return language.t("session.header.open.menu");
+          }
+        }), createComponent(DropdownMenu.Portal, {
           get children() {
-            var _el$4 = _tmpl$5();
-            _$insert(_el$4, _$createComponent(Show, {
-              get when() {
-                return canOpen();
-              },
-              get fallback() {
-                return (() => {
-                  var _el$10 = _tmpl$9();
-                  _$insert(_el$10, _$createComponent(Button, {
-                    variant: "ghost",
-                    "class": "rounded-none h-full py-0 pr-3 pl-0.5 gap-1.5 border-none shadow-none",
-                    onClick: copyPath,
-                    get ["aria-label"]() {
-                      return language.t("session.header.open.copyPath");
-                    },
-                    get children() {
-                      return [_$createComponent(Icon, {
-                        name: "copy",
-                        size: "small",
-                        "class": "text-secondary"
-                      }), (() => {
-                        var _el$11 = _tmpl$8();
-                        _$insert(_el$11, () => language.t("session.header.open.copyPath"));
-                        return _el$11;
-                      })()];
-                    }
-                  }));
-                  return _el$10;
-                })();
-              },
+            return createComponent(DropdownMenu.Content, {
+              "class": "[&_[data-slot=dropdown-menu-item]]:pl-1 [&_[data-slot=dropdown-menu-radio-item]]:pl-1 [&_[data-slot=dropdown-menu-radio-item]+[data-slot=dropdown-menu-radio-item]]:mt-1",
               get children() {
-                var _el$5 = _tmpl$4(),
-                  _el$6 = _el$5.firstChild;
-                _$insert(_el$6, _$createComponent(Button, {
-                  variant: "ghost",
-                  "class": "rounded-none h-full px-0.5 border-none shadow-none disabled:!cursor-default",
-                  get classList() {
-                    return {
-                      "bg-primary-subtle": opening()
-                    };
-                  },
-                  onClick: () => openDir(current().id),
-                  get disabled() {
-                    return opening();
-                  },
-                  get ["aria-label"]() {
-                    return language.t("session.header.open.ariaLabel", {
-                      app: current().label
-                    });
-                  },
+                return [createComponent(DropdownMenu.Group, {
                   get children() {
-                    var _el$7 = _tmpl$2();
-                    _$insert(_el$7, _$createComponent(Show, {
-                      get when() {
-                        return opening();
+                    return [createComponent(DropdownMenu.GroupLabel, {
+                      "class": "!px-1 !py-1",
+                      get children() {
+                        return language.t("session.header.openIn");
+                      }
+                    }), createComponent(DropdownMenu.RadioGroup, {
+                      "class": "mt-1",
+                      get value() {
+                        return current().id;
                       },
-                      get fallback() {
-                        return _$createComponent(AppIcon, {
-                          get id() {
-                            return current().icon;
-                          }
-                        });
+                      onChange: value => {
+                        if (!OPEN_APPS.includes(value)) return;
+                        selectApp(value);
                       },
                       get children() {
-                        return _$createComponent(Spinner, {
-                          "class": "size-3.5",
-                          get style() {
-                            return {
-                              color: tint() ?? "var(--icon-base)"
-                            };
-                          }
-                        });
-                      }
-                    }));
-                    return _el$7;
-                  }
-                }), null);
-                _$insert(_el$6, _$createComponent(DropdownMenu, {
-                  gutter: 4,
-                  placement: "bottom-end",
-                  get open() {
-                    return menu.open;
-                  },
-                  onOpenChange: open => setMenu("open", open),
-                  get children() {
-                    return [_$createComponent(DropdownMenu.Trigger, {
-                      as: IconButton,
-                      icon: "chevron-down",
-                      variant: "ghost",
-                      get disabled() {
-                        return opening();
-                      },
-                      "class": "rounded-none h-full w-[20px] p-0 border-none shadow-none disabled:!cursor-default",
-                      get classList() {
-                        return {
-                          "bg-primary-subtle": opening()
-                        };
-                      },
-                      get ["aria-label"]() {
-                        return language.t("session.header.open.menu");
-                      }
-                    }), _$createComponent(DropdownMenu.Portal, {
-                      get children() {
-                        return _$createComponent(DropdownMenu.Content, {
-                          "class": "[&_[data-slot=dropdown-menu-item]]:pl-1 [&_[data-slot=dropdown-menu-radio-item]]:pl-1 [&_[data-slot=dropdown-menu-radio-item]+[data-slot=dropdown-menu-radio-item]]:mt-1",
-                          get children() {
-                            return [_$createComponent(DropdownMenu.Group, {
-                              get children() {
-                                return [_$createComponent(DropdownMenu.GroupLabel, {
-                                  "class": "!px-1 !py-1",
-                                  get children() {
-                                    return language.t("session.header.openIn");
-                                  }
-                                }), _$createComponent(DropdownMenu.RadioGroup, {
-                                  "class": "mt-1",
-                                  get value() {
-                                    return current().id;
-                                  },
-                                  onChange: value => {
-                                    if (!OPEN_APPS.includes(value)) return;
-                                    selectApp(value);
-                                  },
-                                  get children() {
-                                    return _$createComponent(For, {
-                                      get each() {
-                                        return options();
-                                      },
-                                      children: o => _$createComponent(DropdownMenu.RadioItem, {
-                                        get value() {
-                                          return o.id;
-                                        },
-                                        get disabled() {
-                                          return opening();
-                                        },
-                                        onSelect: () => {
-                                          setMenu("open", false);
-                                          openDir(o.id);
-                                        },
-                                        get children() {
-                                          return [(() => {
-                                            var _el$12 = _tmpl$2();
-                                            _$insert(_el$12, _$createComponent(AppIcon, {
-                                              get id() {
-                                                return o.icon;
-                                              }
-                                            }));
-                                            return _el$12;
-                                          })(), _$createComponent(DropdownMenu.ItemLabel, {
-                                            get children() {
-                                              return o.label;
-                                            }
-                                          }), _$createComponent(DropdownMenu.ItemIndicator, {
-                                            get children() {
-                                              return _$createComponent(Icon, {
-                                                name: "check-small",
-                                                size: "small",
-                                                "class": "text-secondary"
-                                              });
-                                            }
-                                          })];
-                                        }
-                                      })
-                                    });
-                                  }
-                                })];
-                              }
-                            }), _$createComponent(DropdownMenu.Separator, {}), _$createComponent(DropdownMenu.Item, {
-                              onSelect: () => {
-                                setMenu("open", false);
-                                copyPath();
-                              },
-                              get children() {
-                                return [(() => {
-                                  var _el$8 = _tmpl$3();
-                                  _$insert(_el$8, _$createComponent(Icon, {
-                                    name: "copy",
+                        // Runtime For: bs/dropdown-menu renders function
+                        // children reactively, so options()/locale changes
+                        // keep re-rendering the radio items.
+                        return createComponent(For, {
+                          get each() {
+                            return options();
+                          },
+                          children: o => createComponent(DropdownMenu.RadioItem, {
+                            get value() {
+                              return o.id;
+                            },
+                            get disabled() {
+                              return opening();
+                            },
+                            onSelect: () => {
+                              setMenu("open", false);
+                              openDir(o.id);
+                            },
+                            get children() {
+                              const cell = template(`<div class="d-flex size-5 shrink-0 align-items-center justify-content-center [&amp;_[data-component=app-icon]]:size-5"></div>`);
+                              cell.appendChild(createComponent(AppIcon, {
+                                get id() {
+                                  return o.icon;
+                                }
+                              }));
+                              return [cell, createComponent(DropdownMenu.ItemLabel, {
+                                get children() {
+                                  return o.label;
+                                }
+                              }), createComponent(DropdownMenu.ItemIndicator, {
+                                get children() {
+                                  return createComponent(Icon, {
+                                    name: "check-small",
                                     size: "small",
                                     "class": "text-secondary"
-                                  }));
-                                  return _el$8;
-                                })(), _$createComponent(DropdownMenu.ItemLabel, {
-                                  get children() {
-                                    return language.t("session.header.open.copyPath");
-                                  }
-                                })];
-                              }
-                            })];
-                          }
+                                  });
+                                }
+                              })];
+                            }
+                          })
                         });
                       }
                     })];
                   }
-                }), null);
-                return _el$5;
-              }
-            }));
-            return _el$4;
-          }
-        }), _el$9);
-        _$insert(_el$9, _$createComponent(Show, {
-          get when() {
-            return status();
-          },
-          get children() {
-            return _$createComponent(Tooltip, {
-              placement: "bottom",
-              get value() {
-                return language.t("status.popover.trigger");
-              },
-              get children() {
-                return _$createComponent(StatusPopover, {});
-              }
-            });
-          }
-        }), _el$0);
-        _$insert(_el$9, _$createComponent(Show, {
-          get when() {
-            return term();
-          },
-          get children() {
-            return _$createComponent(TooltipKeybind, {
-              get title() {
-                return language.t("command.terminal.toggle");
-              },
-              get keybind() {
-                return command.keybind("terminal.toggle");
-              },
-              get children() {
-                return _$createComponent(Button, {
-                  variant: "ghost",
-                  "class": "group/terminal-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0",
-                  onClick: toggleTerminal,
-                  get ["aria-label"]() {
-                    return language.t("command.terminal.toggle");
+                }), createComponent(DropdownMenu.Separator, {}), createComponent(DropdownMenu.Item, {
+                  onSelect: () => {
+                    setMenu("open", false);
+                    copyPath();
                   },
-                  get ["aria-expanded"]() {
-                    return view().terminal.opened();
-                  },
-                  "aria-controls": "terminal-panel",
                   get children() {
-                    return _$createComponent(Icon, {
+                    const cell = template(`<div class="d-flex size-5 shrink-0 align-items-center justify-content-center"></div>`);
+                    cell.appendChild(createComponent(Icon, {
+                      name: "copy",
                       size: "small",
-                      get name() {
-                        return view().terminal.opened() ? "terminal-active" : "terminal";
-                      }
-                    });
-                  }
-                });
-              }
-            });
-          }
-        }), _el$0);
-        _$insert(_el$0, _$createComponent(TooltipKeybind, {
-          get title() {
-            return language.t("command.review.toggle");
-          },
-          get keybind() {
-            return command.keybind("review.toggle");
-          },
-          get children() {
-            return _$createComponent(Button, {
-              variant: "ghost",
-              "class": "group/review-toggle titlebar-icon w-8 h-6 p-0 box-border",
-              onClick: () => view().reviewPanel.toggle(),
-              get ["aria-label"]() {
-                return language.t("command.review.toggle");
-              },
-              get ["aria-expanded"]() {
-                return view().reviewPanel.opened();
-              },
-              "aria-controls": "review-panel",
-              get children() {
-                return _$createComponent(Icon, {
-                  size: "small",
-                  get name() {
-                    return view().reviewPanel.opened() ? "review-active" : "review";
-                  }
-                });
-              }
-            });
-          }
-        }), null);
-        _$insert(_el$0, _$createComponent(Show, {
-          get when() {
-            return tree();
-          },
-          get children() {
-            return _$createComponent(TooltipKeybind, {
-              get title() {
-                return language.t("command.fileTree.toggle");
-              },
-              get keybind() {
-                return command.keybind("fileTree.toggle");
-              },
-              get children() {
-                return _$createComponent(Button, {
-                  variant: "ghost",
-                  "class": "titlebar-icon w-8 h-6 p-0 box-border",
-                  onClick: () => layout.fileTree.toggle(),
-                  get ["aria-label"]() {
-                    return language.t("command.fileTree.toggle");
-                  },
-                  get ["aria-expanded"]() {
-                    return layout.fileTree.opened();
-                  },
-                  "aria-controls": "file-tree-panel",
-                  get children() {
-                    var _el$1 = _tmpl$6();
-                    _$insert(_el$1, _$createComponent(Icon, {
-                      size: "small",
-                      get name() {
-                        return layout.fileTree.opened() ? "file-tree-active" : "file-tree";
-                      },
-                      get classList() {
-                        return {
-                          "text-body-emphasis": layout.fileTree.opened(),
-                          "text-secondary": !layout.fileTree.opened()
-                        };
-                      }
+                      "class": "text-secondary"
                     }));
-                    return _el$1;
+                    return [cell, createComponent(DropdownMenu.ItemLabel, {
+                      get children() {
+                        return language.t("session.header.open.copyPath");
+                      }
+                    })];
                   }
-                });
+                })];
               }
             });
           }
-        }), null);
-        return _el$3;
+        })];
       }
-    })
-  })];
+    }));
+    return wrap;
+  };
+
+  // Status popover trigger wrapped in a tooltip.
+  const buildStatusButton = () => createComponent(Tooltip, {
+    placement: "bottom",
+    get value() {
+      return language.t("status.popover.trigger");
+    },
+    get children() {
+      return createComponent(StatusPopover, {});
+    }
+  });
+
+  // Terminal panel toggle.
+  const buildTerminalToggle = () => createComponent(TooltipKeybind, {
+    get title() {
+      return language.t("command.terminal.toggle");
+    },
+    get keybind() {
+      return command.keybind("terminal.toggle");
+    },
+    get children() {
+      return createComponent(Button, {
+        variant: "ghost",
+        "class": "group/terminal-toggle titlebar-icon w-8 h-6 p-0 box-border shrink-0",
+        onClick: toggleTerminal,
+        get ["aria-label"]() {
+          return language.t("command.terminal.toggle");
+        },
+        get ["aria-expanded"]() {
+          return view().terminal.opened();
+        },
+        "aria-controls": "terminal-panel",
+        get children() {
+          return createComponent(Icon, {
+            size: "small",
+            get name() {
+              return view().terminal.opened() ? "terminal-active" : "terminal";
+            }
+          });
+        }
+      });
+    }
+  });
+
+  // Review panel toggle (always rendered).
+  const buildReviewToggle = () => createComponent(TooltipKeybind, {
+    get title() {
+      return language.t("command.review.toggle");
+    },
+    get keybind() {
+      return command.keybind("review.toggle");
+    },
+    get children() {
+      return createComponent(Button, {
+        variant: "ghost",
+        "class": "group/review-toggle titlebar-icon w-8 h-6 p-0 box-border",
+        onClick: () => view().reviewPanel.toggle(),
+        get ["aria-label"]() {
+          return language.t("command.review.toggle");
+        },
+        get ["aria-expanded"]() {
+          return view().reviewPanel.opened();
+        },
+        "aria-controls": "review-panel",
+        get children() {
+          return createComponent(Icon, {
+            size: "small",
+            get name() {
+              return view().reviewPanel.opened() ? "review-active" : "review";
+            }
+          });
+        }
+      });
+    }
+  });
+
+  // File tree toggle (_tmpl$6 wrapper around the icon).
+  const buildFileTreeToggle = () => createComponent(TooltipKeybind, {
+    get title() {
+      return language.t("command.fileTree.toggle");
+    },
+    get keybind() {
+      return command.keybind("fileTree.toggle");
+    },
+    get children() {
+      return createComponent(Button, {
+        variant: "ghost",
+        "class": "titlebar-icon w-8 h-6 p-0 box-border",
+        onClick: () => layout.fileTree.toggle(),
+        get ["aria-label"]() {
+          return language.t("command.fileTree.toggle");
+        },
+        get ["aria-expanded"]() {
+          return layout.fileTree.opened();
+        },
+        "aria-controls": "file-tree-panel",
+        get children() {
+          const iconWrap = template(`<div class="position-relative d-flex align-items-center justify-content-center size-4"></div>`);
+          iconWrap.appendChild(createComponent(Icon, {
+            size: "small",
+            get name() {
+              return layout.fileTree.opened() ? "file-tree-active" : "file-tree";
+            },
+            get classList() {
+              return {
+                "text-body-emphasis": layout.fileTree.opened(),
+                "text-secondary": !layout.fileTree.opened()
+              };
+            }
+          }));
+          return iconWrap;
+        }
+      });
+    }
+  });
+
+  // Right titlebar cluster (_tmpl$7) with the compiled insert slots replaced
+  // by marker-anchored regions. Each Show becomes an effect gated on the same
+  // boolean so the rebuild cadence matches the original exactly.
+  const buildRightCluster = () => {
+    const cluster = template(`<div class="d-flex align-items-center gap-2"><div class="d-flex align-items-center gap-1"><div class="d-none md:flex align-items-center gap-1 shrink-0"></div></div></div>`);
+    const controls = cluster.firstChild;
+    const panelToggles = controls.firstChild;
+
+    // Show(when=projectDirectory()): open-in / copy-path cluster (_tmpl$5).
+    // Gate on truthiness like a non-keyed Show — a dir-to-dir change must not
+    // rebuild the cluster.
+    const hasDirectory = createMemo(() => !!projectDirectory());
+    const setOpenRegion = createRegion(cluster, controls);
+    createRenderEffect(() => {
+      if (!hasDirectory()) {
+        setOpenRegion(null);
+        return;
+      }
+      const host = template(`<div class="d-none xl:flex align-items-center"></div>`);
+      // Nested Show(when=canOpen()) with the copy-path fallback.
+      createRenderEffect(() => {
+        host.replaceChildren(canOpen() ? buildOpenBox() : buildCopyPathBox());
+      });
+      setOpenRegion(host);
+    });
+
+    // Show(when=status()).
+    const setStatusRegion = createRegion(controls, panelToggles);
+    createRenderEffect(() => {
+      setStatusRegion(status() ? buildStatusButton() : null);
+    });
+
+    // Show(when=term()).
+    const setTermRegion = createRegion(controls, panelToggles);
+    createRenderEffect(() => {
+      setTermRegion(term() ? buildTerminalToggle() : null);
+    });
+
+    // The review toggle is unconditional.
+    panelToggles.appendChild(buildReviewToggle());
+
+    // Show(when=tree()), appended after the review toggle.
+    const setTreeRegion = createRegion(panelToggles, null);
+    createRenderEffect(() => {
+      setTreeRegion(tree() ? buildFileTreeToggle() : null);
+    });
+    return cluster;
+  };
+
+  // Compiled root: two portals into the custom titlebar slots. The runtime
+  // Portal component (solid-js/web) is replaced by a vanilla stand-in: while
+  // the gate yields a mount element, a plain container <div> — the same
+  // wrapper element Portal creates — is kept appended to it, with the
+  // children built once per mount. Computations created during the build are
+  // owned by the effect, so a gate flip or component unmount disposes them
+  // and onCleanup detaches the container, matching the original Show + Portal
+  // semantics. No child component relies on delegated events, so Portal's
+  // host-retargeting property is not needed.
+  const createPortal = (mountWhen, build) => {
+    createRenderEffect(() => {
+      const mount = mountWhen();
+      if (!mount) return;
+      const container = document.createElement("div");
+      const value = build();
+      for (const node of Array.isArray(value) ? value : [value]) {
+        if (node instanceof Node) container.appendChild(node);
+      }
+      mount.appendChild(container);
+      onCleanup(() => container.remove());
+    });
+  };
+  const searchOn = createMemo(() => !!search());
+  createPortal(() => searchOn() && centerMount(), buildSearchButton);
+  createPortal(rightMount, buildRightCluster);
+  // Everything renders through the portals; nothing is inserted in place.
+  return null;
 }

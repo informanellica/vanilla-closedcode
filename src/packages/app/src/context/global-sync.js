@@ -1,7 +1,6 @@
-import { createComponent as _$createComponent } from "solid-js/web";
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
-import { batch, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "solid-js";
+import { batch, createComponent, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "solid-js";
 import { createStore, produce, reconcile } from "solid-js/store";
 import { useLanguage } from "@/context/language.js";
 import { useGlobalSDK } from "./global-sdk.js";
@@ -433,7 +432,7 @@ function createGlobalSync() {
 const GlobalSyncContext = createContext();
 export function GlobalSyncProvider(props) {
   const value = createGlobalSync();
-  return _$createComponent(GlobalSyncContext.Provider, {
+  return createComponent(GlobalSyncContext.Provider, {
     value: value,
     get children() {
       return props.children;

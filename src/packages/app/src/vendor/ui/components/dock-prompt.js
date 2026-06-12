@@ -1,49 +1,51 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-component=dock-prompt>`);
+import { createComponent, createRenderEffect } from "solid-js";
 import { DockShell, DockTray } from "./dock-surface.js";
+
+// Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
+// keep Nodes, stringify the rest. Re-run inside a render effect so reactive
+// children stay live.
+function resolveNodes(value) {
+  if (value == null || value === false || value === true) return [];
+  if (typeof value === "function" && !value.length) return resolveNodes(value());
+  if (Array.isArray(value)) return value.flatMap(resolveNodes);
+  if (value instanceof Node) return [value];
+  return [document.createTextNode(String(value))];
+}
+function renderInto(parent, read) {
+  createRenderEffect(() => {
+    parent.replaceChildren(...resolveNodes(read()));
+  });
+}
+
 export function DockPrompt(props) {
   const slot = name => `${props.kind}-${name}`;
-  return (() => {
-    var _el$ = _tmpl$2();
-    _$addEventListener(_el$, "keydown", props.onKeyDown, true);
-    var _ref$ = props.ref;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : props.ref = _el$;
-    _$insert(_el$, _$createComponent(DockShell, {
-      get ["data-slot"]() {
-        return slot("body");
-      },
-      get children() {
-        return [(() => {
-          var _el$2 = _tmpl$();
-          _$insert(_el$2, () => props.header);
-          _$effect(() => _$setAttribute(_el$2, "data-slot", slot("header")));
-          return _el$2;
-        })(), (() => {
-          var _el$3 = _tmpl$();
-          _$insert(_el$3, () => props.children);
-          _$effect(() => _$setAttribute(_el$3, "data-slot", slot("content")));
-          return _el$3;
-        })()];
-      }
-    }), null);
-    _$insert(_el$, _$createComponent(DockTray, {
-      get ["data-slot"]() {
-        return slot("footer");
-      },
-      get children() {
-        return props.footer;
-      }
-    }), null);
-    _$effect(() => _$setAttribute(_el$, "data-kind", props.kind));
-    return _el$;
-  })();
+  const el = document.createElement("div");
+  el.dataset.component = "dock-prompt";
+  // The compiled version delegated keydown; a capture listener on the root is
+  // the equivalent for handlers that must see descendants' keys first.
+  el.addEventListener("keydown", event => props.onKeyDown?.(event), true);
+  if (typeof props.ref === "function") props.ref(el);
+  else if ("ref" in props) { try { props.ref = el; } catch {} }
+
+  const header = document.createElement("div");
+  renderInto(header, () => props.header);
+  const content = document.createElement("div");
+  renderInto(content, () => props.children);
+  createRenderEffect(() => {
+    header.setAttribute("data-slot", slot("header"));
+    content.setAttribute("data-slot", slot("content"));
+  });
+
+  el.appendChild(createComponent(DockShell, {
+    get ["data-slot"]() { return slot("body"); },
+    get children() { return [header, content]; }
+  }));
+  el.appendChild(createComponent(DockTray, {
+    get ["data-slot"]() { return slot("footer"); },
+    get children() { return props.footer; }
+  }));
+  createRenderEffect(() => {
+    el.setAttribute("data-kind", props.kind);
+  });
+  return el;
 }
-_$delegateEvents(["keydown"]);

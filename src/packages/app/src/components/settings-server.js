@@ -1,24 +1,14 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10"><div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]"><div class="d-flex flex-column gap-1 pt-6 pb-8 max-w-[720px]"><h2 class="fs-6 fw-medium text-body-emphasis"></h2><span class="small fw-normal text-secondary"></span></div></div><div class="d-flex flex-column gap-4 max-w-[720px]">`),
-  _tmplList$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1 bg-body-tertiary rounded-3 p-2">`),
-  _tmplRow$ = /*#__PURE__*/_$template(`<div class="group d-flex align-items-center gap-3 py-2.5 px-3 rounded-2 cursor-pointer">`),
-  _tmplRight$ = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-1 shrink-0">`),
-  _tmplForm$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-3 p-3 rounded-3 bg-body-tertiary">`),
-  _tmplBtns$ = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2">`),
-  _tmplErr$ = /*#__PURE__*/_$template(`<span class="small fw-normal text-danger">`),
-  _tmplEmpty$ = /*#__PURE__*/_$template(`<div class="fw-normal text-secondary py-3">`);
 import { Button } from "@/bs/button.js";
 import { Icon } from "@/bs/icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TextField } from "@/bs/text-field.js";
-import { createEffect, For, onCleanup, Show } from "solid-js";
+import { createComponent, createEffect, onCleanup } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { useLanguage } from "@/context/language.js";
 import { normalizeServerUrl, ServerConnection, useServer } from "@/context/server.js";
 import { useCheckServerHealth } from "@/utils/server-health.js";
 import { ServerHealthIndicator, ServerRow } from "@/components/server/server-row.js";
+
 const HEALTH_POLL_INTERVAL_MS = 10_000;
 const emptyForm = () => ({
   open: false,
@@ -29,6 +19,13 @@ const emptyForm = () => ({
   error: "",
   busy: false
 });
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
 export const SettingsServer = () => {
   const language = useLanguage();
   const server = useServer();
@@ -122,189 +119,181 @@ export const SettingsServer = () => {
     cancelForm();
     void refreshHealth();
   }
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.nextSibling,
-      _el$6 = _el$2.nextSibling;
-    _$insert(_el$4, () => language.t("settings.server.title"));
-    _$insert(_el$5, () => language.t("dialog.server.description"));
-    _$insert(_el$6, _$createComponent(Show, {
-      get when() {
-        return server.list.length > 0;
-      },
-      get fallback() {
-        return (() => {
-          var _e = _tmplEmpty$();
-          _$insert(_e, () => language.t("settings.server.disconnected"));
-          return _e;
-        })();
-      },
-      get children() {
-        var _list = _tmplList$();
-        _$insert(_list, _$createComponent(For, {
-          get each() {
-            return server.list;
-          },
-          children: conn => {
-            const key = ServerConnection.key(conn);
-            var _row = _tmplRow$();
-            _row.addEventListener("click", () => switchTo(conn));
-            _$insert(_row, _$createComponent(ServerHealthIndicator, {
-              get health() {
-                return state.status[key];
-              }
-            }), null);
-            _$insert(_row, _$createComponent(ServerRow, {
-              conn: conn,
-              get status() {
-                return state.status[key];
-              },
-              showCredentials: true,
-              "class": "d-flex align-items-center gap-2 min-w-0 flex-1",
-              nameClass: "fw-medium text-body-emphasis truncate",
-              versionClass: "small fw-normal text-secondary truncate"
-            }), null);
-            var _right = _tmplRight$();
-            _$insert(_right, _$createComponent(Show, {
-              get when() {
-                return server.key === key;
-              },
-              get children() {
-                return _$createComponent(Icon, {
-                  name: "check",
-                  "class": "text-secondary shrink-0"
-                });
-              }
-            }), null);
-            // Edit / delete only apply to user-added http servers. The built-in
-            // local server (type !== "http") is not editable/removable, so don't
-            // render dead controls for it (the pencil otherwise silently no-ops).
-            _$insert(_right, _$createComponent(Show, {
-              get when() {
-                return conn.type === "http";
-              },
-              get children() {
-                return [_$createComponent(IconButton, {
-                  icon: "pencil-line",
-                  variant: "ghost",
-                  get ["aria-label"]() {
-                    return language.t("dialog.server.menu.edit");
-                  },
-                  onClick: e => {
-                    e?.stopPropagation?.();
-                    openEdit(conn);
-                  }
-                }), _$createComponent(IconButton, {
-                  icon: "circle-x",
-                  variant: "ghost",
-                  get ["aria-label"]() {
-                    return language.t("dialog.server.menu.delete");
-                  },
-                  onClick: e => {
-                    e?.stopPropagation?.();
-                    removeServer(conn);
-                  }
-                })];
-              }
-            }), null);
-            _$insert(_row, _right, null);
-            return _row;
-          }
-        }));
-        return _list;
+
+  const root = template(`
+    <div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10">
+      <div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]">
+        <div class="d-flex flex-column gap-1 pt-6 pb-8 max-w-[720px]">
+          <h2 class="fs-6 fw-medium text-body-emphasis" data-slot="title"></h2>
+          <span class="small fw-normal text-secondary" data-slot="description"></span>
+        </div>
+      </div>
+      <div class="d-flex flex-column gap-4 max-w-[720px]">
+        <div style="display: contents" data-slot="list"></div>
+        <div style="display: contents" data-slot="form"></div>
+      </div>
+    </div>`);
+  const titleEl = root.querySelector('[data-slot="title"]');
+  const descEl = root.querySelector('[data-slot="description"]');
+  const listSlot = root.querySelector('[data-slot="list"]');
+  const formSlot = root.querySelector('[data-slot="form"]');
+
+  createEffect(() => { titleEl.textContent = language.t("settings.server.title"); });
+  createEffect(() => { descEl.textContent = language.t("dialog.server.description"); });
+
+  const buildRow = conn => {
+    const key = ServerConnection.key(conn);
+    const row = template(`<div class="group d-flex align-items-center gap-3 py-2.5 px-3 rounded-2 cursor-pointer"></div>`);
+    row.addEventListener("click", () => switchTo(conn));
+    row.appendChild(createComponent(ServerHealthIndicator, {
+      get health() { return state.status[key]; }
+    }));
+    row.appendChild(createComponent(ServerRow, {
+      conn: conn,
+      get status() { return state.status[key]; },
+      showCredentials: true,
+      class: "d-flex align-items-center gap-2 min-w-0 flex-1",
+      nameClass: "fw-medium text-body-emphasis truncate",
+      versionClass: "small fw-normal text-secondary truncate"
+    }));
+    const right = template(`<div class="d-flex align-items-center gap-1 shrink-0"></div>`);
+    if (server.key === key) {
+      right.appendChild(createComponent(Icon, {
+        name: "check",
+        class: "text-secondary shrink-0"
+      }));
+    }
+    // Edit / delete only apply to user-added http servers. The built-in
+    // local server (type !== "http") is not editable/removable, so don't
+    // render dead controls for it (the pencil otherwise silently no-ops).
+    if (conn.type === "http") {
+      right.appendChild(createComponent(IconButton, {
+        icon: "pencil-line",
+        variant: "ghost",
+        get ["aria-label"]() { return language.t("dialog.server.menu.edit"); },
+        onClick: e => {
+          e?.stopPropagation?.();
+          openEdit(conn);
+        }
+      }));
+      right.appendChild(createComponent(IconButton, {
+        icon: "circle-x",
+        variant: "ghost",
+        get ["aria-label"]() { return language.t("dialog.server.menu.delete"); },
+        onClick: e => {
+          e?.stopPropagation?.();
+          removeServer(conn);
+        }
+      }));
+    }
+    row.appendChild(right);
+    return row;
+  };
+
+  // Server list (or the disconnected note). Rebuilt when the list, the active
+  // server or the locale changes; per-row health flows through component
+  // getters without a rebuild.
+  createEffect(() => {
+    const list = server.list;
+    void server.key;
+    if (list.length === 0) {
+      const empty = template(`<div class="fw-normal text-secondary py-3"></div>`);
+      empty.textContent = language.t("settings.server.disconnected");
+      listSlot.replaceChildren(empty);
+      return;
+    }
+    const box = template(`<div class="d-flex flex-column gap-1 bg-body-tertiary rounded-3 p-2"></div>`);
+    for (const conn of list) box.appendChild(buildRow(conn));
+    listSlot.replaceChildren(box);
+  });
+
+  // Add button (closed) / inline add-edit form (open). The form is built once
+  // per open so typing in the TextFields never loses focus; error text and the
+  // submit/cancel buttons live in nested slots with their own effects.
+  createEffect(() => {
+    if (!state.form.open) {
+      const label = language.t("dialog.server.add.button");
+      const add = createComponent(Button, {
+        variant: "secondary",
+        class: "self-start h-8 px-3 py-1.5",
+        onClick: openAdd,
+        get children() {
+          return [createComponent(Icon, { name: "plus-small" }), label];
+        }
+      });
+      formSlot.replaceChildren(add);
+      return;
+    }
+    const form = template(`
+      <div class="d-flex flex-column gap-3 p-3 rounded-3 bg-body-tertiary">
+        <div style="display: contents" data-slot="fields"></div>
+        <div style="display: contents" data-slot="error"></div>
+        <div class="d-flex align-items-center gap-2" data-slot="buttons"></div>
+      </div>`);
+    const fields = form.querySelector('[data-slot="fields"]');
+    const errorSlot = form.querySelector('[data-slot="error"]');
+    const buttons = form.querySelector('[data-slot="buttons"]');
+
+    fields.appendChild(createComponent(TextField, {
+      type: "text",
+      get value() { return state.form.url; },
+      onChange: v => setState("form", {
+        url: v,
+        error: ""
+      }),
+      get placeholder() { return language.t("dialog.server.add.placeholder"); },
+      spellcheck: false,
+      autocorrect: "off",
+      autocomplete: "off",
+      autocapitalize: "off"
+    }));
+    fields.appendChild(createComponent(TextField, {
+      type: "text",
+      get value() { return state.form.name; },
+      onChange: v => setState("form", {
+        name: v
+      }),
+      get placeholder() { return language.t("dialog.server.add.namePlaceholder"); },
+      spellcheck: false,
+      autocorrect: "off",
+      autocomplete: "off",
+      autocapitalize: "off"
+    }));
+    createEffect(() => {
+      if (state.form.error) {
+        const err = template(`<span class="small fw-normal text-danger"></span>`);
+        err.textContent = state.form.error;
+        errorSlot.replaceChildren(err);
+      } else {
+        errorSlot.replaceChildren();
       }
-    }), null);
-    _$insert(_el$6, _$createComponent(Show, {
-      get when() {
-        return state.form.open;
-      },
-      get fallback() {
-        return _$createComponent(Button, {
-          variant: "secondary",
-          "class": "self-start h-8 px-3 py-1.5",
-          onClick: openAdd,
-          get children() {
-            return [_$createComponent(Icon, {
-              name: "plus-small"
-            }), _$createComponent(Show, {
-              when: true,
-              get children() {
-                return language.t("dialog.server.add.button");
-              }
-            })];
-          }
-        });
-      },
-      get children() {
-        var _form = _tmplForm$();
-        _$insert(_form, _$createComponent(TextField, {
-          type: "text",
-          get value() {
-            return state.form.url;
-          },
-          onChange: v => setState("form", {
-            url: v,
-            error: ""
-          }),
-          get placeholder() {
-            return language.t("dialog.server.add.placeholder");
-          },
-          spellcheck: false,
-          autocorrect: "off",
-          autocomplete: "off",
-          autocapitalize: "off"
-        }), null);
-        _$insert(_form, _$createComponent(TextField, {
-          type: "text",
-          get value() {
-            return state.form.name;
-          },
-          onChange: v => setState("form", {
-            name: v
-          }),
-          get placeholder() {
-            return language.t("dialog.server.add.namePlaceholder");
-          },
-          spellcheck: false,
-          autocorrect: "off",
-          autocomplete: "off",
-          autocapitalize: "off"
-        }), null);
-        _$insert(_form, _$createComponent(Show, {
-          get when() {
-            return state.form.error;
-          },
-          get children() {
-            var _e = _tmplErr$();
-            _$insert(_e, () => state.form.error);
-            return _e;
-          }
-        }), null);
-        var _btns = _tmplBtns$();
-        _$insert(_btns, _$createComponent(Button, {
+    });
+    // The submit label depends on busy/mode (and the locale), and the vanilla
+    // Button renders its children once — rebuild the pair when those change.
+    createEffect(() => {
+      const busy = state.form.busy;
+      const submitLabel = busy
+        ? language.t("dialog.server.add.checking")
+        : state.form.mode === "edit"
+          ? language.t("common.save")
+          : language.t("dialog.server.add.button");
+      const cancelLabel = language.t("common.cancel");
+      buttons.replaceChildren(
+        createComponent(Button, {
           variant: "primary",
-          get disabled() {
-            return state.form.busy;
-          },
+          disabled: busy,
           onClick: submitForm,
-          get children() {
-            return state.form.busy ? language.t("dialog.server.add.checking") : state.form.mode === "edit" ? language.t("common.save") : language.t("dialog.server.add.button");
-          }
-        }), null);
-        _$insert(_btns, _$createComponent(Button, {
+          get children() { return submitLabel; }
+        }),
+        createComponent(Button, {
           variant: "secondary",
           onClick: cancelForm,
-          get children() {
-            return language.t("common.cancel");
-          }
-        }), null);
-        _$insert(_form, _btns, null);
-        return _form;
-      }
-    }), null);
-    return _el$;
-  })();
+          get children() { return cancelLabel; }
+        })
+      );
+    });
+    formSlot.replaceChildren(form);
+  });
+
+  return root;
 };

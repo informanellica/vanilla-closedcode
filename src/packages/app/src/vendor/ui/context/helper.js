@@ -1,5 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createContext, createMemo, Show, useContext } from "solid-js";
+import { createComponent, createContext, createMemo, Show, useContext } from "solid-js";
 export function createSimpleContext(input) {
   const ctx = createContext();
   return {
@@ -7,7 +6,7 @@ export function createSimpleContext(input) {
       const init = input.init(props);
       const gate = input.gate ?? true;
       if (!gate) {
-        return _$createComponent(ctx.Provider, {
+        return createComponent(ctx.Provider, {
           value: init,
           get children() {
             return props.children;
@@ -20,12 +19,12 @@ export function createSimpleContext(input) {
         const ready = init.ready;
         return ready === undefined || (typeof ready === "function" ? ready() : ready);
       });
-      return _$createComponent(Show, {
+      return createComponent(Show, {
         get when() {
           return isReady();
         },
         get children() {
-          return _$createComponent(ctx.Provider, {
+          return createComponent(ctx.Provider, {
             value: init,
             get children() {
               return props.children;

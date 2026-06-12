@@ -1,13 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span class="text-secondary truncate">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between gap-4"><div class="d-flex align-items-center gap-2 min-w-0"><span class="text-body-emphasis whitespace-nowrap">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span class="small fw-normal text-secondary whitespace-nowrap ml-2">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between rounded-2 pl-1"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center gap-2 min-w-0"><span class="text-body-emphasis truncate">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center justify-content-between rounded-2 pl-1"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center"><span class="text-secondary whitespace-nowrap overflow-hidden overflow-ellipsis truncate min-w-0"></span><span class="text-body-emphasis whitespace-nowrap">`);
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
@@ -17,7 +7,7 @@ import { List } from "@/bs/list.js";
 import { base64Encode } from "core/util/encode";
 import { getDirectory, getFilename } from "core/util/path";
 import { useNavigate } from "@solidjs/router";
-import { createMemo, createSignal, Match, onCleanup, Show, Switch } from "solid-js";
+import { createComponent, createEffect, createMemo, createSignal, getOwner, onCleanup, runWithOwner } from "solid-js";
 import { formatKeybind, useCommand } from "@/context/command.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLayout } from "@/context/layout.js";
@@ -28,6 +18,27 @@ import { useSessionLayout } from "@/pages/session/session-layout.js";
 import { createSessionTabs } from "@/pages/session/helpers.js";
 import { decode64 } from "@/utils/base64.js";
 import { getRelativeTime } from "@/utils/time.js";
+
+// Build a detached element from a static HTML skeleton. The markup is kept
+// whitespace-free between tags so the DOM matches the compiled template
+// output exactly.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
+
+// Secondary text shared by the command and session rows (compiled _tmpl$).
+const DESCRIPTION_HTML = `<span class="text-secondary truncate"></span>`;
+// Row for a command entry: title plus optional description and keybind.
+const COMMAND_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-content-between gap-4"><div class="d-flex align-items-center gap-2 min-w-0"><span class="text-body-emphasis whitespace-nowrap"></span></div></div>`;
+// Trailing relative-time label for session rows (compiled _tmpl$3).
+const UPDATED_HTML = `<span class="small fw-normal text-secondary whitespace-nowrap ml-2"></span>`;
+// Row for a session entry: icon, title, optional description and timestamp.
+const SESSION_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-content-between rounded-2 pl-1"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center gap-2 min-w-0"><span class="text-body-emphasis truncate"></span></div></div></div>`;
+// Row for a file entry: icon, truncated parent path and emphasized basename.
+const FILE_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-content-between rounded-2 pl-1"><div class="d-flex align-items-center gap-x-3 grow min-w-0"><div class="d-flex align-items-center"><span class="text-secondary whitespace-nowrap overflow-hidden overflow-ellipsis truncate min-w-0"></span><span class="text-body-emphasis whitespace-nowrap"></span></div></div></div>`;
+
 const ENTRY_LIMIT = 5;
 const COMMON_COMMAND_IDS = ["session.new", "workspace.new", "session.previous", "session.next", "terminal.toggle", "review.toggle"];
 const uniqueEntries = items => {
@@ -301,11 +312,97 @@ export function DialogSelectFile(props) {
     if (state.committed) return;
     state.cleanup?.();
   });
-  return _$createComponent(Dialog, {
+
+  // Per-item row renderers for List. Each `item` is a plain snapshot object
+  // and List rebuilds every row on each compute, so direct textContent writes
+  // are equivalent to the compiled insert() of non-reactive expressions; the
+  // original Switch/Match/Show on static item fields collapse to if/else.
+  // Only the relative-time label reads language.t reactively (it changed live
+  // on locale switch in the compiled output), so it keeps an effect.
+  // List builds rows in an async continuation (after awaiting items), where
+  // Solid's owner is null — effects created there would never be disposed.
+  // Capture the dialog's owner here and re-attach row effects to it so they
+  // are cleaned up when the dialog closes.
+  const owner = getOwner();
+  const buildCommandRow = item => {
+    const row = template(COMMAND_ROW_HTML);
+    const main = row.firstElementChild;
+    const titleEl = main.firstElementChild;
+    titleEl.textContent = item.title ?? "";
+    if (item.description) {
+      const desc = template(DESCRIPTION_HTML);
+      desc.textContent = item.description;
+      main.appendChild(desc);
+    }
+    if (item.keybind) {
+      // The vanilla Keybind reads `children` once at construction, matching
+      // the compiled output where this label did not live-update.
+      row.appendChild(createComponent(Keybind, {
+        "class": "rounded-[4px]",
+        get children() {
+          return formatKeybind(item.keybind ?? "", language.t);
+        }
+      }));
+    }
+    return row;
+  };
+  const buildSessionRow = item => {
+    const row = template(SESSION_ROW_HTML);
+    const left = row.firstElementChild;
+    const titleBox = left.firstElementChild;
+    const titleEl = titleBox.firstElementChild;
+    left.insertBefore(createComponent(Icon, {
+      name: "bubble-5",
+      size: "small",
+      "class": "shrink-0 text-secondary"
+    }), titleBox);
+    titleEl.textContent = item.title ?? "";
+    titleEl.classList.toggle("opacity-70", !!item.archived);
+    if (item.description) {
+      const desc = template(DESCRIPTION_HTML);
+      desc.textContent = item.description;
+      desc.classList.toggle("opacity-70", !!item.archived);
+      titleBox.appendChild(desc);
+    }
+    if (item.updated) {
+      const updatedEl = template(UPDATED_HTML);
+      runWithOwner(owner, () => createEffect(() => {
+        updatedEl.textContent = getRelativeTime(new Date(item.updated).toISOString(), language.t) ?? "";
+      }));
+      row.appendChild(updatedEl);
+    }
+    return row;
+  };
+  const buildFileRow = item => {
+    const row = template(FILE_ROW_HTML);
+    const left = row.firstElementChild;
+    const pathBox = left.firstElementChild;
+    const dirEl = pathBox.firstElementChild;
+    const nameEl = dirEl.nextElementSibling;
+    left.insertBefore(createComponent(FileIcon, {
+      get node() {
+        return {
+          path: item.path ?? "",
+          type: "file"
+        };
+      },
+      "class": "shrink-0 size-4"
+    }), pathBox);
+    dirEl.textContent = getDirectory(item.path ?? "");
+    nameEl.textContent = getFilename(item.path ?? "");
+    return row;
+  };
+  const buildRow = item => {
+    if (item.type === "command") return buildCommandRow(item);
+    if (item.type === "session") return buildSessionRow(item);
+    return buildFileRow(item);
+  };
+
+  return createComponent(Dialog, {
     "class": "pt-3 pb-0 !max-h-[480px]",
     transition: true,
     get children() {
-      return _$createComponent(List, {
+      return createComponent(List, {
         get search() {
           return {
             placeholder: filesOnly() ? language.t("session.header.searchFiles") : language.t("palette.search.placeholder"),
@@ -327,105 +424,7 @@ export function DialogSelectFile(props) {
         },
         onMove: handleMove,
         onSelect: handleSelect,
-        children: item => _$createComponent(Switch, {
-          get fallback() {
-            return (() => {
-              var _el$1 = _tmpl$5(),
-                _el$10 = _el$1.firstChild,
-                _el$11 = _el$10.firstChild,
-                _el$12 = _el$11.firstChild,
-                _el$13 = _el$12.nextSibling;
-              _$insert(_el$10, _$createComponent(FileIcon, {
-                get node() {
-                  return {
-                    path: item.path ?? "",
-                    type: "file"
-                  };
-                },
-                "class": "shrink-0 size-4"
-              }), _el$11);
-              _$insert(_el$12, () => getDirectory(item.path ?? ""));
-              _$insert(_el$13, () => getFilename(item.path ?? ""));
-              return _el$1;
-            })();
-          },
-          get children() {
-            return [_$createComponent(Match, {
-              get when() {
-                return item.type === "command";
-              },
-              get children() {
-                var _el$ = _tmpl$2(),
-                  _el$2 = _el$.firstChild,
-                  _el$3 = _el$2.firstChild;
-                _$insert(_el$3, () => item.title);
-                _$insert(_el$2, _$createComponent(Show, {
-                  get when() {
-                    return item.description;
-                  },
-                  get children() {
-                    var _el$4 = _tmpl$();
-                    _$insert(_el$4, () => item.description);
-                    return _el$4;
-                  }
-                }), null);
-                _$insert(_el$, _$createComponent(Show, {
-                  get when() {
-                    return item.keybind;
-                  },
-                  get children() {
-                    return _$createComponent(Keybind, {
-                      "class": "rounded-[4px]",
-                      get children() {
-                        return formatKeybind(item.keybind ?? "", language.t);
-                      }
-                    });
-                  }
-                }), null);
-                return _el$;
-              }
-            }), _$createComponent(Match, {
-              get when() {
-                return item.type === "session";
-              },
-              get children() {
-                var _el$5 = _tmpl$4(),
-                  _el$6 = _el$5.firstChild,
-                  _el$7 = _el$6.firstChild,
-                  _el$8 = _el$7.firstChild;
-                _$insert(_el$6, _$createComponent(Icon, {
-                  name: "bubble-5",
-                  size: "small",
-                  "class": "shrink-0 text-secondary"
-                }), _el$7);
-                _$insert(_el$8, () => item.title);
-                _$insert(_el$7, _$createComponent(Show, {
-                  get when() {
-                    return item.description;
-                  },
-                  get children() {
-                    var _el$9 = _tmpl$();
-                    _$insert(_el$9, () => item.description);
-                    _$effect(() => _el$9.classList.toggle("opacity-70", !!item.archived));
-                    return _el$9;
-                  }
-                }), null);
-                _$insert(_el$5, _$createComponent(Show, {
-                  get when() {
-                    return item.updated;
-                  },
-                  get children() {
-                    var _el$0 = _tmpl$3();
-                    _$insert(_el$0, () => getRelativeTime(new Date(item.updated).toISOString(), language.t));
-                    return _el$0;
-                  }
-                }), null);
-                _$effect(() => _el$8.classList.toggle("opacity-70", !!item.archived));
-                return _el$5;
-              }
-            })];
-          }
-        })
+        children: item => buildRow(item)
       });
     }
   });

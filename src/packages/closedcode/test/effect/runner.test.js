@@ -1,6 +1,6 @@
 import {  Deferred, Effect, Exit, Fiber, Ref, Scope  } from "effect"
 import {  it  } from "../lib/effect.js"
-import {  Runner  } from "@/effect/runner.js"
+import {  Runner  } from "#effect/runner.js"
 import {  describe, expect, beforeAll  } from "@jest/globals"
 describe("Runner", () => {
   // --- ensureRunning semantics ---

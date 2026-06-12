@@ -207,8 +207,13 @@ const assetSuffixPlugin = {
 // out/main so the sidecar resolver (resolveSidecarUrl in server.js) can find it.
 
 console.log("[1/5] copy closedcode-server sidecar...")
-for (const f of await fs.readdir(closedcodeServerDist)) {
-  await fs.copyFile(path.join(closedcodeServerDist, f), `out/main/closedcode-server/${f}`)
+// dist/node now ships an assets/ directory (fs-read text assets, Stage 2 of
+// pure-vanilla) alongside the bundle — copy recursively, not file-by-file.
+for (const f of await fs.readdir(closedcodeServerDist, { withFileTypes: true })) {
+  const from = path.join(closedcodeServerDist, f.name)
+  const to = `out/main/closedcode-server/${f.name}`
+  if (f.isDirectory()) await fs.cp(from, to, { recursive: true })
+  else await fs.copyFile(from, to)
 }
 
 // ---- renderer: NOT bundled (Stage C: build-less, native ESM) ---------------

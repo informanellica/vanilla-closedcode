@@ -1,20 +1,50 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=tabs-trigger-wrapper>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=tabs-trigger-close-button>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=tabs-section-title>`);
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createMemo, createRenderEffect, mergeProps, splitProps } from "solid-js";
 import { Tabs as Kobalte } from "@kobalte/core/tabs";
-import { Show, splitProps } from "solid-js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
+// Mirror solid-js/web classList(): change-guarded class toggling against the
+// previous map; a key may hold several space-separated class names and empty
+// keys are skipped.
+function toggleClassKey(node, key, value) {
+  const names = key.trim().split(/\s+/);
+  for (let i = 0; i < names.length; i++) node.classList.toggle(names[i], value);
+}
+function applyClassList(node, value, prev = {}) {
+  const classKeys = Object.keys(value || {});
+  const prevKeys = Object.keys(prev);
+  for (let i = 0; i < prevKeys.length; i++) {
+    const key = prevKeys[i];
+    if (!key || key === "undefined" || value[key]) continue;
+    toggleClassKey(node, key, false);
+    delete prev[key];
+  }
+  for (let i = 0; i < classKeys.length; i++) {
+    const key = classKeys[i];
+    const classValue = !!value[key];
+    if (!key || key === "undefined" || prev[key] === classValue || !classValue) continue;
+    toggleClassKey(node, key, true);
+    prev[key] = classValue;
+  }
+  return prev;
+}
+
 function TabsRoot(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "variant", "orientation"]);
-  return _$createComponent(Kobalte, _$mergeProps(rest, {
+  return createComponent(Kobalte, mergeProps(rest, {
     get orientation() {
       return split.orientation;
     },
@@ -35,7 +65,7 @@ function TabsRoot(props) {
 }
 function TabsList(props) {
   const [split, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.List, _$mergeProps(rest, {
+  return createComponent(Kobalte.List, mergeProps(rest, {
     "data-slot": "tabs-list",
     get classList() {
       return {
@@ -47,63 +77,66 @@ function TabsList(props) {
 }
 function TabsTrigger(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "classes", "children", "closeButton", "hideCloseButton", "onMiddleClick"]);
-  return (() => {
-    var _el$ = _tmpl$();
-    _el$.addEventListener("auxclick", e => {
-      if (e.button === 1 && split.onMiddleClick) {
-        e.preventDefault();
-        split.onMiddleClick();
-      }
-    });
-    _el$.$$mousedown = e => {
-      if (e.button === 1 && split.onMiddleClick) {
-        e.preventDefault();
-      }
+  const el = template(`<div data-slot="tabs-trigger-wrapper"></div>`);
+  el.addEventListener("auxclick", e => {
+    if (e.button === 1 && split.onMiddleClick) {
+      e.preventDefault();
+      split.onMiddleClick();
+    }
+  });
+  // The compiled version registered this through Solid's event delegation; a
+  // direct listener is equivalent here (suppress middle-button autoscroll so
+  // auxclick can act as "close tab").
+  el.addEventListener("mousedown", e => {
+    if (e.button === 1 && split.onMiddleClick) {
+      e.preventDefault();
+    }
+  });
+  // Kobalte Trigger is polymorphic (its result is a reactive accessor), so it
+  // must go through solid's insert() to stay live (established exception).
+  _solidInsert(el, createComponent(Kobalte.Trigger, mergeProps(rest, {
+    "data-slot": "tabs-trigger",
+    get ["data-value"]() {
+      return props.value;
+    },
+    get classList() {
+      return {
+        [split.classes?.button ?? ""]: split.classes?.button
+      };
+    },
+    get children() {
+      return split.children;
+    }
+  })), null);
+  // Show(closeButton), non-keyed: the wrapper is rebuilt only when the
+  // condition's truthiness flips; the button content itself stays live
+  // through the inner insert.
+  const hasCloseButton = createMemo(() => !!split.closeButton);
+  _solidInsert(el, createMemo(() => {
+    if (!hasCloseButton()) return undefined;
+    const closeEl = template(`<div data-slot="tabs-trigger-close-button"></div>`);
+    _solidInsert(closeEl, () => split.closeButton);
+    createRenderEffect(() => setAttr(closeEl, "data-hidden", split.hideCloseButton));
+    return closeEl;
+  }), null);
+  // Change-guarded data-value + classList on the wrapper, like the compiled
+  // effect(): an unchanged value never re-touches the attribute.
+  let prevValue;
+  let prevClassList = {};
+  createRenderEffect(() => {
+    const value = props.value;
+    const classes = {
+      ...split.classList,
+      [split.class ?? ""]: !!split.class
     };
-    _$insert(_el$, _$createComponent(Kobalte.Trigger, _$mergeProps(rest, {
-      "data-slot": "tabs-trigger",
-      get ["data-value"]() {
-        return props.value;
-      },
-      get classList() {
-        return {
-          [split.classes?.button ?? ""]: split.classes?.button
-        };
-      },
-      get children() {
-        return split.children;
-      }
-    })), null);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return split.closeButton;
-      },
-      children: closeButton => (() => {
-        var _el$2 = _tmpl$2();
-        _$insert(_el$2, closeButton);
-        _$effect(() => _$setAttribute(_el$2, "data-hidden", split.hideCloseButton));
-        return _el$2;
-      })()
-    }), null);
-    _$effect(_p$ => {
-      var _v$ = props.value,
-        _v$2 = {
-          ...split.classList,
-          [split.class ?? ""]: !!split.class
-        };
-      _v$ !== _p$.e && _$setAttribute(_el$, "data-value", _p$.e = _v$);
-      _p$.t = _$classList(_el$, _v$2, _p$.t);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$;
-  })();
+    if (value !== prevValue) setAttr(el, "data-value", prevValue = value);
+    prevClassList = applyClassList(el, classes, prevClassList);
+  });
+  return el;
 }
 function TabsContent(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Content, _$mergeProps(rest, {
+  return createComponent(Kobalte.Content, mergeProps(rest, {
     "data-slot": "tabs-content",
     get classList() {
       return {
@@ -117,11 +150,10 @@ function TabsContent(props) {
   }));
 }
 const TabsSectionTitle = props => {
-  return (() => {
-    var _el$3 = _tmpl$3();
-    _$insert(_el$3, () => props.children);
-    return _el$3;
-  })();
+  const el = template(`<div data-slot="tabs-section-title"></div>`);
+  // Children may be reactive (components, accessors), so keep them live.
+  _solidInsert(el, () => props.children);
+  return el;
 };
 export const Tabs = Object.assign(TabsRoot, {
   List: TabsList,
@@ -129,4 +161,3 @@ export const Tabs = Object.assign(TabsRoot, {
   Content: TabsContent,
   SectionTitle: TabsSectionTitle
 });
-_$delegateEvents(["mousedown"]);

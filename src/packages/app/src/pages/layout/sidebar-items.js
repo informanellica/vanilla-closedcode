@@ -1,26 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div><div class="size-full rounded-2 overflow-clip">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="size-1.5 rounded-circle bg-warning-subtle">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="size-1.5 rounded-circle bg-text-diff-delete-base">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="size-1.5 rounded-circle bg-text-interactive-base">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="shrink-0 size-6 d-flex align-items-center justify-content-center">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<span class="text-body-emphasis min-w-0 flex-1 truncate">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="shrink-0 overflow-hidden transition-[width,opacity]">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="group/session relative w-full min-w-0 rounded-2 cursor-default pr-3 transition-colors"><div class="d-flex min-w-0 align-items-center gap-1"><div class="min-w-0 flex-1">`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div class=w-full>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div class="group/session relative w-full min-w-0 rounded-2 cursor-default transition-colors pl-2 pr-3">`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1">`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div class="h-8 w-full rounded-2 bg-body-tertiary opacity-60 animate-pulse">`);
 import { Avatar } from "@/vendor/ui/components/avatar.js";
 import { Icon } from "@/bs/icon.js";
 import { IconButton } from "@/bs/icon-button.js";
@@ -28,7 +5,7 @@ import { Spinner } from "@/bs/spinner.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { getFilename } from "core/util/path";
 import { A, useParams } from "@solidjs/router";
-import { createMemo, For, Match, Show, Switch } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, mergeProps, Show } from "solid-js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLanguage } from "@/context/language.js";
 import { getAvatarColors, useLayout } from "@/context/layout.js";
@@ -38,11 +15,41 @@ import { messageAgentColor } from "@/utils/agent.js";
 import { sessionTitle } from "@/utils/session-title.js";
 import { sessionPermissionRequest } from "../session/composer/session-request-tree.js";
 import { childSessionOnPath, hasProjectPermissions } from "./helpers.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Only static markup goes through here; user strings use textContent.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mount a SessionItem result into `parent`. SessionItem returns
+// [row element, child accessor]; the accessor (a memo) resolves to the nested
+// child-session wrapper element or undefined. A render effect keeps that
+// trailing region live, replacing solid-js/web insert() for the recursion.
+function mountSessionItem(parent, parts) {
+  const [row, nested] = parts;
+  parent.appendChild(row);
+  let current = null;
+  createRenderEffect(() => {
+    let value = nested;
+    while (typeof value === "function") value = value();
+    const node = value ?? null;
+    if (node === current) return;
+    if (current) current.remove();
+    if (node) parent.appendChild(node);
+    current = node;
+  });
+}
+
 export function getProjectAvatarSource(id, icon) {
   if (icon?.override) return icon?.override;
   if (icon?.color) return undefined;
   return icon?.url;
 }
+
 export const ProjectIcon = props => {
   const globalSync = useGlobalSync();
   const notification = useNotification();
@@ -58,46 +65,63 @@ export const ProjectIcon = props => {
   }));
   const notify = createMemo(() => props.notify && (hasPermissions() || unseenCount() > 0));
   const name = createMemo(() => props.project.name || getFilename(props.project.worktree));
-  return (() => {
-    var _el$ = _tmpl$2(),
-      _el$2 = _el$.firstChild;
-    _$insert(_el$2, _$createComponent(Avatar, _$mergeProps({
-      get fallback() {
-        return name();
-      },
-      get src() {
-        return getProjectAvatarSource(props.project.id, props.project.icon);
-      }
-    }, () => getAvatarColors(props.project.icon?.color), {
+
+  // Static skeleton (_tmpl$2): root + avatar wrapper.
+  const root = document.createElement("div");
+  const avatarBox = document.createElement("div");
+  avatarBox.className = "size-full rounded-2 overflow-clip";
+  root.appendChild(avatarBox);
+
+  // Avatar: the vanilla Avatar reads its props once, so rebuild it whenever a
+  // reactive input (name, icon source, colors, badge mask) changes. The avatar
+  // is stateless display, so a rebuild matches the original in-place updates.
+  createRenderEffect(() => {
+    const fallback = name();
+    const src = getProjectAvatarSource(props.project.id, props.project.icon);
+    const colors = getAvatarColors(props.project.icon?.color);
+    const badge = notify();
+    avatarBox.replaceChildren(createComponent(Avatar, {
+      fallback,
+      src,
+      ...colors,
       "class": "size-full rounded",
-      get classList() {
-        return {
-          "badge-mask": notify()
-        };
+      classList: {
+        "badge-mask": badge
       }
-    })));
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return notify();
-      },
-      get children() {
-        var _el$3 = _tmpl$();
-        _$effect(_$p => _$classList(_el$3, {
-          "absolute top-px right-px size-1.5 rounded-circle z-10": true,
-          "bg-warning-subtle": hasPermissions(),
-          "bg-icon-critical-base": !hasPermissions() && hasError(),
-          "bg-text-interactive-base": !hasPermissions() && !hasError()
-        }, _$p));
-        return _el$3;
+    }));
+  });
+
+  // Notification dot (the compiled Show + classList effect): present only
+  // while notify() is true; exactly one bg-* class, same precedence order.
+  let dot = null;
+  createRenderEffect(() => {
+    if (!notify()) {
+      if (dot) {
+        dot.remove();
+        dot = null;
       }
-    }), null);
-    _$effect(() => _$className(_el$, `relative size-8 shrink-0 rounded-2 ${props.class ?? ""}`));
-    return _el$;
-  })();
+      return;
+    }
+    if (!dot) {
+      dot = document.createElement("div");
+      root.appendChild(dot);
+    }
+    const bg = hasPermissions() ? "bg-warning-subtle" : hasError() ? "bg-icon-critical-base" : "bg-text-interactive-base";
+    dot.className = `absolute top-px right-px size-1.5 rounded-circle z-10 ${bg}`;
+  });
+
+  // Root class tracks props.class (compiled className effect, change-guarded).
+  let prevClass;
+  createRenderEffect(() => {
+    const cls = `relative size-8 shrink-0 rounded-2 ${props.class ?? ""}`;
+    if (cls !== prevClass) root.className = prevClass = cls;
+  });
+  return root;
 };
+
 const SessionRow = props => {
   const title = () => sessionTitle(props.session.title);
-  return _$createComponent(A, {
+  return createComponent(A, {
     get href() {
       return `/${props.slug}/session/${props.session.id}`;
     },
@@ -115,58 +139,54 @@ const SessionRow = props => {
       props.clearHoverProjectSoon();
     },
     get children() {
-      return [_$createComponent(Show, {
+      // Status slot: Show is the same runtime solid-js component the original
+      // used (its output is handled by A's own children insertion). Inside,
+      // a render effect replaces the compiled Switch/Match with the same
+      // first-match-wins order and short-circuit reads.
+      const status = createComponent(Show, {
         get when() {
           return props.isWorking() || props.hasPermissions() || props.hasError() || props.unseenCount() > 0;
         },
         get children() {
-          var _el$4 = _tmpl$6();
-          _$insert(_el$4, _$createComponent(Switch, {
-            get children() {
-              return [_$createComponent(Match, {
-                get when() {
-                  return props.isWorking();
-                },
-                get children() {
-                  return _$createComponent(Spinner, {
-                    "class": "size-[15px]"
-                  });
-                }
-              }), _$createComponent(Match, {
-                get when() {
-                  return props.hasPermissions();
-                },
-                get children() {
-                  return _tmpl$3();
-                }
-              }), _$createComponent(Match, {
-                get when() {
-                  return props.hasError();
-                },
-                get children() {
-                  return _tmpl$4();
-                }
-              }), _$createComponent(Match, {
-                get when() {
-                  return props.unseenCount() > 0;
-                },
-                get children() {
-                  return _tmpl$5();
-                }
-              })];
+          const box = document.createElement("div");
+          box.className = "shrink-0 size-6 d-flex align-items-center justify-content-center";
+          createRenderEffect(() => {
+            box.style.setProperty("color", props.tint() ?? "var(--icon-interactive-base)");
+          });
+          createRenderEffect(() => {
+            if (props.isWorking()) {
+              box.replaceChildren(createComponent(Spinner, {
+                "class": "size-[15px]"
+              }));
+              return;
             }
-          }));
-          _$effect(_$p => _$setStyleProperty(_el$4, "color", props.tint() ?? "var(--icon-interactive-base)"));
-          return _el$4;
+            if (props.hasPermissions()) {
+              box.replaceChildren(template(`<div class="size-1.5 rounded-circle bg-warning-subtle"></div>`));
+              return;
+            }
+            if (props.hasError()) {
+              box.replaceChildren(template(`<div class="size-1.5 rounded-circle bg-text-diff-delete-base"></div>`));
+              return;
+            }
+            if (props.unseenCount() > 0) {
+              box.replaceChildren(template(`<div class="size-1.5 rounded-circle bg-text-interactive-base"></div>`));
+              return;
+            }
+            box.replaceChildren();
+          });
+          return box;
         }
-      }), (() => {
-        var _el$8 = _tmpl$7();
-        _$insert(_el$8, title);
-        return _el$8;
-      })()];
+      });
+      const label = document.createElement("span");
+      label.className = "text-body-emphasis min-w-0 flex-1 truncate";
+      createRenderEffect(() => {
+        label.textContent = title() ?? "";
+      });
+      return [status, label];
     }
   });
 };
+
 export const SessionItem = props => {
   const params = useParams();
   const layout = useLayout();
@@ -207,7 +227,7 @@ export const SessionItem = props => {
       if (prev) props.prefetchSession(prev, step === 1 ? "high" : priority);
     }
   };
-  const item = _$createComponent(SessionRow, {
+  const item = createComponent(SessionRow, {
     get session() {
       return props.session;
     },
@@ -234,99 +254,111 @@ export const SessionItem = props => {
     warmPress: () => warm(2, "high"),
     warmFocus: () => warm(2, "high")
   });
-  return [(() => {
-    var _el$9 = _tmpl$9(),
-      _el$0 = _el$9.firstChild,
-      _el$1 = _el$0.firstChild;
-    _$insert(_el$1, _$createComponent(Show, {
-      get when() {
-        return !tooltip();
+
+  // Row skeleton (_tmpl$9): group row > flex line > title holder.
+  const row = template(`<div class="group/session relative w-full min-w-0 rounded-2 cursor-default pr-3 transition-colors"><div class="d-flex min-w-0 align-items-center gap-1"><div class="min-w-0 flex-1"></div></div></div>`);
+  const inner = row.firstChild;
+  const holder = inner.firstChild;
+
+  // Tooltip wrap (Show with fallback): the same `item` node moves between the
+  // bare and tooltip-wrapped renderings, so its listeners survive. Truthiness
+  // guard mirrors Show's condition memo (no re-wrap on same-value runs).
+  let wrapped;
+  createRenderEffect(() => {
+    const wrap = !!tooltip();
+    if (wrap === wrapped) return;
+    wrapped = wrap;
+    if (!wrap) {
+      holder.replaceChildren(item);
+      return;
+    }
+    holder.replaceChildren(createComponent(Tooltip, {
+      get placement() {
+        return props.mobile ? "bottom" : "right";
       },
-      get fallback() {
-        return _$createComponent(Tooltip, {
-          get placement() {
-            return props.mobile ? "bottom" : "right";
-          },
-          get value() {
-            return sessionTitle(props.session.title);
-          },
-          gutter: 10,
-          "class": "min-w-0 w-full",
-          children: item
-        });
+      get value() {
+        return sessionTitle(props.session.title);
       },
+      gutter: 10,
+      "class": "min-w-0 w-full",
       children: item
     }));
-    _$insert(_el$0, _$createComponent(Show, {
-      get when() {
-        return !props.level;
-      },
-      get children() {
-        var _el$10 = _tmpl$8();
-        _$insert(_el$10, _$createComponent(Tooltip, {
-          get value() {
-            return language.t("common.archive");
-          },
-          placement: "top",
-          get children() {
-            return _$createComponent(IconButton, {
-              icon: "archive",
-              variant: "ghost",
-              "class": "size-6 rounded-2",
-              get ["aria-label"]() {
-                return language.t("common.archive");
-              },
-              onClick: event => {
-                event.preventDefault();
-                event.stopPropagation();
-                void props.archiveSession(props.session);
-              }
-            });
-          }
-        }));
-        _$effect(_$p => _$classList(_el$10, {
-          "w-6 opacity-100 pointer-events-auto": !!props.mobile,
-          "w-0 opacity-0 pointer-events-none": !props.mobile,
-          "group-hover/session:w-6 group-hover/session:opacity-100 group-hover/session:pointer-events-auto": true,
-          "group-focus-within/session:w-6 group-focus-within/session:opacity-100 group-focus-within/session:pointer-events-auto": true
-        }, _$p));
-        return _el$10;
-      }
-    }), null);
-    _$effect(_p$ => {
-      var _v$ = props.session.id,
-        _v$2 = `${8 + (props.level ?? 0) * 16}px`;
-      _v$ !== _p$.e && _$setAttribute(_el$9, "data-session-id", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setStyleProperty(_el$9, "padding-left", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$9;
-  })(), _$createComponent(Show, {
-    get when() {
-      return currentChild();
+  });
+
+  // Archive affordance (Show when !props.level): built once at component scope
+  // so its class effect stays owned by the component, then attached/detached
+  // when the level flips. The reveal-on-hover classes mirror the compiled
+  // classList effect (static base + mobile-dependent width/opacity).
+  const archive = template(`<div class="shrink-0 overflow-hidden transition-[width,opacity]"></div>`);
+  archive.appendChild(createComponent(Tooltip, {
+    get value() {
+      return language.t("common.archive");
     },
-    keyed: true,
-    children: child => (() => {
-      var _el$11 = _tmpl$0();
-      _$insert(_el$11, _$createComponent(SessionItem, _$mergeProps(props, {
-        session: child,
-        get level() {
-          return (props.level ?? 0) + 1;
+    placement: "top",
+    get children() {
+      return createComponent(IconButton, {
+        icon: "archive",
+        variant: "ghost",
+        "class": "size-6 rounded-2",
+        get ["aria-label"]() {
+          return language.t("common.archive");
+        },
+        onClick: event => {
+          event.preventDefault();
+          event.stopPropagation();
+          void props.archiveSession(props.session);
         }
-      })));
-      return _el$11;
-    })()
-  })];
+      });
+    }
+  }));
+  createRenderEffect(() => {
+    archive.className = "shrink-0 overflow-hidden transition-[width,opacity]" + (props.mobile ? " w-6 opacity-100 pointer-events-auto" : " w-0 opacity-0 pointer-events-none") + " group-hover/session:w-6 group-hover/session:opacity-100 group-hover/session:pointer-events-auto" + " group-focus-within/session:w-6 group-focus-within/session:opacity-100 group-focus-within/session:pointer-events-auto";
+  });
+  let archiveShown = false;
+  createRenderEffect(() => {
+    const show = !props.level;
+    if (show === archiveShown) return;
+    archiveShown = show;
+    if (show) inner.appendChild(archive);
+    else archive.remove();
+  });
+
+  // data-session-id + indentation (compiled attr effect, change-guarded).
+  let prevId;
+  let prevPad;
+  createRenderEffect(() => {
+    const id = props.session.id;
+    const pad = `${8 + (props.level ?? 0) * 16}px`;
+    if (id !== prevId) row.setAttribute("data-session-id", prevId = id);
+    if (pad !== prevPad) row.style.setProperty("padding-left", prevPad = pad);
+  });
+
+  // Child session subtree (keyed Show): a memo that rebuilds the wrapper for
+  // each distinct child value; computations created in a run (the recursive
+  // SessionItem) are owned by the memo and disposed on change, like keyed Show.
+  const childNode = createMemo(() => {
+    const child = currentChild();
+    if (!child) return undefined;
+    const wrapper = document.createElement("div");
+    wrapper.className = "w-full";
+    mountSessionItem(wrapper, createComponent(SessionItem, mergeProps(props, {
+      session: child,
+      get level() {
+        return (props.level ?? 0) + 1;
+      }
+    })));
+    return wrapper;
+  });
+  return [row, childNode];
 };
+
 export const NewSessionItem = props => {
   const layout = useLayout();
   const language = useLanguage();
+  // Resolved once at setup, exactly like the original (not locale-reactive).
   const label = language.t("command.session.new");
   const tooltip = () => props.mobile || !props.sidebarExpanded();
-  const item = _$createComponent(A, {
+  const item = createComponent(A, {
     get href() {
       return `/${props.slug}/session`;
     },
@@ -339,53 +371,48 @@ export const NewSessionItem = props => {
       props.clearHoverProjectSoon();
     },
     get children() {
-      return [(() => {
-        var _el$12 = _tmpl$6();
-        _$insert(_el$12, _$createComponent(Icon, {
-          name: "new-session",
-          size: "small",
-          "class": "text-secondary"
-        }));
-        return _el$12;
-      })(), (() => {
-        var _el$13 = _tmpl$7();
-        _$insert(_el$13, label);
-        return _el$13;
-      })()];
+      const iconBox = document.createElement("div");
+      iconBox.className = "shrink-0 size-6 d-flex align-items-center justify-content-center";
+      iconBox.appendChild(createComponent(Icon, {
+        name: "new-session",
+        size: "small",
+        "class": "text-secondary"
+      }));
+      const span = document.createElement("span");
+      span.className = "text-body-emphasis min-w-0 flex-1 truncate";
+      span.textContent = label ?? "";
+      return [iconBox, span];
     }
   });
-  return (() => {
-    var _el$14 = _tmpl$1();
-    _$insert(_el$14, _$createComponent(Show, {
-      get when() {
-        return !tooltip();
+  const root = template(`<div class="group/session relative w-full min-w-0 rounded-2 cursor-default transition-colors pl-2 pr-3"></div>`);
+  let wrapped;
+  createRenderEffect(() => {
+    const wrap = !!tooltip();
+    if (wrap === wrapped) return;
+    wrapped = wrap;
+    if (!wrap) {
+      root.replaceChildren(item);
+      return;
+    }
+    root.replaceChildren(createComponent(Tooltip, {
+      get placement() {
+        return props.mobile ? "bottom" : "right";
       },
-      get fallback() {
-        return _$createComponent(Tooltip, {
-          get placement() {
-            return props.mobile ? "bottom" : "right";
-          },
-          value: label,
-          gutter: 10,
-          "class": "min-w-0 w-full",
-          children: item
-        });
-      },
+      value: label,
+      gutter: 10,
+      "class": "min-w-0 w-full",
       children: item
     }));
-    return _el$14;
-  })();
+  });
+  return root;
 };
+
 export const SessionSkeleton = props => {
-  const items = Array.from({
-    length: props.count ?? 4
-  }, (_, index) => index);
-  return (() => {
-    var _el$15 = _tmpl$10();
-    _$insert(_el$15, _$createComponent(For, {
-      each: items,
-      children: () => _tmpl$11()
-    }));
-    return _el$15;
-  })();
+  const root = template(`<div class="d-flex flex-column gap-1"></div>`);
+  // props.count was read once at setup in the original (static For source).
+  const count = props.count ?? 4;
+  for (let index = 0; index < count; index++) {
+    root.appendChild(template(`<div class="h-8 w-full rounded-2 bg-body-tertiary opacity-60 animate-pulse"></div>`));
+  }
+  return root;
 };

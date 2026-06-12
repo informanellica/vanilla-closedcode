@@ -1,8 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center gap-2"><span class="truncate flex-1 min-w-0 text-left font-normal"></span><span class="text-secondary shrink-0 font-normal">`);
-import { createMemo } from "solid-js";
+import { createComponent, createMemo } from "solid-js";
 import { useNavigate, useParams } from "@solidjs/router";
 import { useSync } from "@/context/sync.js";
 import { useSDK } from "@/context/sdk.js";
@@ -78,12 +74,30 @@ export const DialogFork = () => {
       });
     });
   };
-  return _$createComponent(Dialog, {
+
+  // Row renderer for List items. Items are static snapshots built by the
+  // messages memo (List re-renders rows itself), so plain DOM construction is
+  // enough; user message text goes through textContent, never into markup.
+  const renderItem = item => {
+    const row = document.createElement("div");
+    row.className = "w-100 d-flex align-items-center gap-2";
+    const textEl = document.createElement("span");
+    textEl.className = "truncate flex-1 min-w-0 text-left font-normal";
+    textEl.textContent = item.text ?? "";
+    row.appendChild(textEl);
+    const timeEl = document.createElement("span");
+    timeEl.className = "text-secondary shrink-0 font-normal";
+    timeEl.textContent = item.time ?? "";
+    row.appendChild(timeEl);
+    return row;
+  };
+
+  return createComponent(Dialog, {
     get title() {
       return language.t("command.session.fork");
     },
     get children() {
-      return _$createComponent(List, {
+      return createComponent(List, {
         "class": "flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0",
         get search() {
           return {
@@ -98,14 +112,7 @@ export const DialogFork = () => {
         items: messages,
         filterKeys: ["text"],
         onSelect: handleSelect,
-        children: item => (() => {
-          var _el$ = _tmpl$(),
-            _el$2 = _el$.firstChild,
-            _el$3 = _el$2.nextSibling;
-          _$insert(_el$2, () => item.text);
-          _$insert(_el$3, () => item.time);
-          return _el$;
-        })()
+        children: renderItem
       });
     }
   });

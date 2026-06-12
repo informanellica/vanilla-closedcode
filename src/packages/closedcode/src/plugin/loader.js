@@ -1,5 +1,5 @@
 import { checkPluginCompatibility, createPluginEntry, isDeprecatedPlugin, pluginSource, resolvePluginTarget } from "./shared.js";
-import { ConfigPlugin } from "@/config/plugin.js";
+import { ConfigPlugin } from "#config/plugin.js";
 import { InstallationVersion } from "core/installation/version";
 export let PluginLoader;
 (function (_PluginLoader) {

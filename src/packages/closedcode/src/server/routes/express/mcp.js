@@ -2,9 +2,9 @@
 import express from "express";
 import { Effect } from "effect";
 import z from "zod";
-import { MCP } from "@/mcp/index.js";
-import { ConfigMCP } from "@/config/mcp.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { MCP } from "#mcp/index.js";
+import { ConfigMCP } from "#config/mcp.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";

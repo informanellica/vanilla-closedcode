@@ -1,5 +1,5 @@
-import { Permission } from "@/permission/index.js";
-import { PermissionID } from "@/permission/schema.js";
+import { Permission } from "#permission/index.js";
+import { PermissionID } from "#permission/schema.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";

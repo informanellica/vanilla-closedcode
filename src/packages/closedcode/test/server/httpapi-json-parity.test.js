@@ -15,7 +15,7 @@ import {  SessionPaths  } from "../../src/server/routes/instance/httpapi/groups/
 import { writeFile } from "../lib/io.js";
 
 import {  MessageID, PartID  } from "../../src/session/schema.js"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  afterEach, describe, expect, beforeAll  } from "@jest/globals"
 void Log.init({

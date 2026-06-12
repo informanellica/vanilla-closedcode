@@ -1,11 +1,11 @@
 import path from "path";
 import { Effect, Layer, Context } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest } from "effect/unstable/http";
-import { Config } from "@/config/config.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Config } from "#config/config.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { Flag } from "core/flag/flag";
 import { AppFileSystem } from "core/filesystem";
-import { withTransientReadRetry } from "@/util/effect-http-client.js";
+import { withTransientReadRetry } from "#util/effect-http-client.js";
 import { Global } from "core/global";
 const FILES = ["AGENTS.md", "CONTEXT.md" // deprecated
 ];

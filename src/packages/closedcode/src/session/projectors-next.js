@@ -1,10 +1,8 @@
-import { and, desc, eq } from "@/storage/db.js";
-import { SessionMessage } from "@/v2/session-message.js";
-import { SessionMessageUpdater } from "@/v2/session-message-updater.js";
-import { SessionEvent } from "@/v2/session-event.js";
+import { SessionMessage } from "#v2/session-message.js";
+import { SessionMessageUpdater } from "#v2/session-message-updater.js";
+import { SessionEvent } from "#v2/session-event.js";
 import * as DateTime from "effect/DateTime";
-import { SyncEvent } from "@/sync/index.js";
-import { SessionMessageTable, SessionTable } from "./session.sql.js";
+import { SyncEvent } from "#sync/index.js";
 import { Schema } from "effect";
 const decodeMessage = Schema.decodeUnknownSync(SessionMessage.Message);
 function encodeDateTimes(value) {
@@ -18,58 +16,63 @@ function encodeDateTimes(value) {
 function encodeMessageData(value) {
   return encodeDateTimes(value);
 }
-function sqlite(db, sessionID) {
-  return {
+// The migration DDL declares JSON columns as `text`, and sequelize's sqlite
+// parser keys off the declared column type, so DataTypes.JSON values come
+// back as raw strings; parse to match the drizzle mode:"json" behavior.
+const json = value => (typeof value === "string" ? JSON.parse(value) : value);
+// SessionMessageUpdater.update is synchronous while sequelize is not: the
+// adapter pre-loads the rows the updater may read (within a single event all
+// reads happen before all writes) and queues the writes, which are flushed
+// in order after the updater returns.
+async function sqlite(h, sessionID) {
+  const fetch = async type => (await h.models.SessionMessage.findAll({
+    where: { session_id: sessionID, type },
+    order: [["id", "DESC"]],
+    transaction: h.tx
+  })).map(row => row.get({ plain: true }));
+  const rows = {
+    assistant: await fetch("assistant"),
+    compaction: await fetch("compaction"),
+    shell: await fetch("shell")
+  };
+  const decoded = {};
+  const messages = type => decoded[type] ??= rows[type].map(row => decodeMessage({
+    ...json(row.data),
+    id: row.id,
+    type: row.type
+  }));
+  const writes = [];
+  const set = message => {
+    const {
+      id,
+      type,
+      ...data
+    } = message;
+    writes.push(() => h.models.SessionMessage.update({
+      data: encodeMessageData(data)
+    }, {
+      where: { id, session_id: sessionID, type },
+      transaction: h.tx
+    }));
+  };
+  const adapter = {
     getCurrentAssistant() {
-      return db.select().from(SessionMessageTable).where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "assistant"))).orderBy(desc(SessionMessageTable.id)).all().map(row => decodeMessage({
-        ...row.data,
-        id: row.id,
-        type: row.type
-      })).find(message => message.type === "assistant" && !message.time.completed);
+      return messages("assistant").find(message => message.type === "assistant" && !message.time.completed);
     },
     getCurrentCompaction() {
-      return db.select().from(SessionMessageTable).where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "compaction"))).orderBy(desc(SessionMessageTable.id)).all().map(row => decodeMessage({
-        ...row.data,
-        id: row.id,
-        type: row.type
-      })).find(message => message.type === "compaction");
+      return messages("compaction").find(message => message.type === "compaction");
     },
     getCurrentShell(callID) {
-      return db.select().from(SessionMessageTable).where(and(eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, "shell"))).orderBy(desc(SessionMessageTable.id)).all().map(row => decodeMessage({
-        ...row.data,
-        id: row.id,
-        type: row.type
-      })).find(message => message.type === "shell" && message.callID === callID);
+      return messages("shell").find(message => message.type === "shell" && message.callID === callID);
     },
     updateAssistant(assistant) {
-      const {
-        id,
-        type,
-        ...data
-      } = assistant;
-      db.update(SessionMessageTable).set({
-        data: encodeMessageData(data)
-      }).where(and(eq(SessionMessageTable.id, id), eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, type))).run();
+      set(assistant);
     },
     updateCompaction(compaction) {
-      const {
-        id,
-        type,
-        ...data
-      } = compaction;
-      db.update(SessionMessageTable).set({
-        data: encodeMessageData(data)
-      }).where(and(eq(SessionMessageTable.id, id), eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, type))).run();
+      set(compaction);
     },
     updateShell(shell) {
-      const {
-        id,
-        type,
-        ...data
-      } = shell;
-      db.update(SessionMessageTable).set({
-        data: encodeMessageData(data)
-      }).where(and(eq(SessionMessageTable.id, id), eq(SessionMessageTable.session_id, sessionID), eq(SessionMessageTable.type, type))).run();
+      set(shell);
     },
     appendMessage(message) {
       const {
@@ -77,148 +80,162 @@ function sqlite(db, sessionID) {
         type,
         ...data
       } = message;
-      db.insert(SessionMessageTable).values([{
+      writes.push(() => h.models.SessionMessage.bulkCreate([{
         id,
         session_id: sessionID,
         type,
         time_created: DateTime.toEpochMillis(message.time.created),
         data: encodeMessageData(data)
-      }]).run();
+      }], { transaction: h.tx }));
     },
     finish() {}
   };
+  return {
+    adapter,
+    flush: async () => {
+      for (const write of writes) await write();
+    }
+  };
 }
-function update(db, event) {
-  SessionMessageUpdater.update(sqlite(db, event.data.sessionID), event);
+async function update(h, event) {
+  const store = await sqlite(h, event.data.sessionID);
+  SessionMessageUpdater.update(store.adapter, event);
+  await store.flush();
 }
-export default [SyncEvent.project(SessionEvent.AgentSwitched.Sync, (db, data, event) => {
-  db.update(SessionTable).set({
+export default [SyncEvent.project(SessionEvent.AgentSwitched.Sync, async (h, data, event) => {
+  await h.models.Session.update({
     agent: data.agent,
     time_updated: DateTime.toEpochMillis(data.timestamp)
-  }).where(eq(SessionTable.id, data.sessionID)).run();
-  update(db, {
+  }, {
+    where: { id: data.sessionID },
+    transaction: h.tx
+  });
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.agent.switched",
     data
   });
-}), SyncEvent.project(SessionEvent.ModelSwitched.Sync, (db, data, event) => {
-  db.update(SessionTable).set({
+}), SyncEvent.project(SessionEvent.ModelSwitched.Sync, async (h, data, event) => {
+  await h.models.Session.update({
     model: {
       id: data.id,
       providerID: data.providerID,
       variant: data.variant
     },
     time_updated: DateTime.toEpochMillis(data.timestamp)
-  }).where(eq(SessionTable.id, data.sessionID)).run();
-  update(db, {
+  }, {
+    where: { id: data.sessionID },
+    transaction: h.tx
+  });
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.model.switched",
     data
   });
-}), SyncEvent.project(SessionEvent.Prompted.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Prompted.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.prompted",
     data
   });
-}), SyncEvent.project(SessionEvent.Synthetic.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Synthetic.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.synthetic",
     data
   });
-}), SyncEvent.project(SessionEvent.Shell.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Shell.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.shell.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Shell.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Shell.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.shell.ended",
     data
   });
-}), SyncEvent.project(SessionEvent.Step.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Step.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.step.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Step.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Step.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.step.ended",
     data
   });
-}), SyncEvent.project(SessionEvent.Text.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Text.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.text.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Text.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Text.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Text.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Text.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.text.ended",
     data
   });
-}), SyncEvent.project(SessionEvent.Tool.Input.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Tool.Input.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.tool.input.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Tool.Input.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Tool.Input.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Tool.Input.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Tool.Input.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.tool.input.ended",
     data
   });
-}), SyncEvent.project(SessionEvent.Tool.Called.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Tool.Called.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.tool.called",
     data
   });
-}), SyncEvent.project(SessionEvent.Tool.Success.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Tool.Success.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.tool.success",
     data
   });
-}), SyncEvent.project(SessionEvent.Tool.Error.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Tool.Error.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.tool.error",
     data
   });
-}), SyncEvent.project(SessionEvent.Reasoning.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Reasoning.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.reasoning.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Reasoning.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Reasoning.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Reasoning.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Reasoning.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.reasoning.ended",
     data
   });
-}), SyncEvent.project(SessionEvent.Retried.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Retried.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.retried",
     data
   });
-}), SyncEvent.project(SessionEvent.Compaction.Started.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Compaction.Started.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.compaction.started",
     data
   });
-}), SyncEvent.project(SessionEvent.Compaction.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Compaction.Ended.Sync, (db, data, event) => {
-  update(db, {
+}), SyncEvent.project(SessionEvent.Compaction.Delta.Sync, () => {}), SyncEvent.project(SessionEvent.Compaction.Ended.Sync, async (h, data, event) => {
+  await update(h, {
     id: SessionMessage.ID.make(event.id),
     type: "session.next.compaction.ended",
     data

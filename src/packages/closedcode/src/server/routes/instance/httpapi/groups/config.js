@@ -1,5 +1,5 @@
-import { Config } from "@/config/config.js";
-import { Provider } from "@/provider/provider.js";
+import { Config } from "#config/config.js";
+import { Provider } from "#provider/provider.js";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";

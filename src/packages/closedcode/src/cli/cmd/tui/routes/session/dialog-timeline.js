@@ -1,8 +1,8 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { createMemo, onMount } from "solid-js";
-import { useSync } from "@tui/context/sync.js";
-import { DialogSelect } from "@tui/ui/dialog-select.js";
-import { Locale } from "@/util/locale.js";
+import { useSync } from "#tui/context/sync.js";
+import { DialogSelect } from "#tui/ui/dialog-select.js";
+import { Locale } from "#util/locale.js";
 import { DialogMessage } from "./dialog-message.js";
 import { useDialog } from "../../ui/dialog.js";
 export function DialogTimeline(props) {

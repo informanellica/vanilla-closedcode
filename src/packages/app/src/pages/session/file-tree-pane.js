@@ -1,18 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="h-100 d-flex flex-column"><div class="h-6 shrink-0"aria-hidden></div><div class="flex-1 pb-64 d-flex align-items-center justify-content-center text-center"><div class="small fw-normal text-secondary">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="px-2 py-2 small fw-normal text-secondary">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div id=file-tree-panel class="relative min-w-0 h-100 shrink-0 overflow-hidden border-r border"><div class="h-100 d-flex flex-column overflow-hidden">`),
-  _tmplClose = /*#__PURE__*/_$template(`<button type=button class="btn btn-link btn-sm p-0 px-1 position-absolute text-secondary text-decoration-none bg-body-tertiary rounded" style="top:3px;right:5px;z-index:6;line-height:1" title="左サイドバーを隠す" aria-label="左サイドバーを隠す"><i class="bi bi-x-lg"></i></button>`);
-import { Match, Show, Switch, createMemo } from "solid-js";
+import { Show, createComponent, createEffect, createMemo, onCleanup } from "solid-js";
 import { useParams } from "@solidjs/router";
 import { base64Decode } from "core/util/encode";
 import { createMediaQuery } from "@solid-primitives/media";
@@ -24,6 +10,23 @@ import { useLanguage } from "@/context/language.js";
 import { useLayout } from "@/context/layout.js";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
+
+// Width-transition classes, enabled while the user is NOT actively dragging
+// the resize handle. Toggled as a set (the compiled classList split the same
+// space-separated string into these tokens).
+const TRANSITION_CLASSES = [
+  "transition-[width]",
+  "duration-200",
+  "ease-[cubic-bezier(0.22,1,0.36,1)]",
+  "will-change-[width]",
+  "motion-reduce:transition-none"
+];
+
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html.trim();
+  return wrapper.firstElementChild;
+}
 
 /**
  * Standalone left-pane file tree panel.
@@ -85,42 +88,50 @@ export function FileTreePane(props) {
     return file.tree.children("").length === 0;
   });
 
-  const empty = msg => (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.nextSibling,
-      _el$4 = _el$3.firstChild;
-    _$insert(_el$4, msg);
-    return _el$;
-  })();
+  // Centered "no files" placeholder. msg is a plain translated string, set
+  // via textContent (never interpolated into markup).
+  const empty = msg => {
+    const el = template(`
+      <div class="h-100 d-flex flex-column">
+        <div class="h-6 shrink-0" aria-hidden></div>
+        <div class="flex-1 pb-64 d-flex align-items-center justify-content-center text-center">
+          <div class="small fw-normal text-secondary" data-slot="message"></div>
+        </div>
+      </div>`);
+    el.querySelector('[data-slot="message"]').textContent = msg;
+    return el;
+  };
 
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return isDesktop() && shown();
     },
     get children() {
-      var _el$5 = _tmpl$4(),
-        _el$6 = _el$5.firstChild;
-      var _close = _tmplClose();
-      _close.addEventListener("click", () => layout.fileTree.close());
-      // Sit inline in the header row (not absolutely positioned) so it lines up
-      // vertically with the "すべてのファイル" title.
-      _close.className = "btn btn-link btn-sm p-0 px-1 text-secondary text-decoration-none shrink-0";
-      _close.style.lineHeight = "1";
+      const root = template(`<div id="file-tree-panel" class="relative min-w-0 h-100 shrink-0 overflow-hidden border-r border"><div class="h-100 d-flex flex-column overflow-hidden"></div></div>`);
+      const column = root.firstChild;
+
+      // Close button. It sits inline in the header row (not absolutely
+      // positioned) so it lines up vertically with the "すべてのファイル"
+      // title; the top/right/z-index inline styles are inert without
+      // position-absolute and are kept only for markup parity.
+      const close = template(`<button type="button" class="btn btn-link btn-sm p-0 px-1 text-secondary text-decoration-none shrink-0" style="top:3px;right:5px;z-index:6;line-height:1" title="左サイドバーを隠す" aria-label="左サイドバーを隠す"><i class="bi bi-x-lg"></i></button>`);
+      close.addEventListener("click", () => layout.fileTree.close());
 
       // Single file tree (all files). The former "変更" (git-changed) tab was
       // removed — git changes live in the right-hand panel, so a duplicate
       // filter here is redundant — but the "すべてのファイル" header is kept as
       // the panel title.
-      var _header = document.createElement("div");
-      _header.className = "shrink-0 d-flex align-items-center justify-content-between px-3 pt-3 pb-1";
-      var _title = document.createElement("span");
-      _title.className = "small fw-medium text-secondary text-nowrap flex-shrink-0";
-      _$insert(_title, () => language.t("session.files.all"));
+      const header = document.createElement("div");
+      header.className = "shrink-0 d-flex align-items-center justify-content-between px-3 pt-3 pb-1";
+      const title = document.createElement("span");
+      title.className = "small fw-medium text-secondary text-nowrap flex-shrink-0";
+      createEffect(() => {
+        title.textContent = language.t("session.files.all");
+      });
       // Show WHICH folder is open: decode the session route's :dir param and
       // append the folder name next to the panel title (full path on hover).
-      var _rootName = document.createElement("span");
-      _rootName.className = "small fw-normal text-secondary text-truncate ms-1 me-auto min-w-0";
+      const rootName = document.createElement("span");
+      rootName.className = "small fw-normal text-secondary text-truncate ms-1 me-auto min-w-0";
       const routeParams = useParams();
       const openedDir = () => {
         try {
@@ -129,95 +140,84 @@ export function FileTreePane(props) {
           return "";
         }
       };
-      _$insert(_rootName, () => {
+      createEffect(() => {
         const dir = openedDir();
         const name = dir ? dir.split(/[\\/]/).filter(Boolean).pop() : "";
-        return name ? `— ${name}` : "";
+        rootName.textContent = name ? `— ${name}` : "";
       });
-      _$effect(() => _rootName.setAttribute("title", openedDir()));
-      _$insert(_header, _title);
-      _$insert(_header, _rootName);
-      _$insert(_header, _close);
-      _$insert(_el$6, _header);
+      createEffect(() => rootName.setAttribute("title", openedDir()));
+      header.appendChild(title);
+      header.appendChild(rootName);
+      header.appendChild(close);
+      column.appendChild(header);
 
-      var _body = document.createElement("div");
-      _body.className = "flex-1 min-h-0 bg-body px-3 py-0 overflow-y-auto";
-      _$insert(_body, _$createComponent(Switch, {
-        get children() {
-          return [_$createComponent(Match, {
-            get when() {
-              return nofiles();
-            },
-            get children() {
-              return empty(language.t("session.files.empty"));
-            }
-          }), _$createComponent(Match, {
-            when: true,
-            get children() {
-              return _$createComponent(FileTree, {
-                path: "",
-                "class": "pt-3",
-                get modified() {
-                  return diffFiles();
-                },
-                get kinds() {
-                  return kinds();
-                },
-                onFileClick: node => props.onFileClick(node.path),
-                onContextMenu: (node, e) => props.onContextMenu?.(node, e)
-              });
-            }
-          })];
+      const body = document.createElement("div");
+      body.className = "flex-1 min-h-0 bg-body px-3 py-0 overflow-y-auto";
+      // Switch/Match equivalent: empty placeholder once the root dir has
+      // loaded with no entries, otherwise the tree. Rebuilding inside the
+      // effect disposes and remounts the FileTree branch exactly like the
+      // compiled Switch did (nofiles is a memo, so the tree is not rebuilt
+      // on unrelated tree-state changes).
+      createEffect(() => {
+        if (nofiles()) {
+          body.replaceChildren(empty(language.t("session.files.empty")));
+          return;
         }
-      }));
-      _$insert(_el$6, _body);
-
-      _$insert(_el$5, _$createComponent(Show, {
-        get when() {
-          return fileOpen();
-        },
-        get children() {
-          var _el$8 = _tmpl$2();
-          _el$8.$$pointerdown = () => props.size.start();
-          _$insert(_el$8, _$createComponent(ResizeHandle, {
-            direction: "horizontal",
-            edge: "end",
-            get size() {
-              return layout.fileTree.width();
-            },
-            min: 200,
-            max: 480,
-            onResize: width => {
-              props.size.touch();
-              layout.fileTree.resize(width);
-            }
-          }));
-          return _el$8;
-        }
-      }), null);
-
-      _$effect(_p$ => {
-        var _v$ = !fileOpen(),
-          _v$2 = !fileOpen(),
-          _v$3 = {
-            "pointer-events-none": !fileOpen(),
-            "transition-[width] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[width] motion-reduce:transition-none": !props.size.active()
+        body.replaceChildren(createComponent(FileTree, {
+          path: "",
+          class: "pt-3",
+          get modified() {
+            return diffFiles();
           },
-          _v$4 = treeWidth();
-        _v$ !== _p$.e && _$setAttribute(_el$5, "aria-hidden", _p$.e = _v$);
-        _v$2 !== _p$.t && (_el$5.inert = _p$.t = _v$2);
-        _p$.a = _$classList(_el$5, _v$3, _p$.a);
-        _v$4 !== _p$.o && _$setStyleProperty(_el$5, "width", _p$.o = _v$4);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined,
-        a: undefined,
-        o: undefined
+          get kinds() {
+            return kinds();
+          },
+          onFileClick: node => props.onFileClick(node.path),
+          onContextMenu: (node, e) => props.onContextMenu?.(node, e)
+        }));
+      });
+      column.appendChild(body);
+
+      // Show equivalent for the resize handle: mounted only while the pane is
+      // open. onCleanup removes the node, and the effect re-run disposes the
+      // ResizeHandle scope, so close/open recreates it like <Show> did.
+      createEffect(() => {
+        if (!fileOpen()) return;
+        const handle = document.createElement("div");
+        handle.addEventListener("pointerdown", () => props.size.start());
+        handle.appendChild(createComponent(ResizeHandle, {
+          direction: "horizontal",
+          edge: "end",
+          get size() {
+            return layout.fileTree.width();
+          },
+          min: 200,
+          max: 480,
+          onResize: width => {
+            props.size.touch();
+            layout.fileTree.resize(width);
+          }
+        }));
+        root.appendChild(handle);
+        onCleanup(() => handle.remove());
       });
 
-      return _el$5;
+      // Collapsed-state bindings. Split into separate effects so each tracks
+      // only its own dependencies (all memo/store-backed, so they dedupe like
+      // the compiled change guards did).
+      createEffect(() => {
+        const closed = !fileOpen();
+        root.setAttribute("aria-hidden", closed);
+        root.inert = closed;
+        root.classList.toggle("pointer-events-none", closed);
+      });
+      createEffect(() => {
+        const animate = !props.size.active();
+        for (const cls of TRANSITION_CLASSES) root.classList.toggle(cls, animate);
+      });
+      createEffect(() => root.style.setProperty("width", treeWidth()));
+
+      return root;
     }
   });
 }
-_$delegateEvents(["pointerdown"]);

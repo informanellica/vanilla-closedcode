@@ -1,21 +1,24 @@
-import { template as _$template } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="px-1.5 pb-1.5"><div class="w-100 rounded-1 border bg-body-tertiary"><div class="w-100 d-flex flex-column align-items-start gap-4 px-1.5 pt-4 pb-4"><div class="px-2 fw-medium text-body"></div><div class=w-100>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center gap-x-3"><span>`);
+import { createComponent, createRenderEffect } from "solid-js";
 import { Button } from "@/bs/button.js";
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
 import { List } from "@/bs/list.js";
 import { ProviderIcon } from "@/vendor/ui/components/provider-icon.js";
 import { Tag } from "@/bs/tag.js";
-import { Show } from "solid-js";
 import { useLocal } from "@/context/local.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { popularProviders, useProviders } from "@/hooks/use-providers.js";
 import { useLanguage } from "@/context/language.js";
 import { localPresetMap, localPresets, presetToFormState } from "./local-llm-presets.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export const DialogSelectModelUnpaid = props => {
   // model state retained for API compatibility (unused now that the empty cloud free-models list was removed)
   void (props.model ?? useLocal().model);
@@ -40,7 +43,7 @@ export const DialogSelectModelUnpaid = props => {
   };
   const connect = provider => {
     void import("./dialog-connect-provider.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogConnectProvider, {
+      dialog.show(() => createComponent(x.DialogConnectProvider, {
         provider: provider
       }));
     });
@@ -49,7 +52,7 @@ export const DialogSelectModelUnpaid = props => {
     const preset = localPresetMap.get(presetID);
     if (!preset) return;
     void import("./dialog-custom-provider.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogCustomProvider, {
+      dialog.show(() => createComponent(x.DialogCustomProvider, {
         back: "close",
         get initial() {
           return presetToFormState(preset);
@@ -59,22 +62,24 @@ export const DialogSelectModelUnpaid = props => {
   };
   const all = () => {
     void import("./dialog-select-provider.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSelectProvider, {}));
+      dialog.show(() => createComponent(x.DialogSelectProvider, {}));
     });
   };
-  return _$createComponent(Dialog, {
+  return createComponent(Dialog, {
     get title() {
       return language.t("dialog.model.select.title");
     },
     "class": "overflow-y-auto [&_[data-slot=dialog-body]]:overflow-visible [&_[data-slot=dialog-body]]:flex-none",
     get children() {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.firstChild,
-        _el$4 = _el$3.firstChild,
-        _el$5 = _el$4.nextSibling;
-      _$insert(_el$4, () => language.t("dialog.model.unpaid.addMore.title"));
-      _$insert(_el$5, _$createComponent(List, {
+      const root = template(`<div class="px-1.5 pb-1.5"><div class="w-100 rounded-1 border bg-body-tertiary"><div class="w-100 d-flex flex-column align-items-start gap-4 px-1.5 pt-4 pb-4"><div class="px-2 fw-medium text-body" data-slot="add-more-title"></div><div class="w-100" data-slot="add-more-body"></div></div></div></div>`);
+      const titleEl = root.querySelector('[data-slot="add-more-title"]');
+      const bodyEl = root.querySelector('[data-slot="add-more-body"]');
+      // Translated heading: assigned via textContent (never interpolated into
+      // the HTML skeleton) and kept live across locale switches.
+      createRenderEffect(() => {
+        titleEl.textContent = language.t("dialog.model.unpaid.addMore.title");
+      });
+      bodyEl.appendChild(createComponent(List, {
         "class": "w-100 px-0",
         key: x => x?.id,
         items: items,
@@ -97,29 +102,29 @@ export const DialogSelectModelUnpaid = props => {
         },
         children: i => {
           const preset = localPresetMap.get(i.id);
-          return (() => {
-            var _el$6 = _tmpl$2(),
-              _el$7 = _el$6.firstChild;
-            _$insert(_el$6, _$createComponent(ProviderIcon, {
-              "data-slot": "list-item-extra-icon",
-              get id() {
-                return preset ? "synthetic" : i.id;
-              }
-            }), _el$7);
-            _$insert(_el$7, () => i.name);
-            _$insert(_el$6, _$createComponent(Show, {
-              when: preset,
-              get children() {
-                return _$createComponent(Tag, {
-                  children: "local"
-                });
-              }
-            }), null);
-            return _el$6;
-          })();
+          const row = template(`<div class="w-100 d-flex align-items-center gap-x-3"><span></span></div>`);
+          const nameEl = row.firstElementChild;
+          row.insertBefore(createComponent(ProviderIcon, {
+            "data-slot": "list-item-extra-icon",
+            get id() {
+              return preset ? "synthetic" : i.id;
+            }
+          }), nameEl);
+          // Item name is user/provider data: textContent only. The row is
+          // rebuilt by List on every render, so a one-shot assignment matches
+          // the compiled output (i.name is constant per item object).
+          nameEl.textContent = i.name;
+          // Show(preset): `preset` is constant for a given item, so the
+          // compiled Show never toggles — a static conditional is equivalent.
+          if (preset) {
+            row.appendChild(createComponent(Tag, {
+              children: "local"
+            }));
+          }
+          return row;
         }
-      }), null);
-      _$insert(_el$5, _$createComponent(Button, {
+      }));
+      bodyEl.appendChild(createComponent(Button, {
         variant: "ghost",
         "class": "w-100 justify-content-start px-[11px] py-3.5 gap-4.5 fw-medium",
         icon: "dot-grid",
@@ -127,8 +132,8 @@ export const DialogSelectModelUnpaid = props => {
         get children() {
           return language.t("dialog.provider.viewAll");
         }
-      }), null);
-      return _el$;
+      }));
+      return root;
     }
   });
 };

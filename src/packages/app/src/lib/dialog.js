@@ -1,9 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=dialog-stack>`);
-import { createContext, createEffect, createRoot, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "solid-js";
+import { createComponent, createContext, createEffect, createMemo, createRenderEffect, createRoot, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "solid-js";
 
 // Self-contained replacement for ui/context/dialog.
 //
@@ -27,6 +22,36 @@ function makeEventListener(target, type, handler, options) {
   onCleanup(remove);
   return remove;
 }
+
+// Resolve a possibly-reactive value the way solid-js/web's insert() does:
+// call accessors (here, the active dialog's memo) until a concrete value
+// remains. Runs inside a render effect, so the reads stay tracked.
+function resolveValue(value) {
+  while (typeof value === "function") value = value();
+  return value;
+}
+
+// Render `value` as the sole content of `el`, mirroring insert() semantics
+// for the shapes the dialog stack can hold: nothing (null/undefined/boolean),
+// a DOM node, a string/number, or an array of those.
+function renderInto(el, value) {
+  if (value == null || typeof value === "boolean") {
+    el.replaceChildren();
+    return;
+  }
+  if (Array.isArray(value)) {
+    const nodes = [];
+    for (const entry of value) {
+      const resolved = resolveValue(entry);
+      if (resolved == null || typeof resolved === "boolean") continue;
+      nodes.push(resolved instanceof Node ? resolved : String(resolved));
+    }
+    el.replaceChildren(...nodes);
+    return;
+  }
+  el.replaceChildren(value instanceof Node ? value : String(value));
+}
+
 const Context = createContext();
 function init() {
   const [active, setActive] = createSignal();
@@ -92,7 +117,10 @@ function init() {
       setClosing = setClosingSignal;
       // The shown element (a @/bs/dialog.js Dialog) owns its own backdrop and
       // closing animation; render it directly while it's not closing.
-      return _$memo(() => closing() ? null : element());
+      // `equals: false` matches the compiled memo() wrapper's semantics.
+      return createMemo(() => closing() ? null : element(), undefined, {
+        equals: false
+      });
     }));
     if (!dispose || !setClosing) return;
     setActive({
@@ -114,14 +142,21 @@ function init() {
 }
 export function DialogProvider(props) {
   const ctx = init();
-  return _$createComponent(Context.Provider, {
+  return createComponent(Context.Provider, {
     value: ctx,
     get children() {
-      return [_$memo(() => props.children), (() => {
-        var _el$ = _tmpl$();
-        _$insert(_el$, () => ctx.active?.node);
-        return _el$;
-      })()];
+      // Stack element that hosts the currently shown dialog. The render
+      // effect replaces solid-js/web insert(): it tracks both the `active`
+      // signal (via ctx.active) and the per-dialog closing memo, clearing or
+      // swapping the stack contents whenever either changes.
+      const stack = document.createElement("div");
+      stack.setAttribute("data-component", "dialog-stack");
+      createRenderEffect(() => {
+        renderInto(stack, resolveValue(ctx.active?.node));
+      });
+      return [createMemo(() => props.children, undefined, {
+        equals: false
+      }), stack];
     }
   });
 }

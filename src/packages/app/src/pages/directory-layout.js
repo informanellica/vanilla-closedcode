@@ -1,9 +1,8 @@
-import { createComponent as _$createComponent } from "solid-js/web";
 import { DataProvider } from "@/lib/context.js";
 import { showToast } from "@/lib/toast.js";
 import { base64Encode } from "core/util/encode";
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
-import { createEffect, createMemo, createResource, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, createResource } from "solid-js";
 import { useLanguage } from "@/context/language.js";
 import { LocalProvider } from "@/context/local.js";
 import { SDKProvider } from "@/context/sdk.js";
@@ -24,7 +23,7 @@ function DirectoryDataProvider(props) {
     });
   });
   createResource(() => params.id, id => sync.session.sync(id));
-  return _$createComponent(DataProvider, {
+  return createComponent(DataProvider, {
     get data() {
       return sync.data;
     },
@@ -34,7 +33,7 @@ function DirectoryDataProvider(props) {
     onNavigateToSession: sessionID => navigate(`/${slug()}/session/${sessionID}`),
     onSessionHref: sessionID => `/${slug()}/session/${sessionID}`,
     get children() {
-      return _$createComponent(LocalProvider, {
+      return createComponent(LocalProvider, {
         get children() {
           return props.children;
         }
@@ -69,18 +68,22 @@ export default function Layout(props) {
       replace: true
     });
   });
-  return _$createComponent(Show, {
-    get when() {
-      return resolved();
-    },
-    keyed: true,
-    children: resolved => _$createComponent(SDKProvider, {
-      directory: () => resolved,
+  // Keyed <Show> equivalent: resolved() is a memo with === equality, so this
+  // view memo re-runs — disposing and remounting the provider tree — exactly
+  // when the resolved directory value changes, and yields nothing while it is
+  // empty. The tree itself is built via createComponent (untracked), so the
+  // memo tracks only resolved(), like Show's condition memo. The router
+  // resolves the returned accessor the same way it resolved the Show result.
+  return createMemo(() => {
+    const directory = resolved();
+    if (!directory) return;
+    return createComponent(SDKProvider, {
+      directory: () => directory,
       get children() {
-        return _$createComponent(SyncProvider, {
+        return createComponent(SyncProvider, {
           get children() {
-            return _$createComponent(DirectoryDataProvider, {
-              directory: resolved,
+            return createComponent(DirectoryDataProvider, {
+              directory,
               get children() {
                 return props.children;
               }
@@ -88,6 +91,6 @@ export default function Layout(props) {
           }
         });
       }
-    })
+    });
   });
 }

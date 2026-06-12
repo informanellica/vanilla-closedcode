@@ -1,6 +1,6 @@
 import {  tmpdir  } from "../fixture/fixture.js"
 import {  Module  } from "core/util/module"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";
 describe("util.module", () => {

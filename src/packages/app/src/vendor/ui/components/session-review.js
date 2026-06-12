@@ -1,27 +1,3 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class=pb-6>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=session-review-container>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-component=session-review><div data-slot=session-review-header><div data-slot=session-review-title></div><div data-slot=session-review-actions>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<span data-slot=session-review-directory>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<button data-slot=session-review-view-button type=button>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-slot=session-review-change-group data-type=added><span data-slot=session-review-change data-type=added>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<span data-slot=session-review-change data-type=removed>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<span data-slot=session-review-change data-type=modified>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<span data-slot=session-review-diff-chevron>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div data-slot=session-review-trigger-content><div data-slot=session-review-file-info><div data-slot=session-review-file-name-container><span data-slot=session-review-filename></span></div></div><div data-slot=session-review-trigger-actions>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div data-slot=session-review-diff-placeholder class="rounded-3 border bg-body"style=height:160px>`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div data-slot=session-review-large-diff><div data-slot=session-review-large-diff-title></div><div data-slot=session-review-large-diff-meta></div><div data-slot=session-review-large-diff-actions>`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<div data-slot=session-review-diff-wrapper>`);
 import { Accordion } from "./accordion.js";
 import { Button } from "./button.js";
 import { DropdownMenu } from "./dropdown-menu.js";
@@ -37,15 +13,49 @@ import { useFileComponent } from "../context/file.js";
 import { useI18n } from "../context/i18n.js";
 import { getDirectory, getFilename } from "core/util/path";
 import { checksum } from "core/util/encode";
-import { createEffect, createMemo, For, Match, onCleanup, Show, Switch, untrack } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, onCleanup, Show, Switch, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Dynamic } from "solid-js/web";
+// insert() is the established exception for reactive/component-valued children
+// (most of them rendered inside Kobalte presence-gated Accordion content) so
+// Solid keeps reconciling accessors instead of freezing them.
+import { insert as _solidInsert } from "solid-js/web";
 import { mediaKindFromPath } from "../pierre/media.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "../pierre/selection-bridge.js";
 import { createLineCommentController } from "./line-comment-annotations.js";
 import { normalize, text } from "./session-diff.js";
 const MAX_DIFF_CHANGED_LINES = 500;
 const REVIEW_MOUNT_MARGIN = 300;
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated or
+// user-controlled strings are always assigned via textContent, never
+// interpolated. Built fresh per call: no cloneNode (listeners survive).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Diff-based classList application, mirroring solid-js/web classList(): only
+// keys whose truthiness changed are toggled; space-separated keys supported.
+function applyClassList(el, value, prev) {
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!name || name in nextObj || !prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.remove(cls);
+    }
+  }
+  for (const name of Object.keys(nextObj)) {
+    const on = !!nextObj[name];
+    if (!name || on === !!prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.toggle(cls, on);
+    }
+  }
+  return { ...nextObj };
+}
 function diff(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   if (!("file" in value) || typeof value.file !== "string") return false;
@@ -65,58 +75,64 @@ function list(value) {
   return Object.values(value).filter(diff);
 }
 function ReviewCommentMenu(props) {
-  return (() => {
-    var _el$ = _tmpl$();
-    _el$.$$click = event => event.stopPropagation();
-    _el$.$$mousedown = event => event.stopPropagation();
-    _$insert(_el$, _$createComponent(DropdownMenu, {
-      gutter: 4,
-      placement: "bottom-end",
-      get children() {
-        return [_$createComponent(DropdownMenu.Trigger, {
-          as: IconButton,
-          icon: "dot-grid",
-          variant: "ghost",
-          size: "small",
-          "class": "size-6 rounded-2",
-          get ["aria-label"]() {
-            return props.labels.moreLabel;
-          }
-        }), _$createComponent(DropdownMenu.Portal, {
-          get children() {
-            return _$createComponent(DropdownMenu.Content, {
-              get children() {
-                return [_$createComponent(DropdownMenu.Item, {
-                  get onSelect() {
-                    return props.onEdit;
-                  },
-                  get children() {
-                    return _$createComponent(DropdownMenu.ItemLabel, {
-                      get children() {
-                        return props.labels.editLabel;
-                      }
-                    });
-                  }
-                }), _$createComponent(DropdownMenu.Item, {
-                  get onSelect() {
-                    return props.onDelete;
-                  },
-                  get children() {
-                    return _$createComponent(DropdownMenu.ItemLabel, {
-                      get children() {
-                        return props.labels.deleteLabel;
-                      }
-                    });
-                  }
-                })];
-              }
-            });
-          }
-        })];
-      }
-    }));
-    return _el$;
-  })();
+  const root = template(`<div></div>`);
+  // The compiled output registered these as *delegated* $$click/$$mousedown
+  // handlers: their stopPropagation suppressed ancestor handlers during the
+  // document-level delegation walk — in particular the LineComment popover's
+  // own click (open/focus) and mousedown handlers. Those ancestors now attach
+  // native listeners (line-comment.js is converted), so a native
+  // stopPropagation here reproduces the same suppression at the same scope.
+  root.addEventListener("click", event => event.stopPropagation());
+  root.addEventListener("mousedown", event => event.stopPropagation());
+  // Kobalte component tree (portal + presence-gated content): insert() keeps
+  // its accessor output live, exactly like the compiled insert().
+  _solidInsert(root, createComponent(DropdownMenu, {
+    gutter: 4,
+    placement: "bottom-end",
+    get children() {
+      return [createComponent(DropdownMenu.Trigger, {
+        as: IconButton,
+        icon: "dot-grid",
+        variant: "ghost",
+        size: "small",
+        "class": "size-6 rounded-2",
+        get ["aria-label"]() {
+          return props.labels.moreLabel;
+        }
+      }), createComponent(DropdownMenu.Portal, {
+        get children() {
+          return createComponent(DropdownMenu.Content, {
+            get children() {
+              return [createComponent(DropdownMenu.Item, {
+                get onSelect() {
+                  return props.onEdit;
+                },
+                get children() {
+                  return createComponent(DropdownMenu.ItemLabel, {
+                    get children() {
+                      return props.labels.editLabel;
+                    }
+                  });
+                }
+              }), createComponent(DropdownMenu.Item, {
+                get onSelect() {
+                  return props.onDelete;
+                },
+                get children() {
+                  return createComponent(DropdownMenu.ItemLabel, {
+                    get children() {
+                      return props.labels.deleteLabel;
+                    }
+                  });
+                }
+              })];
+            }
+          });
+        }
+      })];
+    }
+  }));
+  return root;
 }
 function diffId(file) {
   const sum = checksum(file);
@@ -267,101 +283,107 @@ export const SessionReview = props => {
       requestAnimationFrame(() => props.onFocusedCommentChange?.(null));
     });
   });
-  return (() => {
-    var _el$2 = _tmpl$4(),
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.nextSibling;
-    _$insert(_el$4, (() => {
-      var _c$ = _$memo(() => props.title === undefined);
-      return () => _c$() ? i18n.t("ui.sessionReview.title") : props.title;
-    })());
-    _$insert(_el$5, _$createComponent(Show, {
-      get when() {
-        return _$memo(() => !!hasDiffs())() && props.onDiffStyleChange;
-      },
-      get children() {
-        return _$createComponent(RadioGroup, {
-          options: ["unified", "split"],
-          get current() {
-            return diffStyle();
-          },
-          size: "small",
-          value: style => style,
-          label: style => i18n.t(style === "unified" ? "ui.sessionReview.diffStyle.unified" : "ui.sessionReview.diffStyle.split"),
-          onSelect: style => style && props.onDiffStyleChange?.(style)
-        });
-      }
-    }), null);
-    _$insert(_el$5, _$createComponent(Show, {
-      get when() {
-        return hasDiffs();
-      },
-      get children() {
-        return _$createComponent(Button, {
-          size: "small",
-          icon: "chevron-grabber-vertical",
-          "class": "w-[106px] justify-start",
-          onClick: handleExpandOrCollapseAll,
-          get children() {
-            return _$createComponent(Switch, {
-              get children() {
-                return [_$createComponent(Match, {
-                  get when() {
-                    return open().length > 0;
-                  },
-                  get children() {
-                    return i18n.t("ui.sessionReview.collapseAll");
-                  }
-                }), _$createComponent(Match, {
-                  when: true,
-                  get children() {
-                    return i18n.t("ui.sessionReview.expandAll");
-                  }
-                })];
-              }
-            });
-          }
-        });
-      }
-    }), null);
-    _$insert(_el$5, () => props.actions, null);
-    _$insert(_el$2, _$createComponent(ScrollView, {
-      "data-slot": "session-review-scroll",
-      viewportRef: el => {
-        scroll = el;
-        props.scrollRef?.(el);
-        queue();
-      },
-      onScroll: handleScroll,
-      get classList() {
-        return {
-          [props.classes?.root ?? ""]: !!props.classes?.root
-        };
-      },
-      get children() {
-        var _el$6 = _tmpl$3();
-        _$insert(_el$6, _$createComponent(Show, {
-          get when() {
-            return hasDiffs();
-          },
-          get fallback() {
-            return props.empty;
-          },
-          get children() {
-            var _el$7 = _tmpl$2();
-            _$insert(_el$7, _$createComponent(Accordion, {
-              multiple: true,
-              get value() {
-                return open();
-              },
-              onChange: handleChange,
-              get children() {
-                return _$createComponent(For, {
-                  get each() {
-                    return items();
-                  },
-                  children: diff => {
+  // Static skeleton (compiled _tmpl$4): root > header > title + actions.
+  const root = template(`<div data-component="session-review"><div data-slot="session-review-header"><div data-slot="session-review-title"></div><div data-slot="session-review-actions"></div></div></div>`);
+  const header = root.firstChild;
+  const titleEl = header.firstChild;
+  const actionsEl = titleEl.nextSibling;
+  // Title: props.title may be any renderable (component, string, null), so it
+  // goes through insert(); the memo mirrors the compiled condition wrapper.
+  const defaultTitle = createMemo(() => props.title === undefined);
+  _solidInsert(titleEl, () => defaultTitle() ? i18n.t("ui.sessionReview.title") : props.title);
+  // Actions: three dynamic regions appended in order; each insert() with a
+  // null marker tracks its own nodes, like the compiled inserts.
+  _solidInsert(actionsEl, createComponent(Show, {
+    get when() {
+      return hasDiffs() && props.onDiffStyleChange;
+    },
+    get children() {
+      return createComponent(RadioGroup, {
+        options: ["unified", "split"],
+        get current() {
+          return diffStyle();
+        },
+        size: "small",
+        value: style => style,
+        label: style => i18n.t(style === "unified" ? "ui.sessionReview.diffStyle.unified" : "ui.sessionReview.diffStyle.split"),
+        onSelect: style => style && props.onDiffStyleChange?.(style)
+      });
+    }
+  }), null);
+  _solidInsert(actionsEl, createComponent(Show, {
+    get when() {
+      return hasDiffs();
+    },
+    get children() {
+      return createComponent(Button, {
+        size: "small",
+        icon: "chevron-grabber-vertical",
+        "class": "w-[106px] justify-start",
+        onClick: handleExpandOrCollapseAll,
+        get children() {
+          // Switch output is an accessor; the vanilla Button insert()s
+          // function children, so the label stays live.
+          return createComponent(Switch, {
+            get children() {
+              return [createComponent(Match, {
+                get when() {
+                  return open().length > 0;
+                },
+                get children() {
+                  return i18n.t("ui.sessionReview.collapseAll");
+                }
+              }), createComponent(Match, {
+                when: true,
+                get children() {
+                  return i18n.t("ui.sessionReview.expandAll");
+                }
+              })];
+            }
+          });
+        }
+      });
+    }
+  }), null);
+  _solidInsert(actionsEl, () => props.actions, null);
+  // ScrollView is a vanilla component returning a concrete element; appended
+  // after the header like the compiled insert with a null marker.
+  root.appendChild(createComponent(ScrollView, {
+    "data-slot": "session-review-scroll",
+    viewportRef: el => {
+      scroll = el;
+      props.scrollRef?.(el);
+      queue();
+    },
+    onScroll: handleScroll,
+    get classList() {
+      return {
+        [props.classes?.root ?? ""]: !!props.classes?.root
+      };
+    },
+    get children() {
+      const container = template(`<div data-slot="session-review-container"></div>`);
+      _solidInsert(container, createComponent(Show, {
+        get when() {
+          return hasDiffs();
+        },
+        get fallback() {
+          return props.empty;
+        },
+        get children() {
+          const listEl = template(`<div class="pb-6"></div>`);
+          _solidInsert(listEl, createComponent(Accordion, {
+            multiple: true,
+            get value() {
+              return open();
+            },
+            onChange: handleChange,
+            get children() {
+              return createComponent(For, {
+                get each() {
+                  return items();
+                },
+                children: diff => {
                     const file = diff.file;
 
                     // binary files have empty diffs that we can't render
@@ -452,7 +474,7 @@ export const SessionReview = props => {
                         });
                       },
                       editSubmitLabel: props.lineCommentActions?.saveLabel,
-                      renderCommentActions: props.lineCommentActions ? (comment, controls) => _$createComponent(ReviewCommentMenu, {
+                      renderCommentActions: props.lineCommentActions ? (comment, controls) => createComponent(ReviewCommentMenu, {
                         get labels() {
                           return props.lineCommentActions;
                         },
@@ -477,7 +499,7 @@ export const SessionReview = props => {
                       if (!props.onLineComment) return;
                       commentsUi.onLineSelectionEnd(range);
                     };
-                    return _$createComponent(Accordion.Item, {
+                    return createComponent(Accordion.Item, {
                       get value() {
                         return diffCanRender() ? file : null;
                       },
@@ -490,175 +512,189 @@ export const SessionReview = props => {
                         return props.focusedFile === file ? "" : undefined;
                       },
                       get children() {
-                        return [_$createComponent(StickyAccordionHeader, {
+                        return [createComponent(StickyAccordionHeader, {
                           get children() {
-                            return _$createComponent(Accordion.Trigger, {
+                            return createComponent(Accordion.Trigger, {
                               get disabled() {
                                 return !diffCanRender();
                               },
                               "class": "cursor-default",
                               get children() {
-                                var _el$8 = _tmpl$1(),
-                                  _el$9 = _el$8.firstChild,
-                                  _el$0 = _el$9.firstChild,
-                                  _el$10 = _el$0.firstChild,
-                                  _el$12 = _el$9.nextSibling;
-                                _$insert(_el$9, _$createComponent(FileIcon, {
+                                // Static trigger skeleton (compiled _tmpl$1).
+                                const content = template(`<div data-slot="session-review-trigger-content"><div data-slot="session-review-file-info"><div data-slot="session-review-file-name-container"><span data-slot="session-review-filename"></span></div></div><div data-slot="session-review-trigger-actions"></div></div>`);
+                                const fileInfo = content.firstChild;
+                                const nameContainer = fileInfo.firstChild;
+                                const filenameEl = nameContainer.firstChild;
+                                const triggerActions = fileInfo.nextSibling;
+                                // FileIcon goes before the file-name container
+                                // (vanilla FileIcon returns a concrete element).
+                                fileInfo.insertBefore(createComponent(FileIcon, {
                                   node: {
                                     path: file,
                                     type: "file"
                                   }
-                                }), _el$0);
-                                _$insert(_el$0, _$createComponent(Show, {
+                                }), nameContainer);
+                                // Show(when file.includes("/")): `file` is
+                                // fixed for this row, so the branch is static.
+                                // Directory text set via textContent, never
+                                // interpolated into markup.
+                                if (file.includes("/")) {
+                                  const dir = template(`<span data-slot="session-review-directory"></span>`);
+                                  dir.textContent = `\u202A${getDirectory(file)}\u202C`;
+                                  nameContainer.insertBefore(dir, filenameEl);
+                                }
+                                filenameEl.textContent = getFilename(file);
+                                // Show(when onViewFile && diffCanRender()):
+                                // Tooltip is a Solid component tree, so the
+                                // runtime Show keeps its mount/dispose contract.
+                                _solidInsert(nameContainer, createComponent(Show, {
                                   get when() {
-                                    return file.includes("/");
+                                    return !!props.onViewFile && diffCanRender();
                                   },
                                   get children() {
-                                    var _el$1 = _tmpl$5();
-                                    _$insert(_el$1, () => `\u202A${getDirectory(file)}\u202C`);
-                                    return _el$1;
-                                  }
-                                }), _el$10);
-                                _$insert(_el$10, () => getFilename(file));
-                                _$insert(_el$0, _$createComponent(Show, {
-                                  get when() {
-                                    return _$memo(() => !!props.onViewFile)() && diffCanRender();
-                                  },
-                                  get children() {
-                                    return _$createComponent(Tooltip, {
+                                    return createComponent(Tooltip, {
                                       get value() {
                                         return openFileLabel();
                                       },
                                       placement: "top",
                                       gutter: 4,
                                       get children() {
-                                        var _el$11 = _tmpl$6();
-                                        _el$11.$$click = e => {
+                                        const viewButton = template(`<button data-slot="session-review-view-button" type="button"></button>`);
+                                        // Compiled delegated $$click -> native
+                                        // listener. The stopPropagation still
+                                        // suppresses the Kobalte accordion
+                                        // trigger's (delegated) click handler:
+                                        // the event no longer reaches the
+                                        // document where the delegation walk
+                                        // starts.
+                                        viewButton.addEventListener("click", e => {
                                           e.stopPropagation();
                                           props.onViewFile?.(file);
-                                        };
-                                        _$insert(_el$11, _$createComponent(Icon, {
+                                        });
+                                        viewButton.appendChild(createComponent(Icon, {
                                           name: "open-file",
                                           size: "small"
                                         }));
-                                        _$effect(() => _$setAttribute(_el$11, "aria-label", openFileLabel()));
-                                        return _el$11;
+                                        // aria-label stays live across
+                                        // language switches.
+                                        createRenderEffect(() => viewButton.setAttribute("aria-label", openFileLabel()));
+                                        return viewButton;
                                       }
                                     });
                                   }
                                 }), null);
-                                _$insert(_el$12, _$createComponent(Switch, {
-                                  get children() {
-                                    return [_$createComponent(Match, {
-                                      get when() {
-                                        return isAdded();
-                                      },
-                                      get children() {
-                                        var _el$13 = _tmpl$7(),
-                                          _el$14 = _el$13.firstChild;
-                                        _$insert(_el$14, () => i18n.t("ui.sessionReview.change.added"));
-                                        _$insert(_el$13, _$createComponent(DiffChanges, {
-                                          changes: diff
-                                        }), null);
-                                        return _el$13;
-                                      }
-                                    }), _$createComponent(Match, {
-                                      get when() {
-                                        return isDeleted();
-                                      },
-                                      get children() {
-                                        var _el$15 = _tmpl$8();
-                                        _$insert(_el$15, () => i18n.t("ui.sessionReview.change.removed"));
-                                        return _el$15;
-                                      }
-                                    }), _$createComponent(Match, {
-                                      get when() {
-                                        return !!mediaKind();
-                                      },
-                                      get children() {
-                                        var _el$16 = _tmpl$9();
-                                        _$insert(_el$16, () => i18n.t("ui.sessionReview.change.modified"));
-                                        return _el$16;
-                                      }
-                                    }), _$createComponent(Match, {
-                                      when: true,
-                                      get children() {
-                                        return _$createComponent(DiffChanges, {
-                                          changes: diff
-                                        });
-                                      }
-                                    })];
-                                  }
-                                }), null);
-                                _$insert(_el$12, _$createComponent(Show, {
-                                  get when() {
-                                    return diffCanRender();
-                                  },
-                                  get children() {
-                                    var _el$17 = _tmpl$0();
-                                    _$insert(_el$17, _$createComponent(Icon, {
-                                      name: "chevron-down",
-                                      size: "small"
-                                    }));
-                                    return _el$17;
-                                  }
-                                }), null);
-                                return _el$8;
+                                // Switch over the change type: every condition
+                                // depends only on the per-row `diff` object
+                                // (rows are recreated when the diff changes),
+                                // so the branch is static; only the i18n
+                                // labels stay reactive.
+                                if (isAdded()) {
+                                  const group = template(`<div data-slot="session-review-change-group" data-type="added"><span data-slot="session-review-change" data-type="added"></span></div>`);
+                                  const label = group.firstChild;
+                                  createRenderEffect(() => {
+                                    label.textContent = i18n.t("ui.sessionReview.change.added");
+                                  });
+                                  // DiffChanges returns a Show-like accessor,
+                                  // appended after the label like the compiled
+                                  // insert with a null marker.
+                                  _solidInsert(group, createComponent(DiffChanges, {
+                                    changes: diff
+                                  }), null);
+                                  triggerActions.appendChild(group);
+                                } else if (isDeleted()) {
+                                  const label = template(`<span data-slot="session-review-change" data-type="removed"></span>`);
+                                  createRenderEffect(() => {
+                                    label.textContent = i18n.t("ui.sessionReview.change.removed");
+                                  });
+                                  triggerActions.appendChild(label);
+                                } else if (mediaKind()) {
+                                  const label = template(`<span data-slot="session-review-change" data-type="modified"></span>`);
+                                  createRenderEffect(() => {
+                                    label.textContent = i18n.t("ui.sessionReview.change.modified");
+                                  });
+                                  triggerActions.appendChild(label);
+                                } else {
+                                  _solidInsert(triggerActions, createComponent(DiffChanges, {
+                                    changes: diff
+                                  }), null);
+                                }
+                                // Show(when diffCanRender()): static per row.
+                                if (diffCanRender()) {
+                                  const chevron = template(`<span data-slot="session-review-diff-chevron"></span>`);
+                                  chevron.appendChild(createComponent(Icon, {
+                                    name: "chevron-down",
+                                    size: "small"
+                                  }));
+                                  triggerActions.appendChild(chevron);
+                                }
+                                return content;
                               }
                             });
                           }
-                        }), _$createComponent(Accordion.Content, {
+                        }), createComponent(Accordion.Content, {
                           "data-slot": "session-review-accordion-content",
                           get children() {
-                            var _el$18 = _tmpl$12();
-                            _$use(el => {
-                              anchors.set(file, el);
-                              nodes.set(file, el);
-                              queue();
-                            }, _el$18);
-                            _$insert(_el$18, _$createComponent(Show, {
+                            // Kobalte presence-gated content: this getter runs
+                            // per mount, exactly like the compiled template.
+                            const wrapper = template(`<div data-slot="session-review-diff-wrapper"></div>`);
+                            // The compiled use(...) ref ran synchronously at
+                            // creation time; inline its body here.
+                            anchors.set(file, wrapper);
+                            nodes.set(file, wrapper);
+                            queue();
+                            _solidInsert(wrapper, createComponent(Show, {
                               get when() {
                                 return expanded();
                               },
                               get children() {
-                                return _$createComponent(Switch, {
+                                return createComponent(Switch, {
                                   get children() {
-                                    return [_$createComponent(Match, {
+                                    return [createComponent(Match, {
                                       get when() {
-                                        return _$memo(() => !!!mounted())() && !tooLarge();
+                                        return !mounted() && !tooLarge();
                                       },
                                       get children() {
-                                        return _tmpl$10();
+                                        return template(`<div data-slot="session-review-diff-placeholder" class="rounded-3 border bg-body" style="height:160px"></div>`);
                                       }
-                                    }), _$createComponent(Match, {
+                                    }), createComponent(Match, {
                                       get when() {
                                         return tooLarge();
                                       },
                                       get children() {
-                                        var _el$20 = _tmpl$11(),
-                                          _el$21 = _el$20.firstChild,
-                                          _el$22 = _el$21.nextSibling,
-                                          _el$23 = _el$22.nextSibling;
-                                        _$insert(_el$21, () => i18n.t("ui.sessionReview.largeDiff.title"));
-                                        _$insert(_el$22, () => i18n.t("ui.sessionReview.largeDiff.meta", {
-                                          limit: MAX_DIFF_CHANGED_LINES.toLocaleString(),
-                                          current: changedLines().toLocaleString()
-                                        }));
-                                        _$insert(_el$23, _$createComponent(Button, {
+                                        const large = template(`<div data-slot="session-review-large-diff"><div data-slot="session-review-large-diff-title"></div><div data-slot="session-review-large-diff-meta"></div><div data-slot="session-review-large-diff-actions"></div></div>`);
+                                        const largeTitle = large.firstChild;
+                                        const largeMeta = largeTitle.nextSibling;
+                                        const largeActions = largeMeta.nextSibling;
+                                        createRenderEffect(() => {
+                                          largeTitle.textContent = i18n.t("ui.sessionReview.largeDiff.title");
+                                        });
+                                        createRenderEffect(() => {
+                                          largeMeta.textContent = i18n.t("ui.sessionReview.largeDiff.meta", {
+                                            limit: MAX_DIFF_CHANGED_LINES.toLocaleString(),
+                                            current: changedLines().toLocaleString()
+                                          });
+                                        });
+                                        largeActions.appendChild(createComponent(Button, {
                                           size: "normal",
                                           variant: "secondary",
                                           onClick: () => setStore("force", file, true),
-                                          get children() {
-                                            return i18n.t("ui.sessionReview.largeDiff.renderAnyway");
-                                          }
+                                          // Function child: the vanilla Button
+                                          // insert()s it, so the label stays
+                                          // live across language switches.
+                                          children: () => i18n.t("ui.sessionReview.largeDiff.renderAnyway")
                                         }));
-                                        return _el$20;
+                                        return large;
                                       }
-                                    }), _$createComponent(Match, {
+                                    }), createComponent(Match, {
                                       when: true,
                                       get children() {
-                                        return _$createComponent(Dynamic, {
-                                          component: fileComponent,
+                                        // fileComponent is the context-provided
+                                        // file component. The provider snapshots
+                                        // props.component once (createSimpleContext
+                                        // init), so the component is static and
+                                        // Dynamic is unnecessary: create it
+                                        // directly with the same reactive props.
+                                        return createComponent(fileComponent, {
                                           mode: "diff",
                                           get fileDiff() {
                                             return diff.fileDiff;
@@ -690,7 +726,7 @@ export const SessionReview = props => {
                                             return commentsUi.renderAnnotation;
                                           },
                                           get renderHoverUtility() {
-                                            return _$memo(() => !!props.onLineComment)() ? commentsUi.renderHoverUtility : undefined;
+                                            return props.onLineComment ? commentsUi.renderHoverUtility : undefined;
                                           },
                                           get selectedLines() {
                                             return selectedLines();
@@ -713,36 +749,49 @@ export const SessionReview = props => {
                                 });
                               }
                             }));
-                            return _el$18;
+                            return wrapper;
                           }
                         })];
                       }
                     });
                   }
-                });
-              }
-            }));
-            return _el$7;
-          }
-        }));
-        _$effect(() => _$className(_el$6, props.classes?.container));
-        return _el$6;
-      }
-    }), null);
-    _$effect(_p$ => {
-      var _v$ = props.class,
-        _v$2 = props.classList,
-        _v$3 = props.classes?.header;
-      _v$ !== _p$.e && _$className(_el$2, _p$.e = _v$);
-      _p$.t = _$classList(_el$2, _v$2, _p$.t);
-      _v$3 !== _p$.a && _$className(_el$3, _p$.a = _v$3);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined
-    });
-    return _el$2;
-  })();
+              });
+            }
+          }));
+          return listEl;
+        }
+      }));
+      // className(container, props.classes?.container) ran unguarded in the
+      // compiled effect(); keep the same null -> removeAttribute contract.
+      createRenderEffect(() => {
+        const next = props.classes?.container;
+        if (next == null) container.removeAttribute("class");
+        else container.className = next;
+      });
+      return container;
+    }
+  }));
+  // Reactive root/header classes, mirroring the compiled change-guarded
+  // effect: className(root, props.class), classList(root, props.classList),
+  // className(header, props.classes?.header).
+  let prevRootClass;
+  let prevRootClassList;
+  let prevHeaderClass;
+  createRenderEffect(() => {
+    const nextClass = props.class;
+    const nextClassList = props.classList;
+    const nextHeader = props.classes?.header;
+    if (nextClass !== prevRootClass) {
+      prevRootClass = nextClass;
+      if (nextClass == null) root.removeAttribute("class");
+      else root.className = nextClass;
+    }
+    prevRootClassList = applyClassList(root, nextClassList, prevRootClassList);
+    if (nextHeader !== prevHeaderClass) {
+      prevHeaderClass = nextHeader;
+      if (nextHeader == null) header.removeAttribute("class");
+      else header.className = nextHeader;
+    }
+  });
+  return root;
 };
-_$delegateEvents(["mousedown", "click"]);

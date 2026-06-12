@@ -11,11 +11,11 @@ import { WebSocketServer, WebSocket } from "ws";
 // abort that fetch (UND_ERR_HEADERS_TIMEOUT) and kill the run. 0 = no timeout.
 const IN_PROCESS_DISPATCHER = new Agent({ headersTimeout: 0, bodyTimeout: 0 });
 import { Flag } from "core/flag/flag";
-import { WorkspaceID } from "@/control-plane/schema.js";
-import { Workspace } from "@/control-plane/workspace.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { ProxyUtil } from "@/server/proxy-util.js";
-import { resolveWorkspaceRoute, workspaceProxyURL } from "@/server/workspace.js";
+import { WorkspaceID } from "#control-plane/schema.js";
+import { Workspace } from "#control-plane/workspace.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { ProxyUtil } from "#server/proxy-util.js";
+import { resolveWorkspaceRoute, workspaceProxyURL } from "#server/workspace.js";
 
 async function listen(app, opts, inject) {
   const start = (port) =>

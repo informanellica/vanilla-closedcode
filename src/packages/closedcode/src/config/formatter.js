@@ -1,7 +1,7 @@
 export * as ConfigFormatter from "./formatter.js";
 import { Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 export const Entry = Schema.Struct({
   disabled: Schema.optional(Schema.Boolean),
   command: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),

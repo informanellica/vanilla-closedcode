@@ -1,6 +1,6 @@
-import { BusEvent } from "@/bus/bus-event.js";
-import { SessionID } from "@/session/schema.js";
-import { PositiveInt } from "@/util/schema.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { SessionID } from "#session/schema.js";
+import { PositiveInt } from "#util/schema.js";
 import { Effect, Schema } from "effect";
 const DEFAULT_TOAST_DURATION = 5000;
 export const TuiEvent = {

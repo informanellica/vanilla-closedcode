@@ -3,7 +3,7 @@ import {  disposeAllInstances, provideInstance, tmpdir  } from "../fixture/fixtu
 import {  $  } from "script/shell"
 import {  Snapshot  } from "../../src/snapshot/index.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  afterEach, test, expect, beforeAll  } from "@jest/globals"
 import fs from "fs/promises";
 import path from "path";

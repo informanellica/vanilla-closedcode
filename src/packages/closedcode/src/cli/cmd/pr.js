@@ -1,9 +1,9 @@
 import { Effect } from "effect";
 import { UI } from "../ui.js";
 import { effectCmd, fail } from "../effect-cmd.js";
-import { Git } from "@/git/index.js";
-import { InstanceRef } from "@/effect/instance-ref.js";
-import { Process } from "@/util/process.js";
+import { Git } from "#git/index.js";
+import { InstanceRef } from "#effect/instance-ref.js";
+import { Process } from "#util/process.js";
 export const PrCommand = effectCmd({
   command: "pr <number>",
   describe: "fetch and checkout a GitHub PR branch, then run closedcode",

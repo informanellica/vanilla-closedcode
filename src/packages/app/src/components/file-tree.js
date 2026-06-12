@@ -1,28 +1,9 @@
-import { template as _$template } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span class="shrink-0 w-4 text-center small fw-medium">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="shrink-0 size-1.5 mr-1.5 rounded-circle">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-component=filetree>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="size-4 d-flex align-items-center justify-content-center text-secondary">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="w-4 shrink-0">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<span class="filetree-iconpair size-4">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="px-2 py-1 small fw-normal text-secondary">...`);
 import { useFile } from "@/context/file.js";
 import { encodeFilePath } from "@/context/file/path.js";
 import { Collapsible } from "@/bs/collapsible.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
-import { createEffect, createMemo, For, Match, on, Show, splitProps, Switch, untrack } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, on, Show, splitProps, Switch, untrack } from "solid-js";
 const MAX_DEPTH = 128;
 function pathToFileUrl(filepath) {
   return `file://${encodeFilePath(filepath)}`;
@@ -90,6 +71,65 @@ const withFileDragImage = event => {
   event.dataTransfer?.setDragImage(image, 0, 12);
   setTimeout(() => document.body.removeChild(image), 0);
 };
+// Diff-apply a Solid classList object, mirroring the compiled classList()
+// helper: a key may hold several space-separated classes and only changed keys
+// are touched, so classes applied elsewhere on the element survive.
+function applyClassList(el, value, prev) {
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!name || name in nextObj || !prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.remove(cls);
+    }
+  }
+  for (const name of Object.keys(nextObj)) {
+    const enabled = !!nextObj[name];
+    if (!name || enabled === !!prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.toggle(cls, enabled);
+    }
+  }
+  return { ...nextObj };
+}
+// Flatten possibly-reactive children into `out`. Function values (the memos
+// returned by For/Switch/Show) are called here, inside the caller's render
+// effect, so branch flips re-run that effect; arrays recurse and
+// null/boolean values are dropped — the same shapes solid-js/web's insert()
+// resolved for this component.
+function appendResolved(out, value) {
+  if (value == null || typeof value === "boolean") return;
+  if (typeof value === "function") {
+    appendResolved(out, value());
+    return;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) appendResolved(out, item);
+    return;
+  }
+  out.push(value instanceof Node ? value : document.createTextNode(String(value)));
+}
+// Replace `parent`'s children with `next`, skipping the no-op case so re-runs
+// that resolve to the same nodes do not detach and reattach them.
+function syncChildren(parent, next) {
+  const current = parent.childNodes;
+  if (current.length === next.length) {
+    let same = true;
+    for (let i = 0; i < next.length; i++) {
+      if (current[i] !== next[i]) {
+        same = false;
+        break;
+      }
+    }
+    if (same) return;
+  }
+  parent.replaceChildren(...next);
+}
+// Single row (file or directory label). The compiled version rendered this
+// through solid-js/web's Dynamic + reactive spread; `as` and the leftover rest
+// props (type / onDblClick / onContextMenu) are static at both call sites, so
+// the element is created once and only the genuinely reactive bindings
+// (classList, draggable, name, kind marker, caller children) get effects.
 const FileTreeNode = p => {
   const [local, rest] = splitProps(p, ["node", "level", "active", "nodeClass", "draggable", "kinds", "marks", "as", "children", "class", "classList"]);
   const kind = () => visibleKind(local.node, local.kinds, local.marks);
@@ -99,75 +139,90 @@ const FileTreeNode = p => {
     if (!value) return;
     return kindTextColor(value);
   };
-  return _$createComponent(Dynamic, _$mergeProps({
-    get component() {
-      return local.as ?? "div";
-    },
-    get classList() {
-      return {
-        "w-100 min-w-0 h-6 d-flex align-items-center justify-content-start gap-x-1.5 rounded-2 px-1.5 py-0 text-left transition-colors cursor-pointer": true,
-        "bg-body-tertiary": local.node.path === local.active,
-        ...local.classList,
-        [local.class ?? ""]: !!local.class,
-        [local.nodeClass ?? ""]: !!local.nodeClass
-      };
-    },
-    get style() {
-      // Files and directories share the same indent so a file's icon sits in the
-      // chevron column and file names left-align with sibling folder names (a
-      // file has no chevron; its type icon takes that slot — see the removed
-      // spacer below).
-      return `padding-left: ${Math.max(0, 8 + local.level * 12 - 4)}px`;
-    },
-    get draggable() {
-      return local.draggable;
-    },
-    onDragStart: event => {
-      if (!local.draggable) return;
-      event.dataTransfer?.setData("text/plain", `file:${local.node.path}`);
-      event.dataTransfer?.setData("text/uri-list", pathToFileUrl(local.node.path));
-      if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
-      withFileDragImage(event);
+  const el = document.createElement(local.as ?? "div");
+  let elClasses;
+  createRenderEffect(() => {
+    elClasses = applyClassList(el, {
+      "w-100 min-w-0 h-6 d-flex align-items-center justify-content-start gap-x-1.5 rounded-2 px-1.5 py-0 text-left transition-colors cursor-pointer": true,
+      "bg-body-tertiary": local.node.path === local.active,
+      ...local.classList,
+      [local.class ?? ""]: !!local.class,
+      [local.nodeClass ?? ""]: !!local.nodeClass
+    }, elClasses);
+  });
+  // Files and directories share the same indent so a file's icon sits in the
+  // chevron column and file names left-align with sibling folder names (a
+  // file has no chevron; its type icon takes that slot — see the removed
+  // spacer below). `level` is fixed per row, so the indent is set once.
+  el.style.cssText = `padding-left: ${Math.max(0, 8 + local.level * 12 - 4)}px`;
+  createRenderEffect(() => {
+    el.draggable = !!local.draggable;
+  });
+  el.addEventListener("dragstart", event => {
+    if (!local.draggable) return;
+    event.dataTransfer?.setData("text/plain", `file:${local.node.path}`);
+    event.dataTransfer?.setData("text/uri-list", pathToFileUrl(local.node.path));
+    if (event.dataTransfer) event.dataTransfer.effectAllowed = "copy";
+    withFileDragImage(event);
+  });
+  // Remaining props are static at both call sites: on* handlers become
+  // listeners, anything else an attribute (one-time, like the compiled spread
+  // whose keys and values never changed here).
+  for (const prop of Object.keys(rest)) {
+    const value = rest[prop];
+    if (value == null) continue;
+    if (prop.startsWith("on") && typeof value === "function") {
+      el.addEventListener(prop.slice(2).toLowerCase(), value);
+      continue;
     }
-  }, rest, {
-    get children() {
-      return [_$memo(() => local.children), (() => {
-        var _el$ = _tmpl$();
-        _$insert(_el$, () => local.node.name);
-        _$effect(_p$ => {
-          var _v$ = {
-              "flex-1 min-w-0 small fw-medium whitespace-nowrap truncate": true,
-              "text-body-secondary": local.node.ignored,
-              "text-secondary": !local.node.ignored && !active()
-            },
-            _v$2 = active() ? color() : undefined;
-          _p$.e = _$classList(_el$, _v$, _p$.e);
-          _p$.t = _$style(_el$, _v$2, _p$.t);
-          return _p$;
-        }, {
-          e: undefined,
-          t: undefined
-        });
-        return _el$;
-      })(), _$memo(() => (() => {
-        const value = kind();
-        if (!value) return null;
-        if (local.node.type === "file") {
-          return (() => {
-            var _el$2 = _tmpl$2();
-            _$insert(_el$2, () => kindLabel(value));
-            _$effect(_$p => _$style(_el$2, kindTextColor(value), _$p));
-            return _el$2;
-          })();
-        }
-        return (() => {
-          var _el$3 = _tmpl$3();
-          _$effect(_$p => _$style(_el$3, kindDotColor(value), _$p));
-          return _el$3;
-        })();
-      })())];
+    el.setAttribute(prop, String(value));
+  }
+  const name = document.createElement("span");
+  createRenderEffect(() => {
+    name.textContent = local.node.name;
+  });
+  let nameClasses;
+  createRenderEffect(() => {
+    nameClasses = applyClassList(name, {
+      "flex-1 min-w-0 small fw-medium whitespace-nowrap truncate": true,
+      "text-body-secondary": local.node.ignored,
+      "text-secondary": !local.node.ignored && !active()
+    }, nameClasses);
+    const style = active() ? color() : undefined;
+    if (style) name.style.cssText = style;
+    else name.removeAttribute("style");
+  });
+  // Kind marker after the name: A/D/M letter for files, colored dot for
+  // directories. Memoized so the marker node keeps its identity across
+  // re-renders that do not change the kind.
+  const marker = createMemo(() => {
+    const value = kind();
+    if (!value) return null;
+    if (local.node.type === "file") {
+      const label = document.createElement("span");
+      label.className = "shrink-0 w-4 text-center small fw-medium";
+      label.style.cssText = kindTextColor(value);
+      label.textContent = kindLabel(value);
+      return label;
     }
-  }));
+    const dot = document.createElement("div");
+    dot.className = "shrink-0 size-1.5 mr-1.5 rounded-circle";
+    dot.style.cssText = kindDotColor(value);
+    return dot;
+  });
+  // Caller children (dir chevron / file icon Switch) lead, then the name,
+  // then the marker — the same slot order the compiled insert produced. The
+  // lead memo has no tracked dependencies (component creation is untracked),
+  // matching the compiled memo(() => local.children) that froze it.
+  const lead = createMemo(() => local.children);
+  createRenderEffect(() => {
+    const out = [];
+    appendResolved(out, lead());
+    out.push(name);
+    appendResolved(out, marker());
+    syncChildren(el, out);
+  });
+  return el;
 };
 export default function FileTree(props) {
   const file = useFile();
@@ -312,227 +367,257 @@ export default function FileTree(props) {
     });
     return out;
   });
-  return (() => {
-    var _el$4 = _tmpl$4();
-    _$insert(_el$4, _$createComponent(For, {
-      get each() {
-        return nodes();
-      },
-      children: node => {
-        const expanded = () => file.tree.state(node.path)?.expanded ?? false;
-        const deep = () => deeps().get(node.path) ?? -1;
-        const kind = () => visibleKind(node, kinds(), marks());
-        const active = () => !!kind() && !node.ignored;
-        return _$createComponent(Switch, {
-          get children() {
-            return [_$createComponent(Match, {
-              get when() {
-                return node.type === "directory";
-              },
-              get children() {
-                return _$createComponent(Collapsible, {
-                  variant: "ghost",
-                  "class": "w-100",
-                  "data-scope": "filetree",
-                  forceMount: false,
-                  get open() {
-                    return expanded();
-                  },
-                  onOpenChange: open => open ? file.tree.expand(node.path) : file.tree.collapse(node.path),
-                  get children() {
-                    return [_$createComponent(Collapsible.Trigger, {
-                      get children() {
-                        return _$createComponent(FileTreeNode, {
-                          node: node,
-                          level: level,
-                          get active() {
-                            return props.active;
-                          },
-                          get nodeClass() {
-                            return props.nodeClass;
-                          },
-                          get draggable() {
-                            return draggable();
-                          },
-                          get kinds() {
-                            return kinds();
-                          },
-                          get marks() {
-                            return marks();
-                          },
-                          onContextMenu: e => props.onContextMenu?.(node, e),
-                          get children() {
-                            var _el$5 = _tmpl$5();
-                            _$insert(_el$5, _$createComponent(Icon, {
-                              get name() {
-                                return expanded() ? "chevron-down" : "chevron-right";
-                              },
+  const root = document.createElement("div");
+  root.setAttribute("data-component", "filetree");
+  // For keeps row identity per node reference, so expanding/collapsing or
+  // marker changes never rebuild sibling rows — only genuine nodes() changes
+  // re-run the row mapping, like the compiled insert(For) did.
+  const rows = createComponent(For, {
+    get each() {
+      return nodes();
+    },
+    children: node => {
+      const expanded = () => file.tree.state(node.path)?.expanded ?? false;
+      const deep = () => deeps().get(node.path) ?? -1;
+      const kind = () => visibleKind(node, kinds(), marks());
+      const active = () => !!kind() && !node.ignored;
+      return createComponent(Switch, {
+        get children() {
+          return [createComponent(Match, {
+            get when() {
+              return node.type === "directory";
+            },
+            get children() {
+              const collapsible = createComponent(Collapsible, {
+                variant: "ghost",
+                "class": "w-100",
+                "data-scope": "filetree",
+                forceMount: false,
+                get open() {
+                  return expanded();
+                },
+                onOpenChange: open => open ? file.tree.expand(node.path) : file.tree.collapse(node.path),
+                get children() {
+                  return [createComponent(Collapsible.Trigger, {
+                    get children() {
+                      return createComponent(FileTreeNode, {
+                        node: node,
+                        level: level,
+                        get active() {
+                          return props.active;
+                        },
+                        get nodeClass() {
+                          return props.nodeClass;
+                        },
+                        get draggable() {
+                          return draggable();
+                        },
+                        get kinds() {
+                          return kinds();
+                        },
+                        get marks() {
+                          return marks();
+                        },
+                        onContextMenu: e => props.onContextMenu?.(node, e),
+                        get children() {
+                          const chevron = document.createElement("div");
+                          chevron.className = "size-4 d-flex align-items-center justify-content-center text-secondary";
+                          // The vanilla Icon reads `name` once at creation
+                          // (no internal effects), so a live getter would
+                          // freeze the chevron on its initial direction —
+                          // rebuild the icon whenever expanded() flips. The
+                          // effect is owned by the lead memo that resolves
+                          // these children, so it disposes with the row.
+                          createRenderEffect(() => {
+                            chevron.replaceChildren(createComponent(Icon, {
+                              name: expanded() ? "chevron-down" : "chevron-right",
                               size: "small"
                             }));
-                            return _el$5;
-                          }
-                        });
-                      }
-                    }), _$createComponent(Collapsible.Content, {
-                      "class": "relative pt-0.5",
-                      get children() {
-                        return [(() => {
-                          var _el$6 = _tmpl$6();
-                          _$effect(_p$ => {
-                            var _v$3 = {
-                                "absolute top-0 bottom-0 w-px pointer-events-none bg-border-weak-base opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none": true,
-                                "group-hover/filetree:opacity-100": expanded() && deep() === level,
-                                "group-hover/filetree:opacity-50": !(expanded() && deep() === level)
-                              },
-                              _v$4 = `left: ${Math.max(0, 8 + level * 12 - 4) + 8}px`;
-                            _p$.e = _$classList(_el$6, _v$3, _p$.e);
-                            _p$.t = _$style(_el$6, _v$4, _p$.t);
-                            return _p$;
-                          }, {
-                            e: undefined,
-                            t: undefined
                           });
-                          return _el$6;
-                        })(), _$createComponent(Show, {
-                          get when() {
-                            return level < MAX_DEPTH && !chain.includes(key(node.path));
-                          },
-                          get fallback() {
-                            return _tmpl$9();
-                          },
-                          get children() {
-                            return _$createComponent(FileTree, {
-                              get path() {
-                                return node.path;
-                              },
-                              level: level + 1,
-                              get allowed() {
-                                return props.allowed;
-                              },
-                              get modified() {
-                                return props.modified;
-                              },
-                              get kinds() {
-                                return props.kinds;
-                              },
-                              get active() {
-                                return props.active;
-                              },
-                              get draggable() {
-                                return props.draggable;
-                              },
-                              get onFileClick() {
-                                return props.onFileClick;
-                              },
-                              get _filter() {
-                                return filter();
-                              },
-                              get _marks() {
-                                return marks();
-                              },
-                              get _deeps() {
-                                return deeps();
-                              },
-                              get _kinds() {
-                                return kinds();
-                              },
-                              _chain: chain
-                            });
-                          }
-                        })];
-                      }
-                    })];
-                  }
-                });
-              }
-            }), _$createComponent(Match, {
-              get when() {
-                return node.type === "file";
-              },
-              get children() {
-                return _$createComponent(FileTreeNode, {
-                  node: node,
-                  level: level,
-                  get active() {
-                    return props.active;
-                  },
-                  get nodeClass() {
-                    return props.nodeClass;
-                  },
-                  get draggable() {
-                    return draggable();
-                  },
-                  get kinds() {
-                    return kinds();
-                  },
-                  get marks() {
-                    return marks();
-                  },
-                  as: "button",
-                  type: "button",
-                  // Open on double-click (single click just selects/focuses).
-                  onDblClick: () => props.onFileClick?.(node),
-                  onContextMenu: e => props.onContextMenu?.(node, e),
-                  get children() {
-                    // No chevron spacer for files — the type icon takes the
-                    // chevron column so names align with sibling folders.
-                    return [_$createComponent(Switch, {
-                      get children() {
-                        return [_$createComponent(Match, {
-                          get when() {
-                            return node.ignored;
-                          },
-                          get children() {
-                            return _$createComponent(FileIcon, {
-                              node: node,
-                              "class": "size-4 filetree-icon filetree-icon--mono",
-                              style: "color: var(--icon-weak-base)",
-                              mono: true
-                            });
-                          }
-                        }), _$createComponent(Match, {
-                          get when() {
-                            return active();
-                          },
-                          get children() {
-                            return _$createComponent(FileIcon, {
-                              node: node,
-                              "class": "size-4 filetree-icon filetree-icon--mono",
-                              get style() {
-                                return kindTextColor(kind());
-                              },
-                              mono: true
-                            });
-                          }
-                        }), _$createComponent(Match, {
-                          get when() {
-                            return !node.ignored;
-                          },
-                          get children() {
-                            var _el$8 = _tmpl$8();
-                            _$insert(_el$8, _$createComponent(FileIcon, {
-                              node: node,
-                              "class": "size-4 filetree-icon filetree-icon--color opacity-0 group-hover/filetree:opacity-100"
-                            }), null);
-                            _$insert(_el$8, _$createComponent(FileIcon, {
-                              node: node,
-                              "class": "size-4 filetree-icon filetree-icon--mono group-hover/filetree:opacity-0",
-                              mono: true
-                            }), null);
-                            return _el$8;
-                          }
-                        })];
-                      }
-                    })];
-                  }
-                });
-              }
-            })];
-          }
-        });
-      }
-    }));
-    _$effect(() => _$className(_el$4, `d-flex flex-column gap-0.5 ${props.class ?? ""}`));
-    return _el$4;
-  })();
+                          return chevron;
+                        }
+                      });
+                    }
+                  }), createComponent(Collapsible.Content, {
+                    "class": "relative pt-0.5",
+                    get children() {
+                      // Vertical guide line; its emphasis tracks whether this
+                      // branch is the deepest expanded one (live effect, the
+                      // same classList the compiled output toggled).
+                      const line = document.createElement("div");
+                      line.style.cssText = `left: ${Math.max(0, 8 + level * 12 - 4) + 8}px`;
+                      let lineClasses;
+                      createRenderEffect(() => {
+                        lineClasses = applyClassList(line, {
+                          "absolute top-0 bottom-0 w-px pointer-events-none bg-border-weak-base opacity-0 transition-opacity duration-150 ease-out motion-reduce:transition-none": true,
+                          "group-hover/filetree:opacity-100": expanded() && deep() === level,
+                          "group-hover/filetree:opacity-50": !(expanded() && deep() === level)
+                        }, lineClasses);
+                      });
+                      return [line, createComponent(Show, {
+                        get when() {
+                          return level < MAX_DEPTH && !chain.includes(key(node.path));
+                        },
+                        get fallback() {
+                          const depth = document.createElement("div");
+                          depth.className = "px-2 py-1 small fw-normal text-secondary";
+                          depth.textContent = "...";
+                          return depth;
+                        },
+                        get children() {
+                          return createComponent(FileTree, {
+                            get path() {
+                              return node.path;
+                            },
+                            level: level + 1,
+                            get allowed() {
+                              return props.allowed;
+                            },
+                            get modified() {
+                              return props.modified;
+                            },
+                            get kinds() {
+                              return props.kinds;
+                            },
+                            get active() {
+                              return props.active;
+                            },
+                            get draggable() {
+                              return props.draggable;
+                            },
+                            get onFileClick() {
+                              return props.onFileClick;
+                            },
+                            get _filter() {
+                              return filter();
+                            },
+                            get _marks() {
+                              return marks();
+                            },
+                            get _deeps() {
+                              return deeps();
+                            },
+                            get _kinds() {
+                              return kinds();
+                            },
+                            _chain: chain
+                          });
+                        }
+                      })];
+                    }
+                  })];
+                }
+              });
+              // The vanilla Collapsible re-applies its open-state attributes
+              // only on its own trigger clicks; the compiled (Kobalte)
+              // version tracked the controlled `open` prop live. Re-sync
+              // whenever expanded() changes so externally driven expands
+              // (the `allowed` auto-expand effect above, tree state restored
+              // across remounts) actually show/hide the content — this also
+              // applies the initial attributes (incl. `hidden` on a collapsed
+              // content), which CollapsibleRoot itself sets only before its
+              // children exist.
+              createRenderEffect(() => {
+                expanded();
+                collapsible.__collapsibleUpdate?.();
+              });
+              return collapsible;
+            }
+          }), createComponent(Match, {
+            get when() {
+              return node.type === "file";
+            },
+            get children() {
+              return createComponent(FileTreeNode, {
+                node: node,
+                level: level,
+                get active() {
+                  return props.active;
+                },
+                get nodeClass() {
+                  return props.nodeClass;
+                },
+                get draggable() {
+                  return draggable();
+                },
+                get kinds() {
+                  return kinds();
+                },
+                get marks() {
+                  return marks();
+                },
+                as: "button",
+                type: "button",
+                // Open on double-click (single click just selects/focuses).
+                onDblClick: () => props.onFileClick?.(node),
+                onContextMenu: e => props.onContextMenu?.(node, e),
+                get children() {
+                  // No chevron spacer for files — the type icon takes the
+                  // chevron column so names align with sibling folders.
+                  return [createComponent(Switch, {
+                    get children() {
+                      return [createComponent(Match, {
+                        get when() {
+                          return node.ignored;
+                        },
+                        get children() {
+                          return createComponent(FileIcon, {
+                            node: node,
+                            "class": "size-4 filetree-icon filetree-icon--mono",
+                            style: "color: var(--icon-weak-base)",
+                            mono: true
+                          });
+                        }
+                      }), createComponent(Match, {
+                        get when() {
+                          return active();
+                        },
+                        get children() {
+                          return createComponent(FileIcon, {
+                            node: node,
+                            "class": "size-4 filetree-icon filetree-icon--mono",
+                            get style() {
+                              return kindTextColor(kind());
+                            },
+                            mono: true
+                          });
+                        }
+                      }), createComponent(Match, {
+                        get when() {
+                          return !node.ignored;
+                        },
+                        get children() {
+                          const pair = document.createElement("span");
+                          pair.className = "filetree-iconpair size-4";
+                          pair.appendChild(createComponent(FileIcon, {
+                            node: node,
+                            "class": "size-4 filetree-icon filetree-icon--color opacity-0 group-hover/filetree:opacity-100"
+                          }));
+                          pair.appendChild(createComponent(FileIcon, {
+                            node: node,
+                            "class": "size-4 filetree-icon filetree-icon--mono group-hover/filetree:opacity-0",
+                            mono: true
+                          }));
+                          return pair;
+                        }
+                      })];
+                    }
+                  })];
+                }
+              });
+            }
+          })];
+        }
+      });
+    }
+  });
+  createRenderEffect(() => {
+    const out = [];
+    appendResolved(out, rows);
+    syncChildren(root, out);
+  });
+  createRenderEffect(() => {
+    root.className = `d-flex flex-column gap-0.5 ${props.class ?? ""}`;
+  });
+  return root;
 }

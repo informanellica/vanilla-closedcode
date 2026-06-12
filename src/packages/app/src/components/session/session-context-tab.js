@@ -1,17 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1"><div class="small fw-normal text-secondary"></div><div class="small fw-medium text-body-emphasis">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center justify-content-between gap-2 w-100"><div class="min-w-0 truncate"> <span class=text-body>• </span></div><div class="d-flex align-items-center gap-3"><div class="shrink-0 small fw-normal text-secondary">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class=p-3>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary"></div><div class="h-2 w-100 rounded-circle bg-body-tertiary overflow-hidden d-flex"></div><div class="d-flex flex-wrap gap-x-3 gap-y-1"></div><div class="d-none small fw-normal text-body-secondary">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="px-6 pt-4 pb-10 d-flex flex-column gap-10"><div class="grid grid-cols-1 @[32rem]:grid-cols-2 gap-4"></div><div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class=h-full>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-1 small fw-normal text-secondary"><div class="size-2 rounded-1"></div><div></div><div class=text-body-secondary>%`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary"></div><div class="border rounded-2 bg-body-tertiary px-3 py-2">`);
-import { createMemo, createEffect, on, onCleanup, For, Show } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "solid-js";
 import { useSync } from "@/context/sync.js";
 import { checksum } from "core/util/encode";
 import { findLast } from "core/util/array";
@@ -35,15 +23,45 @@ const BREAKDOWN_COLOR = {
   tool: "var(--syntax-warning)",
   other: "var(--syntax-comment)"
 };
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web insert() semantics for primitive values: nothing for
+// null/undefined/booleans, text otherwise.
+function textValue(value) {
+  return value == null || typeof value === "boolean" ? "" : String(value);
+}
+
+// Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
+// keep Nodes, stringify the rest. Used (inside a render effect) to mount
+// Kobalte component results — which resolve through context providers and
+// Dynamic to memo accessors — into plain DOM.
+function resolveNodes(value) {
+  if (value == null || value === false || value === true) return [];
+  if (typeof value === "function" && !value.length) return resolveNodes(value());
+  if (Array.isArray(value)) return value.flatMap(resolveNodes);
+  if (value instanceof Node) return [value];
+  return [document.createTextNode(String(value))];
+}
 function Stat(props) {
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.nextSibling;
-    _$insert(_el$2, () => props.label);
-    _$insert(_el$3, () => props.value);
-    return _el$;
-  })();
+  // Compiled _tmpl$: label over value. Both bound in render effects so the
+  // label follows live language switches and the value follows the stat memos.
+  const root = template(`<div class="d-flex flex-column gap-1"><div class="small fw-normal text-secondary"></div><div class="small fw-medium text-body-emphasis"></div></div>`);
+  const labelEl = root.firstChild;
+  const valueEl = labelEl.nextSibling;
+  createRenderEffect(() => {
+    labelEl.textContent = textValue(props.label);
+  });
+  createRenderEffect(() => {
+    valueEl.textContent = textValue(props.value);
+  });
+  return root;
 }
 function RawMessageContent(props) {
   const file = createMemo(() => {
@@ -58,7 +76,7 @@ function RawMessageContent(props) {
       cacheKey: checksum(contents)
     };
   });
-  return _$createComponent(File, {
+  return createComponent(File, {
     mode: "text",
     get file() {
       return file();
@@ -69,39 +87,54 @@ function RawMessageContent(props) {
   });
 }
 function RawMessage(props) {
-  return _$createComponent(Accordion.Item, {
+  return createComponent(Accordion.Item, {
     get value() {
       return props.message.id;
     },
     get children() {
-      return [_$createComponent(StickyAccordionHeader, {
+      return [createComponent(StickyAccordionHeader, {
         get children() {
-          return _$createComponent(Accordion.Trigger, {
+          return createComponent(Accordion.Trigger, {
             get children() {
-              var _el$4 = _tmpl$2(),
-                _el$5 = _el$4.firstChild,
-                _el$6 = _el$5.firstChild,
-                _el$7 = _el$6.nextSibling,
-                _el$8 = _el$7.firstChild,
-                _el$9 = _el$5.nextSibling,
-                _el$0 = _el$9.firstChild;
-              _$insert(_el$5, () => props.message.role, _el$6);
-              _$insert(_el$7, () => props.message.id, null);
-              _$insert(_el$0, () => props.time(props.message.time.created));
-              _$insert(_el$9, _$createComponent(Icon, {
+              // Compiled _tmpl$2: "<role> <span>• <id></span>" on the left,
+              // time + chevron on the right. role/id/time are bound in render
+              // effects (time follows locale changes through props.time).
+              const root = template(`<div class="d-flex align-items-center justify-content-between gap-2 w-100"><div class="min-w-0 truncate"> <span class="text-body">• </span></div><div class="d-flex align-items-center gap-3"><div class="shrink-0 small fw-normal text-secondary"></div></div></div>`);
+              const left = root.firstChild;
+              const space = left.firstChild;
+              const idSpan = space.nextSibling;
+              const right = left.nextSibling;
+              const timeEl = right.firstChild;
+              const roleText = document.createTextNode("");
+              left.insertBefore(roleText, space);
+              createRenderEffect(() => {
+                roleText.data = textValue(props.message.role);
+              });
+              const idText = document.createTextNode("");
+              idSpan.appendChild(idText);
+              createRenderEffect(() => {
+                idText.data = textValue(props.message.id);
+              });
+              createRenderEffect(() => {
+                timeEl.textContent = textValue(props.time(props.message.time.created));
+              });
+              right.appendChild(createComponent(Icon, {
                 name: "chevron-grabber-vertical",
                 size: "small",
                 "class": "shrink-0 text-secondary"
-              }), null);
-              return _el$4;
+              }));
+              return root;
             }
           });
         }
-      }), _$createComponent(Accordion.Content, {
+      }), createComponent(Accordion.Content, {
         "class": "bg-body",
         get children() {
-          var _el$1 = _tmpl$3();
-          _$insert(_el$1, _$createComponent(RawMessageContent, {
+          const body = template(`<div class="p-3"></div>`);
+          // File resolves through FileMedia (a Show) to a possibly-function
+          // value and remounts whenever this presence-gated Kobalte Content
+          // reopens, so it stays on solid's insert() (established exception).
+          _solidInsert(body, createComponent(RawMessageContent, {
             get message() {
               return props.message;
             },
@@ -112,7 +145,7 @@ function RawMessage(props) {
               return props.onRendered;
             }
           }));
-          return _el$1;
+          return body;
         }
       })];
     }
@@ -285,7 +318,7 @@ export function SessionContextTab() {
     if (frame === undefined) return;
     cancelAnimationFrame(frame);
   });
-  return _$createComponent(ScrollView, {
+  return createComponent(ScrollView, {
     "class": "@container h-full",
     viewportRef: el => {
       scroll = el;
@@ -293,98 +326,113 @@ export function SessionContextTab() {
     },
     onScroll: handleScroll,
     get children() {
-      var _el$10 = _tmpl$5(),
-        _el$11 = _el$10.firstChild,
-        _el$17 = _el$11.nextSibling,
-        _el$18 = _el$17.firstChild;
-      _$insert(_el$11, _$createComponent(For, {
-        each: stats,
-        children: stat => _$createComponent(Stat, {
+      // Compiled _tmpl$5 skeleton. The two conditional sections (breakdown,
+      // system prompt) and the accordion render into display:contents slots,
+      // which generate no boxes so the root keeps its flex-gap layout.
+      const root = template(`<div class="px-6 pt-4 pb-10 d-flex flex-column gap-10"><div class="grid grid-cols-1 @[32rem]:grid-cols-2 gap-4"></div><div style="display:contents" data-slot="breakdown"></div><div style="display:contents" data-slot="system-prompt"></div><div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary"></div><div style="display:contents" data-slot="messages"></div></div></div>`);
+      const statsGrid = root.firstChild;
+      const breakdownSlot = statsGrid.nextSibling;
+      const systemPromptSlot = breakdownSlot.nextSibling;
+      const rawSection = systemPromptSlot.nextSibling;
+      const rawTitle = rawSection.firstChild;
+      const messagesSlot = rawTitle.nextSibling;
+
+      // Static stats list; each Stat binds its own label/value reactively.
+      for (const stat of stats) {
+        statsGrid.appendChild(createComponent(Stat, {
           get label() {
             return language.t(stat.label);
           },
           get value() {
             return stat.value();
           }
-        })
-      }));
-      _$insert(_el$10, _$createComponent(Show, {
-        get when() {
-          return breakdown().length > 0;
-        },
-        get children() {
-          var _el$12 = _tmpl$4(),
-            _el$13 = _el$12.firstChild,
-            _el$14 = _el$13.nextSibling,
-            _el$15 = _el$14.nextSibling,
-            _el$16 = _el$15.nextSibling;
-          _$insert(_el$13, () => language.t("context.breakdown.title"));
-          _$insert(_el$14, _$createComponent(For, {
-            get each() {
-              return breakdown();
-            },
-            children: segment => (() => {
-              var _el$19 = _tmpl$6();
-              _$effect(_p$ => {
-                var _v$ = `${segment.width}%`,
-                  _v$2 = BREAKDOWN_COLOR[segment.key];
-                _v$ !== _p$.e && _$setStyleProperty(_el$19, "width", _p$.e = _v$);
-                _v$2 !== _p$.t && _$setStyleProperty(_el$19, "background-color", _p$.t = _v$2);
-                return _p$;
-              }, {
-                e: undefined,
-                t: undefined
-              });
-              return _el$19;
-            })()
-          }));
-          _$insert(_el$15, _$createComponent(For, {
-            get each() {
-              return breakdown();
-            },
-            children: segment => (() => {
-              var _el$20 = _tmpl$7(),
-                _el$21 = _el$20.firstChild,
-                _el$22 = _el$21.nextSibling,
-                _el$23 = _el$22.nextSibling,
-                _el$24 = _el$23.firstChild;
-              _$insert(_el$22, () => breakdownLabel(segment.key));
-              _$insert(_el$23, () => segment.percent.toLocaleString(language.intl()), _el$24);
-              _$effect(_$p => _$setStyleProperty(_el$21, "background-color", BREAKDOWN_COLOR[segment.key]));
-              return _el$20;
-            })()
-          }));
-          _$insert(_el$16, () => language.t("context.breakdown.note"));
-          return _el$12;
+        }));
+      }
+
+      // <Show when={breakdown().length > 0}>: the section is (re)built only
+      // when the condition flips (truthiness equality, like non-keyed Show);
+      // nested effects keep title/bar/legend/note live while mounted.
+      const hasBreakdown = createMemo(() => breakdown().length > 0);
+      createRenderEffect(() => {
+        if (!hasBreakdown()) {
+          breakdownSlot.replaceChildren();
+          return;
         }
-      }), _el$17);
-      _$insert(_el$10, _$createComponent(Show, {
-        get when() {
-          return systemPrompt();
-        },
-        children: prompt => (() => {
-          var _el$25 = _tmpl$8(),
-            _el$26 = _el$25.firstChild,
-            _el$27 = _el$26.nextSibling;
-          _$insert(_el$26, () => language.t("context.systemPrompt.title"));
-          _$insert(_el$27, _$createComponent(Markdown, {
-            get text() {
-              return prompt();
-            },
-            "class": "small fw-normal"
+        const section = template(`<div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary"></div><div class="h-2 w-100 rounded-circle bg-body-tertiary overflow-hidden d-flex"></div><div class="d-flex flex-wrap gap-x-3 gap-y-1"></div><div class="d-none small fw-normal text-body-secondary"></div></div>`);
+        const titleEl = section.firstChild;
+        const barEl = titleEl.nextSibling;
+        const legendEl = barEl.nextSibling;
+        const noteEl = legendEl.nextSibling;
+        createRenderEffect(() => {
+          titleEl.textContent = textValue(language.t("context.breakdown.title"));
+        });
+        createRenderEffect(() => {
+          barEl.replaceChildren(...breakdown().map(segment => {
+            const seg = template(`<div class="h-full"></div>`);
+            seg.style.setProperty("width", `${segment.width}%`);
+            seg.style.setProperty("background-color", BREAKDOWN_COLOR[segment.key]);
+            return seg;
           }));
-          return _el$25;
-        })()
-      }), _el$17);
-      _$insert(_el$18, () => language.t("context.rawMessages.title"));
-      _$insert(_el$17, _$createComponent(Accordion, {
+        });
+        // Legend rows read the translated labels and the locale, so the list
+        // rebuilds on breakdown or language changes (rows hold no state, same
+        // visual result as the original per-row inserts).
+        createRenderEffect(() => {
+          legendEl.replaceChildren(...breakdown().map(segment => {
+            const row = template(`<div class="d-flex align-items-center gap-1 small fw-normal text-secondary"><div class="size-2 rounded-1"></div><div></div><div class="text-body-secondary">%</div></div>`);
+            const dot = row.firstChild;
+            const label = dot.nextSibling;
+            const percent = label.nextSibling;
+            dot.style.setProperty("background-color", BREAKDOWN_COLOR[segment.key]);
+            label.textContent = textValue(breakdownLabel(segment.key));
+            percent.insertBefore(document.createTextNode(textValue(segment.percent.toLocaleString(language.intl()))), percent.firstChild);
+            return row;
+          }));
+        });
+        createRenderEffect(() => {
+          noteEl.textContent = textValue(language.t("context.breakdown.note"));
+        });
+        breakdownSlot.replaceChildren(section);
+      });
+
+      // <Show when={systemPrompt()}>: rebuilt on truthiness flips only; the
+      // Markdown text getter keeps tracking systemPrompt() while mounted,
+      // matching the non-keyed Show accessor the original passed along.
+      const hasSystemPrompt = createMemo(() => !!systemPrompt());
+      createRenderEffect(() => {
+        if (!hasSystemPrompt()) {
+          systemPromptSlot.replaceChildren();
+          return;
+        }
+        const section = template(`<div class="d-flex flex-column gap-2"><div class="small fw-normal text-secondary"></div><div class="border rounded-2 bg-body-tertiary px-3 py-2"></div></div>`);
+        const titleEl = section.firstChild;
+        const bodyEl = titleEl.nextSibling;
+        createRenderEffect(() => {
+          titleEl.textContent = textValue(language.t("context.systemPrompt.title"));
+        });
+        bodyEl.appendChild(createComponent(Markdown, {
+          get text() {
+            return systemPrompt();
+          },
+          "class": "small fw-normal"
+        }));
+        systemPromptSlot.replaceChildren(section);
+      });
+      createRenderEffect(() => {
+        rawTitle.textContent = textValue(language.t("context.rawMessages.title"));
+      });
+
+      // The Kobalte Accordion resolves to a memo accessor; create it once and
+      // mount the resolved root element. For keeps per-message rows alive
+      // across message updates, preserving expansion state and File viewers.
+      const accordion = createComponent(Accordion, {
         multiple: true,
         get children() {
-          return _$createComponent(For, {
+          return createComponent(For, {
             get each() {
               return messages();
             },
-            children: message => _$createComponent(RawMessage, {
+            children: message => createComponent(RawMessage, {
               message: message,
               getParts: getParts,
               onRendered: restoreScroll,
@@ -394,8 +442,11 @@ export function SessionContextTab() {
             })
           });
         }
-      }), null);
-      return _el$10;
+      });
+      createRenderEffect(() => {
+        messagesSlot.replaceChildren(...resolveNodes(accordion));
+      });
+      return root;
     }
   });
 }

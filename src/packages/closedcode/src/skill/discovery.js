@@ -1,7 +1,7 @@
 import { NodePath } from "@effect/platform-node";
 import { Effect, Layer, Path, Schema, Context } from "effect";
 import { FetchHttpClient, HttpClient, HttpClientRequest, HttpClientResponse } from "effect/unstable/http";
-import { withTransientReadRetry } from "@/util/effect-http-client.js";
+import { withTransientReadRetry } from "#util/effect-http-client.js";
 import { AppFileSystem } from "core/filesystem";
 import { Global } from "core/global";
 import * as Log from "core/util/log";

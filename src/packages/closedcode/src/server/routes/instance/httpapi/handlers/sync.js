@@ -1,14 +1,8 @@
-import { Workspace } from "@/control-plane/workspace.js";
-import * as InstanceState from "@/effect/instance-state.js";
-import { Database } from "@/storage/db.js";
-import { SyncEvent } from "@/sync/index.js";
-import { EventTable } from "@/sync/event.sql.js";
-import { asc } from "drizzle-orm";
-import { and } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { lte } from "drizzle-orm";
-import { not } from "drizzle-orm";
-import { or } from "drizzle-orm";
+import { Workspace } from "#control-plane/workspace.js";
+import * as InstanceState from "#effect/instance-state.js";
+import { Database } from "#storage/db.js";
+import { Op } from "#storage/sequelize.js";
+import { SyncEvent } from "#sync/index.js";
 import { Effect, Scope } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { InstanceHttpApi } from "../api.js";
@@ -55,7 +49,19 @@ export const syncHandlers = HttpApiBuilder.group(InstanceHttpApi, "sync", handle
   });
   const history = Effect.fn("SyncHttpApi.history")(function* (ctx) {
     const exclude = Object.entries(ctx.payload);
-    return Database.use(db => db.select().from(EventTable).where(exclude.length > 0 ? not(or(...exclude.map(([id, seq]) => and(eq(EventTable.aggregate_id, id), lte(EventTable.seq, seq))))) : undefined).orderBy(asc(EventTable.seq)).all());
+    const where = exclude.length > 0 ? {
+      [Op.not]: {
+        [Op.or]: exclude.map(([id, seq]) => ({ aggregate_id: id, seq: { [Op.lte]: seq } }))
+      }
+    } : undefined;
+    return yield* Effect.promise(() => Database.useAsync(async h => {
+      const found = await h.models.Event.findAll({
+        where,
+        order: [["seq", "ASC"]],
+        transaction: h.tx
+      });
+      return found.map(r => r.get({ plain: true }));
+    }));
   });
   return handlers.handle("start", start).handle("replay", replay).handle("history", history);
 }));

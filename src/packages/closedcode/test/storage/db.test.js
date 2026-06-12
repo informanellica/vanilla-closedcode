@@ -1,6 +1,6 @@
 import {  Global  } from "core/global"
 import {  InstallationChannel  } from "core/installation/version"
-import {  Database  } from "@/storage/db.js"
+import {  Database  } from "#storage/db.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";
 describe("Database.Path", () => {

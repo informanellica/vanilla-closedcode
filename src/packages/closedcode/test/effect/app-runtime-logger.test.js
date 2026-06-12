@@ -3,7 +3,7 @@ import {  provideInstance, tmpdirScoped  } from "../fixture/fixture.js"
 import {  testEffect  } from "../lib/effect.js"
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  AppRuntime  } from "../../src/effect/app-runtime.js"
-import {  EffectBridge  } from "@/effect/bridge.js"
+import {  EffectBridge  } from "#effect/bridge.js"
 import {  InstanceRef  } from "../../src/effect/instance-ref.js"
 import * as EffectLogger from "core/effect/logger";
 import {  makeRuntime  } from "../../src/effect/run-service.js"

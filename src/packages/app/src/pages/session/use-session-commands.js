@@ -1,4 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
+import { createComponent } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 import { useCommand } from "@/context/command.js";
 import { env } from "@/lib/env.js";
@@ -185,7 +185,7 @@ export const useSessionCommands = actions => {
   };
   const openFile = () => {
     void import("@/components/dialog-select-file.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSelectFile, {
+      dialog.show(() => createComponent(x.DialogSelectFile, {
         onOpenFile: showAllFiles
       }));
     });
@@ -216,7 +216,7 @@ export const useSessionCommands = actions => {
   };
   const chooseModel = () => {
     void import("@/components/dialog-select-model.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSelectModel, {
+      dialog.show(() => createComponent(x.DialogSelectModel, {
         get model() {
           return local.model;
         }
@@ -225,7 +225,7 @@ export const useSessionCommands = actions => {
   };
   const chooseMcp = () => {
     void import("@/components/dialog-select-mcp.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSelectMcp, {}));
+      dialog.show(() => createComponent(x.DialogSelectMcp, {}));
     });
   };
   const toggleAutoAccept = () => {
@@ -252,7 +252,7 @@ export const useSessionCommands = actions => {
   };
   const fork = () => {
     void import("@/components/dialog-fork.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogFork, {}));
+      dialog.show(() => createComponent(x.DialogFork, {}));
     });
   };
   const shareCmds = () => {

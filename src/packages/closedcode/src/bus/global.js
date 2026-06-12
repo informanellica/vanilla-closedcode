@@ -1,5 +1,5 @@
 import { EventEmitter } from "events";
-import { Identifier } from "@/id/id.js";
+import { Identifier } from "#id/id.js";
 class GlobalBusEmitter extends EventEmitter {
   emit(eventName, event) {
     if (event.payload && typeof event.payload === "object" && !("id" in event.payload)) {

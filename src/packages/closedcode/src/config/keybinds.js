@@ -1,6 +1,6 @@
 export * as ConfigKeybinds from "./keybinds.js";
 import { Effect, Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
+import { zod } from "#util/effect-zod.js";
 
 // Every keybind field has the same shape: an optional string with a default
 // binding and a human description.  `keybind()` keeps the declaration list

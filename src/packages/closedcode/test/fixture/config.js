@@ -1,5 +1,5 @@
-import {  Config  } from "@/config/config.js"
-import {  emptyConsoleState  } from "@/config/console-state.js"
+import {  Config  } from "#config/config.js"
+import {  emptyConsoleState  } from "#config/console-state.js"
 import {  Effect, Layer  } from "effect"
 function make(overrides = {}) {
   return Config.Service.of({

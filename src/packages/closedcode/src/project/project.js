@@ -1,29 +1,33 @@
 import z from "zod";
-import { and } from "drizzle-orm";
-import { Database } from "@/storage/db.js";
-import { eq } from "drizzle-orm";
-import { ProjectTable } from "./project.sql.js";
-import { SessionTable } from "../session/session.sql.js";
+import { Database } from "#storage/db.js";
 import * as Log from "core/util/log";
 import { Flag } from "core/flag/flag";
-import { BusEvent } from "@/bus/bus-event.js";
-import { GlobalBus } from "@/bus/global.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { GlobalBus } from "#bus/global.js";
 import { which } from "../util/which.js";
 import { ProjectID } from "./schema.js";
-import { Bus } from "@/bus/index.js";
-import { Command } from "@/command/index.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { Bus } from "#bus/index.js";
+import { Command } from "#command/index.js";
+import { InstanceState } from "#effect/instance-state.js";
 import { Effect, Layer, Path, Scope, Context, Stream, Schema } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { NodePath } from "@effect/platform-node";
 import { AppFileSystem } from "core/filesystem";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, optionalOmitUndefined, withStatics } from "@/util/schema.js";
-import { serviceUse } from "@/effect/service-use.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, optionalOmitUndefined, withStatics } from "#util/schema.js";
+import { serviceUse } from "#effect/service-use.js";
 const log = Log.create({
   service: "project"
 });
+// Sequelize call-site conventions (ORM migration S3): callbacks receive a
+// handle { models, sequelize, tx } from Database.useAsync; reads return plain
+// rows so fromRow keeps receiving plain objects with JSON columns parsed.
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
+// The migration journal declares JSON columns as TEXT, so the sqlite dialect
+// returns them unparsed strings on reads (PRAGMA table_info drives parsing);
+// normalize to drizzle's mode:"json" behavior. Parsed values pass through.
+const jsonValue = value => (typeof value === "string" ? JSON.parse(value) : value);
 const ProjectVcs = Schema.Literal("git");
 const ProjectIcon = Schema.Struct({
   url: optionalOmitUndefined(Schema.String),
@@ -74,8 +78,8 @@ export function fromRow(row) {
       updated: row.time_updated,
       initialized: row.time_initialized ?? undefined
     },
-    sandboxes: row.sandboxes,
-    commands: row.commands ?? undefined
+    sandboxes: jsonValue(row.sandboxes),
+    commands: jsonValue(row.commands) ?? undefined
   };
 }
 export const UpdateInput = z.object({
@@ -124,7 +128,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     text: "",
     stderr: ""
   })));
-  const db = fn => Effect.sync(() => Database.use(fn));
+  const db = fn => Effect.promise(() => Database.useAsync(fn));
   const emitUpdated = data => Effect.sync(() => GlobalBus.emit("event", {
     directory: "global",
     project: data.id,
@@ -237,7 +241,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
 
     // Phase 2: upsert
-    const row = yield* db(d => d.select().from(ProjectTable).where(eq(ProjectTable.id, data.id)).get());
+    const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id: data.id }, transaction: h.tx })));
     const existing = row ? fromRow(row) : {
       id: data.id,
       worktree: data.worktree,
@@ -262,7 +266,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     result.sandboxes = yield* Effect.forEach(result.sandboxes, s => fs.exists(s).pipe(Effect.orDie, Effect.map(exists => exists ? s : undefined)), {
       concurrency: "unbounded"
     }).pipe(Effect.map(arr => arr.filter(x => x !== undefined)));
-    yield* db(d => d.insert(ProjectTable).values({
+    yield* db(h => h.models.Project.upsert({
       id: result.id,
       worktree: result.worktree,
       vcs: result.vcs ?? null,
@@ -275,25 +279,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       time_initialized: result.time.initialized,
       sandboxes: result.sandboxes,
       commands: result.commands
-    }).onConflictDoUpdate({
-      target: ProjectTable.id,
-      set: {
-        worktree: result.worktree,
-        vcs: result.vcs ?? null,
-        name: result.name,
-        icon_url: result.icon?.url,
-        icon_url_override: result.icon?.override,
-        icon_color: result.icon?.color,
-        time_updated: result.time.updated,
-        time_initialized: result.time.initialized,
-        sandboxes: result.sandboxes,
-        commands: result.commands
-      }
-    }).run());
+    }, { transaction: h.tx }));
     if (data.id !== ProjectID.global) {
-      yield* db(d => d.update(SessionTable).set({
+      yield* db(h => h.models.Session.update({
         project_id: data.id
-      }).where(and(eq(SessionTable.project_id, ProjectID.global), eq(SessionTable.directory, data.worktree))).run());
+      }, { where: { project_id: ProjectID.global, directory: data.worktree }, transaction: h.tx }));
     }
     yield* emitUpdated(result);
     return {
@@ -324,21 +314,24 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
   });
   const list = Effect.fn("Project.list")(function* () {
-    return yield* db(d => d.select().from(ProjectTable).all().map(fromRow));
+    return yield* db(async h => (await h.models.Project.findAll({ transaction: h.tx })).map(row => fromRow(row.get({ plain: true }))));
   });
   const get = Effect.fn("Project.get")(function* (id) {
-    const row = yield* db(d => d.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     return row ? fromRow(row) : undefined;
   });
   const update = Effect.fn("Project.update")(function* (input) {
-    const result = yield* db(d => d.update(ProjectTable).set({
-      name: input.name,
-      icon_url: input.icon?.url,
-      icon_url_override: input.icon?.override,
-      icon_color: input.icon?.color,
-      commands: input.commands,
-      time_updated: Date.now()
-    }).where(eq(ProjectTable.id, input.projectID)).returning().get());
+    const result = yield* db(async h => {
+      await h.models.Project.update({
+        name: input.name,
+        icon_url: input.icon?.url,
+        icon_url_override: input.icon?.override,
+        icon_color: input.icon?.color,
+        commands: input.commands,
+        time_updated: Date.now()
+      }, { where: { id: input.projectID }, transaction: h.tx });
+      return plain(await h.models.Project.findByPk(input.projectID, { transaction: h.tx }));
+    });
     if (!result) throw new Error(`Project not found: ${input.projectID}`);
     const data = fromRow(result);
     yield* emitUpdated(data);
@@ -359,9 +352,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return project;
   });
   const setInitialized = Effect.fn("Project.setInitialized")(function* (id) {
-    yield* db(d => d.update(ProjectTable).set({
+    yield* db(h => h.models.Project.update({
       time_initialized: Date.now()
-    }).where(eq(ProjectTable.id, id)).run());
+    }, { where: { id }, transaction: h.tx }));
   });
   const initState = yield* InstanceState.make(Effect.fn("Project.initState")(function* (ctx) {
     yield* bus.subscribe(Command.Event.Executed).pipe(Stream.runForEach(payload => payload.properties.name === Command.Default.INIT ? setInitialized(ctx.project.id) : Effect.void), Effect.forkScoped);
@@ -370,7 +363,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* InstanceState.get(initState);
   });
   const sandboxes = Effect.fn("Project.sandboxes")(function* (id) {
-    const row = yield* db(d => d.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) return [];
     const data = fromRow(row);
     return yield* Effect.forEach(data.sandboxes, dir => fs.isDir(dir).pipe(Effect.orDie, Effect.map(ok => ok ? dir : undefined)), {
@@ -378,25 +371,31 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).pipe(Effect.map(arr => arr.filter(x => x !== undefined)));
   });
   const addSandbox = Effect.fn("Project.addSandbox")(function* (id, directory) {
-    const row = yield* db(d => d.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) throw new Error(`Project not found: ${id}`);
-    const sboxes = [...row.sandboxes];
+    const sboxes = [...jsonValue(row.sandboxes)];
     if (!sboxes.includes(directory)) sboxes.push(directory);
-    const result = yield* db(d => d.update(ProjectTable).set({
-      sandboxes: sboxes,
-      time_updated: Date.now()
-    }).where(eq(ProjectTable.id, id)).returning().get());
+    const result = yield* db(async h => {
+      await h.models.Project.update({
+        sandboxes: sboxes,
+        time_updated: Date.now()
+      }, { where: { id }, transaction: h.tx });
+      return plain(await h.models.Project.findByPk(id, { transaction: h.tx }));
+    });
     if (!result) throw new Error(`Project not found: ${id}`);
     yield* emitUpdated(fromRow(result));
   });
   const removeSandbox = Effect.fn("Project.removeSandbox")(function* (id, directory) {
-    const row = yield* db(d => d.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get());
+    const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) throw new Error(`Project not found: ${id}`);
-    const sboxes = row.sandboxes.filter(s => s !== directory);
-    const result = yield* db(d => d.update(ProjectTable).set({
-      sandboxes: sboxes,
-      time_updated: Date.now()
-    }).where(eq(ProjectTable.id, id)).returning().get());
+    const sboxes = jsonValue(row.sandboxes).filter(s => s !== directory);
+    const result = yield* db(async h => {
+      await h.models.Project.update({
+        sandboxes: sboxes,
+        time_updated: Date.now()
+      }, { where: { id }, transaction: h.tx });
+      return plain(await h.models.Project.findByPk(id, { transaction: h.tx }));
+    });
     if (!result) throw new Error(`Project not found: ${id}`);
     yield* emitUpdated(fromRow(result));
   });
@@ -416,17 +415,17 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
 }));
 export const defaultLayer = layer.pipe(Layer.provide(Bus.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(NodePath.layer));
 export const use = serviceUse(Service);
-export function list() {
-  return Database.use(db => db.select().from(ProjectTable).all().map(row => fromRow(row)));
+export async function list() {
+  return Database.useAsync(async h => (await h.models.Project.findAll({ transaction: h.tx })).map(row => fromRow(row.get({ plain: true }))));
 }
-export function get(id) {
-  const row = Database.use(db => db.select().from(ProjectTable).where(eq(ProjectTable.id, id)).get());
+export async function get(id) {
+  const row = await Database.useAsync(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
   if (!row) return undefined;
   return fromRow(row);
 }
-export function setInitialized(id) {
-  Database.use(db => db.update(ProjectTable).set({
+export async function setInitialized(id) {
+  await Database.useAsync(h => h.models.Project.update({
     time_initialized: Date.now()
-  }).where(eq(ProjectTable.id, id)).run());
+  }, { where: { id }, transaction: h.tx }));
 }
 export * as Project from "./project.js";

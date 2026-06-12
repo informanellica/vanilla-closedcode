@@ -1,122 +1,125 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=dialog-header>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=dialog-body>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-component=dialog><div data-slot=dialog-container>`);
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createMemo, createRenderEffect } from "solid-js";
 import { Dialog as Kobalte } from "@kobalte/core/dialog";
-import { Match, Show, Switch } from "solid-js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
 export function Dialog(props) {
   const i18n = useI18n();
-  return (() => {
-    var _el$ = _tmpl$3(),
-      _el$2 = _el$.firstChild;
-    _$insert(_el$2, _$createComponent(Kobalte.Content, {
-      "data-slot": "dialog-content",
-      get ["data-no-header"]() {
-        return !props.title && !props.action ? "" : undefined;
-      },
-      get classList() {
-        return {
-          ...props.classList,
-          [props.class ?? ""]: !!props.class
-        };
-      },
-      onOpenAutoFocus: e => {
-        const target = e.currentTarget;
-        const autofocusEl = target?.querySelector("[autofocus]");
-        if (autofocusEl) {
-          e.preventDefault();
-          autofocusEl.focus();
-        }
-      },
-      get children() {
-        return [_$createComponent(Show, {
-          get when() {
-            return props.title || props.action;
-          },
-          get children() {
-            var _el$3 = _tmpl$();
-            _$insert(_el$3, _$createComponent(Show, {
-              get when() {
-                return props.title;
-              },
-              get children() {
-                return _$createComponent(Kobalte.Title, {
-                  "data-slot": "dialog-title",
-                  get children() {
-                    return props.title;
-                  }
-                });
-              }
-            }), null);
-            _$insert(_el$3, _$createComponent(Switch, {
-              get children() {
-                return [_$createComponent(Match, {
-                  get when() {
-                    return props.action;
-                  },
-                  get children() {
-                    return props.action;
-                  }
-                }), _$createComponent(Match, {
-                  when: true,
-                  get children() {
-                    return _$createComponent(Kobalte.CloseButton, {
-                      "data-slot": "dialog-close-button",
-                      as: IconButton,
-                      icon: "close",
-                      variant: "ghost",
-                      get ["aria-label"]() {
-                        return i18n.t("ui.common.close");
-                      }
-                    });
-                  }
-                })];
-              }
-            }), null);
-            return _el$3;
-          }
-        }), _$createComponent(Show, {
-          get when() {
-            return props.description;
-          },
-          get children() {
-            return _$createComponent(Kobalte.Description, {
-              "data-slot": "dialog-description",
-              style: {
-                "margin-left": "-4px"
-              },
-              get children() {
-                return props.description;
-              }
-            });
-          }
-        }), (() => {
-          var _el$4 = _tmpl$2();
-          _$insert(_el$4, () => props.children);
-          return _el$4;
-        })()];
+  const root = template(`<div data-component="dialog"><div data-slot="dialog-container"></div></div>`);
+  const container = root.querySelector('[data-slot="dialog-container"]');
+
+  // Kobalte Dialog.Content is presence-gated (its result is a reactive
+  // accessor that only resolves while the dialog is open), so it must go
+  // through solid's insert() to stay live; a one-shot appendChild would
+  // freeze it (established exception).
+  _solidInsert(container, createComponent(Kobalte.Content, {
+    "data-slot": "dialog-content",
+    get ["data-no-header"]() {
+      return !props.title && !props.action ? "" : undefined;
+    },
+    get classList() {
+      return {
+        ...props.classList,
+        [props.class ?? ""]: !!props.class
+      };
+    },
+    onOpenAutoFocus: e => {
+      const target = e.currentTarget;
+      const autofocusEl = target?.querySelector("[autofocus]");
+      if (autofocusEl) {
+        e.preventDefault();
+        autofocusEl.focus();
       }
-    }));
-    _$effect(_p$ => {
-      var _v$ = props.fit ? true : undefined,
-        _v$2 = props.size || "normal",
-        _v$3 = props.transition ? true : undefined;
-      _v$ !== _p$.e && _$setAttribute(_el$, "data-fit", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$, "data-size", _p$.t = _v$2);
-      _v$3 !== _p$.a && _$setAttribute(_el$, "data-transition", _p$.a = _v$3);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined
-    });
-    return _el$;
-  })();
+    },
+    get children() {
+      // Runs once per Content mount (it reads no signals directly). The memos
+      // below reproduce the compiled Show/Switch regions; Kobalte's own child
+      // insertion resolves them reactively, keeping stable siblings (the body
+      // div) mounted across header/description updates.
+
+      // Show(title || action), non-keyed: the header is rebuilt only when the
+      // condition's truthiness flips, not on every title/action change.
+      const hasHeader = createMemo(() => !!(props.title || props.action));
+      const headerRegion = createMemo(() => {
+        if (!hasHeader()) return undefined;
+        const header = template(`<div data-slot="dialog-header"></div>`);
+        // Show(title): mount the Kobalte title only while a title exists; the
+        // title text itself stays live through the children getter.
+        const hasTitle = createMemo(() => !!props.title);
+        _solidInsert(header, createMemo(() => hasTitle()
+          ? createComponent(Kobalte.Title, {
+            "data-slot": "dialog-title",
+            get children() {
+              return props.title;
+            }
+          })
+          : undefined), null);
+        // Switch/Match: a caller-provided action replaces the default close
+        // button. The truthiness memo keeps falsy-to-falsy action changes
+        // from rebuilding the close button, matching the compiled Switch.
+        const hasAction = createMemo(() => !!props.action);
+        _solidInsert(header, createMemo(() => hasAction()
+          ? props.action
+          : createComponent(Kobalte.CloseButton, {
+            "data-slot": "dialog-close-button",
+            as: IconButton,
+            icon: "close",
+            variant: "ghost",
+            get ["aria-label"]() {
+              return i18n.t("ui.common.close");
+            }
+          })), null);
+        return header;
+      });
+
+      // Show(description).
+      const hasDescription = createMemo(() => !!props.description);
+      const descriptionRegion = createMemo(() => hasDescription()
+        ? createComponent(Kobalte.Description, {
+          "data-slot": "dialog-description",
+          style: {
+            "margin-left": "-4px"
+          },
+          get children() {
+            return props.description;
+          }
+        })
+        : undefined);
+
+      const body = template(`<div data-slot="dialog-body"></div>`);
+      _solidInsert(body, () => props.children);
+
+      return [headerRegion, descriptionRegion, body];
+    }
+  }));
+
+  // Change-guarded data attributes on the dialog root, like the compiled
+  // effect(): an unchanged value never re-touches the attribute.
+  let prevFit;
+  let prevSize;
+  let prevTransition;
+  createRenderEffect(() => {
+    const fit = props.fit ? true : undefined;
+    const size = props.size || "normal";
+    const transition = props.transition ? true : undefined;
+    if (fit !== prevFit) setAttr(root, "data-fit", prevFit = fit);
+    if (size !== prevSize) setAttr(root, "data-size", prevSize = size);
+    if (transition !== prevTransition) setAttr(root, "data-transition", prevTransition = transition);
+  });
+  return root;
 }

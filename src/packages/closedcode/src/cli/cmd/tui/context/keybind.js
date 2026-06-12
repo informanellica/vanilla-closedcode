@@ -1,5 +1,5 @@
 import { createMemo } from "solid-js";
-import { Keybind } from "@/util/keybind.js";
+import { Keybind } from "#util/keybind.js";
 import { pipe, mapValues } from "remeda";
 import { createStore } from "solid-js/store";
 import { useKeyboard, useRenderer } from "@opentui/solid";

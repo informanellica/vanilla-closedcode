@@ -1,9 +1,9 @@
 import { Glob } from "core/util/glob";
 import { Schema } from "effect";
 import { pathToFileURL } from "url";
-import { isPathPluginSpec, parsePluginSpecifier, resolvePathPluginTarget } from "@/plugin/shared.js";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { isPathPluginSpec, parsePluginSpecifier, resolvePathPluginTarget } from "#plugin/shared.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 import path from "path";
 export const Options = Schema.Record(Schema.String, Schema.Unknown).pipe(withStatics(s => ({
   zod: zod(s)

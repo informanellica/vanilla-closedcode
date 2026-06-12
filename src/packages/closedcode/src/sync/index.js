@@ -1,21 +1,25 @@
 import z from "zod";
-import { Database } from "@/storage/db.js";
-import { eq } from "drizzle-orm";
-import { GlobalBus } from "@/bus/global.js";
-import { Bus as ProjectBus } from "@/bus/index.js";
-import { BusEvent } from "@/bus/bus-event.js";
-import { EventSequenceTable, EventTable } from "./event.sql.js";
+import { Database } from "#storage/db.js";
+import { GlobalBus } from "#bus/global.js";
+import { Bus as ProjectBus } from "#bus/index.js";
+import { BusEvent } from "#bus/bus-event.js";
 import { EventID } from "./schema.js";
 import { Flag } from "core/flag/flag";
 import { Context, Effect, Layer, Schema as EffectSchema } from "effect";
-import { zodObject } from "@/util/effect-zod.js";
-import { makeRuntime } from "@/effect/run-service.js";
-import { serviceUse } from "@/effect/service-use.js";
-import { InstanceState } from "@/effect/instance-state.js";
+import { zodObject } from "#util/effect-zod.js";
+import { makeRuntime } from "#effect/run-service.js";
+import { serviceUse } from "#effect/service-use.js";
+import { InstanceState } from "#effect/instance-state.js";
 
 // Keep `Event["data"]` mutable because projectors mutate the persisted shape
 // when writing to the database. Bus payloads (`Properties`) stay readonly —
 // subscribers only read.
+
+// Sequelize call-site conventions (ORM migration S3): Database.useAsync /
+// transactionAsync hand a handle { models, sequelize, tx }; every model call
+// passes { transaction: h.tx }. Projectors now receive that handle (instead of
+// the drizzle tx) and may be async — `process` awaits them.
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
 
 export class Service extends Context.Service()("@closedcode/SyncEvent") {}
 export const layer = Layer.effect(Service)(Effect.gen(function* () {
@@ -24,9 +28,10 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
     if (!def) {
       throw new Error(`Unknown event type: ${event.type}`);
     }
-    const row = Database.use(db => db.select({
-      seq: EventSequenceTable.seq
-    }).from(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, event.aggregateID)).get());
+    const row = yield* Effect.promise(() => Database.useAsync(async h => plain(await h.models.EventSequence.findOne({
+      where: { aggregate_id: event.aggregateID },
+      transaction: h.tx
+    }))));
     const latest = row?.seq ?? -1;
     if (event.seq <= latest) return;
     const expected = latest + 1;
@@ -38,10 +43,10 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
       instance: yield* InstanceState.context,
       workspace: yield* InstanceState.workspaceID
     } : undefined;
-    process(def, event, {
+    yield* Effect.promise(() => process(def, event, {
       publish,
       context
-    });
+    }));
   });
   const replayAll = Effect.fn("SyncEvent.replayAll")(function* (events, options) {
     const source = events[0]?.aggregateID;
@@ -79,14 +84,17 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
       workspace: yield* InstanceState.workspaceID
     } : undefined;
 
-    // Note that this is an "immediate" transaction which is critical.
-    // We need to make sure we can safely read and write with nothing
-    // else changing the data from under us
-    Database.transaction(tx => {
+    // Note that the original sync layer used an "immediate" transaction here
+    // which is critical: we need to make sure we can safely read and write
+    // with nothing else changing the data from under us. transactionAsync does
+    // not expose the behavior option; the sqlite connection pool is capped at
+    // a single connection, which serializes writers within this process.
+    yield* Effect.promise(() => Database.transactionAsync(async h => {
       const id = EventID.ascending();
-      const row = tx.select({
-        seq: EventSequenceTable.seq
-      }).from(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, agg)).get();
+      const row = plain(await h.models.EventSequence.findOne({
+        where: { aggregate_id: agg },
+        transaction: h.tx
+      }));
       const seq = row?.seq != null ? row.seq + 1 : 0;
       const event = {
         id,
@@ -94,19 +102,17 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
         aggregateID: agg,
         data
       };
-      process(def, event, {
+      await process(def, event, {
         publish,
         context
       });
-    }, {
-      behavior: "immediate"
-    });
+    }));
   });
   const remove = Effect.fn("SyncEvent.remove")(function* (aggregateID) {
-    Database.transaction(tx => {
-      tx.delete(EventSequenceTable).where(eq(EventSequenceTable.aggregate_id, aggregateID)).run();
-      tx.delete(EventTable).where(eq(EventTable.aggregate_id, aggregateID)).run();
-    });
+    yield* Effect.promise(() => Database.transactionAsync(async h => {
+      await h.models.EventSequence.destroy({ where: { aggregate_id: aggregateID }, transaction: h.tx });
+      await h.models.Event.destroy({ where: { aggregate_id: aggregateID }, transaction: h.tx });
+    }));
   });
   return Service.of({
     run,
@@ -166,7 +172,7 @@ export function define(input) {
 export function project(def, func) {
   return [def, func];
 }
-function process(def, event, options) {
+async function process(def, event, options) {
   if (projectors == null) {
     throw new Error("No projectors available. Call `SyncEvent.init` to install projectors");
   }
@@ -177,27 +183,22 @@ function process(def, event, options) {
 
   // idempotent: need to ignore any events already logged
 
-  Database.transaction(tx => {
-    projector(tx, event.data, event);
+  await Database.transactionAsync(async h => {
+    await projector(h, event.data, event);
     if (Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES) {
-      tx.insert(EventSequenceTable).values({
+      await h.models.EventSequence.upsert({
         aggregate_id: event.aggregateID,
         seq: event.seq
-      }).onConflictDoUpdate({
-        target: EventSequenceTable.aggregate_id,
-        set: {
-          seq: event.seq
-        }
-      }).run();
-      tx.insert(EventTable).values({
+      }, { transaction: h.tx });
+      await h.models.Event.create({
         id: event.id,
         seq: event.seq,
         aggregate_id: event.aggregateID,
         type: versionedType(def.type, def.version),
         data: event.data
-      }).run();
+      }, { transaction: h.tx });
     }
-    Database.effect(() => {
+    Database.effectAsync(() => {
       if (options?.publish) {
         if (!options.context?.instance) {
           throw new Error("SyncEvent.process: publish requires instance context");
@@ -227,17 +228,20 @@ function process(def, event, options) {
     });
   });
 }
+// The service effects now cross async boundaries (Sequelize layer), so the
+// module-level wrappers return Promises (runSync would die on the first
+// suspension). Callers were synchronous before — sync→async signature change.
 export function replay(event, options) {
-  return runtime.runSync(sync => sync.replay(event, options));
+  return runtime.runPromise(sync => sync.replay(event, options));
 }
 export function replayAll(events, options) {
-  return runtime.runSync(sync => sync.replayAll(events, options));
+  return runtime.runPromise(sync => sync.replayAll(events, options));
 }
 export function run(def, data, options) {
-  return runtime.runSync(sync => sync.run(def, data, options));
+  return runtime.runPromise(sync => sync.run(def, data, options));
 }
 export function remove(aggregateID) {
-  return runtime.runSync(sync => sync.remove(aggregateID));
+  return runtime.runPromise(sync => sync.remove(aggregateID));
 }
 export function payloads() {
   return registry.entries().map(([type, def]) => {

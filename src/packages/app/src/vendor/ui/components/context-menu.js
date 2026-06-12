@@ -1,15 +1,18 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
 import { ContextMenu as Kobalte } from "@kobalte/core/context-menu";
-import { splitProps } from "solid-js";
+import { createComponent, mergeProps, splitProps } from "solid-js";
+
+// Thin Kobalte wrappers: tag each part with a data attribute and fold the
+// `class` prop into `classList` (live via splitProps getters). Caller props
+// come first in mergeProps so the wrapper's data attributes and classList
+// always win, exactly like the compiled output.
 function ContextMenuRoot(props) {
-  return _$createComponent(Kobalte, _$mergeProps(props, {
+  return createComponent(Kobalte, mergeProps(props, {
     "data-component": "context-menu"
   }));
 }
 function ContextMenuTrigger(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Trigger, _$mergeProps(rest, {
+  return createComponent(Kobalte.Trigger, mergeProps(rest, {
     "data-slot": "context-menu-trigger",
     get classList() {
       return {
@@ -24,7 +27,7 @@ function ContextMenuTrigger(props) {
 }
 function ContextMenuIcon(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Icon, _$mergeProps(rest, {
+  return createComponent(Kobalte.Icon, mergeProps(rest, {
     "data-slot": "context-menu-icon",
     get classList() {
       return {
@@ -38,11 +41,11 @@ function ContextMenuIcon(props) {
   }));
 }
 function ContextMenuPortal(props) {
-  return _$createComponent(Kobalte.Portal, props);
+  return createComponent(Kobalte.Portal, props);
 }
 function ContextMenuContent(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Content, _$mergeProps(rest, {
+  return createComponent(Kobalte.Content, mergeProps(rest, {
     "data-component": "context-menu-content",
     get classList() {
       return {
@@ -57,7 +60,7 @@ function ContextMenuContent(props) {
 }
 function ContextMenuArrow(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.Arrow, _$mergeProps(rest, {
+  return createComponent(Kobalte.Arrow, mergeProps(rest, {
     "data-slot": "context-menu-arrow",
     get classList() {
       return {
@@ -69,7 +72,7 @@ function ContextMenuArrow(props) {
 }
 function ContextMenuSeparator(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.Separator, _$mergeProps(rest, {
+  return createComponent(Kobalte.Separator, mergeProps(rest, {
     "data-slot": "context-menu-separator",
     get classList() {
       return {
@@ -81,7 +84,7 @@ function ContextMenuSeparator(props) {
 }
 function ContextMenuGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Group, _$mergeProps(rest, {
+  return createComponent(Kobalte.Group, mergeProps(rest, {
     "data-slot": "context-menu-group",
     get classList() {
       return {
@@ -96,7 +99,7 @@ function ContextMenuGroup(props) {
 }
 function ContextMenuGroupLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.GroupLabel, _$mergeProps(rest, {
+  return createComponent(Kobalte.GroupLabel, mergeProps(rest, {
     "data-slot": "context-menu-group-label",
     get classList() {
       return {
@@ -111,7 +114,7 @@ function ContextMenuGroupLabel(props) {
 }
 function ContextMenuItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Item, _$mergeProps(rest, {
+  return createComponent(Kobalte.Item, mergeProps(rest, {
     "data-slot": "context-menu-item",
     get classList() {
       return {
@@ -126,7 +129,7 @@ function ContextMenuItem(props) {
 }
 function ContextMenuItemLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemLabel, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemLabel, mergeProps(rest, {
     "data-slot": "context-menu-item-label",
     get classList() {
       return {
@@ -141,7 +144,7 @@ function ContextMenuItemLabel(props) {
 }
 function ContextMenuItemDescription(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemDescription, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemDescription, mergeProps(rest, {
     "data-slot": "context-menu-item-description",
     get classList() {
       return {
@@ -156,7 +159,7 @@ function ContextMenuItemDescription(props) {
 }
 function ContextMenuItemIndicator(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemIndicator, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemIndicator, mergeProps(rest, {
     "data-slot": "context-menu-item-indicator",
     get classList() {
       return {
@@ -171,7 +174,7 @@ function ContextMenuItemIndicator(props) {
 }
 function ContextMenuRadioGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.RadioGroup, _$mergeProps(rest, {
+  return createComponent(Kobalte.RadioGroup, mergeProps(rest, {
     "data-slot": "context-menu-radio-group",
     get classList() {
       return {
@@ -186,7 +189,7 @@ function ContextMenuRadioGroup(props) {
 }
 function ContextMenuRadioItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.RadioItem, _$mergeProps(rest, {
+  return createComponent(Kobalte.RadioItem, mergeProps(rest, {
     "data-slot": "context-menu-radio-item",
     get classList() {
       return {
@@ -201,7 +204,7 @@ function ContextMenuRadioItem(props) {
 }
 function ContextMenuCheckboxItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.CheckboxItem, _$mergeProps(rest, {
+  return createComponent(Kobalte.CheckboxItem, mergeProps(rest, {
     "data-slot": "context-menu-checkbox-item",
     get classList() {
       return {
@@ -215,11 +218,11 @@ function ContextMenuCheckboxItem(props) {
   }));
 }
 function ContextMenuSub(props) {
-  return _$createComponent(Kobalte.Sub, props);
+  return createComponent(Kobalte.Sub, props);
 }
 function ContextMenuSubTrigger(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.SubTrigger, _$mergeProps(rest, {
+  return createComponent(Kobalte.SubTrigger, mergeProps(rest, {
     "data-slot": "context-menu-sub-trigger",
     get classList() {
       return {
@@ -234,7 +237,7 @@ function ContextMenuSubTrigger(props) {
 }
 function ContextMenuSubContent(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.SubContent, _$mergeProps(rest, {
+  return createComponent(Kobalte.SubContent, mergeProps(rest, {
     "data-component": "context-menu-sub-content",
     get classList() {
       return {

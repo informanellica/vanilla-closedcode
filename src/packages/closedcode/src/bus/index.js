@@ -1,11 +1,11 @@
 import { Effect, Exit, Layer, PubSub, Scope, Context, Stream, Schema } from "effect";
-import { EffectBridge } from "@/effect/bridge.js";
+import { EffectBridge } from "#effect/bridge.js";
 import * as Log from "core/util/log";
 import { BusEvent } from "./bus-event.js";
 import { GlobalBus } from "./global.js";
-import { InstanceState } from "@/effect/instance-state.js";
-import { makeRuntime } from "@/effect/run-service.js";
-import { Identifier } from "@/id/id.js";
+import { InstanceState } from "#effect/instance-state.js";
+import { makeRuntime } from "#effect/run-service.js";
+import { Identifier } from "#id/id.js";
 const log = Log.create({
   service: "bus"
 });

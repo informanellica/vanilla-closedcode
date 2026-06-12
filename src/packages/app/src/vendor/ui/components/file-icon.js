@@ -1,4 +1,4 @@
-import sprite from "./file-icons/sprite.svg";
+const sprite = new URL("./file-icons/sprite.svg", import.meta.url).href;
 let fileIconId = 0;
 function splitProps(props, keys) {
   const split = {};

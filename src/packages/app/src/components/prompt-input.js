@@ -1,27 +1,11 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span></span><span class="text-secondary small fw-medium text-[10px]!">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class=relative><div class="relative max-h-[240px] overflow-y-auto no-scrollbar"style=scroll-padding-bottom:56px><div data-component=prompt-input role=textbox aria-multiline=true contenteditable=true inputmode=text autocomplete=off style=padding-bottom:56px></div><div class="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 fw-normal text-secondary pointer-events-none whitespace-nowrap truncate"style=padding-bottom:56px></div></div><div aria-hidden=true class="pointer-events-none absolute inset-x-0 bottom-0"style="height:56px;background:linear-gradient(to top, var(--surface-raised-stronger-non-alpha) calc(100% - 20px), transparent)"></div><div class="pointer-events-none absolute bottom-2 right-2 d-flex align-items-center gap-2"><input type=file multiple class=d-none><div class="d-flex align-items-center gap-1 pointer-events-auto"></div></div><div class="pointer-events-none absolute bottom-2 left-2"><div class=pointer-events-auto>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-component=prompt-agent-control>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<span class=truncate>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-component=prompt-model-control>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-component=prompt-variant-control>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="px-1.75 pt-5.5 pb-2 d-flex align-items-center gap-2 min-w-0"><div class="d-flex align-items-center gap-1.5 min-w-0 flex-fill relative"><div class="h-7 d-flex align-items-center gap-1.5 min-w-0 absolute inset-0"style="padding:0 0px 0 8px"><span class="truncate fw-medium text-body"></span><div class=flex-fill></div></div><div class="d-flex align-items-center gap-1.5 min-w-0 flex-fill h-7">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="relative size-full _max-h-[320px] d-flex flex-column gap-0">`);
+// insert() is the established exception for reactive/component-valued
+// children: PromptPopover and Show return memo accessors that must keep being
+// reconciled (the Kobalte-backed model selector lives under one of them), so
+// freezing their first value would break open/close and branch switches.
+import { insert as _solidInsert } from "solid-js/web";
 import { useFilteredList } from "@/lib/hooks.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
-import { createEffect, on, Show, onCleanup, createMemo, createSignal } from "solid-js";
+import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useLocal } from "@/context/local.js";
 import { useProvidersController } from "@/controllers/providers.js";
@@ -58,6 +42,16 @@ import { PromptImageAttachments } from "./prompt-input/image-attachments.js";
 import { PromptDragOverlay } from "./prompt-input/drag-overlay.js";
 import { promptPlaceholder } from "./prompt-input/placeholder.js";
 import { ImagePreview } from "@/vendor/ui/components/image-preview.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated and
+// user-provided strings are always assigned via textContent, never
+// interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 const EXAMPLES = ["prompt.example.1", "prompt.example.2", "prompt.example.3", "prompt.example.4", "prompt.example.5", "prompt.example.6", "prompt.example.7", "prompt.example.8", "prompt.example.9", "prompt.example.10", "prompt.example.11", "prompt.example.12", "prompt.example.13", "prompt.example.14", "prompt.example.15", "prompt.example.16", "prompt.example.17", "prompt.example.18", "prompt.example.19", "prompt.example.20", "prompt.example.21", "prompt.example.22", "prompt.example.23", "prompt.example.24", "prompt.example.25"];
 const NON_EMPTY_TEXT = /[^\s\u200B]/;
 export const PromptInput = props => {
@@ -248,28 +242,25 @@ export const PromptInput = props => {
     return text.trim().length === 0 && imageAttachments().length === 0 && commentCount() === 0;
   });
   const stopping = createMemo(() => working() && blank());
+  // Tooltip body. Built fresh on every read (the vanilla Tooltip re-reads
+  // `value` per open and clones the node), so the localized labels are
+  // snapshotted via textContent — no live effects here; tip() is typically
+  // called from hover handlers where no Solid owner exists.
   const tip = () => {
     if (stopping()) {
-      return (() => {
-        var _el$ = _tmpl$(),
-          _el$2 = _el$.firstChild,
-          _el$3 = _el$2.nextSibling;
-        _$insert(_el$2, () => language.t("prompt.action.stop"));
-        _$insert(_el$3, () => language.t("common.key.esc"));
-        return _el$;
-      })();
+      const el = template(`<div class="d-flex align-items-center gap-2"><span></span><span class="text-secondary small fw-medium text-[10px]!"></span></div>`);
+      el.firstChild.textContent = language.t("prompt.action.stop");
+      el.lastChild.textContent = language.t("common.key.esc");
+      return el;
     }
-    return (() => {
-      var _el$4 = _tmpl$2(),
-        _el$5 = _el$4.firstChild;
-      _$insert(_el$5, () => language.t("prompt.action.send"));
-      _$insert(_el$4, _$createComponent(Icon, {
-        name: "enter",
-        size: "small",
-        "class": "text-secondary"
-      }), null);
-      return _el$4;
-    })();
+    const el = template(`<div class="d-flex align-items-center gap-2"><span></span></div>`);
+    el.firstChild.textContent = language.t("prompt.action.send");
+    el.appendChild(createComponent(Icon, {
+      name: "enter",
+      size: "small",
+      "class": "text-secondary"
+    }));
+    return el;
   };
   const contextItems = createMemo(() => {
     const items = prompt.context.items();
@@ -1118,503 +1109,519 @@ export const PromptInput = props => {
   const providersLoading = composer.providersLoading;
   const providersShouldFadeIn = composer.providersShouldFadeIn;
   const promptReady = composer.promptReady;
-  return (() => {
-    var _el$6 = _tmpl$9();
-    _$insert(_el$6, () => (promptReady(), null), null);
-    _$insert(_el$6, _$createComponent(PromptPopover, {
-      get popover() {
-        return store.popover;
-      },
-      setSlashPopoverRef: el => slashPopoverRef = el,
-      get atFlat() {
-        return atFlat();
-      },
-      get atActive() {
-        return atActive() ?? undefined;
-      },
-      atKey: atKey,
-      setAtActive: setAtActive,
-      onAtSelect: handleAtSelect,
-      get slashFlat() {
-        return slashFlat();
-      },
-      get slashActive() {
-        return slashActive() ?? undefined;
-      },
-      setSlashActive: setSlashActive,
-      onSlashSelect: handleSlashSelect,
-      get commandKeybind() {
-        return command.keybind;
-      },
-      t: key => language.t(key)
-    }), null);
-    _$insert(_el$6, _$createComponent(DockShellForm, {
-      onSubmit: handleSubmit,
-      get classList() {
-        return {
-          "group/prompt-input": true,
-          "focus-within:shadow-xs-border": true,
-          "border border-dashed": store.draggingType !== null,
-          [props.class ?? ""]: !!props.class
-        };
-      },
-      get children() {
-        return [_$createComponent(PromptDragOverlay, {
-          get type() {
-            return store.draggingType;
-          },
-          get label() {
-            return language.t(store.draggingType === "@mention" ? "prompt.dropzone.file.label" : "prompt.dropzone.label");
-          }
-        }), _$createComponent(PromptContextItems, {
-          get items() {
-            return contextItems();
-          },
-          active: item => {
-            const active = comments.active();
-            return !!item.commentID && item.commentID === active?.id && item.path === active?.file;
-          },
-          openComment: openComment,
-          remove: item => {
-            if (item.commentID) comments.remove(item.path, item.commentID);
-            prompt.context.remove(item.key);
-          },
-          t: key => language.t(key)
-        }), _$createComponent(PromptImageAttachments, {
-          get attachments() {
-            return imageAttachments();
-          },
-          onOpen: attachment => dialog.show(() => _$createComponent(ImagePreview, {
-            get src() {
-              return attachment.dataUrl;
-            },
-            get alt() {
-              return attachment.filename;
-            }
-          })),
-          onRemove: removeAttachment,
-          get removeLabel() {
-            return language.t("prompt.attachment.remove");
-          }
-        }), (() => {
-          var _el$7 = _tmpl$3(),
-            _el$8 = _el$7.firstChild,
-            _el$9 = _el$8.firstChild,
-            _el$0 = _el$9.nextSibling,
-            _el$1 = _el$8.nextSibling,
-            _el$10 = _el$1.nextSibling,
-            _el$11 = _el$10.firstChild,
-            _el$12 = _el$11.nextSibling,
-            _el$13 = _el$10.nextSibling,
-            _el$14 = _el$13.firstChild;
-          _el$7.$$mousedown = e => {
-            const target = e.target;
-            if (!(target instanceof HTMLElement)) return;
-            if (target.closest('[data-action="prompt-attach"], [data-action="prompt-submit"]')) {
-              return;
-            }
-            editorRef?.focus();
-          };
-          _$use(el => scrollRef = el, _el$8);
-          _el$9.$$keydown = handleKeyDown;
-          _el$9.addEventListener("blur", handleBlur);
-          _el$9.addEventListener("compositionend", handleCompositionEnd);
-          _el$9.addEventListener("compositionstart", handleCompositionStart);
-          _$addEventListener(_el$9, "paste", handlePaste);
-          _el$9.$$input = handleInput;
-          _$use(el => {
-            editorRef = el;
-            props.ref?.(el);
-          }, _el$9);
-          _$insert(_el$0, placeholder);
-          _el$11.addEventListener("change", e => {
-            const list = e.currentTarget.files;
-            if (list) void addAttachments(Array.from(list));
-            e.currentTarget.value = "";
-          });
-          var _ref$ = fileInputRef;
-          typeof _ref$ === "function" ? _$use(_ref$, _el$11) : fileInputRef = _el$11;
-          _$insert(_el$12, _$createComponent(Tooltip, {
-            placement: "top",
-            get inactive() {
-              return _$memo(() => !!!working())() && blank();
-            },
-            get value() {
-              return tip();
-            },
-            get children() {
-              return _$createComponent(IconButton, {
-                "data-action": "prompt-submit",
-                type: "submit",
-                get disabled() {
-                  return _$memo(() => !!!working())() && blank();
-                },
-                get tabIndex() {
-                  return store.mode === "normal" ? undefined : -1;
-                },
-                get icon() {
-                  return _$memo(() => !!stopping())() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up";
-                },
-                variant: "primary",
-                "class": "size-8",
-                get ["aria-label"]() {
-                  return _$memo(() => !!stopping())() ? language.t("prompt.action.stop") : language.t("prompt.action.send");
-                }
-              });
-            }
-          }));
-          _$insert(_el$14, _$createComponent(TooltipKeybind, {
-            placement: "top",
-            get title() {
-              return language.t("prompt.action.attachFile");
-            },
-            get keybind() {
-              return command.keybind("file.attach");
-            },
-            get children() {
-              return _$createComponent(Button, {
-                "data-action": "prompt-attach",
-                type: "button",
-                variant: "ghost",
-                "class": "size-8 p-0",
-                get style() {
-                  return buttons();
-                },
-                onClick: pick,
-                get disabled() {
-                  return store.mode !== "normal";
-                },
-                get tabIndex() {
-                  return store.mode === "normal" ? undefined : -1;
-                },
-                get ["aria-label"]() {
-                  return language.t("prompt.action.attachFile");
-                },
-                get children() {
-                  return _$createComponent(Icon, {
-                    name: "plus",
-                    "class": "size-4.5"
-                  });
-                }
-              });
-            }
-          }));
-          _$effect(_p$ => {
-            var _v$ = placeholder(),
-              _v$2 = store.mode === "normal" ? "sentences" : "off",
-              _v$3 = store.mode === "normal" ? "on" : "off",
-              _v$4 = store.mode === "normal",
-              _v$5 = {
-                "select-text": true,
-                "w-full pl-3 pr-2 pt-2 fw-normal text-body-emphasis focus:outline-none whitespace-pre-wrap": true,
-                "[&_[data-type=file]]:text-syntax-property": true,
-                "[&_[data-type=agent]]:text-syntax-type": true,
-                "font-mono!": store.mode === "shell"
-              },
-              _v$6 = !!(store.mode === "shell"),
-              _v$7 = prompt.dirty() ? "none" : undefined,
-              _v$8 = ACCEPTED_FILE_TYPES.join(","),
-              _v$9 = store.mode !== "normal",
-              _v$0 = buttonsSpring() > 0.5 ? "auto" : "none";
-            _v$ !== _p$.e && _$setAttribute(_el$9, "aria-label", _p$.e = _v$);
-            _v$2 !== _p$.t && _$setAttribute(_el$9, "autocapitalize", _p$.t = _v$2);
-            _v$3 !== _p$.a && _$setAttribute(_el$9, "autocorrect", _p$.a = _v$3);
-            _v$4 !== _p$.o && _$setAttribute(_el$9, "spellcheck", _p$.o = _v$4);
-            _p$.i = _$classList(_el$9, _v$5, _p$.i);
-            _v$6 !== _p$.n && _el$0.classList.toggle("font-mono!", _p$.n = _v$6);
-            _v$7 !== _p$.s && _$setStyleProperty(_el$0, "display", _p$.s = _v$7);
-            _v$8 !== _p$.h && _$setAttribute(_el$11, "accept", _p$.h = _v$8);
-            _v$9 !== _p$.r && _$setAttribute(_el$14, "aria-hidden", _p$.r = _v$9);
-            _v$0 !== _p$.d && _$setStyleProperty(_el$14, "pointer-events", _p$.d = _v$0);
-            return _p$;
-          }, {
-            e: undefined,
-            t: undefined,
-            a: undefined,
-            o: undefined,
-            i: undefined,
-            n: undefined,
-            s: undefined,
-            h: undefined,
-            r: undefined,
-            d: undefined
-          });
-          return _el$7;
-        })()];
+
+  // ---- editor area (compiled _tmpl$3) ----
+  const buildEditorArea = () => {
+    const area = template(`<div class="relative"><div class="relative max-h-[240px] overflow-y-auto no-scrollbar" style="scroll-padding-bottom:56px"><div data-component="prompt-input" role="textbox" aria-multiline="true" contenteditable="true" inputmode="text" autocomplete="off" style="padding-bottom:56px" class="select-text w-full pl-3 pr-2 pt-2 fw-normal text-body-emphasis focus:outline-none whitespace-pre-wrap [&_[data-type=file]]:text-syntax-property [&_[data-type=agent]]:text-syntax-type"></div><div class="absolute top-0 inset-x-0 pl-3 pr-2 pt-2 fw-normal text-secondary pointer-events-none whitespace-nowrap truncate" style="padding-bottom:56px"></div></div><div aria-hidden="true" class="pointer-events-none absolute inset-x-0 bottom-0" style="height:56px;background:linear-gradient(to top, var(--surface-raised-stronger-non-alpha) calc(100% - 20px), transparent)"></div><div class="pointer-events-none absolute bottom-2 right-2 d-flex align-items-center gap-2"><input type="file" multiple class="d-none"><div class="d-flex align-items-center gap-1 pointer-events-auto"></div></div><div class="pointer-events-none absolute bottom-2 left-2"><div class="pointer-events-auto"></div></div></div>`);
+    const scrollEl = area.firstChild;
+    const editorEl = scrollEl.firstChild;
+    const placeholderEl = editorEl.nextSibling;
+    const rightDock = scrollEl.nextSibling.nextSibling;
+    const inputEl = rightDock.firstChild;
+    const submitHost = inputEl.nextSibling;
+    const attachHost = rightDock.nextSibling.firstChild;
+    // Compiled delegated $$mousedown -> direct listener. Bubble order to this
+    // wrapper is unchanged and the handler neither prevents defaults nor
+    // stops propagation.
+    area.addEventListener("mousedown", e => {
+      const target = e.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.closest('[data-action="prompt-attach"], [data-action="prompt-submit"]')) {
+        return;
       }
-    }), null);
-    _$insert(_el$6, _$createComponent(Show, {
-      get when() {
-        return store.mode === "normal" || store.mode === "shell";
+      editorRef?.focus();
+    });
+    scrollRef = scrollEl;
+    // Compiled delegated $$keydown/$$input -> direct listeners. The
+    // document-level keydown handlers (command keybinds, session autofocus)
+    // all early-return for editable targets, so running at the editor instead
+    // of at the document is observationally identical — including the Escape
+    // branches that stopPropagation().
+    editorEl.addEventListener("keydown", handleKeyDown);
+    editorEl.addEventListener("blur", handleBlur);
+    editorEl.addEventListener("compositionend", handleCompositionEnd);
+    editorEl.addEventListener("compositionstart", handleCompositionStart);
+    editorEl.addEventListener("paste", handlePaste);
+    editorEl.addEventListener("input", handleInput);
+    // use:ref ran at template creation in the compiled output.
+    editorRef = editorEl;
+    props.ref?.(editorEl);
+    // Live placeholder text (mode/locale/example rotation).
+    const placeholderText = document.createTextNode("");
+    placeholderEl.appendChild(placeholderText);
+    createRenderEffect(() => {
+      placeholderText.data = placeholder();
+    });
+    inputEl.addEventListener("change", e => {
+      const list = e.currentTarget.files;
+      if (list) void addAttachments(Array.from(list));
+      e.currentTarget.value = "";
+    });
+    fileInputRef = inputEl;
+    // accept is built from a static import; the compiled effect only ever set
+    // it once.
+    inputEl.setAttribute("accept", ACCEPTED_FILE_TYPES.join(","));
+    // Eager Node children below: the vanilla Tooltip probes `children` more
+    // than once, so getters would build and discard spare buttons.
+    submitHost.appendChild(createComponent(Tooltip, {
+      placement: "top",
+      get inactive() {
+        return !working() && blank();
       },
-      get children() {
-        return _$createComponent(DockTray, {
-          attach: "top",
-          get children() {
-            var _el$15 = _tmpl$8(),
-              _el$16 = _el$15.firstChild,
-              _el$17 = _el$16.firstChild,
-              _el$18 = _el$17.firstChild,
-              _el$19 = _el$18.nextSibling,
-              _el$20 = _el$17.nextSibling;
-            _$insert(_el$17, _$createComponent(Icon, {
-              name: "console"
-            }), _el$18);
-            _$insert(_el$18, () => language.t("prompt.mode.shell"));
-            _$insert(_el$17, _$createComponent(Button, {
-              variant: "ghost",
-              "class": "text-body",
-              onClick: () => {
-                setStore("mode", "normal");
-              },
-              get children() {
-                return language.t("common.cancel");
-              }
-            }), null);
-            _$insert(_el$20, _$createComponent(Show, {
-              get when() {
-                return !agentsLoading();
-              },
-              get children() {
-                var _el$21 = _tmpl$4();
-                _$insert(_el$21, _$createComponent(TooltipKeybind, {
-                  placement: "top",
-                  gutter: 4,
-                  get title() {
-                    return language.t("command.agent.cycle");
-                  },
-                  get keybind() {
-                    return command.keybind("agent.cycle");
-                  },
-                  get children() {
-                    return _$createComponent(Select, {
-                      size: "normal",
-                      get options() {
-                        return agentNames();
-                      },
-                      get current() {
-                        return local.agent.current()?.name ?? "";
-                      },
-                      onSelect: value => {
-                        local.agent.set(value);
-                        restoreFocus();
-                      },
-                      "class": "capitalize max-w-[160px] text-body",
-                      valueClass: "truncate fw-normal text-body",
-                      get triggerStyle() {
-                        return control();
-                      },
-                      triggerProps: {
-                        "data-action": "prompt-agent"
-                      },
-                      variant: "ghost"
-                    });
+      get value() {
+        return tip();
+      },
+      children: createComponent(IconButton, {
+        "data-action": "prompt-submit",
+        type: "submit",
+        get disabled() {
+          return !working() && blank();
+        },
+        get tabIndex() {
+          return store.mode === "normal" ? undefined : -1;
+        },
+        get icon() {
+          return stopping() ? "stop" : store.mode === "shell" ? "arrow-undo-down" : "arrow-up";
+        },
+        variant: "primary",
+        "class": "size-8",
+        get ["aria-label"]() {
+          return stopping() ? language.t("prompt.action.stop") : language.t("prompt.action.send");
+        }
+      })
+    }));
+    attachHost.appendChild(createComponent(TooltipKeybind, {
+      placement: "top",
+      get title() {
+        return language.t("prompt.action.attachFile");
+      },
+      get keybind() {
+        return command.keybind("file.attach");
+      },
+      children: createComponent(Button, {
+        "data-action": "prompt-attach",
+        type: "button",
+        variant: "ghost",
+        "class": "size-8 p-0",
+        get style() {
+          return buttons();
+        },
+        onClick: pick,
+        get disabled() {
+          return store.mode !== "normal";
+        },
+        get tabIndex() {
+          return store.mode === "normal" ? undefined : -1;
+        },
+        get ["aria-label"]() {
+          return language.t("prompt.action.attachFile");
+        },
+        get children() {
+          return createComponent(Icon, {
+            name: "plus",
+            "class": "size-4.5"
+          });
+        }
+      })
+    }));
+    // Change-guarded reactive attributes, mirroring the compiled effect().
+    // The editor's always-on classes live in the template above; only the
+    // shell-mode font toggle is dynamic.
+    let prevAriaLabel;
+    let prevAutocapitalize;
+    let prevAutocorrect;
+    let prevSpellcheck;
+    let prevEditorMono;
+    let prevPlaceholderMono;
+    let prevPlaceholderDisplay;
+    let prevAttachHidden;
+    let prevAttachPointer;
+    createRenderEffect(() => {
+      const ariaLabel = placeholder();
+      const autocapitalize = store.mode === "normal" ? "sentences" : "off";
+      const autocorrect = store.mode === "normal" ? "on" : "off";
+      const spellcheck = store.mode === "normal";
+      const mono = store.mode === "shell";
+      const display = prompt.dirty() ? "none" : undefined;
+      const attachHidden = store.mode !== "normal";
+      const attachPointer = buttonsSpring() > 0.5 ? "auto" : "none";
+      if (ariaLabel !== prevAriaLabel) editorEl.setAttribute("aria-label", prevAriaLabel = ariaLabel);
+      if (autocapitalize !== prevAutocapitalize) editorEl.setAttribute("autocapitalize", prevAutocapitalize = autocapitalize);
+      if (autocorrect !== prevAutocorrect) editorEl.setAttribute("autocorrect", prevAutocorrect = autocorrect);
+      if (spellcheck !== prevSpellcheck) editorEl.setAttribute("spellcheck", prevSpellcheck = spellcheck);
+      if (mono !== prevEditorMono) editorEl.classList.toggle("font-mono!", prevEditorMono = mono);
+      if (mono !== prevPlaceholderMono) placeholderEl.classList.toggle("font-mono!", prevPlaceholderMono = mono);
+      if (display !== prevPlaceholderDisplay) {
+        prevPlaceholderDisplay = display;
+        if (display == null) placeholderEl.style.removeProperty("display");
+        else placeholderEl.style.setProperty("display", display);
+      }
+      if (attachHidden !== prevAttachHidden) attachHost.setAttribute("aria-hidden", prevAttachHidden = attachHidden);
+      if (attachPointer !== prevAttachPointer) attachHost.style.setProperty("pointer-events", prevAttachPointer = attachPointer);
+    });
+    return area;
+  };
+
+  // ---- bottom tray (compiled _tmpl$8 and friends) ----
+  // Compiled style(el, cond ? { animation } : undefined): the key is removed
+  // again when the condition turns false.
+  const bindFadeIn = (el, shouldFadeIn) => {
+    let prev;
+    createRenderEffect(() => {
+      const fade = shouldFadeIn();
+      if (fade === prev) return;
+      prev = fade;
+      if (fade) el.style.setProperty("animation", "fade-in 0.3s");
+      else el.style.removeProperty("animation");
+    });
+  };
+  // Compiled _tmpl$5 + live insert: the label follows the current model and
+  // falls back to the localized picker title.
+  const buildModelLabel = () => {
+    const el = template(`<span class="truncate"></span>`);
+    createRenderEffect(() => {
+      el.textContent = local.model.current()?.name ?? language.t("dialog.model.select.title");
+    });
+    return el;
+  };
+  const buildModelTriggerChildren = () => [createComponent(Show, {
+    get when() {
+      return local.model.current()?.provider?.id;
+    },
+    get children() {
+      return createComponent(ProviderIcon, {
+        get id() {
+          return local.model.current()?.provider?.id ?? "";
+        },
+        "class": "size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150",
+        style: {
+          "will-change": "opacity",
+          transform: "translateZ(0)"
+        }
+      });
+    }
+  }), buildModelLabel(), createComponent(Icon, {
+    name: "chevron-down",
+    size: "small",
+    "class": "shrink-0"
+  })];
+  const buildModelControl = () => {
+    const el = template(`<div data-component="prompt-model-control"></div>`);
+    _solidInsert(el, createComponent(Show, {
+      get when() {
+        return providers.connected().length > 0;
+      },
+      get fallback() {
+        return createComponent(TooltipKeybind, {
+          placement: "top",
+          gutter: 4,
+          get title() {
+            return language.t("command.model.choose");
+          },
+          get keybind() {
+            return command.keybind("model.choose");
+          },
+          children: createComponent(Button, {
+            "data-action": "prompt-model",
+            as: "div",
+            variant: "ghost",
+            size: "normal",
+            "class": "min-w-0 max-w-[320px] fw-normal text-body group",
+            get style() {
+              return control();
+            },
+            onClick: () => {
+              void import("@/components/dialog-select-model-unpaid.js").then(x => {
+                dialog.show(() => createComponent(x.DialogSelectModelUnpaid, {
+                  get model() {
+                    return local.model;
                   }
                 }));
-                _$effect(_$p => _$style(_el$21, agentsShouldFadeIn() ? {
-                  animation: "fade-in 0.3s"
-                } : undefined, _$p));
-                return _el$21;
-              }
-            }), null);
-            _$insert(_el$20, _$createComponent(Show, {
+              });
+            },
+            get children() {
+              return buildModelTriggerChildren();
+            }
+          })
+        });
+      },
+      get children() {
+        return createComponent(TooltipKeybind, {
+          placement: "top",
+          gutter: 4,
+          get title() {
+            return language.t("command.model.choose");
+          },
+          get keybind() {
+            return command.keybind("model.choose");
+          },
+          // Kobalte-backed popover: its accessor tree is resolved by the
+          // vanilla Tooltip through insert().
+          children: createComponent(ModelSelectorPopover, {
+            get model() {
+              return local.model;
+            },
+            triggerAs: Button,
+            get triggerProps() {
+              return {
+                variant: "ghost",
+                size: "normal",
+                style: control(),
+                class: "min-w-0 max-w-[320px] fw-normal text-body group",
+                "data-action": "prompt-model"
+              };
+            },
+            onClose: restoreFocus,
+            get children() {
+              return buildModelTriggerChildren();
+            }
+          })
+        });
+      }
+    }));
+    bindFadeIn(el, providersShouldFadeIn);
+    return el;
+  };
+  const buildVariantControl = () => {
+    const el = template(`<div data-component="prompt-variant-control"></div>`);
+    el.appendChild(createComponent(TooltipKeybind, {
+      placement: "top",
+      gutter: 4,
+      get title() {
+        return language.t("command.model.variant.cycle");
+      },
+      get keybind() {
+        return command.keybind("model.variant.cycle");
+      },
+      children: createComponent(Select, {
+        size: "normal",
+        get options() {
+          return variants();
+        },
+        get current() {
+          return local.model.variant.current() ?? "default";
+        },
+        label: x => x === "default" ? language.t("common.default") : x,
+        onSelect: value => {
+          local.model.variant.set(value === "default" ? undefined : value);
+          restoreFocus();
+        },
+        "class": "capitalize max-w-[160px] text-body",
+        valueClass: "truncate fw-normal text-body",
+        get triggerStyle() {
+          return control();
+        },
+        triggerProps: {
+          "data-action": "prompt-model-variant"
+        },
+        variant: "ghost"
+      })
+    }));
+    bindFadeIn(el, providersShouldFadeIn);
+    return el;
+  };
+  const buildAgentControl = () => {
+    const el = template(`<div data-component="prompt-agent-control"></div>`);
+    el.appendChild(createComponent(TooltipKeybind, {
+      placement: "top",
+      gutter: 4,
+      get title() {
+        return language.t("command.agent.cycle");
+      },
+      get keybind() {
+        return command.keybind("agent.cycle");
+      },
+      children: createComponent(Select, {
+        size: "normal",
+        get options() {
+          return agentNames();
+        },
+        get current() {
+          return local.agent.current()?.name ?? "";
+        },
+        onSelect: value => {
+          local.agent.set(value);
+          restoreFocus();
+        },
+        "class": "capitalize max-w-[160px] text-body",
+        valueClass: "truncate fw-normal text-body",
+        get triggerStyle() {
+          return control();
+        },
+        triggerProps: {
+          "data-action": "prompt-agent"
+        },
+        variant: "ghost"
+      })
+    }));
+    bindFadeIn(el, agentsShouldFadeIn);
+    return el;
+  };
+  const buildTrayContent = () => {
+    const row = template(`<div class="px-1.75 pt-5.5 pb-2 d-flex align-items-center gap-2 min-w-0"><div class="d-flex align-items-center gap-1.5 min-w-0 flex-fill relative"><div class="h-7 d-flex align-items-center gap-1.5 min-w-0 absolute inset-0" style="padding:0 0px 0 8px"><span class="truncate fw-medium text-body"></span><div class="flex-fill"></div></div><div class="d-flex align-items-center gap-1.5 min-w-0 flex-fill h-7"></div></div></div>`);
+    const shellHeader = row.firstChild.firstChild;
+    const shellLabel = shellHeader.firstChild;
+    const controls = shellHeader.nextSibling;
+    shellHeader.insertBefore(createComponent(Icon, {
+      name: "console"
+    }), shellLabel);
+    createRenderEffect(() => {
+      shellLabel.textContent = language.t("prompt.mode.shell");
+    });
+    shellHeader.appendChild(createComponent(Button, {
+      variant: "ghost",
+      "class": "text-body",
+      onClick: () => {
+        setStore("mode", "normal");
+      },
+      get children() {
+        return language.t("common.cancel");
+      }
+    }));
+    _solidInsert(controls, createComponent(Show, {
+      get when() {
+        return !agentsLoading();
+      },
+      get children() {
+        return buildAgentControl();
+      }
+    }), null);
+    _solidInsert(controls, createComponent(Show, {
+      get when() {
+        return !providersLoading();
+      },
+      get children() {
+        return createComponent(Show, {
+          get when() {
+            return store.mode !== "shell";
+          },
+          get children() {
+            return [buildModelControl(), createComponent(Show, {
               get when() {
-                return !providersLoading();
+                return variants().length > 2;
               },
               get children() {
-                return _$createComponent(Show, {
-                  get when() {
-                    return store.mode !== "shell";
-                  },
-                  get children() {
-                    return [(() => {
-                      var _el$22 = _tmpl$6();
-                      _$insert(_el$22, _$createComponent(Show, {
-                        get when() {
-                          return providers.connected().length > 0;
-                        },
-                        get fallback() {
-                          return _$createComponent(TooltipKeybind, {
-                            placement: "top",
-                            gutter: 4,
-                            get title() {
-                              return language.t("command.model.choose");
-                            },
-                            get keybind() {
-                              return command.keybind("model.choose");
-                            },
-                            get children() {
-                              return _$createComponent(Button, {
-                                "data-action": "prompt-model",
-                                as: "div",
-                                variant: "ghost",
-                                size: "normal",
-                                "class": "min-w-0 max-w-[320px] fw-normal text-body group",
-                                get style() {
-                                  return control();
-                                },
-                                onClick: () => {
-                                  void import("@/components/dialog-select-model-unpaid.js").then(x => {
-                                    dialog.show(() => _$createComponent(x.DialogSelectModelUnpaid, {
-                                      get model() {
-                                        return local.model;
-                                      }
-                                    }));
-                                  });
-                                },
-                                get children() {
-                                  return [_$createComponent(Show, {
-                                    get when() {
-                                      return local.model.current()?.provider?.id;
-                                    },
-                                    get children() {
-                                      return _$createComponent(ProviderIcon, {
-                                        get id() {
-                                          return local.model.current()?.provider?.id ?? "";
-                                        },
-                                        "class": "size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150",
-                                        style: {
-                                          "will-change": "opacity",
-                                          transform: "translateZ(0)"
-                                        }
-                                      });
-                                    }
-                                  }), (() => {
-                                    var _el$25 = _tmpl$5();
-                                    _$insert(_el$25, () => local.model.current()?.name ?? language.t("dialog.model.select.title"));
-                                    return _el$25;
-                                  })(), _$createComponent(Icon, {
-                                    name: "chevron-down",
-                                    size: "small",
-                                    "class": "shrink-0"
-                                  })];
-                                }
-                              });
-                            }
-                          });
-                        },
-                        get children() {
-                          return _$createComponent(TooltipKeybind, {
-                            placement: "top",
-                            gutter: 4,
-                            get title() {
-                              return language.t("command.model.choose");
-                            },
-                            get keybind() {
-                              return command.keybind("model.choose");
-                            },
-                            get children() {
-                              return _$createComponent(ModelSelectorPopover, {
-                                get model() {
-                                  return local.model;
-                                },
-                                triggerAs: Button,
-                                get triggerProps() {
-                                  return {
-                                    variant: "ghost",
-                                    size: "normal",
-                                    style: control(),
-                                    class: "min-w-0 max-w-[320px] fw-normal text-body group",
-                                    "data-action": "prompt-model"
-                                  };
-                                },
-                                onClose: restoreFocus,
-                                get children() {
-                                  return [_$createComponent(Show, {
-                                    get when() {
-                                      return local.model.current()?.provider?.id;
-                                    },
-                                    get children() {
-                                      return _$createComponent(ProviderIcon, {
-                                        get id() {
-                                          return local.model.current()?.provider?.id ?? "";
-                                        },
-                                        "class": "size-4 shrink-0 opacity-40 group-hover:opacity-100 transition-opacity duration-150",
-                                        style: {
-                                          "will-change": "opacity",
-                                          transform: "translateZ(0)"
-                                        }
-                                      });
-                                    }
-                                  }), (() => {
-                                    var _el$23 = _tmpl$5();
-                                    _$insert(_el$23, () => local.model.current()?.name ?? language.t("dialog.model.select.title"));
-                                    return _el$23;
-                                  })(), _$createComponent(Icon, {
-                                    name: "chevron-down",
-                                    size: "small",
-                                    "class": "shrink-0"
-                                  })];
-                                }
-                              });
-                            }
-                          });
-                        }
-                      }));
-                      _$effect(_$p => _$style(_el$22, providersShouldFadeIn() ? {
-                        animation: "fade-in 0.3s"
-                      } : undefined, _$p));
-                      return _el$22;
-                    })(), _$createComponent(Show, {
-                      get when() {
-                        return variants().length > 2;
-                      },
-                      get children() {
-                        var _el$24 = _tmpl$7();
-                        _$insert(_el$24, _$createComponent(TooltipKeybind, {
-                          placement: "top",
-                          gutter: 4,
-                          get title() {
-                            return language.t("command.model.variant.cycle");
-                          },
-                          get keybind() {
-                            return command.keybind("model.variant.cycle");
-                          },
-                          get children() {
-                            return _$createComponent(Select, {
-                              size: "normal",
-                              get options() {
-                                return variants();
-                              },
-                              get current() {
-                                return local.model.variant.current() ?? "default";
-                              },
-                              label: x => x === "default" ? language.t("common.default") : x,
-                              onSelect: value => {
-                                local.model.variant.set(value === "default" ? undefined : value);
-                                restoreFocus();
-                              },
-                              "class": "capitalize max-w-[160px] text-body",
-                              valueClass: "truncate fw-normal text-body",
-                              get triggerStyle() {
-                                return control();
-                              },
-                              triggerProps: {
-                                "data-action": "prompt-model-variant"
-                              },
-                              variant: "ghost"
-                            });
-                          }
-                        }));
-                        _$effect(_$p => _$style(_el$24, providersShouldFadeIn() ? {
-                          animation: "fade-in 0.3s"
-                        } : undefined, _$p));
-                        return _el$24;
-                      }
-                    })];
-                  }
-                });
+                return buildVariantControl();
               }
-            }), null);
-            _$effect(_$p => _$style(_el$17, {
-              ...shell()
-            }, _$p));
-            return _el$15;
+            })];
           }
         });
       }
     }), null);
-    return _el$6;
-  })();
+    // Shell-header crossfade driven by the mode spring; the style keys are
+    // constant, so per-key writes match the compiled style() diff.
+    createRenderEffect(() => {
+      const s = shell();
+      shellHeader.style.setProperty("opacity", String(s.opacity));
+      shellHeader.style.setProperty("transform", s.transform);
+      shellHeader.style.setProperty("filter", s.filter);
+      shellHeader.style.setProperty("pointer-events", s["pointer-events"]);
+    });
+    return row;
+  };
+
+  // ---- root (compiled _tmpl$9) ----
+  const rootEl = template(`<div class="relative size-full _max-h-[320px] d-flex flex-column gap-0"></div>`);
+  // Keep the prompt-ready resource subscribed, exactly like the compiled
+  // insert(() => (promptReady(), null), null) that rendered nothing.
+  createRenderEffect(() => {
+    promptReady();
+  });
+  // PromptPopover returns a Show-style memo accessor; insert() keeps
+  // resolving it (an opening popover is appended at the end of the root,
+  // matching the compiled null-marker insert).
+  _solidInsert(rootEl, createComponent(PromptPopover, {
+    get popover() {
+      return store.popover;
+    },
+    setSlashPopoverRef: el => slashPopoverRef = el,
+    get atFlat() {
+      return atFlat();
+    },
+    get atActive() {
+      return atActive() ?? undefined;
+    },
+    atKey: atKey,
+    setAtActive: setAtActive,
+    onAtSelect: handleAtSelect,
+    get slashFlat() {
+      return slashFlat();
+    },
+    get slashActive() {
+      return slashActive() ?? undefined;
+    },
+    setSlashActive: setSlashActive,
+    onSlashSelect: handleSlashSelect,
+    get commandKeybind() {
+      return command.keybind;
+    },
+    t: key => language.t(key)
+  }), null);
+  rootEl.appendChild(createComponent(DockShellForm, {
+    onSubmit: handleSubmit,
+    get classList() {
+      return {
+        "group/prompt-input": true,
+        "focus-within:shadow-xs-border": true,
+        "border border-dashed": store.draggingType !== null,
+        [props.class ?? ""]: !!props.class
+      };
+    },
+    get children() {
+      return [createComponent(PromptDragOverlay, {
+        get type() {
+          return store.draggingType;
+        },
+        get label() {
+          return language.t(store.draggingType === "@mention" ? "prompt.dropzone.file.label" : "prompt.dropzone.label");
+        }
+      }), createComponent(PromptContextItems, {
+        get items() {
+          return contextItems();
+        },
+        active: item => {
+          const active = comments.active();
+          return !!item.commentID && item.commentID === active?.id && item.path === active?.file;
+        },
+        openComment: openComment,
+        remove: item => {
+          if (item.commentID) comments.remove(item.path, item.commentID);
+          prompt.context.remove(item.key);
+        },
+        t: key => language.t(key)
+      }), createComponent(PromptImageAttachments, {
+        get attachments() {
+          return imageAttachments();
+        },
+        onOpen: attachment => dialog.show(() => createComponent(ImagePreview, {
+          get src() {
+            return attachment.dataUrl;
+          },
+          get alt() {
+            return attachment.filename;
+          }
+        })),
+        onRemove: removeAttachment,
+        get removeLabel() {
+          return language.t("prompt.attachment.remove");
+        }
+      }), buildEditorArea()];
+    }
+  }));
+  // Bottom tray. The mode is only ever "normal" | "shell", so the Show stays
+  // mounted; it is kept for structural parity with the compiled output.
+  _solidInsert(rootEl, createComponent(Show, {
+    get when() {
+      return store.mode === "normal" || store.mode === "shell";
+    },
+    get children() {
+      return createComponent(DockTray, {
+        attach: "top",
+        get children() {
+          return buildTrayContent();
+        }
+      });
+    }
+  }), null);
+  return rootEl;
 };
-_$delegateEvents(["mousedown", "input", "keydown"]);

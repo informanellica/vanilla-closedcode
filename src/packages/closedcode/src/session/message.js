@@ -1,9 +1,9 @@
 import { Schema } from "effect";
 import { SessionID } from "./schema.js";
 import { ModelID, ProviderID } from "../provider/schema.js";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
-import { namedSchemaError } from "@/util/named-schema-error.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
+import { namedSchemaError } from "#util/named-schema-error.js";
 export const OutputLengthError = namedSchemaError("MessageOutputLengthError", {});
 export const AuthError = namedSchemaError("ProviderAuthError", {
   providerID: Schema.String,

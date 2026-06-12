@@ -1,5 +1,5 @@
 import {  tmpdir  } from "../fixture/fixture.js"
-import {  Session as SessionNs  } from "@/session/session.js"
+import {  Session as SessionNs  } from "#session/session.js"
 import {  Bus  } from "../../src/bus/index.js"
 import * as Log from "core/util/log";
 import {  WithInstance  } from "../../src/project/with-instance.js"
@@ -11,7 +11,6 @@ import path from "path";
 import { fileURLToPath as __toPath } from "node:url";
 const __dirname = path.dirname(__toPath(import.meta.url));
 
-let SessionNs;
 
 const projectRoot = path.join(__dirname, "../..");
 void Log.init({

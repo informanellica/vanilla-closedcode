@@ -1,5 +1,5 @@
 import { NamedError } from "core/util/error";
-import { errorFormat } from "@/util/error.js";
+import { errorFormat } from "#util/error.js";
 function isTaggedError(error, tag) {
   return typeof error === "object" && error !== null && "_tag" in error && error._tag === tag;
 }

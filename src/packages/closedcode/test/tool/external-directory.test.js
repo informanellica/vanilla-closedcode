@@ -2,7 +2,7 @@ import {  Effect  } from "effect"
 import {  tmpdir  } from "../fixture/fixture.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  assertExternalDirectory  } from "../../src/tool/external-directory.js"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  SessionID, MessageID  } from "../../src/session/schema.js"
 import {  describe, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";

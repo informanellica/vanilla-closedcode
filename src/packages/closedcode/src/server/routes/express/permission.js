@@ -2,9 +2,9 @@
 import express from "express";
 import { Effect } from "effect";
 import z from "zod";
-import { Permission } from "@/permission/index.js";
-import { PermissionID } from "@/permission/schema.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
+import { Permission } from "#permission/index.js";
+import { PermissionID } from "#permission/schema.js";
+import { AppRuntime } from "#effect/app-runtime.js";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";

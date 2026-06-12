@@ -1,6 +1,7 @@
+import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
-import DESCRIPTION_WRITE from "./todowrite.txt";
+const DESCRIPTION_WRITE = assetText("tool/todowrite.txt");
 import { Todo } from "../session/todo.js";
 
 // Todo.Info is still a zod schema (session/todo.ts). Inline the field shape

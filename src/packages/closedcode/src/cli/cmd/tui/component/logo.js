@@ -9,9 +9,9 @@ import { createElement as _$createElement } from "@opentui/solid";
 import { MouseButton, RGBA, TextAttributes } from "@opentui/core";
 import { useRenderer } from "@opentui/solid";
 import { For, createMemo, createSignal, onCleanup, onMount } from "solid-js";
-import { useTheme, tint } from "@tui/context/theme.js";
-import * as Sound from "@tui/util/sound.js";
-import { go, logo } from "@/cli/logo.js";
+import { useTheme, tint } from "#tui/context/theme.js";
+import * as Sound from "#tui/util/sound.js";
+import { go, logo } from "#cli/logo.js";
 const shimmerConfig = {
   period: 4600,
   rings: 2,

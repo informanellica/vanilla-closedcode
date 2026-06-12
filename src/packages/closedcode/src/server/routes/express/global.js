@@ -1,16 +1,16 @@
 // Express route group for the /global endpoints (health, SSE events, config, dispose, upgrade).
 import express from "express";
 import { Effect } from "effect";
-import { BusEvent } from "@/bus/bus-event.js";
-import { SyncEvent } from "@/sync/index.js";
-import { GlobalBus } from "@/bus/global.js";
-import { Bus } from "@/bus/index.js";
-import { AppRuntime } from "@/effect/app-runtime.js";
-import { AsyncQueue } from "@/util/queue.js";
-import { Installation } from "@/installation/index.js";
+import { BusEvent } from "#bus/bus-event.js";
+import { SyncEvent } from "#sync/index.js";
+import { GlobalBus } from "#bus/global.js";
+import { Bus } from "#bus/index.js";
+import { AppRuntime } from "#effect/app-runtime.js";
+import { AsyncQueue } from "#util/queue.js";
+import { Installation } from "#installation/index.js";
 import { InstallationVersion } from "core/installation/version";
 import * as Log from "core/util/log";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import z from "zod";
 import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";

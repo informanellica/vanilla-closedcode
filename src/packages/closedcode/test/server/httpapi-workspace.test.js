@@ -8,7 +8,7 @@ import {  Flag  } from "core/flag/flag"
 import {  registerAdapter  } from "../../src/control-plane/adapters/index.js"
 import {  Workspace  } from "../../src/control-plane/workspace.js"
 import {  WorkspacePaths  } from "../../src/server/routes/instance/httpapi/groups/workspace.js"
-import {  Session  } from "@/session/session.js"
+import {  Session  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  Server  } from "../../src/server/server.js"
 import {  Project  } from "../../src/project/project.js"

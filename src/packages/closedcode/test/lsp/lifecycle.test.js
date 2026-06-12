@@ -1,8 +1,8 @@
 import {  Effect, Layer  } from "effect"
 import {  provideTmpdirInstance  } from "../fixture/fixture.js"
 import {  testEffect  } from "../lib/effect.js"
-import {  LSP  } from "@/lsp/lsp.js"
-import * as LSPServer from "@/lsp/server.js";
+import {  LSP  } from "#lsp/lsp.js"
+import * as LSPServer from "#lsp/server.js";
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import {  afterEach, beforeEach, describe, expect, test, beforeAll, jest  } from "@jest/globals"
 import path from "path";

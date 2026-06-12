@@ -43,6 +43,15 @@ const getBase = () => ({
     // (loaded at runtime); like the others it can't be read from inside asar,
     // so unpack it (and its platform-specific binary) too.
     "node_modules/@parcel/watcher*/**",
+    // ORM externals: the sidecar bundle requires sequelize + sqlite3 at
+    // runtime (sqlite3 loads its native .node via bindings). Like
+    // node-pty/web-tree-sitter above, they and their runtime deps must live
+    // in app.asar.unpacked/node_modules/ for the unpacked sidecar layout.
+    "node_modules/sqlite3/**",
+    "node_modules/bindings/**",
+    "node_modules/file-uri-to-path/**",
+    "node_modules/sequelize/**",
+    "node_modules/{debug,ms,dottie,inflection,lodash,moment,moment-timezone,pg-connection-string,retry-as-promised,semver,sequelize-pool,toposort-class,uuid,validator,wkx}/**",
   ],
   electronFuses: {
     runAsNode: true,

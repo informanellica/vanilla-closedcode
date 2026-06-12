@@ -1,13 +1,13 @@
 import {  provideTestInstance, tmpdir  } from "../fixture/fixture.js"
 import {  Effect, Layer  } from "effect"
-import {  InstanceRuntime  } from "@/project/instance-runtime.js"
+import {  InstanceRuntime  } from "#project/instance-runtime.js"
 import {  TuiConfig  } from "../../src/cli/cmd/tui/config/tui.js"
-import {  Config  } from "@/config/config.js"
+import {  Config  } from "#config/config.js"
 import {  Global  } from "core/global"
-import {  Filesystem  } from "@/util/filesystem.js"
+import {  Filesystem  } from "#util/filesystem.js"
 import {  AppRuntime  } from "../../src/effect/app-runtime.js"
-import {  CurrentWorkingDirectory  } from "@/cli/cmd/tui/config/cwd.js"
-import {  ConfigPlugin  } from "@/config/plugin.js"
+import {  CurrentWorkingDirectory  } from "#cli/cmd/tui/config/cwd.js"
+import {  ConfigPlugin  } from "#config/plugin.js"
 import {  afterEach, beforeEach, expect, test, beforeAll  } from "@jest/globals"
 import path from "path";
 import fs from "fs/promises";

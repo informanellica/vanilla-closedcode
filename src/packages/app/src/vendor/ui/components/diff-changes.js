@@ -1,16 +1,7 @@
-import { template as _$template } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<svg xmlns=http://www.w3.org/2000/svg viewBox="0 0 18 14"fill=none><g>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span data-slot=diff-changes-additions>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span data-slot=diff-changes-deletions>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-component=diff-changes>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<svg><rect width=2 height=14 rx=1></svg>`, false, true, false);
-import { createMemo, For, Match, Show, Switch } from "solid-js";
+import { createMemo, createRenderEffect } from "solid-js";
+
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 export function DiffChanges(props) {
   const variant = () => props.variant ?? "default";
   const additions = createMemo(() => Array.isArray(props.changes) ? props.changes.reduce((acc, diff) => acc + (diff.additions ?? 0), 0) : props.changes.additions);
@@ -81,65 +72,75 @@ export function DiffChanges(props) {
     const blocks = [...Array(counts.added).fill(ADD_COLOR), ...Array(counts.deleted).fill(DELETE_COLOR), ...Array(counts.neutral).fill(NEUTRAL_COLOR)];
     return blocks.slice(0, 5);
   });
-  return _$createComponent(Show, {
-    get when() {
-      return _$memo(() => variant() === "default")() ? total() > 0 : true;
-    },
-    get children() {
-      var _el$ = _tmpl$4();
-      _$insert(_el$, _$createComponent(Switch, {
-        get children() {
-          return [_$createComponent(Match, {
-            get when() {
-              return variant() === "bars";
-            },
-            get children() {
-              var _el$2 = _tmpl$(),
-                _el$3 = _el$2.firstChild;
-              _$insert(_el$3, _$createComponent(For, {
-                get each() {
-                  return visibleBlocks();
-                },
-                children: (color, i) => (() => {
-                  var _el$6 = _tmpl$5();
-                  _$setAttribute(_el$6, "fill", color);
-                  _$effect(() => _$setAttribute(_el$6, "x", i() * 4));
-                  return _el$6;
-                })()
-              }));
-              return _el$2;
-            }
-          }), _$createComponent(Match, {
-            get when() {
-              return variant() === "default";
-            },
-            get children() {
-              return [(() => {
-                var _el$4 = _tmpl$2();
-                _$insert(_el$4, () => `+${additions()}`);
-                return _el$4;
-              })(), (() => {
-                var _el$5 = _tmpl$3();
-                _$insert(_el$5, () => `-${deletions()}`);
-                return _el$5;
-              })()];
-            }
-          })];
-        }
-      }));
-      _$effect(_p$ => {
-        var _v$ = variant(),
-          _v$2 = {
-            [props.class ?? ""]: true
-          };
-        _v$ !== _p$.e && _$setAttribute(_el$, "data-variant", _p$.e = _v$);
-        _p$.t = _$classList(_el$, _v$2, _p$.t);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined
+
+  const root = document.createElement("div");
+  root.setAttribute("data-component", "diff-changes");
+
+  // Switch/Match over the variant: pick the branch in a memo so equal values
+  // never rebuild the branch DOM, only flips between bars/default/none do.
+  const branch = createMemo(() => variant() === "bars" ? "bars" : variant() === "default" ? "default" : "none");
+  createRenderEffect(() => {
+    const which = branch();
+    if (which === "bars") {
+      const svg = document.createElementNS(SVG_NS, "svg");
+      svg.setAttribute("xmlns", SVG_NS);
+      svg.setAttribute("viewBox", "0 0 18 14");
+      svg.setAttribute("fill", "none");
+      const group = document.createElementNS(SVG_NS, "g");
+      svg.appendChild(group);
+      // For(visibleBlocks): the rects are attribute-only (no listeners or
+      // state), so rebuilding all five on change is equivalent to keyed reuse.
+      createRenderEffect(() => {
+        group.replaceChildren(...visibleBlocks().map((color, i) => {
+          const rect = document.createElementNS(SVG_NS, "rect");
+          rect.setAttribute("width", "2");
+          rect.setAttribute("height", "14");
+          rect.setAttribute("rx", "1");
+          rect.setAttribute("fill", color);
+          rect.setAttribute("x", String(i * 4));
+          return rect;
+        }));
       });
-      return _el$;
+      root.replaceChildren(svg);
+    } else if (which === "default") {
+      const addsEl = document.createElement("span");
+      addsEl.setAttribute("data-slot", "diff-changes-additions");
+      const delsEl = document.createElement("span");
+      delsEl.setAttribute("data-slot", "diff-changes-deletions");
+      createRenderEffect(() => {
+        addsEl.textContent = `+${additions()}`;
+      });
+      createRenderEffect(() => {
+        delsEl.textContent = `-${deletions()}`;
+      });
+      root.replaceChildren(addsEl, delsEl);
+    } else {
+      root.replaceChildren();
     }
   });
+
+  // Change-guarded data-variant, like the compiled effect().
+  let prevVariant;
+  createRenderEffect(() => {
+    const v = variant();
+    if (v !== prevVariant) root.setAttribute("data-variant", prevVariant = v);
+  });
+
+  // classList({ [props.class ?? ""]: true }): tokens from props.class are the
+  // only classes ever applied to the root, so swap the attribute wholesale and
+  // keep it absent (not empty) when no class is given.
+  let prevClass;
+  createRenderEffect(() => {
+    const cls = props.class ?? "";
+    if (cls === prevClass) return;
+    prevClass = cls;
+    if (cls) root.setAttribute("class", cls);
+    else root.removeAttribute("class");
+  });
+
+  // Show(when): default variant hides the whole component until there are
+  // changes. Callers insert the result via solid insert(), which resolves a
+  // returned accessor reactively, so yield the root element or undefined.
+  const visible = createMemo(() => variant() === "default" ? total() > 0 : true);
+  return createMemo(() => visible() ? root : undefined);
 }

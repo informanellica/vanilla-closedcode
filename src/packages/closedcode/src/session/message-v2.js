@@ -1,29 +1,23 @@
-import { BusEvent } from "@/bus/bus-event.js";
+import { BusEvent } from "#bus/bus-event.js";
 import { SessionID, MessageID, PartID } from "./schema.js";
 import z from "zod";
 import { NamedError } from "core/util/error";
 import { APICallError, convertToModelMessages, LoadAPIKeyError } from "ai";
-import { LSP } from "@/lsp/lsp.js";
-import { Snapshot } from "@/snapshot/index.js";
+import { LSP } from "#lsp/lsp.js";
+import { Snapshot } from "#snapshot/index.js";
 import { SyncEvent } from "../sync/index.js";
-import { Database } from "@/storage/db.js";
-import { NotFoundError } from "@/storage/storage.js";
-import { and } from "drizzle-orm";
-import { desc } from "drizzle-orm";
-import { eq } from "drizzle-orm";
-import { inArray } from "drizzle-orm";
-import { lt } from "drizzle-orm";
-import { or } from "drizzle-orm";
-import { MessageTable, PartTable, SessionTable } from "./session.sql.js";
-import * as ProviderError from "@/provider/error.js";
-import { iife } from "@/util/iife.js";
-import { errorMessage } from "@/util/error.js";
-import { isMedia } from "@/util/media.js";
-import { ModelID, ProviderID } from "@/provider/schema.js";
+import { Database } from "#storage/db.js";
+import { NotFoundError } from "#storage/storage.js";
+import { Op } from "#storage/sequelize.js";
+import * as ProviderError from "#provider/error.js";
+import { iife } from "#util/iife.js";
+import { errorMessage } from "#util/error.js";
+import { isMedia } from "#util/media.js";
+import { ModelID, ProviderID } from "#provider/schema.js";
 import { Effect, Schema } from "effect";
-import { zod } from "@/util/effect-zod.js";
-import { NonNegativeInt, withStatics } from "@/util/schema.js";
-import { namedSchemaError } from "@/util/named-schema-error.js";
+import { zod } from "#util/effect-zod.js";
+import { NonNegativeInt, withStatics } from "#util/schema.js";
+import { namedSchemaError } from "#util/named-schema-error.js";
 import * as EffectLogger from "core/effect/logger";
 
 /** Error shape thrown by fetch() when gzip/br decompression fails mid-stream */
@@ -584,6 +578,10 @@ export const cursor = {
     return decodeCursor(JSON.parse(Buffer.from(input, "base64url").toString("utf8")));
   }
 };
+// Sequelize call-site conventions (ORM migration S3): reads go through
+// Database.useAsync and return plain rows so consumers keep receiving plain
+// objects with JSON columns parsed (same shape as the previous drizzle rows).
+const plain = row => (row == null ? undefined : row.get({ plain: true }));
 const info = row => ({
   ...row.data,
   id: row.id,
@@ -595,12 +593,33 @@ const part = row => ({
   sessionID: row.session_id,
   messageID: row.message_id
 });
-const older = row => or(lt(MessageTable.time_created, row.time), and(eq(MessageTable.time_created, row.time), lt(MessageTable.id, row.id)));
-function hydrate(rows) {
+const older = row => ({
+  [Op.or]: [{
+    time_created: {
+      [Op.lt]: row.time
+    }
+  }, {
+    time_created: row.time,
+    id: {
+      [Op.lt]: row.id
+    }
+  }]
+});
+async function hydrate(rows) {
   const ids = rows.map(row => row.id);
   const partByMessage = new Map();
   if (ids.length > 0) {
-    const partRows = Database.use(db => db.select().from(PartTable).where(inArray(PartTable.message_id, ids)).orderBy(PartTable.message_id, PartTable.id).all());
+    const partRows = await Database.useAsync(async h => (await h.models.Part.findAll({
+      where: {
+        message_id: {
+          [Op.in]: ids
+        }
+      },
+      order: [["message_id", "ASC"], ["id", "ASC"]],
+      transaction: h.tx
+    })).map(r => r.get({
+      plain: true
+    })));
     for (const row of partRows) {
       const next = part(row);
       const list = partByMessage.get(row.message_id);
@@ -850,14 +869,30 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (input, model, 
 export function toModelMessages(input, model, options) {
   return Effect.runPromise(toModelMessagesEffect(input, model, options).pipe(Effect.provide(EffectLogger.layer)));
 }
-export function page(input) {
+export async function page(input) {
   const before = input.before ? cursor.decode(input.before) : undefined;
-  const where = before ? and(eq(MessageTable.session_id, input.sessionID), older(before)) : eq(MessageTable.session_id, input.sessionID);
-  const rows = Database.use(db => db.select().from(MessageTable).where(where).orderBy(desc(MessageTable.time_created), desc(MessageTable.id)).limit(input.limit + 1).all());
+  const where = before ? {
+    session_id: input.sessionID,
+    ...older(before)
+  } : {
+    session_id: input.sessionID
+  };
+  const rows = await Database.useAsync(async h => (await h.models.Message.findAll({
+    where,
+    order: [["time_created", "DESC"], ["id", "DESC"]],
+    limit: input.limit + 1,
+    transaction: h.tx
+  })).map(r => r.get({
+    plain: true
+  })));
   if (rows.length === 0) {
-    const row = Database.use(db => db.select({
-      id: SessionTable.id
-    }).from(SessionTable).where(eq(SessionTable.id, input.sessionID)).get());
+    const row = await Database.useAsync(async h => plain(await h.models.Session.findOne({
+      attributes: ["id"],
+      where: {
+        id: input.sessionID
+      },
+      transaction: h.tx
+    })));
     if (!row) throw new NotFoundError({
       message: `Session not found: ${input.sessionID}`
     });
@@ -868,7 +903,7 @@ export function page(input) {
   }
   const more = rows.length > input.limit;
   const slice = more ? rows.slice(0, input.limit) : rows;
-  const items = hydrate(slice);
+  const items = await hydrate(slice);
   items.reverse();
   const tail = slice.at(-1);
   return {
@@ -880,11 +915,11 @@ export function page(input) {
     }) : undefined
   };
 }
-export function* stream(sessionID) {
+export async function* stream(sessionID) {
   const size = 50;
   let before;
   while (true) {
-    const next = page({
+    const next = await page({
       sessionID,
       limit: size,
       before
@@ -897,8 +932,16 @@ export function* stream(sessionID) {
     before = next.cursor;
   }
 }
-export function parts(message_id) {
-  const rows = Database.use(db => db.select().from(PartTable).where(eq(PartTable.message_id, message_id)).orderBy(PartTable.id).all());
+export async function parts(message_id) {
+  const rows = await Database.useAsync(async h => (await h.models.Part.findAll({
+    where: {
+      message_id
+    },
+    order: [["id", "ASC"]],
+    transaction: h.tx
+  })).map(r => r.get({
+    plain: true
+  })));
   return rows.map(row => ({
     ...row.data,
     id: row.id,
@@ -906,14 +949,20 @@ export function parts(message_id) {
     messageID: row.message_id
   }));
 }
-export function get(input) {
-  const row = Database.use(db => db.select().from(MessageTable).where(and(eq(MessageTable.id, input.messageID), eq(MessageTable.session_id, input.sessionID))).get());
+export async function get(input) {
+  const row = await Database.useAsync(async h => plain(await h.models.Message.findOne({
+    where: {
+      id: input.messageID,
+      session_id: input.sessionID
+    },
+    transaction: h.tx
+  })));
   if (!row) throw new NotFoundError({
     message: `Message not found: ${input.messageID}`
   });
   return {
     info: info(row),
-    parts: parts(input.messageID)
+    parts: await parts(input.messageID)
   };
 }
 export function filterCompacted(msgs) {
@@ -941,7 +990,14 @@ export function filterCompacted(msgs) {
   return result;
 }
 export const filterCompactedEffect = Effect.fnUntraced(function* (sessionID) {
-  return filterCompacted(stream(sessionID));
+  // stream() is an async generator since the Sequelize migration; collect it
+  // before handing the messages to the (still sync, iterable-based) filter.
+  const msgs = yield* Effect.promise(async () => {
+    const items = [];
+    for await (const item of stream(sessionID)) items.push(item);
+    return items;
+  });
+  return filterCompacted(msgs);
 });
 export function fromError(e, ctx) {
   switch (true) {

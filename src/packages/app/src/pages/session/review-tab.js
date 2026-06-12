@@ -1,5 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createEffect, onCleanup } from "solid-js";
+import { createComponent, createEffect, onCleanup } from "solid-js";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { SessionReview } from "@/vendor/ui/components/session-review.js";
 import { useLayout } from "@/context/layout.js";
@@ -67,7 +66,7 @@ export function SessionReviewTab(props) {
   onCleanup(() => {
     if (restoreFrame !== undefined) cancelAnimationFrame(restoreFrame);
   });
-  return _$createComponent(SessionReview, {
+  return createComponent(SessionReview, {
     get title() {
       return props.title;
     },

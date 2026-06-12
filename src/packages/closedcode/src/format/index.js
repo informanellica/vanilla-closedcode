@@ -1,14 +1,14 @@
 import { Effect, Layer, Context, Schema } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
-import { InstanceState } from "@/effect/instance-state.js";
+import { InstanceState } from "#effect/instance-state.js";
 import path from "path";
 import { mergeDeep } from "remeda";
-import { Config } from "@/config/config.js";
+import { Config } from "#config/config.js";
 import * as Log from "core/util/log";
 import * as Formatter from "./formatter.js";
-import { zod } from "@/util/effect-zod.js";
-import { withStatics } from "@/util/schema.js";
+import { zod } from "#util/effect-zod.js";
+import { withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "format"
 });

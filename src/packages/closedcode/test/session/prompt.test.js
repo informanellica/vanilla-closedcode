@@ -10,20 +10,19 @@ import {  NamedError  } from "core/util/error"
 import {  Agent as AgentSvc  } from "../../src/agent/agent.js"
 import {  Bus  } from "../../src/bus/index.js"
 import {  Command  } from "../../src/command/index.js"
-import {  Config  } from "@/config/config.js"
-import {  LSP  } from "@/lsp/lsp.js"
+import {  Config  } from "#config/config.js"
+import {  LSP  } from "#lsp/lsp.js"
 import {  MCP  } from "../../src/mcp/index.js"
 import {  Permission  } from "../../src/permission/index.js"
 import {  Plugin  } from "../../src/plugin/index.js"
-import {  Provider as ProviderSvc  } from "@/provider/provider.js"
+import {  Provider as ProviderSvc  } from "#provider/provider.js"
 import {  Env  } from "../../src/env/index.js"
 import {  ModelID, ProviderID  } from "../../src/provider/schema.js"
 import { which, writeFile } from "../lib/io.js";
 
 import {  Question  } from "../../src/question/index.js"
 import {  Todo  } from "../../src/session/todo.js"
-import {  Session  } from "@/session/session.js"
-import {  SessionMessageTable  } from "../../src/session/session.sql.js"
+import {  Session  } from "#session/session.js"
 import {  LLM  } from "../../src/session/llm.js"
 import {  MessageV2  } from "../../src/session/message-v2.js"
 import {  AppFileSystem  } from "core/filesystem"
@@ -41,8 +40,8 @@ import {  Skill  } from "../../src/skill/index.js"
 import {  SystemPrompt  } from "../../src/session/system.js"
 import {  Shell  } from "../../src/shell/shell.js"
 import {  Snapshot  } from "../../src/snapshot/index.js"
-import {  ToolRegistry  } from "@/tool/registry.js"
-import {  Truncate  } from "@/tool/truncate.js"
+import {  ToolRegistry  } from "#tool/registry.js"
+import {  Truncate  } from "#tool/truncate.js"
 import * as Log from "core/util/log";
 import {  CrossSpawnSpawner  } from "core/cross-spawn-spawner"
 import * as Database from "../../src/storage/db.js";
@@ -384,7 +383,17 @@ it.live("prompt emits v2 prompted and synthetic events", () => provideTmpdirServ
   const messages = yield* SessionV2.Service.use(session => session.messages({
     sessionID: chat.id
   })).pipe(Effect.provide(SessionV2.layer));
-  const row = Database.use(db => db.select().from(SessionMessageTable).where(Database.eq(SessionMessageTable.session_id, chat.id)).get());
+  const row = yield* Effect.promise(() => Database.useAsync(async h => {
+    const found = await h.models.SessionMessage.findOne({
+      where: { session_id: chat.id },
+      transaction: h.tx
+    });
+    if (!found) return undefined;
+    const plain = found.get({ plain: true });
+    // JSON columns are declared `text` in the migration DDL, so sequelize's
+    // sqlite parser returns them as raw strings; parse like drizzle did.
+    return { ...plain, data: typeof plain.data === "string" ? JSON.parse(plain.data) : plain.data };
+  }));
   expect(messages.find(message => message.type === "user")).toMatchObject({
     type: "user",
     text: "hello v2"

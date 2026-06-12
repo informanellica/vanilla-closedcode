@@ -1,4 +1,4 @@
-import { Session } from "@/session/session.js";
+import { Session } from "#session/session.js";
 import { SessionID } from "../../session/schema.js";
 import { effectCmd, fail } from "../effect-cmd.js";
 import { UI } from "../ui.js";

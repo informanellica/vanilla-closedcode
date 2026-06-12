@@ -37,6 +37,72 @@ Development line following `0.1.0-preview`.
   harness), so it does not exist on a normal run.
 
 ### Changed
+- **The entire renderer is now hand-written vanilla JS** — the "Pure Vanilla"
+  roadmap goal for our own UI code is complete. Every non-storybook file under
+  `packages/app/src` (about 150 files across `bs/`, `vendor/ui`, `components`,
+  `pages`, `context`, `lib` — including the giants `message-part.js` (2,762
+  lines), `layout.js`, `session.js`, `prompt-input.js`, `app.js` and
+  `entry.js`) has had its SolidJS compiler output (`_$template` /
+  `_$createComponent` / positional `firstChild` wiring) replaced with template
+  literals + `data-slot` lookups, `createEffect`-driven text/attributes and
+  plain `addEventListener`. Reactivity still runs on solid-js core
+  (`createSignal/Memo/Effect`, contexts — the documented next step is replacing
+  that too); the only remaining `solid-js/web` imports are its public API
+  (`render`, `insert` for presence-gated Kobalte content, `Dynamic`), each with
+  an in-file justification. Conversion was verified per batch against the
+  compiled originals (API/contract parity, the project's Solid-interop trap
+  list) plus the e2e suite, with several real pre-existing bugs fixed along the
+  way (vendor text-field frozen copy button, icon-button object-style
+  stringification, i18n fallback dict missing ui.* keys).
+
+### Changed
+- **ORM migrated: Drizzle -> Sequelize** (roadmap backlog item). The data layer
+  now runs on `sequelize@6` + `sqlite3` (N-API; ABI-stable for both plain Node
+  and the Electron-main sidecar import — no rebuild step). The SQL migration
+  journal remains the single source of schema truth: the same
+  `migration/*/migration.sql` files are applied through the Sequelize
+  connection (journal table kept), and the models are pure mappers
+  (`tableName` explicit, `timestamps: false`, `sync()` never used). The legacy
+  synchronous ambient-transaction layer (`node:sqlite` + LocalContext) became
+  an async one: `Database.useAsync` / `transactionAsync` (AsyncLocalStorage
+  ambient transactions, commit-deferred `effectAsync`, `BEGIN IMMEDIATE`
+  support). All 28 modules converted; async-ness propagated through
+  `MessageV2.page/get/parts/stream`, `Session.listGlobal`, `Project.list/get`,
+  `SyncEvent.*` and their callers. drizzle-orm / drizzle-kit and the `*.sql.js`
+  table definitions are gone. **Data preservation proven** on a copy of a real
+  user database (all 15 tables / every row identical across the swap).
+  Notable layer findings (documented in
+  `docs/milestones/orm-sequelize-migration.md`): the sqlite dialect type-parses
+  by DECLARED column type so JSON columns are parsed in model getters;
+  attribute descriptors must be per-model factories (Sequelize mutates them);
+  `notNull` validation precedes create hooks (timestamps via `beforeValidate`);
+  and managed `sequelize.transaction()` deadlocks with a 1-connection pool when
+  the Effect runtime drops AsyncLocalStorage context — transactions are
+  hand-rolled `BEGIN/COMMIT` on the single shared connection, the same
+  execution model as the old synchronous layer. Accepted deltas: bulk
+  `Model.update` does not auto-bump `time_updated`; `upsert` rewrites all
+  provided columns on conflict.
+
+### Changed
+- **Pure Vanilla Standardization stages 1–4 implemented** (roadmap milestone).
+  *Engine/CLI:* the `@/` / `@tui/` aliases (1,400 sites) moved to standard
+  `package.json#imports` — specifiers are `#util/x.js` style because `#/...` is
+  invalid per the Node spec (Node tolerates it; esbuild rejects it) — so
+  **`node src/index.js` runs with no loader and no bundle**. All 28
+  `import x from "./x.txt"` prompt/description imports now read through
+  `src/util/asset.js` (standard `fs.readFileSync(new URL(...))`); the build
+  ships `src/**/*.txt` as an `assets/` tree next to the bundle. The TUI loads
+  lazily so `@opentui/core`'s `.scm`/`.ts` imports (third-party wall) are off
+  the startup path. *Renderer:* first-party modules are served **verbatim** —
+  bare and `@/` specifiers resolve via an **import map** generated at startup
+  and injected into the served HTML; the `oc://` rewriter now only touches
+  files under `node_modules/` (CJS interop, module workers). Asset imports
+  became `new URL(...).href` (17 sites). *Verification:* the jest suite shows
+  **zero regressions** vs. the pre-change baseline (the suite's long-standing
+  red set is unchanged; all 10 differing suites pass individually), desktop
+  e2e suite green. esbuild remains for distribution bundles only — see
+  `docs/milestones/pure-vanilla-standardization.md` for the Stage 5 inventory.
+
 - **`pages/home.js` rewritten in pure vanilla JS** (first pages-layer file with zero
   `solid-js/web` compiler output): template literal + `querySelector` skeleton,
   imperative DOM driven by `createEffect`/`createMemo` so i18n labels, server

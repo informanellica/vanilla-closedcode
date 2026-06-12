@@ -6,7 +6,7 @@ import { setProp as _$setProp } from "@opentui/solid";
 import { use as _$use } from "@opentui/solid";
 import { createElement as _$createElement } from "@opentui/solid";
 import { createMemo, createSignal, For, onCleanup, onMount } from "solid-js";
-import { tint, useTheme } from "@tui/context/theme.js";
+import { tint, useTheme } from "#tui/context/theme.js";
 const PERIOD = 4600;
 const RINGS = 3;
 const WIDTH = 3.8;

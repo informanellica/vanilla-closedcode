@@ -1,5 +1,5 @@
-import { EffectBridge } from "@/effect/bridge.js";
-import { InstanceStore } from "@/project/instance-store.js";
+import { EffectBridge } from "#effect/bridge.js";
+import { InstanceStore } from "#project/instance-store.js";
 import { Effect } from "effect";
 import { HttpEffect, HttpServerRequest } from "effect/unstable/http";
 // Disposal is requested by an endpoint handler, but must run from the outer

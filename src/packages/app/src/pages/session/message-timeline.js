@@ -1,33 +1,10 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span></div><div class="d-flex justify-content-end gap-2">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-component=session-progress aria-hidden=true><div data-component=session-progress-bar>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<button type=button data-slot=session-title-parent class="min-w-0 max-w-[40%] truncate fw-medium text-secondary transition-colors">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<span data-slot=session-title-separator class="px-2 fw-medium text-secondary"aria-hidden=true>/`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="transition-opacity duration-200 ease-out">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-session-title><div class="h-12 w-100 d-flex align-items-center justify-content-between gap-2"><div class="d-flex align-items-center gap-1 min-w-0 flex-1 pr-3"><div class="d-flex align-items-center min-w-0 grow-1"><div class="shrink-0 d-flex align-items-center justify-content-center overflow-hidden transition-[width,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]"aria-hidden=true>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="w-100 d-flex justify-content-center">`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div class="min-w-0 w-100"><div role=log data-slot=session-turn-list class="d-flex flex-column align-items-start justify-content-start pb-16 transition-[margin]">`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div class="relative w-full h-full min-w-0"><div class="absolute left-1/2 -translate-x-1/2 bottom-6 z-[60] pointer-events-none transition-all duration-200 ease-out"><button class="pointer-events-auto d-flex align-items-center justify-content-center w-10 h-8 bg-transparent border-none cursor-pointer p-0 group"><div class="d-flex align-items-center justify-content-center w-8 h-6 rounded-[6px] border bg-[color-mix(in_srgb,var(--surface-raised-stronger-non-alpha)_80%,transparent)] backdrop-blur-[0.75px] transition-colors group-hover:border-[var(--border-weak-base)] group-hover:[--icon-base:var(--icon-hover)]"style="box-shadow:0 51px 60px 0 rgba(0,0,0,0.10), 0 15px 18px 0 rgba(0,0,0,0.12), 0 6.386px 7.513px 0 rgba(0,0,0,0.12), 0 2.31px 2.717px 0 rgba(0,0,0,0.20)">`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div class="relative h-full overflow-hidden">`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<h1 data-slot=session-title-child class="fw-medium text-body-emphasis truncate grow-1 min-w-0">`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-2"><div class="grid grid-cols-2 gap-2">`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<div class="d-flex flex-column p-3"><div class="d-flex flex-column gap-1"><div class="fw-medium text-body-emphasis"></div><div class="small fw-normal text-secondary"></div></div><div class="mt-3 d-flex flex-column gap-2">`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<div class="shrink-0 d-flex align-items-center gap-3">`),
-  _tmpl$13 = /*#__PURE__*/_$template(`<div class="w-100 px-4 md:px-5 pb-2"><div class="ml-auto max-w-[82%] overflow-x-auto no-scrollbar"><div class="d-flex w-max min-w-full justify-content-end gap-2">`),
-  _tmpl$14 = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$15 = /*#__PURE__*/_$template(`<div class="shrink-0 max-w-[260px] rounded-[6px] border bg-body px-2.5 py-2"><div class="d-flex align-items-center gap-1.5 min-w-0 small fw-medium text-body-emphasis"><span class=truncate></span></div><div class="pt-1 small fw-normal text-body-emphasis whitespace-pre-wrap break-words">`),
-  _tmpl$16 = /*#__PURE__*/_$template(`<span class="shrink-0 text-secondary">`);
-import { For, createEffect, createMemo, on, onCleanup, Show, Index, createSignal } from "solid-js";
+// Compiled solid-js/web template helpers are replaced with hand-written DOM
+// construction. insert() is the established exception for reactive and
+// component-valued children (Kobalte presence-gated Popover/Dropdown content,
+// runtime Show/For/Index output, memo-accessor returns) so Solid keeps
+// reconciling accessors instead of freezing them.
+import { insert as _solidInsert } from "solid-js/web";
+import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { useMutation } from "@tanstack/solid-query";
 import { useNavigate } from "@solidjs/router";
@@ -60,6 +37,16 @@ import { messageAgentColor } from "@/utils/agent.js";
 import { sessionTitle } from "@/utils/session-title.js";
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note.js";
 import { makeTimer } from "@solid-primitives/timer";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated and
+// user-provided strings are always assigned via textContent or insert(), never
+// interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 const emptyMessages = [];
 const idle = {
   type: "idle"
@@ -479,20 +466,22 @@ export function MessageTimeline(props) {
       await deleteSession(props.sessionID);
       dialog.close();
     };
-    return _$createComponent(Dialog, {
+    return createComponent(Dialog, {
       get title() {
         return language.t("session.delete.title");
       },
       fit: true,
       get children() {
-        var _el$ = _tmpl$(),
-          _el$2 = _el$.firstChild,
-          _el$3 = _el$2.firstChild,
-          _el$4 = _el$2.nextSibling;
-        _$insert(_el$3, () => language.t("session.delete.confirm", {
-          name: name()
-        }));
-        _$insert(_el$4, _$createComponent(Button, {
+        // _tmpl$: confirm text + footer buttons.
+        const body = template(`<div class="d-flex flex-column gap-4 pl-6 pr-2.5 pb-3"><div class="d-flex flex-column gap-1"><span class="text-body-emphasis"></span></div><div class="d-flex justify-content-end gap-2"></div></div>`);
+        const confirmEl = body.firstChild.firstChild;
+        const footerEl = body.firstChild.nextSibling;
+        createRenderEffect(() => {
+          confirmEl.textContent = language.t("session.delete.confirm", {
+            name: name()
+          });
+        });
+        _solidInsert(footerEl, createComponent(Button, {
           variant: "ghost",
           size: "large",
           onClick: () => dialog.close(),
@@ -500,7 +489,7 @@ export function MessageTimeline(props) {
             return language.t("common.cancel");
           }
         }), null);
-        _$insert(_el$4, _$createComponent(Button, {
+        _solidInsert(footerEl, createComponent(Button, {
           variant: "primary",
           size: "large",
           onClick: handleDelete,
@@ -508,656 +497,727 @@ export function MessageTimeline(props) {
             return language.t("session.delete.button");
           }
         }), null);
-        return _el$;
+        return body;
       }
     });
   }
-  return _$createComponent(Show, {
+  // ----- Progress strip (Show children, _tmpl$2) -----
+  const buildProgressBar = () => {
+    const barEl = template(`<div data-component="session-progress" aria-hidden="true"><div data-component="session-progress-bar"></div></div>`);
+    // Change-guarded reactive attribute/styles, mirroring the compiled effect.
+    let prevState;
+    let prevColor;
+    let prevMs;
+    createRenderEffect(() => {
+      const state = workingStatus();
+      const color = tint() ?? "var(--icon-interactive-base)";
+      const ms = `${bar.ms}ms`;
+      if (state !== prevState) barEl.setAttribute("data-state", prevState = state);
+      if (color !== prevColor) barEl.style.setProperty("--session-progress-color", prevColor = color);
+      if (ms !== prevMs) barEl.style.setProperty("--session-progress-ms", prevMs = ms);
+    });
+    return barEl;
+  };
+
+  // ----- Header actions (keyed Show(sessionID()) children, _tmpl$12) -----
+  const buildHeaderActions = id => {
+    const actionsEl = template(`<div class="shrink-0 d-flex align-items-center gap-3"></div>`);
+    _solidInsert(actionsEl, createComponent(SessionContextUsage, {
+      placement: "bottom"
+    }), null);
+    _solidInsert(actionsEl, createComponent(Show, {
+      get when() {
+        return !parentID();
+      },
+      get children() {
+        return [createComponent(DropdownMenu, {
+          gutter: 4,
+          placement: "bottom-end",
+          get open() {
+            return title.menuOpen;
+          },
+          onOpenChange: open => {
+            setTitle("menuOpen", open);
+            if (open) return;
+          },
+          get children() {
+            return [createComponent(DropdownMenu.Trigger, {
+              as: IconButton,
+              icon: "dot-grid",
+              variant: "ghost",
+              "class": "size-6 rounded-2",
+              get classList() {
+                return {};
+              },
+              get ["aria-label"]() {
+                return language.t("common.moreOptions");
+              },
+              get ["aria-expanded"]() {
+                return title.menuOpen || share.open || title.pendingShare;
+              },
+              ref: el => {
+                more = el;
+              }
+            }), createComponent(DropdownMenu.Portal, {
+              get children() {
+                return createComponent(DropdownMenu.Content, {
+                  style: {
+                    "min-width": "104px"
+                  },
+                  onCloseAutoFocus: event => {
+                    if (title.pendingRename) {
+                      event.preventDefault();
+                      setTitle("pendingRename", false);
+                      openTitleEditor();
+                      return;
+                    }
+                    if (title.pendingShare) {
+                      event.preventDefault();
+                      requestAnimationFrame(() => {
+                        setShare({
+                          open: true,
+                          dismiss: null
+                        });
+                        setTitle("pendingShare", false);
+                      });
+                    }
+                  },
+                  get children() {
+                    return [createComponent(DropdownMenu.Item, {
+                      onSelect: () => {
+                        setTitle("pendingRename", true);
+                        setTitle("menuOpen", false);
+                      },
+                      get children() {
+                        return createComponent(DropdownMenu.ItemLabel, {
+                          get children() {
+                            return language.t("common.rename");
+                          }
+                        });
+                      }
+                    }), createComponent(Show, {
+                      get when() {
+                        return shareEnabled();
+                      },
+                      get children() {
+                        return createComponent(DropdownMenu.Item, {
+                          onSelect: () => {
+                            setTitle({
+                              pendingShare: true,
+                              menuOpen: false
+                            });
+                          },
+                          get children() {
+                            return createComponent(DropdownMenu.ItemLabel, {
+                              get children() {
+                                return language.t("session.share.action.share");
+                              }
+                            });
+                          }
+                        });
+                      }
+                    }), createComponent(DropdownMenu.Item, {
+                      onSelect: () => void archiveSession(id),
+                      get children() {
+                        return createComponent(DropdownMenu.ItemLabel, {
+                          get children() {
+                            return language.t("common.archive");
+                          }
+                        });
+                      }
+                    }), createComponent(DropdownMenu.Separator, {}), createComponent(DropdownMenu.Item, {
+                      onSelect: () => dialog.show(() => createComponent(DialogDeleteSession, {
+                        sessionID: id
+                      })),
+                      get children() {
+                        return createComponent(DropdownMenu.ItemLabel, {
+                          get children() {
+                            return language.t("common.delete");
+                          }
+                        });
+                      }
+                    })];
+                  }
+                });
+              }
+            })];
+          }
+        }), createComponent(KobaltePopover, {
+          get open() {
+            return share.open;
+          },
+          anchorRef: () => more,
+          placement: "bottom-end",
+          gutter: 4,
+          modal: false,
+          onOpenChange: open => {
+            if (open) setShare("dismiss", null);
+            setShare("open", open);
+          },
+          get children() {
+            return createComponent(KobaltePopover.Portal, {
+              get children() {
+                return createComponent(KobaltePopover.Content, {
+                  "data-component": "popover-content",
+                  style: {
+                    "min-width": "320px"
+                  },
+                  onEscapeKeyDown: event => {
+                    setShare({
+                      dismiss: "escape",
+                      open: false
+                    });
+                    event.preventDefault();
+                    event.stopPropagation();
+                  },
+                  onPointerDownOutside: () => {
+                    setShare({
+                      dismiss: "outside",
+                      open: false
+                    });
+                  },
+                  onFocusOutside: () => {
+                    setShare({
+                      dismiss: "outside",
+                      open: false
+                    });
+                  },
+                  onCloseAutoFocus: event => {
+                    if (share.dismiss === "outside") event.preventDefault();
+                    setShare("dismiss", null);
+                  },
+                  get children() {
+                    // _tmpl$11: share popover body (Kobalte presence-gated
+                    // content, rebuilt per open).
+                    const body = template(`<div class="d-flex flex-column p-3"><div class="d-flex flex-column gap-1"><div class="fw-medium text-body-emphasis"></div><div class="small fw-normal text-secondary"></div></div><div class="mt-3 d-flex flex-column gap-2"></div></div>`);
+                    const popTitleEl = body.firstChild.firstChild;
+                    const popDescEl = popTitleEl.nextSibling;
+                    const popActionsEl = body.firstChild.nextSibling;
+                    createRenderEffect(() => {
+                      popTitleEl.textContent = language.t("session.share.popover.title");
+                    });
+                    createRenderEffect(() => {
+                      popDescEl.textContent = shareUrl() ? language.t("session.share.popover.description.shared") : language.t("session.share.popover.description.unshared");
+                    });
+                    _solidInsert(popActionsEl, createComponent(Show, {
+                      get when() {
+                        return shareUrl();
+                      },
+                      get fallback() {
+                        return createComponent(Button, {
+                          size: "large",
+                          variant: "primary",
+                          "class": "w-100",
+                          onClick: shareSession,
+                          get disabled() {
+                            return controller.timelineSharePending();
+                          },
+                          get children() {
+                            return controller.timelineSharePending() ? language.t("session.share.action.publishing") : language.t("session.share.action.publish");
+                          }
+                        });
+                      },
+                      get children() {
+                        // _tmpl$10: shared-state actions.
+                        const grid = template(`<div class="d-flex flex-column gap-2"><div class="grid grid-cols-2 gap-2"></div></div>`);
+                        const gridRow = grid.firstChild;
+                        _solidInsert(grid, createComponent(TextField, {
+                          get value() {
+                            return shareUrl() ?? "";
+                          },
+                          readOnly: true,
+                          copyable: true,
+                          copyKind: "link",
+                          tabIndex: -1,
+                          "class": "w-100"
+                        }), gridRow);
+                        _solidInsert(gridRow, createComponent(Button, {
+                          size: "large",
+                          variant: "secondary",
+                          "class": "w-100 shadow-none border",
+                          onClick: unshareSession,
+                          get disabled() {
+                            return controller.timelineUnsharePending();
+                          },
+                          get children() {
+                            return controller.timelineUnsharePending() ? language.t("session.share.action.unpublishing") : language.t("session.share.action.unpublish");
+                          }
+                        }), null);
+                        _solidInsert(gridRow, createComponent(Button, {
+                          size: "large",
+                          variant: "primary",
+                          "class": "w-100",
+                          onClick: viewShare,
+                          get disabled() {
+                            return controller.timelineUnsharePending();
+                          },
+                          get children() {
+                            return language.t("session.share.action.view");
+                          }
+                        }), null);
+                        return grid;
+                      }
+                    }));
+                    return body;
+                  }
+                });
+              }
+            });
+          }
+        })];
+      }
+    }), null);
+    return actionsEl;
+  };
+
+  // ----- Session header (Show(showHeader()) children, _tmpl$6) -----
+  const buildHeader = () => {
+    const headerEl = template(`<div data-session-title><div class="h-12 w-100 d-flex align-items-center justify-content-between gap-2"><div class="d-flex align-items-center gap-1 min-w-0 flex-1 pr-3"><div class="d-flex align-items-center min-w-0 grow-1"><div class="shrink-0 d-flex align-items-center justify-content-center overflow-hidden transition-[width,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" aria-hidden="true"></div></div></div></div></div>`);
+    const rowEl = headerEl.firstChild;
+    const titleRowEl = rowEl.firstChild.firstChild;
+    const spinnerBoxEl = titleRowEl.firstChild;
+    // use(): capture the measuring ref and seed the progress pace (the element
+    // is detached here, so clientWidth is 0, exactly as in the compiled use()).
+    head = headerEl;
+    setBar("ms", pace(headerEl.clientWidth));
+    // Progress strip, inserted before the title row.
+    _solidInsert(headerEl, createComponent(Show, {
+      get when() {
+        return workingStatus() !== "hidden" && settings.general.showSessionProgressBar();
+      },
+      get children() {
+        return buildProgressBar();
+      }
+    }), rowEl);
+    // Parent session crumb + separator (_tmpl$3/_tmpl$4), before the spinner box.
+    _solidInsert(titleRowEl, createComponent(Show, {
+      get when() {
+        return parentID();
+      },
+      get children() {
+        const parentBtn = template(`<button type="button" data-slot="session-title-parent" class="min-w-0 max-w-[40%] truncate fw-medium text-secondary transition-colors"></button>`);
+        // Compiled delegated $$click -> direct listener.
+        parentBtn.addEventListener("click", navigateParent);
+        createRenderEffect(() => {
+          parentBtn.textContent = parentTitle();
+        });
+        return [parentBtn, template(`<span data-slot="session-title-separator" class="px-2 fw-medium text-secondary" aria-hidden="true">/</span>`)];
+      }
+    }), spinnerBoxEl);
+    // Working spinner (_tmpl$5).
+    _solidInsert(spinnerBoxEl, createComponent(Show, {
+      get when() {
+        return workingStatus() !== "hidden";
+      },
+      get children() {
+        const wrap = template(`<div class="transition-opacity duration-200 ease-out"></div>`);
+        _solidInsert(wrap, createComponent(Spinner, {
+          "class": "size-4",
+          get style() {
+            return {
+              color: tint() ?? "var(--icon-interactive-base)"
+            };
+          }
+        }));
+        createRenderEffect(() => wrap.classList.toggle("opacity-0", !!(workingStatus() === "hiding")));
+        return wrap;
+      }
+    }));
+    // Session title: static heading (_tmpl$1) or the inline editor.
+    _solidInsert(titleRowEl, createComponent(Show, {
+      get when() {
+        return childTitle() || title.editing;
+      },
+      get children() {
+        return createComponent(Show, {
+          get when() {
+            return title.editing;
+          },
+          get fallback() {
+            const heading = template(`<h1 data-slot="session-title-child" class="fw-medium text-body-emphasis truncate grow-1 min-w-0"></h1>`);
+            // Compiled delegated $$dblclick -> direct listener.
+            heading.addEventListener("dblclick", openTitleEditor);
+            createRenderEffect(() => {
+              heading.textContent = childTitle() ?? "";
+            });
+            return heading;
+          },
+          get children() {
+            return createComponent(InlineInput, {
+              ref: el => {
+                titleRef = el;
+              },
+              "data-slot": "session-title-child",
+              get value() {
+                return title.draft;
+              },
+              get disabled() {
+                return titleMutation.isPending;
+              },
+              "class": "fw-medium text-body-emphasis grow-1 min-w-0 rounded-[6px] pl-1 -ml-1",
+              style: {
+                "--inline-input-shadow": "var(--shadow-xs-border-select)"
+              },
+              onInput: event => setTitle("draft", event.currentTarget.value),
+              onKeyDown: event => {
+                event.stopPropagation();
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  void saveTitleEditor();
+                  return;
+                }
+                if (event.key === "Escape") {
+                  event.preventDefault();
+                  closeTitleEditor();
+                }
+              },
+              onBlur: closeTitleEditor
+            });
+          }
+        });
+      }
+    }), null);
+    // Header actions, keyed by session id.
+    _solidInsert(rowEl, createComponent(Show, {
+      get when() {
+        return sessionID();
+      },
+      keyed: true,
+      children: id => buildHeaderActions(id)
+    }), null);
+    // Always-true keys of the compiled classList map applied once.
+    headerEl.classList.add("sticky", "top-0", "z-30", "bg-[linear-gradient(to_bottom,var(--background-stronger)_48px,transparent)]", "relative", "w-100", "pb-4", "pl-2", "pr-3", "md:pl-4", "md:pr-3");
+    // Change-guarded centered classes + spinner box sizing, mirroring the
+    // compiled effect block.
+    let prevCentered;
+    let prevWidth;
+    let prevMargin;
+    createRenderEffect(() => {
+      const centered = !!props.centered;
+      const width = working() ? "16px" : "0px";
+      const margin = working() ? "8px" : "0px";
+      if (centered !== prevCentered) {
+        prevCentered = centered;
+        for (const cls of ["md:max-w-200", "md:mx-auto", "2xl:max-w-[1000px]"]) headerEl.classList.toggle(cls, centered);
+      }
+      if (width !== prevWidth) spinnerBoxEl.style.setProperty("width", prevWidth = width);
+      if (margin !== prevMargin) spinnerBoxEl.style.setProperty("margin-right", prevMargin = margin);
+    });
+    return headerEl;
+  };
+  // ----- Comment card (Show(comment()) children, _tmpl$15/_tmpl$16) -----
+  // c is the derived accessor handed out by the non-keyed Show callback.
+  const buildCommentCard = c => {
+    const card = template(`<div class="shrink-0 max-w-[260px] rounded-[6px] border bg-body px-2.5 py-2"><div class="d-flex align-items-center gap-1.5 min-w-0 small fw-medium text-body-emphasis"><span class="truncate"></span></div><div class="pt-1 small fw-normal text-body-emphasis whitespace-pre-wrap break-words"></div></div>`);
+    const headRowEl = card.firstChild;
+    const nameEl = headRowEl.firstChild;
+    const bodyEl = headRowEl.nextSibling;
+    _solidInsert(headRowEl, createComponent(FileIcon, {
+      get node() {
+        return {
+          path: c().path,
+          type: "file"
+        };
+      },
+      "class": "size-3.5 shrink-0"
+    }), nameEl);
+    createRenderEffect(() => {
+      nameEl.textContent = getFilename(c().path);
+    });
+    _solidInsert(headRowEl, createComponent(Show, {
+      get when() {
+        return c().selection;
+      },
+      children: selection => {
+        const lines = template(`<span class="shrink-0 text-secondary"></span>`);
+        createRenderEffect(() => {
+          const sel = selection();
+          lines.textContent = sel.startLine === sel.endLine ? `:${sel.startLine}` : `:${sel.startLine}-${sel.endLine}`;
+        });
+        return lines;
+      }
+    }), null);
+    createRenderEffect(() => {
+      bodyEl.textContent = c().comment ?? "";
+    });
+    return card;
+  };
+
+  // ----- Timeline row (For children, _tmpl$14/_tmpl$13) -----
+  const buildTimelineRow = messageID => {
+    const active = createMemo(() => activeMessageID() === messageID);
+    const comments = createMemo(() => messageComments(sync.data?.part?.[messageID] ?? []), [], {
+      equals: (a, b) => a.length === b.length && a.every((c, i) => c.path === b[i].path && c.comment === b[i].comment && c.selection?.startLine === b[i].selection?.startLine && c.selection?.endLine === b[i].selection?.endLine)
+    });
+    const commentCount = createMemo(() => comments().length);
+    const row = template(`<div></div>`);
+    row.setAttribute("data-message-id", messageID);
+    _solidInsert(row, createComponent(Show, {
+      get when() {
+        return commentCount() > 0;
+      },
+      get children() {
+        // _tmpl$13: right-aligned comment strip above the turn.
+        const strip = template(`<div class="w-100 px-4 md:px-5 pb-2"><div class="ml-auto max-w-[82%] overflow-x-auto no-scrollbar"><div class="d-flex w-max min-w-full justify-content-end gap-2"></div></div></div>`);
+        const stripRow = strip.firstChild.firstChild;
+        // Runtime Index reuses card slots per position while comments() only
+        // changes identity on real content changes (custom equals above).
+        _solidInsert(stripRow, createComponent(Index, {
+          get each() {
+            return comments();
+          },
+          children: commentAccessor => {
+            const comment = createMemo(() => commentAccessor());
+            return createComponent(Show, {
+              get when() {
+                return comment();
+              },
+              children: c => buildCommentCard(c)
+            });
+          }
+        }));
+        return strip;
+      }
+    }), null);
+    _solidInsert(row, createComponent(SessionTurn, {
+      get sessionID() {
+        return sessionID() ?? "";
+      },
+      messageID: messageID,
+      get messages() {
+        return sessionMessages();
+      },
+      get actions() {
+        return props.actions;
+      },
+      get active() {
+        return active();
+      },
+      get status() {
+        return active() ? sessionStatus() : undefined;
+      },
+      get showReasoningSummaries() {
+        return settings.general.showReasoningSummaries();
+      },
+      get shellToolDefaultOpen() {
+        return settings.general.shellToolPartsExpanded();
+      },
+      get editToolDefaultOpen() {
+        return settings.general.editToolPartsExpanded();
+      },
+      classes: {
+        root: "min-w-0 w-100 relative",
+        content: "d-flex flex-column justify-content-between !overflow-visible",
+        container: "w-100 px-4 md:px-5"
+      }
+    }), null);
+    // Always-true keys of the compiled classList map applied once; anchor id,
+    // centered classes and content-visibility stay change-guarded like the
+    // compiled effect block.
+    row.classList.add("min-w-0", "w-100", "max-w-full");
+    let prevAnchor;
+    let prevCentered;
+    let prevVisibility;
+    let prevIntrinsic;
+    createRenderEffect(() => {
+      const anchor = props.anchor(messageID);
+      const centered = !!props.centered;
+      const visibility = active() ? undefined : "auto";
+      const intrinsic = active() ? undefined : "auto 500px";
+      if (anchor !== prevAnchor) {
+        prevAnchor = anchor;
+        if (anchor == null) row.removeAttribute("id");
+        else row.setAttribute("id", anchor);
+      }
+      if (centered !== prevCentered) {
+        prevCentered = centered;
+        row.classList.toggle("md:max-w-200", centered);
+        row.classList.toggle("2xl:max-w-[1000px]", centered);
+      }
+      if (visibility !== prevVisibility) {
+        prevVisibility = visibility;
+        if (visibility == null) row.style.removeProperty("content-visibility");
+        else row.style.setProperty("content-visibility", visibility);
+      }
+      if (intrinsic !== prevIntrinsic) {
+        prevIntrinsic = intrinsic;
+        if (intrinsic == null) row.style.removeProperty("contain-intrinsic-size");
+        else row.style.setProperty("contain-intrinsic-size", intrinsic);
+      }
+    });
+    return row;
+  };
+
+  // ----- Scroll content (ScrollView children, _tmpl$8) -----
+  const buildTimelineContent = () => {
+    const contentEl = template(`<div class="min-w-0 w-100"><div role="log" data-slot="session-turn-list" class="d-flex flex-column align-items-start justify-content-start pb-16 transition-[margin]"></div></div>`);
+    const turnListEl = contentEl.firstChild;
+    // Ref binding, mirroring the compiled use() dual branch.
+    const contentRef = props.setContentRef;
+    if (typeof contentRef === "function") contentRef(contentEl);
+    else props.setContentRef = contentEl;
+    _solidInsert(contentEl, createComponent(Show, {
+      get when() {
+        return showHeader();
+      },
+      get children() {
+        return buildHeader();
+      }
+    }), turnListEl);
+    // Load-earlier control (_tmpl$7).
+    _solidInsert(turnListEl, createComponent(Show, {
+      get when() {
+        return props.turnStart > 0 || props.historyMore;
+      },
+      get children() {
+        const wrap = template(`<div class="w-100 d-flex justify-content-center"></div>`);
+        _solidInsert(wrap, createComponent(Button, {
+          variant: "ghost",
+          size: "large",
+          "class": "small fw-medium opacity-50",
+          get disabled() {
+            return props.historyLoading;
+          },
+          get onClick() {
+            return props.onLoadEarlier;
+          },
+          get children() {
+            return props.historyLoading ? language.t("session.messages.loadingEarlier") : language.t("session.messages.loadEarlier");
+          }
+        }));
+        return wrap;
+      }
+    }), null);
+    // Runtime For keeps row nodes keyed by message id, so turns (and their
+    // content-visibility state) are reused across sync updates even though
+    // rendered() returns a fresh array identity each time.
+    _solidInsert(turnListEl, createComponent(For, {
+      get each() {
+        return rendered();
+      },
+      children: messageID => buildTimelineRow(messageID)
+    }), null);
+    // Always-true key applied once; centered margins stay change-guarded.
+    turnListEl.classList.add("w-100");
+    let prevCentered;
+    createRenderEffect(() => {
+      const centered = !!props.centered;
+      if (centered === prevCentered) return;
+      prevCentered = centered;
+      for (const cls of ["md:max-w-200", "md:mx-auto", "2xl:max-w-[1000px]"]) turnListEl.classList.toggle(cls, centered);
+      turnListEl.classList.toggle("mt-0.5", centered);
+      turnListEl.classList.toggle("mt-0", !centered);
+    });
+    return contentEl;
+  };
+
+  // ----- Timeline root (Show children, _tmpl$9) -----
+  const buildTimeline = () => {
+    const rootEl = template(`<div class="relative w-full h-full min-w-0"><div class="absolute left-1/2 -translate-x-1/2 bottom-6 z-[60] pointer-events-none transition-all duration-200 ease-out"><button class="pointer-events-auto d-flex align-items-center justify-content-center w-10 h-8 bg-transparent border-none cursor-pointer p-0 group"><div class="d-flex align-items-center justify-content-center w-8 h-6 rounded-[6px] border bg-[color-mix(in_srgb,var(--surface-raised-stronger-non-alpha)_80%,transparent)] backdrop-blur-[0.75px] transition-colors group-hover:border-[var(--border-weak-base)] group-hover:[--icon-base:var(--icon-hover)]" style="box-shadow:0 51px 60px 0 rgba(0,0,0,0.10), 0 15px 18px 0 rgba(0,0,0,0.12), 0 6.386px 7.513px 0 rgba(0,0,0,0.12), 0 2.31px 2.717px 0 rgba(0,0,0,0.20)"></div></button></div></div>`);
+    const jumpEl = rootEl.firstChild;
+    const jumpBtn = jumpEl.firstChild;
+    const jumpIconBox = jumpBtn.firstChild;
+    // Compiled delegated $$click -> direct listener (handler read once at
+    // creation, exactly like the compiled addEventListener).
+    jumpBtn.addEventListener("click", props.onResumeScroll);
+    _solidInsert(jumpIconBox, createComponent(Icon, {
+      name: "arrow-down-to-line",
+      size: "small"
+    }));
+    _solidInsert(rootEl, createComponent(ScrollView, {
+      get viewportRef() {
+        return props.setScrollRef;
+      },
+      onWheel: e => {
+        const root = e.currentTarget;
+        const delta = normalizeWheelDelta({
+          deltaY: e.deltaY,
+          deltaMode: e.deltaMode,
+          rootHeight: root.clientHeight
+        });
+        if (!delta) return;
+        markBoundaryGesture({
+          root,
+          target: e.target,
+          delta,
+          onMarkScrollGesture: props.onMarkScrollGesture
+        });
+      },
+      onTouchStart: e => {
+        touchGesture = e.touches[0]?.clientY;
+      },
+      onTouchMove: e => {
+        const next = e.touches[0]?.clientY;
+        const prev = touchGesture;
+        touchGesture = next;
+        if (next === undefined || prev === undefined) return;
+        const delta = prev - next;
+        if (!delta) return;
+        const root = e.currentTarget;
+        markBoundaryGesture({
+          root,
+          target: e.target,
+          delta,
+          onMarkScrollGesture: props.onMarkScrollGesture
+        });
+      },
+      onTouchEnd: () => {
+        touchGesture = undefined;
+      },
+      onTouchCancel: () => {
+        touchGesture = undefined;
+      },
+      onPointerDown: e => {
+        if (e.target !== e.currentTarget) return;
+        props.onMarkScrollGesture(e.currentTarget);
+      },
+      onScroll: e => {
+        props.onScheduleScrollState(e.currentTarget);
+        props.onTurnBackfillScroll();
+        if (!props.hasScrollGesture()) return;
+        props.onUserScroll();
+        props.onAutoScrollHandleScroll();
+        props.onMarkScrollGesture(e.currentTarget);
+      },
+      get onClick() {
+        return props.onAutoScrollInteraction;
+      },
+      "class": "relative min-w-0 w-100 h-full",
+      get style() {
+        return {
+          "--session-title-height": showHeader() ? "40px" : "0px",
+          "--sticky-accordion-top": showHeader() ? "48px" : "0px"
+        };
+      },
+      get children() {
+        return buildTimelineContent();
+      }
+    }), null);
+    // Jump button visibility classes, change-guarded on the resolved state
+    // (the compiled classList keys are exact complements of each other).
+    let prevVisible;
+    createRenderEffect(() => {
+      const visible = !!(props.scroll.overflow && props.scroll.jump && !staging.isStaging());
+      if (visible === prevVisible) return;
+      prevVisible = visible;
+      for (const cls of ["opacity-100", "translate-y-0", "scale-100"]) jumpEl.classList.toggle(cls, visible);
+      for (const cls of ["opacity-0", "translate-y-2", "scale-95", "pointer-events-none"]) jumpEl.classList.toggle(cls, !visible);
+    });
+    return rootEl;
+  };
+  return createComponent(Show, {
     get when() {
       return !props.mobileChanges;
     },
     get fallback() {
-      return (() => {
-        var _el$19 = _tmpl$0();
-        _$insert(_el$19, () => props.mobileFallback);
-        return _el$19;
-      })();
+      // _tmpl$0: mobile fallback host; the forwarded child stays reactive
+      // through insert().
+      const fallbackEl = template(`<div class="relative h-full overflow-hidden"></div>`);
+      _solidInsert(fallbackEl, () => props.mobileFallback);
+      return fallbackEl;
     },
     get children() {
-      var _el$5 = _tmpl$9(),
-        _el$6 = _el$5.firstChild,
-        _el$7 = _el$6.firstChild,
-        _el$8 = _el$7.firstChild;
-      _$addEventListener(_el$7, "click", props.onResumeScroll, true);
-      _$insert(_el$8, _$createComponent(Icon, {
-        name: "arrow-down-to-line",
-        size: "small"
-      }));
-      _$insert(_el$5, _$createComponent(ScrollView, {
-        get viewportRef() {
-          return props.setScrollRef;
-        },
-        onWheel: e => {
-          const root = e.currentTarget;
-          const delta = normalizeWheelDelta({
-            deltaY: e.deltaY,
-            deltaMode: e.deltaMode,
-            rootHeight: root.clientHeight
-          });
-          if (!delta) return;
-          markBoundaryGesture({
-            root,
-            target: e.target,
-            delta,
-            onMarkScrollGesture: props.onMarkScrollGesture
-          });
-        },
-        onTouchStart: e => {
-          touchGesture = e.touches[0]?.clientY;
-        },
-        onTouchMove: e => {
-          const next = e.touches[0]?.clientY;
-          const prev = touchGesture;
-          touchGesture = next;
-          if (next === undefined || prev === undefined) return;
-          const delta = prev - next;
-          if (!delta) return;
-          const root = e.currentTarget;
-          markBoundaryGesture({
-            root,
-            target: e.target,
-            delta,
-            onMarkScrollGesture: props.onMarkScrollGesture
-          });
-        },
-        onTouchEnd: () => {
-          touchGesture = undefined;
-        },
-        onTouchCancel: () => {
-          touchGesture = undefined;
-        },
-        onPointerDown: e => {
-          if (e.target !== e.currentTarget) return;
-          props.onMarkScrollGesture(e.currentTarget);
-        },
-        onScroll: e => {
-          props.onScheduleScrollState(e.currentTarget);
-          props.onTurnBackfillScroll();
-          if (!props.hasScrollGesture()) return;
-          props.onUserScroll();
-          props.onAutoScrollHandleScroll();
-          props.onMarkScrollGesture(e.currentTarget);
-        },
-        get onClick() {
-          return props.onAutoScrollInteraction;
-        },
-        "class": "relative min-w-0 w-100 h-full",
-        get style() {
-          return {
-            "--session-title-height": showHeader() ? "40px" : "0px",
-            "--sticky-accordion-top": showHeader() ? "48px" : "0px"
-          };
-        },
-        get children() {
-          var _el$9 = _tmpl$8(),
-            _el$17 = _el$9.firstChild;
-          var _ref$ = props.setContentRef;
-          typeof _ref$ === "function" ? _$use(_ref$, _el$9) : props.setContentRef = _el$9;
-          _$insert(_el$9, _$createComponent(Show, {
-            get when() {
-              return showHeader();
-            },
-            get children() {
-              var _el$0 = _tmpl$6(),
-                _el$10 = _el$0.firstChild,
-                _el$11 = _el$10.firstChild,
-                _el$12 = _el$11.firstChild,
-                _el$15 = _el$12.firstChild;
-              _$use(el => {
-                head = el;
-                setBar("ms", pace(el.clientWidth));
-              }, _el$0);
-              _$insert(_el$0, _$createComponent(Show, {
-                get when() {
-                  return _$memo(() => workingStatus() !== "hidden")() && settings.general.showSessionProgressBar();
-                },
-                get children() {
-                  var _el$1 = _tmpl$2();
-                  _$effect(_p$ => {
-                    var _v$ = workingStatus(),
-                      _v$2 = tint() ?? "var(--icon-interactive-base)",
-                      _v$3 = `${bar.ms}ms`;
-                    _v$ !== _p$.e && _$setAttribute(_el$1, "data-state", _p$.e = _v$);
-                    _v$2 !== _p$.t && _$setStyleProperty(_el$1, "--session-progress-color", _p$.t = _v$2);
-                    _v$3 !== _p$.a && _$setStyleProperty(_el$1, "--session-progress-ms", _p$.a = _v$3);
-                    return _p$;
-                  }, {
-                    e: undefined,
-                    t: undefined,
-                    a: undefined
-                  });
-                  return _el$1;
-                }
-              }), _el$10);
-              _$insert(_el$12, _$createComponent(Show, {
-                get when() {
-                  return parentID();
-                },
-                get children() {
-                  return [(() => {
-                    var _el$13 = _tmpl$3();
-                    _el$13.$$click = navigateParent;
-                    _$insert(_el$13, parentTitle);
-                    return _el$13;
-                  })(), _tmpl$4()];
-                }
-              }), _el$15);
-              _$insert(_el$15, _$createComponent(Show, {
-                get when() {
-                  return workingStatus() !== "hidden";
-                },
-                get children() {
-                  var _el$16 = _tmpl$5();
-                  _$insert(_el$16, _$createComponent(Spinner, {
-                    "class": "size-4",
-                    get style() {
-                      return {
-                        color: tint() ?? "var(--icon-interactive-base)"
-                      };
-                    }
-                  }));
-                  _$effect(() => _el$16.classList.toggle("opacity-0", !!(workingStatus() === "hiding")));
-                  return _el$16;
-                }
-              }));
-              _$insert(_el$12, _$createComponent(Show, {
-                get when() {
-                  return childTitle() || title.editing;
-                },
-                get children() {
-                  return _$createComponent(Show, {
-                    get when() {
-                      return title.editing;
-                    },
-                    get fallback() {
-                      return (() => {
-                        var _el$20 = _tmpl$1();
-                        _el$20.$$dblclick = openTitleEditor;
-                        _$insert(_el$20, childTitle);
-                        return _el$20;
-                      })();
-                    },
-                    get children() {
-                      return _$createComponent(InlineInput, {
-                        ref: el => {
-                          titleRef = el;
-                        },
-                        "data-slot": "session-title-child",
-                        get value() {
-                          return title.draft;
-                        },
-                        get disabled() {
-                          return titleMutation.isPending;
-                        },
-                        "class": "fw-medium text-body-emphasis grow-1 min-w-0 rounded-[6px] pl-1 -ml-1",
-                        style: {
-                          "--inline-input-shadow": "var(--shadow-xs-border-select)"
-                        },
-                        onInput: event => setTitle("draft", event.currentTarget.value),
-                        onKeyDown: event => {
-                          event.stopPropagation();
-                          if (event.key === "Enter") {
-                            event.preventDefault();
-                            void saveTitleEditor();
-                            return;
-                          }
-                          if (event.key === "Escape") {
-                            event.preventDefault();
-                            closeTitleEditor();
-                          }
-                        },
-                        onBlur: closeTitleEditor
-                      });
-                    }
-                  });
-                }
-              }), null);
-              _$insert(_el$10, _$createComponent(Show, {
-                get when() {
-                  return sessionID();
-                },
-                keyed: true,
-                children: id => (() => {
-                  var _el$21 = _tmpl$12();
-                  _$insert(_el$21, _$createComponent(SessionContextUsage, {
-                    placement: "bottom"
-                  }), null);
-                  _$insert(_el$21, _$createComponent(Show, {
-                    get when() {
-                      return !parentID();
-                    },
-                    get children() {
-                      return [_$createComponent(DropdownMenu, {
-                        gutter: 4,
-                        placement: "bottom-end",
-                        get open() {
-                          return title.menuOpen;
-                        },
-                        onOpenChange: open => {
-                          setTitle("menuOpen", open);
-                          if (open) return;
-                        },
-                        get children() {
-                          return [_$createComponent(DropdownMenu.Trigger, {
-                            as: IconButton,
-                            icon: "dot-grid",
-                            variant: "ghost",
-                            "class": "size-6 rounded-2",
-                            get classList() {
-                              return {};
-                            },
-                            get ["aria-label"]() {
-                              return language.t("common.moreOptions");
-                            },
-                            get ["aria-expanded"]() {
-                              return title.menuOpen || share.open || title.pendingShare;
-                            },
-                            ref: el => {
-                              more = el;
-                            }
-                          }), _$createComponent(DropdownMenu.Portal, {
-                            get children() {
-                              return _$createComponent(DropdownMenu.Content, {
-                                style: {
-                                  "min-width": "104px"
-                                },
-                                onCloseAutoFocus: event => {
-                                  if (title.pendingRename) {
-                                    event.preventDefault();
-                                    setTitle("pendingRename", false);
-                                    openTitleEditor();
-                                    return;
-                                  }
-                                  if (title.pendingShare) {
-                                    event.preventDefault();
-                                    requestAnimationFrame(() => {
-                                      setShare({
-                                        open: true,
-                                        dismiss: null
-                                      });
-                                      setTitle("pendingShare", false);
-                                    });
-                                  }
-                                },
-                                get children() {
-                                  return [_$createComponent(DropdownMenu.Item, {
-                                    onSelect: () => {
-                                      setTitle("pendingRename", true);
-                                      setTitle("menuOpen", false);
-                                    },
-                                    get children() {
-                                      return _$createComponent(DropdownMenu.ItemLabel, {
-                                        get children() {
-                                          return language.t("common.rename");
-                                        }
-                                      });
-                                    }
-                                  }), _$createComponent(Show, {
-                                    get when() {
-                                      return shareEnabled();
-                                    },
-                                    get children() {
-                                      return _$createComponent(DropdownMenu.Item, {
-                                        onSelect: () => {
-                                          setTitle({
-                                            pendingShare: true,
-                                            menuOpen: false
-                                          });
-                                        },
-                                        get children() {
-                                          return _$createComponent(DropdownMenu.ItemLabel, {
-                                            get children() {
-                                              return language.t("session.share.action.share");
-                                            }
-                                          });
-                                        }
-                                      });
-                                    }
-                                  }), _$createComponent(DropdownMenu.Item, {
-                                    onSelect: () => void archiveSession(id),
-                                    get children() {
-                                      return _$createComponent(DropdownMenu.ItemLabel, {
-                                        get children() {
-                                          return language.t("common.archive");
-                                        }
-                                      });
-                                    }
-                                  }), _$createComponent(DropdownMenu.Separator, {}), _$createComponent(DropdownMenu.Item, {
-                                    onSelect: () => dialog.show(() => _$createComponent(DialogDeleteSession, {
-                                      sessionID: id
-                                    })),
-                                    get children() {
-                                      return _$createComponent(DropdownMenu.ItemLabel, {
-                                        get children() {
-                                          return language.t("common.delete");
-                                        }
-                                      });
-                                    }
-                                  })];
-                                }
-                              });
-                            }
-                          })];
-                        }
-                      }), _$createComponent(KobaltePopover, {
-                        get open() {
-                          return share.open;
-                        },
-                        anchorRef: () => more,
-                        placement: "bottom-end",
-                        gutter: 4,
-                        modal: false,
-                        onOpenChange: open => {
-                          if (open) setShare("dismiss", null);
-                          setShare("open", open);
-                        },
-                        get children() {
-                          return _$createComponent(KobaltePopover.Portal, {
-                            get children() {
-                              return _$createComponent(KobaltePopover.Content, {
-                                "data-component": "popover-content",
-                                style: {
-                                  "min-width": "320px"
-                                },
-                                onEscapeKeyDown: event => {
-                                  setShare({
-                                    dismiss: "escape",
-                                    open: false
-                                  });
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                },
-                                onPointerDownOutside: () => {
-                                  setShare({
-                                    dismiss: "outside",
-                                    open: false
-                                  });
-                                },
-                                onFocusOutside: () => {
-                                  setShare({
-                                    dismiss: "outside",
-                                    open: false
-                                  });
-                                },
-                                onCloseAutoFocus: event => {
-                                  if (share.dismiss === "outside") event.preventDefault();
-                                  setShare("dismiss", null);
-                                },
-                                get children() {
-                                  var _el$22 = _tmpl$11(),
-                                    _el$23 = _el$22.firstChild,
-                                    _el$24 = _el$23.firstChild,
-                                    _el$25 = _el$24.nextSibling,
-                                    _el$26 = _el$23.nextSibling;
-                                  _$insert(_el$24, () => language.t("session.share.popover.title"));
-                                  _$insert(_el$25, (() => {
-                                    var _c$ = _$memo(() => !!shareUrl());
-                                    return () => _c$() ? language.t("session.share.popover.description.shared") : language.t("session.share.popover.description.unshared");
-                                  })());
-                                  _$insert(_el$26, _$createComponent(Show, {
-                                    get when() {
-                                      return shareUrl();
-                                    },
-                                    get fallback() {
-                                      return _$createComponent(Button, {
-                                        size: "large",
-                                        variant: "primary",
-                                        "class": "w-100",
-                                        onClick: shareSession,
-                                        get disabled() {
-                                          return controller.timelineSharePending();
-                                        },
-                                        get children() {
-                                          return _$memo(() => !!controller.timelineSharePending())() ? language.t("session.share.action.publishing") : language.t("session.share.action.publish");
-                                        }
-                                      });
-                                    },
-                                    get children() {
-                                      var _el$27 = _tmpl$10(),
-                                        _el$28 = _el$27.firstChild;
-                                      _$insert(_el$27, _$createComponent(TextField, {
-                                        get value() {
-                                          return shareUrl() ?? "";
-                                        },
-                                        readOnly: true,
-                                        copyable: true,
-                                        copyKind: "link",
-                                        tabIndex: -1,
-                                        "class": "w-100"
-                                      }), _el$28);
-                                      _$insert(_el$28, _$createComponent(Button, {
-                                        size: "large",
-                                        variant: "secondary",
-                                        "class": "w-100 shadow-none border",
-                                        onClick: unshareSession,
-                                        get disabled() {
-                                          return controller.timelineUnsharePending();
-                                        },
-                                        get children() {
-                                          return _$memo(() => !!controller.timelineUnsharePending())() ? language.t("session.share.action.unpublishing") : language.t("session.share.action.unpublish");
-                                        }
-                                      }), null);
-                                      _$insert(_el$28, _$createComponent(Button, {
-                                        size: "large",
-                                        variant: "primary",
-                                        "class": "w-100",
-                                        onClick: viewShare,
-                                        get disabled() {
-                                          return controller.timelineUnsharePending();
-                                        },
-                                        get children() {
-                                          return language.t("session.share.action.view");
-                                        }
-                                      }), null);
-                                      return _el$27;
-                                    }
-                                  }));
-                                  return _el$22;
-                                }
-                              });
-                            }
-                          });
-                        }
-                      })];
-                    }
-                  }), null);
-                  return _el$21;
-                })()
-              }), null);
-              _$effect(_p$ => {
-                var _v$4 = {
-                    "sticky top-0 z-30 bg-[linear-gradient(to_bottom,var(--background-stronger)_48px,transparent)]": true,
-                    relative: true,
-                    "w-100": true,
-                    "pb-4": true,
-                    "pl-2 pr-3 md:pl-4 md:pr-3": true,
-                    "md:max-w-200 md:mx-auto 2xl:max-w-[1000px]": props.centered
-                  },
-                  _v$5 = working() ? "16px" : "0px",
-                  _v$6 = working() ? "8px" : "0px";
-                _p$.e = _$classList(_el$0, _v$4, _p$.e);
-                _v$5 !== _p$.t && _$setStyleProperty(_el$15, "width", _p$.t = _v$5);
-                _v$6 !== _p$.a && _$setStyleProperty(_el$15, "margin-right", _p$.a = _v$6);
-                return _p$;
-              }, {
-                e: undefined,
-                t: undefined,
-                a: undefined
-              });
-              return _el$0;
-            }
-          }), _el$17);
-          _$insert(_el$17, _$createComponent(Show, {
-            get when() {
-              return props.turnStart > 0 || props.historyMore;
-            },
-            get children() {
-              var _el$18 = _tmpl$7();
-              _$insert(_el$18, _$createComponent(Button, {
-                variant: "ghost",
-                size: "large",
-                "class": "small fw-medium opacity-50",
-                get disabled() {
-                  return props.historyLoading;
-                },
-                get onClick() {
-                  return props.onLoadEarlier;
-                },
-                get children() {
-                  return _$memo(() => !!props.historyLoading)() ? language.t("session.messages.loadingEarlier") : language.t("session.messages.loadEarlier");
-                }
-              }));
-              return _el$18;
-            }
-          }), null);
-          _$insert(_el$17, _$createComponent(For, {
-            get each() {
-              return rendered();
-            },
-            children: messageID => {
-              const active = createMemo(() => activeMessageID() === messageID);
-              const comments = createMemo(() => messageComments(sync.data?.part?.[messageID] ?? []), [], {
-                equals: (a, b) => a.length === b.length && a.every((c, i) => c.path === b[i].path && c.comment === b[i].comment && c.selection?.startLine === b[i].selection?.startLine && c.selection?.endLine === b[i].selection?.endLine)
-              });
-              const commentCount = createMemo(() => comments().length);
-              return (() => {
-                var _el$29 = _tmpl$14();
-                _$setAttribute(_el$29, "data-message-id", messageID);
-                _$insert(_el$29, _$createComponent(Show, {
-                  get when() {
-                    return commentCount() > 0;
-                  },
-                  get children() {
-                    var _el$30 = _tmpl$13(),
-                      _el$31 = _el$30.firstChild,
-                      _el$32 = _el$31.firstChild;
-                    _$insert(_el$32, _$createComponent(Index, {
-                      get each() {
-                        return comments();
-                      },
-                      children: commentAccessor => {
-                        const comment = createMemo(() => commentAccessor());
-                        return _$createComponent(Show, {
-                          get when() {
-                            return comment();
-                          },
-                          children: c => (() => {
-                            var _el$33 = _tmpl$15(),
-                              _el$34 = _el$33.firstChild,
-                              _el$35 = _el$34.firstChild,
-                              _el$36 = _el$34.nextSibling;
-                            _$insert(_el$34, _$createComponent(FileIcon, {
-                              get node() {
-                                return {
-                                  path: c().path,
-                                  type: "file"
-                                };
-                              },
-                              "class": "size-3.5 shrink-0"
-                            }), _el$35);
-                            _$insert(_el$35, () => getFilename(c().path));
-                            _$insert(_el$34, _$createComponent(Show, {
-                              get when() {
-                                return c().selection;
-                              },
-                              children: selection => (() => {
-                                var _el$37 = _tmpl$16();
-                                _$insert(_el$37, (() => {
-                                  var _c$2 = _$memo(() => selection().startLine === selection().endLine);
-                                  return () => _c$2() ? `:${selection().startLine}` : `:${selection().startLine}-${selection().endLine}`;
-                                })());
-                                return _el$37;
-                              })()
-                            }), null);
-                            _$insert(_el$36, () => c().comment);
-                            return _el$33;
-                          })()
-                        });
-                      }
-                    }));
-                    return _el$30;
-                  }
-                }), null);
-                _$insert(_el$29, _$createComponent(SessionTurn, {
-                  get sessionID() {
-                    return sessionID() ?? "";
-                  },
-                  messageID: messageID,
-                  get messages() {
-                    return sessionMessages();
-                  },
-                  get actions() {
-                    return props.actions;
-                  },
-                  get active() {
-                    return active();
-                  },
-                  get status() {
-                    return _$memo(() => !!active())() ? sessionStatus() : undefined;
-                  },
-                  get showReasoningSummaries() {
-                    return settings.general.showReasoningSummaries();
-                  },
-                  get shellToolDefaultOpen() {
-                    return settings.general.shellToolPartsExpanded();
-                  },
-                  get editToolDefaultOpen() {
-                    return settings.general.editToolPartsExpanded();
-                  },
-                  classes: {
-                    root: "min-w-0 w-100 relative",
-                    content: "d-flex flex-column justify-content-between !overflow-visible",
-                    container: "w-100 px-4 md:px-5"
-                  }
-                }), null);
-                _$effect(_p$ => {
-                  var _v$7 = props.anchor(messageID),
-                    _v$8 = {
-                      "min-w-0 w-100 max-w-full": true,
-                      "md:max-w-200 2xl:max-w-[1000px]": props.centered
-                    },
-                    _v$9 = active() ? undefined : "auto",
-                    _v$0 = active() ? undefined : "auto 500px";
-                  _v$7 !== _p$.e && _$setAttribute(_el$29, "id", _p$.e = _v$7);
-                  _p$.t = _$classList(_el$29, _v$8, _p$.t);
-                  _v$9 !== _p$.a && _$setStyleProperty(_el$29, "content-visibility", _p$.a = _v$9);
-                  _v$0 !== _p$.o && _$setStyleProperty(_el$29, "contain-intrinsic-size", _p$.o = _v$0);
-                  return _p$;
-                }, {
-                  e: undefined,
-                  t: undefined,
-                  a: undefined,
-                  o: undefined
-                });
-                return _el$29;
-              })();
-            }
-          }), null);
-          _$effect(_$p => _$classList(_el$17, {
-            "w-100": true,
-            "md:max-w-200 md:mx-auto 2xl:max-w-[1000px]": props.centered,
-            "mt-0.5": props.centered,
-            "mt-0": !props.centered
-          }, _$p));
-          return _el$9;
-        }
-      }), null);
-      _$effect(_$p => _$classList(_el$6, {
-        "opacity-100 translate-y-0 scale-100": props.scroll.overflow && props.scroll.jump && !staging.isStaging(),
-        "opacity-0 translate-y-2 scale-95 pointer-events-none": !props.scroll.overflow || !props.scroll.jump || staging.isStaging()
-      }, _$p));
-      return _el$5;
+      return buildTimeline();
     }
   });
 }
-_$delegateEvents(["click", "dblclick"]);

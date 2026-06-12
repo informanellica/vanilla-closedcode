@@ -1,8 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { insert as _solidInsert } from "solid-js/web";
 import {
+  createComponent,
   createContext,
   createEffect,
   createMemo,
@@ -17,6 +15,7 @@ import {
 import { Dialog as Kobalte } from "@kobalte/core/dialog";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { dict as en } from "@/i18n/en.js";
+import { dict as uiEn } from "@/i18n/ui/en.js";
 
 // --- helper.js ---
 export function createSimpleContext(input) {
@@ -26,7 +25,7 @@ export function createSimpleContext(input) {
       const init = input.init(props);
       const gate = input.gate ?? true;
       if (!gate) {
-        return _$createComponent(ctx.Provider, {
+        return createComponent(ctx.Provider, {
           value: init,
           get children() {
             return props.children;
@@ -39,12 +38,12 @@ export function createSimpleContext(input) {
         const ready = init.ready;
         return ready === undefined || (typeof ready === "function" ? ready() : ready);
       });
-      return _$createComponent(Show, {
+      return createComponent(Show, {
         get when() {
           return isReady();
         },
         get children() {
-          return _$createComponent(ctx.Provider, {
+          return createComponent(ctx.Provider, {
             value: init,
             get children() {
               return props.children;
@@ -90,7 +89,6 @@ export const FileComponentProvider = fileCtx.provider;
 export const useFileComponent = fileCtx.use;
 
 // --- dialog.js ---
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=dialog-stack>`);
 const DialogContext = createContext();
 function init() {
   const [active, setActive] = createSignal();
@@ -154,7 +152,7 @@ function init() {
       dispose = d;
       const [closing, setClosingSignal] = createSignal(false);
       setClosing = setClosingSignal;
-      return _$createComponent(Kobalte, {
+      return createComponent(Kobalte, {
         modal: true,
         get open() {
           return !closing();
@@ -164,12 +162,12 @@ function init() {
           close();
         },
         get children() {
-          return _$createComponent(Kobalte.Portal, {
+          return createComponent(Kobalte.Portal, {
             get children() {
-              return [_$createComponent(Kobalte.Overlay, {
+              return [createComponent(Kobalte.Overlay, {
                 "data-component": "dialog-overlay",
                 onClick: close
-              }), _$memo(() => element())];
+              }), createMemo(() => element())];
             }
           });
         }
@@ -195,13 +193,17 @@ function init() {
 }
 export function DialogProvider(props) {
   const ctx = init();
-  return _$createComponent(DialogContext.Provider, {
+  return createComponent(DialogContext.Provider, {
     value: ctx,
     get children() {
-      return [_$memo(() => props.children), (() => {
-        var _el$ = _tmpl$();
-        _$insert(_el$, () => ctx.active?.node);
-        return _el$;
+      return [createMemo(() => props.children), (() => {
+        const stack = document.createElement("div");
+        stack.setAttribute("data-component", "dialog-stack");
+        // The active dialog node is presence-gated Kobalte content (modal
+        // Portal tree torn down on close), so it must go through solid's
+        // insert() to stay live (established exception).
+        _solidInsert(stack, () => ctx.active?.node);
+        return stack;
       })()];
     }
   });
@@ -238,16 +240,21 @@ function resolveTemplate(text, params) {
     return value === undefined ? "" : String(value);
   });
 }
+// Provider-less default. vendor/ui/context/i18n.js re-exports this context, so
+// vendor components resolve here too when no I18nProvider is mounted (storybook,
+// tests) — merge the vendor ui.* dictionary so they still fall back to English
+// strings instead of raw keys.
+const fallbackDict = { ...en, ...uiEn };
 const fallback = {
   locale: () => "en",
   t: (key, params) => {
-    const value = en[key] ?? String(key);
+    const value = fallbackDict[key] ?? String(key);
     return resolveTemplate(value, params);
   }
 };
 const I18nContext = createContext(fallback);
 export function I18nProvider(props) {
-  return _$createComponent(I18nContext.Provider, {
+  return createComponent(I18nContext.Provider, {
     get value() {
       return props.value;
     },

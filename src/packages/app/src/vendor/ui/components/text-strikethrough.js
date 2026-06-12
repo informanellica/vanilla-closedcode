@@ -1,15 +1,8 @@
-import { template as _$template } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-component=text-strikethrough style=display:grid><span style="grid-area:1 / 1"></span><span aria-hidden=true style="grid-area:1 / 1;text-decoration:line-through;pointer-events:none">`);
-import { onMount } from "solid-js";
+import { createRenderEffect, onMount } from "solid-js";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
 import { createStore } from "solid-js/store";
 import { useSpring } from "./motion-spring.js";
+
 export function TextStrikethrough(props) {
   const progress = useSpring(() => props.active ? 1 : 0, () => ({
     visualDuration: props.visualDuration ?? 0.35,
@@ -51,34 +44,69 @@ export function TextStrikethrough(props) {
     if (px <= 0.5) return "none";
     return `inset(0 0 0 ${px}px)`;
   };
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.nextSibling;
-    var _ref$ = containerRef;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : containerRef = _el$;
-    var _ref$2 = baseRef;
-    typeof _ref$2 === "function" ? _$use(_ref$2, _el$2) : baseRef = _el$2;
-    _$insert(_el$2, () => props.text);
-    _$insert(_el$3, () => props.text);
-    _$effect(_p$ => {
-      var _v$ = props.class,
-        _v$2 = {
-          ...props.style
-        },
-        _v$3 = baseClip(),
-        _v$4 = overlayClip();
-      _v$ !== _p$.e && _$className(_el$, _p$.e = _v$);
-      _p$.t = _$style(_el$, _v$2, _p$.t);
-      _v$3 !== _p$.a && _$setStyleProperty(_el$2, "clip-path", _p$.a = _v$3);
-      _v$4 !== _p$.o && _$setStyleProperty(_el$3, "clip-path", _p$.o = _v$4);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined
-    });
-    return _el$;
-  })();
+
+  // Static skeleton: a grid container stacking the base text and an
+  // aria-hidden line-through overlay in the same grid cell.
+  const container = document.createElement("span");
+  container.setAttribute("data-component", "text-strikethrough");
+  container.style.cssText = "display:grid";
+  const base = document.createElement("span");
+  base.style.cssText = "grid-area:1 / 1";
+  const overlay = document.createElement("span");
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.style.cssText = "grid-area:1 / 1;text-decoration:line-through;pointer-events:none";
+  container.appendChild(base);
+  container.appendChild(overlay);
+  containerRef = container;
+  baseRef = base;
+
+  // Reactive text on both layers. props.text is plain text; render it via
+  // textContent (never innerHTML). Function/nullish/boolean values follow
+  // Solid insert() semantics for primitives.
+  createRenderEffect(() => {
+    let value = props.text;
+    while (typeof value === "function") value = value();
+    const text = value == null || typeof value === "boolean" ? "" : String(value);
+    base.textContent = text;
+    overlay.textContent = text;
+  });
+
+  // class / style / clip-path updates, mirroring the compiled render effect:
+  // class is skipped when unchanged, style objects are key-diffed against the
+  // previous object (removeProperty for dropped keys, setProperty otherwise),
+  // and clip-paths only touch the DOM when their value changes.
+  let prevClass;
+  let prevStyle = {};
+  let prevBaseClip;
+  let prevOverlayClip;
+  createRenderEffect(() => {
+    const nextClass = props.class;
+    if (nextClass !== prevClass) {
+      prevClass = nextClass;
+      if (nextClass == null) container.removeAttribute("class");
+      else container.className = nextClass;
+    }
+    const nextStyle = {
+      ...props.style
+    };
+    for (const key in prevStyle) {
+      if (nextStyle[key] == null) container.style.removeProperty(key);
+    }
+    for (const key in nextStyle) {
+      const v = nextStyle[key];
+      if (v !== prevStyle[key]) container.style.setProperty(key, v);
+    }
+    prevStyle = nextStyle;
+    const nextBaseClip = baseClip();
+    if (nextBaseClip !== prevBaseClip) {
+      prevBaseClip = nextBaseClip;
+      base.style.setProperty("clip-path", nextBaseClip);
+    }
+    const nextOverlayClip = overlayClip();
+    if (nextOverlayClip !== prevOverlayClip) {
+      prevOverlayClip = nextOverlayClip;
+      overlay.style.setProperty("clip-path", nextOverlayClip);
+    }
+  });
+  return container;
 }

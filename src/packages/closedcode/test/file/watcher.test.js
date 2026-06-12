@@ -3,7 +3,7 @@ import {  ConfigProvider, Deferred, Effect, Layer, ManagedRuntime, Option  } fro
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
 import {  $  } from "script/shell"
 import {  Bus  } from "../../src/bus/index.js"
-import {  Config  } from "@/config/config.js"
+import {  Config  } from "#config/config.js"
 import {  FileWatcher  } from "../../src/file/watcher.js"
 import {  Git  } from "../../src/git/index.js"
 import {  WithInstance  } from "../../src/project/with-instance.js"
