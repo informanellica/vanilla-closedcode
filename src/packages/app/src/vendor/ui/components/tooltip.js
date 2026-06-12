@@ -1,7 +1,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, mergeProps, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
-import { autoPosition } from "./_floating.js";
+import { autoPosition } from "./floating.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.

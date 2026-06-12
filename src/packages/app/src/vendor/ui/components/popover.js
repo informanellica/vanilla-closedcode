@@ -4,7 +4,7 @@ import { createStore } from "solid-js/store";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
-import { autoPosition } from "./_floating.js";
+import { autoPosition } from "./floating.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).

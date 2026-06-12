@@ -256,7 +256,7 @@ const DragDropProvider = (passedProps) => {
       node,
       layout,
       data,
-      _pendingCleanup: false
+      pendingCleanup: false
     };
     let transformer;
     if (!existingDraggable) {
@@ -333,12 +333,12 @@ const DragDropProvider = (passedProps) => {
     if (!untrack(() => state.draggables[id])) {
       return;
     }
-    setState("draggables", id, "_pendingCleanup", true);
+    setState("draggables", id, "pendingCleanup", true);
     queueMicrotask(() => cleanupDraggable(id));
   };
 
   const cleanupDraggable = (id) => {
-    if (state.draggables[id]?._pendingCleanup) {
+    if (state.draggables[id]?.pendingCleanup) {
       const cleanupActive = state.active.draggableId === id;
       batch(() => {
         if (cleanupActive) {
@@ -356,7 +356,7 @@ const DragDropProvider = (passedProps) => {
       node,
       layout,
       data,
-      _pendingCleanup: false
+      pendingCleanup: false
     };
     if (!existingDroppable) {
       Object.defineProperties(droppable, {
@@ -401,12 +401,12 @@ const DragDropProvider = (passedProps) => {
     if (!untrack(() => state.droppables[id])) {
       return;
     }
-    setState("droppables", id, "_pendingCleanup", true);
+    setState("droppables", id, "pendingCleanup", true);
     queueMicrotask(() => cleanupDroppable(id));
   };
 
   const cleanupDroppable = (id) => {
-    if (state.droppables[id]?._pendingCleanup) {
+    if (state.droppables[id]?.pendingCleanup) {
       const cleanupActive = state.active.droppableId === id;
       batch(() => {
         if (cleanupActive) {

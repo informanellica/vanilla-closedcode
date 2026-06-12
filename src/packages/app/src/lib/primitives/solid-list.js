@@ -115,45 +115,45 @@ const createList = (props) => {
   };
   const onKeyDown = (event) => {
     const eventKey = event.key.toLowerCase();
-    const _items = access(defaultedProps.items);
-    if (_items.length === 0) return;
-    const _itemCount = _items.length;
-    const _active = active();
-    const _activeIndex = _active !== null ? _items.indexOf(_active) : null;
+    const resolvedItems = access(defaultedProps.items);
+    if (resolvedItems.length === 0) return;
+    const itemCount = resolvedItems.length;
+    const activeValue = active();
+    const activeIndex = activeValue !== null ? resolvedItems.indexOf(activeValue) : null;
     if (nextKeys().includes(eventKey)) {
       event.preventDefault();
-      if (_activeIndex === _itemCount - 1) {
+      if (activeIndex === itemCount - 1) {
         if (access(defaultedProps.loop)) {
-          setActive(() => _items[0]);
+          setActive(() => resolvedItems[0]);
         }
       } else {
-        setActive(() => _items[_activeIndex !== null ? _activeIndex + 1 : 0]);
+        setActive(() => resolvedItems[activeIndex !== null ? activeIndex + 1 : 0]);
       }
     } else if (previousKeys().includes(eventKey)) {
       event.preventDefault();
-      if (_activeIndex === 0) {
+      if (activeIndex === 0) {
         if (access(defaultedProps.loop)) {
-          setActive(() => _items[_itemCount - 1]);
+          setActive(() => resolvedItems[itemCount - 1]);
         }
       } else {
         setActive(
-          () => _items[_activeIndex !== null ? _activeIndex - 1 : _itemCount - 1],
+          () => resolvedItems[activeIndex !== null ? activeIndex - 1 : itemCount - 1],
         );
       }
     } else if (eventKey === "home") {
       event.preventDefault();
-      setActive(() => _items[0]);
+      setActive(() => resolvedItems[0]);
     } else if (eventKey === "end") {
       event.preventDefault();
-      setActive(() => _items[_itemCount - 1]);
-    } else if (access(defaultedProps.handleTab) && _activeIndex !== null) {
-      if (eventKey === "tab" && !event.shiftKey && _activeIndex < _itemCount - 1) {
+      setActive(() => resolvedItems[itemCount - 1]);
+    } else if (access(defaultedProps.handleTab) && activeIndex !== null) {
+      if (eventKey === "tab" && !event.shiftKey && activeIndex < itemCount - 1) {
         event.preventDefault();
-        setActive(() => _items[_activeIndex + 1]);
+        setActive(() => resolvedItems[activeIndex + 1]);
       }
-      if (eventKey === "tab" && event.shiftKey && _activeIndex > 0) {
+      if (eventKey === "tab" && event.shiftKey && activeIndex > 0) {
         event.preventDefault();
-        setActive(() => _items[_activeIndex - 1]);
+        setActive(() => resolvedItems[activeIndex - 1]);
       }
     }
   };

@@ -22,7 +22,7 @@ import { TextField } from "@/bs/text-field.js";
 import { showToast } from "@/lib/toast.js";
 import { Binary } from "core/util/binary";
 import { getFilename } from "core/util/path";
-import { Popover as KobaltePopover } from "@/vendor/ui/components/popover.js";
+import { Popover as VanillaPopover } from "@/vendor/ui/components/popover.js";
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
 import { useDialog } from "@/lib/dialog.js";
@@ -642,7 +642,7 @@ export function MessageTimeline(props) {
               }
             })];
           }
-        }), createComponent(KobaltePopover, {
+        }), createComponent(VanillaPopover, {
           get open() {
             return share.open;
           },

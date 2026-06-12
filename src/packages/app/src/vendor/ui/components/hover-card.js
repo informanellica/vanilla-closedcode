@@ -1,7 +1,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
-import { autoPosition } from "./_floating.js";
+import { autoPosition } from "./floating.js";
 
 // Apply a Solid-style classList ({ "a b": true, c: false }) onto an element.
 function applyClassList(el, classList) {

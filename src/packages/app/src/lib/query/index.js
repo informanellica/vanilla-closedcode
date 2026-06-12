@@ -791,7 +791,7 @@ class QueryObserver extends Subscribable {
     const state = query.state;
     let newState = { ...state };
 
-    if (options._optimisticResults) {
+    if (options.optimisticResults) {
       const mounted = this.hasListeners();
       const fetchOnMount = !mounted && shouldFetchOnMount(query, options);
       const fetchOptionally =
@@ -1116,11 +1116,11 @@ export class QueryClient {
   }
 
   defaultQueryOptions(options) {
-    if (options?._defaulted) return options;
+    if (options?.defaultedOpts) return options;
     const defaulted = {
       ...this.#defaultOptions.queries,
       ...options,
-      _defaulted: true,
+      defaultedOpts: true,
     };
     if (!defaulted.queryHash) {
       defaulted.queryHash = hashQueryKeyByOptions(defaulted.queryKey, defaulted);
@@ -1132,8 +1132,8 @@ export class QueryClient {
   }
 
   defaultMutationOptions(options) {
-    if (options?._defaulted) return options;
-    return { ...this.#defaultOptions.mutations, ...options, _defaulted: true };
+    if (options?.defaultedOpts) return options;
+    return { ...this.#defaultOptions.mutations, ...options, defaultedOpts: true };
   }
 
   getQueryData(queryKey) {
@@ -1267,7 +1267,7 @@ function createBaseQuery(optionsAccessor, queryClient) {
 
   const defaultedOptions = () => {
     const opts = client.defaultQueryOptions(optionsAccessor());
-    opts._optimisticResults = "optimistic";
+    opts.optimisticResults = "optimistic";
     return opts;
   };
 
@@ -1302,11 +1302,11 @@ function createBaseQuery(optionsAccessor, queryClient) {
   return new Proxy(
     {},
     {
-      get(_target, prop) {
+      get(qTarget, prop) {
         if (prop === "refetch") return observer.refetch.bind(observer);
         return state[prop];
       },
-      has(_target, prop) {
+      has(qTarget, prop) {
         return prop in state || prop === "refetch";
       },
     },
@@ -1326,7 +1326,7 @@ export function useQueries(queriesOptionsAccessor, queryClient) {
   const defaultedQueries = createMemo(() =>
     queriesOptionsAccessor().queries.map((options) => {
       const opts = client.defaultQueryOptions(options);
-      opts._optimisticResults = "optimistic";
+      opts.optimisticResults = "optimistic";
       return opts;
     }),
   );
@@ -1381,11 +1381,11 @@ export function useQueries(queriesOptionsAccessor, queryClient) {
       new Proxy(
         {},
         {
-          get(_target, prop) {
+          get(qTarget, prop) {
             if (prop === "refetch") return observer.refetch.bind(observer);
             return state[index]?.[prop];
           },
-          has(_target, prop) {
+          has(qTarget, prop) {
             return (state[index] && prop in state[index]) || prop === "refetch";
           },
         },
