@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, For, Show } from "solid-js";
 import { insert as _solidInsert } from "solid-js/web";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@/lib/dnd/index.js";
 import { ConstrainDragXAxis } from "@/utils/solid-dnd.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip, TooltipKeybind } from "@/bs/tooltip.js";

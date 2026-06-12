@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createSortable } from "@thisbeyond/solid-dnd";
+import { createSortable } from "@/lib/dnd/index.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tabs } from "@/bs/tabs.js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";

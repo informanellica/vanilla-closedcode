@@ -9,7 +9,7 @@ import { insert as _solidInsert } from "solid-js/web";
 import { useNavigate, useParams } from "@/lib/router/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createSortable } from "@thisbeyond/solid-dnd";
+import { createSortable } from "@/lib/dnd/index.js";
 import { createMediaQuery } from "@/lib/primitives/media.js";
 import { base64Encode } from "core/util/encode";
 import { getFilename } from "core/util/path";

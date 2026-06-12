@@ -6,7 +6,7 @@ import { Tabs } from "@/bs/tabs.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@/lib/dnd/index.js";
 import { ConstrainDragYAxis, getDraggableId } from "@/utils/solid-dnd.js";
 import { SortableTerminalTab } from "@/components/session/index.js";
 import { Terminal } from "@/components/terminal.js";

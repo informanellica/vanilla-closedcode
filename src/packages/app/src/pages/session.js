@@ -49,7 +49,7 @@ import { useSessionCommands } from "@/pages/session/use-session-commands.js";
 import { useSessionHashScroll } from "@/pages/session/use-session-hash-scroll.js";
 import { diffs as list } from "@/utils/diffs.js";
 import { Persist, persisted } from "@/utils/persist.js";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@/lib/dnd/index.js";
 import { ConstrainDragYAxis, getDraggableId } from "@/utils/solid-dnd.js";
 import { createFileTabListSync } from "@/pages/session/file-tab-scroll.js";
 import { useCommand } from "@/context/command.js";

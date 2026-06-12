@@ -21,7 +21,7 @@ import { getFilename } from "core/util/path";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
 import { createStore, produce } from "solid-js/store";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@/lib/dnd/index.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { showToast, Toast, toaster } from "@/lib/toast.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";

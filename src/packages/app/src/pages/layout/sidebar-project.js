@@ -12,7 +12,7 @@ import { Button } from "@/bs/button.js";
 import { ContextMenu } from "@/vendor/ui/components/context-menu.js";
 import { HoverCard } from "@/vendor/ui/components/hover-card.js";
 import { Icon } from "@/bs/icon.js";
-import { createSortable } from "@thisbeyond/solid-dnd";
+import { createSortable } from "@/lib/dnd/index.js";
 import { useLayout } from "@/context/layout.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLanguage } from "@/context/language.js";
