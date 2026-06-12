@@ -89,7 +89,27 @@ T2  [IN PROGRESS] thin first-party TUI layer on terminal-kit. **Foundation DONE*
     focus + typeahead), focus.js (createKeyRouter LAYER STACK so Escape closes
     only the top dialog + createFocusRing Tab cycling), dialog.js (centerBox).
     → T2 toolkit COMPLETE.
-T3  [TODO — the bulk] Re-architect the TUI app onto the T2 toolkit. The 112
+T3  [IN PROGRESS — the bulk] Re-architect the TUI app onto the T2 toolkit.
+    **Stage 1 (app shell) DONE** — packages/.../tui/vanilla/, 26 node tests green
+    (headless: render the shell model's draw() into a detached ScreenBuffer, drive
+    it with dispatch(), exactly like the runtime tests):
+    - shell.js: createShell() = the immediate-mode replacement for app.js's
+      @opentui render model. State is signals (route home<->session, message
+      timeline, prompt input, dialog stack); the view is ONE rootDraw(region)
+      = column(body / prompt / status) + a centered dialog overlay; keys route
+      through the T2 layer-stack key router (base layer = prompt + global hotkeys;
+      a dialog pushes a capturing layer, Escape closes only the top). A command
+      palette (createSelectList in a centerBox) demonstrates the dialog family.
+      mountShell() wires the model into createApp + onKey.
+    - logo.js: static render of the cli/logo.js wordmark (shadow markers collapsed);
+      the animated shimmer field stays a later (status/logo/misc) stage.
+    - theme.js: stand-in palette mapping the theme TOKENS the shell uses to
+      terminal-kit attrs, until the real ThemeProvider is wired in.
+    Remaining T3 stages onto this shell: (2) the real prompt+autocomplete and the
+    message timeline (replace the stage-1 placeholders); (3) the dialog families
+    (most reduce to createSelectList/centerBox); (4) status/logo/misc + the
+    @opentui renderer features the live app.js uses (selection, console, terminal
+    title, debug overlay). The 112
     components (e.g. DialogStatus = 380 lines) are compiled Solid-JSX over
     @opentui's retained Renderable tree with reactive logic (createMemo/For/
     Show/Switch) + context (useTheme/useDialog/useSync). T2 is IMMEDIATE-MODE
