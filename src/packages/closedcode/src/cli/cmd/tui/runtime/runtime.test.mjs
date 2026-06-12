@@ -107,5 +107,94 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   eq(rowText(buf, 0, 0, 8), "b", "reactive final value");
 }
 
+// 7. text input: editing + CJK cursor + horizontal scroll
+{
+  const { createTextInput } = await import("./input.js");
+  const ch = c => ({ isCharacter: true });
+  const inp = createTextInput("");
+  inp.handleKey("あ", ch()); inp.handleKey("い", ch()); inp.handleKey("X", ch());
+  eq(inp.value(), "あいX", "input insert (CJK + ascii)");
+  eq(inp.cursor(), 3, "input cursor after inserts (code points)");
+  inp.handleKey("LEFT"); inp.handleKey("BACKSPACE"); // delete 'い'
+  eq(inp.value(), "あX", "input backspace at cursor deletes one code point");
+  inp.handleKey("HOME"); inp.handleKey("Z", ch());
+  eq(inp.value(), "ZあX", "input HOME then insert at start");
+  // draw + cursor column (focused): cursor after "Zあ" = 1 + 2 = 3 columns
+  const buf = new tk.ScreenBuffer({ width: 10, height: 1 });
+  let cur = null;
+  inp.setCursor(2); // after "Zあ"
+  inp.draw(makeRegion(buf, 0, 0, 10, 1), { focused: true, ctx: { focusCursor: (x, y) => (cur = [x, y]) } });
+  eq(cur, [3, 0], "input focusCursor at display column (Z=1 + あ=2)");
+}
+
+// 8. select list: roving focus, select, typeahead
+{
+  const { createSelectList } = await import("./list.js");
+  let picked = null;
+  let clock = 0;
+  const list = createSelectList(["Apple", "Banana", "Cherry", "Avocado"], { onSelect: (it, i) => (picked = [it, i]), now: () => clock });
+  list.handleKey("DOWN"); list.handleKey("DOWN");
+  eq(list.active(), 2, "list DOWN x2 -> index 2");
+  list.handleKey("END");
+  eq(list.active(), 3, "list END -> last");
+  list.handleKey("ENTER");
+  eq(picked, ["Avocado", 3], "list ENTER selects active");
+  list.setActive(0);
+  list.handleKey("b", { isCharacter: true }); // typeahead 'b' -> Banana
+  eq(list.active(), 1, "list typeahead 'b' -> Banana");
+  clock = 2000; // typeahead window expired
+  list.handleKey("c", { isCharacter: true }); // 'c' -> Cherry
+  eq(list.active(), 2, "list typeahead 'c' (new) -> Cherry");
+}
+
+// 9. key router layer stack: top layer captures, Escape pops only the top
+{
+  const { createKeyRouter } = await import("./focus.js");
+  const router = createKeyRouter();
+  const seen = [];
+  const base = { handleKey: n => { seen.push("base:" + n); return true; } };
+  router.pushLayer(base);
+  router.dispatch("a");
+  eq(seen, ["base:a"], "router routes to base layer");
+  let dialogClosed = false;
+  const remove = router.pushLayer({ handleKey: n => { seen.push("dlg:" + n); return true; }, onEscape: () => { dialogClosed = true; } });
+  router.dispatch("b");
+  eq(seen[seen.length - 1], "dlg:b", "top layer captures keys");
+  router.dispatch("ESCAPE");
+  eq(dialogClosed, true, "Escape hits TOP layer onEscape only");
+  remove();
+  router.dispatch("c");
+  eq(seen[seen.length - 1], "base:c", "after layer removed, base receives keys again");
+}
+
+// 10. focus ring: Tab cycles, routes to focused widget
+{
+  const { createFocusRing } = await import("./focus.js");
+  const log = [];
+  const a = { handleKey: n => { log.push("a:" + n); return true; } };
+  const b = { handleKey: n => { log.push("b:" + n); return true; } };
+  const ring = createFocusRing([a, b]);
+  ring.handleKey("x");
+  eq(log[log.length - 1], "a:x", "focus ring routes to first widget");
+  ring.handleKey("TAB");
+  ring.handleKey("y");
+  eq(log[log.length - 1], "b:y", "Tab moves focus to second widget");
+  ring.handleKey("TAB", { shift: true });
+  ring.handleKey("z");
+  eq(log[log.length - 1], "a:z", "Shift-Tab moves focus back");
+}
+
+// 11. centerBox: centered overlay returns inner region
+{
+  const { centerBox } = await import("./dialog.js");
+  const buf = new tk.ScreenBuffer({ width: 20, height: 10 });
+  buf.fill({ char: " " });
+  const inner = centerBox(makeRegion(buf, 0, 0, 20, 10), 10, 4, { title: "Hi" });
+  // outer box centered: x=(20-10)/2=5, y=(10-4)/2=3; corner at (5,3)
+  eq(buf.get({ x: 5, y: 3 }).char, "╭", "centerBox centered corner");
+  eq(inner.width, 8, "centerBox inner width (10-2)");
+  eq(inner.x, 6, "centerBox inner x offset");
+}
+
 console.log(`tui runtime tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
