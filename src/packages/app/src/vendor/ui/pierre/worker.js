@@ -1,7 +1,7 @@
 import { WorkerPoolManager } from "@pierre/diffs/worker";
 // Build-less: the module worker is served directly from node_modules via the
-// oc:// protocol, which rewrites the worker's own bare imports (shiki/core etc.)
-// to oc:// /node_modules URLs that the worker fetches over the same protocol.
+// vcc:// protocol, which rewrites the worker's own bare imports (shiki/core etc.)
+// to vcc:// /node_modules URLs that the worker fetches over the same protocol.
 const ShikiWorkerUrl = "/node_modules/@pierre/diffs/dist/worker/worker.js";
 export function workerFactory() {
   return new Worker(ShikiWorkerUrl, {

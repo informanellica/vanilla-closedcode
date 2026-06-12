@@ -1,7 +1,7 @@
 // First-party reimplementation of the subset of @solidjs/router used by this
 // app. Behavior is reproduced faithfully from @solidjs/router 0.15.x's default
 // (browser History-based) integration: window.history pushState/replaceState +
-// popstate, oc://-scheme URL normalization, nested + optional (`:id?`) route
+// popstate, vcc://-scheme URL normalization, nested + optional (`:id?`) route
 // matching, relative href resolution, and live (reactive) params/location. It
 // also provides a memory-history integration (createMemoryHistory/MemoryRouter)
 // ported from the same release.
@@ -674,7 +674,7 @@ function scrollToHash(hash, fallbackTop) {
 function createBrowserSignal() {
   // Read the current browser location into a { value, state } source. The
   // pathname is normalized to a single leading slash and the search/hash are
-  // appended, so oc://host/<dir>/session/<id>?q#h yields "/<dir>/session/<id>?q#h".
+  // appended, so vcc://host/<dir>/session/<id>?q#h yields "/<dir>/session/<id>?q#h".
   const getSource = () => {
     const url =
       window.location.pathname.replace(/^\/+/, "/") + window.location.search;
@@ -728,7 +728,7 @@ function Router(props) {
 // In-memory history stack. Direct port of @solidjs/router 0.15.x's
 // createMemoryHistory: an `entries` array + `index` cursor, with
 // get/set/back/forward/go/listen. Used by environments without a real browser
-// location (e.g. the desktop renderer mounted from oc://renderer/index.html,
+// location (e.g. the desktop renderer mounted from vcc://renderer/index.html,
 // whose pathname would otherwise mismatch the app's `/` and `/:dir` routes).
 // Starts at "/" so the initial render matches the root route.
 function createMemoryHistory() {

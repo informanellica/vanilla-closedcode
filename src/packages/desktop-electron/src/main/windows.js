@@ -15,7 +15,7 @@ const root = dirname(fileURLToPath(import.meta.url));
 // (main in out/main), "../renderer" already resolves to out/renderer.
 const fromSrc = root.replace(/\\/g, "/").endsWith("/src/main");
 const rendererRoot = fromSrc ? join(root, "../../out/renderer") : join(root, "../renderer");
-const rendererProtocol = "oc";
+const rendererProtocol = "vcc";
 const rendererHost = "renderer";
 protocol.registerSchemesAsPrivileged([{
   scheme: rendererProtocol,
@@ -143,11 +143,11 @@ export function createLoadingWindow() {
   loadWindow(win, "loading.html");
   return win;
 }
-// ---- build-less renderer: import-rewriting oc:// resolver ------------------
+// ---- build-less renderer: import-rewriting vcc:// resolver -----------------
 // When main runs from src, the renderer loads as native ESM (no esbuild bundle).
 // Serve packages/app/src (/src/), src/renderer (/renderer/) and node_modules
 // (/node_modules/), rewriting bare import specifiers in served .js to resolved
-// oc:// URLs so deep transitive imports (and module workers) resolve without an
+// vcc:// URLs so deep transitive imports (and module workers) resolve without an
 // exhaustive import map.
 //
 // Packaged mode (app.isPackaged): source trees are copied into the asar by
@@ -297,7 +297,7 @@ async function buildImportMap() {
     if (url) imports[spec] = url;
     // Unresolved specifiers (test-only/storybook imports collected from files
     // the app never loads) are skipped — the map only needs runtime modules.
-    else process.stderr.write(`[oc-importmap] skip "${spec}" (unresolved)\n`);
+    else process.stderr.write(`[vcc-importmap] skip "${spec}" (unresolved)\n`);
   }
   // Stage R4 (solid-free reactivity) — NOW THE PERMANENT DEFAULT: re-point
   // first-party solid-js / solid-js/web / solid-js/store at our self-written
@@ -314,7 +314,7 @@ async function buildImportMap() {
     const storeUrl = toRouteUrl(resolveFile(join(APP_SRC, "lib/store.js")));
     if (coreUrl) { imports["solid-js"] = coreUrl; imports["solid-js/web"] = coreUrl; }
     if (storeUrl) imports["solid-js/store"] = storeUrl;
-    process.stderr.write(`[oc-importmap] SOLID-FREE: solid-js->${coreUrl} store->${storeUrl}\n`);
+    process.stderr.write(`[vcc-importmap] SOLID-FREE: solid-js->${coreUrl} store->${storeUrl}\n`);
   }
   importMapJson = JSON.stringify({ imports });
   return importMapJson;
@@ -393,8 +393,8 @@ async function rewriteModule(code, diskPath) {
       const abs = resolveBare(spec, fromDir);
       const file = abs ? resolveFile(abs) : null;
       url = file ? toRouteUrl(file) : null;
-      if (!abs) process.stderr.write(`[oc-resolve] MISS "${spec}" from ${diskPath}\n`);
-      else if (!url) process.stderr.write(`[oc-resolve] OUTSIDE "${spec}" -> ${abs}\n`);
+      if (!abs) process.stderr.write(`[vcc-resolve] MISS "${spec}" from ${diskPath}\n`);
+      else if (!url) process.stderr.write(`[vcc-resolve] OUTSIDE "${spec}" -> ${abs}\n`);
     }
     if (!url) continue;
     // Asset module: mark with ?m so the protocol serves `export default "<url>"`.
@@ -451,7 +451,7 @@ export function registerRendererProtocol() {
     }
     // Only ES-module routes get import-rewriting/CJS-wrapping. The static route
     // (out/renderer) serves classic <script> assets (CodeMirror, vanilla-ide.js,
-    // bootstrap, oc-theme-preload) VERBATIM — they are not modules.
+    // bootstrap, vcc-theme-preload) VERBATIM — they are not modules.
     const moduleRoute = /^\/(@fs|src|renderer|node_modules)\//.test(pathname);
     // CSS imported as a JS module (`import "foo.css"`) — return an empty module.
     // The actual CSS is loaded via <link> tags; the JS import is a Vite leftover.
@@ -474,7 +474,7 @@ export function registerRendererProtocol() {
         const out = rewrite ? await rewriteModule(code, disk) : code;
         return new Response(out, { headers: { "content-type": "text/javascript" } });
       } catch (e) {
-        process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
+        process.stderr.write(`[vcc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
         return new Response("Not found", { status: 404 });
       }
     }
@@ -489,16 +489,16 @@ export function registerRendererProtocol() {
           : `${tag}\n${html}`;
         return new Response(html, { headers: { "content-type": "text/html" } });
       } catch (e) {
-        process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
+        process.stderr.write(`[vcc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
         return new Response("Not found", { status: 404 });
       }
     }
-    if (!MIME[ext]) process.stderr.write(`[oc-type] unknown ext for ${pathname}\n`);
+    if (!MIME[ext]) process.stderr.write(`[vcc-type] unknown ext for ${pathname}\n`);
     try {
       const buf = await readFile(disk);
       return new Response(buf, { headers: { "content-type": MIME[ext] || "application/octet-stream" } });
     } catch (e) {
-      process.stderr.write(`[oc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
+      process.stderr.write(`[vcc-404] ${pathname} -> ${disk} :: ${e.message}\n`);
       return new Response("Not found", { status: 404 });
     }
   });

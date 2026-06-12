@@ -1,7 +1,7 @@
 let files;
 let loads;
 // Build-less replacement for the former Vite `import.meta.glob(...)`.
-// The renderer is served via the oc:// protocol; the .aac assets are copied
+// The renderer is served via the vcc:// protocol; the .aac assets are copied
 // (by build.js) from packages/ui/src/assets/audio into out/renderer/assets/audio,
 // and reachable at "./assets/audio/<name>.aac" relative to the renderer HTML.
 // Shape matches Vite's glob with { import: "default" }: a map of

@@ -160,7 +160,7 @@ async function launchDesktopWithConfig(config) {
   return { browser, child, root, configDir };
 }
 
-// Resolve the renderer window. The window first opens on oc://renderer/loading.html
+// Resolve the renderer window. The window first opens on vcc://renderer/loading.html
 // and only later navigates to index.html, so we cannot just grab a page whose URL
 // already matches — we must wait for that navigation. We poll for any renderer
 // page (loading.html or index.html) and then wait, on that page object, for the
@@ -171,11 +171,11 @@ async function rendererPage(browser) {
   const deadline = Date.now() + 150_000;
   while (Date.now() < deadline) {
     const pages = browser.contexts().flatMap((context) => context.pages());
-    const renderer = pages.find((page) => page.url().startsWith("oc://renderer/"));
+    const renderer = pages.find((page) => page.url().startsWith("vcc://renderer/"));
     if (renderer) {
       try {
-        if (!renderer.url().startsWith("oc://renderer/index.html")) {
-          await renderer.waitForURL("oc://renderer/index.html**", {
+        if (!renderer.url().startsWith("vcc://renderer/index.html")) {
+          await renderer.waitForURL("vcc://renderer/index.html**", {
             timeout: Math.max(1_000, deadline - Date.now()),
           });
         }
@@ -193,7 +193,7 @@ async function rendererPage(browser) {
 }
 
 // Reload the renderer and wait for it to settle back on index.html. A bare
-// page.reload() can hang on the custom oc:// protocol when the window bounces
+// page.reload() can hang on the custom vcc:// protocol when the window bounces
 // through loading.html, so we drive the reload ourselves and then re-confirm the
 // renderer landed on index.html with the SPA mounted (a non-empty <body>). This
 // keeps reload-based tests deterministic, the same way rendererPage() does for
@@ -201,8 +201,8 @@ async function rendererPage(browser) {
 async function reloadRenderer(page) {
   await page.reload({ waitUntil: "domcontentloaded" }).catch(() => undefined);
   const deadline = Date.now() + 60_000;
-  if (!page.url().startsWith("oc://renderer/index.html")) {
-    await page.waitForURL("oc://renderer/index.html**", {
+  if (!page.url().startsWith("vcc://renderer/index.html")) {
+    await page.waitForURL("vcc://renderer/index.html**", {
       timeout: Math.max(1_000, deadline - Date.now()),
     });
   }
@@ -241,7 +241,7 @@ test.describe("desktop provider settings", () => {
 
     const page = await rendererPage(browser);
     const providerResponse = page.waitForResponse(
-      // Sidecar API only: module files served over oc:// (e.g.
+      // Sidecar API only: module files served over vcc:// (e.g.
       // /src/controllers/providers.js) also contain "/provider" and would
       // otherwise win the race and explode response.json().
       (response) => response.url().startsWith("http") && response.url().includes("/provider") && response.status() === 200,

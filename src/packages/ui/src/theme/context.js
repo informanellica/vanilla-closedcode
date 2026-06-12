@@ -123,7 +123,7 @@ function applyThemeCss(theme, themeId, mode) {
   --text-mix-blend-mode: ${isDark ? "plus-lighter" : "multiply"};
   ${css}
 }`;
-  document.getElementById("oc-theme-preload")?.remove();
+  document.getElementById("vcc-theme-preload")?.remove();
   ensureThemeStyleElement().textContent = fullCss;
   document.documentElement.dataset.theme = themeId;
   document.documentElement.dataset.colorScheme = mode;

@@ -6,7 +6,7 @@ import { Persist, persisted } from "@/utils/persist.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
 function cookie(locale) {
-  return `oc_locale=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
+  return `vcc_locale=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
 }
 const LOCALES = ["en", "zh", "zht", "ko", "de", "es", "fr", "da", "ja", "pl", "ru", "bs", "ar", "no", "br", "th", "tr"];
 const INTL = {
