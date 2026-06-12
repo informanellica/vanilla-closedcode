@@ -4,7 +4,7 @@ import { IconButton } from "@/bs/icon-button.js";
 import { Spinner } from "@/bs/spinner.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { getFilename } from "core/util/path";
-import { A, useParams } from "@solidjs/router";
+import { A, useParams } from "@/lib/router/index.js";
 import { createComponent, createMemo, createRenderEffect, mergeProps, Show } from "solid-js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLanguage } from "@/context/language.js";

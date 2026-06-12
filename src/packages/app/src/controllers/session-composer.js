@@ -1,5 +1,5 @@
 import { createMemo, createResource } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "@/lib/router/index.js";
 import { useQueries } from "@tanstack/solid-query";
 import { showToast } from "@/lib/toast.js";
 import { useGlobalSync } from "@/context/global-sync.js";

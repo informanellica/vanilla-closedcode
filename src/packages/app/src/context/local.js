@@ -1,6 +1,6 @@
 import { createSimpleContext } from "@/lib/context.js";
 import { base64Encode } from "core/util/encode";
-import { useParams } from "@solidjs/router";
+import { useParams } from "@/lib/router/index.js";
 import { batch, createEffect, createMemo } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useModels } from "@/context/models.js";

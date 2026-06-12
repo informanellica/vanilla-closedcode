@@ -12,7 +12,7 @@ import { Font } from "@/vendor/ui/components/font.js";
 import { Splash } from "@/vendor/ui/components/logo.js";
 import { ThemeProvider } from "@/lib/theme.js";
 import { MetaProvider } from "@/lib/primitives/meta.js";
-import { Navigate, Route, Router } from "@solidjs/router";
+import { Navigate, Route, Router } from "@/lib/router/index.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { Effect } from "effect";
 import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";

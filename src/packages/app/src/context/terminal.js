@@ -1,7 +1,7 @@
 import { createStore, produce } from "solid-js/store";
 import { createSimpleContext } from "@/lib/context.js";
 import { batch, createEffect, createMemo, createRoot, on, onCleanup } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "@/lib/router/index.js";
 import { useSDK } from "./sdk.js";
 import { defaultTitle, titleNumber } from "./terminal-title.js";
 import { Persist, persisted, removePersisted } from "@/utils/persist.js";

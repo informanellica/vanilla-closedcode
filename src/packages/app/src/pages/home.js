@@ -2,7 +2,7 @@ import { createMemo, createEffect, createComponent } from "solid-js";
 import { Button } from "@/bs/button.js";
 import { Logo } from "@/vendor/ui/components/logo.js";
 import { useLayout } from "@/context/layout.js";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "@/lib/router/index.js";
 import { base64Encode } from "core/util/encode";
 import { usePlatform } from "@/context/platform.js";
 import { DateTime } from "luxon";

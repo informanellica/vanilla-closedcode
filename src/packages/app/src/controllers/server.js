@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/solid-query";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "@/lib/router/index.js";
 import { createMemo } from "solid-js";
 import { useDialog } from "@/lib/dialog.js";
 import { showToast } from "@/lib/toast.js";

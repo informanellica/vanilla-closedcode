@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "@/lib/router/index.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
 import { PromptInput } from "@/components/prompt-input.js";
 import { useLanguage } from "@/context/language.js";

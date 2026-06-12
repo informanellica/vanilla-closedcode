@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, createRenderEffect, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "@/lib/router/index.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Icon } from "@/bs/icon.js";
 import { Button } from "@/bs/button.js";

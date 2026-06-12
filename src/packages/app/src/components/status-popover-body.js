@@ -4,7 +4,7 @@ import { Icon } from "@/bs/icon.js";
 import { Switch } from "@/bs/switch.js";
 import { Tabs } from "@/bs/tabs.js";
 import { showToast } from "@/lib/toast.js";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "@/lib/router/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup, untrack } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { ServerHealthIndicator, ServerRow } from "@/components/server/server-row.js";

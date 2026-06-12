@@ -215,6 +215,23 @@ export function untrack(fn) {
   try { return fn(); } finally { Listener = prev; }
 }
 
+let uniqueId = 0;
+// Stable per-call unique string id (solid uses this for SSR-stable ids; here it
+// only needs to be unique within the document).
+export function createUniqueId() {
+  return `cl-${++uniqueId}`;
+}
+
+// solid's startTransition defers work into a concurrent transition. We have no
+// concurrent scheduler, so the work runs synchronously and the returned promise
+// resolves once it (and any microtasks it queued) settle. Callers that only use
+// it to drive an "is transitioning" flag therefore observe an instantaneous
+// transition — acceptable for our single consumer (router useIsRouting).
+export function startTransition(fn) {
+  const r = fn ? fn() : undefined;
+  return Promise.resolve(r);
+}
+
 export function batch(fn) {
   if (BatchQueue) return fn();
   BatchQueue = new Set();

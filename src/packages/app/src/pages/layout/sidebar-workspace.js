@@ -6,7 +6,7 @@
 // instead of detaching live rows (established exception, same as
 // sidebar-project.js).
 import { insert as _solidInsert } from "solid-js/web";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@/lib/router/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSortable } from "@thisbeyond/solid-dnd";

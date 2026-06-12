@@ -1,5 +1,5 @@
 import { createComponent } from "solid-js";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "@/lib/router/index.js";
 import { useCommand } from "@/context/command.js";
 import { env } from "@/lib/env.js";
 import { useDialog } from "@/lib/dialog.js";

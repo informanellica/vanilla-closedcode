@@ -1,4 +1,4 @@
-import { useIsRouting, useLocation } from "@solidjs/router";
+import { useIsRouting, useLocation } from "@/lib/router/index.js";
 import { batch, createComponent, createEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@/lib/primitives/event-listener.js";

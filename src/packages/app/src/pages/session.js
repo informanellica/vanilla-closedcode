@@ -18,7 +18,7 @@ import { createAutoScroll } from "@/lib/hooks.js";
 import { previewSelectedLines } from "@/vendor/ui/pierre/selection-bridge.js";
 import { Button } from "@/bs/button.js";
 import { checksum } from "core/util/encode";
-import { useSearchParams, useNavigate } from "@solidjs/router";
+import { useSearchParams, useNavigate } from "@/lib/router/index.js";
 import { base64Encode } from "core/util/encode";
 import { sortedRootSessions } from "@/pages/layout/helpers.js";
 import { SessionTabBar } from "@/pages/session/session-tab-bar.js";

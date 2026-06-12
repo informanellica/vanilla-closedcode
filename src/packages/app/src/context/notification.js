@@ -1,6 +1,6 @@
 import { createStore, reconcile } from "solid-js/store";
 import { batch, createEffect, createMemo, onCleanup } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "@/lib/router/index.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { useGlobalSDK } from "./global-sdk.js";
 import { useGlobalSync } from "./global-sync.js";
