@@ -16,7 +16,7 @@ export const GenerateCommand = {
         if (!operation?.operationId) continue;
         operation["x-codeSamples"] = [{
           lang: "js",
-          source: [`import { createOpencodeClient } from "sdk`, ``, `const client = createOpencodeClient()`, `await client.${operation.operationId}({`, `  ...`, `})`].join("\n")
+          source: [`import { createClosedcodeClient } from "sdk`, ``, `const client = createClosedcodeClient()`, `await client.${operation.operationId}({`, `  ...`, `})`].join("\n")
         }];
       }
     }

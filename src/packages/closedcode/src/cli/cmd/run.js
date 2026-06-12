@@ -7,7 +7,7 @@ import { effectCmd } from "../effect-cmd.js";
 import { Flag } from "core/flag/flag";
 import { EOL } from "os";
 import { Filesystem } from "#util/filesystem.js";
-import { createOpencodeClient } from "sdk/v2";
+import { createClosedcodeClient } from "sdk/v2";
 import { Server } from "../../server/server.js";
 import { Provider } from "#provider/provider.js";
 import { Agent } from "../../agent/agent.js";
@@ -543,7 +543,7 @@ export const RunCommand = effectCmd({
             Authorization: auth
           };
         })();
-        const sdk = createOpencodeClient({
+        const sdk = createClosedcodeClient({
           baseUrl: args.attach,
           directory,
           headers
@@ -554,7 +554,7 @@ export const RunCommand = effectCmd({
         const request = new Request(input, init);
         return Server.Default().app.fetch(request);
       };
-      const sdk = createOpencodeClient({
+      const sdk = createClosedcodeClient({
         baseUrl: "http://closedcode.internal",
         fetch: fetchFn
       });

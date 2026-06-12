@@ -1,4 +1,4 @@
-import { createOpencodeClient } from "sdk/v2/client";
+import { createClosedcodeClient } from "sdk/v2/client";
 export function createSdkForServer({
   server,
   ...config
@@ -9,7 +9,7 @@ export function createSdkForServer({
       Authorization: `Basic ${btoa(`${server.username ?? "closedcode"}:${server.password}`)}`
     };
   })();
-  return createOpencodeClient({
+  return createClosedcodeClient({
     ...config,
     headers: {
       ...(config.headers instanceof Headers ? Object.fromEntries(config.headers.entries()) : config.headers),

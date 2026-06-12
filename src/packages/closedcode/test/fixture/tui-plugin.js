@@ -1,4 +1,4 @@
-import {  createOpencodeClient  } from "sdk/v2"
+import {  createClosedcodeClient  } from "sdk/v2"
 import {  RGBA  } from "@opentui/core"
 import {  createPluginKeybind  } from "../../src/cli/cmd/tui/context/plugin-keybinds.js"
 function themeCurrent() {
@@ -72,7 +72,7 @@ function createTuiPluginApi(opts = {}) {
   const kv = {};
   const count = opts.count;
   const ctrl = new AbortController();
-  const own = createOpencodeClient({
+  const own = createClosedcodeClient({
     baseUrl: "http://localhost:4096"
   });
   const fallback = () => own;

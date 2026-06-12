@@ -1,7 +1,7 @@
 import { Config } from "#config/config.js";
 import { Bus } from "../bus/index.js";
 import * as Log from "core/util/log";
-import { createOpencodeClient } from "sdk";
+import { createClosedcodeClient } from "sdk";
 import { Flag } from "core/flag/flag";
 import { Session } from "#session/session.js";
 import { NamedError } from "core/util/error";
@@ -70,7 +70,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     const {
       Server
     } = yield* Effect.promise(() => import("../server/server.js"));
-    const client = createOpencodeClient({
+    const client = createClosedcodeClient({
       baseUrl: "http://localhost:4096",
       directory: ctx.directory,
       headers: Flag.CLOSEDCODE_SERVER_PASSWORD ? {

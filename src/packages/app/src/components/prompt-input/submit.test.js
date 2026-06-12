@@ -66,7 +66,7 @@ beforeAll(async () => {
     useParams: () => params
   }));
   mock.module("sdk/v2/client", () => ({
-    createOpencodeClient: input => {
+    createClosedcodeClient: input => {
       createdClients.push(input.directory);
       return clientFor(input.directory);
     }

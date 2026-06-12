@@ -4,7 +4,7 @@ import { effectCmd } from "../effect-cmd.js";
 import { AgentSideConnection, ndJsonStream } from "@agentclientprotocol/sdk";
 import { ACP } from "#acp/agent.js";
 import { Server } from "#server/server.js";
-import { createOpencodeClient } from "sdk/v2";
+import { createClosedcodeClient } from "sdk/v2";
 import { withNetworkOptions, resolveNetworkOptions } from "../network.js";
 const log = Log.create({
   service: "acp-command"
@@ -23,7 +23,7 @@ export const AcpCommand = effectCmd({
     process.env.CLOSEDCODE_CLIENT = "acp";
     const opts = yield* Effect.promise(() => resolveNetworkOptions(args));
     const server = yield* Effect.promise(() => Server.listen(opts));
-    const sdk = createOpencodeClient({
+    const sdk = createClosedcodeClient({
       baseUrl: `http://${server.hostname}:${server.port}`
     });
     const input = new WritableStream({

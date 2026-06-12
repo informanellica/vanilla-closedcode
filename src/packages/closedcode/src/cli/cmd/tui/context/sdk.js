@@ -1,4 +1,4 @@
-import { createOpencodeClient } from "sdk/v2";
+import { createClosedcodeClient } from "sdk/v2";
 import { createSimpleContext } from "./helper.js";
 import { createGlobalEmitter } from "@solid-primitives/event-bus";
 import { Flag } from "core/flag/flag";
@@ -12,7 +12,7 @@ export const {
     const abort = new AbortController();
     let sse;
     function createSDK() {
-      return createOpencodeClient({
+      return createClosedcodeClient({
         baseUrl: props.url,
         signal: abort.signal,
         directory: props.directory,

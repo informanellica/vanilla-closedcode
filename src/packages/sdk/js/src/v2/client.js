@@ -27,7 +27,7 @@ function rewrite(request, values) {
   next.headers.delete("x-closedcode-workspace");
   return next;
 }
-export function createOpencodeClient(config) {
+export function createClosedcodeClient(config) {
   if (!config?.fetch) {
     const customFetch = req => {
       req.timeout = false;

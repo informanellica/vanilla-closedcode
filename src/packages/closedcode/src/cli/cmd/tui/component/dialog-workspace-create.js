@@ -1,6 +1,6 @@
 import { createComponent as _$createComponent } from "@opentui/solid";
 import { memo as _$memo } from "@opentui/solid";
-import { createOpencodeClient } from "sdk/v2";
+import { createClosedcodeClient } from "sdk/v2";
 import { useDialog } from "#tui/ui/dialog.js";
 import { DialogSelect } from "#tui/ui/dialog-select.js";
 import { useSync } from "#tui/context/sync.js";
@@ -11,7 +11,7 @@ import { errorMessage } from "#util/error.js";
 import { useSDK } from "../context/sdk.js";
 import { useToast } from "../ui/toast.js";
 function scoped(sdk, sync, workspaceID) {
-  return createOpencodeClient({
+  return createClosedcodeClient({
     baseUrl: sdk.url,
     fetch: sdk.fetch,
     directory: sync.path.directory || sdk.directory,

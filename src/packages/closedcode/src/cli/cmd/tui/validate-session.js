@@ -1,4 +1,4 @@
-import { createOpencodeClient } from "sdk/v2";
+import { createClosedcodeClient } from "sdk/v2";
 import { SessionID } from "#session/schema.js";
 export async function validateSession(input) {
   if (!input.sessionID) return;
@@ -6,7 +6,7 @@ export async function validateSession(input) {
   if (!result.success) {
     throw new Error(`Invalid session ID: ${result.error.issues.at(0)?.message ?? "unknown error"}`);
   }
-  await createOpencodeClient({
+  await createClosedcodeClient({
     baseUrl: input.url,
     directory: input.directory,
     fetch: input.fetch,
