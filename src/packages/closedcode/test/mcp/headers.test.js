@@ -58,7 +58,7 @@ const service = MCP.Service;
 test("headers are passed to transports when oauth is enabled (default)", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-server": {
             type: "remote",

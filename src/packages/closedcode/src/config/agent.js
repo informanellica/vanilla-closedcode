@@ -116,7 +116,7 @@ export async function load(dir) {
       return undefined;
     });
     if (!md) continue;
-    const patterns = ["/.closedcode/agent/", "/.closedcode/agents/", "/.opencode/agent/", "/.opencode/agents/", "/agent/", "/agents/"];
+    const patterns = ["/.closedcode/agent/", "/.closedcode/agents/", "/agent/", "/agents/"];
     const name = configEntryNameFromPath(item, patterns);
     const config = {
       name,

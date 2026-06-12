@@ -43,7 +43,7 @@ afterEach(async () => {
 test("keeps server and tui plugin merge semantics aligned", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const local = path.join(dir, ".opencode");
+      const local = path.join(dir, ".closedcode");
       await fs.mkdir(local, {
         recursive: true
       });
@@ -57,7 +57,7 @@ test("keeps server and tui plugin merge semantics aligned", async () => {
           source: "global"
         }], "global-only@1.0.0"]
       }, null, 2));
-      await writeFile(path.join(local, "opencode.json"), JSON.stringify({
+      await writeFile(path.join(local, "closedcode.json"), JSON.stringify({
         plugin: [["shared-plugin@2.0.0", {
           source: "local"
         }], "local-only@1.0.0"]
@@ -96,10 +96,10 @@ test("loads tui config with the same precedence order as server config paths", a
       await writeFile(path.join(dir, "tui.json"), JSON.stringify({
         theme: "project"
       }, null, 2));
-      await fs.mkdir(path.join(dir, ".opencode"), {
+      await fs.mkdir(path.join(dir, ".closedcode"), {
         recursive: true
       });
-      await writeFile(path.join(dir, ".opencode", "tui.json"), JSON.stringify({
+      await writeFile(path.join(dir, ".closedcode", "tui.json"), JSON.stringify({
         theme: "local",
         diff_style: "stacked"
       }, null, 2));
@@ -408,13 +408,13 @@ test("does not derive tui path from CLOSEDCODE_CONFIG", async () => {
       await fs.mkdir(customDir, {
         recursive: true
       });
-      await writeFile(path.join(customDir, "opencode.json"), JSON.stringify({
+      await writeFile(path.join(customDir, "closedcode.json"), JSON.stringify({
         model: "test/model"
       }));
       await writeFile(path.join(customDir, "tui.json"), JSON.stringify({
         theme: "should-not-load"
       }));
-      process.env.CLOSEDCODE_CONFIG = path.join(customDir, "opencode.json");
+      process.env.CLOSEDCODE_CONFIG = path.join(customDir, "closedcode.json");
     }
   });
   const config = await getTuiConfig(tmp.path);
@@ -455,13 +455,13 @@ test("applies file substitutions when first identical token is in a commented li
   const config = await getTuiConfig(tmp.path);
   expect(config.theme).toBe("resolved-theme");
 });
-test("loads .opencode/tui.json", async () => {
+test("loads .closedcode/tui.json", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await fs.mkdir(path.join(dir, ".opencode"), {
+      await fs.mkdir(path.join(dir, ".closedcode"), {
         recursive: true
       });
-      await writeFile(path.join(dir, ".opencode", "tui.json"), JSON.stringify({
+      await writeFile(path.join(dir, ".closedcode", "tui.json"), JSON.stringify({
         diff_style: "stacked"
       }, null, 2));
     }

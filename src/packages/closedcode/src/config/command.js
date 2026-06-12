@@ -47,7 +47,7 @@ export async function load(dir) {
       return undefined;
     });
     if (!md) continue;
-    const patterns = ["/.closedcode/command/", "/.closedcode/commands/", "/.opencode/command/", "/.opencode/commands/", "/command/", "/commands/"];
+    const patterns = ["/.closedcode/command/", "/.closedcode/commands/", "/command/", "/commands/"];
     const name = configEntryNameFromPath(item, patterns);
     const config = {
       name,

@@ -173,7 +173,7 @@ function withInstance(config, fn) {
   return async () => {
     await using tmp = await tmpdir({
       init: async dir => {
-        await writeFile(`${dir}/opencode.json`, JSON.stringify({
+        await writeFile(`${dir}/closedcode.json`, JSON.stringify({
           mcp: config
         }));
       }

@@ -33,8 +33,8 @@ const withHome = (home, self) => Effect.acquireUseRelease(Effect.sync(() => {
   process.env.CLOSEDCODE_TEST_HOME = prev;
 }));
 describe("skill", () => {
-  it.live("discovers skills from .opencode/skill/ directory", () => provideTmpdirInstance(dir => Effect.gen(function* () {
-    yield* Effect.promise(() => writeFile(path.join(dir, ".opencode", "skill", "test-skill", "SKILL.md"), `---
+  it.live("discovers skills from .closedcode/skill/ directory", () => provideTmpdirInstance(dir => Effect.gen(function* () {
+    yield* Effect.promise(() => writeFile(path.join(dir, ".closedcode", "skill", "test-skill", "SKILL.md"), `---
 name: test-skill
 description: A test skill for verification.
 ---
@@ -54,7 +54,7 @@ Instructions here.
     git: true
   }));
   it.live("returns skill directories from Skill.dirs", () => provideTmpdirInstance(dir => withHome(dir, Effect.gen(function* () {
-    yield* Effect.promise(() => writeFile(path.join(dir, ".opencode", "skill", "dir-skill", "SKILL.md"), `---
+    yield* Effect.promise(() => writeFile(path.join(dir, ".closedcode", "skill", "dir-skill", "SKILL.md"), `---
 name: dir-skill
 description: Skill for dirs test.
 ---
@@ -63,19 +63,19 @@ description: Skill for dirs test.
 `));
     const skill = yield* Skill.Service;
     const dirs = yield* skill.dirs();
-    expect(dirs).toContain(path.join(dir, ".opencode", "skill", "dir-skill"));
+    expect(dirs).toContain(path.join(dir, ".closedcode", "skill", "dir-skill"));
     expect(dirs.length).toBe(1);
   })), {
     git: true
   }));
-  it.live("discovers multiple skills from .opencode/skill/ directory", () => provideTmpdirInstance(dir => Effect.gen(function* () {
-    yield* Effect.promise(() => Promise.all([writeFile(path.join(dir, ".opencode", "skill", "skill-one", "SKILL.md"), `---
+  it.live("discovers multiple skills from .closedcode/skill/ directory", () => provideTmpdirInstance(dir => Effect.gen(function* () {
+    yield* Effect.promise(() => Promise.all([writeFile(path.join(dir, ".closedcode", "skill", "skill-one", "SKILL.md"), `---
 name: skill-one
 description: First test skill.
 ---
 
 # Skill One
-`), writeFile(path.join(dir, ".opencode", "skill", "skill-two", "SKILL.md"), `---
+`), writeFile(path.join(dir, ".closedcode", "skill", "skill-two", "SKILL.md"), `---
 name: skill-two
 description: Second test skill.
 ---
@@ -91,7 +91,7 @@ description: Second test skill.
     git: true
   }));
   it.live("skips skills with missing frontmatter", () => provideTmpdirInstance(dir => Effect.gen(function* () {
-    yield* Effect.promise(() => writeFile(path.join(dir, ".opencode", "skill", "no-frontmatter", "SKILL.md"), `# No Frontmatter
+    yield* Effect.promise(() => writeFile(path.join(dir, ".closedcode", "skill", "no-frontmatter", "SKILL.md"), `# No Frontmatter
 
 Just some content without YAML frontmatter.
 `));
@@ -219,15 +219,15 @@ description: A skill in the .agents/skills directory.
 ---
 
 # Agent Skill
-`), writeFile(path.join(dir, ".opencode", "skill", "agent-skill", "SKILL.md"), `---
-name: opencode-skill
-description: A skill in the .opencode/skill directory.
+`), writeFile(path.join(dir, ".closedcode", "skill", "agent-skill", "SKILL.md"), `---
+name: closedcode-skill
+description: A skill in the .closedcode/skill directory.
 ---
 
 # Legacy Directory Skill
-`), writeFile(path.join(dir, ".opencode", "skills", "agent-skill", "SKILL.md"), `---
-name: opencode-skill
-description: A skill in the .opencode/skills directory.
+`), writeFile(path.join(dir, ".closedcode", "skills", "agent-skill", "SKILL.md"), `---
+name: closedcode-skill
+description: A skill in the .closedcode/skills directory.
 ---
 
 # Legacy Directory Skill

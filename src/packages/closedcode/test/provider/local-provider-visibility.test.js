@@ -113,7 +113,7 @@ describe("local provider visibility (/provider route)", () => {
       // sees fresh state — exactly what removeProvider does after disabling.
       yield* Effect.promise(() =>
         fs.writeFile(
-          path.join(dir, "opencode.json"),
+          path.join(dir, "closedcode.json"),
           JSON.stringify({
             formatter: false,
             lsp: false,

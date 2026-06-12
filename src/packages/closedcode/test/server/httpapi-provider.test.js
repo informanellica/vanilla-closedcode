@@ -41,10 +41,10 @@ function writeProviderAuthPlugin(dir) {
   return Effect.gen(function* () {
     const fs = yield* FileSystem.FileSystem;
     const path = yield* Path.Path;
-    yield* fs.makeDirectory(path.join(dir, ".opencode", "plugin"), {
+    yield* fs.makeDirectory(path.join(dir, ".closedcode", "plugin"), {
       recursive: true
     });
-    yield* fs.writeFileString(path.join(dir, ".opencode", "plugin", "provider-oauth-parity.mjs"), ["export default {", '  id: "test.provider-oauth-parity",', "  server: async () => ({", "    auth: {", `      provider: "${providerID}",`, "      methods: [", '        { type: "api", label: "API key" },', "        {", '          type: "oauth",', '          label: "OAuth",', "          authorize: async () => ({", `            url: "${oauthURL}",`, '            method: "code",', `            instructions: "${oauthInstructions}",`, "            callback: async () => ({ type: 'success', key: 'token' }),", "          }),", "        },", "      ],", "    },", "  }),", "}", ""].join("\n"));
+    yield* fs.writeFileString(path.join(dir, ".closedcode", "plugin", "provider-oauth-parity.mjs"), ["export default {", '  id: "test.provider-oauth-parity",', "  server: async () => ({", "    auth: {", `      provider: "${providerID}",`, "      methods: [", '        { type: "api", label: "API key" },', "        {", '          type: "oauth",', '          label: "OAuth",', "          authorize: async () => ({", `            url: "${oauthURL}",`, '            method: "code",', `            instructions: "${oauthInstructions}",`, "            callback: async () => ({ type: 'success', key: 'token' }),", "          }),", "        },", "      ],", "    },", "  }),", "}", ""].join("\n"));
   });
 }
 function withProviderProject(self) {
@@ -54,7 +54,7 @@ function withProviderProject(self) {
     const dir = yield* fs.makeTempDirectoryScoped({
       prefix: "closedcode-test-"
     });
-    yield* fs.writeFileString(path.join(dir, "opencode.json"), JSON.stringify({
+    yield* fs.writeFileString(path.join(dir, "closedcode.json"), JSON.stringify({
       formatter: false,
       lsp: false
     }));

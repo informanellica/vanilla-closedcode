@@ -51,7 +51,7 @@ afterEach(async () => {
   await disposeAllInstances();
 });
 async function load(dir) {
-  const source = path.join(dir, "opencode.json");
+  const source = path.join(dir, "closedcode.json");
   const config = await readJson(source);
   const plugins = config.plugin ?? [];
   return Effect.gen(function* () {
@@ -76,7 +76,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "plugin.mjs");
         const mark = path.join(dir, "called.txt");
         await writeFile(file, ["export default async () => {", `  await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "  return {}", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -94,7 +94,7 @@ describe("plugin.loader.shared", () => {
         const mark = path.join(dir, "count.txt");
         await writeFile(mark, "");
         await writeFile(file, ["const run = async () => {", `  const text = await (await import("node:fs/promises")).readFile(${JSON.stringify(mark)}, "utf8").catch(() => "")`, `  await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, text + "1")`, "  return {}", "}", "export default run", "export const named = run", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -111,7 +111,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "plugin.mjs");
         const mark = path.join(dir, "count.txt");
         await writeFile(file, ["export default {", '  id: "demo.v1-default",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "default")`, "    return {}", "  },", "}", "export const named = async () => {", `  await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "named")`, "  return {}", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -128,7 +128,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "plugin.mjs");
         const mark = path.join(dir, "called.txt");
         await writeFile(file, ["export default {", "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -146,7 +146,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "plugin.mjs");
         const mark = path.join(dir, "called.txt");
         await writeFile(file, ["export default {", '  id: "demo.mixed",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "server")`, "    return {}", "  },", "  tui: async () => {},", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -181,7 +181,7 @@ describe("plugin.loader.shared", () => {
           main: "./index.js"
         }, null, 2));
         await writeFile(path.join(scope, "index.js"), "export default { server: async () => ({}) }\n");
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin", "scope-plugin@2.3.4"]
         }, null, 2));
         return {
@@ -229,7 +229,7 @@ describe("plugin.loader.shared", () => {
         await writeFile(path.join(mod, "main-throws.js"), 'throw new Error("main loaded")\n');
         await writeFile(path.join(mod, "server.js"), ["export default {", "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
         await writeFile(path.join(mod, "tui.js"), "export default {}\n");
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin@1.0.0"]
         }, null, 2));
         return {
@@ -269,7 +269,7 @@ describe("plugin.loader.shared", () => {
         await writeFile(path.join(mod, "index.js"), 'import "./main-throws.js"\nexport default {}\n');
         await writeFile(path.join(mod, "main-throws.js"), 'throw new Error("main loaded")\n');
         await writeFile(path.join(dist, "server.js"), ["export default {", "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin@1.0.0"]
         }, null, 2));
         return {
@@ -304,7 +304,7 @@ describe("plugin.loader.shared", () => {
           main: "dist/index.js"
         }, null, 2));
         await writeFile(path.join(dist, "index.js"), ["export default {", "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin@1.0.0"]
         }, null, 2));
         return {
@@ -340,7 +340,7 @@ describe("plugin.loader.shared", () => {
           }
         }));
         await writeFile(path.join(mod, "index.js"), ["export default {", '  id: "demo.dot.server",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin@1.0.0"]
         }, null, 2));
         return {
@@ -384,7 +384,7 @@ describe("plugin.loader.shared", () => {
         await writeFile(path.join(mod, "index.js"), "export default {}\n");
         await writeFile(path.join(outside, "server.js"), ["export default {", "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "outside")`, "    return {}", "  },", "}", ""].join("\n"));
         await fs.symlink(outside, path.join(mod, "escape"), process.platform === "win32" ? "junction" : "dir");
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["acme-plugin"]
         }, null, 2));
         return {
@@ -408,7 +408,7 @@ describe("plugin.loader.shared", () => {
   test("skips legacy codex and copilot auth plugin specs", async () => {
     await using tmp = await tmpdir({
       init: async dir => {
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["opencode-openai-codex-auth@1.0.0", "opencode-copilot-auth@1.0.0", "regular-plugin@1.0.0"]
         }, null, 2));
       }
@@ -433,7 +433,7 @@ describe("plugin.loader.shared", () => {
         const ok = path.join(dir, "ok.mjs");
         const mark = path.join(dir, "ok.txt");
         await writeFile(ok, ["export default {", '  id: "demo.ok",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "ok")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: ["broken-plugin@9.9.9", pathToFileURL(ok).href]
         }, null, 2));
         return {
@@ -458,7 +458,7 @@ describe("plugin.loader.shared", () => {
         const mark = path.join(dir, "ok.txt");
         await writeFile(path.join(dir, "throws.mjs"), ["export default {", '  id: "demo.throws",', "  server: async () => {", '    throw new Error("explode")', "  },", "}", ""].join("\n"));
         await writeFile(path.join(dir, "ok.mjs"), ["export default {", '  id: "demo.ok",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "ok")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [file, ok]
         }, null, 2));
         return {
@@ -477,7 +477,7 @@ describe("plugin.loader.shared", () => {
         const mark = path.join(dir, "ok.txt");
         await writeFile(path.join(dir, "invalid.mjs"), ["export default {", '  id: "demo.invalid",', "  nope: true,", "}", ""].join("\n"));
         await writeFile(path.join(dir, "ok.mjs"), ["export default {", '  id: "demo.ok",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "ok")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [file, ok]
         }, null, 2));
         return {
@@ -495,7 +495,7 @@ describe("plugin.loader.shared", () => {
         const ok = pathToFileURL(path.join(dir, "ok.mjs")).href;
         const mark = path.join(dir, "ok.txt");
         await writeFile(path.join(dir, "ok.mjs"), ["export default {", '  id: "demo.ok",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "ok")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [missing, ok]
         }, null, 2));
         return {
@@ -512,7 +512,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "object-plugin.mjs");
         const mark = path.join(dir, "object-called.txt");
         await writeFile(file, ["const plugin = {", '  id: "demo.object",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", "export default plugin", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {
@@ -529,7 +529,7 @@ describe("plugin.loader.shared", () => {
         const file = path.join(dir, "options-plugin.mjs");
         const mark = path.join(dir, "options.json");
         await writeFile(file, ["const plugin = {", '  id: "demo.options",', "  server: async (_input, options) => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, JSON.stringify(options ?? null))`, "    return {}", "  },", "}", "export default plugin", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [[pathToFileURL(file).href, {
             source: "tuple",
             enabled: true
@@ -576,7 +576,7 @@ export default {
   },
 }
 `);
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [aSpec, bSpec]
         }, null, 2));
         return {
@@ -594,7 +594,7 @@ export default {
         const file = path.join(dir, "plugin.mjs");
         const mark = path.join(dir, "called.txt");
         await writeFile(file, ["export default {", '  id: "demo.pure",', "  server: async () => {", `    await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, "called")`, "    return {}", "  },", "}", ""].join("\n"));
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           plugin: [pathToFileURL(file).href]
         }, null, 2));
         return {

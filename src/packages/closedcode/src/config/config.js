@@ -416,9 +416,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }
     if (!Flag.CLOSEDCODE_DISABLE_PROJECT_CONFIG) {
-      // Read both legacy opencode.json/jsonc and closedcode.json/jsonc; the
-      // closedcode files are loaded last so they take precedence.
-      for (const name of ["opencode", "closedcode"]) {
+      // Read project-local closedcode.json/jsonc config files.
+      for (const name of ["closedcode"]) {
         for (const file of yield* ConfigPaths.files(name, ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
           yield* merge(file, yield* loadFile(file), "local");
         }
@@ -435,8 +434,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     const deps = [];
     for (const dir of directories) {
-      if ((dir.endsWith(".closedcode") || dir.endsWith(".opencode")) || dir === Flag.CLOSEDCODE_CONFIG_DIR) {
-        for (const file of ["closedcode.json", "closedcode.jsonc", "opencode.json", "opencode.jsonc"]) {
+      if (dir.endsWith(".closedcode") || dir === Flag.CLOSEDCODE_CONFIG_DIR) {
+        for (const file of ["closedcode.json", "closedcode.jsonc"]) {
           const source = path.join(dir, file);
           log.debug(`loading config from ${source}`);
           yield* merge(source, yield* loadFile(source));
@@ -461,7 +460,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       result.command = mergeDeep(result.command ?? {}, yield* Effect.promise(() => ConfigCommand.load(dir)));
       result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.load(dir)));
       result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.loadMode(dir)));
-      // Auto-discovered plugins under `.closedcode/plugin(s)` (or legacy `.opencode/plugin(s)`) are already local files, so ConfigPlugin.load
+      // Auto-discovered plugins under `.closedcode/plugin(s)` are already local files, so ConfigPlugin.load
       // returns normalized Specs and we only need to attach origin metadata here.
       const list = yield* Effect.promise(() => ConfigPlugin.load(dir));
       yield* mergePluginOrigins(dir, list);
@@ -508,7 +507,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     const managedDir = ConfigManaged.managedConfigDir();
     if (existsSync(managedDir)) {
-      for (const file of ["closedcode.json", "closedcode.jsonc", "opencode.json", "opencode.jsonc"]) {
+      for (const file of ["closedcode.json", "closedcode.jsonc"]) {
         const source = path.join(managedDir, file);
         yield* merge(source, yield* loadFile(source), "global");
       }

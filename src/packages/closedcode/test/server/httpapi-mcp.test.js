@@ -37,7 +37,7 @@ function withMcpProject(self) {
     const dir = yield* fs.makeTempDirectoryScoped({
       prefix: "closedcode-test-"
     });
-    yield* fs.writeFileString(path.join(dir, "opencode.json"), JSON.stringify({
+    yield* fs.writeFileString(path.join(dir, "closedcode.json"), JSON.stringify({
       formatter: false,
       lsp: false,
       mcp: {

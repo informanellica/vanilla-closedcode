@@ -26,7 +26,6 @@ async function bootstrapFixture() {
         plugin: [pathToFileURL(pluginFile).href]
       });
       await writeFile(path.join(dir, "closedcode.json"), config);
-      await writeFile(path.join(dir, "opencode.json"), config);
       return marker;
     }
   });

@@ -10,10 +10,8 @@ import {  test, expect, beforeAll  } from "@jest/globals"
 import path from "path";
 import { writeFile } from "../lib/io.js";
 
-let AgentSvc;
-
 const it = testEffect(Layer.mergeAll(AgentSvc.defaultLayer, CrossSpawnSpawner.defaultLayer));
-const writeConfig = (dir, agent) => Effect.promise(() => writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+const writeConfig = (dir, agent) => Effect.promise(() => writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
   agent
 })));
 it.live("agent color parsed from project config", () => Effect.gen(function* () {

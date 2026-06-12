@@ -117,7 +117,7 @@ const service = MCP.Service;
 test("BrowserOpenFailed event is published when open() throws", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-oauth-server": {
             type: "remote",
@@ -162,7 +162,7 @@ test("BrowserOpenFailed event is published when open() throws", async () => {
 test("BrowserOpenFailed event is NOT published when open() succeeds", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-oauth-server-2": {
             type: "remote",
@@ -205,7 +205,7 @@ test("BrowserOpenFailed event is NOT published when open() succeeds", async () =
 test("open() is called with the authorization URL", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-oauth-server-3": {
             type: "remote",
