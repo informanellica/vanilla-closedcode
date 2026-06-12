@@ -1,12 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-100 d-flex align-items-center gap-x-2 fw-normal"><span class=truncate>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-1">`);
 import { Popover as Kobalte } from "@kobalte/core/popover";
-import { createMemo, Show } from "solid-js";
+import { createComponent, createMemo, createRoot, getOwner, mergeProps, runWithOwner } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useLocal } from "@/context/local.js";
 import { useDialog } from "@/lib/dialog.js";
@@ -29,6 +22,10 @@ function isLocalProvider(options) {
 const ModelList = props => {
   const model = props.model ?? useLocal().model;
   const language = useLanguage();
+  // Captured for the tooltip getter below: Tooltip reads `value` from its
+  // hover handlers, where Solid's owner is null and ModelTooltip's
+  // useLanguage() would throw.
+  const owner = getOwner();
   // Local-only fork: list every configured model across all connected
   // providers — the visible() filter hid all but recently-used models, which
   // made the picker look broken / single-model. Provider scoping and the
@@ -47,7 +44,7 @@ const ModelList = props => {
       baseURL: m.api.url
     }));
   });
-  return _$createComponent(List, {
+  return createComponent(List, {
     get ["class"]() {
       return `flex-1 min-h-0 [&_[data-slot=list-scroll]]:flex-1 [&_[data-slot=list-scroll]]:min-h-0 ${props.class ?? ""}`;
     },
@@ -55,7 +52,12 @@ const ModelList = props => {
       return {
         placeholder: language.t("dialog.model.search.placeholder"),
         autofocus: true,
-        action: props.action
+        // Forward lazily: props.action builds DOM on every read and List
+        // re-reads its `search` prop several times per render — an eager
+        // read here would build and throw away the action buttons each time.
+        get action() {
+          return props.action;
+        }
       };
     },
     get emptyMessage() {
@@ -76,20 +78,30 @@ const ModelList = props => {
       if (!popularProviders.includes(aProvider) && popularProviders.includes(bProvider)) return 1;
       return popularProviders.indexOf(aProvider) - popularProviders.indexOf(bProvider);
     },
-    itemWrapper: (item, node) => _$createComponent(Tooltip, {
+    itemWrapper: (item, node) => createComponent(Tooltip, {
       "class": "w-full",
       placement: "right-start",
       gutter: 12,
       get value() {
-        return _$createComponent(ModelTooltip, {
-          model: item,
-          get latest() {
-            return item.latest;
-          },
-          get free() {
-            return isFree(item.provider.id, item.cost);
-          }
-        });
+        // Accessed from Tooltip's pointerenter path (no Solid owner): restore
+        // ModelList's owner so useLanguage() inside ModelTooltip resolves its
+        // context, and dispose the one-shot root immediately so the tooltip's
+        // render effects (they read the i18n dict signal) don't accumulate as
+        // ownerless subscriptions on every hover. Content is static per item
+        // and Tooltip clones the node anyway.
+        return runWithOwner(owner, () => createRoot(dispose => {
+          const el = createComponent(ModelTooltip, {
+            model: item,
+            get latest() {
+              return item.latest;
+            },
+            get free() {
+              return isFree(item.provider.id, item.cost);
+            }
+          });
+          dispose();
+          return el;
+        }));
       },
       children: node
     }),
@@ -102,36 +114,33 @@ const ModelList = props => {
       });
       props.onSelect();
     },
-    children: i => (() => {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild;
-      _$insert(_el$2, () => i.name);
-      _$insert(_el$, _$createComponent(Show, {
-        get when() {
-          return isFree(i.provider.id, i.cost);
-        },
-        get children() {
-          return _$createComponent(Tag, {
-            get children() {
-              return language.t("model.tag.free");
-            }
-          });
-        }
-      }), null);
-      _$insert(_el$, _$createComponent(Show, {
-        get when() {
-          return i.latest;
-        },
-        get children() {
-          return _$createComponent(Tag, {
-            get children() {
-              return language.t("model.tag.latest");
-            }
-          });
-        }
-      }), null);
-      return _el$;
-    })()
+    children: i => {
+      // Compiled _tmpl$: a name span followed by optional free/latest tags.
+      // List rebuilds rows on every render and items are plain memo copies,
+      // so the name text and the Show conditions are static per row.
+      const row = document.createElement("div");
+      row.className = "w-100 d-flex align-items-center gap-x-2 fw-normal";
+      const name = document.createElement("span");
+      name.className = "truncate";
+      // Model names are external strings — set via textContent, never markup.
+      name.textContent = i.name;
+      row.appendChild(name);
+      if (isFree(i.provider.id, i.cost)) {
+        row.appendChild(createComponent(Tag, {
+          get children() {
+            return language.t("model.tag.free");
+          }
+        }));
+      }
+      if (i.latest) {
+        row.appendChild(createComponent(Tag, {
+          get children() {
+            return language.t("model.tag.latest");
+          }
+        }));
+      }
+      return row;
+    }
   });
 };
 export function ModelSelectorPopover(props) {
@@ -149,7 +158,7 @@ export function ModelSelectorPopover(props) {
     // Model management lives in Settings → LLM → サーバー・プロバイダ now
     // (no separate "manage models" modal).
     void import("./dialog-settings.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSettings, {
+      dialog.show(() => createComponent(x.DialogSettings, {
         tab: "connection"
       }));
     });
@@ -159,13 +168,15 @@ export function ModelSelectorPopover(props) {
     // Pulling/adding models and connecting providers all happen in Settings →
     // LLM → サーバー・プロバイダ now (no separate modal).
     void import("./dialog-settings.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSettings, {
+      dialog.show(() => createComponent(x.DialogSettings, {
         tab: "connection"
       }));
     });
   };
   const language = useLanguage();
-  return _$createComponent(Kobalte, {
+  // Kobalte Popover stays a Solid component tree (presence-gated Portal /
+  // Content need Solid's lifecycle); only the search-action DOM is vanilla.
+  return createComponent(Kobalte, {
     get open() {
       return store.open;
     },
@@ -177,7 +188,7 @@ export function ModelSelectorPopover(props) {
     placement: "top-start",
     gutter: 4,
     get children() {
-      return [_$createComponent(Kobalte.Trigger, _$mergeProps({
+      return [createComponent(Kobalte.Trigger, mergeProps({
         get as() {
           return props.triggerAs ?? "div";
         }
@@ -185,9 +196,9 @@ export function ModelSelectorPopover(props) {
         get children() {
           return props.children;
         }
-      })), _$createComponent(Kobalte.Portal, {
+      })), createComponent(Kobalte.Portal, {
         get children() {
-          return _$createComponent(Kobalte.Content, {
+          return createComponent(Kobalte.Content, {
             "class": "w-72 h-80 d-flex flex-column p-2 rounded-2 border bg-body-tertiary shadow-md z-50 outline-none overflow-hidden",
             onEscapeKeyDown: event => {
               close("escape");
@@ -206,12 +217,12 @@ export function ModelSelectorPopover(props) {
               setStore("dismiss", null);
             },
             get children() {
-              return [_$createComponent(Kobalte.Title, {
+              return [createComponent(Kobalte.Title, {
                 "class": "sr-only",
                 get children() {
                   return language.t("dialog.model.select.title");
                 }
-              }), _$createComponent(ModelList, {
+              }), createComponent(ModelList, {
                 get provider() {
                   return props.provider;
                 },
@@ -221,42 +232,45 @@ export function ModelSelectorPopover(props) {
                 onSelect: () => close("select"),
                 "class": "p-1",
                 get action() {
-                  return (() => {
-                    var _el$3 = _tmpl$2();
-                    _$insert(_el$3, _$createComponent(Tooltip, {
-                      placement: "top",
-                      value: "モデルを取得・管理 (設定)",
-                      get children() {
-                        return _$createComponent(IconButton, {
-                          icon: "plus-small",
-                          variant: "ghost",
-                          iconSize: "normal",
-                          "class": "size-6",
-                          "aria-label": "モデルを取得・管理",
-                          onClick: handleConnectProvider
-                        });
-                      }
-                    }), null);
-                    _$insert(_el$3, _$createComponent(Tooltip, {
-                      placement: "top",
-                      get value() {
-                        return language.t("dialog.model.manage");
-                      },
-                      get children() {
-                        return _$createComponent(IconButton, {
-                          icon: "sliders",
-                          variant: "ghost",
-                          iconSize: "normal",
-                          "class": "size-6",
-                          get ["aria-label"]() {
-                            return language.t("dialog.model.manage");
-                          },
-                          onClick: handleManage
-                        });
-                      }
-                    }), null);
-                    return _el$3;
-                  })();
+                  // Compiled _tmpl$2: the two tooltip-wrapped icon buttons in
+                  // the search bar. Rebuilt on each List render, matching the
+                  // compiled IIFE.
+                  const actions = document.createElement("div");
+                  actions.className = "d-flex align-items-center gap-1";
+                  // Eager Node children: Tooltip probes `children` more than
+                  // once, so a getter would build (and discard) extra
+                  // IconButtons. aria-label is read eagerly too — this DOM is
+                  // rebuilt per List render, which can run outside any Solid
+                  // owner, and a getter prop would leave IconButton's render
+                  // effect subscribed to the i18n dict signal with no owner
+                  // to dispose it.
+                  actions.appendChild(createComponent(Tooltip, {
+                    placement: "top",
+                    value: "モデルを取得・管理 (設定)",
+                    children: createComponent(IconButton, {
+                      icon: "plus-small",
+                      variant: "ghost",
+                      iconSize: "normal",
+                      "class": "size-6",
+                      "aria-label": "モデルを取得・管理",
+                      onClick: handleConnectProvider
+                    })
+                  }));
+                  actions.appendChild(createComponent(Tooltip, {
+                    placement: "top",
+                    get value() {
+                      return language.t("dialog.model.manage");
+                    },
+                    children: createComponent(IconButton, {
+                      icon: "sliders",
+                      variant: "ghost",
+                      iconSize: "normal",
+                      "class": "size-6",
+                      "aria-label": language.t("dialog.model.manage"),
+                      onClick: handleManage
+                    })
+                  }));
+                  return actions;
                 }
               })];
             }
@@ -271,24 +285,29 @@ export const DialogSelectModel = props => {
   const language = useLanguage();
   const provider = () => {
     void import("./dialog-settings.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSettings, {
+      dialog.show(() => createComponent(x.DialogSettings, {
         tab: "connection"
       }));
     });
   };
   const manage = () => {
     void import("./dialog-settings.js").then(x => {
-      dialog.show(() => _$createComponent(x.DialogSettings, {
+      dialog.show(() => createComponent(x.DialogSettings, {
         tab: "connection"
       }));
     });
   };
-  return _$createComponent(Dialog, {
+  // bs/Dialog is vanilla and probes `action`/`children` several times
+  // (truthy + typeof/instanceof/Array checks), so unmemoized getters here
+  // built whole spare ModelList/Button trees per probe and threw them away.
+  let actionEl;
+  let bodyEls;
+  return createComponent(Dialog, {
     get title() {
       return language.t("dialog.model.select.title");
     },
     get action() {
-      return _$createComponent(Button, {
+      return (actionEl ??= createComponent(Button, {
         "class": "h-7 -my-1 fw-medium",
         icon: "plus-small",
         tabIndex: -1,
@@ -296,10 +315,10 @@ export const DialogSelectModel = props => {
         get children() {
           return language.t("command.provider.connect");
         }
-      });
+      }));
     },
     get children() {
-      return [_$createComponent(ModelList, {
+      return (bodyEls ??= [createComponent(ModelList, {
         get provider() {
           return props.provider;
         },
@@ -307,14 +326,14 @@ export const DialogSelectModel = props => {
           return props.model;
         },
         onSelect: () => dialog.close()
-      }), _$createComponent(Button, {
+      }), createComponent(Button, {
         variant: "ghost",
         "class": "ml-3 mt-5 mb-6 text-body self-start",
         onClick: manage,
         get children() {
           return language.t("dialog.model.manage");
         }
-      })];
+      })]);
     }
   });
 };

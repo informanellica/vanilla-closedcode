@@ -1,27 +1,35 @@
-import { template as _$template } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=tooltip-keybind><span></span><span data-slot=tooltip-keybind-key>`);
+import { insert as _solidInsert } from "solid-js/web";
 import { Tooltip as KobalteTooltip } from "@kobalte/core/tooltip";
-import { createEffect, Match, onCleanup, splitProps, Switch } from "solid-js";
+import { createComponent, createEffect, Match, mergeProps, onCleanup, splitProps, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export function TooltipKeybind(props) {
   const [local, others] = splitProps(props, ["title", "keybind"]);
-  return _$createComponent(Tooltip, _$mergeProps(others, {
+  return createComponent(Tooltip, mergeProps(others, {
     get value() {
-      return (() => {
-        var _el$ = _tmpl$(),
-          _el$2 = _el$.firstChild,
-          _el$3 = _el$2.nextSibling;
-        _$insert(_el$2, () => local.title);
-        _$insert(_el$3, () => local.keybind);
-        return _el$;
-      })();
+      // Fresh nodes per read, like the compiled template factory: the getter
+      // runs again whenever the tooltip content remounts.
+      const root = template(`<div data-slot="tooltip-keybind"><span></span><span data-slot="tooltip-keybind-key"></span></div>`);
+      const titleEl = root.firstElementChild;
+      const keybindEl = titleEl.nextElementSibling;
+      // title/keybind are arbitrary (possibly reactive) children rendered
+      // inside the presence-gated tooltip content, so they go through solid's
+      // insert() to stay live (established exception).
+      _solidInsert(titleEl, () => local.title);
+      _solidInsert(keybindEl, () => local.keybind);
+      return root;
     }
   }));
 }
+
 export function Tooltip(props) {
   let ref;
   const [state, setState] = createStore({
@@ -73,19 +81,22 @@ export function Tooltip(props) {
     onCleanup(() => obs.disconnect());
   });
   let justClickedTrigger = false;
-  return _$createComponent(Switch, {
+  // Switch/Match are the same runtime solid-js components the original used:
+  // non-keyed truthiness switching between the inactive passthrough and the
+  // Kobalte tooltip (a flip disposes and rebuilds the active branch).
+  return createComponent(Switch, {
     get children() {
-      return [_$createComponent(Match, {
+      return [createComponent(Match, {
         get when() {
           return local.inactive;
         },
         get children() {
           return local.children;
         }
-      }), _$createComponent(Match, {
+      }), createComponent(Match, {
         when: true,
         get children() {
-          return _$createComponent(KobalteTooltip, _$mergeProps({
+          return createComponent(KobalteTooltip, mergeProps({
             gutter: 4
           }, others, {
             closeDelay: 0,
@@ -105,10 +116,12 @@ export function Tooltip(props) {
               setState("open", open);
             },
             get children() {
-              return [_$createComponent(KobalteTooltip.Trigger, {
-                ref(r$) {
-                  var _ref$ = ref;
-                  typeof _ref$ === "function" ? _ref$(r$) : ref = r$;
+              return [createComponent(KobalteTooltip.Trigger, {
+                // Capture the rendered trigger element. The compiled ref
+                // forwarder special-cased a function-valued `ref`, but the
+                // local `ref` above is only ever undefined or an element.
+                ref(r) {
+                  ref = r;
                 },
                 as: "div",
                 "data-component": "tooltip-trigger",
@@ -125,9 +138,9 @@ export function Tooltip(props) {
                 get children() {
                   return local.children;
                 }
-              }), _$createComponent(KobalteTooltip.Portal, {
+              }), createComponent(KobalteTooltip.Portal, {
                 get children() {
-                  return _$createComponent(KobalteTooltip.Content, {
+                  return createComponent(KobalteTooltip.Content, {
                     "data-component": "tooltip",
                     get ["data-placement"]() {
                       return props.placement;

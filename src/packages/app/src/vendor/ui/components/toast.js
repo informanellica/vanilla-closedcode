@@ -1,28 +1,134 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=toast-icon>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=toast-content>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=toast-actions>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<button data-slot=toast-action>`);
+import { insert as _solidInsert, Portal } from "solid-js/web";
+import { createComponent, createMemo, createRenderEffect, mergeProps } from "solid-js";
 import { Toast as Kobalte, toaster } from "@kobalte/core/toast";
-import { Show } from "solid-js";
-import { Portal } from "solid-js/web";
 import { useI18n } from "../context/i18n.js";
 import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";
+
+// ---------------------------------------------------------------------------
+// Reactive spread helpers (same approach as markdown.js): mirror the compiled
+// spread(el, props, false, false) — re-run on any prop change and diff per key
+// against the previous snapshot. Children are forwarded separately through
+// insert(), matching skipChildren = false in the compiled output.
+// ---------------------------------------------------------------------------
+function applyClassList(el, value, prev) {
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!name || name in nextObj || !prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.remove(cls);
+    }
+  }
+  for (const name of Object.keys(nextObj)) {
+    const on = !!nextObj[name];
+    if (!name || on === !!prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.toggle(cls, on);
+    }
+  }
+  return { ...nextObj };
+}
+function applyStyle(el, value, prev) {
+  if (typeof value === "string") {
+    if (value !== prev) el.style.cssText = value;
+    return value;
+  }
+  if (typeof prev === "string") {
+    el.style.cssText = "";
+    prev = undefined;
+  }
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!(name in nextObj)) el.style.removeProperty(name);
+  }
+  for (const name of Object.keys(nextObj)) {
+    if (nextObj[name] !== prevObj[name]) el.style.setProperty(name, nextObj[name]);
+  }
+  return { ...nextObj };
+}
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+function assignProp(el, key, value, prev, listeners) {
+  if (key === "style") return applyStyle(el, value, prev);
+  if (key === "classList") return applyClassList(el, value, prev);
+  if (value === prev) return prev;
+  if (key === "ref") {
+    if (typeof value === "function") value(el);
+    return value;
+  }
+  if (key.startsWith("on") && key.length > 2) {
+    const name = key.startsWith("on:") ? key.slice(3) : key.slice(2).toLowerCase();
+    const existing = listeners.get(key);
+    if (existing) el.removeEventListener(name, existing);
+    let handler;
+    if (typeof value === "function") handler = value;
+    else if (Array.isArray(value)) handler = event => value[0](value[1], event);
+    if (handler) {
+      el.addEventListener(name, handler);
+      listeners.set(key, handler);
+    } else {
+      listeners.delete(key);
+    }
+    return value;
+  }
+  if (key === "class" || key === "className") {
+    if (value == null) el.removeAttribute("class");
+    else el.className = value;
+    return value;
+  }
+  setAttr(el, key, value);
+  return value;
+}
+function spreadProps(el, props) {
+  const prev = {};
+  const listeners = new Map();
+  createRenderEffect(() => {
+    for (const key of Object.keys(prev)) {
+      if (key === "children" || key in props) continue;
+      assignProp(el, key, null, prev[key], listeners);
+      delete prev[key];
+    }
+    for (const key of Object.keys(props)) {
+      if (key === "children") continue;
+      prev[key] = assignProp(el, key, props[key], prev[key], listeners);
+    }
+  });
+}
+
+// Append a static child the way the compiled insert() rendered it: skip
+// nullish/boolean values, flatten arrays, keep nodes, stringify the rest.
+// Function children stay live through insert().
+function appendChildren(parent, children) {
+  if (children == null || typeof children === "boolean") return;
+  if (Array.isArray(children)) {
+    for (const child of children) appendChildren(parent, child);
+    return;
+  }
+  if (children instanceof Node) {
+    parent.appendChild(children);
+    return;
+  }
+  if (typeof children === "function") {
+    _solidInsert(parent, children);
+    return;
+  }
+  parent.append(String(children));
+}
+
 function ToastRegion(props) {
-  return _$createComponent(Portal, {
+  // Solid's Portal is kept on purpose (established convention, see
+  // file-search.js): it owns the document.body mount and disposal wiring.
+  return createComponent(Portal, {
     get children() {
-      return _$createComponent(Kobalte.Region, _$mergeProps({
+      return createComponent(Kobalte.Region, mergeProps({
         "data-component": "toast-region"
       }, props, {
         get children() {
-          return _$createComponent(Kobalte.List, {
+          return createComponent(Kobalte.List, {
             "data-slot": "toast-list"
           });
         }
@@ -31,7 +137,7 @@ function ToastRegion(props) {
   });
 }
 function ToastRoot(props) {
-  return _$createComponent(Kobalte, _$mergeProps({
+  return createComponent(Kobalte, mergeProps({
     "data-component": "toast",
     get classList() {
       return {
@@ -42,43 +148,47 @@ function ToastRoot(props) {
   }, props));
 }
 function ToastIcon(props) {
-  return (() => {
-    var _el$ = _tmpl$();
-    _$insert(_el$, _$createComponent(Icon, {
-      get name() {
-        return props.name;
-      }
-    }));
-    return _el$;
-  })();
+  const el = document.createElement("div");
+  el.setAttribute("data-slot", "toast-icon");
+  // Icon (bs/icon.js via ./icon.js) builds a plain element synchronously, so
+  // a one-shot append matches the compiled insert() here.
+  el.appendChild(createComponent(Icon, {
+    get name() {
+      return props.name;
+    }
+  }));
+  return el;
 }
 function ToastContent(props) {
-  return (() => {
-    var _el$2 = _tmpl$2();
-    _$spread(_el$2, props, false, false);
-    return _el$2;
-  })();
+  const el = document.createElement("div");
+  el.setAttribute("data-slot", "toast-content");
+  // Children may include Kobalte component results (lazy accessors inside the
+  // presence-gated toast), so they must go through solid's insert() to stay
+  // live — same effect order as the compiled spread (children first).
+  _solidInsert(el, () => props.children);
+  spreadProps(el, props);
+  return el;
 }
 function ToastTitle(props) {
-  return _$createComponent(Kobalte.Title, _$mergeProps({
+  return createComponent(Kobalte.Title, mergeProps({
     "data-slot": "toast-title"
   }, props));
 }
 function ToastDescription(props) {
-  return _$createComponent(Kobalte.Description, _$mergeProps({
+  return createComponent(Kobalte.Description, mergeProps({
     "data-slot": "toast-description"
   }, props));
 }
 function ToastActions(props) {
-  return (() => {
-    var _el$3 = _tmpl$3();
-    _$spread(_el$3, props, false, false);
-    return _el$3;
-  })();
+  const el = document.createElement("div");
+  el.setAttribute("data-slot", "toast-actions");
+  _solidInsert(el, () => props.children);
+  spreadProps(el, props);
+  return el;
 }
 function ToastCloseButton(props) {
   const i18n = useI18n();
-  return _$createComponent(Kobalte.CloseButton, _$mergeProps({
+  return createComponent(Kobalte.CloseButton, mergeProps({
     "data-slot": "toast-close-button",
     as: IconButton,
     icon: "close",
@@ -89,12 +199,12 @@ function ToastCloseButton(props) {
   }, props));
 }
 function ToastProgressTrack(props) {
-  return _$createComponent(Kobalte.ProgressTrack, _$mergeProps({
+  return createComponent(Kobalte.ProgressTrack, mergeProps({
     "data-slot": "toast-progress-track"
   }, props));
 }
 function ToastProgressFill(props) {
-  return _$createComponent(Kobalte.ProgressFill, _$mergeProps({
+  return createComponent(Kobalte.ProgressFill, mergeProps({
     "data-slot": "toast-progress-fill"
   }, props));
 }
@@ -114,101 +224,83 @@ export function showToast(options) {
   const opts = typeof options === "string" ? {
     description: options
   } : options;
-  return toaster.show(props => _$createComponent(Toast, {
+  return toaster.show(props => createComponent(Toast, {
     get toastId() {
       return props.toastId;
     },
-    get duration() {
-      return opts.duration;
-    },
-    get persistent() {
-      return opts.persistent;
-    },
-    get ["data-variant"]() {
-      return opts.variant ?? "default";
-    },
+    duration: opts.duration,
+    persistent: opts.persistent,
+    "data-variant": opts.variant ?? "default",
     get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return opts.icon;
-        },
-        get children() {
-          return _$createComponent(Toast.Icon, {
-            get name() {
-              return opts.icon;
-            }
-          });
-        }
-      }), _$createComponent(Toast.Content, {
-        get children() {
-          return [_$createComponent(Show, {
-            get when() {
-              return opts.title;
-            },
-            get children() {
-              return _$createComponent(Toast.Title, {
-                get children() {
-                  return opts.title;
-                }
-              });
-            }
-          }), _$createComponent(Show, {
-            get when() {
-              return opts.description;
-            },
-            get children() {
-              return _$createComponent(Toast.Description, {
-                get children() {
-                  return opts.description;
-                }
-              });
-            }
-          }), _$createComponent(Show, {
-            get when() {
-              return opts.actions?.length;
-            },
-            get children() {
-              return _$createComponent(Toast.Actions, {
-                get children() {
-                  return opts.actions.map(action => (() => {
-                    var _el$4 = _tmpl$4();
-                    _el$4.$$click = () => {
-                      if (typeof action.onClick === "function") {
-                        action.onClick();
-                      }
-                      toaster.dismiss(props.toastId);
-                    };
-                    _$insert(_el$4, () => action.label);
-                    return _el$4;
-                  })());
-                }
-              });
-            }
-          })];
-        }
-      }), _$createComponent(Toast.CloseButton, {})];
+      // opts is a captured plain object, so every compiled Show condition is
+      // static for the toast's lifetime; plain conditionals build the same DOM.
+      const children = [];
+      if (opts.icon) {
+        children.push(createComponent(Toast.Icon, {
+          name: opts.icon
+        }));
+      }
+      const content = [];
+      if (opts.title) {
+        content.push(createComponent(Toast.Title, {
+          children: opts.title
+        }));
+      }
+      if (opts.description) {
+        content.push(createComponent(Toast.Description, {
+          children: opts.description
+        }));
+      }
+      if (opts.actions?.length) {
+        content.push(createComponent(Toast.Actions, {
+          children: opts.actions.map(action => {
+            const button = document.createElement("button");
+            button.setAttribute("data-slot", "toast-action");
+            // The compiled output used a delegated $$click; a direct listener
+            // is equivalent for this self-contained dismiss handler.
+            button.addEventListener("click", () => {
+              if (typeof action.onClick === "function") {
+                action.onClick();
+              }
+              toaster.dismiss(props.toastId);
+            });
+            appendChildren(button, action.label);
+            return button;
+          })
+        }));
+      }
+      children.push(createComponent(Toast.Content, {
+        children: content
+      }));
+      children.push(createComponent(Toast.CloseButton, {}));
+      return children;
     }
   }));
 }
 export function showPromiseToast(promise, options) {
-  return toaster.promise(promise, props => _$createComponent(Toast, {
+  return toaster.promise(promise, props => createComponent(Toast, {
     get toastId() {
       return props.toastId;
     },
     get ["data-variant"]() {
-      return _$memo(() => props.state === "pending")() ? "loading" : props.state === "fulfilled" ? "success" : "error";
+      return props.state === "pending" ? "loading" : props.state === "fulfilled" ? "success" : "error";
     },
     get children() {
-      return [_$createComponent(Toast.Content, {
+      return [createComponent(Toast.Content, {
         get children() {
-          return _$createComponent(Toast.Description, {
+          return createComponent(Toast.Description, {
             get children() {
-              return [_$memo(() => _$memo(() => props.state === "pending")() && options.loading), _$memo(() => _$memo(() => props.state === "fulfilled")() && options.success?.(props.data)), _$memo(() => _$memo(() => props.state === "rejected")() && options.error?.(props.error))];
+              // Mirror the compiled memo pairs: the inner memo flips only when
+              // the state flag changes, so the success/error callbacks are not
+              // re-invoked by unrelated updates while their branch is active.
+              const pending = createMemo(() => props.state === "pending");
+              const fulfilled = createMemo(() => props.state === "fulfilled");
+              const rejected = createMemo(() => props.state === "rejected");
+              return [createMemo(() => pending() && options.loading), createMemo(() => fulfilled() && options.success?.(props.data)), createMemo(() => rejected() && options.error?.(props.error))];
             }
           });
         }
-      }), _$createComponent(Toast.CloseButton, {})];
+      }), createComponent(Toast.CloseButton, {})];
     }
   }));
 }
-_$delegateEvents(["click"]);

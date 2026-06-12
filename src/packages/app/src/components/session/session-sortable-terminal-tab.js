@@ -1,14 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="absolute inset-0 d-flex align-items-center px-3 bg-muted z-10 pointer-events-auto"><input type=text class="bg-transparent border-none outline-none text-sm min-w-0 flex-1">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="outline-none focus:outline-none focus-visible:outline-none h-full"><div class="relative h-full">`);
-import { Show, createEffect, onCleanup } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSortable } from "@thisbeyond/solid-dnd";
 import { IconButton } from "@/bs/icon-button.js";
@@ -19,6 +9,15 @@ import { isDefaultTitle as isDefaultTerminalTitle } from "@/context/terminal-tit
 import { useTerminal } from "@/context/terminal.js";
 import { useLanguage } from "@/context/language.js";
 import { focusTerminalById } from "@/pages/session/helpers.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export function SortableTerminalTab(props) {
   const terminal = useTerminal();
   const language = useLanguage();
@@ -102,6 +101,9 @@ export function SortableTerminalTab(props) {
     });
     setStore("menuOpen", true);
   };
+  // Focus/select the rename input once editing starts. This is a user effect
+  // (createEffect), so it runs after the render effect below has built the
+  // overlay and bound `input` — same ordering as the compiled Show.
   createEffect(() => {
     if (!store.editing) return;
     if (!input) return;
@@ -117,107 +119,127 @@ export function SortableTerminalTab(props) {
     if (blurFrame === undefined) return;
     cancelAnimationFrame(blurFrame);
   });
-  return (() => {
-    var _el$ = _tmpl$3(),
-      _el$2 = _el$.firstChild;
-    _$use(sortable, _el$, () => true);
-    _$insert(_el$2, _$createComponent(Tabs.Trigger, {
-      get value() {
-        return props.terminal.id;
-      },
-      onClick: focus,
-      onMouseDown: e => e.preventDefault(),
-      onContextMenu: menu,
-      "class": "!shadow-none",
-      classes: {
-        button: "border-0 outline-none focus:outline-none focus-visible:outline-none !shadow-none !ring-0"
-      },
-      get closeButton() {
-        return _$createComponent(IconButton, {
-          icon: "close",
-          variant: "ghost",
-          onClick: e => {
-            e.stopPropagation();
-            close();
-          },
-          get ["aria-label"]() {
-            return language.t("terminal.close");
-          }
-        });
-      },
-      get children() {
-        var _el$3 = _tmpl$();
-        _el$3.$$dblclick = edit;
-        _$insert(_el$3, label);
-        _$effect(() => _el$3.classList.toggle("invisible", !!store.editing));
-        return _el$3;
+
+  // _tmpl$3: sortable outer wrapper + relative positioning context.
+  const root = template(`<div class="outline-none focus:outline-none focus-visible:outline-none h-full"><div class="relative h-full"></div></div>`);
+  const wrap = root.firstChild;
+
+  // use:sortable — registers the element as draggable/droppable and applies
+  // the sort transform (compiled `use(sortable, el, () => true)`).
+  sortable(root, () => true);
+
+  // _tmpl$: tab label span. Double-click starts renaming; the label keeps its
+  // width but turns invisible while the rename overlay covers it.
+  const labelEl = template(`<span></span>`);
+  labelEl.addEventListener("dblclick", edit);
+  createRenderEffect(() => {
+    labelEl.textContent = label();
+  });
+  createRenderEffect(() => labelEl.classList.toggle("invisible", !!store.editing));
+
+  wrap.appendChild(createComponent(Tabs.Trigger, {
+    get value() {
+      return props.terminal.id;
+    },
+    onClick: focus,
+    onMouseDown: e => e.preventDefault(),
+    onContextMenu: menu,
+    "class": "!shadow-none",
+    classes: {
+      button: "border-0 outline-none focus:outline-none focus-visible:outline-none !shadow-none !ring-0"
+    },
+    get closeButton() {
+      return createComponent(IconButton, {
+        icon: "close",
+        variant: "ghost",
+        onClick: e => {
+          e.stopPropagation();
+          close();
+        },
+        get ["aria-label"]() {
+          return language.t("terminal.close");
+        }
+      });
+    },
+    children: labelEl
+  }));
+
+  wrap.appendChild(createComponent(DropdownMenu, {
+    get open() {
+      return store.menuOpen;
+    },
+    onOpenChange: open => setStore("menuOpen", open),
+    get children() {
+      return createComponent(DropdownMenu.Portal, {
+        get children() {
+          return createComponent(DropdownMenu.Content, {
+            "class": "fixed",
+            get style() {
+              return {
+                left: `${store.menuPosition.x}px`,
+                top: `${store.menuPosition.y}px`
+              };
+            },
+            onCloseAutoFocus: e => {
+              if (!editRequested) return;
+              e.preventDefault();
+              editRequested = false;
+              requestAnimationFrame(() => edit());
+            },
+            get children() {
+              return [createComponent(DropdownMenu.Item, {
+                onSelect: () => editRequested = true,
+                get children() {
+                  return [createComponent(Icon, {
+                    name: "edit",
+                    "class": "w-4 h-4 mr-2"
+                  }), createMemo(() => language.t("common.rename"))];
+                }
+              }), createComponent(DropdownMenu.Item, {
+                onSelect: close,
+                get children() {
+                  return [createComponent(Icon, {
+                    name: "close",
+                    "class": "w-4 h-4 mr-2"
+                  }), createMemo(() => language.t("common.close"))];
+                }
+              })];
+            }
+          });
+        }
+      });
+    }
+  }));
+
+  // Show(store.editing): rename input overlay (_tmpl$2). Rebuilt on every
+  // editing start (non-keyed Show on a boolean), appended at the end of the
+  // wrapper — the compiled marker-less insert also appended after the
+  // dropdown root — and removed when editing ends. `input` keeps pointing at
+  // the last built element after unmount, like the compiled ref did.
+  let overlay = null;
+  createRenderEffect(() => {
+    if (!store.editing) {
+      if (overlay) {
+        overlay.remove();
+        overlay = null;
       }
-    }), null);
-    _$insert(_el$2, _$createComponent(Show, {
-      get when() {
-        return store.editing;
-      },
-      get children() {
-        var _el$4 = _tmpl$2(),
-          _el$5 = _el$4.firstChild;
-        _el$5.$$mousedown = e => e.stopPropagation();
-        _el$5.$$keydown = keydown;
-        _el$5.addEventListener("blur", save);
-        _el$5.$$input = e => setStore("title", e.currentTarget.value);
-        var _ref$ = input;
-        typeof _ref$ === "function" ? _$use(_ref$, _el$5) : input = _el$5;
-        _$effect(() => _el$5.value = store.title);
-        return _el$4;
-      }
-    }), null);
-    _$insert(_el$2, _$createComponent(DropdownMenu, {
-      get open() {
-        return store.menuOpen;
-      },
-      onOpenChange: open => setStore("menuOpen", open),
-      get children() {
-        return _$createComponent(DropdownMenu.Portal, {
-          get children() {
-            return _$createComponent(DropdownMenu.Content, {
-              "class": "fixed",
-              get style() {
-                return {
-                  left: `${store.menuPosition.x}px`,
-                  top: `${store.menuPosition.y}px`
-                };
-              },
-              onCloseAutoFocus: e => {
-                if (!editRequested) return;
-                e.preventDefault();
-                editRequested = false;
-                requestAnimationFrame(() => edit());
-              },
-              get children() {
-                return [_$createComponent(DropdownMenu.Item, {
-                  onSelect: () => editRequested = true,
-                  get children() {
-                    return [_$createComponent(Icon, {
-                      name: "edit",
-                      "class": "w-4 h-4 mr-2"
-                    }), _$memo(() => language.t("common.rename"))];
-                  }
-                }), _$createComponent(DropdownMenu.Item, {
-                  onSelect: close,
-                  get children() {
-                    return [_$createComponent(Icon, {
-                      name: "close",
-                      "class": "w-4 h-4 mr-2"
-                    }), _$memo(() => language.t("common.close"))];
-                  }
-                })];
-              }
-            });
-          }
-        });
-      }
-    }), null);
-    _$effect(() => _el$.classList.toggle("opacity-0", !!sortable.isActiveDraggable));
-    return _el$;
-  })();
+      return;
+    }
+    if (overlay) return;
+    overlay = template(`<div class="absolute inset-0 d-flex align-items-center px-3 bg-muted z-10 pointer-events-auto"><input type="text" class="bg-transparent border-none outline-none text-sm min-w-0 flex-1"></div>`);
+    const inputEl = overlay.firstChild;
+    inputEl.addEventListener("mousedown", e => e.stopPropagation());
+    inputEl.addEventListener("keydown", keydown);
+    inputEl.addEventListener("blur", save);
+    inputEl.addEventListener("input", e => setStore("title", e.currentTarget.value));
+    input = inputEl;
+    // Controlled value: owned by this (re)build, disposed with it.
+    createRenderEffect(() => inputEl.value = store.title);
+    wrap.appendChild(overlay);
+  });
+
+  // Compiled effect(): hide the in-flow tab while its drag overlay is active.
+  createRenderEffect(() => root.classList.toggle("opacity-0", !!sortable.isActiveDraggable));
+
+  return root;
 }
-_$delegateEvents(["dblclick", "input", "keydown", "mousedown"]);

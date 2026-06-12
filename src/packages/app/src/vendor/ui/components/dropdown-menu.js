@@ -1,15 +1,20 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
+import { createComponent, mergeProps, splitProps } from "solid-js";
 import { DropdownMenu as Kobalte } from "@kobalte/core/dropdown-menu";
-import { splitProps } from "solid-js";
+
+// These components are pure composition over Kobalte's DropdownMenu: there is
+// no DOM skeleton of their own, so the vanilla form keeps the same component
+// tree built with createComponent/mergeProps (re-exported by solid-js;
+// identical to the compiled solid-js/web helpers). Kobalte owns rendering,
+// portal and the presence-gated content; all reactive props (children,
+// class/classList, refs, handlers) stay live through getters and mergeProps.
 function DropdownMenuRoot(props) {
-  return _$createComponent(Kobalte, _$mergeProps(props, {
+  return createComponent(Kobalte, mergeProps(props, {
     "data-component": "dropdown-menu"
   }));
 }
 function DropdownMenuTrigger(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Trigger, _$mergeProps(rest, {
+  return createComponent(Kobalte.Trigger, mergeProps(rest, {
     "data-slot": "dropdown-menu-trigger",
     get classList() {
       return {
@@ -24,7 +29,7 @@ function DropdownMenuTrigger(props) {
 }
 function DropdownMenuIcon(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Icon, _$mergeProps(rest, {
+  return createComponent(Kobalte.Icon, mergeProps(rest, {
     "data-slot": "dropdown-menu-icon",
     get classList() {
       return {
@@ -38,11 +43,11 @@ function DropdownMenuIcon(props) {
   }));
 }
 function DropdownMenuPortal(props) {
-  return _$createComponent(Kobalte.Portal, props);
+  return createComponent(Kobalte.Portal, props);
 }
 function DropdownMenuContent(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Content, _$mergeProps(rest, {
+  return createComponent(Kobalte.Content, mergeProps(rest, {
     "data-component": "dropdown-menu-content",
     get classList() {
       return {
@@ -57,7 +62,7 @@ function DropdownMenuContent(props) {
 }
 function DropdownMenuArrow(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.Arrow, _$mergeProps(rest, {
+  return createComponent(Kobalte.Arrow, mergeProps(rest, {
     "data-slot": "dropdown-menu-arrow",
     get classList() {
       return {
@@ -69,7 +74,7 @@ function DropdownMenuArrow(props) {
 }
 function DropdownMenuSeparator(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
-  return _$createComponent(Kobalte.Separator, _$mergeProps(rest, {
+  return createComponent(Kobalte.Separator, mergeProps(rest, {
     "data-slot": "dropdown-menu-separator",
     get classList() {
       return {
@@ -81,7 +86,7 @@ function DropdownMenuSeparator(props) {
 }
 function DropdownMenuGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Group, _$mergeProps(rest, {
+  return createComponent(Kobalte.Group, mergeProps(rest, {
     "data-slot": "dropdown-menu-group",
     get classList() {
       return {
@@ -96,7 +101,7 @@ function DropdownMenuGroup(props) {
 }
 function DropdownMenuGroupLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.GroupLabel, _$mergeProps(rest, {
+  return createComponent(Kobalte.GroupLabel, mergeProps(rest, {
     "data-slot": "dropdown-menu-group-label",
     get classList() {
       return {
@@ -111,7 +116,7 @@ function DropdownMenuGroupLabel(props) {
 }
 function DropdownMenuItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.Item, _$mergeProps(rest, {
+  return createComponent(Kobalte.Item, mergeProps(rest, {
     "data-slot": "dropdown-menu-item",
     get classList() {
       return {
@@ -126,7 +131,7 @@ function DropdownMenuItem(props) {
 }
 function DropdownMenuItemLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemLabel, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemLabel, mergeProps(rest, {
     "data-slot": "dropdown-menu-item-label",
     get classList() {
       return {
@@ -141,7 +146,7 @@ function DropdownMenuItemLabel(props) {
 }
 function DropdownMenuItemDescription(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemDescription, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemDescription, mergeProps(rest, {
     "data-slot": "dropdown-menu-item-description",
     get classList() {
       return {
@@ -156,7 +161,7 @@ function DropdownMenuItemDescription(props) {
 }
 function DropdownMenuItemIndicator(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.ItemIndicator, _$mergeProps(rest, {
+  return createComponent(Kobalte.ItemIndicator, mergeProps(rest, {
     "data-slot": "dropdown-menu-item-indicator",
     get classList() {
       return {
@@ -171,7 +176,7 @@ function DropdownMenuItemIndicator(props) {
 }
 function DropdownMenuRadioGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.RadioGroup, _$mergeProps(rest, {
+  return createComponent(Kobalte.RadioGroup, mergeProps(rest, {
     "data-slot": "dropdown-menu-radio-group",
     get classList() {
       return {
@@ -186,7 +191,7 @@ function DropdownMenuRadioGroup(props) {
 }
 function DropdownMenuRadioItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.RadioItem, _$mergeProps(rest, {
+  return createComponent(Kobalte.RadioItem, mergeProps(rest, {
     "data-slot": "dropdown-menu-radio-item",
     get classList() {
       return {
@@ -201,7 +206,7 @@ function DropdownMenuRadioItem(props) {
 }
 function DropdownMenuCheckboxItem(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.CheckboxItem, _$mergeProps(rest, {
+  return createComponent(Kobalte.CheckboxItem, mergeProps(rest, {
     "data-slot": "dropdown-menu-checkbox-item",
     get classList() {
       return {
@@ -215,11 +220,11 @@ function DropdownMenuCheckboxItem(props) {
   }));
 }
 function DropdownMenuSub(props) {
-  return _$createComponent(Kobalte.Sub, props);
+  return createComponent(Kobalte.Sub, props);
 }
 function DropdownMenuSubTrigger(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.SubTrigger, _$mergeProps(rest, {
+  return createComponent(Kobalte.SubTrigger, mergeProps(rest, {
     "data-slot": "dropdown-menu-sub-trigger",
     get classList() {
       return {
@@ -234,7 +239,7 @@ function DropdownMenuSubTrigger(props) {
 }
 function DropdownMenuSubContent(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
-  return _$createComponent(Kobalte.SubContent, _$mergeProps(rest, {
+  return createComponent(Kobalte.SubContent, mergeProps(rest, {
     "data-component": "dropdown-menu-sub-content",
     get classList() {
       return {

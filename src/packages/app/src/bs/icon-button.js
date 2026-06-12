@@ -13,6 +13,26 @@ function getClassList(classList, variantClass, sizeClass, extraClass) {
   return Object.keys(classes).filter(k => !!classes[k]).join(" ");
 }
 
+// Object styles applied per property (compiled style() semantics); a plain
+// setAttribute would stringify the object to "[object Object]" and clear the
+// inline style (e.g. the dock chevron's rotate transform) instead.
+function applyStyle(el, style) {
+  if (style == null) {
+    el.removeAttribute("style");
+    return;
+  }
+  if (typeof style === "string") {
+    el.style.cssText = style;
+    return;
+  }
+  el.removeAttribute("style");
+  for (const [key, value] of Object.entries(style)) {
+    if (value == null) continue;
+    if (key.startsWith("--")) el.style.setProperty(key, String(value));
+    else el.style[key] = value;
+  }
+}
+
 function appendChildValue(target, value) {
   if (typeof value === "function") {
     appendChildValue(target, value());
@@ -82,6 +102,10 @@ export function IconButton(props) {
     for (const key in props) {
       if (STATIC_KEYS.includes(key) || /^on[A-Z]/.test(key)) continue;
       const value = props[key];
+      if (key === "style") {
+        applyStyle(element, value);
+        continue;
+      }
       if (value == null || value === false) element.removeAttribute(key);
       else element.setAttribute(key, value === true ? "" : String(value));
     }

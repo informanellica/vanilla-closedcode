@@ -1,12 +1,17 @@
+import { createRenderEffect } from "solid-js";
 import { insert as _solidInsert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
+// Getter-preserving split (Solid's splitProps semantics): copying values
+// would evaluate signal-backed getters once and freeze them (the documented
+// frozen-props pitfall).
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
-  for (const key in props) {
-    if (keys.includes(key)) split[key] = props[key];
-    else rest[key] = props[key];
+  for (const key of Object.keys(props)) {
+    const desc = Object.getOwnPropertyDescriptor(props, key);
+    if (keys.includes(key)) Object.defineProperty(split, key, desc);
+    else Object.defineProperty(rest, key, desc);
   }
   return [split, rest];
 }
@@ -43,30 +48,65 @@ function applyClassList(el, classList) {
   }
 }
 
+// Object styles applied per property (compiled style() semantics); a plain
+// setAttribute would stringify the object to "[object Object]" and clear the
+// inline style instead.
+function applyStyle(el, style) {
+  if (style == null) {
+    el.removeAttribute("style");
+    return;
+  }
+  if (typeof style === "string") {
+    el.style.cssText = style;
+    return;
+  }
+  el.removeAttribute("style");
+  for (const [key, value] of Object.entries(style)) {
+    if (value == null) continue;
+    if (key.startsWith("--")) el.style.setProperty(key, String(value));
+    else el.style[key] = value;
+  }
+}
+
+// Handlers are bound once; attribute props (data-state, style, aria-*, …)
+// are often signal-backed getters and are re-applied inside a render effect,
+// removed when they turn null/undefined/false.
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
     const value = rest[key];
     if (key.startsWith("on") && typeof value === "function") {
       el[key.toLowerCase()] = value;
-      continue;
     }
-    if (value === undefined) continue;
-    if (key in el && !key.includes("-")) {
-      try {
-        el[key] = value;
-        continue;
-      } catch {
-        // fallback
-      }
-    }
-    if (value === false || value === null) el.removeAttribute(key);
-    else el.setAttribute(key, String(value));
   }
+  const prev = {};
+  createRenderEffect(() => {
+    for (const key in rest) {
+      if (key === "class" || key === "classList" || key === "children") continue;
+      if (key.startsWith("on") && typeof rest[key] === "function") continue;
+      const value = rest[key];
+      if (value === prev[key]) continue;
+      prev[key] = value;
+      if (key === "style") {
+        applyStyle(el, value);
+        continue;
+      }
+      if (value !== undefined && key in el && !key.includes("-")) {
+        try {
+          el[key] = value;
+          continue;
+        } catch {
+          // fall through to the attribute path
+        }
+      }
+      if (value == null || value === false) el.removeAttribute(key);
+      else el.setAttribute(key, String(value));
+    }
+  });
 }
 
 export function Checkbox(props) {
-  const [local, others] = splitProps(props, ["children", "class", "classList", "label", "hideLabel", "description", "icon"]);
+  const [local, others] = splitProps(props, ["children", "class", "classList", "label", "hideLabel", "description", "icon", "checked", "indeterminate", "disabled", "readOnly"]);
   const root = document.createElement("label");
   root.setAttribute("data-component", "checkbox");
   if (local.class) root.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
@@ -78,27 +118,56 @@ export function Checkbox(props) {
   input.setAttribute("data-slot", "checkbox-checkbox-input");
   root.appendChild(input);
 
+  // State props are live getters (e.g. a todo's status signal); track them and
+  // expose the Kobalte-style data attributes checkbox.css selects on
+  // ([data-checked] / [data-indeterminate] / [data-disabled] / [data-readonly]).
+  createRenderEffect(() => {
+    const checked = !!local.checked;
+    const indeterminate = !!local.indeterminate;
+    const disabled = !!local.disabled;
+    const readOnly = !!local.readOnly;
+    root.toggleAttribute("data-checked", checked);
+    root.toggleAttribute("data-indeterminate", indeterminate);
+    root.toggleAttribute("data-disabled", disabled);
+    root.toggleAttribute("data-readonly", readOnly);
+    input.checked = checked;
+    input.indeterminate = indeterminate;
+    input.disabled = disabled;
+  });
+
   const control = document.createElement("span");
   control.setAttribute("data-slot", "checkbox-checkbox-control");
   const indicator = document.createElement("span");
   indicator.setAttribute("data-slot", "checkbox-checkbox-indicator");
-  appendChildren(indicator, local.icon || Icon({ name: "check" }));
+  // icon is often a signal-backed getter (e.g. an in-progress marker that
+  // follows item status); re-resolve it in a render effect instead of reading
+  // it once. The default check mark node is cached and re-attached.
+  let fallbackIcon;
+  createRenderEffect(() => {
+    const icon = local.icon;
+    indicator.replaceChildren();
+    appendChildren(indicator, icon || (fallbackIcon ??= Icon({ name: "check" })));
+  });
   control.appendChild(indicator);
   root.appendChild(control);
 
   const content = document.createElement("div");
   content.setAttribute("data-slot", "checkbox-checkbox-content");
-  if (props.children) {
+  // Children are evaluated exactly once (Solid component semantics) — the
+  // previous code read the getter several times, creating extra instances.
+  const children = local.children;
+  if (children != null && children !== false) {
     const label = document.createElement("span");
     label.setAttribute("data-slot", "checkbox-checkbox-label");
     if (local.hideLabel) label.classList.add("sr-only");
-    appendChildren(label, props.children);
+    appendChildren(label, children);
     content.appendChild(label);
   }
-  if (local.description) {
+  const description = local.description;
+  if (description != null && description !== false) {
     const desc = document.createElement("div");
     desc.setAttribute("data-slot", "checkbox-checkbox-description");
-    appendChildren(desc, local.description);
+    appendChildren(desc, description);
     content.appendChild(desc);
   }
   const error = document.createElement("div");
