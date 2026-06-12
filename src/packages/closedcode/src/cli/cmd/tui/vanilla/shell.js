@@ -14,7 +14,6 @@
 // drive it with dispatch() — exactly like runtime.test.mjs.
 import { createSignal } from "../runtime/reactivity.js";
 import { column, box } from "../runtime/layout.js";
-import { createSelectList } from "../runtime/list.js";
 import { createKeyRouter } from "../runtime/focus.js";
 import { centerBox } from "../runtime/dialog.js";
 import { fit } from "../runtime/text.js";
@@ -23,6 +22,7 @@ import { defaultTheme, attr } from "./theme.js";
 import { drawLogo, LOGO_HEIGHT } from "./logo.js";
 import { createPrompt, createPromptHistory } from "./prompt.js";
 import { createTimeline } from "./timeline.js";
+import * as Dialogs from "./dialogs.js";
 
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
@@ -89,23 +89,29 @@ export function createShell(opts = {}) {
       setDialogs(list => [...list, { ...spec, remove }]);
     },
     close() {
-      setDialogs(list => { list[list.length - 1]?.remove?.(); return list.slice(0, -1); });
+      const top = dialogs().at(-1);
+      if (!top) return;
+      top.remove?.();
+      setDialogs(list => list.slice(0, -1));
+      top.onClose?.();
     },
     current: () => dialogs().at(-1),
   };
 
-  // --- command palette ------------------------------------------------------
+  // --- command palette (filtered select from the dialog families) ----------
   function openCommands() {
-    const items = [
-      { label: "New session", value: "session.new" },
-      { label: "Go home", value: "route.home" },
-      { label: "Switch model", value: "models" },
-      { label: "Switch agent", value: "agents" },
-      { label: "Help", value: "help" },
-      { label: "Exit", value: "app.exit" },
-    ];
-    const list = createSelectList(items, { now: opts.now, onSelect: it => { dialog.close(); runCommand(it.value); } });
-    dialog.open({ title: "Commands", width: 44, height: items.length + 2, widget: list });
+    Dialogs.select(dialog, {
+      title: "Commands", theme, now: opts.now,
+      options: [
+        { label: "New session", value: "session.new" },
+        { label: "Go home", value: "route.home" },
+        { label: "Switch model", value: "models" },
+        { label: "Switch agent", value: "agents" },
+        { label: "Help", value: "help" },
+        { label: "Exit", value: "app.exit" },
+      ],
+      onSelect: it => { if (it) runCommand(it.value); },
+    });
   }
   function runCommand(value) {
     switch (value) {
@@ -132,11 +138,10 @@ export function createShell(opts = {}) {
     const widget = { draw: r => lines.forEach((l, i) => r.line(i, l, attr(theme, "textMuted"))), handleKey: () => false };
     dialog.open({ title: "Help", width: 48, height: lines.length + 2, widget });
   }
-  // A generic single-select stub used by model/agent commands until the real
-  // SDK-backed dialogs land (Stage 3 dialog families).
+  // Model/agent pickers: a filtered select from the dialog families. The real
+  // SDK-backed option lists are injected at the integration stage.
   function openStub(title, options) {
-    const list = createSelectList(options, { now: opts.now, onSelect: () => dialog.close() });
-    dialog.open({ title, width: 40, height: Math.min(options.length, 8) + 2, widget: list });
+    Dialogs.select(dialog, { title, theme, now: opts.now, width: 40, options });
   }
 
   // --- base layer: global hotkeys + timeline scroll + the prompt -----------
