@@ -37,6 +37,25 @@ Development line following `0.1.0-preview`.
   harness), so it does not exist on a normal run.
 
 ### Changed
+- **The entire renderer is now hand-written vanilla JS** — the "Pure Vanilla"
+  roadmap goal for our own UI code is complete. Every non-storybook file under
+  `packages/app/src` (about 150 files across `bs/`, `vendor/ui`, `components`,
+  `pages`, `context`, `lib` — including the giants `message-part.js` (2,762
+  lines), `layout.js`, `session.js`, `prompt-input.js`, `app.js` and
+  `entry.js`) has had its SolidJS compiler output (`_$template` /
+  `_$createComponent` / positional `firstChild` wiring) replaced with template
+  literals + `data-slot` lookups, `createEffect`-driven text/attributes and
+  plain `addEventListener`. Reactivity still runs on solid-js core
+  (`createSignal/Memo/Effect`, contexts — the documented next step is replacing
+  that too); the only remaining `solid-js/web` imports are its public API
+  (`render`, `insert` for presence-gated Kobalte content, `Dynamic`), each with
+  an in-file justification. Conversion was verified per batch against the
+  compiled originals (API/contract parity, the project's Solid-interop trap
+  list) plus the e2e suite, with several real pre-existing bugs fixed along the
+  way (vendor text-field frozen copy button, icon-button object-style
+  stringification, i18n fallback dict missing ui.* keys).
+
+### Changed
 - **ORM migrated: Drizzle -> Sequelize** (roadmap backlog item). The data layer
   now runs on `sequelize@6` + `sqlite3` (N-API; ABI-stable for both plain Node
   and the Electron-main sidecar import — no rebuild step). The SQL migration
