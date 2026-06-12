@@ -3,7 +3,7 @@ let shouldListRoot;
 let shouldListExpanded;
 let dirsToExpand;
 beforeAll(async () => {
-  mock.module("@/lib/router/index.js", () => ({
+  mock.module("../lib/router/index.js", () => ({
     useNavigate: () => () => undefined,
     useParams: () => ({})
   }));

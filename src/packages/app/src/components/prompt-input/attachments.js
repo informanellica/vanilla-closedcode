@@ -1,5 +1,5 @@
 import { onMount } from "solid-js";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { showToast } from "@/lib/toast.js";
 import { usePrompt } from "@/context/prompt.js";
 import { useLanguage } from "@/context/language.js";

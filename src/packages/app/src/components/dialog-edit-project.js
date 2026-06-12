@@ -2,7 +2,7 @@ import { Button } from "@/bs/button.js";
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
 import { TextField } from "@/bs/text-field.js";
-import { useMutation } from "@/lib/query/index.js";
+import { useMutation } from "../lib/query/index.js";
 import { Icon } from "@/bs/icon.js";
 import { createComponent, createEffect, createMemo } from "solid-js";
 import { createStore } from "solid-js/store";

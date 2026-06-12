@@ -61,7 +61,7 @@ const clientFor = directory => {
 };
 beforeAll(async () => {
   const rootClient = clientFor("/repo/main");
-  mock.module("@/lib/router/index.js", () => ({
+  mock.module("../../lib/router/index.js", () => ({
     useNavigate: () => () => undefined,
     useParams: () => params
   }));

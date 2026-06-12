@@ -1,7 +1,7 @@
-import { useIsRouting, useLocation } from "@/lib/router/index.js";
+import { useIsRouting, useLocation } from "../lib/router/index.js";
 import { batch, createComponent, createEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { useLanguage } from "@/context/language.js";
 const span = 5000;

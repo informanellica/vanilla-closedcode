@@ -4,7 +4,7 @@ import { createSimpleContext } from "@/lib/context.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";
 import { useGlobalSync } from "./global-sync.js";
-import { useParams } from "@/lib/router/index.js";
+import { useParams } from "../lib/router/index.js";
 import { decode64 } from "@/utils/base64.js";
 import { acceptKey, directoryAcceptKey, isDirectoryAutoAccepting, autoRespondsPermission } from "./permission-auto-respond.js";
 function isNonAllowRule(rule) {

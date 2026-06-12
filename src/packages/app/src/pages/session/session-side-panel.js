@@ -1,5 +1,5 @@
 import { Show, createComponent, createEffect, createMemo, createRenderEffect } from "solid-js";
-import { createMediaQuery } from "@/lib/primitives/media.js";
+import { createMediaQuery } from "../../lib/primitives/media.js";
 import { Tabs } from "@/bs/tabs.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";

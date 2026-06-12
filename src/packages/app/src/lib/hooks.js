@@ -5,9 +5,9 @@ import fuzzysort from "fuzzysort";
 import { entries, flatMap, groupBy, map, pipe } from "remeda";
 import { createEffect, createMemo, createResource, on, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createList } from "@/lib/primitives/solid-list.js";
-import { createEventListener } from "@/lib/primitives/event-listener.js";
-import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
+import { createList } from "./primitives/solid-list.js";
+import { createEventListener } from "./primitives/event-listener.js";
+import { createResizeObserver } from "./primitives/resize-observer.js";
 
 export function useFilteredList(props) {
   const [store, setStore] = createStore({

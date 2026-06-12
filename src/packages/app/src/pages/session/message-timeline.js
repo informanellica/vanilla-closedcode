@@ -6,8 +6,8 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { useMutation } from "@/lib/query/index.js";
-import { useNavigate } from "@/lib/router/index.js";
+import { useMutation } from "../../lib/query/index.js";
+import { useNavigate } from "../../lib/router/index.js";
 import { Button } from "@/bs/button.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
@@ -26,7 +26,7 @@ import { Popover as KobaltePopover } from "@/vendor/ui/components/popover.js";
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
 import { useDialog } from "@/lib/dialog.js";
-import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
+import { createResizeObserver } from "../../lib/primitives/resize-observer.js";
 import { useLanguage } from "@/context/language.js";
 import { useSessionKey } from "@/pages/session/session-layout.js";
 import { usePlatform } from "@/context/platform.js";
@@ -36,7 +36,7 @@ import { useSync } from "@/context/sync.js";
 import { messageAgentColor } from "@/utils/agent.js";
 import { sessionTitle } from "@/utils/session-title.js";
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note.js";
-import { makeTimer } from "@/lib/primitives/timer.js";
+import { makeTimer } from "../../lib/primitives/timer.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated and

@@ -9,7 +9,7 @@ import { createStore } from "solid-js/store";
 import { env, envAll } from "@/lib/env.js";
 import { useTheme } from "@/lib/theme.js";
 import { showToast } from "@/lib/toast.js";
-import { useParams } from "@/lib/router/index.js";
+import { useParams } from "../lib/router/index.js";
 import { useLanguage } from "@/context/language.js";
 import { usePermission } from "@/context/permission.js";
 import { usePlatform } from "@/context/platform.js";

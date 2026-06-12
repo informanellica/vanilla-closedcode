@@ -1,6 +1,6 @@
 import { batch, createMemo, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { same } from "@/utils/same.js";
 const emptyTabs = [];
 export const getSessionKey = (dir, id) => `${dir ?? ""}${id ? `/${id}` : ""}`;

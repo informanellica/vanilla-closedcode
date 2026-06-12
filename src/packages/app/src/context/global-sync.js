@@ -12,7 +12,7 @@ import { estimateRootSessionTotal, loadRootSessionsWithFallback } from "./global
 import { trimSessions } from "./global-sync/session-trim.js";
 import { SESSION_RECENT_LIMIT } from "./global-sync/types.js";
 import { formatServerError } from "@/utils/server-errors.js";
-import { queryOptions, skipToken, useMutation, useQueries, useQuery, useQueryClient } from "@/lib/query/index.js";
+import { queryOptions, skipToken, useMutation, useQueries, useQuery, useQueryClient } from "../lib/query/index.js";
 import { createRefreshQueue } from "./global-sync/queue.js";
 import { directoryKey } from "./global-sync/utils.js";
 export const loadSessionsQuery = directory => queryOptions({

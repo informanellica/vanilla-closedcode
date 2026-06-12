@@ -12,7 +12,7 @@ import {
   Show,
   useContext
 } from "solid-js";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "./primitives/event-listener.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
 

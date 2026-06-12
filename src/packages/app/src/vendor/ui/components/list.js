@@ -1,7 +1,7 @@
 import { useFilteredList } from "../hooks/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, on, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { useI18n } from "../context/i18n.js";
 import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";

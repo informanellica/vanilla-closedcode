@@ -1,6 +1,6 @@
 import { createEffect, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createSimpleContext } from "../context/helper.js";
 
 // Bootstrap 5.3 color modes only. The single source of truth for colors is the

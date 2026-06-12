@@ -1,5 +1,5 @@
 import { createRenderEffect, onMount } from "solid-js";
-import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { createStore } from "solid-js/store";
 import { useSpring } from "./motion-spring.js";
 

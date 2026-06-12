@@ -1,5 +1,5 @@
 import { createComponent, createEffect, onCleanup } from "solid-js";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { SessionReview } from "@/vendor/ui/components/session-review.js";
 import { useLayout } from "@/context/layout.js";
 import { useSessionController } from "@/controllers/session.js";

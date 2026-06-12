@@ -1,7 +1,7 @@
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
 import { insert as _solidInsert } from "solid-js/web";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { useFileComponent } from "@/vendor/ui/context/file.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "@/vendor/ui/pierre/selection-bridge.js";
 import { createLineCommentController } from "@/vendor/ui/components/line-comment-annotations.js";

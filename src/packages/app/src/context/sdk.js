@@ -1,5 +1,5 @@
 import { createSimpleContext } from "@/lib/context.js";
-import { createGlobalEmitter } from "@/lib/primitives/event-bus.js";
+import { createGlobalEmitter } from "../lib/primitives/event-bus.js";
 import { createEffect, createMemo, onCleanup } from "solid-js";
 import { useGlobalSDK } from "./global-sdk.js";
 export const {

@@ -1,6 +1,6 @@
 import { createEffect, createMemo, on, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useParams } from "@/lib/router/index.js";
+import { useParams } from "../../../lib/router/index.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useSync } from "@/context/sync.js";
 import { useComposerController } from "@/controllers/session-composer.js";

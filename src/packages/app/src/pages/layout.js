@@ -4,8 +4,8 @@
 // freezing a one-time snapshot.
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
-import { useLocation, useNavigate, useParams } from "@/lib/router/index.js";
+import { makeEventListener } from "../lib/primitives/event-listener.js";
+import { useLocation, useNavigate, useParams } from "../lib/router/index.js";
 import { useLayout } from "@/context/layout.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { Persist, persisted } from "@/utils/persist.js";
@@ -21,7 +21,7 @@ import { getFilename } from "core/util/path";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
 import { createStore, produce } from "solid-js/store";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@/lib/dnd/index.js";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "../lib/dnd/index.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { showToast, Toast, toaster } from "@/lib/toast.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";

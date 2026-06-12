@@ -1,7 +1,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
 import { autoPosition } from "./_floating.js";

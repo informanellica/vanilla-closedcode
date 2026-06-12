@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, mock, test } from "@jest/globals";
 import { createRoot } from "solid-js";
 let createCommentSessionForTest;
 beforeAll(async () => {
-  mock.module("@/lib/router/index.js", () => ({
+  mock.module("../lib/router/index.js", () => ({
     useNavigate: () => () => undefined,
     useParams: () => ({})
   }));

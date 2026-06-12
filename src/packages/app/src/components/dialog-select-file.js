@@ -6,7 +6,7 @@ import { Keybind } from "@/vendor/ui/components/keybind.js";
 import { List } from "@/bs/list.js";
 import { base64Encode } from "core/util/encode";
 import { getDirectory, getFilename } from "core/util/path";
-import { useNavigate } from "@/lib/router/index.js";
+import { useNavigate } from "../lib/router/index.js";
 import { createComponent, createEffect, createMemo, createSignal, getOwner, onCleanup, runWithOwner } from "solid-js";
 import { formatKeybind, useCommand } from "@/context/command.js";
 import { useGlobalSync } from "@/context/global-sync.js";

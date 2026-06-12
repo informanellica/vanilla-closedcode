@@ -1,6 +1,6 @@
 import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
-import { makeEventListener } from "@/lib/primitives/event-listener.js";
-import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { createStore } from "solid-js/store";
 const hosts = new Set();
 let target;

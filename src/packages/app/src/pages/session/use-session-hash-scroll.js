@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "@/lib/router/index.js";
+import { useLocation, useNavigate } from "../../lib/router/index.js";
 import { createEffect, createMemo, onCleanup, onMount } from "solid-js";
 import { messageIdFromHash } from "./message-id-from-hash.js";
 export const useSessionHashScroll = input => {

@@ -32,7 +32,7 @@ import { AnimatedCountList } from "./tool-count-summary.js";
 import { ToolStatusTitle } from "./tool-status-title.js";
 import { patchFiles } from "./apply-patch-file.js";
 import { animate } from "motion";
-import { useLocation } from "@/lib/router/index.js";
+import { useLocation } from "../../../lib/router/index.js";
 import { attached, inline, kind } from "./message-file.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
