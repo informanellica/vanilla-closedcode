@@ -1,20 +1,8 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class=scroll-view__thumb style=z-index:100>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div><div class=scroll-view__viewport tabindex=0 role=region>`);
-import { onMount, splitProps, Show, mergeProps } from "solid-js";
+import { onMount, splitProps, mergeProps, createRenderEffect, createRoot, onCleanup } from "solid-js";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
 import { createStore } from "solid-js/store";
 import { useI18n } from "../context/i18n.js";
+
 export const scrollKey = event => {
   if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   switch (event.key) {
@@ -32,6 +20,27 @@ export const scrollKey = event => {
       return "down";
   }
 };
+
+// Apply a Solid-style `style` prop (string or object) to an element, clearing
+// any previously applied value first. Mirrors solid's web-renderer style handling.
+function applyStyle(el, style) {
+  if (style == null) {
+    el.removeAttribute("style");
+    return;
+  }
+  if (typeof style === "string") {
+    el.style.cssText = style;
+    return;
+  }
+  el.removeAttribute("style");
+  for (const key in style) {
+    const value = style[key];
+    if (value == null) continue;
+    if (key.startsWith("--")) el.style.setProperty(key, String(value));
+    else el.style[key] = value;
+  }
+}
+
 export function ScrollView(props) {
   const i18n = useI18n();
   const merged = mergeProps({
@@ -177,69 +186,197 @@ export function ScrollView(props) {
         break;
     }
   };
-  return (() => {
-    var _el$ = _tmpl$2(),
-      _el$2 = _el$.firstChild;
-    _el$.addEventListener("pointerleave", () => setState("isHovered", false));
-    _el$.addEventListener("pointerenter", () => setState("isHovered", true));
-    var _ref$ = rootRef;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : rootRef = _el$;
-    _$spread(_el$, _$mergeProps({
-      get ["class"]() {
-        return `scroll-view ${local.class || ""}`;
-      },
-      get style() {
-        return local.style;
-      }
-    }, rest), false, true);
-    _el$2.$$keydown = e => {
-      onKeyDown(e);
-      if (typeof events.onKeyDown === "function") events.onKeyDown(e);
-    };
-    _$addEventListener(_el$2, "click", events.onClick, true);
-    _$addEventListener(_el$2, "pointerdown", events.onPointerDown, true);
-    _$addEventListener(_el$2, "touchcancel", events.onTouchCancel);
-    _$addEventListener(_el$2, "touchend", events.onTouchEnd, true);
-    _$addEventListener(_el$2, "touchmove", events.onTouchMove, true);
-    _$addEventListener(_el$2, "touchstart", events.onTouchStart, true);
-    _$addEventListener(_el$2, "wheel", events.onWheel);
-    _el$2.addEventListener("scroll", e => {
-      updateThumb();
-      if (typeof events.onScroll === "function") events.onScroll(e);
+
+  // Static skeleton (compiled _tmpl$2):
+  //   <div><div class=scroll-view__viewport tabindex=0 role=region></div></div>
+  const root = document.createElement("div");
+  const viewport = document.createElement("div");
+  viewport.className = "scroll-view__viewport";
+  viewport.setAttribute("tabindex", "0");
+  viewport.setAttribute("role", "region");
+  root.appendChild(viewport);
+
+  // Hover tracking listeners attach once (these are direct addEventListener in
+  // the compiled output, not delegated).
+  root.addEventListener("pointerleave", () => setState("isHovered", false));
+  root.addEventListener("pointerenter", () => setState("isHovered", true));
+
+  // ref forwarding for rootRef (here rootRef is a local, so just assign it).
+  rootRef = root;
+
+  // Spread of mergeProps({ class, style }, rest) onto the root, skipChildren=true.
+  // class/style come from getters so they stay live; `rest` are the remaining
+  // passthrough props. Listeners in `rest` attach once; other attrs re-apply in
+  // a render effect (mirroring the compiled spread()).
+  for (const key in rest) {
+    if (/^on[A-Z]/.test(key) && typeof rest[key] === "function") {
+      root.addEventListener(key.slice(2).toLowerCase(), rest[key]);
+    }
+  }
+  let prevClass;
+  let prevStyleApplied;
+  const prevRestAttrs = {};
+  createRenderEffect(() => {
+    // class: `scroll-view ${local.class || ""}` (trailing space preserved when
+    // empty, exactly like the template literal in the compiled getter).
+    const nextClass = `scroll-view ${local.class || ""}`;
+    if (nextClass !== prevClass) {
+      root.className = prevClass = nextClass;
+    }
+    // style getter (string or object).
+    const nextStyle = local.style;
+    if (nextStyle !== prevStyleApplied) {
+      prevStyleApplied = nextStyle;
+      applyStyle(root, nextStyle);
+    }
+    // Remaining passthrough attributes (non-event), re-applied reactively.
+    for (const key in rest) {
+      if (key === "children" || key === "ref" || /^on[A-Z]/.test(key)) continue;
+      const value = rest[key];
+      if (value === prevRestAttrs[key]) continue;
+      prevRestAttrs[key] = value;
+      if (value == null || value === false) root.removeAttribute(key);
+      else root.setAttribute(key, value === true ? "" : String(value));
+    }
+  });
+
+  // Viewport listeners. The compiled output delegated keydown/click/pointerdown
+  // (document-level, bubble phase) and used addEventListener for touch*/wheel;
+  // all are equivalent to bubble-phase listeners attached directly here.
+  viewport.addEventListener("keydown", e => {
+    onKeyDown(e);
+    if (typeof events.onKeyDown === "function") events.onKeyDown(e);
+  });
+  if (typeof events.onClick === "function") viewport.addEventListener("click", events.onClick);
+  if (typeof events.onPointerDown === "function") viewport.addEventListener("pointerdown", events.onPointerDown);
+  if (typeof events.onTouchCancel === "function") viewport.addEventListener("touchcancel", events.onTouchCancel);
+  if (typeof events.onTouchEnd === "function") viewport.addEventListener("touchend", events.onTouchEnd);
+  if (typeof events.onTouchMove === "function") viewport.addEventListener("touchmove", events.onTouchMove);
+  if (typeof events.onTouchStart === "function") viewport.addEventListener("touchstart", events.onTouchStart);
+  if (typeof events.onWheel === "function") viewport.addEventListener("wheel", events.onWheel);
+  viewport.addEventListener("scroll", e => {
+    updateThumb();
+    if (typeof events.onScroll === "function") events.onScroll(e);
+  });
+
+  // viewportRef ref forwarding (local).
+  viewportRef = viewport;
+
+  // Live children inserted into the viewport (compiled inserted
+  // `() => local.children`). Track the accessor and re-render into the viewport
+  // when it changes. Children are the only
+  // content of the viewport, so a full reconcile via replaceChildren matches the
+  // single dynamic insert in the compiled output.
+  let prevChildren;
+  createRenderEffect(() => {
+    const next = local.children;
+    if (next === prevChildren) return;
+    prevChildren = next;
+    insertChildren(viewport, next);
+  });
+
+  // aria-label effect on the viewport (live across language switch).
+  let prevAria;
+  createRenderEffect(() => {
+    const next = i18n.t("ui.scrollView.ariaLabel");
+    if (next !== prevAria) viewport.setAttribute("aria-label", prevAria = next);
+  });
+
+  // <Show when={showThumb()}>: the thumb only mounts while visible. Built in its
+  // own reactive root so unmount disposes its effect, matching solid's <Show>.
+  // It is the second child of the root (after the viewport), inserted before a
+  // trailing anchor like the compiled insert of the Show into the root.
+  const thumbAnchor = document.createComment("");
+  root.appendChild(thumbAnchor);
+  let thumbNode = null;
+  let thumbDispose = null;
+  const buildThumb = () => {
+    // <div class=scroll-view__thumb style=z-index:100>
+    const thumb = document.createElement("div");
+    thumb.className = "scroll-view__thumb";
+    thumb.style.cssText = "z-index:100";
+    thumb.addEventListener("pointerdown", onThumbPointerDown);
+    thumbRef = thumb;
+    // Change-guarded data-visible / data-dragging / height / transform, exactly
+    // like the compiled effect() with its prev-value cache.
+    let prevVisible;
+    let prevDragging;
+    let prevHeight;
+    let prevTransform;
+    createRenderEffect(() => {
+      const nextVisible = isHovered() || isDragging();
+      const nextDragging = isDragging();
+      const nextHeight = `${thumbHeight()}px`;
+      const nextTransform = `translateY(${thumbTop()}px)`;
+      if (nextVisible !== prevVisible) thumb.setAttribute("data-visible", prevVisible = nextVisible);
+      if (nextDragging !== prevDragging) thumb.setAttribute("data-dragging", prevDragging = nextDragging);
+      if (nextHeight !== prevHeight) thumb.style.setProperty("height", prevHeight = nextHeight);
+      if (nextTransform !== prevTransform) thumb.style.setProperty("transform", prevTransform = nextTransform);
     });
-    var _ref$2 = viewportRef;
-    typeof _ref$2 === "function" ? _$use(_ref$2, _el$2) : viewportRef = _el$2;
-    _$insert(_el$2, () => local.children);
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return showThumb();
-      },
-      get children() {
-        var _el$3 = _tmpl$();
-        _el$3.$$pointerdown = onThumbPointerDown;
-        var _ref$3 = thumbRef;
-        typeof _ref$3 === "function" ? _$use(_ref$3, _el$3) : thumbRef = _el$3;
-        _$effect(_p$ => {
-          var _v$ = isHovered() || isDragging(),
-            _v$2 = isDragging(),
-            _v$3 = `${thumbHeight()}px`,
-            _v$4 = `translateY(${thumbTop()}px)`;
-          _v$ !== _p$.e && _$setAttribute(_el$3, "data-visible", _p$.e = _v$);
-          _v$2 !== _p$.t && _$setAttribute(_el$3, "data-dragging", _p$.t = _v$2);
-          _v$3 !== _p$.a && _$setStyleProperty(_el$3, "height", _p$.a = _v$3);
-          _v$4 !== _p$.o && _$setStyleProperty(_el$3, "transform", _p$.o = _v$4);
-          return _p$;
-        }, {
-          e: undefined,
-          t: undefined,
-          a: undefined,
-          o: undefined
-        });
-        return _el$3;
-      }
-    }), null);
-    _$effect(() => _$setAttribute(_el$2, "aria-label", i18n.t("ui.scrollView.ariaLabel")));
-    return _el$;
-  })();
+    return thumb;
+  };
+  let prevShow;
+  createRenderEffect(() => {
+    const show = showThumb();
+    if (show === prevShow) return;
+    prevShow = show;
+    if (thumbNode) {
+      thumbNode.remove();
+      thumbNode = null;
+      thumbRef = undefined;
+    }
+    if (thumbDispose) {
+      thumbDispose();
+      thumbDispose = null;
+    }
+    if (show) {
+      thumbNode = createRoot(dispose => {
+        thumbDispose = dispose;
+        return buildThumb();
+      });
+      root.insertBefore(thumbNode, thumbAnchor);
+    }
+  });
+  onCleanup(() => {
+    if (thumbDispose) thumbDispose();
+  });
+
+  return root;
 }
-_$delegateEvents(["touchstart", "touchmove", "touchend", "pointerdown", "click", "keydown"]);
+
+// Insert a Solid children value into a parent, replacing existing content.
+// Handles nodes, arrays, primitives and (reactive) function children. A
+// function child is wrapped in a render effect so nested reactivity keeps
+// working, mirroring solid's web-renderer insert().
+function insertChildren(parent, value) {
+  parent.replaceChildren();
+  appendValue(parent, value);
+}
+
+function appendValue(parent, value) {
+  if (value == null || value === false || value === true) return;
+  if (Array.isArray(value)) {
+    for (const item of value) appendValue(parent, item);
+    return;
+  }
+  if (value instanceof Node) {
+    parent.appendChild(value);
+    return;
+  }
+  if (typeof value === "function") {
+    let current = null;
+    createRenderEffect(() => {
+      const resolved = value();
+      const host = document.createElement("span");
+      appendValue(host, resolved);
+      const nodes = Array.from(host.childNodes);
+      if (current) {
+        for (const node of current) node.remove();
+      }
+      current = nodes;
+      for (const node of nodes) parent.appendChild(node);
+    });
+    return;
+  }
+  parent.appendChild(document.createTextNode(String(value)));
+}

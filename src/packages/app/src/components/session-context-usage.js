@@ -1,12 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex align-items-center justify-content-center">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div><div class="d-flex align-items-center gap-2"><span class=text-white></span><span class=text-white>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span class=text-white></span><span class=text-white>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span class=text-white>%</span><span class=text-white>`);
-import { Match, Show, Switch, createMemo } from "solid-js";
+import { createComponent, createMemo, createRenderEffect } from "solid-js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { ProgressCircle } from "@/vendor/ui/components/progress-circle.js";
 import { Button } from "@/bs/button.js";
@@ -73,90 +65,112 @@ export function SessionContextUsage(props) {
       tabs: tabs()
     });
   };
-  const circle = () => (() => {
-    var _el$ = _tmpl$();
-    _$insert(_el$, _$createComponent(ProgressCircle, {
+
+  // Progress circle wrapper (_tmpl$). Rebuilt on each call (the tooltip/button
+  // own the returned node); percentage is a live getter into context()?.usage.
+  const circle = () => {
+    const wrap = document.createElement("div");
+    wrap.className = "d-flex align-items-center justify-content-center";
+    wrap.appendChild(createComponent(ProgressCircle, {
       size: 16,
       strokeWidth: 2,
       get percentage() {
         return context()?.usage ?? 0;
       }
     }));
-    return _el$;
-  })();
-  const tooltipValue = () => (() => {
-    var _el$2 = _tmpl$2(),
-      _el$3 = _el$2.firstChild,
-      _el$4 = _el$3.firstChild,
-      _el$5 = _el$4.nextSibling;
-    _$insert(_el$2, _$createComponent(Show, {
-      get when() {
-        return context();
-      },
-      children: ctx => [(() => {
-        var _el$6 = _tmpl$3(),
-          _el$7 = _el$6.firstChild,
-          _el$8 = _el$7.nextSibling;
-        _$insert(_el$7, () => ctx().total.toLocaleString(language.intl()));
-        _$insert(_el$8, () => language.t("context.usage.tokens"));
-        return _el$6;
-      })(), (() => {
-        var _el$9 = _tmpl$4(),
-          _el$0 = _el$9.firstChild,
-          _el$1 = _el$0.firstChild,
-          _el$10 = _el$0.nextSibling;
-        _$insert(_el$0, () => ctx().usage ?? 0, _el$1);
-        _$insert(_el$10, () => language.t("context.usage.usage"));
-        return _el$9;
-      })()]
-    }), _el$3);
-    _$insert(_el$4, cost);
-    _$insert(_el$5, () => language.t("context.usage.cost"));
-    return _el$2;
-  })();
-  return _$createComponent(Show, {
-    get when() {
-      return params.id;
-    },
-    get children() {
-      return _$createComponent(Tooltip, {
-        get value() {
-          return tooltipValue();
-        },
-        get placement() {
-          return props.placement ?? "top";
-        },
-        get children() {
-          return _$createComponent(Switch, {
-            get children() {
-              return [_$createComponent(Match, {
-                get when() {
-                  return variant() === "indicator";
-                },
-                get children() {
-                  return circle();
-                }
-              }), _$createComponent(Match, {
-                when: true,
-                get children() {
-                  return _$createComponent(Button, {
-                    type: "button",
-                    variant: "ghost",
-                    "class": "size-6",
-                    onClick: openContext,
-                    get ["aria-label"]() {
-                      return language.t("context.usage.view");
-                    },
-                    get children() {
-                      return circle();
-                    }
-                  });
-                }
-              })];
-            }
-          });
-        }
-      });
+    return wrap;
+  };
+
+  // Tooltip content (_tmpl$2): an outer div containing an optional context-info
+  // block (token total + usage %) followed by the cost row. Rebuilt per call so
+  // the Tooltip can snapshot/clone the current values.
+  const tooltipValue = () => {
+    const outer = document.createElement("div");
+    const costRow = document.createElement("div");
+    costRow.className = "d-flex align-items-center gap-2";
+    const costValue = document.createElement("span");
+    costValue.className = "text-white";
+    const costLabel = document.createElement("span");
+    costLabel.className = "text-white";
+    costRow.appendChild(costValue);
+    costRow.appendChild(costLabel);
+
+    // <Show when={context()}> inserted before the cost row.
+    const ctx = context();
+    if (ctx) {
+      // Token total row (_tmpl$3): `<div><span>{total}</span><span>{label}</span></div>`.
+      const tokenRow = document.createElement("div");
+      tokenRow.className = "d-flex align-items-center gap-2";
+      const tokenValue = document.createElement("span");
+      tokenValue.className = "text-white";
+      tokenValue.textContent = ctx.total.toLocaleString(language.intl());
+      const tokenLabel = document.createElement("span");
+      tokenLabel.className = "text-white";
+      tokenLabel.textContent = language.t("context.usage.tokens");
+      tokenRow.appendChild(tokenValue);
+      tokenRow.appendChild(tokenLabel);
+      outer.appendChild(tokenRow);
+
+      // Usage row (_tmpl$4): `<div><span>{usage}%</span><span>{label}</span></div>`,
+      // where the literal "%" follows the inserted usage value.
+      const usageRow = document.createElement("div");
+      usageRow.className = "d-flex align-items-center gap-2";
+      const usageValueSpan = document.createElement("span");
+      usageValueSpan.className = "text-white";
+      const usageValue = document.createTextNode(String(ctx.usage ?? 0));
+      usageValueSpan.appendChild(usageValue);
+      usageValueSpan.appendChild(document.createTextNode("%"));
+      const usageLabel = document.createElement("span");
+      usageLabel.className = "text-white";
+      usageLabel.textContent = language.t("context.usage.usage");
+      usageRow.appendChild(usageValueSpan);
+      usageRow.appendChild(usageLabel);
+      outer.appendChild(usageRow);
     }
+
+    outer.appendChild(costRow);
+    costValue.textContent = cost();
+    costLabel.textContent = language.t("context.usage.cost");
+    return outer;
+  };
+
+  // Build the tooltip-wrapped control. <Switch>: the "indicator" variant renders
+  // the bare progress circle, otherwise a ghost button wrapping the same circle.
+  // The branch is resolved once per build (params.id flip remounts), matching
+  // the compiled Switch evaluating its memos when the Show subtree mounts.
+  const build = () => createComponent(Tooltip, {
+    get value() {
+      return tooltipValue();
+    },
+    get placement() {
+      return props.placement ?? "top";
+    },
+    children: variant() === "indicator"
+      ? circle()
+      : createComponent(Button, {
+          type: "button",
+          variant: "ghost",
+          class: "size-6",
+          onClick: openContext,
+          get ["aria-label"]() {
+            return language.t("context.usage.view");
+          },
+          children: circle()
+        })
   });
+
+  // <Show when={params.id}>: render the control only when a session is active.
+  // A display:contents anchor keeps the original layout (the compiled Show added
+  // no wrapper element). params is a reactive store, so read it live here.
+  const root = document.createElement("div");
+  root.style.display = "contents";
+  let shown = false;
+  createRenderEffect(() => {
+    const active = !!params.id;
+    if (active === shown) return;
+    shown = active;
+    if (active) root.replaceChildren(build());
+    else root.replaceChildren();
+  });
+  return root;
 }

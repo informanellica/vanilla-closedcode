@@ -1,22 +1,10 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="h-100 w-100 d-flex flex-column align-items-center gap-3 px-3 py-3 overflow-y-auto no-scrollbar">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex h-100 w-100 min-w-0 overflow-hidden"><div data-component=sidebar-rail class="w-16 shrink-0 bg-body d-flex flex-column align-items-center overflow-hidden"><div class="flex-1 min-h-0 w-100"></div><div class="shrink-0 w-100 pt-3 pb-6 d-flex flex-column align-items-center gap-2"></div></div><div>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span class="text-secondary small fw-medium">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex align-items-center gap-2"><span>`);
-import { createEffect, createMemo, For, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, For, Show } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
 import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
 import { ConstrainDragXAxis } from "@/utils/solid-dnd.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip, TooltipKeybind } from "@/bs/tooltip.js";
+
 export const SidebarContent = props => {
   const expanded = createMemo(() => !!props.mobile || props.opened());
   const placement = () => props.mobile ? "bottom" : "right";
@@ -30,147 +18,189 @@ export const SidebarContent = props => {
     }
     el.setAttribute("inert", "");
   });
-  return (() => {
-    var _el$ = _tmpl$2(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild,
-      _el$5 = _el$3.nextSibling,
-      _el$6 = _el$2.nextSibling;
-    _$addEventListener(_el$2, "mousemove", props.aimMove, true);
-    _$insert(_el$3, _$createComponent(DragDropProvider, {
-      get onDragStart() {
-        return props.handleDragStart;
-      },
-      get onDragEnd() {
-        return props.handleDragEnd;
-      },
-      get onDragOver() {
-        return props.handleDragOver;
-      },
-      collisionDetector: closestCenter,
-      get children() {
-        return [_$createComponent(DragDropSensors, {}), _$createComponent(ConstrainDragXAxis, {}), (() => {
-          var _el$4 = _tmpl$();
-          _$insert(_el$4, _$createComponent(SortableProvider, {
-            get ids() {
-              return props.projects().map(p => p.worktree);
-            },
-            get children() {
-              return _$createComponent(For, {
-                get each() {
-                  return props.projects();
-                },
-                children: project => props.renderProject(project)
-              });
-            }
-          }), null);
-          _$insert(_el$4, _$createComponent(Tooltip, {
-            get placement() {
-              return placement();
-            },
-            get value() {
-              return (() => {
-                var _el$7 = _tmpl$4(),
-                  _el$8 = _el$7.firstChild;
-                _$insert(_el$8, () => props.openProjectLabel);
-                _$insert(_el$7, _$createComponent(Show, {
-                  get when() {
-                    return _$memo(() => !!!props.mobile)() && !!props.openProjectKeybind();
-                  },
-                  get children() {
-                    var _el$9 = _tmpl$3();
-                    _$insert(_el$9, () => props.openProjectKeybind());
-                    return _el$9;
-                  }
-                }), null);
-                return _el$7;
-              })();
-            },
-            get children() {
-              return _$createComponent(IconButton, {
-                icon: "plus",
-                variant: "ghost",
-                size: "large",
-                get onClick() {
-                  return props.onOpenProject;
-                },
-                get ["aria-label"]() {
-                  return _$memo(() => typeof props.openProjectLabel === "string")() ? props.openProjectLabel : undefined;
-                }
-              });
-            }
-          }), null);
-          return _el$4;
-        })(), _$createComponent(DragOverlay, {
+
+  // Static skeleton mirroring _tmpl$2:
+  // <div> (root)
+  //   <div data-component=sidebar-rail> (rail)
+  //     <div> (projectList)  <div> (railFooter)
+  //   <div> (panel)
+  const root = document.createElement("div");
+  root.className = "d-flex h-100 w-100 min-w-0 overflow-hidden";
+
+  const rail = document.createElement("div");
+  rail.setAttribute("data-component", "sidebar-rail");
+  rail.className = "w-16 shrink-0 bg-body d-flex flex-column align-items-center overflow-hidden";
+
+  const projectList = document.createElement("div");
+  projectList.className = "flex-1 min-h-0 w-100";
+
+  const railFooter = document.createElement("div");
+  railFooter.className = "shrink-0 w-100 pt-3 pb-6 d-flex flex-column align-items-center gap-2";
+
+  rail.appendChild(projectList);
+  rail.appendChild(railFooter);
+
+  const panelEl = document.createElement("div");
+  panel = panelEl; // ref binding (replaces the compiled use:ref on the panel div)
+
+  root.appendChild(rail);
+  root.appendChild(panelEl);
+
+  // Rail mousemove → props.aimMove (capture). Compiled used delegated events;
+  // a capturing listener preserves identical timing/order for this handler.
+  rail.addEventListener("mousemove", event => props.aimMove?.(event), true);
+
+  // Drag-and-drop provider holding the sortable project list and the
+  // "add project" tooltip/button. Inserted into projectList.
+  _solidInsert(projectList, createComponent(DragDropProvider, {
+    get onDragStart() {
+      return props.handleDragStart;
+    },
+    get onDragEnd() {
+      return props.handleDragEnd;
+    },
+    get onDragOver() {
+      return props.handleDragOver;
+    },
+    collisionDetector: closestCenter,
+    get children() {
+      return [createComponent(DragDropSensors, {}), createComponent(ConstrainDragXAxis, {}), (() => {
+        // _tmpl$: scrolling column holding the sortable projects + add button.
+        const column = document.createElement("div");
+        column.className = "h-100 w-100 d-flex flex-column align-items-center gap-3 px-3 py-3 overflow-y-auto no-scrollbar";
+
+        _solidInsert(column, createComponent(SortableProvider, {
+          get ids() {
+            return props.projects().map(p => p.worktree);
+          },
           get children() {
-            return props.renderProjectOverlay();
+            return createComponent(For, {
+              get each() {
+                return props.projects();
+              },
+              children: project => props.renderProject(project)
+            });
           }
-        })];
-      }
-    }));
-    _$insert(_el$5, _$createComponent(TooltipKeybind, {
-      get placement() {
-        return placement();
-      },
-      get title() {
-        return props.settingsLabel();
-      },
-      get keybind() {
-        return props.settingsKeybind() ?? "";
-      },
-      get children() {
-        return _$createComponent(IconButton, {
-          icon: "settings-gear",
-          variant: "ghost",
-          size: "large",
-          get onClick() {
-            return props.onOpenSettings;
+        }), null);
+
+        _solidInsert(column, createComponent(Tooltip, {
+          get placement() {
+            return placement();
           },
-          get ["aria-label"]() {
-            return props.settingsLabel();
-          }
-        });
-      }
-    }), null);
-    _$insert(_el$5, _$createComponent(Tooltip, {
-      get placement() {
-        return placement();
-      },
-      get value() {
-        return props.helpLabel();
-      },
-      get children() {
-        return _$createComponent(IconButton, {
-          icon: "help",
-          variant: "ghost",
-          size: "large",
-          get onClick() {
-            return props.onOpenHelp;
+          get value() {
+            // _tmpl$4: <div class="d-flex align-items-center gap-2"><span>label
+            // </span> + optional keybind hint span</div>.
+            const tip = document.createElement("div");
+            tip.className = "d-flex align-items-center gap-2";
+            const labelSpan = document.createElement("span");
+            tip.appendChild(labelSpan);
+            _solidInsert(labelSpan, () => props.openProjectLabel);
+            _solidInsert(tip, createComponent(Show, {
+              get when() {
+                return !props.mobile && !!props.openProjectKeybind();
+              },
+              get children() {
+                // _tmpl$3: keybind hint span.
+                const hint = document.createElement("span");
+                hint.className = "text-secondary small fw-medium";
+                _solidInsert(hint, () => props.openProjectKeybind());
+                return hint;
+              }
+            }), null);
+            return tip;
           },
-          get ["aria-label"]() {
-            return props.helpLabel();
+          get children() {
+            return createComponent(IconButton, {
+              icon: "plus",
+              variant: "ghost",
+              size: "large",
+              get onClick() {
+                return props.onOpenProject;
+              },
+              get ["aria-label"]() {
+                return typeof props.openProjectLabel === "string" ? props.openProjectLabel : undefined;
+              }
+            });
           }
-        });
-      }
-    }), null);
-    _$use(el => {
-      panel = el;
-    }, _el$6);
-    _$insert(_el$6, () => props.renderPanel());
-    _$effect(_p$ => {
-      var _v$ = {
-          "flex-1 d-flex h-100 min-h-0 min-w-0 overflow-hidden": true,
-          "pointer-events-none": !expanded()
+        }), null);
+
+        return column;
+      })(), createComponent(DragOverlay, {
+        get children() {
+          return props.renderProjectOverlay();
+        }
+      })];
+    }
+  }));
+
+  // Rail footer: settings (keybind tooltip) + help (plain tooltip) buttons.
+  _solidInsert(railFooter, createComponent(TooltipKeybind, {
+    get placement() {
+      return placement();
+    },
+    get title() {
+      return props.settingsLabel();
+    },
+    get keybind() {
+      return props.settingsKeybind() ?? "";
+    },
+    get children() {
+      return createComponent(IconButton, {
+        icon: "settings-gear",
+        variant: "ghost",
+        size: "large",
+        get onClick() {
+          return props.onOpenSettings;
         },
-        _v$2 = !expanded();
-      _p$.e = _$classList(_el$6, _v$, _p$.e);
-      _v$2 !== _p$.t && _$setAttribute(_el$6, "aria-hidden", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$;
-  })();
+        get ["aria-label"]() {
+          return props.settingsLabel();
+        }
+      });
+    }
+  }), null);
+
+  _solidInsert(railFooter, createComponent(Tooltip, {
+    get placement() {
+      return placement();
+    },
+    get value() {
+      return props.helpLabel();
+    },
+    get children() {
+      return createComponent(IconButton, {
+        icon: "help",
+        variant: "ghost",
+        size: "large",
+        get onClick() {
+          return props.onOpenHelp;
+        },
+        get ["aria-label"]() {
+          return props.helpLabel();
+        }
+      });
+    }
+  }), null);
+
+  // Panel content.
+  _solidInsert(panelEl, () => props.renderPanel());
+
+  // Panel dynamic class list + aria-hidden, change-guarded like the compiled
+  // effect(). The base classes are always present; "pointer-events-none" and
+  // aria-hidden track the collapsed state.
+  let prevCollapsed;
+  let prevHidden;
+  createEffect(() => {
+    const collapsed = !expanded();
+    if (collapsed !== prevCollapsed) {
+      prevCollapsed = collapsed;
+      panelEl.className =
+        "flex-1 d-flex h-100 min-h-0 min-w-0 overflow-hidden" +
+        (collapsed ? " pointer-events-none" : "");
+    }
+    if (collapsed !== prevHidden) {
+      panelEl.setAttribute("aria-hidden", prevHidden = collapsed);
+    }
+  });
+
+  return root;
 };
-_$delegateEvents(["mousemove"]);

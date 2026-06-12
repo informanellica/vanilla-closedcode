@@ -1,14 +1,9 @@
-import { template as _$template } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { spread as _$spread } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=markdown>`);
 import { useMarked } from "../context/marked.js";
 import { useI18n } from "../context/i18n.js";
 import DOMPurify from "dompurify";
 import morphdom from "morphdom";
 import { checksum } from "core/util/encode";
-import { createEffect, createResource, createSignal, onCleanup, splitProps } from "solid-js";
+import { createEffect, createRenderEffect, createResource, createSignal, mergeProps, onCleanup, splitProps } from "solid-js";
 import { isServer } from "solid-js/web";
 import { stream } from "./markdown-stream.js";
 const max = 200;
@@ -191,6 +186,100 @@ function touch(key, value) {
   if (!first) return;
   cache.delete(first);
 }
+
+// Reactive spread for the root <div>, mirroring the compiled
+// spread(el, mergeProps({ classList }, others), false, false): re-run on any
+// prop change and diff per key against the previous snapshot. classList merges
+// the local classList prop with the single `class` token (matching the
+// compiled get classList()). "children" is forwarded through insert(), like the
+// compiled spread with skipChildren = false.
+function applyClassList(el, value, prev) {
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!name || name in nextObj || !prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.remove(cls);
+    }
+  }
+  for (const name of Object.keys(nextObj)) {
+    const on = !!nextObj[name];
+    if (!name || on === !!prevObj[name]) continue;
+    for (const cls of name.trim().split(/\s+/)) {
+      if (cls) el.classList.toggle(cls, on);
+    }
+  }
+  return { ...nextObj };
+}
+function applyStyle(el, value, prev) {
+  if (typeof value === "string") {
+    if (value !== prev) el.style.cssText = value;
+    return value;
+  }
+  if (typeof prev === "string") {
+    el.style.cssText = "";
+    prev = undefined;
+  }
+  const prevObj = prev || {};
+  const nextObj = value || {};
+  for (const name of Object.keys(prevObj)) {
+    if (!(name in nextObj)) el.style.removeProperty(name);
+  }
+  for (const name of Object.keys(nextObj)) {
+    if (nextObj[name] !== prevObj[name]) el.style.setProperty(name, nextObj[name]);
+  }
+  return { ...nextObj };
+}
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+function assignProp(el, key, value, prev, listeners) {
+  if (key === "style") return applyStyle(el, value, prev);
+  if (key === "classList") return applyClassList(el, value, prev);
+  if (value === prev) return prev;
+  if (key === "ref") {
+    if (typeof value === "function") value(el);
+    return value;
+  }
+  if (key.startsWith("on") && key.length > 2) {
+    const name = key.startsWith("on:") ? key.slice(3) : key.slice(2).toLowerCase();
+    const existing = listeners.get(key);
+    if (existing) el.removeEventListener(name, existing);
+    let handler;
+    if (typeof value === "function") handler = value;
+    else if (Array.isArray(value)) handler = event => value[0](value[1], event);
+    if (handler) {
+      el.addEventListener(name, handler);
+      listeners.set(key, handler);
+    } else {
+      listeners.delete(key);
+    }
+    return value;
+  }
+  if (key === "class" || key === "className") {
+    if (value == null) el.removeAttribute("class");
+    else el.className = value;
+    return value;
+  }
+  setAttr(el, key, value);
+  return value;
+}
+function spreadProps(el, props) {
+  const prev = {};
+  const listeners = new Map();
+  createRenderEffect(() => {
+    for (const key of Object.keys(prev)) {
+      if (key === "children" || key in props) continue;
+      assignProp(el, key, null, prev[key], listeners);
+      delete prev[key];
+    }
+    for (const key of Object.keys(props)) {
+      if (key === "children") continue;
+      prev[key] = assignProp(el, key, props[key], prev[key], listeners);
+    }
+  });
+}
 export function Markdown(props) {
   const [local, others] = splitProps(props, ["text", "cacheKey", "streaming", "class", "classList"]);
   const marked = useMarked();
@@ -260,17 +349,19 @@ export function Markdown(props) {
   onCleanup(() => {
     if (copyCleanup) copyCleanup();
   });
-  return (() => {
-    var _el$ = _tmpl$();
-    _$use(setRoot, _el$);
-    _$spread(_el$, _$mergeProps({
-      get classList() {
-        return {
-          ...local.classList,
-          [local.class ?? ""]: !!local.class
-        };
-      }
-    }, others), false, false);
-    return _el$;
-  })();
+
+  // Static skeleton: <div data-component=markdown>. The original used a solid
+  // template + use(setRoot, el) ref + reactive spread; reproduce both here.
+  const el = document.createElement("div");
+  el.setAttribute("data-component", "markdown");
+  setRoot(el);
+  spreadProps(el, mergeProps({
+    get classList() {
+      return {
+        ...local.classList,
+        [local.class ?? ""]: !!local.class
+      };
+    }
+  }, others));
+  return el;
 }

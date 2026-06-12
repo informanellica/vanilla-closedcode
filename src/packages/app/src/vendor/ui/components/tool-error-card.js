@@ -1,17 +1,4 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<a data-slot=basic-tool-tool-subtitle class="clickable subagent-link">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-component=tool-trigger><div data-slot=basic-tool-tool-trigger-content><span data-slot=basic-tool-tool-indicator data-component=tool-error-card-icon></span><div data-slot=basic-tool-tool-info><div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=tool-error-card-copy>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-slot=tool-error-card-content>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<span data-slot=basic-tool-tool-subtitle>`);
-import { createMemo, Show, splitProps } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, createRoot, onCleanup, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Card, CardDescription } from "./card.js";
 import { Collapsible } from "./collapsible.js";
@@ -19,6 +6,7 @@ import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";
 import { Tooltip } from "./tooltip.js";
 import { useI18n } from "../context/i18n.js";
+
 export function ToolErrorCard(props) {
   const i18n = useI18n();
   const [state, setState] = createStore({
@@ -73,14 +61,265 @@ export function ToolErrorCard(props) {
     setState("copied", true);
     setTimeout(() => setState("copied", false), 2000);
   };
-  return _$createComponent(Card, _$mergeProps(rest, {
+
+  // ---- Collapsible.Trigger content ----
+  // Static skeleton mirroring the compiled _tmpl$2:
+  //   <div data-component=tool-trigger>
+  //     <div data-slot=basic-tool-tool-trigger-content>
+  //       <span data-slot=basic-tool-tool-indicator data-component=tool-error-card-icon></span>
+  //       <div data-slot=basic-tool-tool-info>
+  //         <div data-slot=basic-tool-tool-info-structured>
+  //           <div data-slot=basic-tool-tool-info-main>
+  //             <span data-slot=basic-tool-tool-title></span>
+  const triggerContent = () => {
+    const trigger = document.createElement("div");
+    trigger.setAttribute("data-component", "tool-trigger");
+    const content = document.createElement("div");
+    content.setAttribute("data-slot", "basic-tool-tool-trigger-content");
+    const indicator = document.createElement("span");
+    indicator.setAttribute("data-slot", "basic-tool-tool-indicator");
+    indicator.setAttribute("data-component", "tool-error-card-icon");
+    const info = document.createElement("div");
+    info.setAttribute("data-slot", "basic-tool-tool-info");
+    const structured = document.createElement("div");
+    structured.setAttribute("data-slot", "basic-tool-tool-info-structured");
+    const main = document.createElement("div");
+    main.setAttribute("data-slot", "basic-tool-tool-info-main");
+    const title = document.createElement("span");
+    title.setAttribute("data-slot", "basic-tool-tool-title");
+
+    trigger.appendChild(content);
+    content.appendChild(indicator);
+    content.appendChild(info);
+    info.appendChild(structured);
+    structured.appendChild(main);
+    main.appendChild(title);
+
+    // <Icon name="circle-ban-sign" size="small" style={{ "stroke-width": 1.5 }}/>
+    indicator.appendChild(createComponent(Icon, {
+      name: "circle-ban-sign",
+      size: "small",
+      style: {
+        "stroke-width": 1.5
+      }
+    }));
+
+    // Live tool title text (compiled inserted `name` into the title span).
+    let prevName;
+    createRenderEffect(() => {
+      const next = name();
+      const text = next == null ? "" : String(next);
+      if (text !== prevName) title.textContent = prevName = text;
+    });
+
+    // Hand-rolled <Show when={!!split.href && split.subtitle}> with a fallback,
+    // inserted into `main` after the title (mirrors the compiled insert of the
+    // Show into the info-main div):
+    //   when  -> <a data-slot=basic-tool-tool-subtitle class="clickable subagent-link" href=…>
+    //   else  -> <span data-slot=basic-tool-tool-subtitle>
+    // Both render the live `subtitle` memo as text. The branch is re-evaluated
+    // reactively; a flip remounts the correct node in its own reactive root so
+    // the previous branch's effects dispose, matching solid's <Show>.
+    const buildSubtitleLink = () => {
+      const a = document.createElement("a");
+      a.setAttribute("data-slot", "basic-tool-tool-subtitle");
+      a.className = "clickable subagent-link";
+      a.addEventListener("click", e => e.stopPropagation());
+      let prevText;
+      createRenderEffect(() => {
+        const next = subtitle();
+        const text = next == null ? "" : String(next);
+        if (text !== prevText) a.textContent = prevText = text;
+      });
+      // Live href attribute (compiled set it via an effect on split.href).
+      let prevHref;
+      createRenderEffect(() => {
+        const next = split.href;
+        if (next !== prevHref) {
+          prevHref = next;
+          if (next == null || next === false) a.removeAttribute("href");
+          else a.setAttribute("href", String(next));
+        }
+      });
+      return a;
+    };
+    const buildSubtitleSpan = () => {
+      const span = document.createElement("span");
+      span.setAttribute("data-slot", "basic-tool-tool-subtitle");
+      let prevText;
+      createRenderEffect(() => {
+        const next = subtitle();
+        const text = next == null ? "" : String(next);
+        if (text !== prevText) span.textContent = prevText = text;
+      });
+      return span;
+    };
+    let subtitleNode = null;
+    let subtitleDispose = null;
+    let prevWhen;
+    createRenderEffect(() => {
+      const when = !!split.href && !!split.subtitle;
+      if (when === prevWhen) return;
+      prevWhen = when;
+      if (subtitleNode) {
+        subtitleNode.remove();
+        subtitleNode = null;
+      }
+      if (subtitleDispose) {
+        subtitleDispose();
+        subtitleDispose = null;
+      }
+      subtitleNode = createRoot(dispose => {
+        subtitleDispose = dispose;
+        return when ? buildSubtitleLink() : buildSubtitleSpan();
+      });
+      main.appendChild(subtitleNode);
+    });
+    onCleanup(() => {
+      if (subtitleDispose) subtitleDispose();
+    });
+
+    // Arrow appended after the content block (compiled inserted it last).
+    trigger.appendChild(createComponent(Collapsible.Arrow, {}));
+    return trigger;
+  };
+
+  // ---- Collapsible.Content ----
+  // Static skeleton mirroring _tmpl$4 (<div data-slot=tool-error-card-content>).
+  const collapsibleContent = () => {
+    const contentEl = document.createElement("div");
+    contentEl.setAttribute("data-slot", "tool-error-card-content");
+
+    // Two comment anchors keep the dynamic children as direct descendants of
+    // tool-error-card-content in the original order (copy block, then the
+    // description), exactly like the compiled inserts into the content div.
+    const copyAnchor = document.createComment("");
+    const descAnchor = document.createComment("");
+    contentEl.appendChild(copyAnchor);
+    contentEl.appendChild(descAnchor);
+
+    // <Show when={open()}>: the copy button only mounts while open. Each mount
+    // builds a fresh subtree inside its own reactive root so unmount disposes
+    // the inner effects (icon/aria-label mirrors), matching solid's <Show>.
+    let copyNode = null;
+    let copyDispose = null;
+    const buildCopy = () => {
+      // <div data-slot=tool-error-card-copy>
+      const copyWrap = document.createElement("div");
+      copyWrap.setAttribute("data-slot", "tool-error-card-copy");
+      copyWrap.appendChild(createComponent(Tooltip, {
+        get value() {
+          return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.toolErrorCard.copyError");
+        },
+        placement: "top",
+        gutter: 4,
+        get children() {
+          // IconButton with a reactive icon + aria-label. The vendor IconButton
+          // reads those eagerly, so build it once and mirror them via guarded
+          // render effects on the returned node.
+          const button = createComponent(IconButton, {
+            icon: copied() ? "check" : "copy",
+            size: "normal",
+            variant: "ghost",
+            onMouseDown: e => e.preventDefault(),
+            onClick: e => {
+              e.stopPropagation();
+              void copy();
+            }
+          });
+          let prevIcon;
+          createRenderEffect(() => {
+            const next = copied() ? "check" : "copy";
+            if (next !== prevIcon) {
+              prevIcon = next;
+              const old = button.querySelector('[data-component="icon"]');
+              if (old) old.remove();
+              button.dataset.icon = next;
+              button.insertBefore(Icon({ name: next, size: "small" }), button.firstChild);
+            }
+          });
+          let prevLabel;
+          createRenderEffect(() => {
+            const next = copied() ? i18n.t("ui.message.copied") : i18n.t("ui.toolErrorCard.copyError");
+            if (next !== prevLabel) button.setAttribute("aria-label", prevLabel = next);
+          });
+          return button;
+        }
+      }));
+      return copyWrap;
+    };
+    let prevOpen;
+    createRenderEffect(() => {
+      const isOpen = open();
+      if (isOpen === prevOpen) return;
+      prevOpen = isOpen;
+      if (copyNode) {
+        copyNode.remove();
+        copyNode = null;
+      }
+      if (copyDispose) {
+        copyDispose();
+        copyDispose = null;
+      }
+      if (isOpen) {
+        copyNode = createRoot(dispose => {
+          copyDispose = dispose;
+          return buildCopy();
+        });
+        contentEl.insertBefore(copyNode, copyAnchor);
+      }
+    });
+    onCleanup(() => {
+      if (copyDispose) copyDispose();
+    });
+
+    // <Show when={body()}>{value => <CardDescription>{value()}</CardDescription>}</Show>
+    // body() is a non-empty string or falsy. The CardDescription mounts only
+    // while body() is truthy, remounting when the truthiness flips. While shown,
+    // the description text stays live: a function child is routed through the
+    // vanilla CardDescription's reactive insert (mirroring the `value()` render
+    // prop accessor). The subtree lives in its own root so unmount disposes it.
+    let descNode = null;
+    let descDispose = null;
+    let prevHasBody;
+    createRenderEffect(() => {
+      const hasBody = !!body();
+      if (hasBody === prevHasBody) return;
+      prevHasBody = hasBody;
+      if (descNode) {
+        descNode.remove();
+        descNode = null;
+      }
+      if (descDispose) {
+        descDispose();
+        descDispose = null;
+      }
+      if (hasBody) {
+        descNode = createRoot(dispose => {
+          descDispose = dispose;
+          return createComponent(CardDescription, {
+            children: () => body()
+          });
+        });
+        contentEl.insertBefore(descNode, descAnchor);
+      }
+    });
+    onCleanup(() => {
+      if (descDispose) descDispose();
+    });
+
+    return contentEl;
+  };
+
+  // Build the Card. `data-open` is a reactive attribute the vanilla Card freezes,
+  // so mirror it via a guarded render effect on the returned node.
+  const cardNode = createComponent(Card, {
+    ...rest,
     "data-kind": "tool-error-card",
-    get ["data-open"]() {
-      return open() ? "true" : "false";
-    },
+    "data-open": open() ? "true" : "false",
     variant: "error",
     get children() {
-      return _$createComponent(Collapsible, {
+      return createComponent(Collapsible, {
         "class": "tool-collapsible",
         get ["data-open"]() {
           return open() ? "true" : "false";
@@ -90,97 +329,26 @@ export function ToolErrorCard(props) {
         },
         onOpenChange: value => setState("open", value),
         get children() {
-          return [_$createComponent(Collapsible.Trigger, {
-            get children() {
-              var _el$ = _tmpl$2(),
-                _el$2 = _el$.firstChild,
-                _el$3 = _el$2.firstChild,
-                _el$4 = _el$3.nextSibling,
-                _el$5 = _el$4.firstChild,
-                _el$6 = _el$5.firstChild,
-                _el$7 = _el$6.firstChild;
-              _$insert(_el$3, _$createComponent(Icon, {
-                name: "circle-ban-sign",
-                size: "small",
-                style: {
-                  "stroke-width": 1.5
-                }
-              }));
-              _$insert(_el$7, name);
-              _$insert(_el$6, _$createComponent(Show, {
-                get when() {
-                  return _$memo(() => !!split.href)() && split.subtitle;
-                },
-                get fallback() {
-                  return (() => {
-                    var _el$1 = _tmpl$5();
-                    _$insert(_el$1, subtitle);
-                    return _el$1;
-                  })();
-                },
-                get children() {
-                  var _el$8 = _tmpl$();
-                  _el$8.$$click = e => e.stopPropagation();
-                  _$insert(_el$8, subtitle);
-                  _$effect(() => _$setAttribute(_el$8, "href", split.href));
-                  return _el$8;
-                }
-              }), null);
-              _$insert(_el$, _$createComponent(Collapsible.Arrow, {}), null);
-              return _el$;
-            }
-          }), _$createComponent(Collapsible.Content, {
-            get children() {
-              var _el$9 = _tmpl$4();
-              _$insert(_el$9, _$createComponent(Show, {
-                get when() {
-                  return open();
-                },
-                get children() {
-                  var _el$0 = _tmpl$3();
-                  _$insert(_el$0, _$createComponent(Tooltip, {
-                    get value() {
-                      return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.toolErrorCard.copyError");
-                    },
-                    placement: "top",
-                    gutter: 4,
-                    get children() {
-                      return _$createComponent(IconButton, {
-                        get icon() {
-                          return copied() ? "check" : "copy";
-                        },
-                        size: "normal",
-                        variant: "ghost",
-                        onMouseDown: e => e.preventDefault(),
-                        onClick: e => {
-                          e.stopPropagation();
-                          void copy();
-                        },
-                        get ["aria-label"]() {
-                          return _$memo(() => !!copied())() ? i18n.t("ui.message.copied") : i18n.t("ui.toolErrorCard.copyError");
-                        }
-                      });
-                    }
-                  }));
-                  return _el$0;
-                }
-              }), null);
-              _$insert(_el$9, _$createComponent(Show, {
-                get when() {
-                  return body();
-                },
-                children: value => _$createComponent(CardDescription, {
-                  get children() {
-                    return value();
-                  }
-                })
-              }), null);
-              return _el$9;
-            }
-          })];
+          return [
+            createComponent(Collapsible.Trigger, {
+              get children() {
+                return triggerContent();
+              }
+            }),
+            createComponent(Collapsible.Content, {
+              get children() {
+                return collapsibleContent();
+              }
+            })
+          ];
         }
       });
     }
-  }));
+  });
+  let prevCardOpen;
+  createRenderEffect(() => {
+    const next = open() ? "true" : "false";
+    if (next !== prevCardOpen) cardNode.setAttribute("data-open", prevCardOpen = next);
+  });
+  return cardNode;
 }
-_$delegateEvents(["click"]);

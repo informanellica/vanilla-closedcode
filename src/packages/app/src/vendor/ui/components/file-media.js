@@ -1,18 +1,94 @@
-import { template as _$template } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="d-flex min-h-56 flex-column align-items-center justify-content-center gap-2 px-6 py-10 text-center"><div class="fw-semibold text-body-emphasis"></div><div class="fw-normal text-secondary">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex min-h-40 align-items-center justify-content-center px-6 py-4 text-center text-secondary">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex justify-content-center bg-body px-6 py-4"><img class="max-h-[60vh] max-w-full rounded-2 border border-body object-contain">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex justify-content-center bg-body px-6 py-4"><audio class="w-100 max-w-xl"controls preload=metadata><source>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-4 px-6 py-4">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="d-flex justify-content-center"><img class="max-h-[60vh] max-w-full rounded-2 border border-body object-contain">`);
-import { createEffect, createMemo, createResource, Match, on, Show, Switch } from "solid-js";
+import { createEffect, createMemo, createRenderEffect, createResource, createRoot, createSignal, on, onCleanup, untrack } from "solid-js";
 import { useI18n } from "../context/i18n.js";
 import { dataUrlFromMediaValue, hasMediaValue, isBinaryContent, mediaKindFromPath, normalizeMimeType, svgTextFromValue } from "../pierre/media.js";
+
+// Build the static skeletons that the compiled templates produced. Each helper
+// returns a fresh element tree (the compiled templates cloned a fresh node per
+// call), so callers never share DOM between branches.
+function tmplState() {
+  const root = document.createElement("div");
+  root.className = "d-flex min-h-40 align-items-center justify-content-center px-6 py-4 text-center text-secondary";
+  return root;
+}
+function tmplImage() {
+  const root = document.createElement("div");
+  root.className = "d-flex justify-content-center bg-body px-6 py-4";
+  const img = document.createElement("img");
+  img.className = "max-h-[60vh] max-w-full rounded-2 border border-body object-contain";
+  root.appendChild(img);
+  return { root, img };
+}
+function tmplAudio() {
+  const root = document.createElement("div");
+  root.className = "d-flex justify-content-center bg-body px-6 py-4";
+  const audio = document.createElement("audio");
+  audio.className = "w-100 max-w-xl";
+  audio.setAttribute("controls", "");
+  audio.setAttribute("preload", "metadata");
+  const source = document.createElement("source");
+  audio.appendChild(source);
+  root.appendChild(audio);
+  return { root, audio, source };
+}
+function tmplSvgWrap() {
+  const root = document.createElement("div");
+  root.className = "d-flex flex-column gap-4 px-6 py-4";
+  return root;
+}
+function tmplSvgImage() {
+  const root = document.createElement("div");
+  root.className = "d-flex justify-content-center";
+  const img = document.createElement("img");
+  img.className = "max-h-[60vh] max-w-full rounded-2 border border-body object-contain";
+  root.appendChild(img);
+  return { root, img };
+}
+function tmplBinary() {
+  const root = document.createElement("div");
+  root.className = "d-flex min-h-56 flex-column align-items-center justify-content-center gap-2 px-6 py-10 text-center";
+  const title = document.createElement("div");
+  title.className = "fw-semibold text-body-emphasis";
+  const desc = document.createElement("div");
+  desc.className = "fw-normal text-secondary";
+  root.appendChild(title);
+  root.appendChild(desc);
+  return { root, title, desc };
+}
+
+// Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+function setAttr(el, name, value) {
+  if (value == null) el.removeAttribute(name);
+  else el.setAttribute(name, value);
+}
+
+// Resolve a fallback/child value into DOM nodes. props.fallback() may return a
+// Node, an array, an accessor, or text; flatten it like the compiled insert().
+function resolveNodes(value) {
+  if (value == null || value === false || value === true) return [];
+  if (typeof value === "function" && !value.length) return resolveNodes(value());
+  if (Array.isArray(value)) return value.flatMap(resolveNodes);
+  if (value instanceof Node) return [value];
+  return [document.createTextNode(String(value))];
+}
+
+// Mirror compiled insert(parent, value, marker): keep the resolved nodes placed
+// right before the marker, re-resolving inside a render effect so reactive
+// accessors stay live. Unchanged results leave the DOM untouched.
+function renderBefore(parent, marker, read) {
+  let current = [];
+  createRenderEffect(() => {
+    const nodes = resolveNodes(read());
+    let same = nodes.length === current.length;
+    for (let i = 0; same && i < nodes.length; i++) same = nodes[i] === current[i];
+    if (same) return;
+    for (const node of current) {
+      if (!nodes.includes(node) && node.parentNode === parent) parent.removeChild(node);
+    }
+    for (const node of nodes) parent.insertBefore(node, marker);
+    current = nodes;
+  });
+}
+
 function mediaValue(cfg, mode) {
   if (cfg.current !== undefined) return cfg.current;
   if (mode === "image") return cfg.after ?? cfg.before;
@@ -139,164 +215,179 @@ export function FileMedia(props) {
     defer: true
   }));
   const kindLabel = value => i18n.t(value === "image" ? "ui.fileMedia.kind.image" : "ui.fileMedia.kind.audio");
-  return _$createComponent(Switch, {
-    get children() {
-      return [_$createComponent(Match, {
-        get when() {
-          return kind() === "image" || kind() === "audio";
-        },
-        get children() {
-          return _$createComponent(Show, {
-            get when() {
-              return src();
-            },
-            get fallback() {
-              const media = cfg();
-              const k = kind();
-              if (!media || k !== "image" && k !== "audio") return props.fallback();
-              const label = kindLabel(k);
-              if (deleted()) {
-                return (() => {
-                  var _el$4 = _tmpl$2();
-                  _$insert(_el$4, () => i18n.t("ui.fileMedia.state.removed", {
-                    kind: label
-                  }));
-                  return _el$4;
-                })();
-              }
-              if (status() === "loading") {
-                return (() => {
-                  var _el$5 = _tmpl$2();
-                  _$insert(_el$5, () => i18n.t("ui.fileMedia.state.loading", {
-                    kind: label
-                  }));
-                  return _el$5;
-                })();
-              }
-              if (status() === "error") {
-                return (() => {
-                  var _el$6 = _tmpl$2();
-                  _$insert(_el$6, () => i18n.t("ui.fileMedia.state.error", {
-                    kind: label
-                  }));
-                  return _el$6;
-                })();
-              }
-              return (() => {
-                var _el$7 = _tmpl$2();
-                _$insert(_el$7, () => i18n.t("ui.fileMedia.state.unavailable", {
-                  kind: label
-                }));
-                return _el$7;
-              })();
-            },
-            children: value => {
-              const k = kind();
-              if (k !== "image" && k !== "audio") return props.fallback();
-              if (k === "image") {
-                return (() => {
-                  var _el$8 = _tmpl$3(),
-                    _el$9 = _el$8.firstChild;
-                  _el$9.addEventListener("load", onLoad);
-                  _$effect(_p$ => {
-                    var _v$ = value(),
-                      _v$2 = cfg()?.path;
-                    _v$ !== _p$.e && _$setAttribute(_el$9, "src", _p$.e = _v$);
-                    _v$2 !== _p$.t && _$setAttribute(_el$9, "alt", _p$.t = _v$2);
-                    return _p$;
-                  }, {
-                    e: undefined,
-                    t: undefined
-                  });
-                  return _el$8;
-                })();
-              }
-              return (() => {
-                var _el$0 = _tmpl$4(),
-                  _el$1 = _el$0.firstChild,
-                  _el$10 = _el$1.firstChild;
-                _el$1.addEventListener("loadedmetadata", onLoad);
-                _$effect(_p$ => {
-                  var _v$3 = value(),
-                    _v$4 = audioMime();
-                  _v$3 !== _p$.e && _$setAttribute(_el$10, "src", _p$.e = _v$3);
-                  _v$4 !== _p$.t && _$setAttribute(_el$10, "type", _p$.t = _v$4);
-                  return _p$;
-                }, {
-                  e: undefined,
-                  t: undefined
-                });
-                return _el$0;
-              })();
-            }
-          });
-        }
-      }), _$createComponent(Match, {
-        get when() {
-          return kind() === "svg";
-        },
-        get children() {
-          return (() => {
-            if (svgSource() === undefined && svgSrc() == null) return props.fallback();
-            return (() => {
-              var _el$11 = _tmpl$5();
-              _$insert(_el$11, _$createComponent(Show, {
-                get when() {
-                  return svgSource() !== undefined;
-                },
-                get children() {
-                  return props.fallback();
-                }
-              }), null);
-              _$insert(_el$11, _$createComponent(Show, {
-                get when() {
-                  return svgSrc();
-                },
-                children: value => (() => {
-                  var _el$12 = _tmpl$6(),
-                    _el$13 = _el$12.firstChild;
-                  _el$13.addEventListener("load", onLoad);
-                  _$effect(_p$ => {
-                    var _v$5 = value(),
-                      _v$6 = cfg()?.path;
-                    _v$5 !== _p$.e && _$setAttribute(_el$13, "src", _p$.e = _v$5);
-                    _v$6 !== _p$.t && _$setAttribute(_el$13, "alt", _p$.t = _v$6);
-                    return _p$;
-                  }, {
-                    e: undefined,
-                    t: undefined
-                  });
-                  return _el$12;
-                })()
-              }), null);
-              return _el$11;
-            })();
-          })();
-        }
-      }), _$createComponent(Match, {
-        get when() {
-          return isBinary();
-        },
-        get children() {
-          var _el$ = _tmpl$(),
-            _el$2 = _el$.firstChild,
-            _el$3 = _el$2.nextSibling;
-          _$insert(_el$2, () => cfg()?.path?.split("/").pop() ?? i18n.t("ui.fileMedia.binary.title"));
-          _$insert(_el$3, () => {
-            const path = cfg()?.path;
-            if (!path) return i18n.t("ui.fileMedia.binary.description.default");
-            return i18n.t("ui.fileMedia.binary.description.path", {
-              path
-            });
-          });
-          return _el$;
-        }
-      }), _$createComponent(Match, {
-        when: true,
-        get children() {
-          return props.fallback();
-        }
-      })];
+
+  // <Show when={src()}>{value => media}</Show> child: build the image or audio
+  // template once and keep src/alt/type live, like the compiled effect().
+  const buildMedia = () => {
+    const k = kind();
+    if (k !== "image" && k !== "audio") return props.fallback();
+    if (k === "image") {
+      const { root, img } = tmplImage();
+      img.addEventListener("load", onLoad);
+      let prevSrc;
+      let prevAlt;
+      createRenderEffect(() => {
+        const nextSrc = src();
+        const nextAlt = cfg()?.path;
+        if (nextSrc !== prevSrc) setAttr(img, "src", prevSrc = nextSrc);
+        if (nextAlt !== prevAlt) setAttr(img, "alt", prevAlt = nextAlt);
+      });
+      return root;
     }
+    const { root, audio, source } = tmplAudio();
+    audio.addEventListener("loadedmetadata", onLoad);
+    let prevSrc;
+    let prevType;
+    createRenderEffect(() => {
+      const nextSrc = src();
+      const nextType = audioMime();
+      if (nextSrc !== prevSrc) setAttr(source, "src", prevSrc = nextSrc);
+      if (nextType !== prevType) setAttr(source, "type", prevType = nextType);
+    });
+    return root;
+  };
+
+  // <Show when={src()} fallback={...}>: yields the media node when src() is
+  // truthy, otherwise the state/fallback node. Equal truthiness never rebuilds.
+  // Returned as an accessor so the caller resolves it reactively, mirroring the
+  // compiled Show child.
+  const showMedia = () => {
+    const shown = createMemo(() => !!src());
+    // Mirror Show: the branch is keyed only on when()'s truthiness, so the
+    // child/fallback is rendered once per flip. The state-snapshot reads below
+    // (kind/deleted/status) are untracked so a same-truthiness change never
+    // re-renders the branch, exactly like the compiled Show fallback getter.
+    return createMemo(() => {
+      const visible = shown();
+      return untrack(() => {
+        if (visible) return buildMedia();
+        const media = cfg();
+        const k = kind();
+        if (!media || k !== "image" && k !== "audio") return props.fallback();
+        const label = kindLabel(k);
+        const stateNode = messageKey => {
+          const node = tmplState();
+          // The translated text is the only live binding here; the compiled
+          // template re-ran insert() on language change.
+          createRenderEffect(() => {
+            node.textContent = i18n.t(messageKey, { kind: label });
+          });
+          return node;
+        };
+        if (deleted()) return stateNode("ui.fileMedia.state.removed");
+        if (status() === "loading") return stateNode("ui.fileMedia.state.loading");
+        if (status() === "error") return stateNode("ui.fileMedia.state.error");
+        return stateNode("ui.fileMedia.state.unavailable");
+      });
+    });
+  };
+
+  // SVG branch: if there is no inline text and no data URL, fall back; otherwise
+  // a column wrapper holding two Shows inserted at the end of the wrapper, like
+  // the compiled insert(wrap, Show, null).
+  const buildSvg = () => {
+    if (svgSource() === undefined && svgSrc() == null) return props.fallback();
+    const wrap = tmplSvgWrap();
+    // Marker between the two Shows so the fallback region always precedes the
+    // image region regardless of which toggles first, mirroring the compiled
+    // insert() markers.
+    const marker = document.createComment("");
+    wrap.appendChild(marker);
+
+    // <Show when={svgSource() !== undefined}>{props.fallback()}</Show>. Key on
+    // the boolean so the fallback child is built once per truthiness flip, not
+    // rebuilt whenever the source text changes (matching Show semantics).
+    const fallbackNode = createMemo(() => {
+      if (svgSource() === undefined) return undefined;
+      return untrack(() => props.fallback());
+    });
+    renderBefore(wrap, marker, () => fallbackNode());
+
+    // <Show when={svgSrc()}>{value => svg image}</Show>. Built once per flip;
+    // src/alt stay live through the inner render effect.
+    const shown = createMemo(() => !!svgSrc());
+    const imageNode = createMemo(() => {
+      if (!shown()) return undefined;
+      return untrack(() => {
+        const { root, img } = tmplSvgImage();
+        img.addEventListener("load", onLoad);
+        let prevSrc;
+        let prevAlt;
+        createRenderEffect(() => {
+          const nextSrc = svgSrc();
+          const nextAlt = cfg()?.path;
+          if (nextSrc !== prevSrc) setAttr(img, "src", prevSrc = nextSrc);
+          if (nextAlt !== prevAlt) setAttr(img, "alt", prevAlt = nextAlt);
+        });
+        return root;
+      });
+    });
+    renderBefore(wrap, null, () => imageNode());
+    return wrap;
+  };
+
+  // Binary branch: title = file name (last path segment), description = the
+  // path-aware translated string. Both stay live via render effects.
+  const buildBinary = () => {
+    const { root, title, desc } = tmplBinary();
+    createRenderEffect(() => {
+      title.textContent = cfg()?.path?.split("/").pop() ?? i18n.t("ui.fileMedia.binary.title");
+    });
+    createRenderEffect(() => {
+      const path = cfg()?.path;
+      if (!path) {
+        desc.textContent = i18n.t("ui.fileMedia.binary.description.default");
+        return;
+      }
+      desc.textContent = i18n.t("ui.fileMedia.binary.description.path", { path });
+    });
+    return root;
+  };
+
+  // Build one branch's reactive content (and the inner Show accessor for the
+  // media branch). Returns an accessor over the branch's current node(s).
+  const buildBranch = which => {
+    if (which === "media") return showMedia();
+    if (which === "svg") {
+      const node = buildSvg();
+      return () => node;
+    }
+    if (which === "binary") {
+      const node = buildBinary();
+      return () => node;
+    }
+    const node = props.fallback();
+    return () => node;
+  };
+
+  // Hand-rolled <Switch>: pick the first matching branch in a memo so equal
+  // branches never rebuild. The matched branch is (re)mounted in its own root,
+  // so switching disposes the previous branch's effects, mirroring solid's
+  // Switch which tears down the old <Match> owner. A signal exposes the active
+  // branch's accessor; the returned memo resolves it for the caller's insert().
+  const branch = createMemo(() => {
+    if (kind() === "image" || kind() === "audio") return "media";
+    if (kind() === "svg") return "svg";
+    if (isBinary()) return "binary";
+    return "fallback";
+  });
+  const [active, setActive] = createSignal();
+  let disposeBranch;
+  createRenderEffect(() => {
+    const which = branch();
+    untrack(() => {
+      if (disposeBranch) disposeBranch();
+      createRoot(dispose => {
+        disposeBranch = dispose;
+        setActive(() => buildBranch(which));
+      });
+    });
+  });
+  onCleanup(() => {
+    if (disposeBranch) disposeBranch();
+  });
+  return createMemo(() => {
+    const read = active();
+    return read ? read() : undefined;
   });
 }

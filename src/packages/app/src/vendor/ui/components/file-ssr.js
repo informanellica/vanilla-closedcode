@@ -1,15 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<template shadowrootmode=open>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-component=file data-mode=diff>`);
 import { DIFFS_TAG_NAME, FileDiff, VirtualizedFileDiff } from "@pierre/diffs";
-import { createEffect, onCleanup, onMount, Show, splitProps } from "solid-js";
+import { createComponent, createEffect, createRenderEffect, onCleanup, onMount, Show, splitProps } from "solid-js";
 import { Dynamic, isServer } from "solid-js/web";
 import { useWorkerPool } from "../context/worker-pool.js";
 import { createDefaultOptions, styleVariables } from "../pierre/index.js";
@@ -18,6 +8,57 @@ import { fixDiffSelection } from "../pierre/diff-selection.js";
 import { applyViewerScheme, clearReadyWatcher, createReadyWatcher, notifyShadowReady, observeViewerScheme } from "../pierre/file-runtime.js";
 import { acquireVirtualizer, virtualMetrics } from "../pierre/virtualizer.js";
 import { File } from "./file.js";
+
+// Apply a Solid classList object to a real element with prev-diffing, matching
+// solid-js/web classList(node, value, prev): tokens that disappear between
+// runs are removed; truthy tokens added, falsy removed. Returns the value so
+// it can be carried as the next prev.
+function applyClassList(el, value, prev) {
+  const next = value || {};
+  const previous = prev || {};
+  const addToken = cls => {
+    if (!cls) return;
+    const tokens = cls.split(/\s+/).filter(Boolean);
+    if (tokens.length) el.classList.add(...tokens);
+  };
+  const removeToken = cls => {
+    if (!cls) return;
+    const tokens = cls.split(/\s+/).filter(Boolean);
+    if (tokens.length) el.classList.remove(...tokens);
+  };
+  // Remove classes that were on previously but are gone now.
+  for (const cls in previous) {
+    if (cls && !next[cls] && previous[cls]) removeToken(cls);
+  }
+  // Add/remove based on the current value when it differs from prev.
+  for (const cls in next) {
+    const on = !!next[cls];
+    if (on === !!previous[cls]) continue;
+    if (on) addToken(cls);
+    else removeToken(cls);
+  }
+  return next;
+}
+
+// Apply a Solid style object to a real element. styleVariables is a stable
+// module constant, so this mirrors solid-js/web style(node, value, prev):
+// numbers/strings flow through setProperty (coerced to string), and the prev
+// reference guard keeps the work to the first run.
+function applyStyle(el, value, prev) {
+  if (value === prev) return prev;
+  if (prev) {
+    for (const key in prev) {
+      if (value == null || !(key in value)) el.style.removeProperty(key);
+    }
+  }
+  if (value) {
+    for (const key in value) {
+      el.style.setProperty(key, value[key]);
+    }
+  }
+  return value;
+}
+
 function DiffSSRViewer(props) {
   let container;
   let fileDiffRef;
@@ -115,43 +156,61 @@ function DiffSSRViewer(props) {
     sharedVirtualizer?.release();
     sharedVirtualizer = undefined;
   });
-  return (() => {
-    var _el$ = _tmpl$2();
-    var _ref$ = container;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : container = _el$;
-    _$insert(_el$, _$createComponent(Dynamic, {
-      component: DIFFS_TAG_NAME,
-      ref(r$) {
-        var _ref$2 = fileDiffRef;
-        typeof _ref$2 === "function" ? _ref$2(r$) : fileDiffRef = r$;
-      },
-      id: "ssr-diff",
-      get children() {
-        return _$createComponent(Show, {
-          when: isServer,
-          get children() {
-            var _el$2 = _tmpl$();
-            _$effect(() => _el$2.innerHTML = local.preloadedDiff.prerenderedHTML);
-            return _el$2;
-          }
-        });
-      }
-    }));
-    _$effect(_p$ => {
-      var _v$ = styleVariables,
-        _v$2 = local.class,
-        _v$3 = local.classList;
-      _p$.e = _$style(_el$, _v$, _p$.e);
-      _v$2 !== _p$.t && _$className(_el$, _p$.t = _v$2);
-      _p$.a = _$classList(_el$, _v$3, _p$.a);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined
-    });
-    return _el$;
-  })();
+
+  // Static skeleton: <div data-component=file data-mode=diff>. This element is
+  // the `container` ref.
+  const root = document.createElement("div");
+  root.setAttribute("data-component", "file");
+  root.setAttribute("data-mode", "diff");
+  container = root;
+
+  // The diff custom element. Dynamic (a public solid-js/web component, not a
+  // compiled primitive) creates <DIFFS_TAG_NAME> and forwards the ref to the
+  // actual element so hydration can attach to it. Its child is a server-only
+  // declarative shadow-root <template> seeded with the prerendered HTML.
+  const diffEl = createComponent(Dynamic, {
+    component: DIFFS_TAG_NAME,
+    ref(r$) {
+      fileDiffRef = r$;
+    },
+    id: "ssr-diff",
+    get children() {
+      return createComponent(Show, {
+        when: isServer,
+        get children() {
+          // <template shadowrootmode=open> with reactive innerHTML, as compiled.
+          const tpl = document.createElement("template");
+          tpl.setAttribute("shadowrootmode", "open");
+          createRenderEffect(() => {
+            tpl.innerHTML = local.preloadedDiff.prerenderedHTML;
+          });
+          return tpl;
+        }
+      });
+    }
+  });
+  // Insert the Dynamic result. It may be a Node or an accessor (Dynamic returns
+  // a memo accessor when the component string changes); resolve once like
+  // solid's insert would for a stable component value.
+  root.append(typeof diffEl === "function" ? diffEl() : diffEl);
+
+  // Static style object + change-guarded className + diffed classList, matching
+  // the compiled effect().
+  let prevStyle;
+  let prevClass;
+  let prevClassList;
+  createRenderEffect(() => {
+    prevStyle = applyStyle(root, styleVariables, prevStyle);
+    const nextClass = local.class;
+    if (nextClass !== prevClass) {
+      prevClass = nextClass;
+      // className mirrors solid-js/web: nullish removes the class attribute.
+      if (nextClass == null) root.removeAttribute("class");
+      else root.className = nextClass;
+    }
+    prevClassList = applyClassList(root, local.classList, prevClassList);
+  });
+  return root;
 }
 export function FileSSR(props) {
   if (props.mode !== "diff" || !props.preloadedDiff) return File(props);
