@@ -1,6 +1,9 @@
 // First-party reimplementation of the subset of `@solid-primitives/storage`
 // used by this app: `makePersisted`.
 //
+// Port/derivative of @solid-primitives/storage (MIT License,
+// Copyright (c) 2021 Solid Core Team). See THIRD-PARTY-NOTICES.md.
+//
 // Imports from "solid-js" and "solid-js/store" (the latter is genuinely required:
 // the store-backed branch reconciles deserialized data into the store).
 // Behavior matches upstream on the real solid-js runtime.

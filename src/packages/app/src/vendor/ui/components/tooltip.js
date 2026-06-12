@@ -1,3 +1,6 @@
+// Vanilla reimplementation of @kobalte/core's Tooltip behavior (no external UI
+// dependency). Derivative of @kobalte/core (MIT License,
+// Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
 import { insert } from "solid-js/web";
 import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, mergeProps, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";

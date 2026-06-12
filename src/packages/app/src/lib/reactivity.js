@@ -1,8 +1,14 @@
-// Self-written reactive core (milestone: solid-free reactivity, Stage R1).
-// API-compatible with the subset of solid-js this app uses, so call sites can
-// later be re-pointed here by swapping what the "solid-js" specifier resolves
-// to (import map / #imports) — without touching the source. Semantics follow
-// docs/milestones/solid-free-reactivity.md ("Semantics R1 must reproduce").
+// API-compatible reimplementation of the subset of solid-js this app uses
+// (milestone: solid-free reactivity, Stage R1). The reactive core itself —
+// signals, effects, memos, owners/scopes — is an independent implementation;
+// the memo/template DOM helpers near the end of this file reproduce the
+// solid-js/web (dom-expressions) runtime helpers of the same name. Call sites
+// can later be re-pointed here by swapping what the "solid-js" specifier
+// resolves to (import map / #imports) — without touching the source. Semantics
+// follow docs/milestones/solid-free-reactivity.md ("Semantics R1 must reproduce").
+//
+// Derived in part from solid-js / dom-expressions (MIT License,
+// Copyright (c) 2016-2025 Ryan Carniato). See THIRD-PARTY-NOTICES.md.
 
 let Owner = null;     // current ownership scope (cleanups, child computations, context)
 let Listener = null;  // current computation collecting dependencies

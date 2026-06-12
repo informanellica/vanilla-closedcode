@@ -4,6 +4,9 @@
 // The upstream module is pure (no solid-js imports); this is a faithful copy of
 // the used exports. Unused upstream exports (prefix / template / scopedTranslator
 // / chainedTranslator / proxyTranslator) are omitted.
+//
+// Port/derivative of @solid-primitives/i18n (MIT License,
+// Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
 
 const isDict = value =>
   value != null &&

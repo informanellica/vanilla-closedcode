@@ -1,8 +1,8 @@
-// Self-written store layer (milestone: solid-free reactivity, Stage R1).
+// Store layer (milestone: solid-free reactivity, Stage R1). This is a faithful
+// PORT of solid-js/store's production build — not an independent rewrite.
 // API-compatible with solid-js/store for the subset this app uses
 // (createStore / produce / reconcile / unwrap, plus createMutable /
-// modifyMutable for completeness). Ported faithfully from solid-js/store's
-// production build, with the three runtime dependencies it needs —
+// modifyMutable for completeness), with the three runtime dependencies it needs —
 // getListener / batch / createSignal — supplied by our own reactive core
 // (lib/reactivity.js) instead of solid-js. The $PROXY / $TRACK marker symbols
 // are private to this module (our reactive core does not use them); they only
@@ -18,6 +18,9 @@
 //     only changed paths notify;
 //   - produce(fn): mutable draft whose writes go straight through setProperty;
 //   - unwrap(value): the raw, proxy-free object graph.
+//
+// Faithful port of solid-js/store (MIT License,
+// Copyright (c) 2016-2025 Ryan Carniato). See THIRD-PARTY-NOTICES.md.
 
 import { batch, createSignal, getListener, $PROXY, $TRACK } from "./reactivity.js";
 

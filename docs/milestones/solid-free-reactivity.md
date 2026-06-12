@@ -1,9 +1,11 @@
 # Milestone: solid-free reactivity (replacing solid-js core)
 
-> Status: **Stage R1 complete** (2026-06-12) — core + store layer implemented,
+> Status: **Stage R1 complete** (2026-06-12) — reactive core (independent
+> implementation) + store layer (a faithful PORT of solid-js/store) implemented,
 > semantics tests green (reactivity 16/16, store 13/13). Next: R2 pilot.
 > Prerequisite (done): every first-party renderer file is hand-written vanilla —
 > zero compiler output; reactivity runs on solid-js core APIs only.
+> Attribution for the ported/derived pieces is tracked in THIRD-PARTY-NOTICES.md.
 
 ## Inventory (what "solid-js" means to us today)
 
@@ -30,7 +32,10 @@ vendored components), `@sentry/solid`, `@solidjs/meta`, `@opentui/solid`
 
 Because call sites are in the thousands but the API surface is small, we do NOT
 rewrite call sites. We implement **`lib/reactivity.js` — an API-compatible
-self-written core** for the subset we use, and swap what the specifier
+reimplementation** of the subset we use (its reactive core — signals/effects/
+memos/owners — is an independent implementation; the memo/template DOM helpers
+reproduce the solid-js/web (dom-expressions) runtime, and **`lib/store.js` is a
+faithful port of solid-js/store**), and swap what the specifier
 `solid-js` RESOLVES to (renderer import map / `package.json#imports`), keeping
 the source untouched. Third-party packages keep resolving to the real solid-js
 until each is replaced (Stage R3) — two runtimes can coexist because every

@@ -6,6 +6,9 @@
 // mutation lifecycle (onMutate/onSuccess/onError/onSettled, isPending,
 // variables, mutate/mutateAsync).
 //
+// Port/derivative of @tanstack/solid-query and @tanstack/query-core (MIT
+// License, Copyright (c) 2021-present Tanner Linsley). See THIRD-PARTY-NOTICES.md.
+//
 // Omitted vs upstream (unused by this app, verified by usage audit): infinite
 // queries, suspense/transitions/prefetch-in-render, devtools, persistence/
 // hydration/SSR, placeholderData, select, structural sharing, notifyOnChange

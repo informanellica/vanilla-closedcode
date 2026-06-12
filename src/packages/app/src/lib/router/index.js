@@ -7,8 +7,9 @@
 // ported from the same release.
 //
 // This is a port of @solidjs/router (MIT License,
-// Copyright (c) Ryan Carniato and contributors). See
-// https://github.com/solidjs/solid-router for the original.
+// Copyright (c) 2020-2022 Ryan Carniato). See
+// https://github.com/solidjs/solid-router for the original, and
+// THIRD-PARTY-NOTICES.md for the license text.
 //
 // Reactivity is imported ONLY from "solid-js" / "solid-js/web" so a later
 // import-map flip can swap the reactive runtime without touching this code.

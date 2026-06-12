@@ -1,3 +1,6 @@
+// Model-selection UI built on the vanilla Popover component, originally derived
+// from an @kobalte/core Popover. Derivative of @kobalte/core (MIT License,
+// Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
 import { Popover } from "@/vendor/ui/components/popover.js";
 import { createComponent, createMemo, createRoot, getOwner, runWithOwner } from "solid-js";
 import { createStore } from "solid-js/store";

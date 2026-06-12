@@ -1,6 +1,9 @@
 // First-party reimplementation of the subset of `@solid-primitives/timer`
 // used by this app: `makeTimer`.
 //
+// Port/derivative of @solid-primitives/timer (MIT License,
+// Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
+//
 // Imports only from "solid-js". Behavior matches upstream on the real solid-js runtime.
 //
 // Scope note: the upstream package also exports `createTimer`, `createTimeoutLoop`,

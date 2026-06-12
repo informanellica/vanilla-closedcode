@@ -6,6 +6,10 @@
 //
 // Imports nothing from the reactive runtime — pure DOM/geometry — so it obeys
 // the flip-safe import constraint by importing nothing at all.
+//
+// Positioning support for the @kobalte/core-derived overlay components in this
+// directory. Derivative of @kobalte/core (MIT License,
+// Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
 
 // Parse a standard placement string ("bottom-end", "top", "right-start", …) into
 // a side + alignment pair.

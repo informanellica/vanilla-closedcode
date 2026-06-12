@@ -5,6 +5,9 @@
 // provider's document.head management never runs, and a pass-through that simply
 // renders its children is behavior-identical. (If Title/Meta are introduced
 // later, port the real provider's head-tag management here.)
+//
+// Derivative of @solidjs/meta (MIT License, Copyright (c) Ryan Carniato).
+// See THIRD-PARTY-NOTICES.md.
 export function MetaProvider(props) {
   return props.children;
 }

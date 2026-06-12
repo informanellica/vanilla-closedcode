@@ -1,6 +1,9 @@
 // First-party reimplementation of the subset of `@solid-primitives/resize-observer`
 // used by this app: `createResizeObserver` (and its helper `makeResizeObserver`).
 //
+// Port/derivative of @solid-primitives/resize-observer (MIT License,
+// Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
+//
 // Imports only from "solid-js". Behavior matches upstream on the real solid-js runtime.
 //
 // Scope note: the upstream package also exports `getWindowSize`, `createWindowSize`,

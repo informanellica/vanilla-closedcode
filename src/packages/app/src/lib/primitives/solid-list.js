@@ -14,6 +14,9 @@
 //   - `createControllableSignal` from `@corvu/utils/create/controllableSignal`
 //
 // Behavior matches the upstream packages on the real solid-js runtime.
+//
+// Port/derivative of solid-list and @corvu/utils (both MIT License,
+// Copyright (c) 2023-2024 Jasmin Noetzli). See THIRD-PARTY-NOTICES.md.
 import { createSignal, mergeProps, untrack } from "solid-js";
 
 // Inlined from `@corvu/utils/reactivity` (`access`): unwrap a value that may be

@@ -1,6 +1,9 @@
 // First-party reimplementation of the subset of `@solid-primitives/media`
 // used by this app: `createMediaQuery`.
 //
+// Port/derivative of @solid-primitives/media (MIT License,
+// Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
+//
 // Imports only from "solid-js". Behavior matches upstream on the real solid-js
 // runtime in a client (browser) environment.
 //

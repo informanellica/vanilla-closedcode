@@ -1,7 +1,10 @@
 // First-party reimplementation of the used subset of @thisbeyond/solid-dnd
-// (v0.7.5, MIT, Martin Pengelly-Phillips). Behavior is reproduced faithfully
-// for the features this app relies on: a pointer-driven sortable drag-and-drop
-// (session tabs, terminal tabs, project/workspace sidebar).
+// (v0.7.5). Behavior is reproduced faithfully for the features this app relies
+// on: a pointer-driven sortable drag-and-drop (session tabs, terminal tabs,
+// project/workspace sidebar).
+//
+// Port/derivative of @thisbeyond/solid-dnd (MIT License,
+// Copyright (c) 2021 Martin Pengelly-Phillips). See THIRD-PARTY-NOTICES.md.
 //
 // Reactivity is sourced ONLY from "solid-js" / "solid-js/store". The upstream
 // DragOverlay used Portal from "solid-js/web"; here the overlay element is

@@ -1,6 +1,9 @@
 // First-party reimplementation of the subset of `@solid-primitives/event-listener`
 // used by this app: `makeEventListener` and `createEventListener`.
 //
+// Port/derivative of @solid-primitives/event-listener (MIT License,
+// Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
+//
 // Imports only from "solid-js" so it follows the import-map flip to a self-written
 // reactive core. Behavior matches the upstream package on the real solid-js runtime.
 //
