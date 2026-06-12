@@ -119,7 +119,7 @@ export function Checkbox(props) {
   root.appendChild(input);
 
   // State props are live getters (e.g. a todo's status signal); track them and
-  // expose the Kobalte-style data attributes checkbox.css selects on
+  // expose the standard data attributes checkbox.css selects on
   // ([data-checked] / [data-indeterminate] / [data-disabled] / [data-readonly]).
   createRenderEffect(() => {
     const checked = !!local.checked;

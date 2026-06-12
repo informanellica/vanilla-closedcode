@@ -79,7 +79,7 @@ export function SessionRetry(props) {
     // Show(truncated) with fallback: swap between the tooltip-wrapped and the
     // plain message div only when the truncation flag flips; the message text
     // itself stays live inside whichever div is mounted. Tooltip is still
-    // compiled Solid (Kobalte, presence-gated), so its accessor result must
+    // compiled Solid (the original component, presence-gated), so its accessor result must
     // flow through solid's insert() (established exception); the null marker
     // keeps this region's position stable next to the info line.
     insert(body, createMemo(() => {

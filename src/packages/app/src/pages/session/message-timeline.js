@@ -1,6 +1,6 @@
 // Compiled solid-js/web template helpers are replaced with hand-written DOM
 // construction. insert() is the established exception for reactive and
-// component-valued children (Kobalte presence-gated Popover/Dropdown content,
+// component-valued children (presence-gated Popover/Dropdown content,
 // runtime Show/For/Index output, memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
 import { insert } from "solid-js/web";
@@ -649,7 +649,7 @@ export function MessageTimeline(props) {
           // Anchor-only popover: positioned against the "more" dropdown button,
           // no own trigger. Esc/outside dismissal + flip handled internally; the
           // dismiss reason arrives via onDismiss (was onEscapeKeyDown /
-          // onPointerDownOutside / onFocusOutside on Kobalte.Content).
+          // onPointerDownOutside / onFocusOutside on the original Content).
           anchorRef: () => more,
           placement: "bottom-end",
           gutter: 4,

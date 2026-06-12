@@ -183,7 +183,7 @@ function init() {
       // The shown element (a vanilla content panel, e.g. vendor Dialog/
       // ImagePreview) is rendered directly while it is not closing. The
       // overlay/backdrop and Escape handling are owned by this provider's
-      // stack and capture-phase keydown listener, so no Kobalte Portal/Overlay
+      // stack and capture-phase keydown listener, so no upstream Portal/Overlay
       // wrapper is needed. `equals: false` matches the compiled memo() wrapper's
       // semantics.
       return createMemo(() => closing() ? null : element(), undefined, {

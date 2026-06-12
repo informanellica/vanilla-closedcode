@@ -6,12 +6,12 @@ import { createComponent, createContext, createEffect, createMemo, createRenderE
 // dependencies handled so we never import from ui (or its
 // own deps) here:
 //
-//   * `@kobalte/core/dialog` (Kobalte Dialog/Portal/Overlay): the original
-//     wrapped the shown element in Kobalte's Portal + Overlay. Our local
+//   * the upstream dialog primitive (Dialog/Portal/Overlay): the original
+//     wrapped the shown element in that primitive's Portal + Overlay. Our local
 //     dialog component (@/bs/dialog.js, the Bootstrap modal) renders its own
 //     fixed backdrop/overlay and closes by re-emitting an `Escape` keydown on
 //     `window` — the exact event this context already listens for in capture
-//     phase. Wrapping in Kobalte would produce a duplicate backdrop and a
+//     phase. Wrapping in the upstream primitive would produce a duplicate backdrop and a
 //     competing Escape handler, so we render the element directly instead.
 //
 //   * `@solid-primitives/event-listener` (`makeEventListener`): inlined below

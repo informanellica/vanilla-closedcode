@@ -9,8 +9,8 @@ import {
 import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
-// Vanilla reimplementation of the Kobalte Collapsible compound component.
-// Mirrors the Kobalte collapsible behaviour: a controllable open state, the
+// Vanilla reimplementation of the original Collapsible compound component.
+// Mirrors the original collapsible behaviour: a controllable open state, the
 // data-expanded/data-closed/data-disabled dataset on root + trigger + content,
 // aria-expanded/aria-controls on the trigger, the --vcc-collapsible-content-height
 // CSS var, a polymorphic trigger (`as`), and content that is hidden while closed.
@@ -244,7 +244,7 @@ function CollapsibleTrigger(props) {
   if (!isNativeButton && !isNativeLink) el.setAttribute("role", "button");
 
   // Local onClick runs first (the root's delegated handler invokes it before
-  // toggling), matching Kobalte's composeEventHandlers([local.onClick, toggle]).
+  // toggling), matching the original composeEventHandlers([local.onClick, toggle]).
   el.__collapsibleLocalOnClick = local.onClick;
 
   applyClassProp(el, local);

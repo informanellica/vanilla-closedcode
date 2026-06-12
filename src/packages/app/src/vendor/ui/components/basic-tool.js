@@ -292,7 +292,7 @@ export function BasicTool(props) {
         return el;
       });
 
-      // Show(!animated && children && !hideDetails): Kobalte presence-gated
+      // Show(!animated && children && !hideDetails): presence-gated
       // Content (children resolve only while open), so the gate memo below is
       // created once per Content mount.
       const plainOn = createMemo(() => !!(!props.animated && props.children));

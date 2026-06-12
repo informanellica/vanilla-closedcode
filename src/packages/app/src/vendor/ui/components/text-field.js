@@ -4,7 +4,7 @@ import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
 import { Tooltip } from "./tooltip.js";
 
-// Vanilla port of the Kobalte TextField wrapper. Kobalte previously owned the
+// Vanilla port of the original TextField wrapper. The original previously owned the
 // field behavior (controllable value, the validation/readonly/disabled data
 // attributes the CSS keys off, the controlled-value clamp). This rebuilds the
 // same surface by hand following the bs/text-field.js house pattern: a real
@@ -50,7 +50,7 @@ function applyRestProps(el, rest) {
   });
 }
 
-// Kobalte's createControllableSignal: controlled when `value` is supplied,
+// The original createControllableSignal: controlled when `value` is supplied,
 // uncontrolled (internal, seeded from defaultValue) otherwise; onChange fires
 // with the new string. Returns [read, write].
 function controllableValue(local) {
@@ -108,7 +108,7 @@ export function TextField(props) {
     if (!multiline) el.type = "text";
 
     // Rest props (type, placeholder, ref, spellcheck, autocomplete, ...) land
-    // on the field, like Kobalte forwarding `others` onto Input/TextArea.
+    // on the field, like the original forwarding `others` onto Input/TextArea.
     applyRestProps(el, others);
 
     // class + validation/readonly/disabled/required data attributes (the CSS
@@ -140,7 +140,7 @@ export function TextField(props) {
 
     // Value: keep the field in sync with the (controllable) value; for a
     // controlled field whose external prop did not change, the DOM is clamped
-    // back, matching Kobalte's `target.value = value()` enforcement.
+    // back, matching the original `target.value = value()` enforcement.
     createRenderEffect(() => {
       const v = readValue();
       if (el.value !== v) el.value = v ?? "";
@@ -200,7 +200,7 @@ export function TextField(props) {
     return wrapper;
   }
 
-  // Root: div role="group" with the formControl dataset, mirroring Kobalte's
+  // Root: div role="group" with the formControl dataset, mirroring the original
   // TextFieldRoot. The CSS keys data-component="input" + data-variant.
   const root = document.createElement("div");
   root.setAttribute("data-component", "input");
@@ -243,7 +243,7 @@ export function TextField(props) {
     root.appendChild(desc);
   }
 
-  // Error message: always present (matches Kobalte's ErrorMessage slot), text
+  // Error message: always present (matches the original ErrorMessage slot), text
   // tracked so it appears/clears reactively.
   const errorEl = document.createElement("div");
   errorEl.setAttribute("data-slot", "input-error");

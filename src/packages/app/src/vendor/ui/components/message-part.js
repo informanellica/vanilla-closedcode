@@ -1,6 +1,6 @@
 // Dynamic is a runtime component, not a compiled template helper (it is only
 // exported from solid-js/web). insert() is the established exception for
-// reactive/component-valued children (Kobalte presence-gated Collapsible and
+// reactive/component-valued children (presence-gated Collapsible and
 // Accordion content, Dynamic and memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
 import { Dynamic, insert } from "solid-js/web";
@@ -2465,7 +2465,7 @@ ToolRegistry.register({
                                 }
                               }), createComponent(Accordion.Content, {
                                 get children() {
-                                  // Kobalte presence-gated content: keep the
+                                  // Presence-gated content: keep the
                                   // Show + insert() path.
                                   return createComponent(Show, {
                                     get when() {

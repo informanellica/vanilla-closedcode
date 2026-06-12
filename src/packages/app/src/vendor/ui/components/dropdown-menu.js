@@ -2,7 +2,7 @@ import { createRenderEffect, getOwner, onCleanup } from "solid-js";
 import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
-// Vanilla DropdownMenu (no Kobalte dependency): mirrors bs/dropdown-menu.js
+// Vanilla DropdownMenu (no third-party UI dependency): mirrors bs/dropdown-menu.js
 // techniques — module-variable context for the compound parts, a fixed-position
 // portal under <body>, document-level dismissal (Esc + outside pointerdown),
 // roving keyboard focus (arrows/Home/End/typeahead), and aria menu/menuitem

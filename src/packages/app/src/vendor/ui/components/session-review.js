@@ -16,7 +16,7 @@ import { checksum } from "core/util/encode";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, onCleanup, Show, Switch, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 // insert() is the established exception for reactive/component-valued children
-// (most of them rendered inside Kobalte presence-gated Accordion content) so
+// (most of them rendered inside presence-gated Accordion content) so
 // Solid keeps reconciling accessors instead of freezing them.
 import { insert } from "solid-js/web";
 import { mediaKindFromPath } from "../pierre/media.js";
@@ -84,7 +84,7 @@ function ReviewCommentMenu(props) {
   // stopPropagation here reproduces the same suppression at the same scope.
   root.addEventListener("click", event => event.stopPropagation());
   root.addEventListener("mousedown", event => event.stopPropagation());
-  // Kobalte component tree (portal + presence-gated content): insert() keeps
+  // The original component tree (portal + presence-gated content): insert() keeps
   // its accessor output live, exactly like the compiled insert().
   insert(root, createComponent(DropdownMenu, {
     gutter: 4,
@@ -562,7 +562,7 @@ export const SessionReview = props => {
                                         const viewButton = template(`<button data-slot="session-review-view-button" type="button"></button>`);
                                         // Compiled delegated $$click -> native
                                         // listener. The stopPropagation still
-                                        // suppresses the Kobalte accordion
+                                        // suppresses the accordion
                                         // trigger's (delegated) click handler:
                                         // the event no longer reaches the
                                         // document where the delegation walk
@@ -634,7 +634,7 @@ export const SessionReview = props => {
                         }), createComponent(Accordion.Content, {
                           "data-slot": "session-review-accordion-content",
                           get children() {
-                            // Kobalte presence-gated content: this getter runs
+                            // Presence-gated content: this getter runs
                             // per mount, exactly like the compiled template.
                             const wrapper = template(`<div data-slot="session-review-diff-wrapper"></div>`);
                             // The compiled use(...) ref ran synchronously at

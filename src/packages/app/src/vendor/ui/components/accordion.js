@@ -7,14 +7,14 @@ import {
 } from "solid-js";
 import { insert } from "solid-js/web";
 
-// Vanilla reimplementation of the Kobalte Accordion compound component, modelled
+// Vanilla reimplementation of the original Accordion compound component, modelled
 // as a set of collapsibles with single/multiple expansion plus roving focus.
-// Faithful to Kobalte's Accordion a11y: role="region"/aria-labelledby on each
+// Faithful to the original accordion a11y: role="region"/aria-labelledby on each
 // content, aria-expanded/aria-controls on each trigger, the data-expanded/
 // data-closed/data-disabled dataset on item/header/trigger/content, data-key /
 // data-value on the trigger, ArrowUp/ArrowDown/Home/End roving focus (wrapping),
 // and the --vcc-accordion-content-height var. There is no src/bs twin, so the
-// selection + keyboard model mirrors the Kobalte Accordion directly.
+// selection + keyboard model mirrors the original accordion directly.
 //
 // Architecture mirrors src/bs/tabs.js: the Root owns delegated click + keydown
 // handlers plus a DOM-walking sync() (run in a render effect) that sets every
@@ -127,7 +127,7 @@ function AccordionRoot(props) {
   const expandedKeys = () => (isControlled() ? toKeySet(local.value) : uncontrolled());
 
   const isMultiple = () => !!local.multiple;
-  // disallowEmptySelection = !multiple && !collapsible (Kobalte).
+  // disallowEmptySelection = !multiple && !collapsible (original behaviour).
   const allowEmpty = () => isMultiple() || !!local.collapsible;
 
   const root = document.createElement("div");
@@ -355,7 +355,7 @@ function AccordionContent(props) {
   el.setAttribute("data-slot", "accordion-content");
   el.setAttribute("role", "region");
   el.id = local.id ?? `accordion-content-${createUniqueId()}`;
-  // Bridge the collapsible height var to the accordion var, like Kobalte.
+  // Bridge the collapsible height var to the accordion var, like the original.
   el.style.setProperty("--vcc-accordion-content-height", "var(--vcc-collapsible-content-height)");
   el.style.setProperty("--vcc-accordion-content-width", "var(--vcc-collapsible-content-width)");
 

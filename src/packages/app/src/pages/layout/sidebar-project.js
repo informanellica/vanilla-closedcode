@@ -1,4 +1,4 @@
-// Kobalte presence-gated content flows through the insertions below: the
+// Presence-gated content flows through the insertions below: the
 // ContextMenu/HoverCard component trees resolve to [trigger, portal marker]
 // arrays whose membership changes whenever a portal mounts/unmounts, and the
 // session lists are For-reconciled rows inside the hover-card panel. insert()

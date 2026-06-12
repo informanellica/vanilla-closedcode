@@ -38,7 +38,7 @@ export function ImagePreview(props) {
 
   const header = template(`<div data-slot="image-preview-header"></div>`);
   // The alt fallback reads i18n.t live so it follows language switches; reuse it
-  // for the close button's aria-label too (was Kobalte CloseButton's children).
+  // for the close button's aria-label too (was the original CloseButton's children).
   const closeBtn = IconButton({
     "data-slot": "image-preview-close",
     icon: "close",
@@ -68,7 +68,7 @@ export function ImagePreview(props) {
   container.appendChild(content);
 
   // Focus the panel on mount, restore on unmount (matching the focus scope the
-  // Kobalte Dialog.Content provided around the preview).
+  // original Dialog.Content provided around the preview).
   const previouslyFocused = typeof document !== "undefined" ? document.activeElement : null;
   onMount(() => content.focus());
   onCleanup(() => {

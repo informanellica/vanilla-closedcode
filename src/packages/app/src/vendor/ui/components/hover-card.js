@@ -85,7 +85,7 @@ export function HoverCard(props) {
     contentEl.style.position = "fixed";
     if (local.class) contentEl.classList.add(...String(local.class).split(/\s+/).filter(Boolean));
     createRenderEffect(() => applyClassList(contentEl, local.classList));
-    // Keep the card open while the pointer is over it (matches Kobalte's
+    // Keep the card open while the pointer is over it (matches the original
     // safe-area / hover-bridge behavior at a basic level).
     contentEl.addEventListener("pointerenter", () => {
       clearTimeout(closeTimer);

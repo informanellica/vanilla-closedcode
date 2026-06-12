@@ -31,7 +31,7 @@ export function TooltipKeybind(props) {
 }
 
 export function Tooltip(props) {
-  // The previously-rendered trigger element (Kobalte wrapped the children in a
+  // The previously-rendered trigger element (the original wrapped the children in a
   // <div data-component="tooltip-trigger">). Captured for hover/focus + the
   // expand/block heuristics below.
   let triggerEl;
@@ -95,7 +95,7 @@ export function Tooltip(props) {
     close();
   };
 
-  // Show with the open delay (Kobalte default 700ms unless overridden).
+  // Show with the open delay (original default 700ms unless overridden).
   const requestOpen = () => {
     if (local.forceOpen) return;
     if (state.block) return;
@@ -112,7 +112,7 @@ export function Tooltip(props) {
       if (!state.block) setState("open", true);
     }, delay);
   };
-  // closeDelay is forced to 0, matching the Kobalte wrapper.
+  // closeDelay is forced to 0, matching the original wrapper.
   const requestClose = () => {
     clearTimeout(openTimer);
     openTimer = 0;
@@ -124,7 +124,7 @@ export function Tooltip(props) {
     drop();
   };
 
-  // The wrapping trigger div (Kobalte rendered `as: "div"` with display:contents
+  // The wrapping trigger div (the original rendered `as: "div"` with display:contents
   // semantics via class). data-component preserved for styling/test hooks.
   triggerEl = document.createElement("div");
   triggerEl.setAttribute("data-component", "tooltip-trigger");
@@ -155,7 +155,7 @@ export function Tooltip(props) {
     insert(triggerEl, () => local.children);
   }
 
-  // Watch the trigger subtree for expand/collapse of inner controls (Kobalte
+  // Watch the trigger subtree for expand/collapse of inner controls (the original
   // relied on its own state; we observe the DOM the way the old wrapper did).
   const obs = new MutationObserver(sync);
   obs.observe(triggerEl, {

@@ -1,7 +1,7 @@
 import { createRenderEffect, createSignal, splitProps } from "solid-js";
 import { insert } from "solid-js/web";
 
-// Vanilla port of the Kobalte Switch wrapper. Kobalte previously owned the
+// Vanilla port of the original Switch wrapper. The original previously owned the
 // switch behavior (controlled/uncontrolled state, aria wiring, the
 // data-checked/data-disabled attributes the CSS keys off); this rebuilds the
 // same observable surface by hand, mirroring the bs/switch.js + checkbox.js
@@ -94,7 +94,7 @@ export function Switch(props) {
   ]);
 
   // Controlled when `checked` is supplied; otherwise track internal state
-  // seeded from defaultChecked, exactly like Kobalte's createToggleState.
+  // seeded from defaultChecked, exactly like the original createToggleState.
   const controlled = () => local.checked !== undefined;
   const [internal, setInternal] = createSignal(!!local.defaultChecked);
   const isChecked = () => (controlled() ? !!local.checked : internal());
@@ -119,7 +119,7 @@ export function Switch(props) {
   if (local.value != null) input.value = local.value;
 
   // Single commit path shared by the input's native change and the control's
-  // pointer/keyboard toggle, mirroring Kobalte's context.toggle().
+  // pointer/keyboard toggle, mirroring the original context.toggle().
   const commit = next => {
     if (local.disabled || local.readOnly) return;
     if (!controlled()) setInternal(next);
@@ -137,7 +137,7 @@ export function Switch(props) {
   });
 
   // Reactive state -> data attributes the CSS selects on, plus the input's
-  // own checked/disabled/aria-checked, mirroring Kobalte's data wiring.
+  // own checked/disabled/aria-checked, mirroring the original data wiring.
   createRenderEffect(() => {
     const checked = isChecked();
     const disabled = !!local.disabled;
@@ -181,7 +181,7 @@ export function Switch(props) {
   control.setAttribute("data-slot", "switch-control");
   control.setAttribute("aria-hidden", "true");
   // The input is visually clipped (see switch.css), so the visible control owns
-  // the pointer/keyboard toggle, exactly like Kobalte's SwitchControl: click or
+  // the pointer/keyboard toggle, exactly like the original SwitchControl: click or
   // Space flips state and returns focus to the input.
   control.addEventListener("click", () => {
     toggle();

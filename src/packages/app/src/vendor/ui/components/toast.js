@@ -21,7 +21,7 @@ import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";
 
 // ---------------------------------------------------------------------------
-// Vanilla reimplementation of the Kobalte toast component (no external UI dep).
+// Vanilla reimplementation of the original toast component (no external UI dep).
 //
 // The exported surface is preserved exactly: the `toaster` singleton
 // (`show`/`update`/`promise`/`dismiss`/`clear`), the `Toast` component
@@ -33,7 +33,7 @@ import { IconButton } from "./icon-button.js";
 // attributes and the `--vcc-toast-*` custom properties).
 //
 // Reactivity stays inside the flip-safe primitive set: the toaster store is a
-// plain `createSignal` holding an immutable array (Kobalte uses a solid-js
+// plain `createSignal` holding an immutable array (the original uses a solid-js
 // store, which is intentionally avoided here), region/toast state flows through
 // `createContext`, and DOM is built natively with reactive `createRenderEffect`
 // updates plus native `addEventListener`.
@@ -156,7 +156,7 @@ function appendChildren(parent, children) {
 // ---------------------------------------------------------------------------
 // Toaster store.
 //
-// Faithful port of the Kobalte toast-store.ts + toaster.ts, but the
+// Faithful port of the original toast-store.ts + toaster.ts, but the
 // backing state is a plain signal holding an immutable `toasts` array instead
 // of a solid-js store. Every mutation produces a new array so the signal change
 // propagates to the region's filtered memo and the `For` list. `dismiss` flips
@@ -262,7 +262,7 @@ function clear() {
   toastStore.clear();
 }
 
-// User facing API (same shape as the Kobalte `toaster`).
+// User facing API (same shape as the original `toaster`).
 const toaster = {
   show,
   update,
@@ -272,7 +272,7 @@ const toaster = {
 };
 
 // ---------------------------------------------------------------------------
-// Region + toast contexts (replace Kobalte's toast-region-context /
+// Region + toast contexts (replace the original toast-region-context /
 // toast-context). Carry the same accessors so the sub-parts behave the same.
 // ---------------------------------------------------------------------------
 const ToastRegionContext = createContext();
@@ -302,7 +302,7 @@ const TOAST_HOTKEY_PLACEHOLDER = "{hotkey}";
 // ---------------------------------------------------------------------------
 // Region: the fixed area where toasts appear. Portals to <body>, hosts the
 // list, and owns the pause/resume coordination (focus, hover, window blur,
-// hotkey focus) that Kobalte's ToastRegion + ToastList split across two files.
+// hotkey focus) that the original ToastRegion + ToastList split across two files.
 // ---------------------------------------------------------------------------
 function ToastRegion(props) {
   // Solid's Portal is kept on purpose (established convention, see
@@ -387,7 +387,7 @@ function ToastRegionImpl(props) {
   list.tabIndex = -1;
 
   // List-level pause/resume: hover and focus pause the close timers; leaving or
-  // blurring resumes them (ToastList in Kobalte).
+  // blurring resumes them (ToastList in the original).
   const pauseFromInteraction = () => {
     if (context.pauseOnInteraction() && !untrack(isPaused)) context.pauseAllTimer();
   };
@@ -821,9 +821,9 @@ function ToastCloseButton(props) {
     props,
   );
   const [local, others] = splitProps(merged, ["onClick"]);
-  // Closing goes through the toast context (mirrors Kobalte's CloseButton, which
+  // Closing goes through the toast context (mirrors the original CloseButton, which
   // called context.close() after any user onClick). Rendered with the vendor
-  // IconButton — previously selected via Kobalte's `as: IconButton`.
+  // IconButton — previously selected via the original `as: IconButton`.
   const onClick = e => {
     if (typeof local.onClick === "function") local.onClick(e);
     context.close();
@@ -849,7 +849,7 @@ function ToastProgressFill(props) {
   let totalElapsedTime = 0;
 
   // Tick the remaining-life custom property while the timer runs (paused when
-  // the region is paused or the toast is persistent) — Kobalte's ProgressFill.
+  // the region is paused or the toast is persistent) — the original ProgressFill.
   createEffect(() => {
     if (rootContext.isPaused() || context.isPersistent()) return;
     const intervalId = setInterval(() => {

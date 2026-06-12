@@ -5,8 +5,8 @@ import { IconButton } from "@/bs/icon-button.js";
 
 // Local, self-contained replacement for ui/toast.
 //
-// The original was a thin wrapper over @kobalte/core/toast. To avoid pulling in
-// any ui (and its Kobalte) dependency, we reimplement a minimal
+// The original was a thin wrapper over the upstream toast primitive. To avoid pulling in
+// any ui (and its third-party UI) dependency, we reimplement a minimal
 // toaster store with the same public JS API (showToast/showPromiseToast/toaster
 // and the `Toast` component namespace). The visual host uses Bootstrap toast
 // markup (.toast-container / .toast). Icons come from @/bs/icon.js.

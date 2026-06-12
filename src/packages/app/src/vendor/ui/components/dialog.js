@@ -22,7 +22,7 @@ function setAttr(el, name, value) {
 // shell — Escape-to-close (capture-phase keydown listener on window) and the
 // presence-gated mount/unmount of the active node. So the close button mirrors
 // @/bs/dialog.js's requestClose: re-emit an Escape keydown on window, which the
-// stack already listens for, instead of needing a Kobalte Dialog root context.
+// stack already listens for, instead of needing an upstream Dialog root context.
 function requestClose() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
@@ -31,7 +31,7 @@ function requestClose() {
 }
 
 // Selector for tabbable elements, used by the focus trap (mirrors the focus
-// scope Kobalte's Dialog.Content set up around this panel).
+// scope the original Dialog.Content set up around this panel).
 const FOCUSABLE =
   'a[href],area[href],input:not([disabled]):not([type="hidden"]),select:not([disabled]),textarea:not([disabled]),button:not([disabled]),iframe,object,embed,[tabindex]:not([tabindex="-1"]),[contenteditable]:not([contenteditable="false"])';
 
@@ -42,7 +42,7 @@ function focusableWithin(root) {
 }
 
 // Move initial focus into the panel: an [autofocus] element if present (the
-// onOpenAutoFocus behavior the Kobalte version reproduced), otherwise the
+// onOpenAutoFocus behavior the original version reproduced), otherwise the
 // content element itself.
 function autoFocus(content) {
   const autofocusEl = content.querySelector("[autofocus]");
@@ -86,7 +86,7 @@ function installFocusTrap(content) {
 }
 
 // Lock body scroll while the panel is mounted (the preventScroll behavior the
-// Kobalte version provided), restoring the prior overflow on unmount.
+// original version provided), restoring the prior overflow on unmount.
 function installScrollLock() {
   if (typeof document === "undefined") return;
   const body = document.body;
@@ -201,7 +201,7 @@ export function Dialog(props) {
     if (transition !== prevTransition) setAttr(root, "data-transition", prevTransition = transition);
   });
 
-  // Modal shell behavior the Kobalte Dialog.Content used to provide: lock body
+  // Modal shell behavior the original Dialog.Content used to provide: lock body
   // scroll, trap + auto-focus, restore focus on unmount. The stack mounts/
   // unmounts this node, so onMount/onCleanup bracket the panel's lifetime.
   installScrollLock();

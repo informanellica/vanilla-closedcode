@@ -7,7 +7,7 @@
 // Imports nothing from the reactive runtime — pure DOM/geometry — so it obeys
 // the flip-safe import constraint by importing nothing at all.
 
-// Parse a Kobalte-style placement ("bottom-end", "top", "right-start", …) into
+// Parse a standard placement string ("bottom-end", "top", "right-start", …) into
 // a side + alignment pair.
 function parsePlacement(placement) {
   const raw = placement || "bottom";
@@ -24,11 +24,11 @@ const isVertical = (side) => side === "top" || side === "bottom";
 // content box given the reference rect, content size, and options.
 //
 // Options:
-//   placement : Kobalte placement string (default "bottom")
+//   placement : placement string (default "bottom")
 //   gutter    : main-axis gap between reference and content (default 0)
 //   shift     : cross-axis nudge applied after alignment (default 0)
 //   overlap   : when true, the content overlaps the reference on the main axis
-//               (Kobalte `overlap` — used by the compact message-nav tooltip)
+//               (the `overlap` option — used by the compact message-nav tooltip)
 //   padding   : min distance kept from the viewport edge (default 8)
 export function computePosition(referenceRect, contentRect, options = {}) {
   const { side, align } = parsePlacement(options.placement);

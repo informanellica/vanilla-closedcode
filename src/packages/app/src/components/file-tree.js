@@ -509,7 +509,7 @@ export default function FileTree(props) {
                 }
               });
               // The vanilla Collapsible re-applies its open-state attributes
-              // only on its own trigger clicks; the compiled (Kobalte)
+              // only on its own trigger clicks; the original compiled
               // version tracked the controlled `open` prop live. Re-sync
               // whenever expanded() changes so externally driven expands
               // (the `allowed` auto-expand effect above, tree state restored

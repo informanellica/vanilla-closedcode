@@ -174,7 +174,7 @@ export function ModelSelectorPopover(props) {
     });
   };
   const language = useLanguage();
-  // Vanilla Popover (was the Kobalte popover): controlled open, click-toggle
+  // Vanilla Popover (was the original third-party popover): controlled open, click-toggle
   // trigger, Esc/outside dismissal + flip positioning handled by the component.
   // The dismiss reason (escape/outside) arrives via onDismiss; select/manage
   // reasons are set on `store` by the handlers below before they close.
@@ -185,7 +185,7 @@ export function ModelSelectorPopover(props) {
   };
   // Presence-gated content thunk: re-evaluated by the Popover's body insert()
   // only while open (the established insert() exception). The sr-only title and
-  // the ModelList are rebuilt per open, matching the Kobalte content remount.
+  // the ModelList are rebuilt per open, matching the original content remount.
   const renderBody = () => {
     if (!store.open) return undefined;
     const title = document.createElement("h2");

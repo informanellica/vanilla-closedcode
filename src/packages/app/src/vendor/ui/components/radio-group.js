@@ -1,12 +1,12 @@
 import { createRenderEffect, createSignal, createUniqueId, onCleanup, splitProps } from "solid-js";
 
-// Vanilla port of the Kobalte SegmentedControl wrapper (a segmented single-
+// Vanilla port of the original SegmentedControl wrapper (a segmented single-
 // select radio group). No bs/ twin existed, so the a11y is built here:
 //
 //  * A real `<input type="radio">` per option, all sharing one `name`. The
 //    browser's native radio-group semantics then provide roving focus and
 //    arrow-key navigation (selection-follows-focus) for free — exactly what
-//    Kobalte's RadioGroup delegates to. Inputs are visually clipped (see
+//    the original RadioGroup delegates to. Inputs are visually clipped (see
 //    radio-group.css) but remain focusable, so :focus-visible drives the
 //    indicator's focus ring.
 //  * role="radiogroup" + aria-orientation on the root; aria-checked /
@@ -14,7 +14,7 @@ import { createRenderEffect, createSignal, createUniqueId, onCleanup, splitProps
 //    [data-slot="radio-group-item-input"][data-checked] + label).
 //  * A `<label for=inputId>` wraps each item's control, so clicking the
 //    segment selects it (native label association).
-//  * The sliding indicator is positioned with Kobalte's exact algorithm:
+//  * The sliding indicator is positioned with the original's exact algorithm:
 //    width/height = selected item box, transform = translate(offsetLeft -
 //    parentPaddingLeft, offsetTop - parentPaddingTop). Recomputed on selection
 //    change and on resize (ResizeObserver), matching SegmentedControlIndicator.
@@ -44,7 +44,7 @@ export function RadioGroup(props) {
   const findOption = v => (local.options || []).find(opt => getValue(opt) === v);
 
   // Controlled when `current` is supplied; otherwise track internally, seeded
-  // from defaultValue (Kobalte's createControllableSignal semantics).
+  // from defaultValue (the original createControllableSignal semantics).
   const controlled = () => local.current !== undefined && local.current !== null;
   const initial = local.current != null ? getValue(local.current) : local.defaultValue != null ? getValue(local.defaultValue) : undefined;
   const [internal, setInternal] = createSignal(initial);
@@ -104,7 +104,7 @@ export function RadioGroup(props) {
   // Track the currently-selected item element so the indicator can follow it.
   const [selectedItem, setSelectedItem] = createSignal(undefined);
 
-  // Position the indicator over the selected item, mirroring Kobalte's
+  // Position the indicator over the selected item, mirroring the original's
   // SegmentedControlIndicator.computeStyle/computeTransform exactly.
   let resizing = false;
   const computeStyle = () => {
@@ -126,7 +126,7 @@ export function RadioGroup(props) {
   };
   createRenderEffect(() => {
     // Re-run on selection change. First placement skips the slide animation
-    // (resizing=true), like Kobalte seeding the indicator without a transition.
+    // (resizing=true), like the original seeding the indicator without a transition.
     const hadStyle = indicator.style.transform !== "";
     selectedItem();
     resizing = !hadStyle;
@@ -145,7 +145,7 @@ export function RadioGroup(props) {
 
   // Build the option items. Options are static arrays at every call site, so a
   // single build pass mirrors the original (which rebuilt on each evaluation).
-  // `byValue` lets one effect resolve the selected item element (Kobalte sets
+  // `byValue` lets one effect resolve the selected item element (the original sets
   // it per item; a single map keeps the indicator's anchor unambiguous).
   renderInto(items, () => {
     const opts = local.options || [];

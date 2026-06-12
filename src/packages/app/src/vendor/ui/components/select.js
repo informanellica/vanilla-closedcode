@@ -1,7 +1,7 @@
 import { createMemo, createRenderEffect, mergeProps, onCleanup, splitProps } from "solid-js";
 import { pipe, groupBy, entries, map } from "remeda";
 
-// Vanilla port of the Kobalte Select wrapper. Kobalte previously owned the
+// Vanilla port of the original Select wrapper. The original previously owned the
 // listbox (trigger + portaled positioned content + arrow/typeahead/Esc
 // navigation, highlight tracking, grouping). This mirrors the bs/select.js
 // house technique: a native `<select>` element, which provides the full
@@ -74,7 +74,7 @@ export function Select(props) {
   const [local, others] = splitProps(props, ["class", "classList", "placeholder", "options", "current", "value", "label", "groupBy", "valueClass", "onSelect", "onHighlight", "onOpenChange", "children", "triggerStyle", "triggerVariant", "triggerProps", "size", "variant", "disabled"]);
 
   // Highlight tracking (onHighlight returns an optional cleanup), identical to
-  // the Kobalte wrapper's move()/stop() bookkeeping.
+  // the original wrapper's move()/stop() bookkeeping.
   const state = { key: undefined, cleanup: undefined };
   const stop = () => {
     state.cleanup?.();
@@ -139,7 +139,7 @@ export function Select(props) {
     stop();
   });
 
-  // Disabled is a live prop in the Kobalte wrapper (forwarded from props).
+  // Disabled is a live prop in the original wrapper (forwarded from props).
   createRenderEffect(() => {
     el.disabled = !!local.disabled;
   });

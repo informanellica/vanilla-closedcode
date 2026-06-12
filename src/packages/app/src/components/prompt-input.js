@@ -1,6 +1,6 @@
 // insert() is the established exception for reactive/component-valued
 // children: PromptPopover and Show return memo accessors that must keep being
-// reconciled (the Kobalte-backed model selector lives under one of them), so
+// reconciled (the popover-backed model selector lives under one of them), so
 // freezing their first value would break open/close and branch switches.
 import { insert } from "solid-js/web";
 import { useFilteredList } from "@/lib/hooks.js";
@@ -1355,7 +1355,7 @@ export const PromptInput = props => {
           get keybind() {
             return command.keybind("model.choose");
           },
-          // Kobalte-backed popover: its accessor tree is resolved by the
+          // Popover-backed selector: its accessor tree is resolved by the
           // vanilla Tooltip through insert().
           children: createComponent(ModelSelectorPopover, {
             get model() {

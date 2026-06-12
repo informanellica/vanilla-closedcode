@@ -87,7 +87,7 @@ export function Popover(props) {
     if (typeof triggerAs === "function") {
       // Component `as`: invoke with the trigger props + the trigger content as
       // children, and use the returned element as the trigger node. A `style`
-      // object is post-applied onto the produced element — Kobalte used to
+      // object is post-applied onto the produced element — the original used to
       // handle object styles for the polymorphic `as`; our leaf components
       // (Button) only stringify attributes, so applying it here keeps inline
       // styles intact.
@@ -274,7 +274,7 @@ export function Popover(props) {
         close("outside");
       }, { capture: true });
 
-      // Focus the panel on open (Kobalte autofocuses content). Skipped when the
+      // Focus the panel on open (the original autofocuses content). Skipped when the
       // caller opts out (noAutoFocus) — some panels manage their own focus
       // (e.g. the model list autofocuses its search input).
       if (!local.noAutoFocus) {
@@ -294,7 +294,7 @@ export function Popover(props) {
       stopPosition = null;
     }
     const el = state.contentRef;
-    // Mirror Kobalte onCloseAutoFocus: when dismissed by an outside pointer,
+    // Mirror the original onCloseAutoFocus: when dismissed by an outside pointer,
     // do NOT pull focus back to the trigger; otherwise restore it.
     const restoreFocus = state.dismiss !== "outside";
     setState("contentRef", undefined);
@@ -323,6 +323,6 @@ export function Popover(props) {
 
   // Anchor mode contributes no inline element (content is portaled and
   // positioned against the external anchor); return a comment placeholder so
-  // the surrounding insert has a stable node, like Kobalte's anchor-only root.
+  // the surrounding insert has a stable node, like the original anchor-only root.
   return triggerEl ?? document.createComment("popover-anchor");
 }

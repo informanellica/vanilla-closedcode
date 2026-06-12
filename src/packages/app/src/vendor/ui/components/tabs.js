@@ -8,8 +8,8 @@ import {
 } from "solid-js";
 import { insert } from "solid-js/web";
 
-// Vanilla reimplementation of the Kobalte Tabs compound component. Mirrors the
-// Kobalte tabs primitive: a roving-focus tablist with single selection, the
+// Vanilla reimplementation of the original Tabs compound component. Mirrors the
+// original tabs primitive: a roving-focus tablist with single selection, the
 // data-selected/data-highlighted/data-orientation dataset, role=tab/tablist/
 // tabpanel, aria-selected/aria-controls/aria-labelledby/aria-orientation,
 // automatic activation (select on focus), and panels hidden while unselected.
@@ -20,7 +20,7 @@ import { insert } from "solid-js/web";
 // triggers/content being (re)built in a later reactive tick (e.g. inside a For
 // or a Show), which a module-global context would not survive. The selected
 // trigger's inner button carries [data-selected] so tabs.css's
-// `:has([data-selected])` rules style the wrapper, exactly like Kobalte.
+// `:has([data-selected])` rules style the wrapper, exactly like the original.
 
 function template(html) {
   const wrapper = document.createElement("div");
@@ -147,7 +147,7 @@ function TabsRoot(props) {
     root.setAttribute("data-orientation", o);
     root.setAttribute("data-variant", variant());
 
-    // Empty-selection fallback: pick the first enabled trigger (Kobalte's
+    // Empty-selection fallback: pick the first enabled trigger (the original's
     // disallowEmptySelection) when the current value matches none.
     const triggers = ownedTriggers();
     const hasValid = value != null && triggers.some(t => (t.dataset.value ?? "") === String(value));

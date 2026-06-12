@@ -2,7 +2,7 @@ import { createRenderEffect, getOwner, onCleanup } from "solid-js";
 import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
-// Vanilla ContextMenu (no Kobalte dependency): the same menu primitive as
+// Vanilla ContextMenu (no third-party UI dependency): the same menu primitive as
 // ./dropdown-menu.js, but it opens on a `contextmenu` gesture over the trigger
 // and positions the content panel at the pointer coordinates (rather than
 // anchored to the trigger). Mirrors the dropdown's bs/-derived techniques:

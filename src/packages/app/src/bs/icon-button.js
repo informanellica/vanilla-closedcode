@@ -111,7 +111,7 @@ export function IconButton(props) {
     }
   });
 
-  // Solid ref forwarding (Kobalte anchors measure via ref).
+  // Solid ref forwarding (popover anchors measure via ref).
   if (typeof props.ref === "function") props.ref(element);
   else if ("ref" in props) { try { props.ref = element; } catch {} }
 
