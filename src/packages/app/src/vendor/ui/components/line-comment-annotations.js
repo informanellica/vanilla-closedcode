@@ -1,7 +1,11 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createEffect, createMemo, createSignal, onCleanup, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, createRoot, createSignal, onCleanup, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { render as renderSolid } from "solid-js/web";
+// Each annotation gets its own reactive root (createRoot + the insert()
+// exception) mounted into a detached host <div> that the external annotation
+// layer adopts. LineComment/LineCommentEditor are Solid components, so they
+// need a real root (owner + disposal). This mirrors solid-js/web render()
+// exactly, without using anything from solid-js/web beyond insert().
+import { insert as _solidInsert } from "solid-js/web";
 import { useI18n } from "../context/i18n.js";
 import { createHoverCommentUtility } from "../pierre/comment-hover.js";
 import { cloneSelectedLineRange, formatSelectedLineLabel, lineInSelectedRange } from "../pierre/selection-bridge.js";
@@ -13,7 +17,7 @@ export function createLineCommentAnnotationRenderer(props) {
     const host = document.createElement("div");
     host.setAttribute("data-prevent-autofocus", "");
     const [current, setCurrent] = createSignal(meta);
-    const dispose = renderSolid(() => {
+    const ui = () => {
       const active = current();
       if (active.kind === "comment") {
         const view = createMemo(() => {
@@ -21,12 +25,15 @@ export function createLineCommentAnnotationRenderer(props) {
           if (next.kind !== "comment") return props.renderComment(active.comment);
           return props.renderComment(next.comment);
         });
-        return _$createComponent(Show, {
+        // Show is the same runtime solid-js component the original used:
+        // non-keyed truthiness switching between the rendered comment and its
+        // inline editor (a flip disposes and rebuilds the active branch).
+        return createComponent(Show, {
           get when() {
             return view().editor;
           },
           get fallback() {
-            return _$createComponent(LineComment, {
+            return createComponent(LineComment, {
               inline: true,
               get id() {
                 return view().id;
@@ -52,7 +59,7 @@ export function createLineCommentAnnotationRenderer(props) {
             });
           },
           get children() {
-            return _$createComponent(LineCommentEditor, {
+            return createComponent(LineCommentEditor, {
               inline: true,
               get id() {
                 return view().id;
@@ -93,7 +100,7 @@ export function createLineCommentAnnotationRenderer(props) {
         if (next.kind !== "draft") return props.renderDraft(active.range);
         return props.renderDraft(next.range);
       });
-      return _$createComponent(LineCommentEditor, {
+      return createComponent(LineCommentEditor, {
         inline: true,
         get value() {
           return view().value;
@@ -117,7 +124,18 @@ export function createLineCommentAnnotationRenderer(props) {
           return view().mention;
         }
       });
-    }, host);
+    };
+    // render(ui, host) equivalent: one unowned root per annotation; insert()
+    // keeps the component output live, dispose also empties the host.
+    let disposer;
+    createRoot(d => {
+      disposer = d;
+      _solidInsert(host, ui());
+    });
+    const dispose = () => {
+      disposer();
+      host.textContent = "";
+    };
     const node = {
       host,
       dispose,

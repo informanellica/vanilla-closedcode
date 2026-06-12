@@ -1,191 +1,285 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<svg><path d="M16.25 3.75H3.75V16.25L6.875 14.4643H16.25V3.75Z"stroke=currentColor stroke-linecap=square></svg>`, false, true, false),
-  _tmpl$2 = /*#__PURE__*/_$template(`<svg data-slot=line-comment-icon viewBox="0 0 20 20"fill=none aria-hidden=true>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<svg><path d="M10 5.41699V10.0003M10 10.0003V14.5837M10 10.0003H5.4165M10 10.0003H14.5832"stroke=currentColor stroke-linecap=square></svg>`, false, true, false),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-slot=line-comment-popover data-inline-body>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-component=line-comment data-prevent-autofocus>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-button>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-slot=line-comment-popover>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div data-slot=line-comment-tools>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<div data-slot=line-comment-content><div data-slot=line-comment-head><div data-slot=line-comment-text></div></div><div data-slot=line-comment-label>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div data-slot=line-comment-mention-list>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div data-slot=line-comment-editor><textarea data-slot=line-comment-textarea></textarea><div data-slot=line-comment-actions><div data-slot=line-comment-editor-label>`),
-  _tmpl$10 = /*#__PURE__*/_$template(`<span data-slot=line-comment-mention-file>`),
-  _tmpl$11 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-mention-item><div data-slot=line-comment-mention-path><span data-slot=line-comment-mention-dir>`),
-  _tmpl$12 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-action data-variant=ghost>`),
-  _tmpl$13 = /*#__PURE__*/_$template(`<button type=button data-slot=line-comment-action data-variant=primary>`);
+// Hand-written vanilla port of the compiled SolidJS output for the line
+// comment components. Static skeletons are template literals; dynamic text,
+// attributes and branches are wired with solid-js createRenderEffect /
+// createMemo. The export API (props, children getters, context use) is
+// unchanged.
 import { useFilteredList } from "../hooks/index.js";
 import { getDirectory, getFilename } from "core/util/path";
-import { createSignal, For, onMount, Show, splitProps } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, createSignal, mergeProps, onMount, splitProps } from "solid-js";
 import { Button } from "./button.js";
 import { FileIcon } from "./file-icon.js";
 import { Icon } from "./icon.js";
 import { installLineCommentStyles } from "./line-comment-styles.js";
 import { useI18n } from "../context/i18n.js";
 installLineCommentStyles();
-function InlineGlyph(props) {
-  return (() => {
-    var _el$ = _tmpl$2();
-    _$insert(_el$, _$createComponent(Show, {
-      get when() {
-        return props.icon === "comment";
-      },
-      get fallback() {
-        return _tmpl$3();
-      },
-      get children() {
-        return _tmpl$();
+
+// --- Vanilla helpers replacing the compiled solid-js/web runtime calls ---
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Resolve a possibly-reactive value the way solid-js/web's insert() does:
+// call accessors until a concrete value remains. Callers run this inside a
+// render effect, so the reads stay tracked.
+function resolveValue(value) {
+  while (typeof value === "function") value = value();
+  return value;
+}
+
+// Normalize an insert() value (node, string/number, array, accessor) into an
+// array of DOM nodes.
+function flattenNodes(value) {
+  value = resolveValue(value);
+  if (value == null || typeof value === "boolean") return [];
+  if (Array.isArray(value)) {
+    const nodes = [];
+    for (const entry of value) nodes.push(...flattenNodes(entry));
+    return nodes;
+  }
+  return [value instanceof Node ? value : document.createTextNode(String(value))];
+}
+
+// insert(el, accessor) replacement: render the value as the sole content of
+// `el` and keep it live.
+function bindContent(el, get) {
+  createRenderEffect(() => {
+    el.replaceChildren(...flattenNodes(get()));
+  });
+}
+
+// setAttribute() replacement: null/undefined removes the attribute.
+function bindAttr(el, name, get) {
+  let prev;
+  createRenderEffect(() => {
+    const value = get();
+    if (value === prev) return;
+    prev = value;
+    if (value == null) el.removeAttribute(name);
+    else el.setAttribute(name, value);
+  });
+}
+
+// classList(el, { [name]: !!name }) replacement for a single dynamic
+// (possibly multi-token) class string.
+function bindClass(el, getName) {
+  let prev = [];
+  createRenderEffect(() => {
+    const name = getName();
+    const next = name ? String(name).trim().split(/\s+/).filter(Boolean) : [];
+    for (const cls of prev) {
+      if (!next.includes(cls)) el.classList.remove(cls);
+    }
+    for (const cls of next) {
+      if (!prev.includes(cls)) el.classList.add(cls);
+    }
+    prev = next;
+  });
+}
+
+// style(el, value, prev) replacement for the object/undefined form.
+function bindStyle(el, get) {
+  let prev = {};
+  createRenderEffect(() => {
+    const next = get() || {};
+    for (const name of Object.keys(prev)) {
+      if (!(name in next)) el.style.removeProperty(name);
+    }
+    for (const name of Object.keys(next)) {
+      if (next[name] !== prev[name]) el.style.setProperty(name, String(next[name]));
+    }
+    prev = { ...next };
+  });
+}
+
+// The compiled output delegated the mention-row click/mousedown handlers
+// through solid-js/web delegateEvents(): the handler lives on the element and
+// a document-level bubble listener walks up from event.target, so an
+// ancestor's stopPropagation() suppresses it (the editor popover does exactly
+// that for mousedown). Reproduce that wiring with module-local symbol keys so
+// it cannot double-fire with any remaining compiled delegation in the app.
+const delegatedKeys = {
+  click: Symbol("line-comment-click"),
+  mousedown: Symbol("line-comment-mousedown")
+};
+if (typeof document !== "undefined") {
+  for (const type of ["click", "mousedown"]) {
+    const key = delegatedKeys[type];
+    document.addEventListener(type, event => {
+      let node = event.target;
+      while (node) {
+        const handler = node[key];
+        if (handler && !node.disabled) {
+          handler.call(node, event);
+          if (event.cancelBubble) return;
+        }
+        node = node.parentNode || node.host;
       }
-    }));
-    return _el$;
-  })();
+    });
+  }
+}
+
+const glyphPaths = {
+  comment: '<path d="M16.25 3.75H3.75V16.25L6.875 14.4643H16.25V3.75Z" stroke="currentColor" stroke-linecap="square"></path>',
+  plus: '<path d="M10 5.41699V10.0003M10 10.0003V14.5837M10 10.0003H5.4165M10 10.0003H14.5832" stroke="currentColor" stroke-linecap="square"></path>'
+};
+function InlineGlyph(props) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("data-slot", "line-comment-icon");
+  svg.setAttribute("viewBox", "0 0 20 20");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("aria-hidden", "true");
+  // Show(when: icon === "comment") equivalent: swap the path only when the
+  // condition flips.
+  const isComment = createMemo(() => props.icon === "comment");
+  createRenderEffect(() => {
+    svg.innerHTML = isComment() ? glyphPaths.comment : glyphPaths.plus;
+  });
+  return svg;
 }
 export const LineCommentAnchor = props => {
   const hidden = () => !props.inline && props.top === undefined;
   const variant = () => props.variant ?? "default";
   const icon = () => props.icon ?? "comment";
   const inlineBody = () => props.inline && props.hideButton;
-  return (() => {
-    var _el$4 = _tmpl$5();
-    _$insert(_el$4, _$createComponent(Show, {
-      get when() {
-        return inlineBody();
-      },
-      get fallback() {
-        return [(() => {
-          var _el$6 = _tmpl$6();
-          _$addEventListener(_el$6, "mouseenter", props.onMouseEnter);
-          _$addEventListener(_el$6, "click", props.onClick);
-          _$addEventListener(_el$6, "mouseup", e => e.stopPropagation());
-          _$addEventListener(_el$6, "mousedown", e => e.stopPropagation());
-          _$insert(_el$6, _$createComponent(Show, {
-            get when() {
-              return props.inline;
-            },
-            get fallback() {
-              return _$createComponent(Icon, {
-                get name() {
-                  return icon() === "plus" ? "plus-small" : "comment";
-                },
-                size: "small"
-              });
-            },
-            get children() {
-              return _$createComponent(InlineGlyph, {
-                get icon() {
-                  return icon();
-                }
-              });
-            }
-          }));
-          _$effect(() => _$setAttribute(_el$6, "aria-label", props.buttonLabel));
-          return _el$6;
-        })(), _$createComponent(Show, {
-          get when() {
-            return props.open;
-          },
-          get children() {
-            var _el$7 = _tmpl$7();
-            _$addEventListener(_el$7, "focusout", props.onPopoverFocusOut);
-            _$addEventListener(_el$7, "mousedown", e => e.stopPropagation());
-            _$insert(_el$7, () => props.children);
-            _$effect(_$p => _$classList(_el$7, {
-              [props.popoverClass ?? ""]: !!props.popoverClass
-            }, _$p));
-            return _el$7;
-          }
-        })];
-      },
-      get children() {
-        var _el$5 = _tmpl$4();
-        _$addEventListener(_el$5, "focusout", props.onPopoverFocusOut);
-        _$addEventListener(_el$5, "mouseenter", props.onMouseEnter);
-        _$addEventListener(_el$5, "click", props.onClick);
-        _$addEventListener(_el$5, "mousedown", e => e.stopPropagation());
-        _$insert(_el$5, () => props.children);
-        _$effect(_$p => _$classList(_el$5, {
-          [props.popoverClass ?? ""]: !!props.popoverClass
-        }, _$p));
-        return _el$5;
-      }
-    }));
-    _$effect(_p$ => {
-      var _v$ = variant(),
-        _v$2 = props.id,
-        _v$3 = props.open ? "" : undefined,
-        _v$4 = props.inline ? "" : undefined,
-        _v$5 = {
-          [props.class ?? ""]: !!props.class
-        },
-        _v$6 = props.inline ? undefined : {
-          top: `${props.top ?? 0}px`,
-          opacity: hidden() ? 0 : 1,
-          "pointer-events": hidden() ? "none" : "auto"
-        };
-      _v$ !== _p$.e && _$setAttribute(_el$4, "data-variant", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$4, "data-comment-id", _p$.t = _v$2);
-      _v$3 !== _p$.a && _$setAttribute(_el$4, "data-open", _p$.a = _v$3);
-      _v$4 !== _p$.o && _$setAttribute(_el$4, "data-inline", _p$.o = _v$4);
-      _p$.i = _$classList(_el$4, _v$5, _p$.i);
-      _p$.n = _$style(_el$4, _v$6, _p$.n);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined,
-      i: undefined,
-      n: undefined
+  const root = document.createElement("div");
+  root.setAttribute("data-component", "line-comment");
+  root.setAttribute("data-prevent-autofocus", "");
+
+  // Shared popover/inline-body builder. Handler props are deliberately read
+  // here, inside the rebuilding effect: the compiled Show evaluated its
+  // branch (and these reads) inside its memo, so a handler identity change
+  // rebuilds the branch with the new handler attached. Keep that contract.
+  const buildPopover = inline => {
+    const pop = document.createElement("div");
+    pop.setAttribute("data-slot", "line-comment-popover");
+    if (inline) pop.setAttribute("data-inline-body", "");
+    const onFocusOut = props.onPopoverFocusOut;
+    if (onFocusOut) pop.addEventListener("focusout", onFocusOut);
+    if (inline) {
+      const onMouseEnter = props.onMouseEnter;
+      if (onMouseEnter) pop.addEventListener("mouseenter", onMouseEnter);
+      const onClick = props.onClick;
+      if (onClick) pop.addEventListener("click", onClick);
+    }
+    pop.addEventListener("mousedown", e => e.stopPropagation());
+    bindContent(pop, () => props.children);
+    bindClass(pop, () => props.popoverClass ?? "");
+    return pop;
+  };
+
+  // Show(when: inlineBody) equivalent: rebuild on truthiness flips (and on
+  // tracked handler-prop changes, see buildPopover above).
+  const inlineCond = createMemo(() => !!inlineBody());
+  createRenderEffect(() => {
+    if (inlineCond()) {
+      root.replaceChildren(buildPopover(true));
+      return;
+    }
+    // Fallback branch: trigger button plus open-gated popover.
+    const button = document.createElement("button");
+    button.type = "button";
+    button.setAttribute("data-slot", "line-comment-button");
+    const onMouseEnter = props.onMouseEnter;
+    if (onMouseEnter) button.addEventListener("mouseenter", onMouseEnter);
+    const onClick = props.onClick;
+    if (onClick) button.addEventListener("click", onClick);
+    button.addEventListener("mouseup", e => e.stopPropagation());
+    button.addEventListener("mousedown", e => e.stopPropagation());
+    // Show(when: inline) equivalent for the button glyph. The icon name is
+    // read here in the effect body: createComponent() untracks the component
+    // call and the vanilla Icon reads its props only once, so a getter prop
+    // would freeze the glyph. Tracking the read here rebuilds it on change.
+    const inlineIcon = createMemo(() => !!props.inline);
+    createRenderEffect(() => {
+      const name = icon();
+      const node = inlineIcon()
+        ? createComponent(InlineGlyph, { icon: name })
+        : createComponent(Icon, {
+            name: name === "plus" ? "plus-small" : "comment",
+            size: "small"
+          });
+      button.replaceChildren(...flattenNodes(node));
     });
-    return _el$4;
-  })();
+    bindAttr(button, "aria-label", () => props.buttonLabel);
+    root.replaceChildren(button);
+    // Show(when: open) equivalent for the popover.
+    const openCond = createMemo(() => !!props.open);
+    let popover;
+    createRenderEffect(() => {
+      if (popover) {
+        popover.remove();
+        popover = undefined;
+      }
+      if (!openCond()) return;
+      popover = buildPopover(false);
+      root.appendChild(popover);
+    });
+  });
+
+  bindAttr(root, "data-variant", variant);
+  bindAttr(root, "data-comment-id", () => props.id);
+  bindAttr(root, "data-open", () => (props.open ? "" : undefined));
+  bindAttr(root, "data-inline", () => (props.inline ? "" : undefined));
+  bindClass(root, () => props.class ?? "");
+  bindStyle(root, () => props.inline ? undefined : {
+    top: `${props.top ?? 0}px`,
+    opacity: hidden() ? 0 : 1,
+    "pointer-events": hidden() ? "none" : "auto"
+  });
+  return root;
 };
 export const LineComment = props => {
   const i18n = useI18n();
   const [split, rest] = splitProps(props, ["comment", "selection", "actions"]);
-  return _$createComponent(LineCommentAnchor, _$mergeProps(rest, {
+  return createComponent(LineCommentAnchor, mergeProps(rest, {
     variant: "default",
     get hideButton() {
       return props.inline;
     },
     get children() {
-      var _el$8 = _tmpl$9(),
-        _el$9 = _el$8.firstChild,
-        _el$0 = _el$9.firstChild,
-        _el$10 = _el$9.nextSibling;
-      _$insert(_el$0, () => split.comment);
-      _$insert(_el$9, _$createComponent(Show, {
-        get when() {
-          return split.actions;
-        },
-        get children() {
-          var _el$1 = _tmpl$8();
-          _$insert(_el$1, () => split.actions);
-          return _el$1;
+      const content = template('<div data-slot="line-comment-content"><div data-slot="line-comment-head"><div data-slot="line-comment-text"></div></div><div data-slot="line-comment-label"></div></div>');
+      const head = content.firstChild;
+      const text = head.firstChild;
+      const label = head.nextSibling;
+      bindContent(text, () => split.comment);
+      // Show(when: actions) equivalent: the tools wrapper appears/disappears
+      // on truthiness flips, its content stays live via bindContent.
+      const hasActions = createMemo(() => !!split.actions);
+      let tools;
+      createRenderEffect(() => {
+        if (tools) {
+          tools.remove();
+          tools = undefined;
         }
-      }), null);
-      _$insert(_el$10, () => i18n.t("ui.lineComment.label.prefix"), null);
-      _$insert(_el$10, () => split.selection, null);
-      _$insert(_el$10, () => i18n.t("ui.lineComment.label.suffix"), null);
-      return _el$8;
+        if (!hasActions()) return;
+        const el = document.createElement("div");
+        el.setAttribute("data-slot", "line-comment-tools");
+        bindContent(el, () => split.actions);
+        head.appendChild(el);
+        tools = el;
+      });
+      // The label is fully dynamic (prefix / selection / suffix), so one
+      // effect renders all three; i18n.t keeps it live on locale change.
+      createRenderEffect(() => {
+        label.replaceChildren(
+          ...flattenNodes(i18n.t("ui.lineComment.label.prefix")),
+          ...flattenNodes(split.selection),
+          ...flattenNodes(i18n.t("ui.lineComment.label.suffix"))
+        );
+      });
+      return content;
     }
   }));
 };
 export const LineCommentAdd = props => {
   const [split, rest] = splitProps(props, ["label"]);
   const i18n = useI18n();
-  return _$createComponent(LineCommentAnchor, _$mergeProps(rest, {
+  return createComponent(LineCommentAnchor, mergeProps(rest, {
     open: false,
     variant: "add",
     icon: "plus",
@@ -279,7 +373,7 @@ export const LineCommentEditor = props => {
     if (split.autofocus === false) return;
     requestAnimationFrame(focus);
   });
-  return _$createComponent(LineCommentAnchor, _$mergeProps(rest, {
+  return createComponent(LineCommentAnchor, mergeProps(rest, {
     open: true,
     variant: "editor",
     get hideButton() {
@@ -287,11 +381,11 @@ export const LineCommentEditor = props => {
     },
     onClick: () => focus(),
     get children() {
-      var _el$11 = _tmpl$1(),
-        _el$12 = _el$11.firstChild,
-        _el$14 = _el$12.nextSibling,
-        _el$15 = _el$14.firstChild;
-      _$addEventListener(_el$12, "keydown", e => {
+      const editor = template('<div data-slot="line-comment-editor"><textarea data-slot="line-comment-textarea"></textarea><div data-slot="line-comment-actions"><div data-slot="line-comment-editor-label"></div></div></div>');
+      const textarea = editor.firstChild;
+      const actionsEl = textarea.nextSibling;
+      const labelEl = actionsEl.firstChild;
+      textarea.addEventListener("keydown", e => {
         const event = e;
         if (event.isComposing || event.keyCode === 229) return;
         event.stopPropagation();
@@ -326,121 +420,129 @@ export const LineCommentEditor = props => {
         event.preventDefault();
         submit();
       });
-      _$addEventListener(_el$12, "select", () => syncMention());
-      _$addEventListener(_el$12, "click", () => syncMention());
-      _$addEventListener(_el$12, "input", e => {
+      textarea.addEventListener("select", () => syncMention());
+      textarea.addEventListener("click", () => syncMention());
+      textarea.addEventListener("input", e => {
         const value = e.currentTarget.value;
         split.onInput(value);
         syncMention();
       });
-      _$use(el => {
-        refs.textarea = el;
-      }, _el$12);
-      _$insert(_el$11, _$createComponent(Show, {
-        get when() {
-          return _$memo(() => !!open())() && mention.flat().length > 0;
-        },
-        get children() {
-          var _el$13 = _tmpl$0();
-          _$insert(_el$13, _$createComponent(For, {
-            get each() {
-              return mention.flat().slice(0, 10);
-            },
-            children: item => {
-              const directory = item.path.endsWith("/") ? item.path : getDirectory(item.path);
-              const name = item.path.endsWith("/") ? "" : getFilename(item.path);
-              return (() => {
-                var _el$16 = _tmpl$11(),
-                  _el$17 = _el$16.firstChild,
-                  _el$18 = _el$17.firstChild;
-                _el$16.$$click = () => selectMention(item);
-                _el$16.addEventListener("mouseenter", () => mention.setActive(item.path));
-                _el$16.$$mousedown = event => event.preventDefault();
-                _$insert(_el$16, _$createComponent(FileIcon, {
-                  get node() {
-                    return {
-                      path: item.path,
-                      type: "file"
-                    };
-                  },
-                  "class": "shrink-0 size-4"
-                }), _el$17);
-                _$insert(_el$18, directory);
-                _$insert(_el$17, _$createComponent(Show, {
-                  when: name,
-                  get children() {
-                    var _el$19 = _tmpl$10();
-                    _$insert(_el$19, name);
-                    return _el$19;
-                  }
-                }), null);
-                _$effect(() => _$setAttribute(_el$16, "data-active", mention.active() === item.path ? "" : undefined));
-                return _el$16;
-              })();
-            }
-          }));
-          return _el$13;
+      refs.textarea = textarea;
+
+      const buildMentionRow = item => {
+        const directory = item.path.endsWith("/") ? item.path : getDirectory(item.path);
+        const name = item.path.endsWith("/") ? "" : getFilename(item.path);
+        const row = template('<button type="button" data-slot="line-comment-mention-item"><div data-slot="line-comment-mention-path"><span data-slot="line-comment-mention-dir"></span></div></button>');
+        const pathEl = row.firstChild;
+        const dirEl = pathEl.firstChild;
+        row[delegatedKeys.click] = () => selectMention(item);
+        row.addEventListener("mouseenter", () => mention.setActive(item.path));
+        row[delegatedKeys.mousedown] = event => event.preventDefault();
+        const fileIcon = createComponent(FileIcon, {
+          get node() {
+            return {
+              path: item.path,
+              type: "file"
+            };
+          },
+          "class": "shrink-0 size-4"
+        });
+        for (const node of flattenNodes(fileIcon)) row.insertBefore(node, pathEl);
+        dirEl.textContent = directory;
+        if (name) {
+          const file = template('<span data-slot="line-comment-mention-file"></span>');
+          file.textContent = name;
+          pathEl.appendChild(file);
         }
-      }), _el$14);
-      _$insert(_el$15, () => i18n.t("ui.lineComment.editorLabel.prefix"), null);
-      _$insert(_el$15, () => split.selection, null);
-      _$insert(_el$15, () => i18n.t("ui.lineComment.editorLabel.suffix"), null);
-      _$insert(_el$14, _$createComponent(Show, {
-        get when() {
-          return !props.inline;
-        },
-        get fallback() {
-          return [(() => {
-            var _el$20 = _tmpl$12();
-            _$addEventListener(_el$20, "click", click(split.onCancel));
-            _$addEventListener(_el$20, "mousedown", hold);
-            _$insert(_el$20, () => split.cancelLabel ?? i18n.t("ui.common.cancel"));
-            return _el$20;
-          })(), (() => {
-            var _el$21 = _tmpl$13();
-            _$addEventListener(_el$21, "click", click(submit));
-            _$addEventListener(_el$21, "mousedown", hold);
-            _$insert(_el$21, () => split.submitLabel ?? i18n.t("ui.lineComment.submit"));
-            _$effect(() => _el$21.disabled = split.value.trim().length === 0);
-            return _el$21;
-          })()];
-        },
-        get children() {
-          return [_$createComponent(Button, {
+        bindAttr(row, "data-active", () => (mention.active() === item.path ? "" : undefined));
+        return row;
+      };
+
+      // Show(when: open && items) equivalent for the mention list.
+      const showMention = createMemo(() => !!open() && mention.flat().length > 0);
+      let mentionList;
+      createRenderEffect(() => {
+        if (mentionList) {
+          mentionList.remove();
+          mentionList = undefined;
+        }
+        if (!showMention()) return;
+        const list = document.createElement("div");
+        list.setAttribute("data-slot", "line-comment-mention-list");
+        // <For> equivalent: rebuild the rows when the filtered items change;
+        // the per-row active highlight stays live via bindAttr.
+        createRenderEffect(() => {
+          list.replaceChildren(...mention.flat().slice(0, 10).map(buildMentionRow));
+        });
+        editor.insertBefore(list, actionsEl);
+        mentionList = list;
+      });
+
+      // Editor label (prefix / selection / suffix), live on locale change.
+      createRenderEffect(() => {
+        labelEl.replaceChildren(
+          ...flattenNodes(i18n.t("ui.lineComment.editorLabel.prefix")),
+          ...flattenNodes(split.selection),
+          ...flattenNodes(i18n.t("ui.lineComment.editorLabel.suffix"))
+        );
+      });
+
+      // Show(when: !inline) equivalent: Button components on desktop,
+      // bare action buttons inline.
+      const desktopActions = createMemo(() => !props.inline);
+      let actionButtons = [];
+      createRenderEffect(() => {
+        for (const node of actionButtons) node.remove();
+        if (desktopActions()) {
+          // The vanilla Button reads its props exactly once inside
+          // createComponent()'s untrack scope, so getter props freeze there.
+          // Keep the labels live by passing accessor children (Button routes
+          // function children through insert()), read the handler here in the
+          // tracked effect body, and bind the reactive disabled state on the
+          // returned element, mirroring the compiled Button's own effect.
+          const cancelButton = createComponent(Button, {
             size: "small",
             variant: "ghost",
-            get onClick() {
-              return split.onCancel;
-            },
-            get children() {
-              return split.cancelLabel ?? i18n.t("ui.common.cancel");
-            }
-          }), _$createComponent(Button, {
+            onClick: split.onCancel,
+            children: () => split.cancelLabel ?? i18n.t("ui.common.cancel")
+          });
+          const submitButton = createComponent(Button, {
             size: "small",
             variant: "primary",
-            get disabled() {
-              return split.value.trim().length === 0;
-            },
             onClick: submit,
-            get children() {
-              return split.submitLabel ?? i18n.t("ui.lineComment.submit");
-            }
-          })];
+            children: () => split.submitLabel ?? i18n.t("ui.lineComment.submit")
+          });
+          createRenderEffect(() => {
+            submitButton.disabled = split.value.trim().length === 0;
+          });
+          actionButtons = [cancelButton, submitButton];
+        } else {
+          const cancel = template('<button type="button" data-slot="line-comment-action" data-variant="ghost"></button>');
+          cancel.addEventListener("click", click(split.onCancel));
+          cancel.addEventListener("mousedown", hold);
+          createRenderEffect(() => {
+            cancel.replaceChildren(...flattenNodes(split.cancelLabel ?? i18n.t("ui.common.cancel")));
+          });
+          const send = template('<button type="button" data-slot="line-comment-action" data-variant="primary"></button>');
+          send.addEventListener("click", click(submit));
+          send.addEventListener("mousedown", hold);
+          createRenderEffect(() => {
+            send.replaceChildren(...flattenNodes(split.submitLabel ?? i18n.t("ui.lineComment.submit")));
+          });
+          createRenderEffect(() => {
+            send.disabled = split.value.trim().length === 0;
+          });
+          actionButtons = [cancel, send];
         }
-      }), null);
-      _$effect(_p$ => {
-        var _v$7 = split.rows ?? 3,
-          _v$8 = split.placeholder ?? i18n.t("ui.lineComment.placeholder");
-        _v$7 !== _p$.e && _$setAttribute(_el$12, "rows", _p$.e = _v$7);
-        _v$8 !== _p$.t && _$setAttribute(_el$12, "placeholder", _p$.t = _v$8);
-        return _p$;
-      }, {
-        e: undefined,
-        t: undefined
+        for (const node of actionButtons) actionsEl.appendChild(node);
       });
-      _$effect(() => _el$12.value = split.value);
-      return _el$11;
+
+      bindAttr(textarea, "rows", () => split.rows ?? 3);
+      bindAttr(textarea, "placeholder", () => split.placeholder ?? i18n.t("ui.lineComment.placeholder"));
+      createRenderEffect(() => {
+        textarea.value = split.value;
+      });
+      return editor;
     }
   }));
 };
-_$delegateEvents(["mousedown", "click"]);

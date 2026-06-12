@@ -1,15 +1,11 @@
-import { template as _$template } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="bg-body rounded-3 p-1">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="-m-3 p-2 d-flex flex-column w-72"><div class="px-4 pt-2 pb-1 d-flex align-items-center gap-2"><div class="fw-medium text-body-emphasis truncate grow"></div></div><div class="px-4 pb-2 small fw-medium text-secondary"></div><div class="px-2 pb-2 d-flex flex-column gap-2"></div><div class="px-2 py-2 border-t border">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="d-flex flex-column gap-1"><div class="px-2 py-0.5 d-flex align-items-center gap-1 min-w-0"><div class="shrink-0 size-6 d-flex align-items-center justify-content-center"></div><span class="truncate fw-medium text-body">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div>`);
-import { createMemo, For, Show } from "solid-js";
+// Kobalte presence-gated content flows through the insertions below: the
+// ContextMenu/HoverCard component trees resolve to [trigger, portal marker]
+// arrays whose membership changes whenever a portal mounts/unmounts, and the
+// session lists are For-reconciled rows inside the hover-card panel. insert()
+// reconciles those arrays in place instead of detaching the live trigger or
+// session nodes, so it stays (established exception).
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createMemo, createRenderEffect, For, mergeProps, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import { base64Encode } from "core/util/encode";
 import { Button } from "@/bs/button.js";
@@ -23,21 +19,39 @@ import { useLanguage } from "@/context/language.js";
 import { useNotification } from "@/context/notification.js";
 import { ProjectIcon, SessionItem } from "./sidebar-items.js";
 import { displayName, sortedRootSessions } from "./helpers.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
+// Reactive text binding: mirrors insert(el, accessor) for text-only slots
+// (renders nothing for null/undefined, like insert does).
+function bindText(el, accessor) {
+  createRenderEffect(() => {
+    const value = accessor();
+    el.textContent = value == null ? "" : value;
+  });
+}
+
 export const ProjectDragOverlay = props => {
   const project = createMemo(() => props.projects().find(p => p.worktree === props.activeProject()));
-  return _$createComponent(Show, {
+  return createComponent(Show, {
     get when() {
       return project();
     },
-    children: p => (() => {
-      var _el$ = _tmpl$();
-      _$insert(_el$, _$createComponent(ProjectIcon, {
+    children: p => {
+      const el = template(`<div class="bg-body rounded-3 p-1"></div>`);
+      el.appendChild(createComponent(ProjectIcon, {
         get project() {
           return p();
         }
       }));
-      return _el$;
-    })()
+      return el;
+    }
   });
 };
 const ProjectTile = props => {
@@ -45,7 +59,7 @@ const ProjectTile = props => {
   const layout = useLayout();
   const unseenCount = createMemo(() => props.dirs().reduce((total, directory) => total + notification.project.unseenCount(directory), 0));
   const clear = () => props.dirs().filter(directory => notification.project.unseenCount(directory) > 0).forEach(directory => notification.project.markViewed(directory));
-  return _$createComponent(ContextMenu, {
+  return createComponent(ContextMenu, {
     get modal() {
       return !props.sidebarHovering();
     },
@@ -55,7 +69,7 @@ const ProjectTile = props => {
       if (value) props.setOpen(false);
     },
     get children() {
-      return [_$createComponent(ContextMenu.Trigger, {
+      return [createComponent(ContextMenu.Trigger, {
         as: "button",
         type: "button",
         get ["aria-label"]() {
@@ -110,43 +124,43 @@ const ProjectTile = props => {
         },
         onBlur: () => props.setOpen(false),
         get children() {
-          return _$createComponent(ProjectIcon, {
+          return createComponent(ProjectIcon, {
             get project() {
               return props.project;
             },
             notify: true
           });
         }
-      }), _$createComponent(ContextMenu.Portal, {
+      }), createComponent(ContextMenu.Portal, {
         get children() {
-          return _$createComponent(ContextMenu.Content, {
+          return createComponent(ContextMenu.Content, {
             get children() {
-              return [_$createComponent(ContextMenu.Item, {
+              return [createComponent(ContextMenu.Item, {
                 onSelect: () => props.showEditProjectDialog(props.project),
                 get children() {
-                  return _$createComponent(ContextMenu.ItemLabel, {
+                  return createComponent(ContextMenu.ItemLabel, {
                     get children() {
                       return props.language.t("common.edit");
                     }
                   });
                 }
-              }), _$createComponent(ContextMenu.Item, {
+              }), createComponent(ContextMenu.Item, {
                 "data-action": "project-workspaces-toggle",
                 get ["data-project"]() {
                   return base64Encode(props.project.worktree);
                 },
                 get disabled() {
-                  return _$memo(() => props.project.vcs !== "git")() && !props.workspacesEnabled(props.project);
+                  return props.project.vcs !== "git" && !props.workspacesEnabled(props.project);
                 },
                 onSelect: () => props.toggleProjectWorkspaces(props.project),
                 get children() {
-                  return _$createComponent(ContextMenu.ItemLabel, {
+                  return createComponent(ContextMenu.ItemLabel, {
                     get children() {
-                      return _$memo(() => !!props.workspacesEnabled(props.project))() ? props.language.t("sidebar.workspaces.disable") : props.language.t("sidebar.workspaces.enable");
+                      return props.workspacesEnabled(props.project) ? props.language.t("sidebar.workspaces.disable") : props.language.t("sidebar.workspaces.enable");
                     }
                   });
                 }
-              }), _$createComponent(ContextMenu.Item, {
+              }), createComponent(ContextMenu.Item, {
                 "data-action": "project-clear-notifications",
                 get ["data-project"]() {
                   return base64Encode(props.project.worktree);
@@ -156,20 +170,20 @@ const ProjectTile = props => {
                 },
                 onSelect: clear,
                 get children() {
-                  return _$createComponent(ContextMenu.ItemLabel, {
+                  return createComponent(ContextMenu.ItemLabel, {
                     get children() {
                       return props.language.t("sidebar.project.clearNotifications");
                     }
                   });
                 }
-              }), _$createComponent(ContextMenu.Separator, {}), _$createComponent(ContextMenu.Item, {
+              }), createComponent(ContextMenu.Separator, {}), createComponent(ContextMenu.Item, {
                 "data-action": "project-close-menu",
                 get ["data-project"]() {
                   return base64Encode(props.project.worktree);
                 },
                 onSelect: () => props.closeProject(props.project.worktree),
                 get children() {
-                  return _$createComponent(ContextMenu.ItemLabel, {
+                  return createComponent(ContextMenu.ItemLabel, {
                     get children() {
                       return props.language.t("common.close");
                     }
@@ -183,25 +197,29 @@ const ProjectTile = props => {
     }
   });
 };
-const ProjectPreviewPanel = props => (() => {
-  var _el$2 = _tmpl$2(),
-    _el$3 = _el$2.firstChild,
-    _el$4 = _el$3.firstChild,
-    _el$5 = _el$3.nextSibling,
-    _el$6 = _el$5.nextSibling,
-    _el$7 = _el$6.nextSibling;
-  _$insert(_el$4, () => displayName(props.project));
-  _$insert(_el$5, () => props.language.t("sidebar.project.recentSessions"));
-  _$insert(_el$6, _$createComponent(Show, {
+const ProjectPreviewPanel = props => {
+  // Static skeleton mirroring _tmpl$2: header (project name), "recent
+  // sessions" label, session list slot, footer ("view all" button).
+  const root = template(`<div class="-m-3 p-2 d-flex flex-column w-72"><div class="px-4 pt-2 pb-1 d-flex align-items-center gap-2"><div class="fw-medium text-body-emphasis truncate grow"></div></div><div class="px-4 pb-2 small fw-medium text-secondary"></div><div class="px-2 pb-2 d-flex flex-column gap-2"></div><div class="px-2 py-2 border-t border"></div></div>`);
+  const header = root.firstChild;
+  const nameEl = header.firstChild;
+  const recentLabel = header.nextSibling;
+  const sessionList = recentLabel.nextSibling;
+  const footer = sessionList.nextSibling;
+  bindText(nameEl, () => displayName(props.project));
+  bindText(recentLabel, () => props.language.t("sidebar.project.recentSessions"));
+  // Session rows live inside the presence-gated hover-card content; keep
+  // Show/For + insert so row identity is preserved across list updates.
+  _solidInsert(sessionList, createComponent(Show, {
     get when() {
       return props.workspaceEnabled();
     },
     get fallback() {
-      return _$createComponent(For, {
+      return createComponent(For, {
         get each() {
           return props.projectSessions().slice(0, 2);
         },
-        children: session => _$createComponent(SessionItem, _$mergeProps(() => props.ctx.sessionProps, {
+        children: session => createComponent(SessionItem, mergeProps(() => props.ctx.sessionProps, {
           session: session,
           get list() {
             return props.projectSessions();
@@ -218,49 +236,47 @@ const ProjectPreviewPanel = props => (() => {
       });
     },
     get children() {
-      return _$createComponent(For, {
+      return createComponent(For, {
         get each() {
           return props.workspaces();
         },
         children: directory => {
           const sessions = createMemo(() => props.workspaceSessions(directory));
-          return (() => {
-            var _el$8 = _tmpl$3(),
-              _el$9 = _el$8.firstChild,
-              _el$0 = _el$9.firstChild,
-              _el$1 = _el$0.nextSibling;
-            _$insert(_el$0, _$createComponent(Icon, {
-              name: "branch",
-              size: "small",
-              "class": "text-secondary"
-            }));
-            _$insert(_el$1, () => props.label(directory));
-            _$insert(_el$8, _$createComponent(For, {
-              get each() {
-                return sessions().slice(0, 2);
+          // _tmpl$3: workspace header row (icon + label), sessions appended after.
+          const row = template(`<div class="d-flex flex-column gap-1"><div class="px-2 py-0.5 d-flex align-items-center gap-1 min-w-0"><div class="shrink-0 size-6 d-flex align-items-center justify-content-center"></div><span class="truncate fw-medium text-body"></span></div></div>`);
+          const iconBox = row.firstChild.firstChild;
+          const labelEl = iconBox.nextSibling;
+          iconBox.appendChild(createComponent(Icon, {
+            name: "branch",
+            size: "small",
+            "class": "text-secondary"
+          }));
+          bindText(labelEl, () => props.label(directory));
+          _solidInsert(row, createComponent(For, {
+            get each() {
+              return sessions().slice(0, 2);
+            },
+            children: session => createComponent(SessionItem, mergeProps(() => props.ctx.sessionProps, {
+              session: session,
+              get list() {
+                return sessions();
               },
-              children: session => _$createComponent(SessionItem, _$mergeProps(() => props.ctx.sessionProps, {
-                session: session,
-                get list() {
-                  return sessions();
-                },
-                get slug() {
-                  return base64Encode(directory);
-                },
-                dense: true,
-                showTooltip: true,
-                get mobile() {
-                  return props.mobile;
-                }
-              }))
-            }), null);
-            return _el$8;
-          })();
+              get slug() {
+                return base64Encode(directory);
+              },
+              dense: true,
+              showTooltip: true,
+              get mobile() {
+                return props.mobile;
+              }
+            }))
+          }), null);
+          return row;
         }
       });
     }
   }));
-  _$insert(_el$7, _$createComponent(Button, {
+  footer.appendChild(createComponent(Button, {
     variant: "ghost",
     "class": "d-flex w-100 text-left justify-content-start text-body px-2 hover:bg-transparent active:bg-transparent",
     onClick: () => {
@@ -273,8 +289,8 @@ const ProjectPreviewPanel = props => (() => {
       return props.language.t("sidebar.project.viewAllSessions");
     }
   }));
-  return _el$2;
-})();
+  return root;
+};
 export const SortableProject = props => {
   const globalSync = useGlobalSync();
   const language = useLanguage();
@@ -310,7 +326,7 @@ export const SortableProject = props => {
     });
     return sortedRootSessions(data, props.sortNow());
   };
-  const tile = () => _$createComponent(ProjectTile, {
+  const tile = () => createComponent(ProjectTile, {
     get project() {
       return props.project;
     },
@@ -354,59 +370,57 @@ export const SortableProject = props => {
     setSuppressHover: value => setState("suppressHover", value),
     language: language
   });
-  return (
-    (() => {
-      var _el$10 = _tmpl$4();
-      _$use(sortable, _el$10, () => true);
-      _$insert(_el$10, _$createComponent(Show, {
-        get when() {
-          return _$memo(() => !!preview())() && !selected();
+  const root = document.createElement("div");
+  // use:sortable directive (compiled use() helper): run untracked, exactly
+  // like solid-js/web's use() does.
+  untrack(() => sortable(root, () => true));
+  _solidInsert(root, createComponent(Show, {
+    get when() {
+      return preview() && !selected();
+    },
+    get fallback() {
+      return tile();
+    },
+    get children() {
+      return createComponent(HoverCard, {
+        get open() {
+          return !state.suppressHover && hoverOpen() && !state.menu;
         },
-        get fallback() {
+        openDelay: 0,
+        closeDelay: 0,
+        placement: "right-start",
+        gutter: 6,
+        get trigger() {
           return tile();
         },
+        onOpenChange: value => {
+          if (state.menu) return;
+          if (value && state.suppressHover) return;
+          props.ctx.onHoverOpenChanged(props.project.worktree, value);
+        },
         get children() {
-          return _$createComponent(HoverCard, {
-            get open() {
-              return _$memo(() => !!(!state.suppressHover && hoverOpen()))() && !state.menu;
+          return createComponent(ProjectPreviewPanel, {
+            get project() {
+              return props.project;
             },
-            openDelay: 0,
-            closeDelay: 0,
-            placement: "right-start",
-            gutter: 6,
-            get trigger() {
-              return tile();
+            get mobile() {
+              return props.mobile;
             },
-            onOpenChange: value => {
-              if (state.menu) return;
-              if (value && state.suppressHover) return;
-              props.ctx.onHoverOpenChanged(props.project.worktree, value);
+            selected: selected,
+            workspaceEnabled: workspaceEnabled,
+            workspaces: workspaces,
+            label: label,
+            projectSessions: projectSessions,
+            workspaceSessions: workspaceSessions,
+            get ctx() {
+              return props.ctx;
             },
-            get children() {
-              return _$createComponent(ProjectPreviewPanel, {
-                get project() {
-                  return props.project;
-                },
-                get mobile() {
-                  return props.mobile;
-                },
-                selected: selected,
-                workspaceEnabled: workspaceEnabled,
-                workspaces: workspaces,
-                label: label,
-                projectSessions: projectSessions,
-                workspaceSessions: workspaceSessions,
-                get ctx() {
-                  return props.ctx;
-                },
-                language: language
-              });
-            }
+            language: language
           });
         }
-      }));
-      _$effect(() => _el$10.classList.toggle("opacity-30", !!sortable.isActiveDraggable));
-      return _el$10;
-    })()
-  );
+      });
+    }
+  }));
+  createRenderEffect(() => root.classList.toggle("opacity-30", !!sortable.isActiveDraggable));
+  return root;
 };

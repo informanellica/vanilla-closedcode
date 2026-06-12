@@ -1,20 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { classList as _$classList } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="h-full d-flex align-items-center justify-content-center">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full"><div class="flex-1 min-h-0 position-relative">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div id=terminal-panel role=region class="position-relative w-100 shrink-0 overflow-hidden bg-body"><div class="position-absolute inset-x-0 top-0 d-flex flex-column"><div class="d-none md:block">`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="d-flex flex-column h-full pointer-events-none"><div class="h-10 d-flex align-items-center gap-2 px-2 border-b border bg-body overflow-hidden"><div class=flex-1></div><div class="text-secondary pr-2"></div></div><div class="flex-1 d-flex align-items-center justify-content-center text-secondary">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="px-2 py-1 rounded-2 bg-body-tertiary fw-normal text-secondary truncate max-w-40">`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div class="position-absolute inset-0">`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div class="position-relative p-1 h-10 d-flex align-items-center bg-body fw-normal">`);
-import { For, Show, createEffect, createMemo, on, onCleanup, onMount } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
+import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { Tabs } from "@/bs/tabs.js";
@@ -33,6 +18,14 @@ import { terminalTabLabel } from "@/pages/session/terminal-label.js";
 import { createSizing, focusTerminalById } from "@/pages/session/helpers.js";
 import { getTerminalHandoff, setTerminalHandoff } from "@/pages/session/handoff.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 export function TerminalPanel() {
   const delays = [120, 240];
   const layout = useLayout();
@@ -151,212 +144,256 @@ export function TerminalPanel() {
       focusTerminalById(activeId);
     });
   };
-  return (() => {
-    var _el$ = _tmpl$3(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild;
-    var _ref$ = root;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$) : root = _el$;
-    _el$3.$$pointerdown = () => size.start();
-    _$insert(_el$3, _$createComponent(ResizeHandle, {
-      direction: "vertical",
-      get size() {
-        return pane();
+
+  // Loading fallback (_tmpl$4): ghost tab bar from the previous visit's
+  // handoff labels plus the localized loading message. Built lazily by the
+  // Show fallback getter, so the effects below live under that branch and
+  // are disposed when the terminal context becomes ready.
+  const buildFallback = () => {
+    const fb = template(`<div class="d-flex flex-column h-full pointer-events-none"><div class="h-10 d-flex align-items-center gap-2 px-2 border-b border bg-body overflow-hidden"><div class="flex-1"></div><div class="text-secondary pr-2"></div></div><div class="flex-1 d-flex align-items-center justify-content-center text-secondary"></div></div>`);
+    const bar = fb.firstChild;
+    const spacer = bar.firstChild;
+    const counter = spacer.nextSibling;
+    const message = bar.nextSibling;
+    // Replaces For over handoff(): labels are plain strings keyed only by
+    // params.dir, so a full rebuild before the spacer is equivalent.
+    let ghosts = [];
+    createRenderEffect(() => {
+      const next = handoff().map(title => {
+        const ghost = template(`<div class="px-2 py-1 rounded-2 bg-body-tertiary fw-normal text-secondary truncate max-w-40"></div>`);
+        ghost.textContent = title;
+        return ghost;
+      });
+      for (const el of ghosts) el.remove();
+      ghosts = next;
+      for (const el of next) bar.insertBefore(el, spacer);
+    });
+    createRenderEffect(() => {
+      counter.textContent = language.t("common.loading") + language.t("common.loading.ellipsis");
+    });
+    createRenderEffect(() => {
+      message.textContent = language.t("terminal.loading");
+    });
+    return fb;
+  };
+
+  // "New terminal" tab-bar cell (_tmpl$).
+  const buildNewTabButton = () => {
+    const cell = template(`<div class="h-full d-flex align-items-center justify-content-center"></div>`);
+    cell.appendChild(createComponent(TooltipKeybind, {
+      get title() {
+        return language.t("command.terminal.new");
       },
-      min: 100,
-      get max() {
-        return max();
+      get keybind() {
+        return command.keybind("terminal.new");
       },
-      collapseThreshold: 50,
-      onResize: next => {
-        size.touch();
-        layout.terminal.resize(next);
-      },
-      onCollapse: close
-    }));
-    _$insert(_el$2, _$createComponent(Show, {
-      get when() {
-        return terminal.ready();
-      },
-      get fallback() {
-        return (() => {
-          var _el$7 = _tmpl$4(),
-            _el$8 = _el$7.firstChild,
-            _el$9 = _el$8.firstChild,
-            _el$0 = _el$9.nextSibling,
-            _el$1 = _el$8.nextSibling;
-          _$insert(_el$8, _$createComponent(For, {
-            get each() {
-              return handoff();
-            },
-            children: title => (() => {
-              var _el$10 = _tmpl$5();
-              _$insert(_el$10, title);
-              return _el$10;
-            })()
-          }), _el$9);
-          _$insert(_el$0, () => language.t("common.loading"), null);
-          _$insert(_el$0, () => language.t("common.loading.ellipsis"), null);
-          _$insert(_el$1, () => language.t("terminal.loading"));
-          return _el$7;
-        })();
-      },
+      "class": "d-flex align-items-center",
       get children() {
-        return _$createComponent(DragDropProvider, {
-          onDragStart: handleTerminalDragStart,
-          onDragEnd: handleTerminalDragEnd,
-          onDragOver: handleTerminalDragOver,
-          collisionDetector: closestCenter,
-          get children() {
-            return [_$createComponent(DragDropSensors, {}), _$createComponent(ConstrainDragYAxis, {}), (() => {
-              var _el$4 = _tmpl$2(),
-                _el$6 = _el$4.firstChild;
-              _$insert(_el$4, _$createComponent(Tabs, {
-                variant: "alt",
-                get value() {
-                  return terminal.active();
-                },
-                onChange: id => terminal.open(id),
-                "class": "!h-auto !flex-none",
-                get children() {
-                  return _$createComponent(Tabs.List, {
-                    "class": "h-10 border-b border",
-                    get children() {
-                      return [_$createComponent(SortableProvider, {
-                        get ids() {
-                          return ids();
-                        },
-                        get children() {
-                          return _$createComponent(For, {
-                            get each() {
-                              return all();
-                            },
-                            children: pty => _$createComponent(SortableTerminalTab, {
-                              terminal: pty,
-                              onClose: close
-                            })
-                          });
-                        }
-                      }), (() => {
-                        var _el$5 = _tmpl$();
-                        _$insert(_el$5, _$createComponent(TooltipKeybind, {
-                          get title() {
-                            return language.t("command.terminal.new");
-                          },
-                          get keybind() {
-                            return command.keybind("terminal.new");
-                          },
-                          "class": "d-flex align-items-center",
-                          get children() {
-                            return _$createComponent(IconButton, {
-                              icon: "plus-small",
-                              variant: "ghost",
-                              iconSize: "large",
-                              get onClick() {
-                                return terminal.new;
-                              },
-                              get ["aria-label"]() {
-                                return language.t("command.terminal.new");
-                              }
-                            });
-                          }
-                        }));
-                        return _el$5;
-                      })()];
-                    }
-                  });
-                }
-              }), _el$6);
-              _$insert(_el$6, _$createComponent(Show, {
-                get when() {
-                  return terminal.active();
-                },
-                keyed: true,
-                children: id => {
-                  const ops = terminal.bind();
-                  return _$createComponent(Show, {
-                    get when() {
-                      return all().find(pty => pty.id === id);
-                    },
-                    children: pty => (() => {
-                      var _el$11 = _tmpl$6();
-                      _$setAttribute(_el$11, "id", `terminal-wrapper-${id}`);
-                      _$insert(_el$11, _$createComponent(Terminal, {
-                        get pty() {
-                          return pty();
-                        },
-                        get autoFocus() {
-                          return opened();
-                        },
-                        onConnect: () => ops.trim(id),
-                        get onCleanup() {
-                          return ops.update;
-                        },
-                        onConnectError: () => ops.clone(id)
-                      }));
-                      return _el$11;
-                    })()
-                  });
-                }
-              }));
-              return _el$4;
-            })(), _$createComponent(DragOverlay, {
-              get children() {
-                return _$createComponent(Show, {
-                  get when() {
-                    return store.activeDraggable;
-                  },
-                  keyed: true,
-                  children: id => _$createComponent(Show, {
-                    get when() {
-                      return all().find(pty => pty.id === id);
-                    },
-                    children: t => (() => {
-                      var _el$12 = _tmpl$7();
-                      _$insert(_el$12, () => terminalTabLabel({
-                        title: t().title,
-                        titleNumber: t().titleNumber,
-                        t: language.t
-                      }));
-                      return _el$12;
-                    })()
-                  })
-                });
-              }
-            })];
+        return createComponent(IconButton, {
+          icon: "plus-small",
+          variant: "ghost",
+          iconSize: "large",
+          get onClick() {
+            return terminal.new;
+          },
+          get ["aria-label"]() {
+            return language.t("command.terminal.new");
           }
         });
       }
-    }), null);
-    _$effect(_p$ => {
-      var _v$ = language.t("terminal.title"),
-        _v$2 = !opened(),
-        _v$3 = !opened(),
-        _v$4 = {
-          "border-t border": opened(),
-          "transition-[height] duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] will-change-[height] motion-reduce:transition-none": !size.active()
-        },
-        _v$5 = opened() ? `${pane()}px` : "0px",
-        _v$6 = !opened(),
-        _v$7 = `${pane()}px`;
-      _v$ !== _p$.e && _$setAttribute(_el$, "aria-label", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setAttribute(_el$, "aria-hidden", _p$.t = _v$2);
-      _v$3 !== _p$.a && (_el$.inert = _p$.a = _v$3);
-      _p$.o = _$classList(_el$, _v$4, _p$.o);
-      _v$5 !== _p$.i && _$setStyleProperty(_el$, "height", _p$.i = _v$5);
-      _v$6 !== _p$.n && _el$2.classList.toggle("pointer-events-none", _p$.n = _v$6);
-      _v$7 !== _p$.s && _$setStyleProperty(_el$2, "height", _p$.s = _v$7);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined,
-      o: undefined,
-      i: undefined,
-      n: undefined,
-      s: undefined
-    });
-    return _el$;
-  })();
+    }));
+    return cell;
+  };
+
+  // Tab strip + active terminal body (_tmpl$2).
+  const buildTerminalArea = () => {
+    const area = template(`<div class="d-flex flex-column h-full"><div class="flex-1 min-h-0 position-relative"></div></div>`);
+    const body = area.firstChild;
+    // Tabs (bs/tabs.js) returns a concrete element; place it above the body.
+    area.insertBefore(createComponent(Tabs, {
+      variant: "alt",
+      get value() {
+        return terminal.active();
+      },
+      onChange: id => terminal.open(id),
+      "class": "!h-auto !flex-none",
+      get children() {
+        return createComponent(Tabs.List, {
+          "class": "h-10 border-b border",
+          get children() {
+            return [createComponent(SortableProvider, {
+              get ids() {
+                return ids();
+              },
+              get children() {
+                // Runtime For keeps tab nodes stable across reorders, which
+                // solid-dnd's sortable transforms rely on.
+                return createComponent(For, {
+                  get each() {
+                    return all();
+                  },
+                  children: pty => createComponent(SortableTerminalTab, {
+                    terminal: pty,
+                    onClose: close
+                  })
+                });
+              }
+            }), buildNewTabButton()];
+          }
+        });
+      }
+    }), body);
+    // Keyed Show: remount the wrapper (and Terminal) per active id; the inner
+    // non-keyed Show keeps it mounted while the pty still exists, feeding the
+    // live pty accessor through the props getter. insert() reconciles so the
+    // terminal node is never re-attached without an actual branch change.
+    _solidInsert(body, createComponent(Show, {
+      get when() {
+        return terminal.active();
+      },
+      keyed: true,
+      children: id => {
+        const ops = terminal.bind();
+        return createComponent(Show, {
+          get when() {
+            return all().find(pty => pty.id === id);
+          },
+          children: pty => {
+            const wrapper = template(`<div class="position-absolute inset-0"></div>`);
+            wrapper.id = `terminal-wrapper-${id}`;
+            wrapper.appendChild(createComponent(Terminal, {
+              get pty() {
+                return pty();
+              },
+              get autoFocus() {
+                return opened();
+              },
+              onConnect: () => ops.trim(id),
+              get onCleanup() {
+                return ops.update;
+              },
+              onConnectError: () => ops.clone(id)
+            }));
+            return wrapper;
+          }
+        });
+      }
+    }));
+    return area;
+  };
+
+  // Ready branch: solid-dnd providers wrapping the terminal area and the
+  // drag overlay (a floating copy of the dragged tab's label, _tmpl$7).
+  const buildReady = () => createComponent(DragDropProvider, {
+    onDragStart: handleTerminalDragStart,
+    onDragEnd: handleTerminalDragEnd,
+    onDragOver: handleTerminalDragOver,
+    collisionDetector: closestCenter,
+    get children() {
+      return [createComponent(DragDropSensors, {}), createComponent(ConstrainDragYAxis, {}), buildTerminalArea(), createComponent(DragOverlay, {
+        get children() {
+          return createComponent(Show, {
+            get when() {
+              return store.activeDraggable;
+            },
+            keyed: true,
+            children: id => createComponent(Show, {
+              get when() {
+                return all().find(pty => pty.id === id);
+              },
+              children: t => {
+                const label = template(`<div class="position-relative p-1 h-10 d-flex align-items-center bg-body fw-normal"></div>`);
+                // terminalTabLabel returns a translated string; keep it live
+                // across title/locale changes while dragging.
+                createRenderEffect(() => {
+                  label.textContent = terminalTabLabel({
+                    title: t().title,
+                    titleNumber: t().titleNumber,
+                    t: language.t
+                  });
+                });
+                return label;
+              }
+            })
+          });
+        }
+      })];
+    }
+  });
+
+  // Static skeleton (_tmpl$3): panel root > absolute column > resize-handle
+  // host (hidden below md).
+  const rootEl = template(`<div id="terminal-panel" role="region" class="position-relative w-100 shrink-0 overflow-hidden bg-body"><div class="position-absolute inset-x-0 top-0 d-flex flex-column"><div class="d-none md:block"></div></div></div>`);
+  const column = rootEl.firstChild;
+  const handleWrap = column.firstChild;
+  // Ref binding: the local `root` is only ever undefined or an element.
+  root = rootEl;
+  // Compiled delegated $$pointerdown -> direct listener (pointerdown always
+  // precedes the handle's own mousedown handling, so ordering is unchanged).
+  handleWrap.addEventListener("pointerdown", () => size.start());
+  handleWrap.appendChild(createComponent(ResizeHandle, {
+    direction: "vertical",
+    get size() {
+      return pane();
+    },
+    min: 100,
+    get max() {
+      return max();
+    },
+    collapseThreshold: 50,
+    onResize: next => {
+      size.touch();
+      layout.terminal.resize(next);
+    },
+    onCollapse: close
+  }));
+  // Ready/loading switch appended after the resize-handle host. insert() with
+  // a null marker keeps append semantics and reconciles the provider output
+  // (sensors/overlay markers + the area element) without remounting it.
+  _solidInsert(column, createComponent(Show, {
+    get when() {
+      return terminal.ready();
+    },
+    get fallback() {
+      return buildFallback();
+    },
+    get children() {
+      return buildReady();
+    }
+  }), null);
+  // Change-guarded reactive attributes/classes/styles, mirroring the compiled
+  // effect() block.
+  const animationClasses = ["transition-[height]", "duration-200", "ease-[cubic-bezier(0.22,1,0.36,1)]", "will-change-[height]", "motion-reduce:transition-none"];
+  let prevLabel;
+  let prevHidden;
+  let prevInert;
+  let prevBorder;
+  let prevAnimate;
+  let prevRootHeight;
+  let prevPointer;
+  let prevColumnHeight;
+  createRenderEffect(() => {
+    const label = language.t("terminal.title");
+    const hidden = !opened();
+    const border = opened();
+    const animate = !size.active();
+    const rootHeight = opened() ? `${pane()}px` : "0px";
+    const columnHeight = `${pane()}px`;
+    if (label !== prevLabel) rootEl.setAttribute("aria-label", prevLabel = label);
+    if (hidden !== prevHidden) rootEl.setAttribute("aria-hidden", prevHidden = hidden);
+    if (hidden !== prevInert) rootEl.inert = prevInert = hidden;
+    if (border !== prevBorder) {
+      prevBorder = border;
+      rootEl.classList.toggle("border-t", border);
+      rootEl.classList.toggle("border", border);
+    }
+    if (animate !== prevAnimate) {
+      prevAnimate = animate;
+      for (const cls of animationClasses) rootEl.classList.toggle(cls, animate);
+    }
+    if (rootHeight !== prevRootHeight) rootEl.style.setProperty("height", prevRootHeight = rootHeight);
+    if (hidden !== prevPointer) column.classList.toggle("pointer-events-none", prevPointer = hidden);
+    if (columnHeight !== prevColumnHeight) column.style.setProperty("height", prevColumnHeight = columnHeight);
+  });
+  return rootEl;
 }
-_$delegateEvents(["pointerdown"]);

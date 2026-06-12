@@ -190,8 +190,13 @@ function CollapsibleRoot(props) {
       root.removeAttribute("data-disabled");
     }
 
-    const triggers = root.querySelectorAll('[data-slot="collapsible-trigger"]');
-    const contents = root.querySelectorAll('[data-slot="collapsible-content"]');
+    // Only this root's own slots: in nested collapsibles (file tree) a bare
+    // querySelectorAll also matched descendants of nested roots, so toggling
+    // a parent folder force-applied the parent's open state onto collapsed
+    // children (their `hidden` was stripped, re-showing their rows).
+    const own = el => el.closest('[data-component="collapsible"]') === root;
+    const triggers = [...root.querySelectorAll('[data-slot="collapsible-trigger"]')].filter(own);
+    const contents = [...root.querySelectorAll('[data-slot="collapsible-content"]')].filter(own);
 
     triggers.forEach(trigger => {
       if (open) {
