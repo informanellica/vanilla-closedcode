@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/solid-query";
+import { useMutation } from "@/lib/query/index.js";
 import { useNavigate } from "@/lib/router/index.js";
 import { createMemo } from "solid-js";
 import { useDialog } from "@/lib/dialog.js";

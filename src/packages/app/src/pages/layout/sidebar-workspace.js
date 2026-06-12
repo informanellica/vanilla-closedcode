@@ -25,7 +25,7 @@ import { useLanguage } from "@/context/language.js";
 import { pathKey } from "@/utils/path-key.js";
 import { NewSessionItem, SessionItem, SessionSkeleton } from "./sidebar-items.js";
 import { sortedRootSessions } from "./helpers.js";
-import { useQuery } from "@tanstack/solid-query";
+import { useQuery } from "@/lib/query/index.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.

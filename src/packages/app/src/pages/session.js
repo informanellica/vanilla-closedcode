@@ -3,7 +3,7 @@
 // so Solid keeps reconciling accessors instead of freezing them.
 import { insert as _solidInsert } from "solid-js/web";
 import { useDialog } from "@/lib/dialog.js";
-import { createQuery, skipToken } from "@tanstack/solid-query";
+import { createQuery, skipToken } from "@/lib/query/index.js";
 import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "solid-js";
 import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { createMediaQuery } from "@/lib/primitives/media.js";

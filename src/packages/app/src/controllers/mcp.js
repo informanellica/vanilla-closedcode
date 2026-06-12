@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/solid-query";
+import { useMutation, useQueryClient } from "@/lib/query/index.js";
 import { useSDK } from "@/context/sdk.js";
 import { useSync } from "@/context/sync.js";
 import { loadMcpQuery } from "@/context/global-sync.js";

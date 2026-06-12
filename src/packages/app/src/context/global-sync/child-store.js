@@ -3,7 +3,7 @@ import { createStore } from "solid-js/store";
 import { Persist, persisted } from "@/utils/persist.js";
 import { DIR_IDLE_TTL_MS, MAX_DIR_STORES } from "./types.js";
 import { canDisposeDirectory, pickDirectoriesToEvict } from "./eviction.js";
-import { useQueries } from "@tanstack/solid-query";
+import { useQueries } from "@/lib/query/index.js";
 import { loadPathQuery, loadProvidersQuery } from "./bootstrap.js";
 import { loadLspQuery, loadMcpQuery } from "../global-sync.js";
 import { directoryKey } from "./utils.js";

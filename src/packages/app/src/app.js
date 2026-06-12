@@ -13,7 +13,7 @@ import { Splash } from "@/vendor/ui/components/logo.js";
 import { ThemeProvider } from "@/lib/theme.js";
 import { MetaProvider } from "@/lib/primitives/meta.js";
 import { Navigate, Route, Router } from "@/lib/router/index.js";
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
+import { QueryClient, QueryClientProvider } from "@/lib/query/index.js";
 import { Effect } from "effect";
 import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";
 import { Dynamic } from "solid-js/web";

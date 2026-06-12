@@ -5,7 +5,7 @@ import { batch } from "solid-js";
 import { reconcile } from "solid-js/store";
 import { cmp, normalizeAgentList, normalizeProviderList } from "./utils.js";
 import { formatServerError } from "@/utils/server-errors.js";
-import { queryOptions, skipToken } from "@tanstack/solid-query";
+import { queryOptions, skipToken } from "@/lib/query/index.js";
 import { loadMcpQuery } from "../global-sync.js";
 function waitForPaint() {
   return new Promise(resolve => {

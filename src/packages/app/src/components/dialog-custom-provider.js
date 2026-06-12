@@ -3,7 +3,7 @@ import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { ProviderIcon } from "@/vendor/ui/components/provider-icon.js";
-import { useMutation } from "@tanstack/solid-query";
+import { useMutation } from "@/lib/query/index.js";
 import { TextField } from "@/bs/text-field.js";
 import { showToast } from "@/lib/toast.js";
 import { batch, createComponent, createEffect, createMemo, createRoot, createSignal, onCleanup } from "solid-js";

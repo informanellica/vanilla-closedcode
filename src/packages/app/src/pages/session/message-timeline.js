@@ -6,7 +6,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { useMutation } from "@tanstack/solid-query";
+import { useMutation } from "@/lib/query/index.js";
 import { useNavigate } from "@/lib/router/index.js";
 import { Button } from "@/bs/button.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
