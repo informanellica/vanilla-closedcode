@@ -299,18 +299,17 @@ async function buildImportMap() {
     // the app never loads) are skipped — the map only needs runtime modules.
     else process.stderr.write(`[oc-importmap] skip "${spec}" (unresolved)\n`);
   }
-  // Stage R2/R4 (solid-free reactivity): re-point first-party solid-js /
-  // solid-js/web / solid-js/store at our self-written core (lib/reactivity.js,
-  // lib/store.js) instead of node_modules. This affects ONLY first-party
-  // modules — third-party packages under node_modules/ go through the
-  // import-rewriting resolver (not this map) and keep the real solid-js until
-  // each is internalized (Stage R3). Gated by CLOSEDCODE_SOLID_FREE=1 so the
-  // global flip is opt-in until R3 removes every third-party that would
-  // otherwise hand first-party code a foreign-runtime context across the
-  // (plain-DOM) component boundary. lib/reactivity.js covers the union of the
-  // solid-js core + solid-js/web runtime subset the app imports, so one URL
-  // serves both specifiers.
-  if (process.env.CLOSEDCODE_SOLID_FREE === "1") {
+  // Stage R4 (solid-free reactivity) — NOW THE PERMANENT DEFAULT: re-point
+  // first-party solid-js / solid-js/web / solid-js/store at our self-written
+  // core (lib/reactivity.js, lib/store.js) instead of node_modules. This affects
+  // ONLY first-party modules. Every third-party that imported solid-js has been
+  // internalized (Stage R3) and removed from this app's package.json, so the
+  // renderer no longer needs node_modules/solid-js at all. lib/reactivity.js
+  // covers the union of the solid-js core + solid-js/web runtime subset the app
+  // imports, so one URL serves both specifiers. Set CLOSEDCODE_SOLID_FREE=0 to
+  // opt OUT (only meaningful while node_modules/solid-js still exists — e.g. for
+  // an A/B debug before the dependency is pruned).
+  if (process.env.CLOSEDCODE_SOLID_FREE !== "0") {
     const coreUrl = toRouteUrl(resolveFile(join(APP_SRC, "lib/reactivity.js")));
     const storeUrl = toRouteUrl(resolveFile(join(APP_SRC, "lib/store.js")));
     if (coreUrl) { imports["solid-js"] = coreUrl; imports["solid-js/web"] = coreUrl; }
