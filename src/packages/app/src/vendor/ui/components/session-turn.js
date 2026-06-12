@@ -1,31 +1,15 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { addEventListener as _$addEventListener } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=session-turn-compaction>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div data-slot=session-turn-assistant-content>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=session-turn-thinking>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<span data-slot=session-turn-diffs-toggle>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-slot=session-turn-diffs-more>`),
-  _tmpl$6 = /*#__PURE__*/_$template(`<div data-slot=session-turn-diffs data-component=session-turn-diffs-group><div data-slot=session-turn-diffs-header><span data-slot=session-turn-diffs-label> <!> </span></div><div data-component=session-turn-diffs-content>`),
-  _tmpl$7 = /*#__PURE__*/_$template(`<div data-slot=session-turn-message-container><div data-slot=session-turn-message-content aria-live=off>`),
-  _tmpl$8 = /*#__PURE__*/_$template(`<div data-component=session-turn><div data-slot=session-turn-content><div>`),
-  _tmpl$9 = /*#__PURE__*/_$template(`<span data-slot=session-turn-diff-directory>`),
-  _tmpl$0 = /*#__PURE__*/_$template(`<div data-slot=session-turn-diff-trigger><span data-slot=session-turn-diff-path><span data-slot=session-turn-diff-filename></span></span><div data-slot=session-turn-diff-meta><span data-slot=session-turn-diff-changes></span><span data-slot=session-turn-diff-chevron>`),
-  _tmpl$1 = /*#__PURE__*/_$template(`<div data-slot=session-turn-diff-view data-scrollable>`);
+// Dynamic is a runtime component, not a compiled template helper (it is only
+// exported from solid-js/web). insert() is the established exception for
+// reactive/component-valued children (Kobalte presence-gated Accordion
+// content, memo-accessor returns) so Solid keeps reconciling accessors
+// instead of freezing them.
+import { Dynamic, insert as _solidInsert } from "solid-js/web";
 import { useData } from "../context/index.js";
 import { useFileComponent } from "../context/file.js";
 import { Binary } from "core/util/binary";
 import { getDirectory, getFilename } from "core/util/path";
-import { createEffect, createMemo, createSignal, For, on, Show } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Dynamic } from "solid-js/web";
 import { AssistantParts, Message, MessageDivider, PART_MAPPING } from "./message-part.js";
 import { Card } from "./card.js";
 import { Accordion } from "./accordion.js";
@@ -38,6 +22,15 @@ import { TextReveal } from "./text-reveal.js";
 import { createAutoScroll } from "../hooks/index.js";
 import { useI18n } from "../context/i18n.js";
 import { normalize } from "./session-diff.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — translated or
+// user-provided strings are always assigned via textContent/text nodes.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 function record(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -311,301 +304,367 @@ export function SessionTurn(props) {
     onUserInteracted: props.onUserInteracted,
     overflowAnchor: "dynamic"
   });
-  return (() => {
-    var _el$ = _tmpl$8(),
-      _el$2 = _el$.firstChild,
-      _el$3 = _el$2.firstChild;
-    _$addEventListener(_el$2, "scroll", autoScroll.handleScroll);
-    var _ref$ = autoScroll.scrollRef;
-    typeof _ref$ === "function" ? _$use(_ref$, _el$2) : autoScroll.scrollRef = _el$2;
-    _$addEventListener(_el$3, "click", autoScroll.handleInteraction, true);
-    _$insert(_el$3, _$createComponent(Show, {
-      get when() {
-        return message();
+  // One accordion row per file diff (For children, _tmpl$0/_tmpl$9/_tmpl$1).
+  const buildDiffRow = diff => {
+    const view = normalize(diff);
+    const rowActive = createMemo(() => expanded().includes(diff.file));
+    const [shown, setShown] = createSignal(false);
+    createEffect(on(rowActive, value => {
+      if (!value) {
+        setShown(false);
+        return;
+      }
+      requestAnimationFrame(() => {
+        if (!rowActive()) return;
+        setShown(true);
+      });
+    }, {
+      defer: true
+    }));
+    return createComponent(Accordion.Item, {
+      get value() {
+        return diff.file;
       },
       get children() {
-        var _el$4 = _tmpl$7(),
-          _el$5 = _el$4.firstChild;
-        var _ref$2 = autoScroll.contentRef;
-        typeof _ref$2 === "function" ? _$use(_ref$2, _el$4) : autoScroll.contentRef = _el$4;
-        _$insert(_el$5, _$createComponent(Message, {
-          get message() {
-            return message();
-          },
-          get parts() {
-            return parts();
-          },
-          get actions() {
-            return props.actions;
-          }
-        }));
-        _$insert(_el$4, _$createComponent(Show, {
-          get when() {
-            return divider();
-          },
+        return [createComponent(StickyAccordionHeader, {
           get children() {
-            var _el$6 = _tmpl$();
-            _$insert(_el$6, _$createComponent(MessageDivider, {
-              get label() {
-                return divider();
-              }
-            }));
-            return _el$6;
-          }
-        }), null);
-        _$insert(_el$4, _$createComponent(Show, {
-          get when() {
-            return assistantMessages().length > 0;
-          },
-          get children() {
-            var _el$7 = _tmpl$2();
-            _$insert(_el$7, _$createComponent(AssistantParts, {
-              get messages() {
-                return assistantMessages();
-              },
-              get showAssistantCopyPartID() {
-                return assistantCopyPartID();
-              },
-              get turnDurationMs() {
-                return turnDurationMs();
-              },
-              get working() {
-                return working();
-              },
-              get showReasoningSummaries() {
-                return showReasoningSummaries();
-              },
-              get shellToolDefaultOpen() {
-                return props.shellToolDefaultOpen;
-              },
-              get editToolDefaultOpen() {
-                return props.editToolDefaultOpen;
-              }
-            }));
-            _$effect(() => _$setAttribute(_el$7, "aria-hidden", working()));
-            return _el$7;
-          }
-        }), null);
-        _$insert(_el$4, _$createComponent(Show, {
-          get when() {
-            return showThinking();
-          },
-          get children() {
-            var _el$8 = _tmpl$3();
-            _$insert(_el$8, _$createComponent(TextShimmer, {
-              get text() {
-                return i18n.t("ui.sessionTurn.status.thinking");
-              }
-            }), null);
-            _$insert(_el$8, _$createComponent(Show, {
-              get when() {
-                return !showReasoningSummaries();
-              },
+            return createComponent(Accordion.Trigger, {
               get children() {
-                return _$createComponent(TextReveal, {
-                  get text() {
-                    return reasoningHeading();
-                  },
-                  "class": "session-turn-thinking-heading",
-                  travel: 25,
-                  duration: 700
-                });
-              }
-            }), null);
-            return _el$8;
-          }
-        }), null);
-        _$insert(_el$4, _$createComponent(SessionRetry, {
-          get status() {
-            return status();
-          },
-          get show() {
-            return active();
-          }
-        }), null);
-        _$insert(_el$4, _$createComponent(Show, {
-          get when() {
-            return _$memo(() => edited() > 0)() && !working();
-          },
-          get children() {
-            var _el$9 = _tmpl$6(),
-              _el$0 = _el$9.firstChild,
-              _el$1 = _el$0.firstChild,
-              _el$10 = _el$1.firstChild,
-              _el$12 = _el$10.nextSibling,
-              _el$11 = _el$12.nextSibling,
-              _el$14 = _el$0.nextSibling;
-            _$insert(_el$1, edited, _el$10);
-            _$insert(_el$1, () => i18n.t("ui.sessionTurn.diffs.changed"), _el$12);
-            _$insert(_el$1, () => i18n.t(edited() === 1 ? "ui.common.file.one" : "ui.common.file.other"), null);
-            _$insert(_el$0, _$createComponent(DiffChanges, {
-              get changes() {
-                return diffs();
-              }
-            }), null);
-            _$insert(_el$0, _$createComponent(Show, {
-              get when() {
-                return overflow() > 0;
-              },
-              get children() {
-                var _el$13 = _tmpl$4();
-                _el$13.$$click = toggleAll;
-                _$insert(_el$13, (() => {
-                  var _c$ = _$memo(() => !!showAll());
-                  return () => _c$() ? i18n.t("ui.sessionTurn.diffs.showLess") : i18n.t("ui.sessionTurn.diffs.showAll");
-                })());
-                return _el$13;
-              }
-            }), null);
-            _$insert(_el$14, _$createComponent(Accordion, {
-              multiple: true,
-              style: {
-                "--sticky-accordion-offset": "44px"
-              },
-              get value() {
-                return expanded();
-              },
-              onChange: value => setState("expanded", Array.isArray(value) ? value : value ? [value] : []),
-              get children() {
-                return _$createComponent(For, {
-                  get each() {
-                    return visible();
-                  },
-                  children: diff => {
-                    const view = normalize(diff);
-                    const active = createMemo(() => expanded().includes(diff.file));
-                    const [shown, setShown] = createSignal(false);
-                    createEffect(on(active, value => {
-                      if (!value) {
-                        setShown(false);
-                        return;
-                      }
-                      requestAnimationFrame(() => {
-                        if (!active()) return;
-                        setShown(true);
-                      });
-                    }, {
-                      defer: true
-                    }));
-                    return _$createComponent(Accordion.Item, {
-                      get value() {
-                        return diff.file;
-                      },
-                      get children() {
-                        return [_$createComponent(StickyAccordionHeader, {
-                          get children() {
-                            return _$createComponent(Accordion.Trigger, {
-                              get children() {
-                                var _el$16 = _tmpl$0(),
-                                  _el$17 = _el$16.firstChild,
-                                  _el$19 = _el$17.firstChild,
-                                  _el$20 = _el$17.nextSibling,
-                                  _el$21 = _el$20.firstChild,
-                                  _el$22 = _el$21.nextSibling;
-                                _$insert(_el$17, _$createComponent(Show, {
-                                  get when() {
-                                    return diff.file.includes("/");
-                                  },
-                                  get children() {
-                                    var _el$18 = _tmpl$9();
-                                    _$insert(_el$18, () => `\u202A${getDirectory(diff.file)}\u202C`);
-                                    return _el$18;
-                                  }
-                                }), _el$19);
-                                _$insert(_el$19, () => getFilename(diff.file));
-                                _$insert(_el$21, _$createComponent(DiffChanges, {
-                                  changes: diff
-                                }));
-                                _$insert(_el$22, _$createComponent(Icon, {
-                                  name: "chevron-down",
-                                  size: "small"
-                                }));
-                                return _el$16;
-                              }
-                            });
-                          }
-                        }), _$createComponent(Accordion.Content, {
-                          get children() {
-                            return _$createComponent(Show, {
-                              get when() {
-                                return shown();
-                              },
-                              get children() {
-                                var _el$23 = _tmpl$1();
-                                _$insert(_el$23, _$createComponent(Dynamic, {
-                                  component: fileComponent,
-                                  mode: "diff",
-                                  get fileDiff() {
-                                    return view.fileDiff;
-                                  }
-                                }));
-                                return _el$23;
-                              }
-                            });
-                          }
-                        })];
-                      }
-                    });
-                  }
-                });
-              }
-            }), null);
-            _$insert(_el$14, _$createComponent(Show, {
-              get when() {
-                return _$memo(() => !!!showAll())() && overflow() > 0;
-              },
-              get children() {
-                var _el$15 = _tmpl$5();
-                _el$15.$$click = toggleAll;
-                _$insert(_el$15, () => i18n.t("ui.sessionTurn.diffs.more", {
-                  count: String(overflow())
+                // diff is static per row (For is reference-keyed), so the
+                // path/filename writes are one-shot like the compiled thunks.
+                const trigger = template(`<div data-slot="session-turn-diff-trigger"><span data-slot="session-turn-diff-path"><span data-slot="session-turn-diff-filename"></span></span><div data-slot="session-turn-diff-meta"><span data-slot="session-turn-diff-changes"></span><span data-slot="session-turn-diff-chevron"></span></div></div>`);
+                const path = trigger.firstChild;
+                const filename = path.firstChild;
+                const meta = path.nextSibling;
+                const changes = meta.firstChild;
+                const chevron = changes.nextSibling;
+                // Show(diff.file.includes("/")): static condition -> plain if.
+                if (diff.file.includes("/")) {
+                  const directory = template(`<span data-slot="session-turn-diff-directory"></span>`);
+                  directory.textContent = `\u202A${getDirectory(diff.file)}\u202C`;
+                  path.insertBefore(directory, filename);
+                }
+                filename.textContent = getFilename(diff.file);
+                // DiffChanges returns a memo accessor; insert() resolves it.
+                _solidInsert(changes, createComponent(DiffChanges, {
+                  changes: diff
                 }));
-                return _el$15;
-              }
-            }), null);
-            _$effect(() => _$setAttribute(_el$9, "data-show-all", showAll() || undefined));
-            return _el$9;
-          }
-        }), null);
-        _$insert(_el$4, _$createComponent(Show, {
-          get when() {
-            return error();
-          },
-          get children() {
-            return _$createComponent(Card, {
-              variant: "error",
-              "class": "error-card",
-              get children() {
-                return errorText();
+                chevron.appendChild(createComponent(Icon, {
+                  name: "chevron-down",
+                  size: "small"
+                }));
+                return trigger;
               }
             });
           }
-        }), null);
-        _$effect(_p$ => {
-          var _v$ = message().id,
-            _v$2 = props.classes?.container;
-          _v$ !== _p$.e && _$setAttribute(_el$4, "data-message", _p$.e = _v$);
-          _v$2 !== _p$.t && _$className(_el$4, _p$.t = _v$2);
-          return _p$;
-        }, {
-          e: undefined,
-          t: undefined
-        });
-        return _el$4;
+        }), createComponent(Accordion.Content, {
+          get children() {
+            // Kobalte presence-gated content: keep the Show + insert() path.
+            return createComponent(Show, {
+              get when() {
+                return shown();
+              },
+              get children() {
+                const viewEl = template(`<div data-slot="session-turn-diff-view" data-scrollable></div>`);
+                _solidInsert(viewEl, createComponent(Dynamic, {
+                  component: fileComponent,
+                  mode: "diff",
+                  get fileDiff() {
+                    return view.fileDiff;
+                  }
+                }));
+                return viewEl;
+              }
+            });
+          }
+        })];
+      }
+    });
+  };
+
+  // Diffs summary group (_tmpl$6).
+  const buildDiffs = () => {
+    const group = template(`<div data-slot="session-turn-diffs" data-component="session-turn-diffs-group"><div data-slot="session-turn-diffs-header"><span data-slot="session-turn-diffs-label"></span></div><div data-component="session-turn-diffs-content"></div></div>`);
+    const header = group.firstChild;
+    const label = header.firstChild;
+    const content = header.nextSibling;
+    // Label: "<count> <changed> <file(s)>" as three live text nodes around the
+    // static spaces, matching the compiled inserts into the label span.
+    const countText = document.createTextNode("");
+    const changedText = document.createTextNode("");
+    const fileText = document.createTextNode("");
+    label.replaceChildren(countText, document.createTextNode(" "), changedText, document.createTextNode(" "), fileText);
+    createRenderEffect(() => {
+      countText.data = String(edited());
+    });
+    createRenderEffect(() => {
+      changedText.data = i18n.t("ui.sessionTurn.diffs.changed");
+    });
+    createRenderEffect(() => {
+      fileText.data = i18n.t(edited() === 1 ? "ui.common.file.one" : "ui.common.file.other");
+    });
+    // Aggregate +/- counts (memo accessor; insert() resolves it).
+    _solidInsert(header, createComponent(DiffChanges, {
+      get changes() {
+        return diffs();
       }
     }), null);
-    _$insert(_el$3, () => props.children, null);
-    _$effect(_p$ => {
-      var _v$3 = props.classes?.root,
-        _v$4 = props.classes?.content;
-      _v$3 !== _p$.e && _$className(_el$, _p$.e = _v$3);
-      _v$4 !== _p$.t && _$className(_el$2, _p$.t = _v$4);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
+    // Show all / show less toggle.
+    _solidInsert(header, createComponent(Show, {
+      get when() {
+        return overflow() > 0;
+      },
+      get children() {
+        const toggle = template(`<span data-slot="session-turn-diffs-toggle"></span>`);
+        toggle.addEventListener("click", toggleAll);
+        createRenderEffect(() => {
+          toggle.textContent = showAll() ? i18n.t("ui.sessionTurn.diffs.showLess") : i18n.t("ui.sessionTurn.diffs.showAll");
+        });
+        return toggle;
+      }
+    }), null);
+    // Per-file accordion.
+    _solidInsert(content, createComponent(Accordion, {
+      multiple: true,
+      style: {
+        "--sticky-accordion-offset": "44px"
+      },
+      get value() {
+        return expanded();
+      },
+      onChange: value => setState("expanded", Array.isArray(value) ? value : value ? [value] : []),
+      get children() {
+        return createComponent(For, {
+          get each() {
+            return visible();
+          },
+          children: diff => buildDiffRow(diff)
+        });
+      }
+    }), null);
+    // "+N more" hint while collapsed.
+    _solidInsert(content, createComponent(Show, {
+      get when() {
+        return !showAll() && overflow() > 0;
+      },
+      get children() {
+        const more = template(`<div data-slot="session-turn-diffs-more"></div>`);
+        more.addEventListener("click", toggleAll);
+        createRenderEffect(() => {
+          more.textContent = i18n.t("ui.sessionTurn.diffs.more", {
+            count: String(overflow())
+          });
+        });
+        return more;
+      }
+    }), null);
+    // Mirrors compiled setAttribute(showAll() || undefined): the attribute is
+    // removed while false and set to "true" while expanded.
+    createRenderEffect(() => {
+      const value = showAll() || undefined;
+      if (value == null) group.removeAttribute("data-show-all");
+      else group.setAttribute("data-show-all", value);
     });
-    return _el$;
-  })();
+    return group;
+  };
+
+  // ----- Turn body (children of Show(message()), _tmpl$7) -----
+  const buildTurn = () => {
+    const container = template(`<div data-slot="session-turn-message-container"><div data-slot="session-turn-message-content" aria-live="off"></div></div>`);
+    const messageHost = container.firstChild;
+    // Ref binding, mirroring the compiled use(): contentRef is a function in
+    // the current createAutoScroll, but keep the compiled dual branch.
+    const contentRef = autoScroll.contentRef;
+    if (typeof contentRef === "function") contentRef(container);
+    else autoScroll.contentRef = container;
+    // User message. Message (compiled) returns Show accessors, so it must be
+    // reconciled through solid's insert().
+    _solidInsert(messageHost, createComponent(Message, {
+      get message() {
+        return message();
+      },
+      get parts() {
+        return parts();
+      },
+      get actions() {
+        return props.actions;
+      }
+    }));
+    // Compaction/interruption divider.
+    _solidInsert(container, createComponent(Show, {
+      get when() {
+        return divider();
+      },
+      get children() {
+        const el = template(`<div data-slot="session-turn-compaction"></div>`);
+        _solidInsert(el, createComponent(MessageDivider, {
+          get label() {
+            return divider();
+          }
+        }));
+        return el;
+      }
+    }), null);
+    // Assistant parts.
+    _solidInsert(container, createComponent(Show, {
+      get when() {
+        return assistantMessages().length > 0;
+      },
+      get children() {
+        const el = template(`<div data-slot="session-turn-assistant-content"></div>`);
+        _solidInsert(el, createComponent(AssistantParts, {
+          get messages() {
+            return assistantMessages();
+          },
+          get showAssistantCopyPartID() {
+            return assistantCopyPartID();
+          },
+          get turnDurationMs() {
+            return turnDurationMs();
+          },
+          get working() {
+            return working();
+          },
+          get showReasoningSummaries() {
+            return showReasoningSummaries();
+          },
+          get shellToolDefaultOpen() {
+            return props.shellToolDefaultOpen;
+          },
+          get editToolDefaultOpen() {
+            return props.editToolDefaultOpen;
+          }
+        }));
+        // Mirrors the compiled setAttribute(): the boolean stringifies to
+        // "true"/"false" and the attribute is never removed.
+        createRenderEffect(() => {
+          el.setAttribute("aria-hidden", working());
+        });
+        return el;
+      }
+    }), null);
+    // Thinking shimmer (+ reasoning heading reveal when summaries are hidden).
+    _solidInsert(container, createComponent(Show, {
+      get when() {
+        return showThinking();
+      },
+      get children() {
+        const el = template(`<div data-slot="session-turn-thinking"></div>`);
+        el.appendChild(createComponent(TextShimmer, {
+          get text() {
+            return i18n.t("ui.sessionTurn.status.thinking");
+          }
+        }));
+        _solidInsert(el, createComponent(Show, {
+          get when() {
+            return !showReasoningSummaries();
+          },
+          get children() {
+            return createComponent(TextReveal, {
+              get text() {
+                return reasoningHeading();
+              },
+              "class": "session-turn-thinking-heading",
+              travel: 25,
+              duration: 700
+            });
+          }
+        }), null);
+        return el;
+      }
+    }), null);
+    // Retry banner. SessionRetry returns a memo accessor; insert() resolves it.
+    _solidInsert(container, createComponent(SessionRetry, {
+      get status() {
+        return status();
+      },
+      get show() {
+        return active();
+      }
+    }), null);
+    // Diffs summary group: only after the turn settled.
+    _solidInsert(container, createComponent(Show, {
+      get when() {
+        return edited() > 0 && !working();
+      },
+      get children() {
+        return buildDiffs();
+      }
+    }), null);
+    // Assistant error card. The children getter is read once per mount by the
+    // vanilla Card (mount-time snapshot), matching current behavior.
+    _solidInsert(container, createComponent(Show, {
+      get when() {
+        return error();
+      },
+      get children() {
+        return createComponent(Card, {
+          variant: "error",
+          "class": "error-card",
+          get children() {
+            return errorText();
+          }
+        });
+      }
+    }), null);
+    // Change-guarded data-message / container class, mirroring the compiled
+    // effect block (className: nullish removes the attribute, the initial
+    // undefined is skipped by the guard).
+    let prevMessage;
+    let prevContainerClass;
+    createRenderEffect(() => {
+      const nextMessage = message().id;
+      const nextClass = props.classes?.container;
+      if (nextMessage !== prevMessage) container.setAttribute("data-message", prevMessage = nextMessage);
+      if (nextClass !== prevContainerClass) {
+        prevContainerClass = nextClass;
+        if (nextClass == null) container.removeAttribute("class");
+        else container.className = nextClass;
+      }
+    });
+    return container;
+  };
+
+  // ----- Static skeleton (_tmpl$8): root > scroll container > click area ----
+  const rootEl = template(`<div data-component="session-turn"><div data-slot="session-turn-content"><div></div></div></div>`);
+  const scrollEl = rootEl.firstChild;
+  const innerEl = scrollEl.firstChild;
+  scrollEl.addEventListener("scroll", autoScroll.handleScroll);
+  // Ref binding, mirroring the compiled use() branch.
+  const scrollRef = autoScroll.scrollRef;
+  if (typeof scrollRef === "function") scrollRef(scrollEl);
+  else autoScroll.scrollRef = scrollEl;
+  // Compiled delegated $$click -> direct listener; descendants' own click
+  // handlers still run first, as under Solid's simulated bubbling.
+  innerEl.addEventListener("click", autoScroll.handleInteraction);
+  // Show(message()), non-keyed: the turn body remounts only when the message
+  // appears/disappears, exactly like the compiled Show.
+  _solidInsert(innerEl, createComponent(Show, {
+    get when() {
+      return message();
+    },
+    get children() {
+      return buildTurn();
+    }
+  }), null);
+  // Forwarded children stay reactive through insert(), as compiled.
+  _solidInsert(innerEl, () => props.children, null);
+  // Change-guarded root/content classes (compiled className() semantics).
+  let prevRootClass;
+  let prevContentClass;
+  createRenderEffect(() => {
+    const nextRoot = props.classes?.root;
+    const nextContent = props.classes?.content;
+    if (nextRoot !== prevRootClass) {
+      prevRootClass = nextRoot;
+      if (nextRoot == null) rootEl.removeAttribute("class");
+      else rootEl.className = nextRoot;
+    }
+    if (nextContent !== prevContentClass) {
+      prevContentClass = nextContent;
+      if (nextContent == null) scrollEl.removeAttribute("class");
+      else scrollEl.className = nextContent;
+    }
+  });
+  return rootEl;
 }
-_$delegateEvents(["click"]);

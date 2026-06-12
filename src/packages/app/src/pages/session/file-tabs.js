@@ -1,16 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div>`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="relative overflow-hidden pb-40">`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div class="px-6 py-4 text-secondary">...`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div class="px-6 py-4 text-secondary">`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div class="h-full">`),
-  _tmplReply = /*#__PURE__*/_$template(`<button type=button class="btn btn-primary btn-sm position-fixed shadow d-flex align-items-center gap-1" style="z-index:2060;padding:2px 8px" title="この選択について返信" aria-label="この選択について返信"><i class="bi bi-reply"></i></button>`);
-import { createEffect, createMemo, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Dynamic } from "solid-js/web";
+import { insert as _solidInsert } from "solid-js/web";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { useFileComponent } from "@/vendor/ui/context/file.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "@/vendor/ui/pierre/selection-bridge.js";
@@ -30,59 +20,69 @@ import { usePrompt } from "@/context/prompt.js";
 import { getSessionHandoff } from "@/pages/session/handoff.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
 import { createSessionTabs } from "@/pages/session/helpers.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+// Static markup only — translated/user strings are assigned via textContent.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
 function FileCommentMenu(props) {
-  return (() => {
-    var _el$ = _tmpl$();
-    _el$.$$click = event => event.stopPropagation();
-    _el$.$$mousedown = event => event.stopPropagation();
-    _$insert(_el$, _$createComponent(DropdownMenu, {
-      gutter: 4,
-      placement: "bottom-end",
-      get children() {
-        return [_$createComponent(DropdownMenu.Trigger, {
-          as: IconButton,
-          icon: "dot-grid",
-          variant: "ghost",
-          size: "small",
-          "class": "size-6 rounded-2",
-          get ["aria-label"]() {
-            return props.moreLabel;
-          }
-        }), _$createComponent(DropdownMenu.Portal, {
-          get children() {
-            return _$createComponent(DropdownMenu.Content, {
-              get children() {
-                return [_$createComponent(DropdownMenu.Item, {
-                  get onSelect() {
-                    return props.onEdit;
-                  },
-                  get children() {
-                    return _$createComponent(DropdownMenu.ItemLabel, {
-                      get children() {
-                        return props.editLabel;
-                      }
-                    });
-                  }
-                }), _$createComponent(DropdownMenu.Item, {
-                  get onSelect() {
-                    return props.onDelete;
-                  },
-                  get children() {
-                    return _$createComponent(DropdownMenu.ItemLabel, {
-                      get children() {
-                        return props.deleteLabel;
-                      }
-                    });
-                  }
-                })];
-              }
-            });
-          }
-        })];
-      }
-    }));
-    return _el$;
-  })();
+  const root = template(`<div></div>`);
+  // Keep menu clicks from reaching the annotation/selection handlers around it
+  // (the compiled version used delegated $$click/$$mousedown stopPropagation).
+  root.addEventListener("click", event => event.stopPropagation());
+  root.addEventListener("mousedown", event => event.stopPropagation());
+  // DropdownMenu (bs) returns a concrete element; append it directly.
+  root.appendChild(createComponent(DropdownMenu, {
+    gutter: 4,
+    placement: "bottom-end",
+    get children() {
+      return [createComponent(DropdownMenu.Trigger, {
+        as: IconButton,
+        icon: "dot-grid",
+        variant: "ghost",
+        size: "small",
+        "class": "size-6 rounded-2",
+        get ["aria-label"]() {
+          return props.moreLabel;
+        }
+      }), createComponent(DropdownMenu.Portal, {
+        get children() {
+          return createComponent(DropdownMenu.Content, {
+            get children() {
+              return [createComponent(DropdownMenu.Item, {
+                get onSelect() {
+                  return props.onEdit;
+                },
+                get children() {
+                  return createComponent(DropdownMenu.ItemLabel, {
+                    get children() {
+                      return props.editLabel;
+                    }
+                  });
+                }
+              }), createComponent(DropdownMenu.Item, {
+                get onSelect() {
+                  return props.onDelete;
+                },
+                get children() {
+                  return createComponent(DropdownMenu.ItemLabel, {
+                    get children() {
+                      return props.deleteLabel;
+                    }
+                  });
+                }
+              })];
+            }
+          });
+        }
+      })];
+    }
+  }));
+  return root;
 }
 function createScrollSync(input) {
   let scroll;
@@ -440,7 +440,7 @@ export function FileTabContent(props) {
       });
     },
     editSubmitLabel: language.t("common.save"),
-    renderCommentActions: (_, controls) => _$createComponent(FileCommentMenu, {
+    renderCommentActions: (_, controls) => createComponent(FileCommentMenu, {
       get moreLabel() {
         return language.t("common.moreOptions");
       },
@@ -533,10 +533,13 @@ export function FileTabContent(props) {
     if (!restore) return;
     scrollSync.queueRestore();
   });
-  const renderFile = source => (() => {
-    var _el$2 = _tmpl$2();
-    _$insert(_el$2, _$createComponent(Dynamic, {
-      component: fileComponent,
+  const renderFile = source => {
+    const el = template(`<div class="relative overflow-hidden pb-40"></div>`);
+    // fileComponent is the context-provided file component. The provider
+    // snapshots props.component once (createSimpleContext init), so the
+    // component is static and Dynamic is unnecessary: create it directly and
+    // let insert() reconcile the result as the sole content of the wrapper.
+    _solidInsert(el, createComponent(fileComponent, {
       mode: "text",
       get file() {
         return {
@@ -593,45 +596,45 @@ export function FileTabContent(props) {
         };
       }
     }));
-    return _el$2;
-  })();
-  return _$createComponent(Tabs.Content, {
-    get value() {
-      return props.tab;
+    return el;
+  };
+  // Floating reply button (Show when replyBtn.open). Show re-runs the children
+  // getter on every open, rebuilding the button exactly like the compiled
+  // branch did (its position effect is owned by the branch and disposed with it).
+  const replyShow = createComponent(Show, {
+    get when() {
+      return replyBtn.open;
     },
-    "class": "mt-3 relative h-full",
     get children() {
-      return [_$createComponent(Show, {
-        get when() {
-          return replyBtn.open;
-        },
-        get children() {
-          var _b = _tmplReply();
-          // Keep the text selection alive through the click (mousedown would
-          // otherwise collapse it and unmount this button before click fires).
-          _b.addEventListener("mousedown", e => e.preventDefault());
-          _b.addEventListener("click", () => {
-            if (replyBtn.range) commentsUi.note.openDraft(replyBtn.range);
-            hideReply();
-          });
-          createEffect(() => {
-            _b.style.top = replyBtn.top + "px";
-            _b.style.left = replyBtn.left + "px";
-          });
-          return _b;
-        }
-      }), _$createComponent(Show, {
-        get when() {
-          return editMode();
-        },
-        get children() {
-          var _host = _tmpl$5();
-          editorHost = _host;
-          requestAnimationFrame(syncEditor);
-          return _host;
-        },
-        get fallback() {
-          return _$createComponent(ScrollView, {
+      const btn = template(`<button type="button" class="btn btn-primary btn-sm position-fixed shadow d-flex align-items-center gap-1" style="z-index:2060;padding:2px 8px" title="この選択について返信" aria-label="この選択について返信"><i class="bi bi-reply"></i></button>`);
+      // Keep the text selection alive through the click (mousedown would
+      // otherwise collapse it and unmount this button before click fires).
+      btn.addEventListener("mousedown", e => e.preventDefault());
+      btn.addEventListener("click", () => {
+        if (replyBtn.range) commentsUi.note.openDraft(replyBtn.range);
+        hideReply();
+      });
+      createEffect(() => {
+        btn.style.top = replyBtn.top + "px";
+        btn.style.left = replyBtn.left + "px";
+      });
+      return btn;
+    }
+  });
+  // Edit/view switch. Show re-evaluates children/fallback per flip, so the
+  // editor host and the scroll view remount (state reset) exactly as before.
+  const editorShow = createComponent(Show, {
+    get when() {
+      return editMode();
+    },
+    get children() {
+      const host = template(`<div class="h-full"></div>`);
+      editorHost = host;
+      requestAnimationFrame(syncEditor);
+      return host;
+    },
+    get fallback() {
+      return createComponent(ScrollView, {
         "class": "h-full",
         get viewportRef() {
           return scrollSync.setViewport;
@@ -640,42 +643,59 @@ export function FileTabContent(props) {
           return scrollSync.handleScroll;
         },
         get children() {
-          return _$createComponent(Switch, {
+          return createComponent(Switch, {
             get children() {
-              return [_$createComponent(Match, {
+              return [createComponent(Match, {
                 get when() {
                   return state()?.loaded;
                 },
                 get children() {
                   return renderFile(contents());
                 }
-              }), _$createComponent(Match, {
+              }), createComponent(Match, {
                 get when() {
                   return state()?.loading;
                 },
                 get children() {
-                  var _el$3 = _tmpl$3(),
-                    _el$4 = _el$3.firstChild;
-                  _$insert(_el$3, () => language.t("common.loading"), _el$4);
-                  return _el$3;
+                  const el = template(`<div class="px-6 py-4 text-secondary">...</div>`);
+                  // Localized label precedes the static "..." text node and
+                  // stays live across language switches.
+                  const label = document.createTextNode("");
+                  el.insertBefore(label, el.firstChild);
+                  createRenderEffect(() => {
+                    label.textContent = language.t("common.loading");
+                  });
+                  return el;
                 }
-              }), _$createComponent(Match, {
+              }), createComponent(Match, {
                 get when() {
                   return state()?.error;
                 },
-                children: err => (() => {
-                  var _el$5 = _tmpl$4();
-                  _$insert(_el$5, err);
-                  return _el$5;
-                })()
+                children: err => {
+                  const el = template(`<div class="px-6 py-4 text-secondary"></div>`);
+                  // err is a live accessor (non-keyed Match function child);
+                  // insert() tracks it as the sole content of this div.
+                  _solidInsert(el, err);
+                  return el;
+                }
               })];
             }
           });
         }
-          });
-        }
-      })];
+      });
     }
   });
+  const content = createComponent(Tabs.Content, {
+    get value() {
+      return props.tab;
+    },
+    "class": "mt-3 relative h-full"
+  });
+  // Append the two Show branches with explicit null markers so each insert
+  // reconciles only its own nodes (a marker-less insert would clear the whole
+  // pane when the fallback-less reply Show turns off). Order matches the
+  // original children array: [reply button, editor/view].
+  _solidInsert(content, replyShow, null);
+  _solidInsert(content, editorShow, null);
+  return content;
 }
-_$delegateEvents(["mousedown", "click"]);
