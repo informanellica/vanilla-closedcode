@@ -22,7 +22,7 @@ import { TextField } from "@/bs/text-field.js";
 import { showToast } from "@/lib/toast.js";
 import { Binary } from "core/util/binary";
 import { getFilename } from "core/util/path";
-import { Popover as KobaltePopover } from "@kobalte/core/popover";
+import { Popover as KobaltePopover } from "@/vendor/ui/components/popover.js";
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
 import { useDialog } from "@/lib/dialog.js";
@@ -646,49 +646,31 @@ export function MessageTimeline(props) {
           get open() {
             return share.open;
           },
+          // Anchor-only popover: positioned against the "more" dropdown button,
+          // no own trigger. Esc/outside dismissal + flip handled internally; the
+          // dismiss reason arrives via onDismiss (was onEscapeKeyDown /
+          // onPointerDownOutside / onFocusOutside on Kobalte.Content).
           anchorRef: () => more,
           placement: "bottom-end",
           gutter: 4,
           modal: false,
+          contentProps: {
+            style: {
+              "min-width": "320px"
+            }
+          },
           onOpenChange: open => {
             if (open) setShare("dismiss", null);
             setShare("open", open);
           },
+          onDismiss: reason => {
+            setShare("dismiss", reason);
+          },
           get children() {
-            return createComponent(KobaltePopover.Portal, {
-              get children() {
-                return createComponent(KobaltePopover.Content, {
-                  "data-component": "popover-content",
-                  style: {
-                    "min-width": "320px"
-                  },
-                  onEscapeKeyDown: event => {
-                    setShare({
-                      dismiss: "escape",
-                      open: false
-                    });
-                    event.preventDefault();
-                    event.stopPropagation();
-                  },
-                  onPointerDownOutside: () => {
-                    setShare({
-                      dismiss: "outside",
-                      open: false
-                    });
-                  },
-                  onFocusOutside: () => {
-                    setShare({
-                      dismiss: "outside",
-                      open: false
-                    });
-                  },
-                  onCloseAutoFocus: event => {
-                    if (share.dismiss === "outside") event.preventDefault();
-                    setShare("dismiss", null);
-                  },
-                  get children() {
-                    // _tmpl$11: share popover body (Kobalte presence-gated
-                    // content, rebuilt per open).
+            return () => {
+                    // _tmpl$11: share popover body (presence-gated content,
+                    // rebuilt per open via the Popover body insert()).
+                    if (!share.open) return undefined;
                     const body = template(`<div class="d-flex flex-column p-3"><div class="d-flex flex-column gap-1"><div class="fw-medium text-body-emphasis"></div><div class="small fw-normal text-secondary"></div></div><div class="mt-3 d-flex flex-column gap-2"></div></div>`);
                     const popTitleEl = body.firstChild.firstChild;
                     const popDescEl = popTitleEl.nextSibling;
@@ -759,10 +741,7 @@ export function MessageTimeline(props) {
                       }
                     }));
                     return body;
-                  }
-                });
-              }
-            });
+            };
           }
         })];
       }

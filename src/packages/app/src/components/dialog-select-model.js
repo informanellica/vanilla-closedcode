@@ -1,5 +1,5 @@
-import { Popover as Kobalte } from "@kobalte/core/popover";
-import { createComponent, createMemo, createRoot, getOwner, mergeProps, runWithOwner } from "solid-js";
+import { Popover } from "@/vendor/ui/components/popover.js";
+import { createComponent, createMemo, createRoot, getOwner, runWithOwner } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useLocal } from "@/context/local.js";
 import { useDialog } from "@/lib/dialog.js";
@@ -174,62 +174,34 @@ export function ModelSelectorPopover(props) {
     });
   };
   const language = useLanguage();
-  // Kobalte Popover stays a Solid component tree (presence-gated Portal /
-  // Content need Solid's lifecycle); only the search-action DOM is vanilla.
-  return createComponent(Kobalte, {
-    get open() {
-      return store.open;
-    },
-    onOpenChange: next => {
-      if (next) setStore("dismiss", null);
-      setStore("open", next);
-    },
-    modal: false,
-    placement: "top-start",
-    gutter: 4,
-    get children() {
-      return [createComponent(Kobalte.Trigger, mergeProps({
-        get as() {
-          return props.triggerAs ?? "div";
-        }
-      }, () => props.triggerProps, {
-        get children() {
-          return props.children;
-        }
-      })), createComponent(Kobalte.Portal, {
-        get children() {
-          return createComponent(Kobalte.Content, {
-            "class": "w-72 h-80 d-flex flex-column p-2 rounded-2 border bg-body-tertiary shadow-md z-50 outline-none overflow-hidden",
-            onEscapeKeyDown: event => {
-              close("escape");
-              event.preventDefault();
-              event.stopPropagation();
-            },
-            onPointerDownOutside: () => close("outside"),
-            onFocusOutside: () => close("outside"),
-            onCloseAutoFocus: event => {
-              const dismiss = store.dismiss;
-              if (dismiss === "outside") event.preventDefault();
-              if (dismiss === "escape" || dismiss === "select") {
-                event.preventDefault();
-                props.onClose?.(dismiss);
-              }
-              setStore("dismiss", null);
-            },
-            get children() {
-              return [createComponent(Kobalte.Title, {
-                "class": "sr-only",
-                get children() {
-                  return language.t("dialog.model.select.title");
-                }
-              }), createComponent(ModelList, {
+  // Vanilla Popover (was the Kobalte popover): controlled open, click-toggle
+  // trigger, Esc/outside dismissal + flip positioning handled by the component.
+  // The dismiss reason (escape/outside) arrives via onDismiss; select/manage
+  // reasons are set on `store` by the handlers below before they close.
+  const onClose = dismiss => {
+    if (dismiss === "escape" || dismiss === "select") {
+      props.onClose?.(dismiss);
+    }
+  };
+  // Presence-gated content thunk: re-evaluated by the Popover's body insert()
+  // only while open (the established insert() exception). The sr-only title and
+  // the ModelList are rebuilt per open, matching the Kobalte content remount.
+  const renderBody = () => {
+    if (!store.open) return undefined;
+    const title = document.createElement("h2");
+    title.className = "sr-only";
+    title.textContent = language.t("dialog.model.select.title");
+    return [title, createComponent(ModelList, {
                 get provider() {
                   return props.provider;
                 },
                 get model() {
                   return props.model;
                 },
-                onSelect: () => close("select"),
+                onSelect: () => {
+                  close("select");
+                  onClose("select");
+                },
                 "class": "p-1",
                 get action() {
                   // Compiled _tmpl$2: the two tooltip-wrapped icon buttons in
@@ -273,11 +245,37 @@ export function ModelSelectorPopover(props) {
                   return actions;
                 }
               })];
-            }
-          });
-        }
-      })];
-    }
+  };
+  return createComponent(Popover, {
+    get open() {
+      return store.open;
+    },
+    onOpenChange: next => {
+      if (next) setStore("dismiss", null);
+      setStore("open", next);
+    },
+    // Esc / outside-click dismissal originates inside the Popover; forward the
+    // reason so escape still notifies the caller (matching onCloseAutoFocus).
+    onDismiss: reason => {
+      setStore("dismiss", reason);
+      onClose(reason);
+    },
+    modal: false,
+    placement: "top-start",
+    gutter: 4,
+    // ModelList autofocuses its own search input — don't steal focus to the panel.
+    noAutoFocus: true,
+    get triggerAs() {
+      return props.triggerAs ?? "div";
+    },
+    get triggerProps() {
+      return props.triggerProps;
+    },
+    "class": "w-72 h-80 d-flex flex-column p-2 rounded-2 border bg-body-tertiary shadow-md z-50 outline-none overflow-hidden",
+    get trigger() {
+      return props.children;
+    },
+    children: renderBody
   });
 }
 export const DialogSelectModel = props => {

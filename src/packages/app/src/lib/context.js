@@ -1,9 +1,9 @@
-import { insert as _solidInsert } from "solid-js/web";
 import {
   createComponent,
   createContext,
   createEffect,
   createMemo,
+  createRenderEffect,
   createRoot,
   createSignal,
   getOwner,
@@ -12,7 +12,6 @@ import {
   Show,
   useContext
 } from "solid-js";
-import { Dialog as Kobalte } from "@kobalte/core/dialog";
 import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
@@ -89,6 +88,35 @@ export const FileComponentProvider = fileCtx.provider;
 export const useFileComponent = fileCtx.use;
 
 // --- dialog.js ---
+// Resolve a possibly-reactive value the way solid-js/web's insert() does:
+// call accessors (here, the active dialog's memo) until a concrete value
+// remains. Runs inside a render effect, so the reads stay tracked.
+function resolveValue(value) {
+  while (typeof value === "function") value = value();
+  return value;
+}
+
+// Render `value` as the sole content of `el`, mirroring insert() semantics for
+// the shapes the dialog stack can hold: nothing (null/undefined/boolean), a DOM
+// node, a string/number, or an array of those.
+function renderInto(el, value) {
+  if (value == null || typeof value === "boolean") {
+    el.replaceChildren();
+    return;
+  }
+  if (Array.isArray(value)) {
+    const nodes = [];
+    for (const entry of value) {
+      const resolved = resolveValue(entry);
+      if (resolved == null || typeof resolved === "boolean") continue;
+      nodes.push(resolved instanceof Node ? resolved : String(resolved));
+    }
+    el.replaceChildren(...nodes);
+    return;
+  }
+  el.replaceChildren(value instanceof Node ? value : String(value));
+}
+
 const DialogContext = createContext();
 function init() {
   const [active, setActive] = createSignal();
@@ -152,25 +180,14 @@ function init() {
       dispose = d;
       const [closing, setClosingSignal] = createSignal(false);
       setClosing = setClosingSignal;
-      return createComponent(Kobalte, {
-        modal: true,
-        get open() {
-          return !closing();
-        },
-        onOpenChange: open => {
-          if (open) return;
-          close();
-        },
-        get children() {
-          return createComponent(Kobalte.Portal, {
-            get children() {
-              return [createComponent(Kobalte.Overlay, {
-                "data-component": "dialog-overlay",
-                onClick: close
-              }), createMemo(() => element())];
-            }
-          });
-        }
+      // The shown element (a vanilla content panel, e.g. vendor Dialog/
+      // ImagePreview) is rendered directly while it is not closing. The
+      // overlay/backdrop and Escape handling are owned by this provider's
+      // stack and capture-phase keydown listener, so no Kobalte Portal/Overlay
+      // wrapper is needed. `equals: false` matches the compiled memo() wrapper's
+      // semantics.
+      return createMemo(() => closing() ? null : element(), undefined, {
+        equals: false
       });
     }));
     if (!dispose || !setClosing) return;
@@ -196,15 +213,18 @@ export function DialogProvider(props) {
   return createComponent(DialogContext.Provider, {
     value: ctx,
     get children() {
-      return [createMemo(() => props.children), (() => {
-        const stack = document.createElement("div");
-        stack.setAttribute("data-component", "dialog-stack");
-        // The active dialog node is presence-gated Kobalte content (modal
-        // Portal tree torn down on close), so it must go through solid's
-        // insert() to stay live (established exception).
-        _solidInsert(stack, () => ctx.active?.node);
-        return stack;
-      })()];
+      // Stack element that hosts the currently shown dialog. The render effect
+      // replaces solid-js/web insert(): it tracks both the `active` signal (via
+      // ctx.active) and the per-dialog closing memo, clearing or swapping the
+      // stack contents whenever either changes.
+      const stack = document.createElement("div");
+      stack.setAttribute("data-component", "dialog-stack");
+      createRenderEffect(() => {
+        renderInto(stack, resolveValue(ctx.active?.node));
+      });
+      return [createMemo(() => props.children, undefined, {
+        equals: false
+      }), stack];
     }
   });
 }
