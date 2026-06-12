@@ -5,6 +5,7 @@ import {
   createSignal, createMemo, createRenderEffect, createEffect, createRoot,
   onCleanup, getOwner, runWithOwner, untrack, batch, on,
   createContext, useContext, createComponent, mergeProps, splitProps,
+  mapArray, createComputed,
 } from "./reactivity.js";
 
 let passed = 0, failed = 0;
@@ -139,6 +140,51 @@ await new Promise(resolve => {
     eq(log, [], "createEffect not synchronous");
     queueMicrotask(() => { eq(log, ["effect"], "createEffect ran async"); resolve(); });
   });
+});
+
+// 11. mapArray: reference-keyed reuse + disposal of removed items
+createRoot(() => {
+  const [list, setList] = createSignal([{ id: "a" }, { id: "b" }, { id: "c" }]);
+  const builds = [];
+  const cleanups = [];
+  const rows = mapArray(list, item => {
+    builds.push(item.id);
+    onCleanup(() => cleanups.push(item.id));
+    return item.id.toUpperCase();
+  });
+  const first = rows();
+  const a = list()[0], b = list()[1];
+  // reorder + drop c + add d: a,b reused (no rebuild), c disposed, d built
+  setList([b, a, { id: "d" }]);
+  const second = rows();
+  eq(first, ["A", "B", "C"], "mapArray initial map");
+  eq(builds, ["a", "b", "c", "d"], "mapArray builds each new item once (a,b reused)");
+  eq(cleanups, ["c"], "mapArray disposes removed item");
+  eq(second, ["B", "A", "D"], "mapArray reorders by reference");
+});
+
+// 12. mapArray: live index accessor when mapFn reads index (arity > 1)
+createRoot(() => {
+  const [list, setList] = createSignal(["x", "y"]);
+  const seen = [];
+  const rows = mapArray(list, (item, index) => {
+    createRenderEffect(() => seen.push(`${item}@${index()}`));
+    return item;
+  });
+  rows();
+  const x = "x";
+  setList(["y", x]);   // primitives: "x"/"y" keyed by value -> moved, index updates
+  rows();
+  eq(seen.includes("x@1"), true, "mapArray index accessor updates on reorder");
+});
+
+// 13. createComputed runs synchronously at creation (like a render effect)
+createRoot(() => {
+  const [n, setN] = createSignal(1);
+  const doubled = [];
+  createComputed(() => doubled.push(n() * 2));
+  setN(3);
+  eq(doubled, [2, 6], "createComputed sync create + update");
 });
 
 console.log(`reactivity tests: ${passed} passed, ${failed} failed`);

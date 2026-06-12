@@ -1,6 +1,7 @@
 # Milestone: solid-free reactivity (replacing solid-js core)
 
-> Status: **design + Stage R1 implementation** (2026-06-12)
+> Status: **Stage R1 complete** (2026-06-12) — core + store layer implemented,
+> semantics tests green (reactivity 16/16, store 13/13). Next: R2 pilot.
 > Prerequisite (done): every first-party renderer file is hand-written vanilla —
 > zero compiler output; reactivity runs on solid-js core APIs only.
 
@@ -40,12 +41,18 @@ already catalogued per component from the conversion campaign.
 ## Stages
 
 ```
-R1  lib/reactivity.js: signals/effects/memos/batch/untrack/on +
-    owners (root/cleanup/getOwner/runWithOwner) + context + store-lite +
-    helpers (createComponent/children/mergeProps/splitProps/Show/For/...)
-    — with a node-run unit-test file proving the semantics we rely on.
-R2  pilot: alias solid-js -> lib/reactivity.js for a bounded leaf area
-    (storybook scaffold or a single page) via the import map; e2e-verify.
+R1  [DONE] lib/reactivity.js: signals/effects/memos/batch/untrack/on +
+    owners (root/cleanup/getOwner/runWithOwner) + context +
+    helpers (createComponent/children/mergeProps/splitProps/Show/For/...).
+    [DONE] lib/store.js: createStore/produce/reconcile/unwrap (+createMutable/
+    modifyMutable) ported from solid-js/store onto our core via the three
+    runtime deps it needs (getListener/batch/createSignal). Both have node-run
+    unit tests (reactivity.test.mjs 16, store.test.mjs 13) proving the trap-list
+    semantics. `solid-js` -> reactivity.js, `solid-js/store` -> store.js when aliased.
+R2  pilot: alias solid-js -> lib/reactivity.js (and solid-js/store -> lib/store.js)
+    for a bounded leaf area (storybook scaffold or a single page) via the import
+    map; e2e-verify. Both alias specifiers must flip together since store imports
+    getListener/batch/createSignal from the core.
 R3  replace third-party solid deps one at a time (router -> the memory router
     we already drive; solid-query -> small fetch cache; primitives -> trivial
     utilities; dnd/kobalte leftovers -> bs/ equivalents; sentry/solid ->

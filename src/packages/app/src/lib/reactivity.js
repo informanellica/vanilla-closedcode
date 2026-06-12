@@ -157,6 +157,15 @@ export function createMemo(fn, value, options) {
   return () => c.read();
 }
 
+// solid's createComputed: a pure computation that runs synchronously at
+// creation and synchronously on updates. We model it identically to a render
+// effect (sync create + sync update); the only solid nuance we don't reproduce
+// is its higher scheduling priority over render effects, which our fully
+// synchronous graph makes moot for the call sites that use it.
+export function createComputed(fn, value) {
+  return createRenderEffect(fn, value);
+}
+
 export function createRoot(fn, detachedOwner) {
   const root = new OwnerNode(detachedOwner ?? null);
   const prevOwner = Owner, prevListener = Listener;
@@ -179,6 +188,20 @@ export function onMount(fn) {
 }
 
 export function getOwner() { return Owner; }
+
+// Current tracking computation, or null. solid-js/store uses this to decide
+// whether a property read should lazily create + subscribe a tracking signal.
+export function getListener() { return Listener; }
+
+// Store interop markers, shared with lib/store.js (it imports them from here).
+// $TRACK lets a consumer subscribe to a whole store object/array — solid's
+// indexArray reads `list[$TRACK]`, and a few first-party components do too;
+// $PROXY tags an already-wrapped object. Because store proxies test reads
+// against these exact symbols, they MUST be the same identities the consumers
+// import, so they live here (the `solid-js` resolution target) rather than in
+// store.js.
+export const $PROXY = Symbol("solid-proxy");
+export const $TRACK = Symbol("solid-track");
 
 export function runWithOwner(owner, fn) {
   const prevOwner = Owner, prevListener = Listener;
@@ -300,6 +323,10 @@ export function splitProps(props, ...keysList) {
 }
 
 // ---- DOM helpers (solid-js/web subset) --------------------------------------
+// No SSR: the renderer is client-only, so isServer is always false (matches the
+// `browser` resolution condition the import map already uses for third parties).
+export const isServer = false;
+
 function nodesOf(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return nodesOf(value());
@@ -363,39 +390,88 @@ export function Show(props) {
   });
 }
 
-export function For(props) {
-  // Simple keyed-by-identity map cache: stable DOM per item identity.
-  let cache = new Map();
+// solid's mapArray: keyed-by-reference list mapping. Each surviving item keeps
+// its mapped output (and the owner/effects created while mapping it) across
+// updates; removed items are disposed; the index passed to mapFn is a live
+// accessor that updates on reorder only when mapFn reads it (arity > 1).
+export function mapArray(list, mapFn) {
+  let items = [];           // previous input items (by reference)
+  let mapped = [];          // mapped outputs, parallel to items
+  let disposers = [];       // per-item createRoot disposer
+  const wantsIndex = mapFn.length > 1;
+  let indexSetters = wantsIndex ? [] : null;
+  onCleanup(() => { for (const d of disposers) d(); });
   return createMemo(() => {
-    const items = props.each || [];
-    const next = new Map();
-    const out = items.map((item, i) => {
-      let node = cache.get(item);
-      if (node === undefined) {
-        node = createRoot(() => props.children(item, () => i));
+    const next = list() || [];
+    const len = next.length;
+    const newMapped = new Array(len);
+    const newDisposers = new Array(len);
+    const newIndexSetters = wantsIndex ? new Array(len) : null;
+    // Index previous items by reference; a count guards duplicate references.
+    const prev = new Map();
+    for (let i = 0; i < items.length; i++) {
+      const arr = prev.get(items[i]);
+      if (arr) arr.push(i); else prev.set(items[i], [i]);
+    }
+    const reused = new Array(items.length).fill(false);
+    for (let i = 0; i < len; i++) {
+      const item = next[i];
+      const bucket = prev.get(item);
+      let j = -1;
+      while (bucket && bucket.length) { const k = bucket.shift(); if (!reused[k]) { j = k; break; } }
+      if (j >= 0) {
+        reused[j] = true;
+        newMapped[i] = mapped[j];
+        newDisposers[i] = disposers[j];
+        if (wantsIndex) { newIndexSetters[i] = indexSetters[j]; newIndexSetters[i](i); }
+      } else {
+        newMapped[i] = createRoot(dispose => {
+          newDisposers[i] = dispose;
+          if (wantsIndex) {
+            const [index, setIndex] = createSignal(i);
+            newIndexSetters[i] = setIndex;
+            return mapFn(item, index);
+          }
+          return mapFn(item, () => i);
+        });
       }
-      next.set(item, node);
-      return node;
-    });
-    cache = next;
-    return out;
+    }
+    for (let j = 0; j < items.length; j++) if (!reused[j]) disposers[j]();
+    items = next; mapped = newMapped; disposers = newDisposers; indexSetters = newIndexSetters;
+    return mapped;
   });
 }
 
+export function For(props) {
+  const mapped = mapArray(() => props.each, (item, index) => props.children(item, index));
+  return () => mapped();
+}
+
+// solid's indexArray: keyed-by-INDEX (position). The slot is stable per index;
+// the item is a live signal so a value change at a position updates in place
+// rather than rebuilding. Trailing slots are disposed when the list shrinks.
 export function Index(props) {
-  let roots = [];
+  let slots = [];           // { setItem, dispose, node } per index
+  onCleanup(() => { for (const s of slots) s.dispose(); });
   return createMemo(() => {
     const items = props.each || [];
-    const out = items.map((item, i) => {
-      if (!roots[i]) {
-        const [get, set] = createSignal(item);
-        roots[i] = { get, set, node: createRoot(() => props.children(get, i)) };
+    const out = new Array(items.length);
+    for (let i = 0; i < items.length; i++) {
+      let slot = slots[i];
+      if (!slot) {
+        slot = createRoot(dispose => {
+          const [item, setItem] = createSignal(items[i]);
+          const node = props.children(item, i);
+          return { setItem, dispose, node };
+        });
+        slots[i] = slot;
       } else {
-        roots[i].set(item);
+        slot.setItem(() => items[i]);
       }
-      return roots[i].node;
-    });
-    roots.length = items.length;
+      out[i] = slot.node;
+    }
+    for (let i = items.length; i < slots.length; i++) slots[i].dispose();
+    slots.length = items.length;
     return out;
   });
 }
