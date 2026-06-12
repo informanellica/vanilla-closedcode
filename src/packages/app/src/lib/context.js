@@ -13,7 +13,7 @@ import {
   useContext
 } from "solid-js";
 import { Dialog as Kobalte } from "@kobalte/core/dialog";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
 

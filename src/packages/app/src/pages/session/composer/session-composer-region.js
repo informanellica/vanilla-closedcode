@@ -13,7 +13,7 @@ import { SessionQuestionDock } from "@/pages/session/composer/session-question-d
 import { SessionFollowupDock } from "@/pages/session/composer/session-followup-dock.js";
 import { SessionRevertDock } from "@/pages/session/composer/session-revert-dock.js";
 import { SessionTodoDock } from "@/pages/session/composer/session-todo-dock.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.

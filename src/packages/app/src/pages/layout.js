@@ -4,7 +4,7 @@
 // freezing a one-time snapshot.
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { useLayout } from "@/context/layout.js";
 import { useGlobalSync } from "@/context/global-sync.js";

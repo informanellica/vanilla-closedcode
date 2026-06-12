@@ -10,7 +10,7 @@ import { useNavigate, useParams } from "@solidjs/router";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSortable } from "@thisbeyond/solid-dnd";
-import { createMediaQuery } from "@solid-primitives/media";
+import { createMediaQuery } from "@/lib/primitives/media.js";
 import { base64Encode } from "core/util/encode";
 import { getFilename } from "core/util/path";
 import { Button } from "@/bs/button.js";

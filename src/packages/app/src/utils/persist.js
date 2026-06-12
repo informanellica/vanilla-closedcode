@@ -1,5 +1,5 @@
 import { usePlatform } from "@/context/platform.js";
-import { makePersisted } from "@solid-primitives/storage";
+import { makePersisted } from "@/lib/primitives/storage.js";
 import { checksum } from "core/util/encode";
 import { createResource } from "solid-js";
 import { pathKey } from "@/utils/path-key.js";

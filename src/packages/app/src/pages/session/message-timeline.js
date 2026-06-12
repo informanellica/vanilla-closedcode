@@ -26,7 +26,7 @@ import { Popover as KobaltePopover } from "@kobalte/core/popover";
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
 import { useDialog } from "@/lib/dialog.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "@/lib/primitives/resize-observer.js";
 import { useLanguage } from "@/context/language.js";
 import { useSessionKey } from "@/pages/session/session-layout.js";
 import { usePlatform } from "@/context/platform.js";
@@ -36,7 +36,7 @@ import { useSync } from "@/context/sync.js";
 import { messageAgentColor } from "@/utils/agent.js";
 import { sessionTitle } from "@/utils/session-title.js";
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note.js";
-import { makeTimer } from "@solid-primitives/timer";
+import { makeTimer } from "@/lib/primitives/timer.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated and

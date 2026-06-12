@@ -1,4 +1,4 @@
-import * as i18n from "@solid-primitives/i18n";
+import * as i18n from "@/lib/primitives/i18n.js";
 import { createEffect, createMemo, createResource } from "solid-js";
 import { createStore } from "solid-js/store";
 import { createSimpleContext } from "@/vendor/ui/context/index.js";

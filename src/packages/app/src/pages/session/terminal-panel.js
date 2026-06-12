@@ -1,7 +1,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { Tabs } from "@/bs/tabs.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import { IconButton } from "@/bs/icon-button.js";

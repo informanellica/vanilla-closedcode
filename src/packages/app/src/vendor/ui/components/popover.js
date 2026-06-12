@@ -1,7 +1,7 @@
 import { insert as _solidInsert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, mergeProps, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "@/lib/primitives/event-listener.js";
 import { Popover as Kobalte } from "@kobalte/core/popover";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
