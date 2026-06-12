@@ -344,6 +344,26 @@ export function splitProps(props, ...keysList) {
 // `browser` resolution condition the import map already uses for third parties).
 export const isServer = false;
 
+// solid-js/web compiled-output primitives, needed by the few first-party files
+// that are still compiler output (the desktop renderer entry: loading.js /
+// index.js). memo wraps a reactive sub-expression in a memo; template builds a
+// cloneable DOM factory from an HTML string. Both reproduce the solid-js/web
+// (dom-expressions, MIT) runtime helpers of the same name.
+export const memo = fn => createMemo(() => fn());
+export function template(html, isImportNode, isSVG) {
+  let node;
+  const create = () => {
+    const t = document.createElement("template");
+    t.innerHTML = html;
+    return isSVG ? t.content.firstChild.firstChild : t.content.firstChild;
+  };
+  const fn = isImportNode
+    ? () => untrack(() => document.importNode(node || (node = create()), true))
+    : () => (node || (node = create())).cloneNode(true);
+  fn.cloneNode = fn;
+  return fn;
+}
+
 function nodesOf(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return nodesOf(value());

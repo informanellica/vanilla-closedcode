@@ -2,7 +2,7 @@ import { template as _$template } from "solid-js/web";
 import { insert as _$insert } from "solid-js/web";
 import { createComponent as _$createComponent } from "solid-js/web";
 var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-screen h-screen bg-background-base flex items-center justify-center"><div class="flex flex-col items-center gap-11"><div class="w-60 flex flex-col items-center gap-4"aria-live=polite><span class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap text-text-strong text-14-normal">`);
-import { MetaProvider } from "@solidjs/meta";
+import { MetaProvider } from "../../../app/src/lib/primitives/meta.js";
 import { render } from "solid-js/web";
 import "app/index.css";
 import { Font } from "@/vendor/ui/components/font.js";

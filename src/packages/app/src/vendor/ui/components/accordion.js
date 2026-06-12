@@ -73,6 +73,40 @@ function appendChildren(parent, children) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+// Apply the consumer's `style` prop (string OR object form) to `el`. Object
+// values are set individually so they coexist with styles the component sets
+// itself (e.g. the bridged collapsible height vars), while a string overwrites
+// cssText wholesale, matching the compiled output. Wrapped in a change-guarded
+// render effect by the caller via applyStyleProp.
+function applyStyle(el, style) {
+  if (typeof style === "string") {
+    el.style.cssText = style;
+    return;
+  }
+  if (!style) return;
+  for (const key in style) {
+    const value = style[key];
+    if (value == null) continue;
+    if (key.startsWith("--")) el.style.setProperty(key, String(value));
+    else el.style[key] = value;
+  }
+}
+
+// Forward the consumer's `style` prop onto `el` reactively. The render effect is
+// change-guarded (identity compare) so unrelated reactive ticks do not re-write
+// the element's style — important because consumers (session-turn / message-part)
+// set CSS custom props like --sticky-accordion-offset here for sticky headers.
+function applyStyleProp(el, local) {
+  let prev;
+  createRenderEffect(() => {
+    const style = local.style;
+    if (style === prev) return;
+    prev = style;
+    if (style == null) return;
+    applyStyle(el, style);
+  });
+}
+
 const CONTROL_KEYS = new Set(["as", "ref", "class", "className", "classList", "children", "value", "disabled", "onClick", "onKeyDown", "id", "style"]);
 
 function applyRest(el, rest, handled) {
@@ -116,6 +150,7 @@ function AccordionRoot(props) {
     "multiple",
     "collapsible",
     "children",
+    "style",
     "ref"
   ]);
   const id = `accordion-${createUniqueId()}`;
@@ -224,6 +259,7 @@ function AccordionRoot(props) {
   };
 
   applyClassProp(root, local);
+  applyStyleProp(root, local);
   applyRest(root, others, CONTROL_KEYS);
   if (typeof local.ref === "function") local.ref(root);
 
@@ -360,18 +396,7 @@ function AccordionContent(props) {
   el.style.setProperty("--vcc-accordion-content-width", "var(--vcc-collapsible-content-width)");
 
   applyClassProp(el, local);
-  if (local.style != null) {
-    createRenderEffect(() => {
-      const style = local.style;
-      if (typeof style === "string") el.style.cssText = style;
-      else if (style) for (const k in style) {
-        const v = style[k];
-        if (v == null) continue;
-        if (k.startsWith("--")) el.style.setProperty(k, String(v));
-        else el.style[k] = v;
-      }
-    });
-  }
+  applyStyleProp(el, local);
   applyRest(el, others, new Set([...CONTROL_KEYS, "id", "style"]));
   if (typeof local.ref === "function") local.ref(el);
 

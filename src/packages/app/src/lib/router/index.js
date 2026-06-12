@@ -2,7 +2,13 @@
 // app. Behavior is reproduced faithfully from @solidjs/router 0.15.x's default
 // (browser History-based) integration: window.history pushState/replaceState +
 // popstate, oc://-scheme URL normalization, nested + optional (`:id?`) route
-// matching, relative href resolution, and live (reactive) params/location.
+// matching, relative href resolution, and live (reactive) params/location. It
+// also provides a memory-history integration (createMemoryHistory/MemoryRouter)
+// ported from the same release.
+//
+// This is a port of @solidjs/router (MIT License,
+// Copyright (c) Ryan Carniato and contributors). See
+// https://github.com/solidjs/solid-router for the original.
 //
 // Reactivity is imported ONLY from "solid-js" / "solid-js/web" so a later
 // import-map flip can swap the reactive runtime without touching this code.
@@ -716,6 +722,98 @@ function Router(props) {
   })(props);
 }
 
+// --- memory history integration ---------------------------------------------
+
+// In-memory history stack. Direct port of @solidjs/router 0.15.x's
+// createMemoryHistory: an `entries` array + `index` cursor, with
+// get/set/back/forward/go/listen. Used by environments without a real browser
+// location (e.g. the desktop renderer mounted from oc://renderer/index.html,
+// whose pathname would otherwise mismatch the app's `/` and `/:dir` routes).
+// Starts at "/" so the initial render matches the root route.
+function createMemoryHistory() {
+  const entries = ["/"];
+  let index = 0;
+  const listeners = [];
+  const go = (n) => {
+    // https://github.com/remix-run/react-router/blob/682810ca929d0e3c64a76f8d6e465196b7a2ac58/packages/router/history.ts#L245
+    index = Math.max(0, Math.min(index + n, entries.length - 1));
+    const value = entries[index];
+    listeners.forEach((listener) => listener(value));
+  };
+  return {
+    get: () => entries[index],
+    set: ({ value, scroll, replace }) => {
+      if (replace) {
+        entries[index] = value;
+      } else {
+        entries.splice(index + 1, entries.length - index, value);
+        index++;
+      }
+      listeners.forEach((listener) => listener(value));
+      setTimeout(() => {
+        if (scroll) {
+          scrollToHash(value.split("#")[1] || "", true);
+        }
+      }, 0);
+    },
+    back: () => {
+      go(-1);
+    },
+    forward: () => {
+      go(1);
+    },
+    go,
+    listen: (listener) => {
+      listeners.push(listener);
+      return () => {
+        const idx = listeners.indexOf(listener);
+        listeners.splice(idx, 1);
+      };
+    },
+  };
+}
+
+// Bridge a memory history (get/set/listen) into the [source, setSource] signal
+// shape that createRouterComponent expects (the same contract createBrowserSignal
+// fulfills for window.history). The ONLY difference from the browser adapter is
+// the location SOURCE: here get()/set()/listen() drive a string-valued stack
+// instead of window.location + pushState/popstate. Memory history has no `state`,
+// so state is tracked alongside the signal and threaded back through set().
+function createMemorySignal(history) {
+  const getSource = () => ({ value: history.get(), state: null });
+  const [signal, setSignal] = createSignal(getSource(), {
+    equals: (a, b) => a.value === b.value && a.state === b.state,
+  });
+  let ignore = false;
+  // Wrap setSource so router-driven writes both push the memory stack and update
+  // the signal; external history.listen notifications refresh the signal without
+  // re-writing the stack (ignore guard), mirroring the popstate path.
+  const setSource = (next) => {
+    if (!ignore) {
+      history.set({ value: next.value, scroll: next.scroll, replace: next.replace });
+    }
+    setSignal({ value: next.value, state: next.state ?? null });
+  };
+  const cleanup = history.listen((value) => {
+    ignore = true;
+    setSignal({ value, state: null });
+    ignore = false;
+  });
+  if (getOwner()) onCleanup(cleanup);
+  return { signal: [signal, setSource] };
+}
+
+function MemoryRouter(props) {
+  const history = props.history || createMemoryHistory();
+  const integration = createMemorySignal(history);
+  return createRouterComponent({
+    signal: integration.signal,
+    utils: {
+      go: (delta) => history.go(delta),
+    },
+  })(props);
+}
+
 // --- public components & hooks ----------------------------------------------
 
 // <Route> is declaration-only: it returns a RouteDefinition descriptor (its own
@@ -868,6 +966,8 @@ function A(props) {
 
 export {
   A,
+  createMemoryHistory,
+  MemoryRouter,
   Navigate,
   Route,
   Router,

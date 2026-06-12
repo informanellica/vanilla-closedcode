@@ -109,6 +109,78 @@ function applyRest(el, rest, handled) {
   });
 }
 
+// Is `el` currently running a CSS animation or transition? Used so the close
+// path waits for the animation to finish before hiding, instead of slamming
+// `display:none` mid-animation (which makes the content vanish instantly).
+// On a detached element getComputedStyle returns defaults ("none"/"all 0s"),
+// so the initial closed state hides immediately, as before.
+function isAnimating(el) {
+  if (typeof getComputedStyle !== "function") return false;
+  const cs = getComputedStyle(el);
+  if (cs.animationName && cs.animationName !== "none") return true;
+  // A non-zero transition duration on a layout/visual property means a close
+  // transition is about to (or already) run.
+  const durations = (cs.transitionDuration || "").split(",");
+  return durations.some(d => {
+    const n = parseFloat(d);
+    return !Number.isNaN(n) && n > 0;
+  });
+}
+
+// Drive the content's `hidden` attribute, animation-aware. While open (or when
+// forceMount/data-animated own the visibility) the attribute is removed. While
+// closed we hide AFTER any running CSS animation/transition ends, so the close
+// animation is visible. data-animated content (basic-tool's JS spring collapses
+// height to 0 itself) is never given `hidden`, which would kill the spring.
+function applyHidden(content, shouldHide) {
+  // Cancel a hide that an earlier close scheduled but that an intervening open
+  // (or this call deciding not to hide) supersedes.
+  if (content.__collapsibleCancelHide) {
+    content.__collapsibleCancelHide();
+    content.__collapsibleCancelHide = undefined;
+  }
+  if (!shouldHide) {
+    content.removeAttribute("hidden");
+    return;
+  }
+  // basic-tool's spring drives height to 0 on the [data-animated] content; let
+  // it own visibility (an immediate `hidden` would freeze the spring closed).
+  if (content.hasAttribute("data-animated")) {
+    content.removeAttribute("hidden");
+    return;
+  }
+  if (!isAnimating(content)) {
+    content.setAttribute("hidden", "");
+    return;
+  }
+  // Defer the hide until the close animation/transition finishes. A later open
+  // calls __collapsibleCancelHide to abort and re-show.
+  let done = false;
+  const finish = () => {
+    if (done) return;
+    done = true;
+    content.removeEventListener("animationend", finish);
+    content.removeEventListener("transitionend", finish);
+    content.removeEventListener("animationcancel", cancel);
+    content.removeEventListener("transitioncancel", cancel);
+    content.__collapsibleCancelHide = undefined;
+    content.setAttribute("hidden", "");
+  };
+  const cancel = () => {
+    done = true;
+    content.removeEventListener("animationend", finish);
+    content.removeEventListener("transitionend", finish);
+    content.removeEventListener("animationcancel", cancel);
+    content.removeEventListener("transitioncancel", cancel);
+    content.__collapsibleCancelHide = undefined;
+  };
+  content.addEventListener("animationend", finish);
+  content.addEventListener("transitionend", finish);
+  content.addEventListener("animationcancel", cancel);
+  content.addEventListener("transitioncancel", cancel);
+  content.__collapsibleCancelHide = cancel;
+}
+
 function CollapsibleRoot(props) {
   const [local, others] = splitProps(props, [
     "class",
@@ -200,11 +272,14 @@ function CollapsibleRoot(props) {
       }
       if (disabled) content.setAttribute("data-disabled", "");
       else content.removeAttribute("data-disabled");
-      // Presence: hide while closed (unless forceMount), like bs/collapsible.
-      if (!open && !local.forceMount) content.setAttribute("hidden", "");
-      else content.removeAttribute("hidden");
+      // Presence: while closed (and not forceMount) hide the content, but only
+      // AFTER any close animation/transition finishes (and never for the JS
+      // spring-animated [data-animated] content) so the close animation plays.
+      // Set the height var BEFORE hiding so CSS keyframes / the spring have a
+      // target height to animate from.
       const rect = content.getBoundingClientRect?.();
       if (rect && rect.height) content.style.setProperty("--vcc-collapsible-content-height", `${rect.height}px`);
+      applyHidden(content, !open && !local.forceMount);
     }
   };
 
@@ -230,6 +305,25 @@ function CollapsibleRoot(props) {
   // Render effect drives sync on open/disabled/variant changes, after children
   // have been mounted by appendChildren above.
   createRenderEffect(sync);
+
+  // Trigger/content can be (re)mounted in a later reactive tick (e.g. basic-tool
+  // rebuilds its trigger/content memos when the href flips or the body mounts,
+  // or a For in the file tree). A MutationObserver re-syncs so newly added or
+  // late-growing content picks up the correct hidden/data-expanded/height state
+  // even while the collapsible stays closed (no open-state change to trigger
+  // sync on its own), mirroring tabs.js / accordion.js.
+  if (typeof MutationObserver === "function") {
+    let scheduled = false;
+    const observer = new MutationObserver(() => {
+      if (scheduled) return;
+      scheduled = true;
+      queueMicrotask(() => {
+        scheduled = false;
+        sync();
+      });
+    });
+    observer.observe(root, { childList: true, subtree: true });
+  }
   return root;
 }
 
