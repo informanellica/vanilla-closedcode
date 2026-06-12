@@ -55,7 +55,7 @@ const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char());
   shell.dispatch("ENTER");
   eq(shell.route().type, "session", "submit from home navigates to session");
   eq(shell.messages().length, 2, "submit records user + assistant turn");
-  eq(shell.messages()[0], { role: "user", text: "hello" }, "first message is the user prompt");
+  eq(shell.messages()[0], { role: "user", parts: [{ type: "text", text: "hello" }] }, "first message is the user prompt (parts)");
   eq(shell.prompt.value(), "", "prompt clears after submit");
   // session body shows the message
   const { buf, w, h } = render(shell);
@@ -126,6 +126,62 @@ const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char());
   shell.dispatch("CTRL_P"); // opens dialog -> dialogs() signal changes -> repaint
   ok(paints > before, "opening a dialog triggers a reactive repaint");
   ok(screenText(buf, 80, 24).includes("Commands"), "repaint reflects the new dialog");
+}
+
+// 8. prompt autocomplete: "/" opens command suggestions; Down+Enter accepts
+{
+  const shell = createShell();
+  type(shell, "/");
+  ok(shell.prompt.autocomplete.visible(), "'/' opens command autocomplete");
+  ok(shell.prompt.autocomplete.items().some(i => i.label === "help"), "command suggestions include 'help'");
+  const { buf, w, h } = render(shell);
+  ok(screenText(buf, w, h).includes("new"), "autocomplete dropdown rendered above the prompt");
+  shell.dispatch("DOWN"); // new -> help
+  shell.dispatch("ENTER"); // accept
+  eq(shell.prompt.value(), "/help ", "accepting a suggestion replaces the token");
+  eq(shell.prompt.autocomplete.visible(), false, "autocomplete closes after accept");
+}
+
+// 9. shell mode: "!" at the start toggles shell mode; Escape exits it
+{
+  const shell = createShell();
+  shell.dispatch("!", char());
+  eq(shell.prompt.mode(), "shell", "'!' at offset 0 enters shell mode");
+  eq(shell.prompt.value(), "", "'!' is consumed, not inserted");
+  shell.dispatch("ESCAPE");
+  eq(shell.prompt.mode(), "normal", "Escape exits shell mode (does not leave the screen)");
+}
+
+// 10. prompt history: submit, then Up recalls the previous prompt
+{
+  const shell = createShell();
+  type(shell, "first question");
+  shell.dispatch("ENTER");
+  eq(shell.prompt.value(), "", "prompt cleared after submit");
+  shell.dispatch("UP"); // at offset 0 -> history
+  eq(shell.prompt.value(), "first question", "Up recalls the previous prompt from history");
+}
+
+// 11. slash command on submit runs the command instead of posting
+{
+  const shell = createShell();
+  type(shell, "/help");
+  shell.prompt.autocomplete.hide(); // ensure Enter submits rather than accepts
+  shell.dispatch("ENTER");
+  ok(shell.dialog.current()?.title === "Help", "submitting /help runs the Help command");
+  eq(shell.messages().length, 0, "slash command did not post a message");
+}
+
+// 12. timeline scroll: PageUp scrolls back when content overflows
+{
+  const shell = createShell();
+  shell.navigate({ type: "session", sessionID: "x" });
+  for (let i = 0; i < 40; i++) shell.pushMessage({ role: "assistant", parts: [{ type: "text", text: "line " + i }] });
+  render(shell, 80, 12); // establishes the viewport height
+  eq(shell.timeline.offset(), 0, "timeline starts bottom-pinned");
+  shell.dispatch("PAGE_UP");
+  render(shell, 80, 12);
+  ok(shell.timeline.offset() > 0, "PageUp scrolls the timeline back");
 }
 
 console.log(`tui vanilla shell tests: ${passed} passed, ${failed} failed`);

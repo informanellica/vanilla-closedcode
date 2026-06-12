@@ -12,6 +12,7 @@ export { makeRegion, column, row, box } from "./layout.js";
 export { width, wrap, wordWrap, truncate, sliceCols, fit } from "./text.js";
 export { wrapMessages, drawScrollLines } from "./scroll.js";
 export { createTextInput } from "./input.js";
+export { createTextArea } from "./textarea.js";
 export { createSelectList } from "./list.js";
 export { centerBox } from "./dialog.js";
 export { createKeyRouter, createFocusRing } from "./focus.js";

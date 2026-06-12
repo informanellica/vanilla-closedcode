@@ -1,66 +1,84 @@
-// Vanilla TUI app shell (Stage T3, stage 1 — "the app shell"). This replaces the
-// compiled-Solid-JSX app.js render model (an @opentui retained Renderable tree +
-// RendererContext) with the immediate-mode T2 toolkit: state is signals, the view
-// is a single rootDraw(region) composed from layout splits + widgets, and key
-// input is routed through the layer-stack key router so an open dialog captures
-// input and Escape closes only the top layer.
+// Vanilla TUI app shell (Stage T3). This replaces the compiled-Solid-JSX app.js
+// render model (an @opentui retained Renderable tree + RendererContext) with the
+// immediate-mode T2 toolkit: state is signals, the view is a single rootDraw(region)
+// composed from layout splits + widgets, and key input is routed through the
+// layer-stack key router so an open dialog captures input and Escape closes only
+// the top layer.
 //
-// Scope of this stage: the ROOT LAYOUT (body / prompt / status), route switching
-// (home <-> session), the prompt input, the message timeline, and a dialog
-// overlay demonstrated by a command palette. Later T3 stages fill the body with
-// the real timeline/dialog families; T4 flips the entry from app.js to mountShell
-// and removes @opentui/solid. The model (createShell) is pure and headless-
-// testable — render its draw() into a detached ScreenBuffer, drive it with
-// dispatch() — exactly like runtime.test.mjs.
+// Stage 1 built the root layout + route switch + a dialog overlay. Stage 2 wires
+// in the REAL prompt (multi-line textarea + autocomplete + shell mode + history +
+// agent/model meta) and the parts-based message timeline, replacing the stage-1
+// placeholders. Later stages add the dialog families and the @opentui renderer
+// features; T4 flips the entry from app.js to mountShell. The model (createShell)
+// is pure and headless-testable — render its draw() into a detached ScreenBuffer,
+// drive it with dispatch() — exactly like runtime.test.mjs.
 import { createSignal } from "../runtime/reactivity.js";
-import { column } from "../runtime/layout.js";
-import { box } from "../runtime/layout.js";
-import { createTextInput } from "../runtime/input.js";
+import { column, box } from "../runtime/layout.js";
 import { createSelectList } from "../runtime/list.js";
 import { createKeyRouter } from "../runtime/focus.js";
 import { centerBox } from "../runtime/dialog.js";
-import { wordWrap, fit } from "../runtime/text.js";
+import { fit } from "../runtime/text.js";
 import { createApp } from "../runtime/screen.js";
 import { defaultTheme, attr } from "./theme.js";
 import { drawLogo, LOGO_HEIGHT } from "./logo.js";
+import { createPrompt, createPromptHistory } from "./prompt.js";
+import { createTimeline } from "./timeline.js";
 
-const PROMPT_ROWS = 3; // bordered box: top + 1 input line + bottom
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
 
-// Build the shell MODEL: state + key routing + a draw(region, ctx). No terminal
-// dependency, so it renders into any region (a detached ScreenBuffer in tests).
+// Slash commands surfaced in the prompt autocomplete (and handled on submit).
+const SLASH_COMMANDS = [
+  { name: "new", description: "Start a new session" },
+  { name: "help", description: "Show help" },
+  { name: "models", description: "Switch model" },
+  { name: "agents", description: "Switch agent" },
+  { name: "exit", description: "Exit the app" },
+];
+
 export function createShell(opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const router = createKeyRouter();
 
   // --- route ---------------------------------------------------------------
   const [route, setRoute] = createSignal(opts.initialRoute ?? { type: "home" });
-  function navigate(next) {
-    setRoute(next);
-  }
+  const navigate = next => setRoute(next);
 
   // --- timeline ------------------------------------------------------------
-  const [messages, setMessages] = createSignal([]); // { role: "user"|"assistant", text }
+  // message = { role, parts: [{ type:"text"|"reasoning"|"tool"|"file", ... }] }
+  const [messages, setMessages] = createSignal([]);
   const pushMessage = m => setMessages(list => [...list, m]);
+  const timeline = createTimeline(messages, { theme });
 
   // --- prompt --------------------------------------------------------------
-  const prompt = createTextInput("", { onSubmit: text => submit(text) });
-  function submit(text) {
-    const value = text.trim();
-    if (!value) return;
+  const history = createPromptHistory();
+  const prompt = createPrompt({
+    theme,
+    placeholders: opts.placeholders ?? { normal: ["Fix a TODO", "Explain this repo"], shell: ["ls -la", "git status"] },
+    commands: SLASH_COMMANDS,
+    listFiles: opts.listFiles,
+    history,
+    agent: opts.agent ?? "build",
+    model: opts.model ?? "opus-4.8",
+    provider: opts.provider ?? "anthropic",
+    onSubmit: (text, { mode }) => onPromptSubmit(text, mode),
+  });
+
+  function onPromptSubmit(text, mode) {
+    // Slash command on submit (normal mode) -> run it instead of posting.
+    if (mode === "normal" && text.startsWith("/")) {
+      const cmd = text.slice(1).split(/\s+/)[0];
+      if (SLASH_COMMANDS.some(c => c.name === cmd)) { runCommand(slashToValue(cmd)); return; }
+    }
     if (route().type === "home") navigate({ type: "session", sessionID: "local" });
-    pushMessage({ role: "user", text: value });
-    prompt.setValue("");
-    prompt.setCursor(0);
-    // Stage-1 placeholder: the real assistant stream is wired in a later stage.
-    pushMessage({ role: "assistant", text: "(assistant response will stream here)" });
+    pushMessage({ role: "user", parts: [{ type: "text", text: mode === "shell" ? "! " + text : text }] });
+    // Stage-2 placeholder; SDK streaming is wired at the integration stage.
+    pushMessage({ role: "assistant", parts: [{ type: "text", text: "(assistant response will stream here)" }] });
+    timeline.setOffset(0);
   }
+  const slashToValue = cmd => ({ new: "session.new", help: "help", exit: "app.exit", models: "models", agents: "agents" }[cmd] ?? "help");
 
   // --- dialog overlay (layer stack) ----------------------------------------
-  // A dialog is { title, width, height, widget } where widget has
-  // draw(region, ctx) + handleKey(name, data). Opening pushes a key-router layer
-  // whose onEscape closes it; closing pops both the signal entry and the layer.
   const [dialogs, setDialogs] = createSignal([]);
   const dialog = {
     open(spec) {
@@ -68,152 +86,124 @@ export function createShell(opts = {}) {
         handleKey: (name, data) => spec.widget.handleKey?.(name, data) ?? false,
         onEscape: () => dialog.close(),
       });
-      const entry = { ...spec, remove };
-      setDialogs(list => [...list, entry]);
-      return entry;
+      setDialogs(list => [...list, { ...spec, remove }]);
     },
     close() {
-      setDialogs(list => {
-        const top = list[list.length - 1];
-        top?.remove?.();
-        return list.slice(0, -1);
-      });
+      setDialogs(list => { list[list.length - 1]?.remove?.(); return list.slice(0, -1); });
     },
     current: () => dialogs().at(-1),
   };
 
-  // --- command palette (demonstrates list + dialog + layer) ----------------
+  // --- command palette ------------------------------------------------------
   function openCommands() {
     const items = [
       { label: "New session", value: "session.new" },
       { label: "Go home", value: "route.home" },
+      { label: "Switch model", value: "models" },
+      { label: "Switch agent", value: "agents" },
       { label: "Help", value: "help" },
       { label: "Exit", value: "app.exit" },
     ];
-    const list = createSelectList(items, {
-      now: opts.now,
-      onSelect: it => {
-        dialog.close();
-        runCommand(it.value);
-      },
-    });
-    dialog.open({ title: "Commands", width: 40, height: items.length + 2, widget: list });
+    const list = createSelectList(items, { now: opts.now, onSelect: it => { dialog.close(); runCommand(it.value); } });
+    dialog.open({ title: "Commands", width: 44, height: items.length + 2, widget: list });
   }
   function runCommand(value) {
     switch (value) {
       case "session.new": setMessages([]); navigate({ type: "home" }); break;
       case "route.home": navigate({ type: "home" }); break;
       case "help": openHelp(); break;
+      case "models": openStub("Models", ["opus-4.8", "sonnet-4.6", "haiku-4.5"]); break;
+      case "agents": openStub("Agents", ["build", "plan", "general"]); break;
       case "app.exit": opts.onExit?.(); break;
     }
   }
   function openHelp() {
     const lines = [
-      "Enter      send the prompt",
-      "Ctrl-P     command palette",
-      "Esc        close dialog / back to home",
-      "Ctrl-C     exit",
+      "Enter        send the prompt",
+      "Shift-Enter  newline",
+      "!            shell mode (at line start)",
+      "/ , @        command / file autocomplete",
+      "Up / Down    prompt history (at edges)",
+      "PgUp / PgDn  scroll the timeline",
+      "Ctrl-P       command palette",
+      "Esc          close dialog / back to home",
+      "Ctrl-C       exit",
     ];
-    const widget = {
-      draw: region => lines.forEach((l, i) => region.line(i, l, attr(theme, "textMuted"))),
-      handleKey: () => false, // any non-Escape key is swallowed by the layer
-    };
-    dialog.open({ title: "Help", width: 44, height: lines.length + 2, widget });
+    const widget = { draw: r => lines.forEach((l, i) => r.line(i, l, attr(theme, "textMuted"))), handleKey: () => false };
+    dialog.open({ title: "Help", width: 48, height: lines.length + 2, widget });
+  }
+  // A generic single-select stub used by model/agent commands until the real
+  // SDK-backed dialogs land (Stage 3 dialog families).
+  function openStub(title, options) {
+    const list = createSelectList(options, { now: opts.now, onSelect: () => dialog.close() });
+    dialog.open({ title, width: 40, height: Math.min(options.length, 8) + 2, widget: list });
   }
 
-  // --- base layer: prompt by default + global hotkeys ----------------------
+  // --- base layer: global hotkeys + timeline scroll + the prompt -----------
   router.pushLayer({
     handleKey: (name, data) => {
       if (name === "CTRL_P") { openCommands(); return true; }
       if (name === "CTRL_C") { opts.onExit?.(); return true; }
-      if (name === "ESCAPE") {
-        if (route().type === "session" && prompt.value() === "") { navigate({ type: "home" }); return true; }
-        return false;
-      }
-      return prompt.handleKey(name, data);
+      if (route().type === "session" && (name === "PAGE_UP" || name === "PAGE_DOWN")) return timeline.handleKey(name);
+      if (prompt.handleKey(name, data)) return true;
+      if (name === "ESCAPE" && route().type === "session") { navigate({ type: "home" }); return true; }
+      return false;
     },
   });
-
-  function dispatch(name, data) {
-    return router.dispatch(name, data);
-  }
+  const dispatch = (name, data) => router.dispatch(name, data);
 
   // --- draw ----------------------------------------------------------------
-  function drawPrompt(region, ctx, { focused }) {
-    const inner = box(region, { attr: attr(theme, focused ? "primary" : "textMuted") });
-    prompt.draw(inner, {
-      focused,
-      ctx,
-      attr: attr(theme, "text"),
-      placeholder: route().type === "home" ? "Ask anything, or run a command with Ctrl-P" : "Reply…",
-    });
-  }
-
   function drawHomeBody(region) {
-    // Center the logo block (logo + a hint) vertically in the body.
     const blockH = LOGO_HEIGHT + 2;
     const top = Math.max(0, Math.floor((region.height - blockH) / 2));
     drawLogo(region.sub(0, top, region.width, LOGO_HEIGHT), attr(theme, "primary"), { row: 0, center: true });
-    region.line(top + LOGO_HEIGHT + 1, "Type a message and press Enter  •  Ctrl-P for commands",
-      attr(theme, "textMuted"), "center");
-  }
-
-  function drawSessionBody(region) {
-    // Build colored, wrapped timeline lines; bottom-pin to the latest.
-    const lines = [];
-    for (const m of messages()) {
-      const isUser = m.role === "user";
-      const a = attr(theme, isUser ? "primary" : "text");
-      const prefix = isUser ? "› " : "  ";
-      for (const l of wordWrap(prefix + m.text, region.width)) lines.push({ str: l, a });
-    }
-    const h = region.height;
-    const start = Math.max(0, lines.length - h);
-    for (let i = 0; i + start < lines.length && i < h; i++) {
-      const ln = lines[start + i];
-      region.line(i, ln.str, ln.a);
-    }
+    region.line(top + LOGO_HEIGHT + 1, "Type a message and press Enter  •  Ctrl-P for commands", attr(theme, "textMuted"), "center");
   }
 
   function drawStatus(region) {
     const r = route();
     const left = r.type === "home" ? " home" : ` session:${r.sessionID}`;
     const right = "Ctrl-P commands  Ctrl-C exit ";
-    region.line(0, fit(left, region.width - right.length, "left") + right, attr(theme, "textMuted"));
+    region.line(0, fit(left, Math.max(0, region.width - right.length), "left") + right, attr(theme, "textMuted"));
   }
 
   function drawDialog(region, ctx) {
     const top = dialog.current();
     if (!top) return;
     const inner = centerBox(region, top.width, top.height, {
-      title: top.title,
-      fill: " ",
-      fillAttr: attr(theme, "text"),
-      attr: attr(theme, "primary"),
+      title: top.title, fill: " ", fillAttr: attr(theme, "text"), attr: attr(theme, "primary"),
     });
     top.widget.draw(inner, { ...ctx, attr: attr(theme, "text"), activeAttr: { inverse: true } });
+  }
+
+  function drawAutocomplete(region, promptH, promptW, aoffset) {
+    const ac = prompt.autocomplete;
+    if (!ac.visible()) return;
+    const n = Math.min(ac.items().length, 6);
+    const overlayH = n + 2;
+    const promptTop = region.height - STATUS_ROWS - promptH;
+    const top = Math.max(0, promptTop - overlayH);
+    const outer = region.sub(aoffset, top, promptW, overlayH);
+    const inner = box(outer, { attr: attr(theme, "primary") });
+    ac.draw(inner, { attr: attr(theme, "text"), activeAttr: { inverse: true } });
   }
 
   function draw(region, ctx = {}) {
     const dialogOpen = dialogs().length > 0;
     const home = route().type === "home";
+    const promptW = home ? Math.min(HOME_PROMPT_COLS, region.width) : region.width;
+    const aoffset = home ? Math.max(0, Math.floor((region.width - promptW) / 2)) : 0;
+    const promptH = prompt.height(promptW);
     column(region, [
-      { size: "flex", draw: r => (home ? drawHomeBody(r) : drawSessionBody(r)) },
-      {
-        size: PROMPT_ROWS,
-        draw: r => {
-          // On home the prompt is width-capped and centered (like the live home).
-          const p = home ? r.sub(Math.max(0, Math.floor((r.width - HOME_PROMPT_COLS) / 2)), 0,
-            Math.min(HOME_PROMPT_COLS, r.width), r.height) : r;
-          drawPrompt(p, ctx, { focused: !dialogOpen });
-        },
-      },
+      { size: "flex", draw: r => (home ? drawHomeBody(r) : timeline.draw(r)) },
+      { size: promptH, draw: r => prompt.draw(r.sub(aoffset, 0, promptW, r.height), ctx, { focused: !dialogOpen }) },
       { size: STATUS_ROWS, draw: drawStatus },
     ]);
+    drawAutocomplete(region, promptH, promptW, aoffset);
     drawDialog(region, ctx);
   }
 
-  return { route, navigate, messages, pushMessage, prompt, dialog, openCommands, openHelp, dispatch, draw, theme };
+  return { route, navigate, messages, pushMessage, prompt, timeline, dialog, openCommands, openHelp, dispatch, draw, theme };
 }
 
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.

@@ -196,5 +196,31 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   eq(inner.x, 6, "centerBox inner x offset");
 }
 
+// 12. textarea: multiline editing, newline, Up/Down by logical line, CJK, wrap
+{
+  const { createTextArea } = await import("./textarea.js");
+  const ch = () => ({ isCharacter: true });
+  const ta = createTextArea("");
+  ta.handleKey("a", ch()); ta.handleKey("ENTER"); ta.handleKey("b", ch()); ta.handleKey("c", ch());
+  eq(ta.value(), "a\nbc", "textarea ENTER inserts newline");
+  eq(ta.cursor(), 4, "textarea cursor after 'a\\nbc'");
+  ta.handleKey("UP"); // to line 0, col 2 -> clamped to col 1 (len of 'a')
+  eq(ta.locate(), { line: 0, col: 1 }, "textarea UP keeps column (clamped)");
+  ta.handleKey("HOME");
+  eq(ta.cursor(), 0, "textarea HOME to line start");
+  ta.handleKey("DOWN"); ta.handleKey("END");
+  eq(ta.value().slice(ta.cursor() - 2), "bc", "textarea DOWN+END to end of second line");
+  // CJK + wrap rendering into a narrow region
+  const ta2 = createTextArea("あいうえお");
+  eq(ta2.rowCount(4), 3, "textarea wraps CJK to width 4 (2 glyphs/row -> 3 rows)");
+  const buf = new tk.ScreenBuffer({ width: 4, height: 3 });
+  buf.fill({ char: " " });
+  let cur = null;
+  ta2.draw(makeRegion(buf, 0, 0, 4, 3), { focused: true, ctx: { focusCursor: (x, y) => (cur = [x, y]) } });
+  // fullwidth glyphs occupy a char-cell + a filler-cell, so read glyph cells directly
+  eq([buf.get({ x: 0, y: 0 }).char, buf.get({ x: 2, y: 0 }).char], ["あ", "い"], "textarea row 0 = first 2 fullwidth glyphs");
+  eq(cur, [2, 2], "textarea cursor at end is row 2, display col 2 (after お)");
+}
+
 console.log(`tui runtime tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -14,6 +14,9 @@ export const defaultTheme = {
   success: "brightGreen",
   info: "brightBlue",
   selected: "brightCyan",
+  secondary: "brightBlue",
+  border: "gray",
+  backgroundElement: "default",
 };
 
 // Build a terminal-kit attr from a theme token (+ optional bg token / flags).
