@@ -1,17 +1,18 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-slot=session-turn-retry-message class="cursor-help truncate">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<div class="d-flex align-items-start gap-2"><div class=min-w-0>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=session-turn-retry>`),
-  _tmpl$4 = /*#__PURE__*/_$template(`<div data-slot=session-turn-retry-message>`),
-  _tmpl$5 = /*#__PURE__*/_$template(`<div data-slot=session-turn-retry-info>`);
-import { createEffect, createMemo, createSignal, on, onCleanup, Show } from "solid-js";
+import { insert as _solidInsert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, on, onCleanup } from "solid-js";
 import { useI18n } from "../context/i18n.js";
 import { Card } from "./card.js";
 import { Tooltip } from "./tooltip.js";
 import { Spinner } from "./spinner.js";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates).
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 export function SessionRetry(props) {
   const i18n = useI18n();
   const retry = createMemo(() => {
@@ -61,60 +62,68 @@ export function SessionRetry(props) {
       attempt: current.attempt
     });
   });
-  return _$createComponent(Show, {
-    get when() {
-      return _$memo(() => !!retry())() && (props.show ?? true);
-    },
-    get children() {
-      var _el$ = _tmpl$3();
-      _$insert(_el$, _$createComponent(Card, {
-        variant: "error",
-        "class": "error-card",
+
+  // Show(retry && show), non-keyed: this boolean memo only changes on
+  // truthiness flips, so the card subtree below is rebuilt exactly when the
+  // compiled Show remounted it (and torn down while hidden).
+  const visible = createMemo(() => !!retry() && (props.show ?? true));
+
+  const build = () => {
+    const root = template(`<div data-slot="session-turn-retry"></div>`);
+    const row = template(`<div class="d-flex align-items-start gap-2"><div class="min-w-0"></div></div>`);
+    const body = row.firstElementChild;
+    row.insertBefore(createComponent(Spinner, {
+      "class": "size-4 mt-0.5"
+    }), body);
+
+    // Show(truncated) with fallback: swap between the tooltip-wrapped and the
+    // plain message div only when the truncation flag flips; the message text
+    // itself stays live inside whichever div is mounted. Tooltip is still
+    // compiled Solid (Kobalte, presence-gated), so its accessor result must
+    // flow through solid's insert() (established exception); the null marker
+    // keeps this region's position stable next to the info line.
+    _solidInsert(body, createMemo(() => {
+      if (!truncated()) {
+        const messageEl = template(`<div data-slot="session-turn-retry-message"></div>`);
+        createRenderEffect(() => {
+          messageEl.textContent = message();
+        });
+        return messageEl;
+      }
+      return createComponent(Tooltip, {
+        get value() {
+          return retry()?.message ?? "";
+        },
+        placement: "top",
         get children() {
-          var _el$2 = _tmpl$2(),
-            _el$3 = _el$2.firstChild;
-          _$insert(_el$2, _$createComponent(Spinner, {
-            "class": "size-4 mt-0.5"
-          }), _el$3);
-          _$insert(_el$3, _$createComponent(Show, {
-            get when() {
-              return truncated();
-            },
-            get fallback() {
-              return (() => {
-                var _el$5 = _tmpl$4();
-                _$insert(_el$5, message);
-                return _el$5;
-              })();
-            },
-            get children() {
-              return _$createComponent(Tooltip, {
-                get value() {
-                  return retry()?.message ?? "";
-                },
-                placement: "top",
-                get children() {
-                  var _el$4 = _tmpl$();
-                  _$insert(_el$4, message);
-                  return _el$4;
-                }
-              });
-            }
-          }), null);
-          _$insert(_el$3, _$createComponent(Show, {
-            get when() {
-              return info();
-            },
-            children: line => (() => {
-              var _el$6 = _tmpl$5();
-              _$insert(_el$6, line);
-              return _el$6;
-            })()
-          }), null);
-          return _el$2;
+          const messageEl = template(`<div data-slot="session-turn-retry-message" class="cursor-help truncate"></div>`);
+          createRenderEffect(() => {
+            messageEl.textContent = message();
+          });
+          return messageEl;
         }
-      }));
-      return _el$;
-    }
-  });
+      });
+    }), null);
+
+    // Show(info()): mount the info line only while the string is non-empty;
+    // the text itself tracks the live countdown/attempt message.
+    const hasInfo = createMemo(() => !!info());
+    _solidInsert(body, createMemo(() => {
+      if (!hasInfo()) return undefined;
+      const infoEl = template(`<div data-slot="session-turn-retry-info"></div>`);
+      createRenderEffect(() => {
+        infoEl.textContent = info();
+      });
+      return infoEl;
+    }), null);
+
+    root.appendChild(createComponent(Card, {
+      variant: "error",
+      "class": "error-card",
+      children: row
+    }));
+    return root;
+  };
+
+  return createMemo(() => (visible() ? build() : undefined));
 }

@@ -1,27 +1,33 @@
-import { template as _$template } from "solid-js/web";
-import { className as _$className } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<span data-slot=animated-number-digit><span data-slot=animated-number-strip style="--animated-number-duration:var(--tool-motion-odometer-ms, 600ms)">`),
-  _tmpl$2 = /*#__PURE__*/_$template(`<span data-slot=animated-number-cell>`),
-  _tmpl$3 = /*#__PURE__*/_$template(`<span data-component=animated-number><span data-slot=animated-number-value>`);
-import { For, Index, createEffect, createMemo, on } from "solid-js";
+import {
+  createComponent,
+  createEffect,
+  createMemo,
+  createRenderEffect,
+  createRoot,
+  createSignal,
+  on,
+  onCleanup,
+  untrack
+} from "solid-js";
 import { createStore } from "solid-js/store";
+
 const TRACK = Array.from({
   length: 30
 }, (_, index) => index % 10);
 const DURATION = 600;
+
 function normalize(value) {
   return (value % 10 + 10) % 10;
 }
+
 function spin(from, to, direction) {
   if (from === to) return 0;
   if (direction > 0) return (to - from + 10) % 10;
   return -((from - to + 10) % 10);
 }
+
+// One odometer digit. props.value is a live getter (0-9); spinning state is
+// kept locally so an in-flight transition survives value updates.
 function Digit(props) {
   const [state, setState] = createStore({
     step: props.value + 10,
@@ -43,34 +49,39 @@ function Digit(props) {
   }, {
     defer: true
   }));
-  return (() => {
-    var _el$ = _tmpl$(),
-      _el$2 = _el$.firstChild;
-    _el$2.addEventListener("transitionend", () => {
-      setState("animating", false);
-      setState("step", value => normalize(value) + 10);
-    });
-    _$insert(_el$2, _$createComponent(For, {
-      each: TRACK,
-      children: value => (() => {
-        var _el$3 = _tmpl$2();
-        _$insert(_el$3, value);
-        return _el$3;
-      })()
-    }));
-    _$effect(_p$ => {
-      var _v$ = animating() ? "true" : "false",
-        _v$2 = `${step()}`;
-      _v$ !== _p$.e && _$setAttribute(_el$2, "data-animating", _p$.e = _v$);
-      _v$2 !== _p$.t && _$setStyleProperty(_el$2, "--animated-number-offset", _p$.t = _v$2);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined
-    });
-    return _el$;
-  })();
+
+  const root = document.createElement("span");
+  root.setAttribute("data-slot", "animated-number-digit");
+  const strip = document.createElement("span");
+  strip.setAttribute("data-slot", "animated-number-strip");
+  strip.style.setProperty("--animated-number-duration", `var(--tool-motion-odometer-ms, ${DURATION}ms)`);
+  strip.addEventListener("transitionend", () => {
+    setState("animating", false);
+    setState("step", value => normalize(value) + 10);
+  });
+  // TRACK is a static array, so the compiled <For> never re-runs: build the
+  // 30 cells once.
+  for (const value of TRACK) {
+    const cell = document.createElement("span");
+    cell.setAttribute("data-slot", "animated-number-cell");
+    cell.textContent = String(value);
+    strip.appendChild(cell);
+  }
+  root.appendChild(strip);
+
+  // Change-guarded dynamic attributes, like the compiled effect(): an
+  // unchanged value never re-touches the DOM.
+  let prevAnimating;
+  let prevStep;
+  createRenderEffect(() => {
+    const nextAnimating = animating() ? "true" : "false";
+    const nextStep = `${step()}`;
+    if (nextAnimating !== prevAnimating) strip.setAttribute("data-animating", prevAnimating = nextAnimating);
+    if (nextStep !== prevStep) strip.style.setProperty("--animated-number-offset", prevStep = nextStep);
+  });
+  return root;
 }
+
 export function AnimatedNumber(props) {
   const target = createMemo(() => {
     if (!Number.isFinite(props.value)) return 0;
@@ -97,35 +108,71 @@ export function AnimatedNumber(props) {
     return code;
   }).reverse());
   const width = createMemo(() => `${digits().length}ch`);
-  return (() => {
-    var _el$4 = _tmpl$3(),
-      _el$5 = _el$4.firstChild;
-    _$insert(_el$5, _$createComponent(Index, {
-      get each() {
-        return digits();
-      },
-      children: digit => _$createComponent(Digit, {
-        get value() {
-          return digit();
-        },
-        get direction() {
-          return direction();
-        }
-      })
-    }));
-    _$effect(_p$ => {
-      var _v$3 = props.class,
-        _v$4 = label(),
-        _v$5 = width();
-      _v$3 !== _p$.e && _$className(_el$4, _p$.e = _v$3);
-      _v$4 !== _p$.t && _$setAttribute(_el$4, "aria-label", _p$.t = _v$4);
-      _v$5 !== _p$.a && _$setStyleProperty(_el$5, "--animated-number-width", _p$.a = _v$5);
-      return _p$;
-    }, {
-      e: undefined,
-      t: undefined,
-      a: undefined
+
+  const root = document.createElement("span");
+  root.setAttribute("data-component", "animated-number");
+  const valueEl = document.createElement("span");
+  valueEl.setAttribute("data-slot", "animated-number-value");
+  root.appendChild(valueEl);
+
+  // Hand-rolled <Index>: each position keeps its Digit instance (and its
+  // in-flight spin) across updates; only the per-index value signal changes.
+  // New positions mount in their own root so removal disposes their effects,
+  // mirroring solid's indexArray.
+  const items = [];
+  createRenderEffect(() => {
+    const next = digits();
+    untrack(() => {
+      const shared = Math.min(items.length, next.length);
+      for (let i = 0; i < shared; i++) items[i].set(next[i]);
+      for (let i = items.length; i < next.length; i++) {
+        const [digit, set] = createSignal(next[i]);
+        createRoot(dispose => {
+          const node = createComponent(Digit, {
+            get value() {
+              return digit();
+            },
+            get direction() {
+              return direction();
+            }
+          });
+          items.push({
+            set,
+            node,
+            dispose
+          });
+          valueEl.appendChild(node);
+        });
+      }
+      while (items.length > next.length) {
+        const item = items.pop();
+        item.dispose();
+        item.node.remove();
+      }
     });
-    return _el$4;
-  })();
+  });
+  onCleanup(() => {
+    for (const item of items) item.dispose();
+    items.length = 0;
+  });
+
+  // Change-guarded root class / aria-label / width, like the compiled
+  // effect(). className mirrors solid-js/web semantics: nullish removes the
+  // class attribute (and the guard skips the initial undefined, as compiled).
+  let prevClass;
+  let prevLabel;
+  let prevWidth;
+  createRenderEffect(() => {
+    const nextClass = props.class;
+    const nextLabel = label();
+    const nextWidth = width();
+    if (nextClass !== prevClass) {
+      prevClass = nextClass;
+      if (nextClass == null) root.removeAttribute("class");
+      else root.className = nextClass;
+    }
+    if (nextLabel !== prevLabel) root.setAttribute("aria-label", prevLabel = nextLabel);
+    if (nextWidth !== prevWidth) valueEl.style.setProperty("--animated-number-width", prevWidth = nextWidth);
+  });
+  return root;
 }
