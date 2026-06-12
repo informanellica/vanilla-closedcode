@@ -4,7 +4,7 @@ import * as Log from "core/util/log";
 import { NamedError } from "core/util/error";
 import z from "zod";
 import path from "path";
-import { readFileSync, readdirSync, existsSync, renameSync } from "fs";
+import { readFileSync, readdirSync, existsSync } from "fs";
 import { fileURLToPath } from "node:url";
 import { Flag } from "core/flag/flag";
 import { InstallationChannel } from "core/installation/version";
@@ -18,31 +18,10 @@ const log = Log.create({
   service: "db"
 });
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Legacy opencode.db path for migration purposes.
-function legacyChannelPath() {
-  if (["latest", "beta", "prod"].includes(InstallationChannel) || Flag.CLOSEDCODE_DISABLE_CHANNEL_DB) return path.join(Global.Path.data, "opencode.db");
-  const safe = InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-");
-  return path.join(Global.Path.data, `opencode-${safe}.db`);
-}
 export function getChannelPath() {
   if (["latest", "beta", "prod"].includes(InstallationChannel) || Flag.CLOSEDCODE_DISABLE_CHANNEL_DB) return path.join(Global.Path.data, "closedcode.db");
   const safe = InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-");
   return path.join(Global.Path.data, `closedcode-${safe}.db`);
-}
-// Rename legacy opencode.db -> closedcode.db (and WAL/SHM companions) on first
-// run so existing user data is preserved under the canonical filename.
-function migrateDbFile(canonical) {
-  if (existsSync(canonical)) return;
-  const legacy = legacyChannelPath();
-  if (!existsSync(legacy)) return;
-  for (const suffix of ["", "-wal", "-shm"]) {
-    const src = legacy + suffix;
-    const dst = canonical + suffix;
-    if (existsSync(src)) {
-      try { renameSync(src, dst); } catch {}
-    }
-  }
-  log.info("migrated legacy database file", { from: legacy, to: canonical });
 }
 export const Path = iife(() => {
   if (Flag.CLOSEDCODE_DB) {
@@ -97,7 +76,6 @@ export function close() {
 // model calls.
 import { createSequelize, transactionStorage } from "./sequelize.js";
 export const Orm = lazy(() => {
-  if (!Flag.CLOSEDCODE_DB) migrateDbFile(Path);
   const { sequelize, models } = createSequelize(Path);
   return { sequelize, models };
 });

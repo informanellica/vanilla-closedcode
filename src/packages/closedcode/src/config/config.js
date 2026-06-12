@@ -256,7 +256,7 @@ export const Info = Schema.Struct({
 
 export class Service extends Context.Service()("@closedcode/Config") {}
 function globalConfigFile() {
-  const candidates = ["closedcode.jsonc", "closedcode.json", "opencode.jsonc", "opencode.json", "config.json"].map(file => path.join(Global.Path.config, file));
+  const candidates = ["closedcode.jsonc", "closedcode.json", "config.json"].map(file => path.join(Global.Path.config, file));
   for (const file of candidates) {
     if (existsSync(file)) return file;
   }
@@ -336,8 +336,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const loadGlobal = Effect.fnUntraced(function* () {
     let result = {};
     result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json")));
-    result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.json")));
-    result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "opencode.jsonc")));
     result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "closedcode.json")));
     result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "closedcode.jsonc")));
     const legacy = path.join(Global.Path.config, "config");

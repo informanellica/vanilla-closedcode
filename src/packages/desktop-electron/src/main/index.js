@@ -84,7 +84,7 @@ function setupApp() {
     return;
   }
   app.on("second-instance", (_event, argv) => {
-    const urls = argv.filter(arg => arg.startsWith("closedcode://") || arg.startsWith("opencode://"));
+    const urls = argv.filter(arg => arg.startsWith("closedcode://"));
     if (urls.length) {
       logger.log("deep link received via second-instance", {
         urls
@@ -114,7 +114,6 @@ function setupApp() {
   }
   void app.whenReady().then(async () => {
     app.setAsDefaultProtocolClient("closedcode");
-    app.setAsDefaultProtocolClient("opencode"); // legacy deep-link compatibility
     registerRendererProtocol();
     setDockIcon();
     setupAutoUpdater();
@@ -367,12 +366,9 @@ async function getSidecarPort() {
 function sqliteFileExists() {
   const xdg = process.env.XDG_DATA_HOME;
   const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share");
-  // Check both canonical closedcode and legacy opencode directory/file combinations
-  for (const dir of ["closedcode", "opencode"]) {
-    for (const file of ["closedcode.db", "opencode.db"]) {
-      if (existsSync(join(base, dir, file))) return true;
-    }
-  }
+  // Only check the canonical closedcode directory/file; never inspect a
+  // coexisting opencode install's data directory.
+  if (existsSync(join(base, "closedcode", "closedcode.db"))) return true;
   return false;
 }
 function setupAutoUpdater() {

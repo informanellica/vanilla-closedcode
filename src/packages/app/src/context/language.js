@@ -159,7 +159,7 @@ export function normalizeLocale(value) {
 function readStoredLocale() {
   if (typeof localStorage !== "object") return;
   try {
-    const raw = localStorage.getItem("closedcode.global.dat:language") ?? localStorage.getItem("opencode.global.dat:language");
+    const raw = localStorage.getItem("closedcode.global.dat:language");
     if (!raw) return;
     const next = JSON.parse(raw);
     if (typeof next?.locale !== "string") return;

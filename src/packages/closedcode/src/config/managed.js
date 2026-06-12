@@ -7,24 +7,23 @@ import { Process } from "#util/process.js";
 const log = Log.create({
   service: "config"
 });
-// macOS managed-preferences domains: prefer the closedcode domain, fall back to
-// the legacy opencode one so existing MDM profiles keep working.
-const MANAGED_PLIST_DOMAINS = ["ai.closedcode.managed", "ai.opencode.managed"];
+// macOS managed-preferences domain. Only the closedcode domain is read; we
+// never inspect a coexisting opencode install's managed configuration.
+const MANAGED_PLIST_DOMAINS = ["ai.closedcode.managed"];
 
 // Keys injected by macOS/MDM into the managed plist that are not closedcode config
 const PLIST_META = new Set(["PayloadDisplayName", "PayloadIdentifier", "PayloadType", "PayloadUUID", "PayloadVersion", "_manualProfile"]);
 function systemManagedConfigDir() {
-  // Prefer the closedcode dir; fall back to a pre-existing legacy opencode dir.
-  const pick = (next, legacy) => (!existsSync(next) && existsSync(legacy) ? legacy : next);
+  // Only the closedcode managed dir is used; never fall back to an opencode dir.
   switch (process.platform) {
     case "darwin":
-      return pick("/Library/Application Support/closedcode", "/Library/Application Support/opencode");
+      return "/Library/Application Support/closedcode";
     case "win32": {
       const pd = process.env.ProgramData || "C:\\ProgramData";
-      return pick(path.join(pd, "closedcode"), path.join(pd, "opencode"));
+      return path.join(pd, "closedcode");
     }
     default:
-      return pick("/etc/closedcode", "/etc/opencode");
+      return "/etc/closedcode";
   }
 }
 export function managedConfigDir() {

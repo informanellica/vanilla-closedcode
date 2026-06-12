@@ -1,6 +1,6 @@
 export const deepLinkEvent = "closedcode:deep-link";
 const parseUrl = input => {
-  if (!input.startsWith("closedcode://") && !input.startsWith("opencode://")) return;
+  if (!input.startsWith("closedcode://")) return;
   if (typeof URL.canParse === "function" && !URL.canParse(input)) return;
   try {
     return new URL(input);

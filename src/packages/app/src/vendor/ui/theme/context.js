@@ -47,7 +47,7 @@ export const {
 } = createSimpleContext({
   name: "Theme",
   init: props => {
-    const stored = read(STORAGE_KEYS.COLOR_SCHEME) ?? read("opencode-color-scheme");
+    const stored = read(STORAGE_KEYS.COLOR_SCHEME);
     const colorScheme = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const [store, setStore] = createStore({
       colorScheme,

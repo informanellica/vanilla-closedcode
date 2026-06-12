@@ -26,10 +26,10 @@ const getTuiConfig = async directory => Effect.runPromise(TuiConfig.Service.use(
 afterEach(async () => {
   delete process.env.CLOSEDCODE_CONFIG;
   delete process.env.CLOSEDCODE_TUI_CONFIG;
-  await fs.rm(path.join(Global.Path.config, "opencode.json"), {
+  await fs.rm(path.join(Global.Path.config, "closedcode.json"), {
     force: true
   }).catch(() => {});
-  await fs.rm(path.join(Global.Path.config, "opencode.jsonc"), {
+  await fs.rm(path.join(Global.Path.config, "closedcode.jsonc"), {
     force: true
   }).catch(() => {});
   await fs.rm(path.join(Global.Path.config, "tui.json"), {
@@ -47,7 +47,7 @@ test("keeps server and tui plugin merge semantics aligned", async () => {
       await fs.mkdir(local, {
         recursive: true
       });
-      await writeFile(path.join(Global.Path.config, "opencode.json"), JSON.stringify({
+      await writeFile(path.join(Global.Path.config, "closedcode.json"), JSON.stringify({
         plugin: [["shared-plugin@1.0.0", {
           source: "global"
         }], "global-only@1.0.0"]

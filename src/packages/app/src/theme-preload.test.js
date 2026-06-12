@@ -36,14 +36,9 @@ describe("theme preload", () => {
     run();
     expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
   });
-  test("falls back to legacy opencode-color-scheme key", () => {
+  test("ignores legacy opencode-color-scheme key", () => {
     localStorage.setItem("opencode-color-scheme", "dark");
-    run();
-    expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
-  });
-  test("canonical key takes precedence over legacy key", () => {
-    localStorage.setItem("closedcode-color-scheme", "light");
-    localStorage.setItem("opencode-color-scheme", "dark");
+    setMatchMedia(false);
     run();
     expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
   });

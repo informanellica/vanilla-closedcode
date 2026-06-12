@@ -88,7 +88,7 @@ async function check(map) {
   try {
     await writeConfig(globalTmp.path, {
       snapshot: false
-    });
+    }, "closedcode.json");
     await WithInstance.provide({
       directory: map(tmp.path),
       fn: async () => {
@@ -172,7 +172,7 @@ test("updates global config and omits empty shell key in json", async () => {
     init: async dir => {
       await writeConfig(dir, {
         shell: "bash"
-      });
+      }, "closedcode.json");
     }
   });
   const prev = Global.Path.config;
@@ -182,7 +182,7 @@ test("updates global config and omits empty shell key in json", async () => {
     await saveGlobal({
       shell: ""
     });
-    const writtenConfig = await Filesystem.readJson(path.join(tmp.path, "opencode.json"));
+    const writtenConfig = await Filesystem.readJson(path.join(tmp.path, "closedcode.json"));
     expect("shell" in writtenConfig).toBe(false);
   } finally {
     ;
@@ -193,7 +193,7 @@ test("updates global config and omits empty shell key in json", async () => {
 test("updates global config and omits empty shell key in jsonc", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.jsonc"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.jsonc"), JSON.stringify({
         shell: "bash",
         model: "test/model"
       }));
@@ -206,7 +206,7 @@ test("updates global config and omits empty shell key in jsonc", async () => {
     await saveGlobal({
       shell: ""
     });
-    const file = path.join(tmp.path, "opencode.jsonc");
+    const file = path.join(tmp.path, "closedcode.jsonc");
     const writtenConfig = await Filesystem.readText(file);
     const parsed = ConfigParse.schema(Config.Info.zod, ConfigParse.jsonc(writtenConfig, file), file);
     expect(writtenConfig).not.toContain('"shell"');

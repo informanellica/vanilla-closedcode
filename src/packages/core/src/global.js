@@ -1,20 +1,14 @@
 import path from "path";
-import { mkdirSync, existsSync } from "fs";
+import { mkdirSync } from "fs";
 import { xdgData, xdgCache, xdgConfig, xdgState } from "xdg-basedir";
 import os from "os";
 import { Context, Effect, Layer } from "effect";
 import { Flock } from "./util/flock.js";
 import { Flag } from "./flag/flag.js";
 const app = "closedcode";
-const legacyApp = "opencode";
-// Prefer the closedcode dir, but if it doesn't exist yet and a legacy opencode
-// dir does, keep using the legacy one so existing installs retain their data.
-const resolveDir = base => {
-  const next = path.join(base, app);
-  const legacy = path.join(base, legacyApp);
-  if (!existsSync(next) && existsSync(legacy)) return legacy;
-  return next;
-};
+// Always resolve to the closedcode-named dir. We never adopt a coexisting
+// opencode install's data directory.
+const resolveDir = base => path.join(base, app);
 const data = resolveDir(xdgData);
 const cache = resolveDir(xdgCache);
 const config = resolveDir(xdgConfig);

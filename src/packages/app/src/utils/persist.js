@@ -5,7 +5,6 @@ import { createResource } from "solid-js";
 import { pathKey } from "@/utils/path-key.js";
 const LEGACY_STORAGE = "default.dat";
 const GLOBAL_STORAGE = "closedcode.global.dat";
-const LEGACY_GLOBAL_STORAGE = "opencode.global.dat";
 const LOCAL_PREFIX = "closedcode.";
 const fallback = new Map();
 const CACHE_MAX_ENTRIES = 500;
@@ -258,17 +257,9 @@ function workspaceStorage(dir) {
   const sum = checksum(dir) ?? "0";
   return `closedcode.workspace.${head}.${sum}.dat`;
 }
-function opencodeWorkspaceStorage(dir) {
-  const head = (dir.slice(0, 12) || "workspace").replace(/[^a-zA-Z0-9._-]/g, "-");
-  const sum = checksum(dir) ?? "0";
-  return `opencode.workspace.${head}.${sum}.dat`;
-}
 function legacyWorkspaceStorage(dir) {
   const storage = workspaceStorage(pathKey(dir));
   const result = new Set();
-  // Pre-rebrand opencode.* workspace files (read as legacy fallback).
-  result.add(opencodeWorkspaceStorage(pathKey(dir)));
-  result.add(opencodeWorkspaceStorage(dir));
   const raw = workspaceStorage(dir);
   if (raw !== storage) result.add(raw);
   const key = pathKey(dir);
@@ -374,7 +365,6 @@ export const Persist = {
   global(key, legacy) {
     return {
       storage: GLOBAL_STORAGE,
-      legacyStorageNames: [LEGACY_GLOBAL_STORAGE],
       key,
       legacy
     };

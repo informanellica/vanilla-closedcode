@@ -5,7 +5,7 @@
   // "system" | "light" | "dark"; "system" resolves via prefers-color-scheme.
   var scheme = "system"
   try {
-    var stored = localStorage.getItem("closedcode-color-scheme") || localStorage.getItem("opencode-color-scheme")
+    var stored = localStorage.getItem("closedcode-color-scheme")
     if (stored === "light" || stored === "dark" || stored === "system") scheme = stored
   } catch (e) {}
   var prefersDark =
