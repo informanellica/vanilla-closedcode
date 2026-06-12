@@ -120,6 +120,14 @@ function setupApp() {
     setupAutoUpdater();
     setupLocalLLMCors();
     await initialize();
+  }).catch(error => {
+    // Without this, a failed boot (e.g. the sidecar import throwing) is an
+    // unhandled rejection: no window ever opens but the process lives on,
+    // holding the single-instance lock so retries die silently too.
+    logger.error("initialization failed", error);
+    dialog.showErrorBox("vanilla-closedcode failed to start", String(error?.stack ?? error));
+    killSidecar();
+    app.exit(1);
   });
 }
 function isLocalLLMHost(hostname) {
