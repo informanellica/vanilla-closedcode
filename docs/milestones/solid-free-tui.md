@@ -84,8 +84,28 @@ T2  [IN PROGRESS] thin first-party TUI layer on terminal-kit. **Foundation DONE*
     - scroll.js: bottom-pinned scroll windowing for the chat timeline
     - screen.js: createApp = ScreenBuffer + reactive render loop
       (createRenderEffect -> paint -> delta draw; input dispatched in batch())
-    **Remaining T2 widgets:** Input (cursor/editing/CJK), List/Select (roving
-    focus + typeahead), Dialog/overlay region, a focus model + keymap router.
+    **Widgets DONE** (runtime tests 45/45): input.js (createTextInput — CJK
+    code-point cursor + width-aware draw), list.js (createSelectList — roving
+    focus + typeahead), focus.js (createKeyRouter LAYER STACK so Escape closes
+    only the top dialog + createFocusRing Tab cycling), dialog.js (centerBox).
+    → T2 toolkit COMPLETE.
+T3  [TODO — the bulk] Re-architect the TUI app onto the T2 toolkit. The 112
+    components (e.g. DialogStatus = 380 lines) are compiled Solid-JSX over
+    @opentui's retained Renderable tree with reactive logic (createMemo/For/
+    Show/Switch) + context (useTheme/useDialog/useSync). T2 is IMMEDIATE-MODE
+    (state -> draw functions), so each component is REWRITTEN as a controller
+    (signals + handleKey) + a draw(region) function, and app.js's
+    @opentui `render()` mount becomes `createApp(rootDraw)`. This is one coherent
+    re-architecture of the render model, not 112 independent ports — sequence it:
+    (1) migrate the app shell (app.js render setup, RendererContext ->
+        createApp + a root layout: header/timeline/prompt/status),
+    (2) the prompt + autocomplete + message timeline (the core chat loop),
+    (3) the dialogs (createSelectList/centerBox cover most), grouped by family,
+    (4) status/logo/misc.
+    Reuse solid-js core (For/Show/createMemo/context) from tui/runtime/reactivity.js
+    (NOT node's solid-js — it's SSR/non-reactive). Snapshot-test screens by
+    rendering state into a detached ScreenBuffer (works without a TTY, as the
+    runtime tests do) + a manual `closedcode tui` smoke per stage.
     Original T2 design notes:
     - a single ScreenBuffer sized to the terminal, redrawn on resize;
     - a render() loop: state -> draw functions -> ScreenBuffer.draw({delta:true});
