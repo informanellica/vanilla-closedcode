@@ -1,7 +1,7 @@
-import { createComponent as _$createComponent } from "solid-js/web";
 // @refresh reload
 
 import * as Sentry from "@sentry/solid";
+import { createComponent } from "solid-js";
 import { render } from "solid-js/web";
 import { AppBaseProviders, AppInterface } from "@/app.js";
 import { PlatformProvider } from "@/context/platform.js";
@@ -125,12 +125,12 @@ if (root instanceof HTMLElement) {
       url: getCurrentUrl()
     }
   };
-  render(() => _$createComponent(PlatformProvider, {
+  render(() => createComponent(PlatformProvider, {
     value: platform,
     get children() {
-      return _$createComponent(AppBaseProviders, {
+      return createComponent(AppBaseProviders, {
         get children() {
-          return _$createComponent(AppInterface, {
+          return createComponent(AppInterface, {
             get defaultServer() {
               return ServerConnection.Key.make(getDefaultUrl());
             },

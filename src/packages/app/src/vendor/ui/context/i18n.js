@@ -1,32 +1,8 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createContext, useContext } from "solid-js";
-import { dict as en } from "../i18n/en.js";
-function resolveTemplate(text, params) {
-  if (!params) return text;
-  return text.replace(/{{\s*([^}]+?)\s*}}/g, (_, rawKey) => {
-    const key = String(rawKey);
-    const value = params[key];
-    return value === undefined ? "" : String(value);
-  });
-}
-const fallback = {
-  locale: () => "en",
-  t: (key, params) => {
-    const value = en[key] ?? String(key);
-    return resolveTemplate(value, params);
-  }
-};
-const Context = createContext(fallback);
-export function I18nProvider(props) {
-  return _$createComponent(Context.Provider, {
-    get value() {
-      return props.value;
-    },
-    get children() {
-      return props.children;
-    }
-  });
-}
-export function useI18n() {
-  return useContext(Context);
-}
+// The app consolidated the vendor contexts into @/lib/context.js and mounts the
+// I18nProvider from there (app.js UiI18nBridge wraps the language context).
+// Re-export the i18n context from that single source so vendor UI components
+// consume the SAME context instance the app provides — a parallel createContext
+// here would silently serve the built-in English fallback dictionary instead of
+// the live locale/t bridge (no error is thrown because the context has a
+// default value).
+export { I18nProvider, useI18n } from "@/lib/context.js";

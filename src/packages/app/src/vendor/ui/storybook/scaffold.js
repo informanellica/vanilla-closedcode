@@ -1,12 +1,16 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-var _tmpl$ = /*#__PURE__*/_$template(`<div data-component=storybook-missing><div>Missing component export.</div><div style=opacity:0.7;font-size:12px>Exports: `),
-  _tmpl$2 = /*#__PURE__*/_$template(`<pre data-component=storybook-error style=white-space:pre-wrap>`);
-import { ErrorBoundary } from "solid-js";
+import { createComponent, mergeProps, ErrorBoundary } from "solid-js";
 import { Dynamic } from "solid-js/web";
+
+// Build a detached element from compact HTML (no inter-element whitespace,
+// matching the compiled Solid templates). Static markup only — dynamic
+// strings (export list, error text) are assigned via textContent / text
+// nodes, never interpolated into the markup.
+function template(html) {
+  const wrapper = document.createElement("div");
+  wrapper.innerHTML = html;
+  return wrapper.firstElementChild;
+}
+
 function fn(value) {
   return typeof value === "function";
 }
@@ -18,14 +22,13 @@ function pick(mod, name) {
   const first = Object.keys(mod).find(k => fn(mod[k]));
   if (first) return mod[first];
   return () => {
-    return (() => {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.nextSibling,
-        _el$4 = _el$3.firstChild;
-      _$insert(_el$3, () => Object.keys(mod).join(", ") || "(none)", null);
-      return _el$;
-    })();
+    // Fallback notice when the module has no usable component export.
+    // `mod` is static for this closure, so the exports list is a one-time
+    // text node appended after the "Exports: " label, matching the
+    // compiled insert(..., null) placement.
+    const root = template(`<div data-component="storybook-missing"><div>Missing component export.</div><div style="opacity:0.7;font-size:12px">Exports: </div></div>`);
+    root.lastElementChild.appendChild(document.createTextNode(Object.keys(mod).join(", ") || "(none)"));
+    return root;
   };
 }
 export function create(input) {
@@ -38,16 +41,15 @@ export function create(input) {
     Basic: {
       args: input.args ?? {},
       render: args => {
-        return _$createComponent(ErrorBoundary, {
+        return createComponent(ErrorBoundary, {
           fallback: err => {
-            return (() => {
-              var _el$5 = _tmpl$2();
-              _$insert(_el$5, () => String(err));
-              return _el$5;
-            })();
+            // `err` is fixed for each fallback render — plain textContent.
+            const el = template(`<pre data-component="storybook-error" style="white-space:pre-wrap"></pre>`);
+            el.textContent = String(err);
+            return el;
           },
           get children() {
-            return _$createComponent(Dynamic, _$mergeProps({
+            return createComponent(Dynamic, mergeProps({
               component: component
             }, args));
           }

@@ -15,6 +15,7 @@ import {
 import { Dialog as Kobalte } from "@kobalte/core/dialog";
 import { makeEventListener } from "@solid-primitives/event-listener";
 import { dict as en } from "@/i18n/en.js";
+import { dict as uiEn } from "@/i18n/ui/en.js";
 
 // --- helper.js ---
 export function createSimpleContext(input) {
@@ -239,10 +240,15 @@ function resolveTemplate(text, params) {
     return value === undefined ? "" : String(value);
   });
 }
+// Provider-less default. vendor/ui/context/i18n.js re-exports this context, so
+// vendor components resolve here too when no I18nProvider is mounted (storybook,
+// tests) — merge the vendor ui.* dictionary so they still fall back to English
+// strings instead of raw keys.
+const fallbackDict = { ...en, ...uiEn };
 const fallback = {
   locale: () => "en",
   t: (key, params) => {
-    const value = en[key] ?? String(key);
+    const value = fallbackDict[key] ?? String(key);
     return resolveTemplate(value, params);
   }
 };
