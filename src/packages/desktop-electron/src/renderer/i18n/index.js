@@ -1,4 +1,4 @@
-import * as i18n from "@solid-primitives/i18n";
+import * as i18n from "@/lib/primitives/i18n.js";
 import { dict as desktopEn } from "./en.js";
 import { dict as desktopZh } from "./zh.js";
 import { dict as desktopZht } from "./zht.js";
