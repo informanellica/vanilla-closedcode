@@ -1,6 +1,6 @@
 // @refresh reload
 
-import * as Sentry from "@sentry/solid";
+import * as Sentry from "@sentry/browser";
 import { createComponent } from "solid-js";
 import { render } from "solid-js/web";
 import { AppBaseProviders, AppInterface } from "@/app.js";

@@ -1,5 +1,5 @@
 import { TextField } from "@/bs/text-field.js";
-import * as Sentry from "@sentry/solid";
+import * as Sentry from "@sentry/browser";
 import { Logo } from "@/vendor/ui/components/logo.js";
 import { Button } from "@/bs/button.js";
 import { createComponent, createRenderEffect, createSignal } from "solid-js";

@@ -2,7 +2,7 @@
 // component-valued children (Suspense/Show branches, For-mapped rows): Solid
 // keeps reconciling the accessors instead of freezing a one-time snapshot.
 import { insert as _solidInsert } from "solid-js/web";
-import * as Sentry from "@sentry/solid";
+import * as Sentry from "@sentry/browser";
 import { I18nProvider } from "@/lib/context.js";
 import { DialogProvider } from "@/lib/dialog.js";
 import { FileComponentProvider } from "@/vendor/ui/context/file.js";
@@ -11,7 +11,7 @@ import { File } from "@/vendor/ui/components/file.js";
 import { Font } from "@/vendor/ui/components/font.js";
 import { Splash } from "@/vendor/ui/components/logo.js";
 import { ThemeProvider } from "@/lib/theme.js";
-import { MetaProvider } from "@solidjs/meta";
+import { MetaProvider } from "@/lib/primitives/meta.js";
 import { Navigate, Route, Router } from "@solidjs/router";
 import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import { Effect } from "effect";
