@@ -60,6 +60,36 @@ R3  replace third-party solid deps one at a time (router -> the memory router
 R4  flip the global alias; solid-js leaves package.json.
 ```
 
+## R3 progress (2026-06-12)
+
+Each R3 item is an "internalization": the third-party's used behavior is
+reimplemented in first-party space, still `import`ing from "solid-js" (so it
+follows the R4 import-map flip), and is verified behavior-equivalent on the
+CURRENT real-solid runtime BEFORE the flip.
+
+- **[DONE] @solid-primitives/\*** (7 pkgs) -> `lib/primitives/{event-listener,
+  resize-observer,media,event-bus,timer,storage,i18n}.js`. Faithful ports of the
+  used exports; 33 first-party files repointed to `@/lib/primitives/*`. Zero
+  runtime imports remain. (mechanical repoint — node-check sufficient)
+- **[DONE] solid-list** -> `lib/primitives/solid-list.js` (createList + inlined
+  @corvu access/controllableSignal). **@solidjs/meta** -> `lib/primitives/meta.js`
+  (pass-through MetaProvider — app uses no Title/Meta). **@sentry/solid** ->
+  `@sentry/browser` (only init/captureException/isEnabled used; non-solid pkg).
+- **[TODO — needs build+e2e verification, not node-check]** these are complex
+  runtime reimplementations whose correctness can't be proven statically:
+  - `@solidjs/router` (97 hook sites + Router/Route/Navigate mount in app.js):
+    nested routes, params/search, navigation, useIsRouting.
+  - `@tanstack/solid-query` (17 sites + global-sync bootstrap): QueryClient
+    (fetchQuery/ensureQueryData/invalidate/refetch/setQueryData), useQuery/
+    useQueries/useMutation/useQueryClient, queryOptions/skipToken.
+  - `@thisbeyond/solid-dnd` (9 files) -> bs/ sortable equivalents.
+  - `@kobalte/core` (20 files) -> bs/ equivalents (bs/ already covers a subset).
+
+  Verification plan: build the reimplementations, run the e2e gate with the flip
+  OFF (real solid) to confirm the internalizations are behavior-equivalent, then
+  R4 (flip ON) + e2e again. package.json dep pruning is batched into R4 (one
+  `npm install` to confirm the tree still resolves).
+
 ## Semantics R1 must reproduce (from the campaign's trap list)
 
 - effect/memo dependency tracking with **dynamic dependencies** (re-collected
