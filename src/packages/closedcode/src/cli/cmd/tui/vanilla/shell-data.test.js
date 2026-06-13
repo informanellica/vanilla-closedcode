@@ -37,6 +37,8 @@ function mockBackend() {
       messages: rec("session.messages", () => ({ data: [] })),
       list: rec("session.list", () => ({ data: [] })),
     },
+    permission: { reply: rec("permission.reply") },
+    question: { reply: rec("question.reply"), reject: rec("question.reject") },
     find: { files: rec("find.files", () => ({ data: ["src/app.js", "src/main.js"] })) },
     config: { providers: rec("config.providers", () => ({ data: { providers: [{ id: "anthropic", name: "Anthropic", models: { "opus-4-8": { name: "Opus 4.8" } } }], default: {} } })) },
     app: { agents: rec("app.agents", () => ({ data: [{ name: "build" }, { name: "plan" }] })) },
@@ -131,6 +133,58 @@ function makeShell() {
   const call = backend.calls.find(c => c[0] === "session.shell");
   ok(call, "shell-mode submit called session.shell");
   eq(call[1].command, "ls", "shell command text passed through");
+}
+
+// 6. permission request -> modal captures input + replies via the SDK
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  backend.emit("permission.asked", { id: "perm_1", sessionID: "ses_real", tool: "edit",
+    metadata: { filepath: "src/app.js", diff: "--- a\n+++ b\n@@ -1 +1 @@\n-old\n+new" } });
+  const screen = screenText(shell);
+  ok(screen.includes("Permission"), "permission modal shown");
+  ok(screen.includes("src/app.js"), "modal shows the filepath");
+  ok(screen.includes("+ new") && screen.includes("- old"), "modal renders the diff");
+  ok(screen.includes("Allow once") && screen.includes("Reject"), "modal shows the choices");
+  // the text prompt is captured: typing does not reach it
+  type(shell, "should be ignored");
+  eq(shell.prompt.value(), "", "prompt is disabled while a permission is pending");
+  shell.dispatch("DOWN"); // Allow once -> Allow always
+  shell.dispatch("ENTER");
+  await settle();
+  const call = backend.calls.find(c => c[0] === "permission.reply");
+  ok(call, "permission.reply called");
+  eq([call[1].requestID, call[1].reply], ["perm_1", "always"], "replied 'always' for the request");
+}
+
+// 7. permission Escape -> reject
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  backend.emit("permission.asked", { id: "perm_2", sessionID: "ses_real", tool: "bash", metadata: {} });
+  shell.dispatch("ESCAPE");
+  await settle();
+  const call = backend.calls.find(c => c[0] === "permission.reply");
+  eq(call[1].reply, "reject", "Escape on a permission rejects it");
+}
+
+// 8. question request -> options select replies with answers
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  backend.emit("question.asked", { id: "q_1", sessionID: "ses_real",
+    questions: [{ text: "Pick one", options: [{ label: "Yes", value: "yes" }, { label: "No", value: "no" }] }] });
+  const screen = screenText(shell);
+  ok(screen.includes("Question") && screen.includes("Pick one"), "question modal + text shown");
+  ok(screen.includes("Yes") && screen.includes("No"), "question options shown");
+  shell.dispatch("DOWN"); // Yes -> No
+  shell.dispatch("ENTER");
+  await settle();
+  const call = backend.calls.find(c => c[0] === "question.reply");
+  eq([call[1].requestID, call[1].answers], ["q_1", [["no"]]], "question.reply carries the chosen answer");
 }
 
 console.log(`tui vanilla shell-data tests: ${passed} passed, ${failed} failed`);

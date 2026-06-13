@@ -21,6 +21,7 @@ import { createPrompt, createPromptHistory } from "./prompt.js";
 import { createTimeline } from "./timeline.js";
 import { createToast } from "./toast.js";
 import * as Dialogs from "./dialogs.js";
+import { createPermissionPrompt, createQuestionPrompt } from "./prompts.js";
 
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
@@ -188,9 +189,35 @@ export function createShell(opts = {}) {
   }
   function openStub(title, options) { return Dialogs.select(dialog, { title, theme, now: opts.now, width: 40, options }); }
 
+  // --- permission / question modal (data-driven, not user-opened) ----------
+  let pwId = null, pw = null;
+  function pendingRequest() {
+    if (!data) return null;
+    const sid = currentSid();
+    if (!sid) return null;
+    const perm = data.store.permissions(sid)[0];
+    if (perm) return { kind: "permission", req: perm };
+    const q = data.store.questions(sid)[0];
+    if (q) return { kind: "question", req: q };
+    return null;
+  }
+  function activePrompt() {
+    const p = pendingRequest();
+    if (!p) { pwId = null; pw = null; return null; }
+    if (pwId !== p.req.id) { // rebuild only when the pending request changes (stable select state)
+      pwId = p.req.id;
+      pw = p.kind === "permission"
+        ? createPermissionPrompt(p.req, { theme, now: opts.now, onReply: reply => data.permissionReply(p.req.id, reply) })
+        : createQuestionPrompt(p.req, { theme, now: opts.now, onReply: ans => data.questionReply(p.req.id, ans), onReject: () => data.questionReject(p.req.id) });
+    }
+    return pw;
+  }
+
   // --- base layer: global hotkeys + timeline scroll + the prompt -----------
   router.pushLayer({
     handleKey: (name, dt) => {
+      const ap = activePrompt();
+      if (ap) return ap.handleKey(name, dt); // a pending request captures all input
       if (name === "CTRL_P") { openCommands(); return true; }
       if (route().type === "session" && (name === "PAGE_UP" || name === "PAGE_DOWN")) return timeline.handleKey(name);
       if (prompt.handleKey(name, dt)) return true;
@@ -215,6 +242,15 @@ export function createShell(opts = {}) {
     const right = "Ctrl-P commands  Ctrl-C exit ";
     region.line(0, fit(label + mode, Math.max(0, region.width - right.length), "left") + right, attr(theme, "textMuted"));
   }
+  function drawPromptModal(region, ap, ctx) {
+    const w = Math.min(100, Math.max(24, region.width - 4));
+    const h = Math.min(ap.kind === "permission" ? 24 : 12, Math.max(6, region.height - 4));
+    const inner = centerBox(region, w, h, {
+      title: ap.kind === "permission" ? "Permission" : "Question",
+      fill: " ", fillAttr: attr(theme, "text"), attr: attr(theme, ap.kind === "permission" ? "warning" : "primary"),
+    });
+    ap.draw(inner, ctx);
+  }
   function drawDialog(region, ctx) {
     const top = dialog.current();
     if (!top) return;
@@ -231,6 +267,7 @@ export function createShell(opts = {}) {
     ac.draw(inner, { attr: attr(theme, "text"), activeAttr: { inverse: true } });
   }
   function draw(region, ctx = {}) {
+    const ap = activePrompt();
     const dialogOpen = dialogs().length > 0;
     const home = route().type === "home";
     const promptW = home ? Math.min(HOME_PROMPT_COLS, region.width) : region.width;
@@ -238,10 +275,11 @@ export function createShell(opts = {}) {
     const promptH = prompt.height(promptW);
     column(region, [
       { size: "flex", draw: r => (home ? drawHomeBody(r) : timeline.draw(r)) },
-      { size: promptH, draw: r => prompt.draw(r.sub(aoffset, 0, promptW, r.height), ctx, { focused: !dialogOpen }) },
+      { size: promptH, draw: r => prompt.draw(r.sub(aoffset, 0, promptW, r.height), ctx, { focused: !dialogOpen && !ap }) },
       { size: STATUS_ROWS, draw: drawStatus },
     ]);
-    drawAutocomplete(region, promptH, promptW, aoffset);
+    if (!ap) drawAutocomplete(region, promptH, promptW, aoffset);
+    if (ap) drawPromptModal(region, ap, ctx);
     drawDialog(region, ctx);
     toast.draw(region);
   }

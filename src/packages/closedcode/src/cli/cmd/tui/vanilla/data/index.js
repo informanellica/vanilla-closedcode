@@ -111,6 +111,9 @@ export function createDataLayer(opts = {}) {
 
   const abort = sessionID => sdk.session.abort({ sessionID }).catch(() => {});
   const findFiles = query => sdk.find.files({ query, directory }).then(r => r.data ?? []).catch(() => []);
+  const permissionReply = (requestID, reply, extra = {}) => sdk.permission.reply({ requestID, reply, ...extra }).catch(() => {});
+  const questionReply = (requestID, answers) => sdk.question.reply({ requestID, answers }).catch(() => {});
+  const questionReject = requestID => sdk.question.reject({ requestID }).catch(() => {});
 
-  return { store, start, stop, bootstrap, syncSession, submit, abort, findFiles, ids, get sdk() { return sdk; } };
+  return { store, start, stop, bootstrap, syncSession, submit, abort, findFiles, permissionReply, questionReply, questionReject, ids, get sdk() { return sdk; } };
 }
