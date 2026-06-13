@@ -35,7 +35,14 @@ export function createPermissionPrompt(req = {}, opts = {}) {
       { size: filepath ? 1 : 0, draw: r => r.line(0, truncate(filepath ?? "", r.width), attr(theme, "textMuted")) },
       {
         size: "flex", draw: r => {
-          if (diff) { const lines = renderUnifiedDiff(diff, r.width); for (let i = 0; i < r.height && i < lines.length; i++) drawRichLine(r, i, lines[i], theme); return; }
+          if (diff) {
+            const lines = renderUnifiedDiff(diff, r.width);
+            const overflow = lines.length > r.height;
+            const shown = overflow ? r.height - 1 : lines.length;
+            for (let i = 0; i < shown; i++) drawRichLine(r, i, lines[i], theme);
+            if (overflow) r.line(r.height - 1, truncate(`… (+${lines.length - shown} more lines — open the file to review)`, r.width), attr(theme, "textMuted"));
+            return;
+          }
           if (description) r.line(0, truncate(description, r.width), attr(theme, "text"));
         },
       },

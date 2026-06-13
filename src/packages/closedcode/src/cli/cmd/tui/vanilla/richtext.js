@@ -79,3 +79,14 @@ export function wrapRich(segments, max) {
 export function withGutter(lines, first, rest) {
   return lines.map((line, i) => [i === 0 ? first : rest, ...line]);
 }
+
+// Hard-wrap a single text into rich lines PRESERVING all whitespace — for code /
+// diff bodies where leading indentation is significant (wrapRich is prose-oriented
+// and discards leading whitespace, which would flatten indented code). Tabs are
+// expanded to spaces so they occupy real columns.
+export function wrapCode(text, style, max, tabWidth = 4) {
+  const expanded = String(text ?? "").replace(/\t/g, " ".repeat(tabWidth));
+  const pieces = wrap(expanded, Math.max(1, max));
+  if (!pieces.length) pieces.push("");
+  return pieces.map(p => [seg(p, style)]);
+}

@@ -10,6 +10,8 @@ import { seg, wrapRich, withGutter } from "./richtext.js";
 import { width } from "../runtime/text.js";
 
 // Inline scan -> styled segments. Recurses for nestable spans (bold/italic/link).
+const ALNUM = c => c != null && /[A-Za-z0-9]/.test(c);
+
 function parseInline(text, base = {}) {
   const out = [];
   let buf = "";
@@ -24,15 +26,20 @@ function parseInline(text, base = {}) {
     }
     if ((ch === "*" || ch === "_") && text[i + 1] === ch) { // **bold** / __bold__
       const m = ch + ch, end = text.indexOf(m, i + 2);
-      if (end > i) { flush(); out.push(...parseInline(text.slice(i + 2, end), { ...base, bold: true })); i = end + 2; continue; }
+      // '_' requires word boundaries (CommonMark: no intraword __ emphasis); '*' is loose
+      const boundaryOK = ch === "*" || (!ALNUM(text[i - 1]) && !ALNUM(text[end + 2]));
+      if (end > i && boundaryOK) { flush(); out.push(...parseInline(text.slice(i + 2, end), { ...base, bold: true })); i = end + 2; continue; }
+      buf += m; i += 2; continue; // unbalanced / intraword -> literal "**" (do NOT fall through to single-*)
     }
     if (ch === "~" && text[i + 1] === "~") { // ~~strike~~
       const end = text.indexOf("~~", i + 2);
       if (end > i) { flush(); out.push(...parseInline(text.slice(i + 2, end), { ...base, strike: true })); i = end + 2; continue; }
+      buf += "~~"; i += 2; continue; // unbalanced -> literal
     }
     if (ch === "*" || ch === "_") { // *italic* / _italic_
       const end = text.indexOf(ch, i + 1);
-      if (end > i && text[i + 1] !== " ") { flush(); out.push(...parseInline(text.slice(i + 1, end), { ...base, italic: true })); i = end + 1; continue; }
+      const boundaryOK = ch === "*" || (!ALNUM(text[i - 1]) && !ALNUM(text[end + 1]));
+      if (end > i && text[i + 1] !== " " && boundaryOK) { flush(); out.push(...parseInline(text.slice(i + 1, end), { ...base, italic: true })); i = end + 1; continue; }
     }
     if (ch === "[") { // [label](url)
       const close = text.indexOf("]", i + 1);
@@ -45,6 +52,18 @@ function parseInline(text, base = {}) {
   }
   flush();
   return out.length ? out : [seg("", base)];
+}
+
+// Wrap `segs` under a gutter (bullet/quote/number). The wrap budget comes from the
+// gutter's DISPLAY width; if the gutter is as wide as the pane (inner < 1) the
+// gutter is dropped so content is never shoved entirely off-region (which silently
+// lost whole lines, worst for 2-col CJK glyphs).
+function gutterBlock(segs, first, rest, W) {
+  const gw = Math.max(width(first.text), width(rest.text));
+  const inner = W - gw;
+  // need >=2 inner cols to hold a fullwidth CJK glyph; otherwise drop the gutter
+  if (inner < 2) return wrapRich(segs, Math.max(1, W));
+  return withGutter(wrapRich(segs, inner), first, rest);
 }
 
 const HR = /^\s*([-*_])(\s*\1){2,}\s*$/;
@@ -88,24 +107,22 @@ export function markdownToRichLines(md, maxWidth, opts = {}) {
     const bq = line.match(BLOCKQUOTE);
     if (bq) {
       flushPara();
-      const inner = wrapRich(parseInline(bq[1], { ...base, dim: true }), Math.max(1, W - 2));
-      for (const l of withGutter(inner, seg("▌ ", { token: "markdownQuote", dim: true }), seg("▌ ", { token: "markdownQuote", dim: true }))) lines.push(l);
+      const g = seg("▌ ", { token: "markdownQuote", dim: true });
+      for (const l of gutterBlock(parseInline(bq[1], { ...base, dim: true }), g, g, W)) lines.push(l);
       continue;
     }
     const ul = line.match(UL);
     if (ul) {
       flushPara();
       const indent = " ".repeat(ul[1].length);
-      const inner = wrapRich(parseInline(ul[2], base), Math.max(1, W - ul[1].length - 2));
-      for (const l of withGutter(inner, seg(indent + "• ", { token: "primary" }), seg(indent + "  ", base))) lines.push(l);
+      for (const l of gutterBlock(parseInline(ul[2], base), seg(indent + "• ", { token: "primary" }), seg(indent + "  ", base), W)) lines.push(l);
       continue;
     }
     const ol = line.match(OL);
     if (ol) {
       flushPara();
       const marker = ol[1] + ol[2] + ". ";
-      const inner = wrapRich(parseInline(ol[3], base), Math.max(1, W - marker.length));
-      for (const l of withGutter(inner, seg(marker, { token: "primary" }), seg(" ".repeat(marker.length), base))) lines.push(l);
+      for (const l of gutterBlock(parseInline(ol[3], base), seg(marker, { token: "primary" }), seg(" ".repeat(width(marker)), base), W)) lines.push(l);
       continue;
     }
     para.push(line.trim());

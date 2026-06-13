@@ -5,12 +5,16 @@
 // standard unified-diff string, and computeLineDiff+renderLineDiff for a raw
 // before/after pair (LCS line diff). Width-aware / CJK-safe; long lines wrap with
 // a 2-col hanging indent so the +/- gutter stays aligned.
-import { seg, wrapRich, withGutter } from "./richtext.js";
-import { truncate } from "../runtime/text.js";
+import { seg } from "./richtext.js";
+import { truncate, wrap } from "../runtime/text.js";
 
+// Wrap a diff/code body PRESERVING leading indentation (hard char-wrap, not the
+// prose wrapRich which would strip it), with a 2-col +/- gutter. Tabs -> spaces.
 function gutterLines(body, token, marker, width) {
-  const wrapped = wrapRich([seg(body, { token })], Math.max(1, width - 2));
-  return withGutter(wrapped, seg(marker + " ", { token, bold: marker !== " " }), seg("  ", { token }));
+  const inner = Math.max(1, width - 2);
+  const pieces = wrap(String(body ?? "").replace(/\t/g, "    "), inner);
+  if (!pieces.length) pieces.push("");
+  return pieces.map((p, i) => [seg(i === 0 ? marker + " " : "  ", { token, bold: i === 0 && marker !== " " }), seg(p, { token })]);
 }
 
 // Render a unified-diff string into rich lines.
@@ -19,7 +23,7 @@ export function renderUnifiedDiff(diffText, width) {
   for (const raw of String(diffText ?? "").replace(/\r\n/g, "\n").split("\n")) {
     if (raw.startsWith("+++") || raw.startsWith("---")) { out.push([seg(truncate(raw, width), { token: "textMuted", bold: true })]); continue; }
     if (raw.startsWith("@@")) { out.push([seg(truncate(raw, width), { token: "secondary" })]); continue; }
-    if (raw.startsWith("\\")) { out.push([seg(truncate(raw, width), { token: "diffContext", dim: true })]); continue; }
+    if (raw.startsWith("\\ ")) { out.push([seg(truncate(raw, width), { token: "diffContext", dim: true })]); continue; } // git "\ No newline at end of file"
     if (raw.startsWith("+")) { out.push(...gutterLines(raw.slice(1), "diffAdded", "+", width)); continue; }
     if (raw.startsWith("-")) { out.push(...gutterLines(raw.slice(1), "diffRemoved", "-", width)); continue; }
     out.push(...gutterLines(raw.startsWith(" ") ? raw.slice(1) : raw, "diffContext", " ", width));
@@ -27,10 +31,20 @@ export function renderUnifiedDiff(diffText, width) {
   return out;
 }
 
+// Split into lines, treating "" as ZERO lines and dropping the single trailing
+// "" produced by a final newline — so creating/clearing a file (or just adding a
+// trailing newline) doesn't render a phantom +/- blank line.
+function splitLines(t) {
+  if (t == null || t === "") return [];
+  const lines = String(t).split("\n");
+  if (lines.length > 1 && lines[lines.length - 1] === "") lines.pop();
+  return lines;
+}
+
 // Minimal LCS line diff between two texts -> [{ type:"add"|"del"|"ctx", text }].
 export function computeLineDiff(oldText, newText) {
-  const a = String(oldText ?? "").split("\n");
-  const b = String(newText ?? "").split("\n");
+  const a = splitLines(oldText);
+  const b = splitLines(newText);
   const n = a.length, m = b.length;
   const dp = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
   for (let i = n - 1; i >= 0; i--)

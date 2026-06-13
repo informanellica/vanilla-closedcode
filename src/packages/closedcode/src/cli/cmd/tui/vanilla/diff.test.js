@@ -42,5 +42,27 @@ const tokenOf = l => (l.find(s => s.text.trim()) || l[0] || {}).style?.token;
   ok(wide.length > 1, "long line wrapped to multiple rows");
 }
 
+// --- regressions from the renderer bug-hunt -------------------------------
+{
+  // leading indentation preserved (the HIGH bug: code structure was flattened)
+  const l = renderUnifiedDiff("+        deeply.indented()", 40).find(x => text(x).includes("deeply"));
+  ok(text(l).includes("        deeply.indented()"), "diff preserves 8-space leading indentation");
+  // nested indentation stays distinct
+  const nested = renderTextDiff("def f():\n    if x:\n        return 1", "def f():\n    if x:\n        return 2", 60).map(text);
+  ok(nested.some(x => x.includes("    if x:")), "4-space indent kept");
+  ok(nested.some(x => x.includes("        return")), "8-space indent kept distinct from 4-space");
+  // tabs expand to spaces (not dropped)
+  ok(text(renderUnifiedDiff("+\tindented", 40)[0]).includes("    indented"), "leading tab expands to spaces");
+}
+{
+  // empty-side diff: no phantom blank +/- line (new-file write)
+  eq(computeLineDiff("", "x\ny"), [{ type: "add", text: "x" }, { type: "add", text: "y" }], "new-file diff has no phantom 'del' blank line");
+  eq(computeLineDiff("x\ny", ""), [{ type: "del", text: "x" }, { type: "del", text: "y" }], "cleared-file diff has no phantom 'add' blank line");
+  eq(computeLineDiff("line1", "line1\n"), [{ type: "ctx", text: "line1" }], "trailing-newline only -> no phantom add");
+  // backslash content line is NOT mistaken for the '\\ No newline' marker
+  const bs = renderUnifiedDiff("\\windows\\path", 50)[0];
+  ok(text(bs).startsWith("  "), "backslash content line keeps a context gutter (not the No-newline marker)");
+}
+
 console.log(`tui vanilla diff tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
