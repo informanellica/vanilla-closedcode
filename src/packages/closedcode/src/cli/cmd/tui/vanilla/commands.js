@@ -276,6 +276,68 @@ export function buildCommands(ctx = {}) {
     notify(`Diff view: ${ctx.diffView?.() ?? "unified"}`, "info");
   }
 
+  // Run a skill: skills are store commands with source === "skill". Opens a
+  // select over them and submits the chosen one as a slash command via the data
+  // layer (which creates a session lazily when there is none — see data/index.js
+  // submit()). Defensive: no throw if store/submit are absent.
+  async function runSkill() {
+    const skills = (store?.commands?.() ?? []).filter(c => c.source === "skill");
+    if (!skills.length) { notify("No skills available", "warning"); return; }
+    const options = skills.map(c => ({
+      label: c.name + (c.description ? "  ·  " + c.description : ""),
+      value: c.name,
+    }));
+    await Dialogs.select(dialog, {
+      ...base, title: "Run a skill", options,
+      onSelect: it => {
+        if (!it) return; // escaped
+        // submit() creates a session when currentSid() is undefined, so it is safe
+        // to call unconditionally; fall back to a toast if the data layer lacks it.
+        if (typeof data?.submit === "function") {
+          Promise.resolve(data.submit(currentSid(), "/" + it.value, { agent: selection?.agent?.current?.() })).catch(e => notify(errMsg(e), "error"));
+        } else {
+          notify(`Skill: ${it.value}`, "info");
+        }
+      },
+    });
+  }
+
+  // MCP servers: read-only status view. The sdk.mcp.status method may be absent
+  // in some builds (optional chaining + .catch), and the response shape is not
+  // guaranteed — handle both a name->status object map and an array of records.
+  async function mcpStatus() {
+    const res = await ctx.data?.sdk?.mcp?.status?.({}).catch(() => undefined);
+    const raw = res?.data ?? res;
+    const servers = [];
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      // Object map: { [name]: status } where status is a string or a record.
+      for (const [name, v] of Object.entries(raw)) {
+        const status = typeof v === "string" ? v : (v?.status ?? v?.state ?? (v?.connected ? "connected" : "disconnected"));
+        servers.push({ name, status: String(status ?? "unknown") });
+      }
+    } else if (Array.isArray(raw)) {
+      // Array of records: { name|id, status|state|connected }.
+      for (const v of raw) {
+        const name = v?.name ?? v?.id ?? "(unknown)";
+        const status = v?.status ?? v?.state ?? (v?.connected ? "connected" : "disconnected");
+        servers.push({ name: String(name), status: String(status ?? "unknown") });
+      }
+    }
+    if (!servers.length) {
+      await Dialogs.alert(dialog, { ...base, title: "MCP servers", message: "No MCP servers connected." });
+      return;
+    }
+    const options = servers.map(s => ({ label: `${s.name}  ·  ${s.status}`, value: s.name }));
+    await Dialogs.select(dialog, {
+      ...base, title: "MCP servers", options,
+      onSelect: it => {
+        if (!it) return; // escaped
+        const s = servers.find(x => x.name === it.value);
+        notify(`${it.value}: ${s?.status ?? "unknown"}`, "info");
+      },
+    });
+  }
+
   async function exit() { onExit?.(); }
 
   // --------------------------------------------------------------------------
@@ -298,6 +360,8 @@ export function buildCommands(ctx = {}) {
     { label: "Switch theme", value: "theme.switch", slash: "theme", category: "Config", run: switchTheme },
     { label: "Connect provider", value: "provider.connect", slash: "connect", category: "Config", run: connectProvider },
     { label: "Toggle split / unified diff", value: "diff.view", slash: "diff", category: "View", run: toggleDiffView },
+    { label: "Run a skill", value: "skill.run", slash: "skills", category: "Tools", run: runSkill },
+    { label: "MCP servers", value: "mcp.status", slash: "mcp", category: "Tools", run: mcpStatus },
     { label: "View status", value: "app.status", slash: "status", category: "App", run: viewStatus },
     { label: "Help", value: "app.help", slash: "help", category: "App", run: help },
     { label: "Exit", value: "app.exit", slash: "exit", category: "App", run: exit },

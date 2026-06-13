@@ -68,5 +68,66 @@ const exited = c => c.some(([k, v]) => k === "fullscreen" && v === false);
   eq(draws, afterStart, "repaint() after stop() draws nothing (no stray frame over the restored shell)");
 }
 
+// 4. mouse: enabled -> grabs in drag mode + routes "mouse" events to onMouse
+{
+  const term = mockTerm();
+  const got = [];
+  const app = createApp(() => {}, { terminal: term, createBuffer: mockBuffer, installProcessHandlers: false, mouse: true });
+  app.onMouse((name, data) => got.push([name, data]));
+  app.start();
+  ok(term.calls.some(([k, v]) => k === "grabInput" && v && v.mouse === "drag"), "mouse:true grabs input in drag mode");
+  term.emit("mouse", "MOUSE_WHEEL_UP", { x: 3, y: 2 });
+  eq(got, [["MOUSE_WHEEL_UP", { x: 3, y: 2 }]], "mouse event routed to onMouse handler");
+  app.stop();
+  ok(!(term.listeners.mouse || []).length, "stop() removes the mouse listener");
+}
+
+// 5. mouse: disabled by default -> no mouse grab, no mouse listener
+{
+  const term = mockTerm();
+  const app = createApp(() => {}, { terminal: term, createBuffer: mockBuffer, installProcessHandlers: false });
+  app.start();
+  ok(term.calls.some(([k, v]) => k === "grabInput" && (!v || v.mouse === false)), "mouse off by default (grab mouse:false)");
+  ok(!(term.listeners.mouse || []).length, "no mouse listener when mouse disabled");
+  app.stop();
+}
+
+// 6. suspend(): hands the TTY back during fn, re-enters fullscreen after
+{
+  const term = mockTerm();
+  const app = createApp(() => {}, { terminal: term, createBuffer: mockBuffer, installProcessHandlers: false });
+  app.start();
+  const fsEnters = () => term.calls.filter(([k, v]) => k === "fullscreen" && v === true).length;
+  const before = fsEnters();
+  let exitedDuring = null;
+  const ret = await app.suspend(async () => { exitedDuring = exited(term.calls); return "done"; });
+  eq(ret, "done", "suspend returns fn's result");
+  ok(exitedDuring, "fullscreen exited (TTY released) during suspend");
+  ok(fsEnters() > before, "re-entered fullscreen after suspend");
+  app.stop();
+}
+
+// 7. suspend(): paint() is INERT while suspended — a tracked-signal change during
+//    fn() (streaming token / toast timer) must NOT draw over the child process
+{
+  const term = mockTerm();
+  let draws = 0;
+  const countingBuffer = () => ({ fill() {}, put() {}, get() { return { char: " " }; }, draw() { draws++; }, moveTo() {}, drawCursor() {} });
+  const [tick, setTick] = createSignal(0);
+  const app = createApp(() => { tick(); }, { terminal: term, createBuffer: countingBuffer, installProcessHandlers: false });
+  app.start();
+  const beforeSuspend = draws;
+  let duringDraws = null;
+  await app.suspend(async () => {
+    const d0 = draws;
+    setTick(t => t + 1); // tracked-signal write -> render effect re-runs paint()
+    setTick(t => t + 1);
+    duringDraws = draws - d0; // must be 0: paint() bails while suspended
+  });
+  eq(duringDraws, 0, "no buf.draw() during suspend (signal changes don't draw over the child)");
+  ok(draws > beforeSuspend, "exactly one restore paint() after suspend re-enters fullscreen");
+  app.stop();
+}
+
 console.log(`tui screen tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

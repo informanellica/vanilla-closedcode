@@ -285,6 +285,8 @@ export function createShell(opts = {}) {
       case "help_show": registry ? run("app.help") : openHelp(); break;
       case "sidebar_toggle": sidebar?.toggle(); break;
       case "diff_view_toggle": toggleDiffView(); toast.show({ message: `Diff view: ${diffView()}`, variant: "info" }); break;
+      case "messages_copy": copyLastMessage(); break;
+      case "editor_open": openEditor(); break;
       case "app_exit": opts.onExit?.(); break;
       default: break;
     }
@@ -292,6 +294,40 @@ export function createShell(opts = {}) {
   // Direct (non-leader) bindings safe to fire globally without the prompt seeing
   // the key (Ctrl-T / F2 / Shift-F2 / Shift-Tab). Tab/Enter/Up/Down stay with the
   // widgets, so they're NOT here.
+  // Copy the most recent assistant message's text to the system clipboard (OSC 52).
+  function copyLastMessage() {
+    const msgs = timelineSource() ?? [];
+    let text = "";
+    for (let i = msgs.length - 1; i >= 0 && !text; i--) {
+      if (msgs[i].role !== "assistant") continue;
+      text = (msgs[i].parts ?? []).filter(p => p.type === "text" && p.text).map(p => p.text).join("\n\n").trim();
+    }
+    if (!text) { toast.show({ message: "No assistant message to copy", variant: "warning" }); return; }
+    if (!opts.copyToClipboard) { toast.show({ message: "Clipboard unavailable", variant: "warning" }); return; }
+    opts.copyToClipboard(text);
+    toast.show({ message: "Copied last message", variant: "success" });
+  }
+
+  // Compose the prompt in $EDITOR: hand the TTY to the editor (opts.suspend),
+  // read the edited text back, and load it into the prompt.
+  async function openEditor() {
+    try {
+      const { editInEditor } = await import("./editor.js");
+      const edited = await editInEditor(prompt.value(), { suspend: opts.suspend });
+      if (typeof edited === "string") { prompt.setText(edited.replace(/\n$/, "")); opts.scheduleRepaint?.(0); }
+    } catch (e) { toast.error?.(e); }
+  }
+
+  // Mouse routing: wheel scrolls the timeline; clicks pin/keep follow. A modal or
+  // open dialog owns the screen, so mouse is ignored while one is up.
+  function handleMouse(name, data) {
+    if (activePrompt() || dialogs().length > 0) return false;
+    if (route().type !== "session") return false;
+    if (name === "MOUSE_WHEEL_UP") { timeline.scrollBy(-3); return true; }
+    if (name === "MOUSE_WHEEL_DOWN") { timeline.scrollBy(3); return true; }
+    return false;
+  }
+
   const GLOBAL_DIRECT = new Set(["variant_cycle", "model_cycle_recent", "model_cycle_recent_reverse", "agent_cycle_reverse"]);
   function dispatch(name, dt) {
     // Global escape hatch: Ctrl-C exits even mid-chord / behind a modal.
@@ -382,21 +418,35 @@ export function createShell(opts = {}) {
     catch (e) { toast.error(e); }
   }
 
-  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, sidebar, openCommands, openHelp, dispatch, draw, init, theme, data };
+  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, sidebar, openCommands, openHelp, dispatch, handleMouse, draw, init, theme, data };
 }
 
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.
 export function mountShell(opts = {}) {
   let app;
+  // Mouse on by default (wheel scroll + click + app drag-selection). Native
+  // terminal copy still works via Shift+drag (terminals bypass the app mouse grab
+  // while Shift is held). Pass mouse:false to opt out entirely.
+  const mouse = opts.mouse ?? true;
   const shell = createShell({
     ...opts,
     onExit: () => { app?.stop(); opts.onExit?.(); },
     scheduleRepaint: ms => { const t = setTimeout(() => app?.repaint(), ms + 16); t?.unref?.(); },
+    suspend: fn => app?.suspend(fn),     // hand the TTY to $EDITOR and back
+    copyToClipboard: text => app?.term?.write?.(osc52(text)), // OSC 52 system-clipboard copy
   });
   app = createApp((region, ctx) => shell.draw(region, ctx), {
-    terminal: opts.terminal, mouse: opts.mouse,
+    terminal: opts.terminal, mouse,
     attr: { color: shell.theme.text, bgColor: shell.theme.background }, // clear screen to the theme bg
   });
   app.onKey((name, dt) => shell.dispatch(name, dt));
+  app.onMouse((name, data) => shell.handleMouse(name, data));
   return { app, shell };
+}
+
+// OSC 52 "set clipboard" escape: base64 the text into the terminal's clipboard.
+// Works over SSH / tmux-aware terminals where shelling out to pbcopy/xclip can't.
+export function osc52(text) {
+  const b64 = Buffer.from(String(text ?? ""), "utf8").toString("base64");
+  return `\x1b]52;c;${b64}\x07`;
 }

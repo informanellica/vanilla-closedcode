@@ -202,5 +202,27 @@ const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char());
   ok(exited, "Ctrl-C still exits with a dialog open (was a dead key before)");
 }
 
+// copy last assistant message via <leader>y (OSC 52 clipboard)
+{
+  const copied = [];
+  const shell = createShell({ copyToClipboard: t => copied.push(t), now: () => 0 });
+  shell.pushMessage({ role: "user", parts: [{ type: "text", text: "hi" }] });
+  shell.pushMessage({ role: "assistant", parts: [{ type: "text", text: "the answer" }] });
+  shell.dispatch("CTRL_X");      // arm leader
+  shell.dispatch("y", char());   // <leader>y -> messages_copy
+  eq(copied, ["the answer"], "<leader>y copies the last assistant message to the clipboard");
+}
+
+// mouse wheel scrolls the timeline only in a session route
+{
+  const shell = createShell();
+  shell.navigate({ type: "session", sessionID: "local" });
+  eq(shell.handleMouse("MOUSE_WHEEL_UP", { x: 1, y: 1 }), true, "wheel up handled in a session");
+  eq(shell.handleMouse("MOUSE_WHEEL_DOWN", { x: 1, y: 1 }), true, "wheel down handled in a session");
+  eq(shell.handleMouse("MOUSE_LEFT_BUTTON_PRESSED", { x: 1, y: 1 }), false, "a click is not consumed as a scroll");
+  shell.navigate({ type: "home" });
+  eq(shell.handleMouse("MOUSE_WHEEL_UP", {}), false, "no timeline scroll at the home route");
+}
+
 console.log(`tui vanilla shell tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -37,6 +37,9 @@ function mockDialog() {
   };
 }
 const type = (d, str) => { for (const ch of str) d.dispatch(ch, char()); };
+// Flush pending microtasks so a command that awaits the sdk before opening its
+// dialog (e.g. mcp.status) has actually opened it before we assert/drive it.
+const flush = () => new Promise(r => setTimeout(r, 0));
 
 // Mock data layer: a fixed store + an sdk that records calls and resolves.
 function mockData(overrides = {}) {
@@ -54,6 +57,11 @@ function mockData(overrides = {}) {
     { name: "plan", mode: "primary" },
     { name: "secret", mode: "subagent", hidden: true },
   ];
+  // Store command list (used by the skill picker): defaults to a mix incl. one skill.
+  const commands = overrides.commands ?? [
+    { name: "compact", description: "Compact the session" },
+    { name: "review", description: "Run a code review", source: "skill" },
+  ];
   const sdk = {
     session: {
       update: record("session.update"),
@@ -62,13 +70,20 @@ function mockData(overrides = {}) {
       share: (...a) => { calls.push({ name: "session.share", args: a[0] }); return Promise.resolve({ data: { share: { url: "https://x/abc" } } }); },
       unshare: record("session.unshare"),
     },
+    // overrides.mcp === null removes the group entirely (defensive-path test).
+    ...(overrides.mcp === null ? {} : {
+      mcp: { status: (...a) => { calls.push({ name: "mcp.status", args: a[0] }); return Promise.resolve(overrides.mcp ?? { data: { fs: "connected", git: { status: "disconnected" } } }); } },
+    }),
   };
+  // submit() records its call + resolves with a synthetic session id.
+  const submit = (...a) => { calls.push({ name: "submit", args: { sessionID: a[0], text: a[1], opts: a[2] } }); return Promise.resolve(a[0] ?? "ses_new"); };
   return {
-    calls, sdk,
+    calls, sdk, submit,
     store: {
       sessions: () => sessions,
       providers: () => providers,
       agents: () => agents,
+      commands: () => commands,
       status: () => "complete",
       sessionStatusText: () => "idle",
     },
@@ -321,6 +336,81 @@ const find = (cmds, value) => cmds.find(c => c.value === value);
   const cmds = buildCommands(ctx);
   await find(cmds, "session.new").run();
   eq(navs.at(-1).type, "home", "new session navigates home");
+}
+
+// --- Run a skill: lists skill commands + submits the chosen one -----------
+{
+  const d = mockDialog(), t = mockToast();
+  const { ctx } = mockCtx({ dialog: d, toast: t });
+  const cmds = buildCommands(ctx);
+  const skillCmd = find(cmds, "skill.run");
+  ok(skillCmd && skillCmd.slash === "skills" && skillCmd.category === "Tools", "skill.run command present (/skills, Tools)");
+  const p = skillCmd.run();
+  ok(d.current(), "skill picker opened a dialog");
+  const screen = d.render();
+  ok(screen.includes("review"), "skill picker lists the skill name");
+  ok(screen.includes("compact") === false, "non-skill commands are filtered out");
+  d.dispatch("ENTER"); // pick first (review)
+  await p;
+  const sub = ctx.data.calls.find(c => c.name === "submit");
+  ok(sub, "skill run called data.submit");
+  eq(sub.args.text, "/review", "submit sends the skill as a slash command");
+  eq(sub.args.sessionID, "ses_a", "submit targets the current session");
+}
+
+// --- Run a skill: no skills available -> warning toast --------------------
+{
+  const d = mockDialog(), t = mockToast();
+  const { ctx } = mockCtx({ dialog: d, toast: t, data: mockData({ commands: [{ name: "compact", description: "Compact" }] }) });
+  const cmds = buildCommands(ctx);
+  await find(cmds, "skill.run").run();
+  ok(!d.current(), "no skills -> no dialog opened");
+  ok(t.shown.some(s => s.variant === "warning"), "no skills warns");
+  eq(ctx.data.calls.some(c => c.name === "submit"), false, "no skills does not submit");
+}
+
+// --- MCP servers: object-map status lists servers -------------------------
+{
+  const d = mockDialog(), t = mockToast();
+  const { ctx } = mockCtx({ dialog: d, toast: t });
+  const cmds = buildCommands(ctx);
+  const mcpCmd = find(cmds, "mcp.status");
+  ok(mcpCmd && mcpCmd.slash === "mcp" && mcpCmd.category === "Tools", "mcp.status command present (/mcp, Tools)");
+  const p = mcpCmd.run();
+  await flush(); // mcp.status awaits the sdk before opening its dialog
+  ok(d.current(), "mcp status opened a dialog");
+  const screen = d.render();
+  ok(screen.includes("fs") && screen.includes("connected"), "mcp lists server name + status");
+  ok(screen.includes("git") && screen.includes("disconnected"), "mcp normalizes nested status records");
+  d.dispatch("ENTER"); // pick first (fs)
+  await p;
+  ok(t.shown.some(s => s.message.includes("fs")), "selecting a server toasts its name + status");
+}
+
+// --- MCP servers: array shape also lists servers --------------------------
+{
+  const d = mockDialog(), t = mockToast();
+  const { ctx } = mockCtx({ dialog: d, toast: t, data: mockData({ mcp: { data: [{ name: "fs", status: "connected" }, { id: "git", connected: false }] } }) });
+  const cmds = buildCommands(ctx);
+  const p = find(cmds, "mcp.status").run();
+  await flush(); // mcp.status awaits the sdk before opening its dialog
+  const screen = d.render();
+  ok(screen.includes("fs") && screen.includes("connected"), "mcp array shape lists named server");
+  ok(screen.includes("git") && screen.includes("disconnected"), "mcp array shape derives status from connected flag");
+  d.dispatch("ENTER");
+  await p;
+}
+
+// --- MCP servers: missing sdk.mcp is defensive (no throw) -----------------
+{
+  const d = mockDialog(), t = mockToast();
+  const { ctx } = mockCtx({ dialog: d, toast: t, data: mockData({ mcp: null }) });
+  const cmds = buildCommands(ctx);
+  const p = find(cmds, "mcp.status").run();
+  await flush(); // defensive path still resolves before opening the alert
+  ok(d.render().includes("No MCP servers"), "missing sdk.mcp shows an empty alert (no throw)");
+  d.dispatch("ENTER");
+  await p;
 }
 
 // --- Exit calls onExit -----------------------------------------------------

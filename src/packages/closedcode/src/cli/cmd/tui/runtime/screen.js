@@ -21,7 +21,15 @@ export function createApp(rootDraw, options = {}) {
   let buf = null;
   let disposeRoot = null;
   let running = false;
+  let suspended = false; // true while the TTY is handed to a child (suspend()): paint() must be inert
   const keyHandlers = new Set();
+  const mouseHandlers = new Set();
+
+  // Mouse grab mode passed to terminal-kit grabInput: true -> "drag" (button +
+  // drag motion + wheel, enough for scroll/click/select); a string passes through;
+  // falsy disables mouse (native terminal selection stays available).
+  const mouseMode = options.mouse === true ? "drag" : (options.mouse || false);
+  const grab = () => term.grabInput({ mouse: mouseMode });
 
   function makeBuffer() {
     // ScreenBufferHD = 24-bit color (hex/RGBA themes). options.createBuffer lets
@@ -42,10 +50,11 @@ export function createApp(rootDraw, options = {}) {
   }
 
   function paint() {
-    // Bail if stopped: repaint()/onResize and (notably) a deferred toast repaint
-    // timer can fire AFTER stop() restored the terminal — drawing then would emit
-    // stray escapes over the user's recovered shell.
-    if (!buf || !running) return;
+    // Bail if stopped OR suspended: repaint()/onResize, a deferred toast timer, or
+    // a tracked-signal change (e.g. a streaming token) can fire AFTER stop()
+    // restored the terminal, or WHILE a child process (suspend()) owns the TTY —
+    // drawing then would emit stray escapes over the recovered shell / the child.
+    if (!buf || !running || suspended) return;
     try {
       buf.fill({ attr: baseAttr, char: " " });
       let cursor = null;
@@ -66,8 +75,9 @@ export function createApp(rootDraw, options = {}) {
     term.fullscreen(true);
     term.hideCursor();
     makeBuffer();
-    term.grabInput({ mouse: options.mouse ? "button" : false });
+    grab();
     term.on("key", onKeyEvent);
+    if (mouseMode) term.on("mouse", onMouseEvent);
     term.on("resize", onResize);
     // Process-level net: an async throw must still restore the terminal before
     // the process dies. Opt-out for tests (installProcessHandlers: false).
@@ -93,6 +103,16 @@ export function createApp(rootDraw, options = {}) {
       onFatal(error);
     }
   }
+  // terminal-kit mouse events ("MOUSE_WHEEL_UP", "MOUSE_LEFT_BUTTON_PRESSED",
+  // "MOUSE_DRAG", "MOUSE_LEFT_BUTTON_RELEASED", …) with data { x, y } (1-based
+  // screen coords). Routed to mouse handlers inside a batch, same as keys.
+  function onMouseEvent(name, data) {
+    try {
+      batch(() => { for (const h of [...mouseHandlers]) h(name, data); });
+    } catch (error) {
+      onFatal(error);
+    }
+  }
   function onResize() {
     makeBuffer();
     paint();
@@ -102,6 +122,7 @@ export function createApp(rootDraw, options = {}) {
     if (!running) return;
     running = false;
     term.off("key", onKeyEvent);
+    if (mouseMode) term.off("mouse", onMouseEvent);
     term.off("resize", onResize);
     if (procHandlers) {
       process.off?.("uncaughtException", procHandlers.uncaughtException);
@@ -125,6 +146,44 @@ export function createApp(rootDraw, options = {}) {
     try { onCleanup(off); } catch { /* no owner — caller manages */ }
     return off;
   }
+  // Register a mouse handler (h(name, data)); same lifecycle as onKey.
+  function onMouse(handler) {
+    mouseHandlers.add(handler);
+    const off = () => mouseHandlers.delete(handler);
+    try { onCleanup(off); } catch { /* no owner — caller manages */ }
+    return off;
+  }
 
-  return { start, stop, onKey, repaint: paint, get term() { return term; }, get buffer() { return buf; } };
+  // Temporarily hand the terminal back to a child process (e.g. $EDITOR): leave
+  // fullscreen + release input/mouse so the child owns the TTY, run fn(), then
+  // re-enter fullscreen, re-grab input, and repaint. Restores even if fn throws.
+  // When not running, just runs fn() (nothing to suspend).
+  async function suspend(fn) {
+    if (!running) return fn();
+    suspended = true; // paint() bails now, so any tracked-signal change during fn() can't draw over the child
+    term.off("key", onKeyEvent);
+    if (mouseMode) term.off("mouse", onMouseEvent);
+    term.off("resize", onResize);
+    term.grabInput(false);
+    term.styleReset();
+    term.fullscreen(false);
+    term.showCursor();
+    try {
+      return await fn();
+    } finally {
+      suspended = false; // clear BEFORE the restore paint() so re-entering fullscreen draws once
+      if (running) {
+        term.fullscreen(true);
+        term.hideCursor();
+        makeBuffer();
+        grab();
+        term.on("key", onKeyEvent);
+        if (mouseMode) term.on("mouse", onMouseEvent);
+        term.on("resize", onResize);
+        paint();
+      }
+    }
+  }
+
+  return { start, stop, onKey, onMouse, suspend, repaint: paint, get term() { return term; }, get buffer() { return buf; } };
 }
