@@ -62,7 +62,10 @@ await fs.promises.mkdir(path.join(outDir, "bin"), {
 // Native modules and runtime-specific packages stay external; everything else
 // is bundled so Node's strict ESM resolver doesn't trip on extension-less
 // imports inside CJS-era dependencies (vscode-jsonrpc/node, @parcel/watcher/wrapper).
-const EXTERNAL_NATIVE = new Set(["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi"]);
+// terminal-kit (the vanilla TUI's terminal library) dynamically loads its
+// termconfig/* files (incl. a non-JS README), which esbuild cannot bundle — keep
+// it + its string-kit dep external and resolve them from node_modules at runtime.
+const EXTERNAL_NATIVE = new Set(["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit"]);
 const externalize = {
   name: "externalize-natives",
   setup(build) {

@@ -188,13 +188,9 @@ export const TuiThreadCommand = cmd({
         }).catch(() => {});
       }, 1000).unref?.();
       try {
-        // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
-      // cannot load (the documented third-party interop wall) — load it only
-      // when the TUI actually starts. CLOSEDCODE_VANILLA_TUI routes to the
-      // native-free terminal-kit shell (no @opentui/solid-js in its graph).
-      const { tui } = ["1", "true"].includes(process.env["CLOSEDCODE_VANILLA_TUI"])
-        ? await import("./vanilla/main.js")
-        : await import("./app.js");
+        // The TUI is the native-free terminal-kit vanilla shell (no @opentui /
+      // solid-js / yoga). Loaded lazily so its graph is only built when the TUI runs.
+      const { tui } = await import("./vanilla/main.js");
       await tui({
           url: transport.url,
           async onSnapshot() {
