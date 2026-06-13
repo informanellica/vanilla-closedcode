@@ -114,7 +114,16 @@ export function createDataStore() {
         else if (part.type === "reasoning") { if (part.text) parts.push({ type: "reasoning", text: part.text }); }
         else if (part.type === "tool") {
           const st = part.state ?? {};
-          parts.push({ type: "tool", name: part.tool, title: st.title, status: st.status });
+          const tool = part.tool;
+          let diff, output;
+          if (["edit", "write", "apply_patch", "patch"].includes(tool)) {
+            diff = st.metadata?.diff ?? st.metadata?.patch;
+            if (!diff && st.input && (st.input.oldString != null || st.input.newString != null || st.input.content != null)) {
+              diff = { old: st.input.oldString ?? "", new: st.input.newString ?? st.input.content ?? "" };
+            }
+          }
+          if (typeof st.output === "string" && st.output) output = st.output;
+          parts.push({ type: "tool", name: tool, title: st.title, status: st.status, diff, output });
         } else if (part.type === "file") { parts.push({ type: "file", filename: part.filename ?? part.source?.path }); }
       }
       return { role: m.role, parts };

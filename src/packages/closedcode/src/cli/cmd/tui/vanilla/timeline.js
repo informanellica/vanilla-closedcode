@@ -10,6 +10,9 @@ import { truncate } from "../runtime/text.js";
 import { defaultTheme } from "./theme.js";
 import { seg, wrapRich, withGutter, drawRichLine } from "./richtext.js";
 import { markdownToRichLines } from "./markdown.js";
+import { renderUnifiedDiff, renderTextDiff } from "./diff.js";
+
+const TOOL_DETAIL_CAP = 8; // max detail (diff/output) lines shown per tool part
 
 // One message -> rich display lines.
 function messageLines(msg, width) {
@@ -30,6 +33,13 @@ function messageLines(msg, width) {
       const token = part.status === "error" ? "error" : part.status === "completed" ? "success" : "warning";
       const title = [part.name, part.title].filter(Boolean).join(" ");
       out.push([seg(truncate("● " + title, width), { token })]);
+      // detail: a diff (edit/write) or text output (read/bash/…), indented + capped
+      const innerW = Math.max(1, width - 2);
+      let detail = [];
+      if (part.diff) detail = typeof part.diff === "string" ? renderUnifiedDiff(part.diff, innerW) : renderTextDiff(part.diff.old, part.diff.new, innerW);
+      else if (part.output) detail = part.output.replace(/\r\n/g, "\n").split("\n").map(l => [seg(truncate(l, innerW), { token: "codeBlock", code: true })]);
+      for (const l of detail.slice(0, TOOL_DETAIL_CAP)) out.push([seg("  ", {}), ...l]);
+      if (detail.length > TOOL_DETAIL_CAP) out.push([seg(`  … (+${detail.length - TOOL_DETAIL_CAP} more lines)`, { token: "textMuted", dim: true })]);
     } else if (part.type === "file") {
       out.push([seg(truncate("⏎ " + (part.filename ?? part.path ?? "file"), width), { token: "secondary" })]);
     }
