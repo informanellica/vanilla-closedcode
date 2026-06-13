@@ -23,6 +23,7 @@ import { createToast } from "./toast.js";
 import * as Dialogs from "./dialogs.js";
 import { createPermissionPrompt, createQuestionPrompt } from "./prompts.js";
 import { createSelection } from "./selection.js";
+import { buildCommands } from "./commands.js";
 
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
@@ -66,7 +67,7 @@ export function createShell(opts = {}) {
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();
   const promptCommands = () => (data
-    ? [...SLASH_COMMANDS, ...data.store.commands().filter(c => c.source !== "skill").map(c => ({ name: c.name, description: c.description }))]
+    ? [...registry.filter(c => c.slash).map(c => ({ name: c.slash, description: c.label })), ...data.store.commands().filter(c => c.source !== "skill").map(c => ({ name: c.name, description: c.description }))]
     : SLASH_COMMANDS);
   const prompt = createPrompt({
     theme,
@@ -83,8 +84,9 @@ export function createShell(opts = {}) {
   function onPromptSubmit(text, mode) {
     // Local slash command -> run in the TUI, do not send to the server.
     if (mode === "normal" && text.startsWith("/")) {
-      const cmd = text.slice(1).split(/\s+/)[0];
-      if (SLASH_COMMANDS.some(c => c.name === cmd)) { runCommand(slashToValue(cmd)); return; }
+      const slash = text.slice(1).split(/\s+/)[0];
+      if (registryBySlash) { const cmd = registryBySlash.get(slash); if (cmd) { cmd.run(); return; } }
+      else if (SLASH_COMMANDS.some(c => c.name === slash)) { runCommand(slashToValue(slash)); return; }
     }
     if (data) {
       timeline.pin();
@@ -122,7 +124,21 @@ export function createShell(opts = {}) {
   };
 
   // --- commands ------------------------------------------------------------
+  // Data mode: the full registry (vanilla/commands.js) drives the palette + slash.
+  // Stub mode (no SDK, for shell.test.js): the small inline set below.
+  const registry = data ? buildCommands({ data, dialog, toast, route, navigate, selection, onExit: opts.onExit, theme, now: opts.now }) : null;
+  const registryBySlash = registry ? new Map(registry.filter(c => c.slash).map(c => [c.slash, c])) : null;
+  const runRegistry = value => registry?.find(c => c.value === value)?.run();
+
   function openCommands() {
+    if (registry) {
+      Dialogs.select(dialog, {
+        title: "Commands", theme, now: opts.now,
+        options: registry.map(c => ({ label: c.label, value: c.value, category: c.category })),
+        onSelect: it => { if (it) runRegistry(it.value); },
+      });
+      return;
+    }
     Dialogs.select(dialog, {
       title: "Commands", theme, now: opts.now,
       options: [

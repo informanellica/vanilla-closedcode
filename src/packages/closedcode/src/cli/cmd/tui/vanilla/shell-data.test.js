@@ -35,7 +35,12 @@ function mockBackend() {
       abort: rec("session.abort"),
       get: rec("session.get", ({ sessionID }) => ({ data: { id: sessionID, title: "T", time: {} } })),
       messages: rec("session.messages", () => ({ data: [] })),
-      list: rec("session.list", () => ({ data: [] })),
+      list: rec("session.list", () => ({ data: [{ id: "ses_real", title: "Existing", time: { updated: 9000 } }] })),
+      update: rec("session.update"),
+      delete: rec("session.delete"),
+      summarize: rec("session.summarize"),
+      share: rec("session.share", () => ({ data: { share: { url: "https://x" } } })),
+      unshare: rec("session.unshare"),
     },
     permission: { reply: rec("permission.reply") },
     question: { reply: rec("question.reply"), reject: rec("question.reject") },
@@ -185,6 +190,48 @@ function makeShell() {
   await settle();
   const call = backend.calls.find(c => c[0] === "question.reply");
   eq([call[1].requestID, call[1].answers], ["q_1", [["no"]]], "question.reply carries the chosen answer");
+}
+
+// 9. command registry: palette lists the full set
+{
+  const { shell } = makeShell();
+  await shell.init(); await settle();
+  shell.dispatch("CTRL_P");
+  const screen = screenText(shell);
+  ok(screen.includes("Rename session") && screen.includes("Switch session") && screen.includes("Compact session"),
+    "command palette lists the full registry (rename/switch/compact)");
+}
+
+// 10. /rename runs the registry command -> prompt -> sdk.session.update
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  await settle();
+  type(shell, "/rename");
+  shell.prompt.autocomplete.hide();
+  shell.dispatch("ENTER"); // run rename -> opens the prompt dialog
+  await settle();
+  type(shell, " renamed"); // appends to the prefilled current title
+  shell.dispatch("ENTER"); // submit the rename prompt
+  await settle();
+  const call = backend.calls.find(c => c[0] === "session.update");
+  ok(call, "rename invoked session.update");
+  eq(call[1].sessionID, "ses_real", "rename targets the current session");
+  ok(call[1].title.includes("renamed"), "rename passes the new title");
+}
+
+// 11. /compact runs the registry command -> sdk.session.summarize
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  await settle();
+  type(shell, "/compact");
+  shell.prompt.autocomplete.hide();
+  shell.dispatch("ENTER");
+  await settle();
+  ok(backend.calls.some(c => c[0] === "session.summarize"), "/compact calls session.summarize");
 }
 
 console.log(`tui vanilla shell-data tests: ${passed} passed, ${failed} failed`);
