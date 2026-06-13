@@ -6,10 +6,11 @@
 > url, streams real sessions via `vanilla/data/` (no solid-js/store — immediate-
 > mode rev-bump). Assistant markdown, edit/write/revert diffs (indentation
 > preserved), tool output, and permission/question modals are first-party +
-> adversarially hardened. **293 headless tests green.** @opentui/solid-js stay
-> until the breadth checklist clears (keybinds, remaining dialogs, sidebar, theme
-> 24-bit, syntax highlighting, mouse/selection, plugins) — see "Flip-readiness
-> assessment". Sibling of
+> adversarially hardened; then a 4-way parallel breadth pass added keybinds
+> (leader chords), the command/dialog registry, model/agent/variant selection,
+> and syntax highlighting. **507 headless tests green.** @opentui/solid-js stay
+> until the remaining gaps clear — chiefly 24-bit theme (ScreenBufferHD),
+> mouse/selection, sidebar, plugins — see "Flip-readiness assessment". Sibling of
 > `solid-free-reactivity.md` (the desktop renderer milestone). The reactive core
 > built there (`lib/reactivity.js`) is reused for TUI state; everything else in
 > the TUI rendering stack is replaced by a pure-JavaScript base.
@@ -262,24 +263,33 @@ bump per event batch.
 
 ### Flip-readiness assessment (2026-06-13) — NOT YET; do not delete @opentui
 
-The hard, novel work is done: the chat loop streams real sessions, and the
-markdown/diff/tool/permission/question renderers are first-party + adversarially
-hardened (293 headless tests green). What remains before the vanilla path can be
-made DEFAULT (and @opentui/solid-js/yoga physically removed) is BREADTH, not new
-hard problems — but it is real, and flipping now would regress the live app:
-- [ ] full keybind system (leader Ctrl-X chords + all configurable keybinds)
-- [ ] remaining dialogs: session-list / rename / stash / skill / provider-connect
-      / theme-list / mcp / status / variant / console-org / export
-- [ ] sidebar (files / todos / diffs), subagent view, timeline-jump
-- [ ] model/agent selection persistence + variants + favorites + cycle keybinds
-- [ ] real ThemeProvider (24-bit color — needs terminal-kit ScreenBufferHD, the
-      current stand-in is the 16-color named palette)
-- [ ] per-language syntax highlighting; split-diff view
+The hard, novel work is done, plus a large breadth pass (a 4-way parallel build:
+keybind / syntax-highlight / command-registry / selection, each new-file + self-
+tested, then integrated). **507 headless tests green.** Checklist toward making
+the vanilla path DEFAULT (and removing @opentui/solid-js/yoga):
+- [x] keybind system — vanilla/keybind.js (leader Ctrl-X chords + configurable map),
+      adapter from terminal-kit names, additive to the raw key flow.
+- [x] command/dialog registry — vanilla/commands.js: New/Switch/Rename/Delete/
+      Compact/Share/Unshare/Export session, Switch model/agent/variant/theme,
+      Connect provider, Status, Help, Exit (palette + slash + leader chords).
+- [x] model/agent/variant selection + cycle/favorite — vanilla/selection.js
+      (in-memory; disk persistence still TODO).
+- [x] per-language syntax highlighting — vanilla/syntax.js in markdown fenced code
+      (js/ts/json/python/bash + plaintext; exact-tiling, never throws).
+STILL OPEN (flipping now would still regress):
+- [ ] real ThemeProvider (24-bit color — needs terminal-kit ScreenBufferHD; the
+      current stand-in is the 16-color named palette). The biggest visual gap.
+- [ ] sidebar (files / todos / diffs), subagent view, timeline-jump dialog
+      (needs todo/diff added to the data store).
 - [ ] mouse + text selection/copy, paste-image, external editor, drag-drop
-- [ ] plugin runtime + slots; startup/TTFD; win32 ctrl-c guard / suspend
-Conclusion: deleting @opentui now would break sessions that rely on these (most
-real usage). The default stays @opentui; the vanilla path remains opt-in behind
-`CLOSEDCODE_VANILLA_TUI=1` until the checklist above is cleared.
+      (terminal-kit input; OS-bound, hard to test headlessly).
+- [ ] plugin runtime + slots; startup/TTFD; win32 ctrl-c guard / suspend.
+- [ ] a few dialogs: stash / skill / mcp / console-org; split-diff view; model
+      selection DISK persistence.
+Conclusion: the gap is much smaller (keybinds, most dialogs, selection, syntax
+done), but the remaining items — chiefly 24-bit theme, mouse/selection, sidebar,
+and plugins — mean deleting @opentui now would still regress real usage. Default
+stays @opentui; vanilla remains opt-in behind `CLOSEDCODE_VANILLA_TUI=1`.
 
 ## Risks / open items
 
