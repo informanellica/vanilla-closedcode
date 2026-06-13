@@ -10,7 +10,7 @@
 // headless tests need no SDK). The model (createShell) renders into any region
 // and is driven by dispatch() — headless-testable either way.
 import { createSignal } from "../runtime/reactivity.js";
-import { column, box } from "../runtime/layout.js";
+import { column, row, box } from "../runtime/layout.js";
 import { createKeyRouter } from "../runtime/focus.js";
 import { centerBox } from "../runtime/dialog.js";
 import { fit } from "../runtime/text.js";
@@ -25,6 +25,7 @@ import { createPermissionPrompt, createQuestionPrompt } from "./prompts.js";
 import { createSelection } from "./selection.js";
 import { buildCommands } from "./commands.js";
 import { createKeybind } from "./keybind.js";
+import { createSidebar } from "./sidebar.js";
 
 // Map a terminal-kit combined key NAME ("CTRL_X","ENTER","PAGE_UP",…) to the
 // {name, ctrl, shift, meta} event shape the keybind resolver expects.
@@ -74,6 +75,7 @@ export function createShell(opts = {}) {
 
   // --- selection (model / agent / variant) ---------------------------------
   const selection = data ? createSelection({ data, toast, agent: opts.agent }) : null;
+  const sidebar = data ? createSidebar({ data, theme, sessionID: currentSid }) : null;
   const currentAgentName = () => (selection ? selection.agent.current() : (opts.agent ?? "build"));
   const currentModel = () => (selection ? selection.model.current() : undefined);
   const metaModel = () => (selection ? selection.model.parsed().model : opts.model);
@@ -278,8 +280,9 @@ export function createShell(opts = {}) {
       case "theme_list": registry && run("theme.switch"); break;
       case "status_view": registry ? run("app.status") : openHelp(); break;
       case "help_show": registry ? run("app.help") : openHelp(); break;
+      case "sidebar_toggle": sidebar?.toggle(); break;
       case "app_exit": opts.onExit?.(); break;
-      default: break; // sidebar_toggle etc. — not wired yet
+      default: break;
     }
   }
   // Direct (non-leader) bindings safe to fire globally without the prompt seeing
@@ -348,7 +351,17 @@ export function createShell(opts = {}) {
     const aoffset = home ? Math.max(0, Math.floor((region.width - promptW) / 2)) : 0;
     const promptH = prompt.height(promptW);
     column(region, [
-      { size: "flex", draw: r => (home ? drawHomeBody(r) : timeline.draw(r)) },
+      {
+        size: "flex", draw: r => {
+          if (home) return drawHomeBody(r);
+          if (sidebar?.visible() && r.width > 50) {
+            const sw = Math.min(36, Math.floor(r.width / 3));
+            row(r, [{ size: "flex", draw: rr => timeline.draw(rr) }, { size: sw, draw: rr => sidebar.draw(rr) }]);
+            return;
+          }
+          timeline.draw(r);
+        },
+      },
       { size: promptH, draw: r => prompt.draw(r.sub(aoffset, 0, promptW, r.height), ctx, { focused: !dialogOpen && !ap }) },
       { size: STATUS_ROWS, draw: drawStatus },
     ]);
@@ -365,7 +378,7 @@ export function createShell(opts = {}) {
     catch (e) { toast.error(e); }
   }
 
-  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, openCommands, openHelp, dispatch, draw, init, theme, data };
+  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, sidebar, openCommands, openHelp, dispatch, draw, init, theme, data };
 }
 
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.

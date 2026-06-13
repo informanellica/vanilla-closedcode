@@ -303,5 +303,19 @@ function makeShell() {
   ok(shell.prompt.autocomplete.items().length >= 0, "");
 }
 
+// 18. sidebar: Ctrl-X b toggles it and it shows the session's todos
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  backend.emit("todo.updated", { sessionID: "ses_real", todos: [{ content: "do the thing", status: "pending" }] });
+  shell.dispatch("CTRL_X"); shell.dispatch("b", char()); // sidebar_toggle
+  await settle();
+  ok(shell.sidebar.visible(), "Ctrl-X b opens the sidebar");
+  ok(screenText(shell, 100, 24).includes("do the thing"), "sidebar shows the session todo");
+  shell.dispatch("CTRL_X"); shell.dispatch("b", char());
+  eq(shell.sidebar.visible(), false, "Ctrl-X b again hides it");
+}
+
 console.log(`tui vanilla shell-data tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

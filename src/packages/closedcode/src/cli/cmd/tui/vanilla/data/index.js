@@ -75,13 +75,16 @@ export function createDataLayer(opts = {}) {
   async function syncSession(sessionID) {
     if (!sessionID || synced.has(sessionID)) return;
     synced.add(sessionID);
-    const [session, messages] = await Promise.all([
+    const opt = fn => (fn ? fn({ sessionID }).then(r => r.data).catch(() => undefined) : Promise.resolve(undefined));
+    const [session, messages, todo, diff] = await Promise.all([
       sdk.session.get({ sessionID }).then(r => r.data).catch(() => undefined),
       sdk.session.messages({ sessionID, limit: 100 }).then(r => r.data).catch(() => undefined),
+      opt(sdk.session.todo),
+      opt(sdk.session.diff),
     ]);
     const parts = {};
     for (const m of messages ?? []) if (m.info && m.parts) parts[m.info.id] = m.parts;
-    store.hydrateSession(sessionID, { session, messages: (messages ?? []).map(m => m.info ?? m), parts });
+    store.hydrateSession(sessionID, { session, messages: (messages ?? []).map(m => m.info ?? m), parts, todo, diff });
   }
 
   const isKnownCommand = name => store.commands().some(c => c.name === name);

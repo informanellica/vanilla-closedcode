@@ -83,5 +83,19 @@ const TURN = [
   eq(store.questions("ses_001").length, 0, "question.rejected clears it");
 }
 
+// 5. todo + diff events feed the sidebar accessors
+{
+  const store = createDataStore();
+  store.applyBatch([
+    ev("todo.updated", { sessionID: "ses_001", todos: [{ content: "a", status: "pending" }, { content: "b", status: "completed" }] }),
+    ev("session.diff", { sessionID: "ses_001", diff: { files: [{ path: "x.js", additions: 2 }] } }),
+  ]);
+  eq(store.todos("ses_001").length, 2, "todo.updated stored");
+  eq(store.todos("ses_001")[1].status, "completed", "todo content preserved");
+  eq(store.diff("ses_001").files[0].path, "x.js", "session.diff stored");
+  store.applyBatch([ev("todo.updated", { sessionID: "ses_001", todos: [] })]);
+  eq(store.todos("ses_001").length, 0, "todo.updated replaces wholesale");
+}
+
 console.log(`tui vanilla data-store tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

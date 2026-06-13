@@ -39,6 +39,8 @@ export function createDataStore() {
     sessionStatus: new Map(),     // sessionID -> status object
     permission: new Map(),        // sessionID -> request[]
     question: new Map(),          // sessionID -> request[]
+    todo: new Map(),              // sessionID -> Todo[]
+    diff: new Map(),              // sessionID -> diff (unified string or {files})
     providers: [],                // Provider[]
     agents: [],                   // Agent[]
     commands: [],                 // Command[]
@@ -78,6 +80,8 @@ export function createDataStore() {
       case "permission.replied": { const a = s.permission.get(p.sessionID); if (a) removeById(a, p.requestID); break; }
       case "question.asked": { const a = s.question.get(p.sessionID) ?? (s.question.set(p.sessionID, []), s.question.get(p.sessionID)); upsert(a, p); break; }
       case "question.replied": case "question.rejected": { const a = s.question.get(p.sessionID); if (a) removeById(a, p.requestID); break; }
+      case "todo.updated": s.todo.set(p.sessionID, p.todos ?? []); break;
+      case "session.diff": s.diff.set(p.sessionID, p.diff); break;
       default: return false;
     }
     return true;
@@ -95,10 +99,12 @@ export function createDataStore() {
     if (status) s.status = status;
     bump();
   }
-  function hydrateSession(sessionID, { session, messages, parts } = {}) {
+  function hydrateSession(sessionID, { session, messages, parts, todo, diff } = {}) {
     if (session) upsert(s.sessions, session);
     if (messages) s.message.set(sessionID, [...messages].sort((a, b) => (a.id < b.id ? -1 : 1)));
     if (parts) for (const [mid, arr] of Object.entries(parts)) s.part.set(mid, [...arr].sort((a, b) => (a.id < b.id ? -1 : 1)));
+    if (todo) s.todo.set(sessionID, todo);
+    if (diff !== undefined) s.diff.set(sessionID, diff);
     bump();
   }
 
@@ -152,6 +158,8 @@ export function createDataStore() {
     status: () => (rev(), s.status),
     permissions: sid => (rev(), s.permission.get(sid) ?? []),
     questions: sid => (rev(), s.question.get(sid) ?? []),
+    todos: sid => (rev(), s.todo.get(sid) ?? []),
+    diff: sid => (rev(), s.diff.get(sid)),
     timeline, sessionStatusText,
     _state: s,
   };
