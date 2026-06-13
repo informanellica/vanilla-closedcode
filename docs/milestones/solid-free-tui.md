@@ -1,6 +1,9 @@
 # Milestone: vanilla TUI (remove @opentui/* + solid-js from the terminal UI)
 
-> Status: **plan; de-risking PoC DONE** (2026-06-12). Sibling of
+> Status: **T0–T3 DONE (view layer), T4 flag-flip runnable, removal gated on SDK
+> integration** (2026-06-13). The vanilla `tui/vanilla/` shell runs behind
+> `CLOSEDCODE_VANILLA_TUI=1`; 134 headless tests green; @opentui/solid-js stay
+> until the SDK-integration phase (see "Remaining work"). Sibling of
 > `solid-free-reactivity.md` (the desktop renderer milestone). The reactive core
 > built there (`lib/reactivity.js`) is reused for TUI state; everything else in
 > the TUI rendering stack is replaced by a pure-JavaScript base.
@@ -77,8 +80,9 @@ T1  [DONE, revised] The TUI uses the self-written reactive core DIRECTLY (not a
     reactivity solid-free from the start. (The runtime currently holds a COPY of
     app/src/lib/reactivity.js at tui/runtime/reactivity.js — TODO: consolidate
     the desktop + TUI copies into one shared module, e.g. packages/core.)
-T2  [IN PROGRESS] thin first-party TUI layer on terminal-kit. **Foundation DONE**
-    (packages/closedcode/src/cli/cmd/tui/runtime/, 25 node tests green):
+T2  [DONE] thin first-party TUI layer on terminal-kit. **Foundation + widgets**
+    (packages/closedcode/src/cli/cmd/tui/runtime/, 53 node tests green — incl. the
+    multi-line textarea added in T3):
     - text.js: CJK-aware width/wrap/wordWrap/truncate/sliceCols/fit
     - layout.js: Region (clipped draw) + column/row (fixed+flex) + box
     - scroll.js: bottom-pinned scroll windowing for the chat timeline
@@ -89,27 +93,37 @@ T2  [IN PROGRESS] thin first-party TUI layer on terminal-kit. **Foundation DONE*
     focus + typeahead), focus.js (createKeyRouter LAYER STACK so Escape closes
     only the top dialog + createFocusRing Tab cycling), dialog.js (centerBox).
     → T2 toolkit COMPLETE.
-T3  [IN PROGRESS — the bulk] Re-architect the TUI app onto the T2 toolkit.
-    **Stage 1 (app shell) DONE** — packages/.../tui/vanilla/, 26 node tests green
-    (headless: render the shell model's draw() into a detached ScreenBuffer, drive
-    it with dispatch(), exactly like the runtime tests):
-    - shell.js: createShell() = the immediate-mode replacement for app.js's
-      @opentui render model. State is signals (route home<->session, message
-      timeline, prompt input, dialog stack); the view is ONE rootDraw(region)
-      = column(body / prompt / status) + a centered dialog overlay; keys route
-      through the T2 layer-stack key router (base layer = prompt + global hotkeys;
-      a dialog pushes a capturing layer, Escape closes only the top). A command
-      palette (createSelectList in a centerBox) demonstrates the dialog family.
-      mountShell() wires the model into createApp + onKey.
-    - logo.js: static render of the cli/logo.js wordmark (shadow markers collapsed);
-      the animated shimmer field stays a later (status/logo/misc) stage.
-    - theme.js: stand-in palette mapping the theme TOKENS the shell uses to
-      terminal-kit attrs, until the real ThemeProvider is wired in.
-    Remaining T3 stages onto this shell: (2) the real prompt+autocomplete and the
-    message timeline (replace the stage-1 placeholders); (3) the dialog families
-    (most reduce to createSelectList/centerBox); (4) status/logo/misc + the
-    @opentui renderer features the live app.js uses (selection, console, terminal
-    title, debug overlay). The 112
+T3  [DONE — view layer] Re-architected the TUI app onto the T2 toolkit as a
+    parallel `tui/vanilla/` tree (the immediate-mode replacement for the
+    compiled-Solid app.js render model). All four planned stages landed; the whole
+    `vanilla/` + `runtime/` graph has ZERO `@opentui` / `solid-js` import
+    statements (grep-verified). Headless tests: runtime 53 + vanilla widgets 28 +
+    shell 41 + dialogs 12 = 134 green (render each draw() into a detached
+    ScreenBuffer, drive with dispatch() — no TTY).
+    - Stage 1 (app shell) — vanilla/shell.js createShell(): state is signals
+      (route home<->session, timeline, prompt, dialog stack); the view is ONE
+      rootDraw(region) = column(body / prompt / status) + a centered dialog
+      overlay; keys route through the T2 layer-stack router (base = prompt +
+      global hotkeys; a dialog pushes a capturing layer, Escape closes only the
+      top). vanilla/logo.js = static cli/logo.js wordmark (shimmer deferred).
+      vanilla/theme.js = stand-in token->attr palette. mountShell() = createApp+onKey.
+    - Stage 2 (chat loop) — runtime/textarea.js (NEW T2 widget: multi-line,
+      code-point cursor, wrap + vertical scroll). vanilla/prompt.js (textarea +
+      shell mode "!" + history + agent/model meta, replacing the 1500-line
+      compiled-Solid prompt). vanilla/autocomplete.js ("/" commands + "@" files,
+      sources injected). vanilla/timeline.js (parts model {role,parts:text/
+      reasoning/tool/file}, width-wrap + bottom-pin + PageUp/Down scroll).
+    - Stage 3 (dialog families) — vanilla/dialogs.js: promise-returning
+      select(filtered) / confirm / alert / prompt bound to the dialog manager
+      (onClose resolves on Escape). The SDK-backed dialogs become thin callers
+      that pass options + onSelect.
+    - Stage 4 (status/misc) — vanilla/toast.js (variant toasts, injectable clock)
+      + status-bar mode indicator wired into the shell.
+    Deferred to the SDK-integration phase (see "Remaining work"): the animated
+    logo shimmer, and the @opentui renderer-only features app.js uses (text
+    selection, console overlay, terminal title, debug overlay).
+    --- original analysis (kept for context) ---
+    The 112
     components (e.g. DialogStatus = 380 lines) are compiled Solid-JSX over
     @opentui's retained Renderable tree with reactive logic (createMemo/For/
     Show/Switch) + context (useTheme/useDialog/useSync). T2 is IMMEDIATE-MODE
@@ -141,17 +155,43 @@ T3  Port the 112 TUI components from compiled-Solid-JSX-over-@opentui to the T2
     toolkit. Group by family (dialogs, prompt/autocomplete, timeline, status,
     logo). State stays in plain objects + lib/reactivity signals; views become
     draw functions / small widgets. (This is the bulk — a TUI view-layer rewrite.)
-T4  Remove @opentui/* (core + solid + native binaries) + solid-js + yoga-layout
-    from packages/closedcode (and the `plugin` package). Add terminal-kit. Flip
-    any remaining `solid-js` imports -> lib/reactivity (esbuild alias for the
-    bundled sidecar/CLI; a Node resolve hook or `#reactivity` #imports alias for
-    native-ESM dev). npm install; confirm the tree resolves and no native dep.
-T5  Verify: terminal-kit has no headless renderer, so combine (a) unit tests of
-    the T2 layout/width/wrap helpers, (b) snapshot tests that render state into a
-    detached ScreenBuffer and assert the cell grid (works without a TTY — proven
-    in the PoC), and (c) a manual `closedcode tui` smoke across WSL / Git Bash /
-    Windows Terminal.
+T4  [PARTIAL — runnable flip done; full removal gated] The vanilla shell is now
+    launchable: thread.js / attach.js gate their lazy `import("./app.js")` on
+    `CLOSEDCODE_VANILLA_TUI` — set it to 1 to load vanilla/main.js (a drop-in
+    `tui(input)` that mounts the shell on terminal-kit), else the default @opentui
+    app (no regression). vanilla/main.js's graph is native-free: terminal-kit +
+    the first-party runtime only, no @opentui/solid-js/yoga.
+    NOT yet done (blocked on the SDK-integration phase below): physically removing
+    @opentui/* + solid-js + yoga-layout from package.json and adding terminal-kit
+    as a dep, because the live app.js path still needs them until the vanilla shell
+    is SDK-connected and promoted to default.
+T5  [PARTIAL] Verify: (a)+(b) DONE — unit + detached-ScreenBuffer snapshot tests,
+    134 green across runtime/widgets/shell/dialogs (no TTY needed); plus a module-
+    load + import-graph check that vanilla/main.js pulls no @opentui/solid-js.
+    (c) PENDING — a manual `CLOSEDCODE_VANILLA_TUI=1 closedcode` smoke across WSL /
+    Git Bash / Windows Terminal (needs a real TTY).
 ```
+
+## Remaining work (to actually delete @opentui)
+
+The T3 view layer is a faithful, tested REBUILD, but it is not yet wired to the
+backend. Before @opentui/solid-js/yoga can be removed and the vanilla shell made
+default, do the **SDK-integration phase**:
+
+1. Port the contexts the app needs (SDK/sync/project/local/keybind/theme/event)
+   from compiled-Solid providers to plain modules over the first-party reactivity
+   core — feeding `useSync`/`useSDK` data into the shell's signals.
+2. Wire streaming: server message/part events -> the timeline signal; real
+   session create/switch/abort; permission + question prompts.
+3. Replace the injected stubs with real sources: model/agent/session/theme lists
+   into the dialog families; file search into `@`-autocomplete; command registry
+   into `/`-autocomplete + the command palette.
+4. Re-cover the remaining @opentui/core widgets the timeline needs (Markdown /
+   Code highlight / Diff) — the non-trivial renderers still handed to @opentui.
+5. The deferred renderer features (selection, console, terminal title, debug
+   overlay) and the animated logo shimmer.
+6. THEN T4-final: flip default, prune @opentui/* + solid-js + yoga-layout, add
+   terminal-kit, npm install, confirm no native dep; and T5(c) cross-terminal smoke.
 
 ## Risks / open items
 
