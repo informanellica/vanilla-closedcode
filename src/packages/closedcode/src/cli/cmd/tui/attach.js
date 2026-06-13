@@ -73,8 +73,11 @@ export const AttachCommand = cmd({
       }
       // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
       // cannot load (the documented third-party interop wall) — load it only
-      // when the TUI actually starts.
-      const { tui } = await import("./app.js");
+      // when the TUI actually starts. CLOSEDCODE_VANILLA_TUI routes to the
+      // native-free terminal-kit shell (no @opentui/solid-js in its graph).
+      const { tui } = ["1", "true"].includes(process.env["CLOSEDCODE_VANILLA_TUI"])
+        ? await import("./vanilla/main.js")
+        : await import("./app.js");
       await tui({
         url: args.url,
         config,
