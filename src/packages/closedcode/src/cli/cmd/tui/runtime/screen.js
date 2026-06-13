@@ -24,11 +24,13 @@ export function createApp(rootDraw, options = {}) {
   const keyHandlers = new Set();
 
   function makeBuffer() {
-    // options.createBuffer lets tests inject a detached/mock buffer (no TTY).
-    buf = options.createBuffer ? options.createBuffer(term) : new tk.ScreenBuffer({ dst: term, width: term.width, height: term.height });
+    // ScreenBufferHD = 24-bit color (hex/RGBA themes). options.createBuffer lets
+    // tests inject a detached/mock buffer (no TTY).
+    buf = options.createBuffer ? options.createBuffer(term) : new tk.ScreenBufferHD({ dst: term, width: term.width, height: term.height });
   }
 
-  const baseAttr = options.attr ?? { color: "default", bgColor: "default" };
+  // HD has no "default" color sentinel — clear to the theme's bg/fg (hex).
+  const baseAttr = options.attr ?? { color: "#cdd6f4", bgColor: "#1e1e2e" };
 
   // Any throw from rootDraw or a key handler would otherwise leave the terminal
   // in raw/fullscreen mode (unusable). Restore first, then surface the error via

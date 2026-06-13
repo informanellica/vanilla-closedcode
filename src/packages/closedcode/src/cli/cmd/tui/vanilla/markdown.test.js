@@ -32,9 +32,17 @@ const styleOf = (line, text) => (line.find(s => s.text === text) || {}).style;
 
 // --- drawRichLine renders segments at the right columns -------------------
 {
-  const buf = new tk.ScreenBuffer({ width: 8, height: 1 }); buf.fill({ char: " " });
+  const buf = new tk.ScreenBufferHD({ width: 8, height: 1 }); buf.fill({ char: " " });
   drawRichLine(makeRegion(buf, 0, 0, 8, 1), 0, [seg("ab"), seg("CD", { bold: true }), seg("日")], defaultTheme);
   eq([buf.get({ x: 0, y: 0 }).char, buf.get({ x: 2, y: 0 }).char, buf.get({ x: 4, y: 0 }).char], ["a", "C", "日"], "segments drawn left-to-right, CJK advances 2 cols");
+}
+
+// --- 24-bit color: a themed cell carries the token's RGBA -------------------
+{
+  const buf = new tk.ScreenBufferHD({ width: 4, height: 1 }); buf.fill({ char: " " });
+  drawRichLine(makeRegion(buf, 0, 0, 4, 1), 0, [seg("X", { token: "primary" })], defaultTheme);
+  const col = buf.get({ x: 0, y: 0 }).attr.color; // ScreenBufferHD -> {r,g,b,a}
+  eq([col.r, col.g, col.b], [0x89, 0xb4, 0xfa], "themed cell carries 24-bit RGBA from the hex token (#89b4fa)");
 }
 
 // --- markdown: inline styles ----------------------------------------------

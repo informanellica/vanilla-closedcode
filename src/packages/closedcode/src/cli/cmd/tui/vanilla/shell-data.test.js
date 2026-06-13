@@ -14,7 +14,7 @@ const settle = () => new Promise(r => setTimeout(r, 0));
 const char = () => ({ isCharacter: true });
 const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char()); };
 function screenText(shell, w = 80, h = 24) {
-  const buf = new tk.ScreenBuffer({ width: w, height: h });
+  const buf = new tk.ScreenBufferHD({ width: w, height: h });
   buf.fill({ char: " " });
   shell.draw(makeRegion(buf, 0, 0, w, h), { focusCursor: () => {} });
   const rows = [];

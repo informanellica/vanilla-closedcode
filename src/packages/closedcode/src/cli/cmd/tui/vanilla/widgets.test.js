@@ -98,7 +98,7 @@ const char = () => ({ isCharacter: true });
   ok(lines.some(l => lineText(l) === "› hello"), "user text gets the '›' marker (rich line)");
   ok(lines.some(l => lineText(l).startsWith("● read")), "tool part renders a bullet line");
   const tl = createTimeline(() => msgs, {});
-  const buf = new tk.ScreenBuffer({ width: 40, height: 2 }); // smaller than the 4 content lines
+  const buf = new tk.ScreenBufferHD({ width: 40, height: 2 }); // smaller than the 4 content lines
   buf.fill({ char: " " });
   const res = tl.draw(makeRegion(buf, 0, 0, 40, 2));
   eq(res.offset, 0, "timeline bottom-pinned by default");
@@ -115,7 +115,7 @@ const char = () => ({ isCharacter: true });
   clock = 500; eq(t.visible().length, 1, "toast visible before expiry");
   clock = 1500; eq(t.visible().length, 0, "toast expired after its duration");
   clock = 2000; t.show({ message: "saved", variant: "success", duration: 1000 });
-  const buf = new tk.ScreenBuffer({ width: 30, height: 4 }); buf.fill({ char: " " });
+  const buf = new tk.ScreenBufferHD({ width: 30, height: 4 }); buf.fill({ char: " " });
   t.draw(makeRegion(buf, 0, 0, 30, 4));
   ok(rowText(buf, 3, 30).includes("saved"), "toast drawn on the bottom row");
 }
@@ -126,7 +126,7 @@ const char = () => ({ isCharacter: true });
   const t = createToast({ now: () => 0, scheduleRepaint: ms => (scheduled = ms) });
   t.show({ message: "x", duration: 1234 });
   eq(scheduled, 1234, "toast schedules a repaint at its duration (idle expiry)");
-  const buf = new tk.ScreenBuffer({ width: 12, height: 2 }); buf.fill({ char: " " });
+  const buf = new tk.ScreenBufferHD({ width: 12, height: 2 }); buf.fill({ char: " " });
   t.show({ message: "日本語", duration: 9999 });
   t.draw(makeRegion(buf, 0, 0, 12, 2));
   // " 日本語 " = 8 display cols, right-aligned in width 12 -> starts at col 4, "日" at col 5.
@@ -139,7 +139,7 @@ const char = () => ({ isCharacter: true });
   const msgs = [];
   for (let i = 0; i < 20; i++) msgs.push({ role: "assistant", parts: [{ type: "text", text: "line" + i }] });
   const tl = createTimeline(() => msgs, {});
-  const buf = new tk.ScreenBuffer({ width: 30, height: 5 }); buf.fill({ char: " " });
+  const buf = new tk.ScreenBufferHD({ width: 30, height: 5 }); buf.fill({ char: " " });
   const reg = makeRegion(buf, 0, 0, 30, 5);
   const viewport = () => { const r = []; for (let y = 0; y < 5; y++) r.push(rowText(buf, y, 30)); return r; };
   tl.draw(reg); // establish viewport bounds (maxStart) before scrolling
@@ -161,7 +161,7 @@ const char = () => ({ isCharacter: true });
 {
   const msgs = [{ role: "assistant", parts: [{ type: "text", text: "only message" }] }];
   const tl = createTimeline(() => msgs, {});
-  const buf = new tk.ScreenBuffer({ width: 20, height: 5 }); buf.fill({ char: " " });
+  const buf = new tk.ScreenBufferHD({ width: 20, height: 5 }); buf.fill({ char: " " });
   const reg = makeRegion(buf, 0, 0, 20, 5);
   tl.draw(reg);
   tl.handleKey("PAGE_UP"); // nothing to scroll back to -> must NOT break follow

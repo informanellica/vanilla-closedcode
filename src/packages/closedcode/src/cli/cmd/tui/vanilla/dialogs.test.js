@@ -25,7 +25,7 @@ function mockDialog() {
     dispatch(name, data) { return stack.at(-1)?.widget.handleKey(name, data); },
     escape() { const t = stack.at(-1); if (t) { stack.pop(); t.onClose?.(); } }, // shell's onEscape => close
     render(w = 60, h = 16) {
-      const buf = new tk.ScreenBuffer({ width: w, height: h }); buf.fill({ char: " " });
+      const buf = new tk.ScreenBufferHD({ width: w, height: h }); buf.fill({ char: " " });
       const inner = makeRegion(buf, 2, 2, w - 4, h - 4);
       stack.at(-1)?.widget.draw(inner, { focusCursor: () => {} });
       let s = ""; for (let y = 0; y < h; y++) s += rowText(buf, y, w) + "\n"; return s;

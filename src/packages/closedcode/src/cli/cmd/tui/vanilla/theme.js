@@ -1,44 +1,43 @@
-// Minimal palette for the vanilla TUI app shell (Stage T3). The live app's
-// ThemeProvider resolves 24-bit hex colors from the user's theme; this is a
-// stand-in mapping of the theme TOKENS the shell uses to terminal-kit attr
-// colors, so the shell renders standalone (and under node tests) before the real
-// theme is wired in at a later T3 stage. Keys mirror context/theme.js token names.
+// 24-bit theme for the vanilla TUI. Colors are HEX strings (terminal-kit
+// ScreenBufferHD converts them to RGBA via hexToRgba), giving true-color fidelity
+// — the screen + all draws run on ScreenBufferHD. This default is a dark palette
+// (Catppuccin Mocha); a later stage loads the user's real theme JSON. Token names
+// mirror the live ThemeProvider so renderers reference them by name.
 export const defaultTheme = {
-  background: "default",
-  text: "white",
-  textMuted: "gray",
-  primary: "brightCyan",
-  accent: "brightMagenta",
-  error: "brightRed",
-  warning: "brightYellow",
-  success: "brightGreen",
-  info: "brightBlue",
-  selected: "brightCyan",
-  secondary: "brightBlue",
-  border: "gray",
-  backgroundElement: "default",
-  // markdown / syntax / diff tokens (the live ThemeProvider resolves these to
-  // 24-bit hex; here they map to terminal-kit named colors as a stand-in)
-  markdownHeading: "brightCyan",
-  markdownCode: "brightYellow",
-  markdownLink: "brightBlue",
-  markdownQuote: "gray",
-  codeBlock: "brightGreen",
-  diffAdded: "brightGreen",
-  diffRemoved: "brightRed",
-  diffContext: "gray",
-  // syntax-highlight tokens (vanilla/syntax.js); stand-ins until the real theme
-  syntaxKeyword: "brightMagenta",
-  syntaxString: "brightGreen",
-  syntaxComment: "gray",
-  syntaxNumber: "brightYellow",
-  syntaxType: "brightCyan",
-  syntaxFunction: "brightBlue",
-  syntaxOperator: "white",
-  syntaxPunctuation: "gray",
+  background: "#1e1e2e",
+  backgroundElement: "#181825",
+  text: "#cdd6f4",
+  textMuted: "#7f849c",
+  primary: "#89b4fa",
+  accent: "#cba6f7",
+  error: "#f38ba8",
+  warning: "#f9e2af",
+  success: "#a6e3a1",
+  info: "#89dceb",
+  selected: "#89b4fa",
+  secondary: "#74c7ec",
+  border: "#45475a",
+  // markdown / syntax / diff tokens
+  markdownHeading: "#89b4fa",
+  markdownCode: "#f9e2af",
+  markdownLink: "#74c7ec",
+  markdownQuote: "#7f849c",
+  codeBlock: "#a6e3a1",
+  diffAdded: "#a6e3a1",
+  diffRemoved: "#f38ba8",
+  diffContext: "#7f849c",
+  syntaxKeyword: "#cba6f7",
+  syntaxString: "#a6e3a1",
+  syntaxComment: "#6c7086",
+  syntaxNumber: "#fab387",
+  syntaxType: "#f9e2af",
+  syntaxFunction: "#89b4fa",
+  syntaxOperator: "#89dceb",
+  syntaxPunctuation: "#bac2de",
 };
 
-// Build a terminal-kit attr from a theme token (+ optional bg token / flags).
+// Build a terminal-kit (HD) attr from a theme token (+ optional flags). Falls back
+// to the text color for an unknown token (never "default" — HD has no default).
 export function attr(theme, token, extra = {}) {
-  return { color: theme[token] ?? "default", ...extra };
+  return { color: theme[token] ?? theme.text ?? "#cdd6f4", ...extra };
 }

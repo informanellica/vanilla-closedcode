@@ -376,7 +376,10 @@ export function mountShell(opts = {}) {
     onExit: () => { app?.stop(); opts.onExit?.(); },
     scheduleRepaint: ms => { const t = setTimeout(() => app?.repaint(), ms + 16); t?.unref?.(); },
   });
-  app = createApp((region, ctx) => shell.draw(region, ctx), { terminal: opts.terminal, mouse: opts.mouse });
+  app = createApp((region, ctx) => shell.draw(region, ctx), {
+    terminal: opts.terminal, mouse: opts.mouse,
+    attr: { color: shell.theme.text, bgColor: shell.theme.background }, // clear screen to the theme bg
+  });
   app.onKey((name, dt) => shell.dispatch(name, dt));
   return { app, shell };
 }

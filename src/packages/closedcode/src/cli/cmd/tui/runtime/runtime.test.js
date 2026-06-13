@@ -33,7 +33,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 
 // 2. layout: column splits height, fixed + flex
 {
-  const buf = new tk.ScreenBuffer({ width: 10, height: 5 });
+  const buf = new tk.ScreenBufferHD({ width: 10, height: 5 });
   buf.fill({ char: " " });
   const region = makeRegion(buf, 0, 0, 10, 5);
   column(region, [
@@ -49,7 +49,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 
 // 3. layout: row splits width; clipping past region width
 {
-  const buf = new tk.ScreenBuffer({ width: 12, height: 1 });
+  const buf = new tk.ScreenBufferHD({ width: 12, height: 1 });
   buf.fill({ char: " " });
   const region = makeRegion(buf, 0, 0, 12, 1);
   row(region, [
@@ -63,7 +63,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 
 // 4. box border + inner region
 {
-  const buf = new tk.ScreenBuffer({ width: 8, height: 4 });
+  const buf = new tk.ScreenBufferHD({ width: 8, height: 4 });
   buf.fill({ char: " " });
   const region = makeRegion(buf, 0, 0, 8, 4);
   const inner = box(region, { title: "T" });
@@ -76,7 +76,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 // 5. scroll windowing (bottom-pinned)
 {
   const lines = Array.from({ length: 10 }, (_, i) => `L${i}`);
-  const buf = new tk.ScreenBuffer({ width: 6, height: 3 });
+  const buf = new tk.ScreenBufferHD({ width: 6, height: 3 });
   buf.fill({ char: " " });
   const region = makeRegion(buf, 0, 0, 6, 3);
   const r0 = drawScrollLines(region, lines, 0, {}); // bottom: L7,L8,L9
@@ -89,7 +89,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 
 // 6. REACTIVITY: a render effect repaints when a signal changes (the createApp model)
 {
-  const buf = new tk.ScreenBuffer({ width: 8, height: 1 });
+  const buf = new tk.ScreenBufferHD({ width: 8, height: 1 });
   const [msg, setMsg] = createSignal("hi");
   let paints = 0;
   createRoot(() => {
@@ -120,7 +120,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   inp.handleKey("HOME"); inp.handleKey("Z", ch());
   eq(inp.value(), "ZあX", "input HOME then insert at start");
   // draw + cursor column (focused): cursor after "Zあ" = 1 + 2 = 3 columns
-  const buf = new tk.ScreenBuffer({ width: 10, height: 1 });
+  const buf = new tk.ScreenBufferHD({ width: 10, height: 1 });
   let cur = null;
   inp.setCursor(2); // after "Zあ"
   inp.draw(makeRegion(buf, 0, 0, 10, 1), { focused: true, ctx: { focusCursor: (x, y) => (cur = [x, y]) } });
@@ -190,7 +190,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
 // 11. centerBox: centered overlay returns inner region
 {
   const { centerBox } = await import("./dialog.js");
-  const buf = new tk.ScreenBuffer({ width: 20, height: 10 });
+  const buf = new tk.ScreenBufferHD({ width: 20, height: 10 });
   buf.fill({ char: " " });
   const inner = centerBox(makeRegion(buf, 0, 0, 20, 10), 10, 4, { title: "Hi" });
   // outer box centered: x=(20-10)/2=5, y=(10-4)/2=3; corner at (5,3)
@@ -216,7 +216,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   // CJK + wrap rendering into a narrow region
   const ta2 = createTextArea("あいうえお");
   eq(ta2.rowCount(4), 3, "textarea wraps CJK to width 4 (2 glyphs/row -> 3 rows)");
-  const buf = new tk.ScreenBuffer({ width: 4, height: 3 });
+  const buf = new tk.ScreenBufferHD({ width: 4, height: 3 });
   buf.fill({ char: " " });
   let cur = null;
   ta2.draw(makeRegion(buf, 0, 0, 4, 3), { focused: true, ctx: { focusCursor: (x, y) => (cur = [x, y]) } });
@@ -226,7 +226,7 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   // cursor exactly at a CJK soft-wrap boundary on an ODD width must land at the
   // START of the next visual row, not the empty trailing cell of the previous row
   const ta3 = createTextArea("あいうえお");
-  const b2 = new tk.ScreenBuffer({ width: 5, height: 6 }); b2.fill({ char: " " });
+  const b2 = new tk.ScreenBufferHD({ width: 5, height: 6 }); b2.fill({ char: " " });
   let cur2 = null;
   ta3.setCursor(2); // before 'う', which renders at row 1 col 0 (rows: あい / うえ / お)
   ta3.draw(makeRegion(b2, 0, 0, 5, 6), { focused: true, ctx: { focusCursor: (x, y) => (cur2 = [x, y]) } });
