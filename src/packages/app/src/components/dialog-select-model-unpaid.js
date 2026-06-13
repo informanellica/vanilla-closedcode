@@ -9,7 +9,7 @@ import { useLocal } from "@/context/local.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { popularProviders, useProviders } from "@/hooks/use-providers.js";
 import { useLanguage } from "@/context/language.js";
-import { localPresetMap, localPresets, presetToFormState } from "./local-llm-presets.js";
+import { localPresetMap, localPresets } from "./local-llm-presets.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
@@ -41,30 +41,21 @@ export const DialogSelectModelUnpaid = props => {
     const catalog = providers.popular().filter(p => !presetIDs.has(p.id) || configured.has(p.id));
     return [...presetItems(), ...catalog];
   };
-  const connect = provider => {
-    void import("./dialog-connect-provider.js").then(x => {
-      dialog.show(() => createComponent(x.DialogConnectProvider, {
-        provider: provider
+  // Adding/connecting providers and pulling models all live in Settings ->
+  // サーバー・プロバイダ now (the "connection" tab — see dialog-select-model.js
+  // handleConnectProvider). Route every "add a model" affordance here to that tab
+  // so it focuses server/provider management, instead of the legacy standalone
+  // connect / custom-provider / select-provider modals.
+  const openServerProviderSettings = () => {
+    void import("./dialog-settings.js").then(x => {
+      dialog.show(() => createComponent(x.DialogSettings, {
+        tab: "connection"
       }));
     });
   };
-  const openPreset = presetID => {
-    const preset = localPresetMap.get(presetID);
-    if (!preset) return;
-    void import("./dialog-custom-provider.js").then(x => {
-      dialog.show(() => createComponent(x.DialogCustomProvider, {
-        back: "close",
-        get initial() {
-          return presetToFormState(preset);
-        }
-      }));
-    });
-  };
-  const all = () => {
-    void import("./dialog-select-provider.js").then(x => {
-      dialog.show(() => createComponent(x.DialogSelectProvider, {}));
-    });
-  };
+  const connect = openServerProviderSettings;
+  const openPreset = openServerProviderSettings;
+  const all = openServerProviderSettings;
   return createComponent(Dialog, {
     get title() {
       return language.t("dialog.model.select.title");

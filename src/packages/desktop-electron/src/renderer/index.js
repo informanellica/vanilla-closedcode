@@ -261,7 +261,11 @@ async function boot() {
   const [, , sidecar, defaultServer, locale] = await Promise.all([
     window.api.getWindowConfig().catch(() => ({ updaterEnabled: false })),
     window.api.getWindowCount().catch(() => 1),
-    window.api.awaitInitialization(() => undefined),
+    // Don't let a sidecar-init failure reject the whole boot — that would drop to
+    // showBootError and pin the window on an error screen with no app at all. The
+    // app must still mount (sidecar -> undefined -> servers: []) so the user can
+    // reach Settings -> サーバー・プロバイダ and connect/configure a server.
+    window.api.awaitInitialization(() => undefined).catch(() => undefined),
     Promise.resolve(platform.getDefaultServer?.())
       .then(url => (url ? ServerConnection.key({ type: "http", http: { url } }) : undefined))
       .catch(() => undefined),

@@ -1,4 +1,5 @@
 import { IconButton } from "@/bs/icon-button.js";
+import { onCleanup } from "../lib/reactivity.js";
 
 function requestClose(props) {
   props.onClose?.();
@@ -175,6 +176,16 @@ export function Dialog(props) {
   };
 
   updateStyles();
+
+  // The reactive owner disposes this dialog by removing `el` from the DOM (on
+  // close, or when dialog.show() swaps in another dialog). Bootstrap never sees
+  // that, so tear its modal down here — otherwise the .modal-backdrop it appended
+  // to <body> is orphaned and grays out the whole window with no way to dismiss it
+  // (and it accumulates as dialogs are opened/closed).
+  onCleanup(() => {
+    try { instance?.dispose(); } catch {}
+    cleanupBootstrapModalLeftovers();
+  });
 
   return el;
 }

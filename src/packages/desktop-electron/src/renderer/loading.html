@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" style="background-color: var(--background-base)">
+<html lang="en" style="background-color: var(--background-base, #f7f7f7)">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -40,9 +40,41 @@
     <link rel="stylesheet" href="./vendor/bootstrap/bootstrap.min.css" />
     <link rel="stylesheet" href="./app.css" />
   </head>
-  <body class="antialiased overscroll-none text-12-regular overflow-hidden">
+  <body class="antialiased overscroll-none text-12-regular overflow-hidden" style="margin: 0">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root" class="flex flex-col h-dvh"></div>
+    <!-- Startup splash, rendered STATICALLY with inline styles so it appears even
+         if app.css, the import map or the reactive runtime fail to load. This is
+         the surface that must survive a broken renderer the most, so it owns no
+         framework dependency. loading.js only updates the status text and the
+         progress fill width, then signals completion. -->
+    <div
+      id="root"
+      style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background-color: var(--background-base, #f7f7f7)"
+    >
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 2.75rem">
+        <img src="./favicon-v3.svg" alt="" width="80" height="100" style="opacity: 0.15" />
+        <div
+          style="display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 15rem"
+          aria-live="polite"
+        >
+          <span
+            id="loading-status"
+            style="width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; color: var(--text-strong, #1a1a1a); font-size: 14px"
+            >Just a moment...</span
+          >
+          <div
+            role="progressbar"
+            aria-label="Database migration progress"
+            style="width: 5rem; height: 4px; overflow: hidden; background: var(--surface-weak, #e5e5e5)"
+          >
+            <div
+              id="loading-progress"
+              style="height: 100%; width: 25%; background: var(--icon-warning-base, #e0a000); transition: width 0.2s ease"
+            ></div>
+          </div>
+        </div>
+      </div>
+    </div>
     <script src="./loading.js" type="module"></script>
   </body>
 </html>

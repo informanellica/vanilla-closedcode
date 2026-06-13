@@ -1,78 +1,67 @@
-import { template as _$template } from "../../../app/src/lib/reactivity.js";
-import { insert as _$insert } from "../../../app/src/lib/reactivity.js";
-import { createComponent as _$createComponent } from "../../../app/src/lib/reactivity.js";
-var _tmpl$ = /*#__PURE__*/_$template(`<div class="w-screen h-screen bg-background-base flex items-center justify-center"><div class="flex flex-col items-center gap-11"><div class="w-60 flex flex-col items-center gap-4"aria-live=polite><span class="w-full overflow-hidden text-center text-ellipsis whitespace-nowrap text-text-strong text-14-normal">`);
-import { MetaProvider } from "../../../app/src/lib/primitives/meta.js";
-import { render } from "../../../app/src/lib/reactivity.js";
-import "app/index.css";
-import { Font } from "@/vendor/ui/components/font.js";
-import { Splash } from "@/vendor/ui/components/logo.js";
-import { Progress } from "@/vendor/ui/components/progress.js";
-import "./styles.css";
-import { createEffect, createMemo, createSignal, onCleanup, onMount } from "../../../app/src/lib/reactivity.js";
-const root = document.getElementById("root");
+// Startup splash controller. Deliberately framework-free: it imports NOTHING
+// (no reactive runtime, no components, no CSS), so the splash that loading.html
+// renders statically keeps working — and updating — even if the import map,
+// reactive runtime or CSS fail to load. The splash is the surface that must
+// survive a broken renderer the most. This script only updates the status
+// line's text and the progress fill's width on the static markup, then signals
+// completion via the preload bridge.
+
+const statusEl = document.getElementById("loading-status");
+const fillEl = document.getElementById("loading-progress");
 const lines = ["Just a moment...", "Migrating your database", "This may take a couple of minutes"];
 const delays = [3000, 9000];
-render(() => {
-  const [step, setStep] = createSignal(null);
-  const [line, setLine] = createSignal(0);
-  const [percent, setPercent] = createSignal(0);
-  const phase = createMemo(() => step()?.phase);
-  const value = createMemo(() => {
-    if (phase() === "done") return 100;
-    return Math.max(25, Math.min(100, percent()));
+
+let phase = null;
+let line = 0;
+let percent = 0;
+let completed = false;
+
+const setStatus = text => { if (statusEl) statusEl.textContent = text; };
+const setFill = value => { if (fillEl) fillEl.style.width = Math.max(0, Math.min(100, value)) + "%"; };
+
+function render() {
+  if (phase === "done") { setStatus("All done"); setFill(100); return; }
+  setStatus(phase === "sqlite_waiting" ? (lines[line] ?? lines[0]) : "Just a moment...");
+  // Mirror the previous behaviour: hold at a visible minimum until real progress.
+  setFill(Math.max(25, percent));
+}
+
+function complete() {
+  if (completed) return;
+  completed = true;
+  // Let the splash settle on "All done / 100%" before the main window swaps in.
+  setTimeout(() => window.api?.loadingWindowComplete?.(), 1000);
+}
+
+function setPhase(next) {
+  phase = next ?? null;
+  render();
+  if (phase === "done") complete();
+}
+
+render();
+
+const api = window.api;
+if (api) {
+  // Drive the status text from initialization steps; a rejection just leaves the
+  // splash on "Just a moment..." (the main process still owns the swap timeout).
+  const init = api.awaitInitialization?.(step => setPhase(step?.phase ?? null));
+  if (init && typeof init.catch === "function") init.catch(() => undefined);
+
+  const timers = delays.map((ms, i) => setTimeout(() => { line = i + 1; render(); }, ms));
+
+  const off = api.onSqliteMigrationProgress?.(progress => {
+    if (progress.type === "InProgress") { percent = Math.max(0, Math.min(100, progress.value)); render(); }
+    if (progress.type === "Done") { percent = 100; setPhase("done"); }
   });
-  window.api.awaitInitialization(next => setStep(next)).catch(() => undefined);
-  onMount(() => {
-    setLine(0);
-    setPercent(0);
-    const timers = delays.map((ms, i) => setTimeout(() => setLine(i + 1), ms));
-    const listener = window.api.onSqliteMigrationProgress(progress => {
-      if (progress.type === "InProgress") setPercent(Math.max(0, Math.min(100, progress.value)));
-      if (progress.type === "Done") {
-        setPercent(100);
-        setStep({
-          phase: "done"
-        });
-      }
-    });
-    onCleanup(() => {
-      listener();
-      timers.forEach(clearTimeout);
-    });
+
+  window.addEventListener("beforeunload", () => {
+    try { off?.(); } catch {}
+    timers.forEach(clearTimeout);
   });
-  createEffect(() => {
-    if (phase() !== "done") return;
-    const timer = setTimeout(() => window.api.loadingWindowComplete(), 1000);
-    onCleanup(() => clearTimeout(timer));
-  });
-  const status = createMemo(() => {
-    if (phase() === "done") return "All done";
-    if (phase() === "sqlite_waiting") return lines[line()];
-    return "Just a moment...";
-  });
-  return _$createComponent(MetaProvider, {
-    get children() {
-      var _el$ = _tmpl$(),
-        _el$2 = _el$.firstChild,
-        _el$3 = _el$2.firstChild,
-        _el$4 = _el$3.firstChild;
-      _$insert(_el$, _$createComponent(Font, {}), _el$2);
-      _$insert(_el$2, _$createComponent(Splash, {
-        "class": "w-20 h-25 opacity-15"
-      }), _el$3);
-      _$insert(_el$4, status);
-      _$insert(_el$3, _$createComponent(Progress, {
-        get value() {
-          return value();
-        },
-        "class": "w-20 [&_[data-slot='progress-track']]:h-1 [&_[data-slot='progress-track']]:border-0 [&_[data-slot='progress-track']]:rounded-none [&_[data-slot='progress-track']]:bg-surface-weak [&_[data-slot='progress-fill']]:rounded-none [&_[data-slot='progress-fill']]:bg-icon-warning-base",
-        "aria-label": "Database migration progress",
-        getValueLabel: ({
-          value
-        }) => `${Math.round(value)}%`
-      }), null);
-      return _el$;
-    }
-  });
-}, root);
+} else {
+  // No preload bridge (shouldn't happen) — nothing to await; let main swap us out.
+  complete();
+}
+
+export {};
