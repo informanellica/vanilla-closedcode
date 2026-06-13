@@ -211,7 +211,7 @@ export function createShell(opts = {}) {
     const r = route();
     const mode = prompt.mode() === "shell" ? "  · shell" : "";
     let label = r.type === "home" ? " home" : ` session:${r.sessionID}`;
-    if (data && r.type === "session") label += `  ${data.sessionStatusText(r.sessionID)}`;
+    if (data && r.type === "session") label += `  ${data.store.sessionStatusText(r.sessionID)}`;
     const right = "Ctrl-P commands  Ctrl-C exit ";
     region.line(0, fit(label + mode, Math.max(0, region.width - right.length), "left") + right, attr(theme, "textMuted"));
   }

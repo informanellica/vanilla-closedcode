@@ -1,29 +1,39 @@
-// Vanilla TUI entry (Stage T4 — the runnable flip). Drop-in for app.js's tui():
-// same input shape, returns a Promise that resolves on exit. Set
+// Vanilla TUI entry (Stage T4 flip + SDK integration). Drop-in for app.js's
+// tui(): same input shape, returns a Promise that resolves on exit. Set
 // CLOSEDCODE_VANILLA_TUI=1 to route thread.js / attach.js here instead of the
-// @opentui app — so the immediate-mode shell actually RUNS on terminal-kit with
-// ZERO @opentui / solid-js / native code in its module graph (only terminal-kit
-// + the first-party runtime).
+// @opentui app — the immediate-mode shell runs on terminal-kit with ZERO
+// @opentui / solid-js / native code in its module graph.
 //
-// SCOPE: this boots the T3 view layer (logo / prompt+autocomplete / timeline /
-// dialogs / toast). It is NOT yet wired to the SDK/sync (sessions, streaming,
-// real model/agent lists) — that integration is the remaining work documented in
-// docs/milestones/solid-free-tui.md before @opentui can be removed outright. The
-// default path (no flag) stays the fully-featured @opentui app, so nothing
-// regresses.
+// With input.url present this connects to the REAL backend: createConnection
+// builds the sdk/v2 HTTP+SSE client and the data layer streams server events
+// into the shell (real sessions, prompt submit, providers/agents/commands,
+// @-file search). Without a url (or if the client fails to construct) it falls
+// back to the self-contained stub shell. Feature parity vs the @opentui app is
+// still partial — see docs/milestones/solid-free-tui.md "Remaining work".
 import { mountShell } from "./shell.js";
+import { createDataLayer } from "./data/index.js";
 
 export function tui(input = {}) {
   const args = input.args ?? {};
-  return new Promise(resolve => {
+  return new Promise(async resolve => {
+    let data;
+    if (input.url) {
+      try {
+        // Lazy: keeps the stub path from loading sdk/v2 at all.
+        const { createConnection } = await import("./data/connection.js");
+        data = createDataLayer(createConnection(input));
+      } catch { data = undefined; /* stub fallback */ }
+    }
     const { app, shell } = mountShell({
-      agent: args.agent ?? "build",
-      model: args.model,
-      onExit: () => resolve(),
+      data,
+      agent: args.agent,
+      initialRoute: args.sessionID ? { type: "session", sessionID: args.sessionID } : undefined,
+      onExit: () => { data?.stop(); resolve(); },
     });
-    // Prefill the prompt from --prompt (does not auto-submit: no SDK yet). Use
-    // setText so a leading "!" doesn't trip shell mode.
+    // Prefill the prompt from --prompt (no auto-submit yet). setText so a
+    // leading "!" doesn't trip shell mode.
     if (args.prompt) shell.prompt.setText(String(args.prompt));
     app.start();
+    void shell.init(); // events + bootstrap (no-op in stub mode)
   });
 }

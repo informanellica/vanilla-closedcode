@@ -30,8 +30,9 @@ export function createAutocomplete(opts = {}) {
   const [items, setItems] = createSignal([]); // { kind:"command"|"file", label, value, description? }
   const [active, setActive] = createSignal(0);
   let from = 0, to = 0; // code-point splice range of the token being completed
+  let fileReq = 0; // stale-async-guard: only the latest listFiles result applies
 
-  function hide() { setVisible(false); setItems([]); setActive(0); }
+  function hide() { fileReq++; setVisible(false); setItems([]); setActive(0); }
 
   // Recompute suggestions from the current value + cursor (code-point offset).
   function onInput(value, cursor) {
@@ -51,10 +52,21 @@ export function createAutocomplete(opts = {}) {
     }
     if (token.startsWith("@")) {
       const query = token.slice(1);
-      const list = (listFiles(query) ?? []).slice(0, 50)
-        .map(f => ({ kind: "file", label: typeof f === "string" ? f : f.path, value: typeof f === "string" ? f : f.path }));
       from = start; to = c;
-      setActive(0); setItems(list); setVisible(list.length > 0);
+      // listFiles may be sync (array) or async (e.g. sdk.find.files -> Promise).
+      // Async results apply only if no newer request/hide superseded them.
+      const apply = files => {
+        const list = (files ?? []).slice(0, 50)
+          .map(f => ({ kind: "file", label: typeof f === "string" ? f : f.path, value: typeof f === "string" ? f : f.path }));
+        setActive(0); setItems(list); setVisible(list.length > 0);
+      };
+      const result = listFiles(query);
+      if (result && typeof result.then === "function") {
+        const req = ++fileReq;
+        result.then(files => { if (req === fileReq) apply(files); }, () => { if (req === fileReq) apply([]); });
+      } else {
+        apply(result);
+      }
       return;
     }
     hide();

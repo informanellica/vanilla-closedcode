@@ -62,7 +62,7 @@ export function createDataLayer(opts = {}) {
       sdk.config.providers({}).then(r => r.data).catch(() => undefined),
       sdk.app.agents({}).then(r => r.data).catch(() => undefined),
       sdk.command.list({}).then(r => r.data).catch(() => undefined),
-      sdk.session.list({ start: 0 }).then(r => r.data).catch(() => undefined),
+      sdk.session.list({ start: Date.now() - 30 * 86400000 }).then(r => r.data).catch(() => undefined), // 30-day window, like the live sync
     ]);
     store.setBootstrap({
       providers: providers?.providers ?? providers,
