@@ -1,9 +1,11 @@
 # Milestone: vanilla TUI (remove @opentui/* + solid-js from the terminal UI)
 
-> Status: **T0–T3 DONE (view layer), T4 flag-flip runnable, removal gated on SDK
-> integration** (2026-06-13). The vanilla `tui/vanilla/` shell runs behind
-> `CLOSEDCODE_VANILLA_TUI=1`; 134 headless tests green; @opentui/solid-js stay
-> until the SDK-integration phase (see "Remaining work"). Sibling of
+> Status: **T0–T3 DONE (view layer), T4 flag-flip runnable, SDK chat loop wired**
+> (2026-06-13). The vanilla `tui/vanilla/` shell runs behind
+> `CLOSEDCODE_VANILLA_TUI=1` and, with a server url, streams real sessions via
+> `vanilla/data/` (no solid-js/store — immediate-mode rev-bump). 224 headless tests
+> green. @opentui/solid-js stay until the remaining SDK parity (Markdown/Code/Diff
+> rendering, permission/question prompts) lands — see "Remaining work". Sibling of
 > `solid-free-reactivity.md` (the desktop renderer milestone). The reactive core
 > built there (`lib/reactivity.js`) is reused for TUI state; everything else in
 > the TUI rendering stack is replaced by a pure-JavaScript base.
@@ -206,20 +208,42 @@ CJK soft-wrap boundary (piece-width predicate). Test totals after Step 0: **179 
 
 Then the **SDK-integration phase**:
 
-1. Port the contexts the app needs (SDK/sync/project/local/keybind/theme/event)
-   from compiled-Solid providers to plain modules over the first-party reactivity
-   core — feeding `useSync`/`useSDK` data into the shell's signals.
-2. Wire streaming: server message/part events -> the timeline signal; real
-   session create/switch/abort; permission + question prompts.
-3. Replace the injected stubs with real sources: model/agent/session/theme lists
-   into the dialog families; file search into `@`-autocomplete; command registry
-   into `/`-autocomplete + the command palette.
+KEY INSIGHT: the SDK client (`createClosedcodeClient` from `sdk/v2`) is pure
+HTTP/SSE — no @opentui/solid in its graph — and because the vanilla shell is
+immediate-mode (one render effect repaints the whole screen), it does NOT need
+solid-js/store's fine-grained reactivity / reconcile identity. So the 435-line
+`context/sync.js` reducer collapses to plain in-place mutation + one `rev` signal
+bump per event batch.
+
+1. [DONE — core] `vanilla/data/`: store.js (event reducer for the v1
+   message+part model -> a `timeline(sessionID)` mapped to {role,parts}; session/
+   message/part/permission/question; `sessionStatusText`), index.js (SDK actions
+   submit/abort/findFiles/bootstrap/syncSession + the coalesced event loop, sdk +
+   ids injected), connection.js (real createClosedcodeClient + Identifier.ascending
+   ids). main.js builds it when input.url is present (else stub). Shell wired
+   dual-mode (timeline streams, prompt submit hits the SDK, model/agent dialogs
+   list real providers/agents, `/`-autocomplete merges server commands, `@` ->
+   sdk.find.files). 224 green incl. an 18-case shell-data integration test
+   (full submit -> create/prompt -> streamed events -> render).
+   REMAINING for steps 1-3: model/agent SELECTION persistence + variants
+   (local.js cycle/favorite/variant); the permission + question PROMPT widgets
+   (data is captured, no interactive UI yet); the session-list / rename / stash /
+   skill / provider-connect dialogs; sidebar + todo + diff; theme from the real
+   ThemeProvider (24-bit). keybind/project/editor contexts.
+2. [DONE — core] streaming wired (message.part.delta concatenation -> timeline);
+   real session create/switch/abort. (permission/question prompts: remaining.)
+3. [DONE — core] real sources fed: providers/agents -> model/agent dialogs;
+   sdk.find.files -> `@`; server command.list merged into `/`. (session/theme
+   lists + frecency sort: remaining.)
 4. Re-cover the remaining @opentui/core widgets the timeline needs (Markdown /
    Code highlight / Diff) — the non-trivial renderers still handed to @opentui.
+   THE LARGEST remaining item.
 5. The deferred renderer features (selection, console, terminal title, debug
    overlay) and the animated logo shimmer.
-6. THEN T4-final: flip default, prune @opentui/* + solid-js + yoga-layout, add
-   terminal-kit, npm install, confirm no native dep; and T5(c) cross-terminal smoke.
+6. THEN T4-final: flip default, prune @opentui/* + solid-js + yoga-layout (keep
+   terminal-kit), npm install, confirm no native dep; and T5(c) cross-terminal
+   smoke. NOTE: cannot flip default until 4 (+ permission/question prompts) land,
+   or sessions with tool output / diffs / approvals regress.
 
 ## Risks / open items
 
