@@ -14,31 +14,7 @@ import { AppRuntime } from "#effect/app-runtime.js";
 import { ensureProcessMetadata } from "core/util/closedcode-process";
 import { Effect } from "effect";
 import { disposeAllInstancesAndEmitGlobalDisposed } from "#server/global-lifecycle.js";
-ensureProcessMetadata("worker");
-await Log.init({
-  print: process.argv.includes("--print-logs"),
-  dev: Installation.isLocal(),
-  level: (() => {
-    if (Installation.isLocal()) return "DEBUG";
-    return "INFO";
-  })()
-});
-Heap.start();
-process.on("unhandledRejection", e => {
-  Log.Default.error("rejection", {
-    e: e instanceof Error ? e.message : e
-  });
-});
-process.on("uncaughtException", e => {
-  Log.Default.error("exception", {
-    e: e instanceof Error ? e.message : e
-  });
-});
 
-// Subscribe to global events and forward them via RPC
-GlobalBus.on("event", event => {
-  Rpc.emit("global.event", event);
-});
 let server;
 export const rpc = {
   async fetch(input) {
@@ -96,10 +72,40 @@ export const rpc = {
     if (server) await server.stop(true);
   }
 };
-Rpc.listen(rpc);
 function getAuthorizationHeader() {
   const password = Flag.CLOSEDCODE_SERVER_PASSWORD;
   if (!password) return undefined;
   const username = Flag.CLOSEDCODE_SERVER_USERNAME ?? "closedcode";
   return `Basic ${btoa(`${username}:${password}`)}`;
 }
+
+// Imperative startup wrapped in an async IIFE (not top-level await) so the worker
+// bundle can be emitted as CommonJS for the Node SEA build — SEA runs the embedded
+// main as CJS, which forbids top-level await. Ordering is preserved; valid for ESM.
+void (async () => {
+  ensureProcessMetadata("worker");
+  await Log.init({
+    print: process.argv.includes("--print-logs"),
+    dev: Installation.isLocal(),
+    level: (() => {
+      if (Installation.isLocal()) return "DEBUG";
+      return "INFO";
+    })()
+  });
+  Heap.start();
+  process.on("unhandledRejection", e => {
+    Log.Default.error("rejection", {
+      e: e instanceof Error ? e.message : e
+    });
+  });
+  process.on("uncaughtException", e => {
+    Log.Default.error("exception", {
+      e: e instanceof Error ? e.message : e
+    });
+  });
+  // Subscribe to global events and forward them via RPC
+  GlobalBus.on("event", event => {
+    Rpc.emit("global.event", event);
+  });
+  Rpc.listen(rpc);
+})();

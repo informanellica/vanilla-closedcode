@@ -2,7 +2,12 @@ import z from "zod";
 import { EOL } from "os";
 import { NamedError } from "core/util/error";
 import { logo as glyphs } from "./logo.js";
-const wordmark = [`⠀                                ▄     `, `█▀▀█ █▀▀█ █▀▀█ █▀▀▄ █▀▀▀ █▀▀█ █▀▀█ █▀▀█`, `█  █ █  █ █▀▀▀ █  █ █    █  █ █  █ █▀▀▀`, `▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀`];
+// Plain (non-TTY) wordmark, derived from the same glyphs as the colored TTY logo
+// so both stay in sync and follow the closedcode rebrand. Shadow markers collapse:
+// `_`/`~`/`,` -> blank, `^` -> a top half-block.
+const __FLATTEN = { _: " ", "^": "▀", "~": " ", ",": " " };
+const __flat = s => [...s].map(c => __FLATTEN[c] ?? c).join("");
+const wordmark = glyphs.left.map((row, i) => __flat(row) + " " + __flat(glyphs.right[i] ?? ""));
 export const CancelledError = NamedError.create("UICancelledError", z.void());
 export const Style = {
   TEXT_HIGHLIGHT: "\x1b[96m",
