@@ -23,7 +23,8 @@ function rank(items, query, keyOf) {
 }
 
 export function createAutocomplete(opts = {}) {
-  const commands = opts.commands ?? [];
+  // commands may be a static array or an accessor (it grows after SDK bootstrap)
+  const getCommands = typeof opts.commands === "function" ? opts.commands : () => opts.commands ?? [];
   const listFiles = opts.listFiles ?? (() => []);
   const [visible, setVisible] = createSignal(false);
   const [items, setItems] = createSignal([]); // { kind:"command"|"file", label, value, description? }
@@ -42,7 +43,7 @@ export function createAutocomplete(opts = {}) {
     const token = cs.slice(start, c).join("");
     if (token.startsWith("/") && start === 0) {
       const query = token.slice(1);
-      const list = rank(commands, query, c => c.name)
+      const list = rank(getCommands(), query, c => c.name)
         .map(cmd => ({ kind: "command", label: cmd.name, value: cmd.name, description: cmd.description }));
       from = start; to = c;
       setActive(0); setItems(list); setVisible(list.length > 0);
