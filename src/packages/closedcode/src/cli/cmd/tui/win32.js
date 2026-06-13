@@ -51,16 +51,29 @@ function readInputMode(k) {
 }
 
 // Clear ENABLE_PROCESSED_INPUT so Ctrl-C is delivered as input, not a signal.
+// The console input mode is buffer state that OUTLIVES this process, so leaving
+// it cleared would break Ctrl-C for the parent shell on the same console. Returns
+// a restore() that re-sets ONLY the bit we cleared (onto the then-current mode,
+// so it doesn't clobber e.g. terminal-kit's own grabInput restore) — call it in a
+// finally. Returns undefined when there's nothing to restore (no console, or the
+// bit was already clear).
 export function win32DisableProcessedInput() {
   const k = kernel32();
-  if (!k) return;
+  if (!k) return undefined;
   try {
     const cur = readInputMode(k);
-    if (!cur) return;
-    if (cur.mode & ENABLE_PROCESSED_INPUT) {
-      k.SetConsoleMode(cur.handle, (cur.mode & ~ENABLE_PROCESSED_INPUT) >>> 0);
-    }
-  } catch { /* ignore — degrade to default Ctrl-C behavior */ }
+    if (!cur) return undefined;
+    if (!(cur.mode & ENABLE_PROCESSED_INPUT)) return undefined; // already clear -> nothing to undo
+    k.SetConsoleMode(cur.handle, (cur.mode & ~ENABLE_PROCESSED_INPUT) >>> 0);
+    return () => {
+      try {
+        const now = readInputMode(k);
+        if (now) k.SetConsoleMode(now.handle, (now.mode | ENABLE_PROCESSED_INPUT) >>> 0);
+      } catch { /* ignore */ }
+    };
+  } catch {
+    return undefined; // degrade to default Ctrl-C behavior
+  }
 }
 
 // Flush any pending console input (stale keystrokes) — best-effort.

@@ -93,10 +93,12 @@ export const TuiThreadCommand = cmd({
   handler: async args => {
     // Keep ENABLE_PROCESSED_INPUT cleared even if other code flips it.
     const unguard = win32InstallCtrlCGuard();
+    let restoreInput;
     try {
       // Must be the very first thing — disables CTRL_C_EVENT before any Worker
-      // spawn or async work so the OS cannot kill the process group.
-      win32DisableProcessedInput();
+      // spawn or async work so the OS cannot kill the process group. Returns a
+      // restore() (called in finally) so the parent shell's Ctrl-C is not left broken.
+      restoreInput = win32DisableProcessedInput();
       if (args.fork && !args.continue && !args.session) {
         UI.error("--fork requires --continue or --session");
         process.exitCode = 1;
@@ -215,6 +217,7 @@ export const TuiThreadCommand = cmd({
         await stop();
       }
     } finally {
+      restoreInput?.(); // restore ENABLE_PROCESSED_INPUT for the parent shell
       unguard?.();
     }
     process.exit(0);

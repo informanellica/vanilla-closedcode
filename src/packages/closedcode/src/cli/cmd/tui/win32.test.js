@@ -15,12 +15,24 @@ const IS_WIN32 = process.platform === "win32";
 {
   let threw = false;
   try {
-    win32DisableProcessedInput();
+    const restore = win32DisableProcessedInput();
+    if (typeof restore === "function") restore();
     win32FlushInputBuffer();
     const u = win32InstallCtrlCGuard();
     if (typeof u === "function") u();
   } catch { threw = true; }
   ok(!threw, "all win32 helpers are no-throw");
+}
+
+// 1b. win32DisableProcessedInput contract: returns undefined OR a restore fn that
+//     re-sets the console input mode (so the parent shell's Ctrl-C is restored).
+{
+  const restore = win32DisableProcessedInput();
+  ok(restore === undefined || typeof restore === "function", "DisableProcessedInput returns undefined or a restore fn");
+  if (typeof restore === "function") {
+    let t = false; try { restore(); } catch { t = true; }
+    ok(!t, "restore() is no-throw");
+  }
 }
 
 // 2. win32InstallCtrlCGuard contract: undefined OR an unguard function
