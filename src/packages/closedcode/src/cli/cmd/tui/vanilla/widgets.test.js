@@ -71,6 +71,12 @@ const char = () => ({ isCharacter: true });
   p.handleKey("ENTER", { shift: true });
   p.handleKey("c", char());
   eq(p.value(), "ab\nc", "Shift-Enter inserts a newline");
+  // real terminal-kit emits Shift-Enter / Ctrl-J as DISTINCT key names (no data.shift)
+  p.handleKey("SHIFT_ENTER");
+  p.handleKey("d", char());
+  eq(p.value(), "ab\nc\nd", "SHIFT_ENTER (real key name) inserts a newline");
+  p.handleKey("CTRL_J");
+  eq(p.value(), "ab\nc\nd\n", "CTRL_J inserts a newline");
 }
 
 // --- prompt height grows with content (1..6 input rows + 2 meta/hint) ------

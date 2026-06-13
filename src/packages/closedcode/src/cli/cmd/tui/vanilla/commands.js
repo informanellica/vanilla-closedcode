@@ -164,7 +164,9 @@ export function buildCommands(ctx = {}) {
     let variants = [];
     if (model) {
       const provider = (store?.providers() ?? []).find(p => p.id === model.providerID);
-      variants = provider?.models?.[model.modelID]?.variants ?? [];
+      // model.variants is a Record (object keyed by name), not an array — match
+      // selection.js / context/local.js which read it via Object.keys.
+      variants = Object.keys(provider?.models?.[model.modelID]?.variants ?? {});
     }
     const options = [{ label: "Default", value: undefined }, ...variants.map(v => ({ label: v, value: v }))];
     await Dialogs.select(dialog, {

@@ -81,9 +81,14 @@ export function createShell(opts = {}) {
 
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();
-  const promptCommands = () => (data
-    ? [...registry.filter(c => c.slash).map(c => ({ name: c.slash, description: c.label })), ...data.store.commands().filter(c => c.source !== "skill").map(c => ({ name: c.name, description: c.description }))]
-    : SLASH_COMMANDS);
+  const promptCommands = () => {
+    if (!data) return SLASH_COMMANDS;
+    const local = registry.filter(c => c.slash).map(c => ({ name: c.slash, description: c.label }));
+    const localNames = new Set(local.map(c => c.name));
+    // server commands, minus skills and names already covered by a local slash (dedup)
+    const server = data.store.commands().filter(c => c.source !== "skill" && !localNames.has(c.name)).map(c => ({ name: c.name, description: c.description }));
+    return [...local, ...server];
+  };
   const prompt = createPrompt({
     theme,
     placeholders: opts.placeholders ?? { normal: ["Fix a TODO", "Explain this repo"], shell: ["ls -la", "git status"] },
@@ -277,13 +282,23 @@ export function createShell(opts = {}) {
       default: break; // sidebar_toggle etc. — not wired yet
     }
   }
+  // Direct (non-leader) bindings safe to fire globally without the prompt seeing
+  // the key (Ctrl-T / F2 / Shift-F2 / Shift-Tab). Tab/Enter/Up/Down stay with the
+  // widgets, so they're NOT here.
+  const GLOBAL_DIRECT = new Set(["variant_cycle", "model_cycle_recent", "model_cycle_recent_reverse", "agent_cycle_reverse"]);
   function dispatch(name, dt) {
+    // Global escape hatch: Ctrl-C exits even mid-chord / behind a modal.
+    if (name === "CTRL_C" && opts.onExit) { keymap.clearLeader?.(); opts.onExit(); return true; }
+    // A pending request modal or open dialog owns ALL input — leader chords must
+    // NOT bypass the layer stack (clear any half-armed leader first).
+    if (activePrompt() || dialogs().length > 0) { keymap.clearLeader?.(); return router.dispatch(name, dt); }
     const ev = tkToEvent(name, dt);
     const wasLeader = keymap.isLeaderActive();
     const action = keymap.resolve(ev.name, ev); // arms/clears leader internally
-    if (wasLeader) { if (action) handleAction(action); return true; } // chord key consumed
-    if (keymap.isLeaderActive()) return true; // leader just armed -> swallow that key
-    return router.dispatch(name, dt); // ordinary raw key -> prompt/widgets/dialogs
+    if (action && (wasLeader || GLOBAL_DIRECT.has(action))) { handleAction(action); return true; }
+    if (wasLeader) return true; // unmatched chord -> cancel leader, swallow (don't leak into the prompt)
+    if (keymap.isLeaderActive()) return true; // leader just armed -> swallow the leader key
+    return router.dispatch(name, dt); // ordinary raw key -> prompt / widgets / dialogs
   }
 
   // --- draw ----------------------------------------------------------------

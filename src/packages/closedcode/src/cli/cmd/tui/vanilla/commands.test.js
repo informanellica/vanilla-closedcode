@@ -47,7 +47,7 @@ function mockData(overrides = {}) {
     { id: "ses_b", title: "Beta", time: { created: 2000, updated: 9000 } },
   ];
   const providers = overrides.providers ?? [
-    { id: "anthropic", name: "Anthropic", models: { "opus-4.8": { name: "Opus 4.8", variants: ["1m", "thinking"] }, "haiku-4.5": { name: "Haiku 4.5" } } },
+    { id: "anthropic", name: "Anthropic", models: { "opus-4.8": { name: "Opus 4.8", variants: { "1m": {}, "thinking": {} } }, "haiku-4.5": { name: "Haiku 4.5" } } },
   ];
   const agents = overrides.agents ?? [
     { name: "build", mode: "primary" },

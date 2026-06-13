@@ -258,5 +258,50 @@ function makeShell() {
   eq(shell.route().type, "home", "Ctrl-X n runs New session (home)");
 }
 
+// 14. armed leader does NOT trap Ctrl-C (global escape hatch works mid-chord)
+{
+  const backend = mockBackend();
+  const data = createDataLayer({ sdk: backend.sdk, ids: IDS, schedule: sync, events: backend.events });
+  let exited = false;
+  const shell = createShell({ data, onExit: () => (exited = true) });
+  await shell.init(); await settle();
+  shell.dispatch("CTRL_X"); // arm leader
+  shell.dispatch("CTRL_C"); // must still exit on the FIRST press
+  ok(exited, "Ctrl-C exits even while a leader chord is armed");
+}
+
+// 15. leader chords do NOT bypass an open modal (permission)
+{
+  const { shell, backend } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  backend.emit("permission.asked", { id: "perm_x", sessionID: "ses_real", tool: "bash", metadata: {} });
+  shell.dispatch("CTRL_X"); shell.dispatch("n", char()); // would be New session -> home
+  await settle();
+  eq(shell.route().type, "session", "leader chord blocked while a permission modal owns input");
+}
+
+// 16. direct (non-leader) binding fires: Shift-Tab cycles the agent
+{
+  const { shell } = makeShell();
+  await shell.init(); await settle();
+  eq(shell.selection.agent.current(), "build", "initial agent is the first");
+  shell.dispatch("SHIFT_TAB"); // agent_cycle_reverse — was resolved-but-discarded before
+  eq(shell.selection.agent.current(), "plan", "Shift-Tab cycles the agent (direct global binding)");
+}
+
+// 17. '/' autocomplete dedups a registry/server command-name collision
+{
+  const backend = mockBackend();
+  backend.sdk.command.list = async () => ({ data: [{ name: "compact", description: "server" }, { name: "mycustom" }] });
+  const data = createDataLayer({ sdk: backend.sdk, ids: IDS, schedule: sync, events: backend.events });
+  const shell = createShell({ data });
+  await shell.init(); await settle();
+  type(shell, "/compact");
+  const items = shell.prompt.autocomplete.items().map(i => i.label);
+  eq(items.filter(l => l === "compact").length, 1, "/compact appears once (registry vs server deduped)");
+  ok(shell.prompt.autocomplete.items().length >= 0, "");
+}
+
 console.log(`tui vanilla shell-data tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

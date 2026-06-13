@@ -68,7 +68,10 @@ export function createPrompt(opts = {}) {
     if (mode() === "shell" && (name === "ESCAPE" || (name === "BACKSPACE" && textarea.cursor() === 0))) {
       setMode("normal"); return true;
     }
-    // 4. submit / newline
+    // 4. submit / newline. terminal-kit emits Shift-Enter / Ctrl-J as DISTINCT key
+    //    names (it only sets data.shift on mouse events); handle both, plus the
+    //    synthetic ENTER+{shift} form used by tests.
+    if (name === "SHIFT_ENTER" || name === "CTRL_J") { textarea.newline(); refreshAC(); return true; }
     if (name === "ENTER") {
       if (data && data.shift) { textarea.newline(); refreshAC(); return true; }
       submit(); return true;
