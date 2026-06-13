@@ -24,6 +24,20 @@ import * as Dialogs from "./dialogs.js";
 import { createPermissionPrompt, createQuestionPrompt } from "./prompts.js";
 import { createSelection } from "./selection.js";
 import { buildCommands } from "./commands.js";
+import { createKeybind } from "./keybind.js";
+
+// Map a terminal-kit combined key NAME ("CTRL_X","ENTER","PAGE_UP",…) to the
+// {name, ctrl, shift, meta} event shape the keybind resolver expects.
+function tkToEvent(name, data) {
+  let ctrl = false, shift = false, meta = false, n = name;
+  if (n.startsWith("CTRL_")) { ctrl = true; n = n.slice(5); }
+  else if (n.startsWith("ALT_")) { meta = true; n = n.slice(4); }
+  else if (n.startsWith("META_")) { meta = true; n = n.slice(5); }
+  else if (n.startsWith("SHIFT_")) { shift = true; n = n.slice(6); }
+  const REMAP = { ENTER: "return", ESCAPE: "escape", PAGE_UP: "pageup", PAGE_DOWN: "pagedown", " ": "space" };
+  n = REMAP[n] ?? n.toLowerCase();
+  return { name: n, ctrl, shift, meta, isCharacter: data?.isCharacter };
+}
 
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
@@ -41,6 +55,7 @@ export function createShell(opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const data = opts.data; // optional vanilla/data layer
   const router = createKeyRouter();
+  const keymap = createKeybind({ keybinds: opts.keybinds, now: opts.now }); // leader-chord resolver
 
   // --- route ---------------------------------------------------------------
   const [route, setRoute] = createSignal(opts.initialRoute ?? { type: "home" });
@@ -234,7 +249,42 @@ export function createShell(opts = {}) {
       return false;
     },
   });
-  const dispatch = (name, dt) => router.dispatch(name, dt);
+  // Leader-chord actions (default leader Ctrl-X). Only ADDED on top of the raw
+  // key flow: a leader keypress arms the chord and the NEXT key resolves an
+  // action; everything else (editing, autocomplete Tab, Enter, etc.) passes
+  // through unchanged. Maps the resolved action -> a command/dialog.
+  function handleAction(action) {
+    const run = registry ? runRegistry : runCommand;
+    switch (action) {
+      case "command_list": openCommands(); break;
+      case "session_new": run("session.new"); break;
+      case "session_list": registry ? run("session.switch") : openCommands(); break;
+      case "session_rename": registry && run("session.rename"); break;
+      case "session_delete": registry && run("session.delete"); break;
+      case "session_compact": registry && run("session.compact"); break;
+      case "session_export": registry && run("session.export"); break;
+      case "model_list": registry ? run("model.switch") : openModelDialog(); break;
+      case "agent_list": registry ? run("agent.switch") : openAgentDialog(); break;
+      case "variant_cycle": selection?.variant.cycle(); break;
+      case "agent_cycle": selection?.agent.cycle(1); break;
+      case "agent_cycle_reverse": selection?.agent.cycle(-1); break;
+      case "model_cycle_recent": selection?.model.cycle(1); break;
+      case "model_cycle_recent_reverse": selection?.model.cycle(-1); break;
+      case "theme_list": registry && run("theme.switch"); break;
+      case "status_view": registry ? run("app.status") : openHelp(); break;
+      case "help_show": registry ? run("app.help") : openHelp(); break;
+      case "app_exit": opts.onExit?.(); break;
+      default: break; // sidebar_toggle etc. — not wired yet
+    }
+  }
+  function dispatch(name, dt) {
+    const ev = tkToEvent(name, dt);
+    const wasLeader = keymap.isLeaderActive();
+    const action = keymap.resolve(ev.name, ev); // arms/clears leader internally
+    if (wasLeader) { if (action) handleAction(action); return true; } // chord key consumed
+    if (keymap.isLeaderActive()) return true; // leader just armed -> swallow that key
+    return router.dispatch(name, dt); // ordinary raw key -> prompt/widgets/dialogs
+  }
 
   // --- draw ----------------------------------------------------------------
   function drawHomeBody(region) {

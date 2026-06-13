@@ -234,5 +234,29 @@ function makeShell() {
   ok(backend.calls.some(c => c[0] === "session.summarize"), "/compact calls session.summarize");
 }
 
+// 12. leader chord: Ctrl-X then m opens the model picker (and the leader key is
+//     swallowed, not typed into the prompt)
+{
+  const { shell } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  shell.dispatch("CTRL_X");      // arm leader
+  shell.dispatch("m", char());   // chord -> model_list -> Switch model dialog
+  await settle();
+  ok(screenText(shell).includes("Opus 4.8"), "Ctrl-X m opens the model picker");
+  eq(shell.prompt.value(), "", "leader chord typed nothing into the prompt");
+  shell.dispatch("ESCAPE");
+}
+
+// 13. leader chord: Ctrl-X then n -> New session (back to home)
+{
+  const { shell } = makeShell();
+  await shell.init(); await settle();
+  shell.navigate({ type: "session", sessionID: "ses_real" });
+  shell.dispatch("CTRL_X"); shell.dispatch("n", char());
+  await settle();
+  eq(shell.route().type, "home", "Ctrl-X n runs New session (home)");
+}
+
 console.log(`tui vanilla shell-data tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
