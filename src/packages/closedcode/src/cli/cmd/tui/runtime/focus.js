@@ -10,18 +10,25 @@ import { createSignal } from "./reactivity.js";
 export function createKeyRouter() {
   // layers: { handleKey(name,data)->bool, onEscape?() }
   const [layers, setLayers] = createSignal([]);
+  // A global handler consulted BEFORE the top layer, for keys that must work even
+  // while a dialog captures input (e.g. Ctrl-C to quit) — otherwise, since the top
+  // layer captures everything and grabInput suppresses SIGINT, the dialog would
+  // trap the user with no exit but Escape.
+  let global = null;
+  function setGlobal(handler) { global = handler; }
   function pushLayer(layer) {
     setLayers(ls => [...ls, layer]);
     return () => setLayers(ls => ls.filter(l => l !== layer));
   }
   function dispatch(name, data) {
+    if (global && global(name, data)) return true;
     const ls = layers();
     const top = ls[ls.length - 1];
     if (!top) return false;
     if (name === "ESCAPE" && top.onEscape) { top.onEscape(); return true; }
     return top.handleKey?.(name, data) ?? false;
   }
-  return { pushLayer, dispatch, depth: () => layers().length };
+  return { pushLayer, dispatch, setGlobal, depth: () => layers().length };
 }
 
 // A focus ring over an ordered list of focusables. `widgets` is an accessor (so

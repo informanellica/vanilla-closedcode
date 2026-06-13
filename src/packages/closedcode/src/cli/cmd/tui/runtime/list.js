@@ -12,7 +12,10 @@ export function createSelectList(items, opts = {}) {
   const [active, setActive] = createSignal(opts.initialIndex ?? 0);
   let typeahead = "";
   let typeaheadAt = 0;
-  const now = () => (opts.now ? opts.now() : 0); // injectable clock (tests pass a stub)
+  // Injectable clock (tests pass a stub). Defaults to a real clock so the 800ms
+  // typeahead window actually elapses — a constant 0 would keep it open forever,
+  // so separate searches would concatenate instead of resetting.
+  const now = opts.now ?? (() => Date.now());
 
   const clamp = i => { const n = getItems().length; return n === 0 ? 0 : Math.max(0, Math.min(i, n - 1)); };
 

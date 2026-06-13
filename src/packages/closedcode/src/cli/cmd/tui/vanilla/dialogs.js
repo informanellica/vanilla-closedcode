@@ -5,7 +5,14 @@
 // manager (dialog.open/close with an onClose hook), so the SDK-backed dialogs
 // (model/agent/session/theme/…) become thin callers that supply options + an
 // onSelect. Widgets are { draw(region, ctx), handleKey(name, data) } and are
-// headless-testable. Escape resolves to undefined via the manager's onClose.
+// headless-testable.
+//
+// Close protocol (so stacked dialogs don't double-pop): the WIDGET's own action
+// (Enter/select) records the result and calls dialog.close() exactly ONCE; the
+// manager's onClose hook ONLY resolves the promise — it never calls close again.
+// Escape goes manager.onEscape -> close -> onClose -> resolve(undefined). Earlier,
+// a finish() that both resolved AND called close from inside onClose popped two
+// layers on a single Escape when dialogs were stacked.
 import { createSignal } from "../runtime/reactivity.js";
 import { createTextInput } from "../runtime/input.js";
 import { createSelectList } from "../runtime/list.js";
@@ -22,7 +29,8 @@ export function select(dialog, opts = {}) {
   const options = (opts.options ?? []).map(normalizeOption);
   return new Promise(resolve => {
     let done = false;
-    const finish = val => { if (done) return; done = true; dialog.close(); opts.onSelect?.(val); resolve(val); };
+    let result; // undefined = escaped/dismissed
+    const resolveOnce = () => { if (done) return; done = true; resolve(result); };
     const filterInput = filterOn ? createTextInput("", { onChange: () => list.setActive(0) }) : null;
     function filtered() {
       if (!filterInput) return options;
@@ -36,7 +44,10 @@ export function select(dialog, opts = {}) {
       }
       return [...starts, ...inc];
     }
-    const list = createSelectList(filtered, { now: opts.now, onSelect: it => finish(it) });
+    const list = createSelectList(filtered, {
+      now: opts.now,
+      onSelect: it => { result = it; dialog.close(); opts.onSelect?.(it); }, // close THIS dialog before the callback may open another
+    });
     const widget = {
       handleKey(name, data) {
         switch (name) {
@@ -64,7 +75,7 @@ export function select(dialog, opts = {}) {
       width: opts.width ?? 50,
       height: listRows + (filterOn ? 1 : 0) + 2,
       widget,
-      onClose: () => finish(undefined),
+      onClose: resolveOnce,
     });
   });
 }
@@ -77,12 +88,13 @@ export function confirm(dialog, opts = {}) {
   const message = opts.message ?? "";
   return new Promise(resolve => {
     let done = false;
-    const finish = val => { if (done) return; done = true; dialog.close(); resolve(val); };
+    let result; // undefined on escape
+    const resolveOnce = () => { if (done) return; done = true; resolve(result); };
     const [active, setActive] = createSignal("confirm");
     const widget = {
       handleKey(name) {
         if (name === "LEFT" || name === "RIGHT") { setActive(a => (a === "confirm" ? "cancel" : "confirm")); return true; }
-        if (name === "ENTER") { finish(active() === "confirm"); return true; }
+        if (name === "ENTER") { result = active() === "confirm"; dialog.close(); return true; }
         return false;
       },
       draw(region) {
@@ -95,7 +107,7 @@ export function confirm(dialog, opts = {}) {
       },
     };
     const h = Math.min(wordWrap(message, (opts.width ?? 50) - 4).length, 6) + 1;
-    dialog.open({ title: opts.title ?? "Confirm", width: opts.width ?? 50, height: h + 2, widget, onClose: () => finish(undefined) });
+    dialog.open({ title: opts.title ?? "Confirm", width: opts.width ?? 50, height: h + 2, widget, onClose: resolveOnce });
   });
 }
 
@@ -105,9 +117,9 @@ export function alert(dialog, opts = {}) {
   const message = opts.message ?? "";
   return new Promise(resolve => {
     let done = false;
-    const finish = () => { if (done) return; done = true; dialog.close(); resolve(); };
+    const resolveOnce = () => { if (done) return; done = true; resolve(); };
     const widget = {
-      handleKey(name) { if (name === "ENTER") { finish(); return true; } return false; },
+      handleKey(name) { if (name === "ENTER") { dialog.close(); return true; } return false; },
       draw(region) {
         const lines = wordWrap(message, region.width);
         lines.slice(0, region.height - 1).forEach((l, i) => region.line(i, l, attr(theme, "text")));
@@ -115,7 +127,7 @@ export function alert(dialog, opts = {}) {
       },
     };
     const h = Math.min(wordWrap(message, (opts.width ?? 50) - 4).length, 8) + 1;
-    dialog.open({ title: opts.title ?? "Alert", width: opts.width ?? 50, height: h + 2, widget, onClose: () => finish() });
+    dialog.open({ title: opts.title ?? "Alert", width: opts.width ?? 50, height: h + 2, widget, onClose: resolveOnce });
   });
 }
 
@@ -124,16 +136,20 @@ export function prompt(dialog, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   return new Promise(resolve => {
     let done = false;
-    const finish = val => { if (done) return; done = true; dialog.close(); resolve(val); };
-    const input = createTextInput(opts.initial ?? "", { onSubmit: v => finish(v) });
+    let result; // undefined on escape
+    const resolveOnce = () => { if (done) return; done = true; resolve(result); };
+    const input = createTextInput(opts.initial ?? "");
     const widget = {
-      handleKey(name, data) { if (name === "ENTER") { finish(input.value()); return true; } return input.handleKey(name, data); },
+      handleKey(name, data) {
+        if (name === "ENTER") { result = input.value(); dialog.close(); return true; }
+        return input.handleKey(name, data);
+      },
       draw(region, ctx) {
         if (opts.message) region.line(0, truncate(opts.message, region.width), attr(theme, "textMuted"));
         const row = opts.message ? 1 : 0;
         input.draw(region.sub(0, row, region.width, 1), { focused: true, ctx, attr: attr(theme, "text"), placeholder: opts.placeholder ?? "" });
       },
     };
-    dialog.open({ title: opts.title ?? "Input", width: opts.width ?? 50, height: (opts.message ? 1 : 0) + 1 + 2, widget, onClose: () => finish(undefined) });
+    dialog.open({ title: opts.title ?? "Input", width: opts.width ?? 50, height: (opts.message ? 1 : 0) + 1 + 2, widget, onClose: resolveOnce });
   });
 }

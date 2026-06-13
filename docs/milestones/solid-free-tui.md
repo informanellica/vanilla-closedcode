@@ -161,10 +161,11 @@ T4  [PARTIAL — runnable flip done; full removal gated] The vanilla shell is no
     `tui(input)` that mounts the shell on terminal-kit), else the default @opentui
     app (no regression). vanilla/main.js's graph is native-free: terminal-kit +
     the first-party runtime only, no @opentui/solid-js/yoga.
-    NOT yet done (blocked on the SDK-integration phase below): physically removing
-    @opentui/* + solid-js + yoga-layout from package.json and adding terminal-kit
-    as a dep, because the live app.js path still needs them until the vanilla shell
-    is SDK-connected and promoted to default.
+    (terminal-kit is ALREADY a dep — added in T2, package.json "terminal-kit":
+    "^3.1.2".) NOT yet done (blocked on the SDK-integration phase below):
+    physically removing @opentui/* + solid-js + yoga-layout from package.json,
+    because the live app.js path still needs them until the vanilla shell is
+    SDK-connected and promoted to default.
 T5  [PARTIAL] Verify: (a)+(b) DONE — unit + detached-ScreenBuffer snapshot tests,
     134 green across runtime/widgets/shell/dialogs (no TTY needed); plus a module-
     load + import-graph check that vanilla/main.js pulls no @opentui/solid-js.
@@ -176,7 +177,22 @@ T5  [PARTIAL] Verify: (a)+(b) DONE — unit + detached-ScreenBuffer snapshot tes
 
 The T3 view layer is a faithful, tested REBUILD, but it is not yet wired to the
 backend. Before @opentui/solid-js/yoga can be removed and the vanilla shell made
-default, do the **SDK-integration phase**:
+default:
+
+**Step 0 [DONE 2026-06-13] — fix the confirmed bugs an external review reproduced**
+(10 bugs, all with regression tests; the 5 marked SDK-critical would be hit the
+moment streaming/stacked-dialogs land): CJK loss in wordWrap (long no-space word
+not hard-wrapped); stacked-dialog Escape double-pop; Ctrl-C dead behind a modal
+(added a global key path); no terminal-restore on a draw/handler throw (screen.js
+error net + a new test suite for the previously-untested loop); timeline
+re-entrant setOffset during draw + scroll drift on append (now an absolute-from-
+top scroll model, draw is pure); idle toasts never expiring (repaint scheduled at
+duration); toast CJK off-screen (.length -> display width); typeahead default
+clock stuck open; history Up<->Down round-trip; `--prompt "!…"` tripping shell
+mode (setText path). Test totals after Step 0: 162 green (runtime 57 / screen 7 /
+widgets 39 / shell 43 / dialogs 16).
+
+Then the **SDK-integration phase**:
 
 1. Port the contexts the app needs (SDK/sync/project/local/keybind/theme/event)
    from compiled-Solid providers to plain modules over the first-party reactivity

@@ -24,22 +24,37 @@ export function createApp(rootDraw, options = {}) {
   const keyHandlers = new Set();
 
   function makeBuffer() {
-    buf = new tk.ScreenBuffer({ dst: term, width: term.width, height: term.height });
+    // options.createBuffer lets tests inject a detached/mock buffer (no TTY).
+    buf = options.createBuffer ? options.createBuffer(term) : new tk.ScreenBuffer({ dst: term, width: term.width, height: term.height });
   }
 
   const baseAttr = options.attr ?? { color: "default", bgColor: "default" };
 
-  function paint() {
-    if (!buf) return;
-    buf.fill({ attr: baseAttr, char: " " });
-    let cursor = null;
-    const region = makeRegion(buf, 0, 0, term.width, term.height);
-    rootDraw(region, { focusCursor: (x, y) => { cursor = { x, y }; } });
-    buf.draw({ delta: true });
-    if (cursor) { term.showCursor(); buf.moveTo(cursor.x, cursor.y); buf.drawCursor(); }
-    else term.hideCursor();
+  // Any throw from rootDraw or a key handler would otherwise leave the terminal
+  // in raw/fullscreen mode (unusable). Restore first, then surface the error via
+  // options.onError or rethrow.
+  function onFatal(error) {
+    stop();
+    if (options.onError) options.onError(error);
+    else throw error;
   }
 
+  function paint() {
+    if (!buf) return;
+    try {
+      buf.fill({ attr: baseAttr, char: " " });
+      let cursor = null;
+      const region = makeRegion(buf, 0, 0, term.width, term.height);
+      rootDraw(region, { focusCursor: (x, y) => { cursor = { x, y }; } });
+      buf.draw({ delta: true });
+      if (cursor) { term.showCursor(); buf.moveTo(cursor.x, cursor.y); buf.drawCursor(); }
+      else term.hideCursor();
+    } catch (error) {
+      onFatal(error);
+    }
+  }
+
+  let procHandlers = null;
   function start() {
     if (running) return;
     running = true;
@@ -49,6 +64,14 @@ export function createApp(rootDraw, options = {}) {
     term.grabInput({ mouse: options.mouse ? "button" : false });
     term.on("key", onKeyEvent);
     term.on("resize", onResize);
+    // Process-level net: an async throw must still restore the terminal before
+    // the process dies. Opt-out for tests (installProcessHandlers: false).
+    if (options.installProcessHandlers !== false) {
+      const die = error => { stop(); console.error(error); process.exit(1); };
+      procHandlers = { uncaughtException: die, unhandledRejection: die };
+      process.on("uncaughtException", procHandlers.uncaughtException);
+      process.on("unhandledRejection", procHandlers.unhandledRejection);
+    }
     createRoot(dispose => {
       disposeRoot = dispose;
       // The render effect: reading signals inside rootDraw subscribes this
@@ -58,8 +81,12 @@ export function createApp(rootDraw, options = {}) {
   }
 
   function onKeyEvent(name, _matches, data) {
-    // batch so a handler that flips several signals produces a single repaint
-    batch(() => { for (const h of [...keyHandlers]) h(name, data); });
+    try {
+      // batch so a handler that flips several signals produces a single repaint
+      batch(() => { for (const h of [...keyHandlers]) h(name, data); });
+    } catch (error) {
+      onFatal(error);
+    }
   }
   function onResize() {
     makeBuffer();
@@ -71,6 +98,11 @@ export function createApp(rootDraw, options = {}) {
     running = false;
     term.off("key", onKeyEvent);
     term.off("resize", onResize);
+    if (procHandlers) {
+      process.off?.("uncaughtException", procHandlers.uncaughtException);
+      process.off?.("unhandledRejection", procHandlers.unhandledRejection);
+      procHandlers = null;
+    }
     disposeRoot?.();
     disposeRoot = null;
     term.grabInput(false);

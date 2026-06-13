@@ -21,8 +21,9 @@ export function tui(input = {}) {
       model: args.model,
       onExit: () => resolve(),
     });
-    // Prefill the prompt from --prompt (does not auto-submit: no SDK yet).
-    if (args.prompt) for (const ch of String(args.prompt)) shell.prompt.handleKey(ch, { isCharacter: true });
+    // Prefill the prompt from --prompt (does not auto-submit: no SDK yet). Use
+    // setText so a leading "!" doesn't trip shell mode.
+    if (args.prompt) shell.prompt.setText(String(args.prompt));
     app.start();
   });
 }

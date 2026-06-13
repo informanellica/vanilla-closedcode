@@ -95,7 +95,7 @@ const char = () => ({ isCharacter: true });
   buf.fill({ char: " " });
   const res = tl.draw(makeRegion(buf, 0, 0, 40, 2));
   eq(res.offset, 0, "timeline bottom-pinned by default");
-  eq(res.maxScroll, 2, "maxScroll = content(4) - viewport(2)");
+  eq(res.maxStart, 2, "maxStart = content(4) - viewport(2)");
   ok(rowText(buf, 1, 40).includes("done"), "newest line pinned to the bottom row when content overflows");
 }
 
@@ -111,6 +111,55 @@ const char = () => ({ isCharacter: true });
   const buf = new tk.ScreenBuffer({ width: 30, height: 4 }); buf.fill({ char: " " });
   t.draw(makeRegion(buf, 0, 0, 30, 4));
   ok(rowText(buf, 3, 30).includes("saved"), "toast drawn on the bottom row");
+}
+
+// --- toast: schedules a repaint at its duration; CJK positioned by width ---
+{
+  let scheduled = null;
+  const t = createToast({ now: () => 0, scheduleRepaint: ms => (scheduled = ms) });
+  t.show({ message: "x", duration: 1234 });
+  eq(scheduled, 1234, "toast schedules a repaint at its duration (idle expiry)");
+  const buf = new tk.ScreenBuffer({ width: 12, height: 2 }); buf.fill({ char: " " });
+  t.show({ message: "日本語", duration: 9999 });
+  t.draw(makeRegion(buf, 0, 0, 12, 2));
+  // " 日本語 " = 8 display cols, right-aligned in width 12 -> starts at col 4, "日" at col 5.
+  // (With code-unit .length=6 it would start at col 6 and overflow the right edge.)
+  eq(buf.get({ x: 5, y: 1 }).char, "日", "CJK toast positioned by display width, in-bounds");
+}
+
+// --- timeline: draw is pure; scrolled view is stable across appends --------
+{
+  const msgs = [];
+  for (let i = 0; i < 20; i++) msgs.push({ role: "assistant", parts: [{ type: "text", text: "line" + i }] });
+  const tl = createTimeline(() => msgs, {});
+  const buf = new tk.ScreenBuffer({ width: 30, height: 5 }); buf.fill({ char: " " });
+  const reg = makeRegion(buf, 0, 0, 30, 5);
+  tl.draw(reg);
+  const before = tl.offset();
+  tl.draw(reg);
+  eq(tl.offset(), before, "draw() does not mutate scroll state (no re-entrant repaint)");
+  tl.handleKey("PAGE_UP");
+  buf.fill({ char: " " }); tl.draw(reg);
+  const topLine = rowText(buf, 0, 30);
+  msgs.push({ role: "assistant", parts: [{ type: "text", text: "NEWEST" }] });
+  buf.fill({ char: " " }); tl.draw(reg);
+  eq(rowText(buf, 0, 30), topLine, "scrolled-up view stays put when content is appended below");
+}
+
+// --- prompt: history Up/Down round-trip + setText doesn't trip shell mode --
+{
+  const h = createPromptHistory();
+  const p = createPrompt({ placeholders: { normal: [], shell: [] }, history: h, onSubmit: () => {} });
+  for (const c of "one") p.handleKey(c, char()); p.handleKey("ENTER");
+  for (const c of "two") p.handleKey(c, char()); p.handleKey("ENTER");
+  eq(p.value(), "", "cleared after submits");
+  p.handleKey("UP"); eq(p.value(), "two", "Up -> latest");
+  p.handleKey("UP"); eq(p.value(), "one", "Up again -> older");
+  p.handleKey("DOWN"); eq(p.value(), "two", "Down -> newer (round-trip works)");
+  p.handleKey("DOWN"); eq(p.value(), "", "Down at the end restores the draft");
+  p.setText("!ls -la");
+  eq(p.value(), "!ls -la", "setText keeps the leading '!'");
+  eq(p.mode(), "normal", "setText('!...') does not trip shell mode");
 }
 
 console.log(`tui vanilla widgets tests: ${passed} passed, ${failed} failed`);

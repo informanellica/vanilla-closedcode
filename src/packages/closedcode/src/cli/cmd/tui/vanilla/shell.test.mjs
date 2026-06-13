@@ -192,5 +192,15 @@ const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char());
   ok(screenText(buf, w, h).includes("ping"), "shell composites the toast overlay");
 }
 
+// 14. Ctrl-C exits even while a dialog captures input (global key)
+{
+  let exited = false;
+  const shell = createShell({ onExit: () => (exited = true) });
+  shell.dispatch("CTRL_P"); // open command palette (captures all input)
+  ok(shell.dialog.current(), "dialog open and capturing");
+  shell.dispatch("CTRL_C");
+  ok(exited, "Ctrl-C still exits with a dialog open (was a dead key before)");
+}
+
 console.log(`tui vanilla shell tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

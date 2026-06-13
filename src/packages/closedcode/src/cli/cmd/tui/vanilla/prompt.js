@@ -22,8 +22,13 @@ export function createPrompt(opts = {}) {
   const textarea = createTextArea("", { minHeight: 1, maxHeight: 6, onChange: opts.onChange });
   const ac = createAutocomplete({ commands: opts.commands ?? [], listFiles: opts.listFiles });
   const history = opts.history;
+  let historyActive = false; // true while browsing history (so Up/Down cycle)
 
   const refreshAC = () => ac.onInput(textarea.value(), textarea.cursor());
+  // Set the whole prompt text programmatically (e.g. --prompt prefill, a stash
+  // restore). Goes through the textarea directly so a leading "!" does NOT trip
+  // shell mode the way feeding it key-by-key would.
+  function setText(str) { textarea.setText(str ?? ""); historyActive = false; refreshAC(); }
 
   function applyAccept(splice) {
     const cs = [...textarea.value()];
@@ -43,6 +48,7 @@ export function createPrompt(opts = {}) {
     opts.onSubmit?.(text, { mode: m });
     textarea.setText("");
     setMode("normal");
+    historyActive = false;
     ac.hide();
     return true;
   }
@@ -67,20 +73,26 @@ export function createPrompt(opts = {}) {
       if (data && data.shift) { textarea.newline(); refreshAC(); return true; }
       submit(); return true;
     }
-    // 5. history: Up at the very start, Down at the very end
-    if (history && name === "UP" && textarea.cursor() === 0) {
+    // 5. history: Up walks back (from the line start, or while already browsing);
+    //    Down walks forward while browsing and restores the in-progress draft at
+    //    the end. Tracking `historyActive` makes the Up<->Down round-trip work
+    //    regardless of where the recalled text left the cursor.
+    if (history && name === "UP" && (historyActive || textarea.cursor() === 0)) {
       const item = history.move?.(-1, textarea.value());
-      if (item) { textarea.setText(item.input); setMode(item.mode ?? "normal"); textarea.setCursor(0); }
+      if (item) { textarea.setText(item.input); textarea.setCursor(0); setMode(item.mode ?? "normal"); historyActive = true; }
       return true;
     }
-    if (history && name === "DOWN" && textarea.cursor() === [...textarea.value()].length) {
+    if (history && name === "DOWN" && historyActive) {
       const item = history.move?.(1, textarea.value());
-      if (item) { textarea.setText(item.input); setMode(item.mode ?? "normal"); }
+      if (item) { textarea.setText(item.input); setMode(item.mode ?? "normal"); if (item.atDraft) historyActive = false; }
       return true;
     }
-    // 6. default: edit, then refresh suggestions
+    // 6. default: edit, then refresh suggestions; an actual edit exits browsing
     const handled = textarea.handleKey(name, data);
-    if (handled) refreshAC();
+    if (handled) {
+      if ((data && data.isCharacter) || name === "BACKSPACE" || name === "DELETE") historyActive = false;
+      refreshAC();
+    }
     return handled;
   }
 
@@ -118,7 +130,7 @@ export function createPrompt(opts = {}) {
     content.line(tH + 1, hint, attr(theme, "textMuted"));
   }
 
-  return { textarea, autocomplete: ac, mode, setMode, value: () => textarea.value(), handleKey, submit, draw, height, placeholder };
+  return { textarea, autocomplete: ac, mode, setMode, value: () => textarea.value(), setText, handleKey, submit, draw, height, placeholder };
 }
 
 // Minimal prompt history: Up (dir -1) walks back, Down (dir +1) walks forward and
@@ -141,7 +153,7 @@ export function createPromptHistory() {
       if (idx === null) return;
       if (idx < items.length - 1) { idx++; return items[idx]; }
       idx = null;
-      return { input: draft, mode: "normal" };
+      return { input: draft, mode: "normal", atDraft: true };
     },
   };
 }

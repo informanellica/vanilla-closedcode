@@ -92,5 +92,18 @@ const type = (d, str) => { for (const ch of str) d.dispatch(ch, char()); };
   eq(await p, "renamed", "prompt resolves the entered text");
 }
 
+// --- stacked dialogs: one Escape closes ONLY the top (no double-pop) ------
+{
+  const d = mockDialog();
+  const ps = Dialogs.select(d, { title: "S", options: ["a", "b"] });
+  const pc = Dialogs.confirm(d, { title: "C", message: "sure?" });
+  eq(d.current().title, "C", "confirm is stacked on top of select");
+  d.escape(); // close the top layer only
+  eq(await pc, undefined, "top (confirm) resolved undefined on its escape");
+  ok(d.current() && d.current().title === "S", "select still open underneath (no double-pop)");
+  d.escape();
+  eq(await ps, undefined, "select then closes on its own escape");
+}
+
 console.log(`tui vanilla dialogs tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

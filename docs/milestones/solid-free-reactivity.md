@@ -120,5 +120,9 @@ CURRENT real-solid runtime BEFORE the flip.
   owner will NOT be disposed by Kobalte. The conversion campaign already
   routes such cases through getOwner/runWithOwner — those sites keep solid-js
   resolution until their host third-party is replaced.
-- `@opentui/solid` (TUI) is bundled and stays on real solid-js permanently
-  (third-party interop wall, same status as `.scm` imports).
+- `@opentui/solid` (TUI): SUPERSEDED. This was the original "stays on solid-js
+  permanently" wall, but the TUI is being rebuilt native-free on terminal-kit +
+  the first-party reactivity core (see docs/milestones/solid-free-tui.md — T0–T3
+  done, view layer runs behind CLOSEDCODE_VANILLA_TUI=1). Once the vanilla shell
+  is SDK-connected and promoted to default, `@opentui/*` + the TUI's solid-js are
+  removed outright, so this is no longer a permanent wall.

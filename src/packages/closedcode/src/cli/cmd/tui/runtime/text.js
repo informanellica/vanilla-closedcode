@@ -40,20 +40,34 @@ export function wrap(str, max) {
 }
 
 // Word-wrap on whitespace, falling back to hard-wrap for words longer than max.
+// A word wider than `max` is hard-wrapped (via wrap()) REGARDLESS of position —
+// not only at line start — so a long no-space run (e.g. a CJK sentence, which is
+// one "word" because it has no spaces) is broken across lines instead of being
+// emitted as one over-long line that the caller then truncates (which silently
+// dropped Japanese text). The CJK-first project relies on this.
 export function wordWrap(str, max) {
   if (max <= 0) return [str];
   const out = [];
   for (const para of str.split("\n")) {
     let line = "";
     let w = 0;
+    const flush = () => { out.push(line.replace(/\s+$/, "")); line = ""; w = 0; };
     for (const word of para.split(/(\s+)/)) {
       if (word === "") continue;
       const ww = width(word);
-      if (w === 0 && ww > max) { for (const piece of wrap(word, max)) out.push(piece); line = ""; w = 0; continue; }
-      if (w + ww > max) { out.push(line.replace(/\s+$/, "")); line = word.replace(/^\s+/, ""); w = width(line); }
+      if (ww > max) {
+        // word alone exceeds the width: flush the current line, then hard-wrap it.
+        if (w > 0) flush();
+        const pieces = wrap(word, max);
+        for (let i = 0; i < pieces.length - 1; i++) out.push(pieces[i]);
+        line = pieces[pieces.length - 1];
+        w = width(line);
+        continue;
+      }
+      if (w + ww > max) { flush(); if (/^\s+$/.test(word)) continue; line = word; w = ww; }
       else { line += word; w += ww; }
     }
-    out.push(line.replace(/\s+$/, ""));
+    flush();
   }
   return out;
 }

@@ -50,7 +50,11 @@ export function createShell(opts = {}) {
   const [messages, setMessages] = createSignal([]);
   const pushMessage = m => setMessages(list => [...list, m]);
   const timeline = createTimeline(messages, { theme });
-  const toast = createToast({ theme, now: opts.now });
+  const toast = createToast({ theme, now: opts.now, scheduleRepaint: opts.scheduleRepaint });
+
+  // Global keys work even while a dialog captures input (grabInput suppresses
+  // SIGINT, so without this Ctrl-C would be a dead key behind a modal).
+  router.setGlobal((name) => { if (name === "CTRL_C") { opts.onExit?.(); return true; } return false; });
 
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();
@@ -76,7 +80,7 @@ export function createShell(opts = {}) {
     pushMessage({ role: "user", parts: [{ type: "text", text: mode === "shell" ? "! " + text : text }] });
     // Stage-2 placeholder; SDK streaming is wired at the integration stage.
     pushMessage({ role: "assistant", parts: [{ type: "text", text: "(assistant response will stream here)" }] });
-    timeline.setOffset(0);
+    timeline.pin(); // jump to the newest line on the user's own message
   }
   const slashToValue = cmd => ({ new: "session.new", help: "help", exit: "app.exit", models: "models", agents: "agents" }[cmd] ?? "help");
 
@@ -152,7 +156,6 @@ export function createShell(opts = {}) {
   router.pushLayer({
     handleKey: (name, data) => {
       if (name === "CTRL_P") { openCommands(); return true; }
-      if (name === "CTRL_C") { opts.onExit?.(); return true; }
       if (route().type === "session" && (name === "PAGE_UP" || name === "PAGE_DOWN")) return timeline.handleKey(name);
       if (prompt.handleKey(name, data)) return true;
       if (name === "ESCAPE" && route().type === "session") { navigate({ type: "home" }); return true; }
@@ -220,7 +223,12 @@ export function createShell(opts = {}) {
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.
 export function mountShell(opts = {}) {
   let app;
-  const shell = createShell({ ...opts, onExit: () => { app?.stop(); opts.onExit?.(); } });
+  const shell = createShell({
+    ...opts,
+    onExit: () => { app?.stop(); opts.onExit?.(); },
+    // Repaint when a toast is due to expire (an idle screen never re-renders).
+    scheduleRepaint: ms => { const t = setTimeout(() => app?.repaint(), ms + 16); t?.unref?.(); },
+  });
   app = createApp((region, ctx) => shell.draw(region, ctx), { terminal: opts.terminal, mouse: opts.mouse });
   app.onKey((name, data) => shell.dispatch(name, data));
   return { app, shell };

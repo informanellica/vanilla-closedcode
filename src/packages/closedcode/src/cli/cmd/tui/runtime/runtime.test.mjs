@@ -222,5 +222,15 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   eq(cur, [2, 2], "textarea cursor at end is row 2, display col 2 (after お)");
 }
 
+// 13. wordWrap hard-wraps an over-long no-space word (CJK-loss regression)
+{
+  const long = "日本語".repeat(10); // 30 display cols, NO spaces -> one "word"
+  const lines = wordWrap("› " + long, 20);
+  eq(lines.every(l => width(l) <= 20), true, "wordWrap: every line within the width");
+  eq(lines.map(l => l.replace(/\s/g, "")).join("").includes("日本語日本語"), true, "wordWrap: CJK content preserved (not dropped)");
+  eq(wordWrap("aaaaaaaa", 3), ["aaa", "aaa", "aa"], "wordWrap: over-long ascii word hard-wrapped mid-line");
+  eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap: ordinary wrapping unchanged");
+}
+
 console.log(`tui runtime tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

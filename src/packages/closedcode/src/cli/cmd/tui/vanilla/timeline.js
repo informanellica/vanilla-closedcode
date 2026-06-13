@@ -2,9 +2,16 @@
 // routes/session renders the SDK message store through @opentui parts; this is
 // the immediate-mode view over a plain message model — { role, parts } where a
 // part is { type:"text"|"reasoning"|"tool"|"file", ... } — wrapped width-aware
-// and windowed bottom-pinned (newest at the bottom), with PageUp/PageDown
-// scrollback. The real part schema/streaming is wired at the SDK-integration
-// stage; this covers the rendering + scroll behavior, headless-testable.
+// and scrolled, with PageUp/PageDown scrollback. The real part schema/streaming
+// is wired at the SDK-integration stage; this covers the rendering + scroll
+// behavior, headless-testable.
+//
+// Scroll model: a `follow` flag (true = pinned to the newest line, the chat
+// default) plus, when scrolled up, an ABSOLUTE `topIndex` (top visible line from
+// the top). Absolute-from-top means appending below does NOT shift what the user
+// is reading (a bottom-relative offset would drift on every streamed token).
+// draw() is PURE — it never writes a signal (an earlier bottom-offset clamp wrote
+// during the render effect, causing a double repaint per key).
 import { createSignal } from "../runtime/reactivity.js";
 import { wordWrap, truncate } from "../runtime/text.js";
 import { attr, defaultTheme } from "./theme.js";
@@ -43,31 +50,42 @@ export function buildTimelineLines(messages, width) {
 export function createTimeline(messages, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const getMessages = typeof messages === "function" ? messages : () => messages;
-  const [offset, setOffset] = createSignal(0); // lines hidden below the viewport (0 = bottom)
-  let lastViewH = 1;
+  const [follow, setFollow] = createSignal(true); // pinned to newest
+  const [topIndex, setTopIndex] = createSignal(0); // absolute top line when !follow
+  let lastViewH = 1, lastMaxStart = 0;
 
+  // current top line index (clamped to the last render's bounds)
+  const curStart = () => (follow() ? lastMaxStart : Math.min(Math.max(0, topIndex()), lastMaxStart));
+  // lines hidden below the viewport (kept for back-compat / tests)
+  const offset = () => Math.max(0, lastMaxStart - curStart());
+
+  function pin() { setFollow(true); }
+  function scrollBy(deltaLines) {
+    const next = curStart() + deltaLines;
+    if (next >= lastMaxStart) { setFollow(true); return; }
+    setFollow(false); setTopIndex(Math.max(0, next));
+  }
   function handleKey(name) {
     switch (name) {
-      case "PAGE_UP": setOffset(o => o + lastViewH); return true;
-      case "PAGE_DOWN": setOffset(o => Math.max(0, o - lastViewH)); return true;
+      case "PAGE_UP": scrollBy(-lastViewH); return true;
+      case "PAGE_DOWN": scrollBy(lastViewH); return true;
       default: return false;
     }
   }
 
   function draw(region) {
-    const h = region.height;
-    lastViewH = Math.max(1, h);
+    const h = Math.max(1, region.height);
     const lines = buildTimelineLines(getMessages(), region.width);
-    const maxScroll = Math.max(0, lines.length - h);
-    const off = Math.min(Math.max(0, offset() | 0), maxScroll);
-    if (off !== offset()) setOffset(off);
-    const start = Math.max(0, lines.length - h - off);
+    // record bounds for the next handleKey/curStart (NO signal writes here)
+    lastViewH = h;
+    lastMaxStart = Math.max(0, lines.length - h);
+    const start = curStart();
     for (let i = 0; i < h && start + i < lines.length; i++) {
       const ln = lines[start + i];
       region.line(i, ln.str, attr(theme, ln.token));
     }
-    return { offset: off, maxScroll };
+    return { start, maxStart: lastMaxStart, follow: follow(), offset: offset() };
   }
 
-  return { offset, setOffset, handleKey, draw };
+  return { follow, pin, offset, scrollBy, handleKey, draw };
 }
