@@ -64,5 +64,42 @@ const tokenOf = l => (l.find(s => s.text.trim()) || l[0] || {}).style?.token;
   ok(text(bs).startsWith("  "), "backslash content line keeps a context gutter (not the No-newline marker)");
 }
 
+// --- optional syntax highlighting (opts.lang) -----------------------------
+{
+  const styleOfWord = (line, word) => (line.find(s => s.text === word) || {}).style;
+  // added JS line: keyword + number colored; marker stays diffAdded; bg tinted
+  const added = renderUnifiedDiff("+const x = 1", 40, { lang: "js" }).find(l => text(l).includes("const"));
+  eq(text(added), "+ const x = 1", "lang: added line tiles exactly (marker + highlighted body)");
+  eq(styleOfWord(added, "const")?.token, "syntaxKeyword", "lang: 'const' highlighted as keyword");
+  eq(styleOfWord(added, "1")?.token, "syntaxNumber", "lang: '1' highlighted as number");
+  eq(styleOfWord(added, "const")?.bg, "diffAddedBg", "lang: added body segments carry diffAddedBg tint");
+  eq(added[0].style.bg, "diffAddedBg", "lang: added gutter marker also tinted");
+  ok(added[0].style.token === "diffAdded", "lang: gutter marker keeps diffAdded token (sign stays green)");
+
+  // removed line -> diffRemovedBg tint
+  const removed = renderUnifiedDiff("-let y = 2", 40, { lang: "js" }).find(l => text(l).includes("let"));
+  eq(styleOfWord(removed, "let")?.bg, "diffRemovedBg", "lang: removed body carries diffRemovedBg tint");
+
+  // context line is highlighted but gets NO background band
+  const ctx = renderUnifiedDiff(" return z", 40, { lang: "js" }).find(l => text(l).includes("return"));
+  eq(styleOfWord(ctx, "return")?.token, "syntaxKeyword", "lang: context line highlighted");
+  ok(styleOfWord(ctx, "return")?.bg == null, "lang: context line has no background tint");
+
+  // unknown / absent lang falls back to a single diff-colored body segment
+  const plain = renderUnifiedDiff("+const x = 1", 40, { lang: "no-such-lang" }).find(l => text(l).includes("const"));
+  eq([text(plain), tokenOf(plain)], ["+ const x = 1", "diffAdded"], "unknown lang -> plain single diffAdded body");
+  const noopts = renderUnifiedDiff("+const x = 1", 40).find(l => text(l).includes("const"));
+  eq(noopts.length, 2, "no opts -> body is one segment (marker + body), unchanged behavior");
+
+  // renderTextDiff threads lang through too
+  const td = renderTextDiff("a = 1", "a = 2", 40, { lang: "js" });
+  ok(td.some(l => (l.find(s => s.text === "2") || {}).style?.token === "syntaxNumber"), "renderTextDiff: lang threaded to renderLineDiff");
+
+  // highlighted lines still wrap within width (CJK + tiling preserved)
+  const wide = renderUnifiedDiff("+const s = \"" + "あ".repeat(20) + "\"", 12, { lang: "js" });
+  ok(wide.every(l => richWidth(l) <= 12), "highlighted long line wraps within width (CJK)");
+  ok(wide.length > 1, "highlighted long line wrapped to multiple rows");
+}
+
 console.log(`tui vanilla diff tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

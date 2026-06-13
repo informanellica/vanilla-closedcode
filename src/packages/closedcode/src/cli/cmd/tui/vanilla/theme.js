@@ -26,6 +26,11 @@ export const defaultTheme = {
   diffAdded: "#a6e3a1",
   diffRemoved: "#f38ba8",
   diffContext: "#7f849c",
+  // Faint add/removed line backgrounds (used when a diff is syntax-highlighted,
+  // so the green/red signal survives even though the foreground carries syntax
+  // colors). Dark, low-saturation tints that read against the #1e1e2e base.
+  diffAddedBg: "#2d4030",
+  diffRemovedBg: "#432934",
   syntaxKeyword: "#cba6f7",
   syntaxString: "#a6e3a1",
   syntaxComment: "#6c7086",

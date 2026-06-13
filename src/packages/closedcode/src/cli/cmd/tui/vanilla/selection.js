@@ -4,9 +4,12 @@
 // modelID), the model's reasoning/effort variant, plus a favorites list.
 //
 // Design notes vs. the original solid local.js:
-//   - No disk persistence. The original kept recent/favorite/variant in
-//     model.json; here everything lives in memory for the session (the spec
-//     requires "in-memory only").
+//   - Disk persistence is OPTIONAL via an injected storage adapter
+//     (opts.storage with synchronous load()/save(snapshot)). When supplied it
+//     restores the original model.json recent/favorite/variant parity: the
+//     override agent/model, favorites, and per-model variants are hydrated on
+//     create and re-saved after every mutation. With no adapter the default
+//     stays in-memory only — everything lives in memory for the session.
 //   - No per-agent model map. The original keyed the chosen model by agent name;
 //     here a single model selection applies to whichever agent is current. This
 //     matches the vanilla shell, which had one flat modelSel signal.
@@ -66,14 +69,32 @@ export function createSelection(opts = {}) {
   const data = opts.data;
   const store = data.store;
   const toast = opts.toast; // optional { show({message,variant}) } for invalid picks
+  const storage = opts.storage; // optional { load(): snapshot|null, save(snapshot): void }
 
   // Override state (undefined => fall back to live data).
   let agentOverride; // agent name
   let modelOverride; // { providerID, modelID }
-  const variants = new Map(); // modelKey -> chosen variant string
+  let variants = new Map(); // modelKey -> chosen variant string
   let favorites = []; // [{ providerID, modelID }] in insertion order
 
   const warn = message => { try { toast?.show?.({ message, variant: "warning" }); } catch { /* ignore */ } };
+
+  // Build the plain, round-trippable snapshot from the *overrides* (what the
+  // user explicitly chose — never the resolved fallbacks), and persist it. No-op
+  // when no storage adapter is injected. Mutators call this after any change.
+  const persist = () => {
+    if (!storage?.save) return;
+    const variantsObj = {};
+    for (const [key, name] of variants) variantsObj[key] = name;
+    try {
+      storage.save({
+        agent: agentOverride,
+        model: modelOverride,
+        favorites: favorites.map(f => ({ providerID: f.providerID, modelID: f.modelID })),
+        variants: variantsObj,
+      });
+    } catch { /* ignore persistence failures — selection stays usable in memory */ }
+  };
 
   // ---- agent --------------------------------------------------------------
   const agent = {
@@ -91,6 +112,7 @@ export function createSelection(opts = {}) {
     set(name) {
       if (!visibleAgents(store).some(a => a.name === name)) { warn(`Agent not found: ${name}`); return; }
       agentOverride = name;
+      persist();
     },
     // Cycle to the next/prev agent, wrapping at both ends. dir defaults to +1.
     cycle(dir = 1) {
@@ -102,6 +124,7 @@ export function createSelection(opts = {}) {
       let next = idx + dir;
       next = ((next % list.length) + list.length) % list.length; // wrap both ways
       agentOverride = list[next].name;
+      persist();
     },
   };
 
@@ -129,6 +152,7 @@ export function createSelection(opts = {}) {
     set(m) {
       if (!isModelValid(store, m)) { warn(`Model ${m?.providerID}/${m?.modelID} is not valid`); return; }
       modelOverride = { providerID: m.providerID, modelID: m.modelID };
+      persist();
     },
     // Cycle through the flat model list, wrapping. dir defaults to +1.
     cycle(dir = 1) {
@@ -141,6 +165,7 @@ export function createSelection(opts = {}) {
       next = ((next % list.length) + list.length) % list.length;
       const val = list[next];
       modelOverride = { providerID: val.providerID, modelID: val.modelID };
+      persist();
     },
     favorite: {
       // Toggle a model in/out of the favorites list (validated).
@@ -152,6 +177,7 @@ export function createSelection(opts = {}) {
         } else {
           favorites = [{ providerID: m.providerID, modelID: m.modelID }, ...favorites];
         }
+        persist();
       },
       // Current favorites that are still valid, as {providerID, modelID}[].
       list() {
@@ -187,6 +213,7 @@ export function createSelection(opts = {}) {
       const key = modelKey(m);
       if (!v) variants.delete(key);
       else variants.set(key, v);
+      persist();
     },
     // Cycle: undefined -> first -> ... -> last -> undefined. No-op with 0 variants.
     cycle() {
@@ -199,6 +226,36 @@ export function createSelection(opts = {}) {
       this.set(list[idx + 1]);
     },
   };
+
+  // Hydrate in-memory state from the storage adapter, if one was injected. This
+  // runs once at create time, after the accessors exist. We do NOT validate the
+  // snapshot against the live store (providers/agents may not be loaded yet);
+  // current()/list() already fall back / filter invalid entries lazily, so a
+  // stale-but-restored value heals itself. Anything malformed is treated as
+  // "nothing saved" — we never throw on a bad snapshot.
+  if (storage?.load) {
+    let snap;
+    try { snap = storage.load(); } catch { snap = null; }
+    if (snap && typeof snap === "object") {
+      if (typeof snap.agent === "string") agentOverride = snap.agent;
+      if (snap.model && typeof snap.model === "object" &&
+          typeof snap.model.providerID === "string" && typeof snap.model.modelID === "string") {
+        modelOverride = { providerID: snap.model.providerID, modelID: snap.model.modelID };
+      }
+      if (Array.isArray(snap.favorites)) {
+        favorites = snap.favorites
+          .filter(f => f && typeof f === "object" && typeof f.providerID === "string" && typeof f.modelID === "string")
+          .map(f => ({ providerID: f.providerID, modelID: f.modelID }));
+      }
+      if (snap.variants && typeof snap.variants === "object" && !Array.isArray(snap.variants)) {
+        const restored = new Map();
+        for (const [key, name] of Object.entries(snap.variants)) {
+          if (typeof name === "string") restored.set(key, name);
+        }
+        variants = restored;
+      }
+    }
+  }
 
   return { agent, model, variant };
 }

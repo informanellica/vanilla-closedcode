@@ -134,5 +134,81 @@ const AGENTS = [
   eq(toasts.map(t => t.variant), ["warning", "warning"], "invalid set/agent.set emit a warning toast");
 }
 
+// --- storage: persistence via an injected synchronous adapter -------------
+// A fake in-memory storage: save() deep-copies the snapshot (mimicking a real
+// JSON-on-disk round-trip), load() returns the last saved box, _peek() reads it.
+function memStorage() {
+  let box = null;
+  return { load: () => box, save: s => { box = JSON.parse(JSON.stringify(s)); }, _peek: () => box };
+}
+
+// Each mutation persists, and a no-op set never corrupts the saved snapshot.
+{
+  const storage = memStorage();
+  const sel = createSelection({ data: mockData({ providers: PROVIDERS, agents: AGENTS }), storage });
+  eq(storage._peek(), null, "storage: nothing saved before any mutation");
+
+  sel.model.favorite.toggle({ providerID: "anthropic", modelID: "opus-4-8" });
+  eq(storage._peek().favorites, [{ providerID: "anthropic", modelID: "opus-4-8" }], "storage: favorite.toggle persists");
+
+  sel.model.set({ providerID: "openai", modelID: "gpt-5" });
+  eq(storage._peek().model, { providerID: "openai", modelID: "gpt-5" }, "storage: model.set persists the override");
+
+  sel.agent.set("plan");
+  eq(storage._peek().agent, "plan", "storage: agent.set persists");
+
+  // current model is gpt-5 (no variants) — set a variant on opus instead.
+  sel.model.set({ providerID: "anthropic", modelID: "opus-4-8" });
+  sel.variant.set("high");
+  eq(storage._peek().variants, { "anthropic/opus-4-8": "high" }, "storage: variant.set persists keyed by model");
+
+  // A no-op set (invalid model) must NOT change the saved snapshot.
+  const before = JSON.stringify(storage._peek());
+  sel.model.set({ providerID: "openai", modelID: "nope" });
+  eq(JSON.stringify(storage._peek()), before, "storage: invalid model.set does not corrupt saved state");
+}
+
+// RESTORE: a second selection over the SAME storage + store rehydrates state.
+{
+  const storage = memStorage();
+  const first = createSelection({ data: mockData({ providers: PROVIDERS, agents: AGENTS }), storage });
+  first.model.set({ providerID: "anthropic", modelID: "opus-4-8" });
+  first.variant.set("high");
+  first.agent.set("plan");
+  first.model.favorite.toggle({ providerID: "openai", modelID: "gpt-5" });
+  first.model.favorite.toggle({ providerID: "anthropic", modelID: "sonnet-4-6" });
+
+  const restored = createSelection({ data: mockData({ providers: PROVIDERS, agents: AGENTS }), storage });
+  eq(restored.model.current(), { providerID: "anthropic", modelID: "opus-4-8" }, "restore: model.current() rehydrated");
+  eq(restored.agent.current(), "plan", "restore: agent.current() rehydrated");
+  eq(restored.variant.current(), "high", "restore: variant.current() rehydrated per model");
+  eq(restored.model.favorite.list().map(m => m.modelID), ["sonnet-4-6", "gpt-5"], "restore: favorites rehydrated (order preserved)");
+}
+
+// A malformed snapshot is tolerated: no throw, yields a working selection.
+{
+  const bad = { load: () => ({ favorites: 5, variants: "x", model: 7, agent: 9 }), save: () => {} };
+  let sel;
+  let threw = false;
+  try { sel = createSelection({ data: mockData({ providers: PROVIDERS, agents: AGENTS }), storage: bad }); }
+  catch { threw = true; }
+  eq(threw, false, "malformed snapshot does not throw");
+  eq(sel.model.current(), { providerID: "anthropic", modelID: "opus-4-8" }, "malformed snapshot: model falls back");
+  eq(sel.agent.current(), "build", "malformed snapshot: agent falls back");
+  eq(sel.model.favorite.list(), [], "malformed snapshot: favorites empty");
+  // and the selection is still mutable afterward
+  sel.model.set({ providerID: "openai", modelID: "gpt-5" });
+  eq(sel.model.current(), { providerID: "openai", modelID: "gpt-5" }, "malformed snapshot: selection still works");
+}
+
+// No storage adapter: persist() is a no-op (no crash on any mutation path).
+{
+  const sel = createSelection({ data: mockData({ providers: PROVIDERS, agents: AGENTS }) });
+  sel.model.set({ providerID: "openai", modelID: "gpt-5" });
+  sel.agent.set("plan");
+  sel.model.favorite.toggle({ providerID: "openai", modelID: "gpt-5" });
+  ok(true, "no storage: mutations succeed without a save adapter");
+}
+
 console.log(`tui vanilla selection tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);
