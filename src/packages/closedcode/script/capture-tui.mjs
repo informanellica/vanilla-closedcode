@@ -16,7 +16,9 @@ import { createShell } from "../src/cli/cmd/tui/vanilla/shell.js";
 import { defaultTheme } from "../src/cli/cmd/tui/vanilla/theme.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUT = process.argv[2] || path.resolve(__dirname, "../../../../artifacts/closedcode-self-improvement/tui-captures");
+// Default to the workspace's established capture dir (src/artifacts), where the
+// other TUI screenshots live. (script/ -> ../../../ == the workspace src root.)
+const OUT = process.argv[2] || path.resolve(__dirname, "../../../artifacts");
 const W = 96, H = 30;
 
 // --- SVG emitter ------------------------------------------------------------
@@ -81,10 +83,10 @@ function seedChat(shell) {
 }
 
 const scenarios = [
-  { name: "01-home", title: "closedcode vanilla TUI — home", build: () => render(createShell()) },
-  { name: "02-chat-diff-unified", title: "session: markdown + syntax-highlighted unified diff", build: () => { const s = createShell(); seedChat(s); return render(s); } },
-  { name: "03-diff-split", title: "session: side-by-side (split) diff  [<leader>d / /diff]", build: () => { const s = createShell({ diffView: "split" }); seedChat(s); return render(s); } },
-  { name: "04-command-palette", title: "command palette  [Ctrl-P]", build: () => { const s = createShell(); s.dispatch("CTRL_P"); return render(s); } },
+  { name: "vanilla-tui-01-home", title: "closedcode vanilla TUI — home", build: () => render(createShell()) },
+  { name: "vanilla-tui-02-chat-diff-unified", title: "session: markdown + syntax-highlighted unified diff", build: () => { const s = createShell(); seedChat(s); return render(s); } },
+  { name: "vanilla-tui-03-diff-split", title: "session: side-by-side (split) diff  [<leader>d / /diff]", build: () => { const s = createShell({ diffView: "split" }); seedChat(s); return render(s); } },
+  { name: "vanilla-tui-04-command-palette", title: "command palette  [Ctrl-P]", build: () => { const s = createShell(); s.dispatch("CTRL_P"); return render(s); } },
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
