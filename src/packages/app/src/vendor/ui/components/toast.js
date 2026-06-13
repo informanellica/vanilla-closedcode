@@ -1,7 +1,7 @@
 // Vanilla reimplementation of @kobalte/core's Toast behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { insert, Portal } from "solid-js/web";
+import { insert, Portal } from "../../../lib/reactivity.js";
 import {
   createComponent,
   createContext,
@@ -18,7 +18,7 @@ import {
   splitProps,
   untrack,
   useContext,
-} from "solid-js";
+} from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";

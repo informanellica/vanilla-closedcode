@@ -1,4 +1,4 @@
-import { insert } from "solid-js/web";
+import { insert } from "../lib/reactivity.js";
 import fuzzysort from "fuzzysort";
 import { entries, flatMap, groupBy, map, pipe } from "remeda";
 import { Icon } from "@/bs/icon.js";

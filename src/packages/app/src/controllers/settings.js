@@ -1,4 +1,4 @@
-import { createMemo, createResource } from "solid-js";
+import { createMemo, createResource } from "../lib/reactivity.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 

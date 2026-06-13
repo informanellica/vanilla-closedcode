@@ -1,5 +1,5 @@
-import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { createSortable } from "../../lib/dnd/index.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tabs } from "@/bs/tabs.js";

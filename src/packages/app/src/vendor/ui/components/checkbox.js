@@ -1,5 +1,5 @@
-import { createRenderEffect } from "solid-js";
-import { insert } from "solid-js/web";
+import { createRenderEffect } from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
 // Getter-preserving split (Solid's splitProps semantics): copying values

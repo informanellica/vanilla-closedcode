@@ -1,5 +1,5 @@
-import { createComponent, createEffect, createMemo, For, Show } from "solid-js";
-import { insert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, For, Show } from "../../lib/reactivity.js";
+import { insert } from "../../lib/reactivity.js";
 import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "../../lib/dnd/index.js";
 import { ConstrainDragXAxis } from "@/utils/solid-dnd.js";
 import { IconButton } from "@/bs/icon-button.js";

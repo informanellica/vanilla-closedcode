@@ -5,10 +5,10 @@
 // updates. insert() reconciles that nested array/accessor shape in place
 // instead of detaching live rows (established exception, same as
 // sidebar-project.js).
-import { insert } from "solid-js/web";
+import { insert } from "../../lib/reactivity.js";
 import { useNavigate, useParams } from "../../lib/router/index.js";
-import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { createSortable } from "../../lib/dnd/index.js";
 import { createMediaQuery } from "../../lib/primitives/media.js";
 import { base64Encode } from "core/util/encode";

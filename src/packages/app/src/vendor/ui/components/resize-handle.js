@@ -1,4 +1,4 @@
-import { createRenderEffect, splitProps } from "solid-js";
+import { createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
 function applyStyle(el, style) {
   if (style == null) {

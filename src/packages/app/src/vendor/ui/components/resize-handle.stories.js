@@ -1,14 +1,14 @@
-import { template as _$template } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
+import { setStyleProperty as _$setStyleProperty } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:grid;gap:8px><div style=color:var(--text-weak);font-size:12px>Size: <!>px</div><div style=height:48px;background-color:var(--background-stronger);border-radius:6px>`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style=display:grid;gap:8px;width:220px><div style=color:var(--text-weak);font-size:12px>Size: <!>px</div><div style=background-color:var(--background-stronger);border-radius:6px>`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div style=display:grid;gap:8px><div style=color:var(--text-weak);font-size:12px></div><div style=height:48px;background-color:var(--background-stronger);border-radius:6px>`);
-import { createSignal } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createSignal } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import * as mod from "./resize-handle.js";
 const docs = `### Overview
 Drag handle for resizing panels or split views.

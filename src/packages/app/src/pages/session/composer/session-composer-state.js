@@ -1,5 +1,5 @@
-import { createEffect, createMemo, on, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createMemo, on, onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { useParams } from "../../../lib/router/index.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useSync } from "@/context/sync.js";

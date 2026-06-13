@@ -1,6 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<button type=button data-slot=list-item>Add item`),
   _tmpl$2 = /*#__PURE__*/_$template(`<button type=button>Action`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div style="border:1px solid var(--border-weak);border-radius:6px;margin:4px 0">`),

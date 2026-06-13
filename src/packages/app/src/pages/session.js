@@ -1,16 +1,16 @@
 // insert() from solid-js/web is the established exception for reactive and
 // component-valued children (runtime Show/For/Switch return memo accessors),
 // so Solid keeps reconciling accessors instead of freezing them.
-import { insert } from "solid-js/web";
+import { insert } from "../lib/reactivity.js";
 import { useDialog } from "@/lib/dialog.js";
 import { createQuery, skipToken } from "../lib/query/index.js";
-import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "solid-js";
+import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "../lib/reactivity.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { createMediaQuery } from "../lib/primitives/media.js";
 import { createResizeObserver } from "../lib/primitives/resize-observer.js";
 import { useLocal } from "@/context/local.js";
 import { selectionFromLines, useFile } from "@/context/file.js";
-import { createStore } from "solid-js/store";
+import { createStore } from "../lib/store.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import { Select } from "@/bs/select.js";
 import { Tabs } from "@/bs/tabs.js";

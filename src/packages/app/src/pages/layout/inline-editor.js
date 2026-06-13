@@ -1,5 +1,5 @@
-import { createComponent, createMemo, createRenderEffect, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createMemo, createRenderEffect, onCleanup } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { InlineInput } from "@/vendor/ui/components/inline-input.js";
 export function createInlineEditorController() {
   // This controller intentionally supports one active inline editor at a time.

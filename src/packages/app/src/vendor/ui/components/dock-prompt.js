@@ -1,4 +1,4 @@
-import { createComponent, createRenderEffect } from "solid-js";
+import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
 import { DockShell, DockTray } from "./dock-surface.js";
 
 // Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,

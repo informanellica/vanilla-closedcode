@@ -1,5 +1,5 @@
-import { insert } from "solid-js/web";
-import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "solid-js";
+import { insert } from "../../lib/reactivity.js";
+import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "../../lib/reactivity.js";
 import { useSync } from "@/context/sync.js";
 import { checksum } from "core/util/encode";
 import { findLast } from "core/util/array";

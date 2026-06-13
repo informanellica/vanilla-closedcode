@@ -2,8 +2,8 @@
 // component-valued children (Show branches, forwarded router children,
 // portal-backed components): Solid keeps reconciling the accessors instead of
 // freezing a one-time snapshot.
-import { insert } from "solid-js/web";
-import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "solid-js";
+import { insert } from "../lib/reactivity.js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createResource, createSignal, For, on, onCleanup, onMount, Show, untrack } from "../lib/reactivity.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { useLocation, useNavigate, useParams } from "../lib/router/index.js";
 import { useLayout } from "@/context/layout.js";
@@ -20,7 +20,7 @@ import { Dialog } from "@/bs/dialog.js";
 import { getFilename } from "core/util/path";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce } from "../lib/store.js";
 import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "../lib/dnd/index.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { showToast, Toast, toaster } from "@/lib/toast.js";

@@ -1,7 +1,7 @@
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
-import { batch, createComponent, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "solid-js";
-import { createStore, produce, reconcile } from "solid-js/store";
+import { batch, createComponent, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "../lib/reactivity.js";
+import { createStore, produce, reconcile } from "../lib/store.js";
 import { useLanguage } from "@/context/language.js";
 import { useGlobalSDK } from "./global-sdk.js";
 import { bootstrapDirectory, bootstrapGlobal, clearProviderRev, loadGlobalConfigQuery, loadPathQuery, loadProjectsQuery, loadProvidersQuery } from "./global-sync/bootstrap.js";

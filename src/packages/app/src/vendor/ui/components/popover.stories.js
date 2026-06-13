@@ -1,5 +1,5 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { createSignal } from "solid-js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { createSignal } from "../../../lib/reactivity.js";
 import * as mod from "./popover.js";
 import { create } from "../storybook/scaffold.js";
 const docs = `### Overview

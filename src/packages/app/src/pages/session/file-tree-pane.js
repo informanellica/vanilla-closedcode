@@ -1,4 +1,4 @@
-import { Show, createComponent, createEffect, createMemo, onCleanup } from "solid-js";
+import { Show, createComponent, createEffect, createMemo, onCleanup } from "../../lib/reactivity.js";
 import { useParams } from "../../lib/router/index.js";
 import { base64Decode } from "core/util/encode";
 import { createMediaQuery } from "../../lib/primitives/media.js";

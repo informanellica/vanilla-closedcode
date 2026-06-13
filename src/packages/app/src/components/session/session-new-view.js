@@ -1,4 +1,4 @@
-import { createComponent, createEffect, createMemo } from "solid-js";
+import { createComponent, createEffect, createMemo } from "../../lib/reactivity.js";
 import { DateTime } from "luxon";
 import { useSync } from "@/context/sync.js";
 import { useSDK } from "@/context/sdk.js";

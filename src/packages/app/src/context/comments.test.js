@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, mock, test } from "@jest/globals";
-import { createRoot } from "solid-js";
+import { createRoot } from "../lib/reactivity.js";
 let createCommentSessionForTest;
 beforeAll(async () => {
   mock.module("../lib/router/index.js", () => ({

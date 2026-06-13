@@ -1,0 +1,11 @@
+**/node_modules
+**/dist
+artifacts
+**/out
+.git
+**/.turbo
+**/*.tsbuildinfo
+**/storybook-static
+**/playwright-report
+.closedcode-self-improvement
+closedcode.json

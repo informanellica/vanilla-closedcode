@@ -1,5 +1,5 @@
-import { createComponent, createMemo, createRenderEffect, createRoot, onCleanup, splitProps } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createMemo, createRenderEffect, createRoot, onCleanup, splitProps } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { Card, CardDescription } from "./card.js";
 import { Collapsible } from "./collapsible.js";
 import { Icon } from "./icon.js";

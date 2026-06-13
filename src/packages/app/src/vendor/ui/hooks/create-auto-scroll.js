@@ -1,5 +1,5 @@
-import { createEffect, on, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, on, onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { createEventListener } from "../../../lib/primitives/event-listener.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 export function createAutoScroll(options) {

@@ -1,7 +1,7 @@
 // Vanilla reimplementation of @kobalte/core's Select behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { createMemo, createRenderEffect, mergeProps, onCleanup, splitProps } from "solid-js";
+import { createMemo, createRenderEffect, mergeProps, onCleanup, splitProps } from "../../../lib/reactivity.js";
 import { pipe, groupBy, entries, map } from "remeda";
 
 // Vanilla port of the original Select wrapper. The original previously owned the

@@ -1,6 +1,6 @@
-import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, Match, on, onCleanup, Show, Switch } from "solid-js";
-import { createStore } from "solid-js/store";
-import { insert } from "solid-js/web";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, Match, on, onCleanup, Show, Switch } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
+import { insert } from "../../lib/reactivity.js";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { useFileComponent } from "@/vendor/ui/context/file.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "@/vendor/ui/pierre/selection-bridge.js";

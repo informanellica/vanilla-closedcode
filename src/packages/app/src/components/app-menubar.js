@@ -1,4 +1,4 @@
-import { createComponent } from "solid-js";
+import { createComponent } from "../lib/reactivity.js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";
 import { Icon } from "@/bs/icon.js";
 

@@ -1,8 +1,8 @@
-import { insert } from "solid-js/web";
-import { createComponent, createEffect, createMemo, createRenderEffect, For, on, onCleanup } from "solid-js";
+import { insert } from "../../../lib/reactivity.js";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, on, onCleanup } from "../../../lib/reactivity.js";
 import { animate } from "motion";
 import { useI18n } from "../context/i18n.js";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../../lib/store.js";
 import { Collapsible } from "./collapsible.js";
 import { TextShimmer } from "./text-shimmer.js";
 const isTriggerTitle = val => {

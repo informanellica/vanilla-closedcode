@@ -1,4 +1,4 @@
-import { createComponent, createMemo } from "solid-js";
+import { createComponent, createMemo } from "../lib/reactivity.js";
 import { useNavigate, useParams } from "../lib/router/index.js";
 import { useSync } from "@/context/sync.js";
 import { useSDK } from "@/context/sdk.js";

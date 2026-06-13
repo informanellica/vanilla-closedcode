@@ -1,4 +1,4 @@
-import { createComponent } from "solid-js";
+import { createComponent } from "../../lib/reactivity.js";
 import { useNavigate } from "../../lib/router/index.js";
 import { useCommand } from "@/context/command.js";
 import { env } from "@/lib/env.js";

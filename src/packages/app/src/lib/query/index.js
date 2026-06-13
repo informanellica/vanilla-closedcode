@@ -15,10 +15,10 @@
 // props, refetchInterval, query/mutation defaults registry, online/focus
 // managers (the app disables refetchOnReconnect/Mount/WindowFocus).
 //
-// FLIP-SAFETY: reactivity is imported ONLY from "solid-js" / "solid-js/store"
+// FLIP-SAFETY: reactivity is imported ONLY from "../reactivity.js" / "solid-js/store"
 // using the names the self-written reactive core provides, so a later
 // import-map flip can swap the runtime without touching this code. No compiled
-// primitives from "solid-js/web" are used.
+// primitives from "../reactivity.js" are used.
 import {
   batch,
   createComponent,
@@ -29,8 +29,8 @@ import {
   onCleanup,
   runWithOwner,
   useContext,
-} from "solid-js";
-import { createStore } from "solid-js/store";
+} from "../reactivity.js";
+import { createStore } from "../store.js";
 
 // ---------------------------------------------------------------------------
 // utils (faithful to query-core/utils.ts)

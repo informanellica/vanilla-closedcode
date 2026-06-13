@@ -1,5 +1,5 @@
 import { useParams } from "../../lib/router/index.js";
-import { createMemo } from "solid-js";
+import { createMemo } from "../../lib/reactivity.js";
 import { useLayout } from "@/context/layout.js";
 export const useSessionKey = () => {
   const params = useParams();

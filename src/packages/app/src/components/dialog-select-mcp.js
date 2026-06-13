@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect } from "solid-js";
+import { createComponent, createMemo, createRenderEffect } from "../lib/reactivity.js";
 import { useSync } from "@/context/sync.js";
 import { Dialog } from "@/bs/dialog.js";
 import { List } from "@/bs/list.js";

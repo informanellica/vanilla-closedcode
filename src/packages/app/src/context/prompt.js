@@ -1,8 +1,8 @@
 import { createSimpleContext } from "@/lib/context.js";
 import { checksum } from "core/util/encode";
 import { useParams } from "../lib/router/index.js";
-import { batch, createMemo, createRoot, getOwner, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { batch, createMemo, createRoot, getOwner, onCleanup } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
 export const DEFAULT_PROMPT = [{
   type: "text",

@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect } from "solid-js";
+import { createComponent, createMemo, createRenderEffect } from "../../lib/reactivity.js";
 import { createSortable } from "../../lib/dnd/index.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { IconButton } from "@/bs/icon-button.js";

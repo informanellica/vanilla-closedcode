@@ -5,7 +5,7 @@
 // unchanged.
 import { useFilteredList } from "../hooks/index.js";
 import { getDirectory, getFilename } from "core/util/path";
-import { createComponent, createMemo, createRenderEffect, createSignal, mergeProps, onMount, splitProps } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, createSignal, mergeProps, onMount, splitProps } from "../../../lib/reactivity.js";
 import { Button } from "./button.js";
 import { FileIcon } from "./file-icon.js";
 import { Icon } from "./icon.js";

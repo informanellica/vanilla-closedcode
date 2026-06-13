@@ -5,7 +5,7 @@ import { ProviderIcon } from "@/vendor/ui/components/provider-icon.js";
 import { Tag } from "@/bs/tag.js";
 import { showToast } from "@/lib/toast.js";
 import { popularProviders, useProviders } from "@/hooks/use-providers.js";
-import { createMemo, createSignal, createEffect, createComponent } from "solid-js";
+import { createMemo, createSignal, createEffect, createComponent } from "../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 import { useProvidersController } from "@/controllers/providers.js";
 import { DialogConnectProvider } from "./dialog-connect-provider.js";

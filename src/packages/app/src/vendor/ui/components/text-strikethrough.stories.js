@@ -1,19 +1,19 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { delegateEvents as _$delegateEvents } from "../../../lib/reactivity.js";
+import { style as _$style } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
+import { use as _$use } from "../../../lib/reactivity.js";
+import { setStyleProperty as _$setStyleProperty } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<span style="position:relative;display:block;transition:color 220ms ease"><span style="position:absolute;left:0;right:0;top:50%;height:1.5px;background:currentColor;transform-origin:left center;pointer-events:none">`),
   _tmpl$2 = /*#__PURE__*/_$template(`<span style="display:block;transition:color 220ms ease;background-image:linear-gradient(currentColor, currentColor);background-repeat:no-repeat;background-position:left center">`),
   _tmpl$3 = /*#__PURE__*/_$template(`<span style="display:grid;transition:color 220ms ease"><span style="grid-area:1 / 1"></span><span aria-hidden=true style="grid-area:1 / 1;text-decoration:line-through;pointer-events:none">`),
   _tmpl$4 = /*#__PURE__*/_$template(`<div style=display:grid;gap:24px;padding:24px;max-width:700px><button></button><div><div>F — grid stacking + clip mapped to text width (THE COMPONENT)</div><div style=margin-top:12px></div><div style=margin-top:12px></div></div><div><div>F (inline) — same but just inline variants</div><div style=margin-top:12px></div><div style=margin-top:12px></div></div><div><div>E — grid stacking + clip-path (container %)</div><div style=margin-top:12px></div><div style=margin-top:12px></div></div><div><div>A — scaleX line at 50%</div><div style=margin-top:12px></div></div><div><div>D — background-image line</div><div style=margin-top:12px>`);
-import { createSignal, onMount } from "solid-js";
+import { createSignal, onMount } from "../../../lib/reactivity.js";
 import { createResizeObserver } from "@solid-primitives/resize-observer";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../../lib/store.js";
 import { useSpring } from "./motion-spring.js";
 import { TextStrikethrough } from "./text-strikethrough.js";
 const TEXT_SHORT = "Remove inline measure nodes";

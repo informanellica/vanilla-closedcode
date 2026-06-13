@@ -3,7 +3,7 @@ import { encodeFilePath } from "@/context/file/path.js";
 import { Collapsible } from "@/bs/collapsible.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
-import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, on, Show, splitProps, Switch, untrack } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, on, Show, splitProps, Switch, untrack } from "../lib/reactivity.js";
 const MAX_DEPTH = 128;
 function pathToFileUrl(filepath) {
   return `file://${encodeFilePath(filepath)}`;

@@ -1,5 +1,5 @@
-import { createEffect, createRenderEffect, createRoot, getOwner } from "solid-js";
-import { insert } from "solid-js/web";
+import { createEffect, createRenderEffect, createRoot, getOwner } from "../lib/reactivity.js";
+import { insert } from "../lib/reactivity.js";
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();

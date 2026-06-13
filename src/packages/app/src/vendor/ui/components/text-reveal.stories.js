@@ -1,14 +1,14 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { delegateEvents as _$delegateEvents } from "../../../lib/reactivity.js";
+import { style as _$style } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:grid;gap:24px;padding:20px;max-width:700px><div style=display:grid;gap:16px><div><span>text-reveal (mask wipe + slide)</span><div><span>Thinking</span><span></span></div></div><div><span>text-reveal (mask wipe only)</span><div><span>Thinking</span><span></span></div></div></div><div style=display:flex;gap:6px;flex-wrap:wrap></div><div style=display:flex;gap:8px;flex-wrap:wrap><button>Prev</button><button>Next</button><button></button><button></button></div><div style=display:grid;gap:8px;max-width:480px><div style="font-size:11px;color:var(--color-text-weak, #666)">Hybrid (wipe + slide)</div><label style=display:flex;align-items:center;gap:12px><span>edge</span><input type=range min=1 max=40 step=1 style=flex:1><span style=width:60px;text-align:right;font-size:12px>%</span></label><label style=display:flex;align-items:center;gap:12px><span>travel</span><input type=range min=0 max=40 step=1 style=flex:1><span style=width:60px;text-align:right;font-size:12px>px</span></label><div style="font-size:11px;color:var(--color-text-weak, #666);margin-top:8px">Shared</div><label style=display:flex;align-items:center;gap:12px><span>duration</span><input type=range min=100 max=1400 step=10 style=flex:1><span style=width:60px;text-align:right;font-size:12px>ms</span></label><label style=display:flex;align-items:center;gap:12px><span>bounce</span><input type=range min=1 max=2 step=0.01 style=flex:1><span style=width:60px;text-align:right;font-size:12px></span></label><label style=display:flex;align-items:center;gap:12px><span>bounce soft</span><input type=range min=1 max=1.5 step=0.01 style=flex:1><span style=width:60px;text-align:right;font-size:12px></span></label><div style="font-size:11px;color:var(--color-text-weak, #666);margin-top:8px">Wipe only</div><label style=display:flex;align-items:center;gap:12px><span>edge</span><input type=range min=1 max=40 step=1 style=flex:1><span style=width:60px;text-align:right;font-size:12px>%</span></label><label style=display:flex;align-items:center;gap:12px><span>travel</span><input type=range min=0 max=16 step=1 style=flex:1><span style=width:60px;text-align:right;font-size:12px>px</span></label></div><div style="font-size:11px;color:var(--color-text-weak, #888);font-family:monospace">text: <!> · growOnly: `),
   _tmpl$2 = /*#__PURE__*/_$template(`<button>`);
-import { onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { TextReveal } from "./text-reveal.js";
 export default {
   title: "UI/TextReveal",

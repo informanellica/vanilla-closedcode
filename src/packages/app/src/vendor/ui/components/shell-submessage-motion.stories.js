@@ -1,18 +1,18 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { delegateEvents as _$delegateEvents } from "../../../lib/reactivity.js";
+import { style as _$style } from "../../../lib/reactivity.js";
+import { setStyleProperty as _$setStyleProperty } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
+import { use as _$use } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<span data-component=shell-submessage><span data-slot=shell-submessage-width style=width:0px><span data-slot=basic-tool-tool-subtitle><span data-slot=shell-submessage-value>`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style="border-radius:8px;border:1px solid var(--color-divider, #333);background:var(--color-fill-secondary, #161616);padding:14px 16px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;font-size:18px;color:var(--color-text, #eee);white-space:pre-wrap">$ cat &lt;&lt;'TOPIC1'`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div data-component=shell-submessage-scene style=display:grid;gap:20px;padding:20px;max-width:860px><style>\n[data-component="shell-submessage-scene"] [data-component="tool-trigger"] [data-slot="basic-tool-tool-info-main"] \{\n  align-items: baseline;\n}\n\n[data-component="shell-submessage"] \{\n  min-width: 0;\n  max-width: 100%;\n  display: inline-flex;\n  align-items: baseline;\n  vertical-align: baseline;\n}\n\n[data-component="shell-submessage"] [data-slot="shell-submessage-width"] \{\n  min-width: 0;\n  max-width: 100%;\n  display: inline-flex;\n  align-items: baseline;\n  overflow: hidden;\n}\n\n[data-component="shell-submessage"] [data-slot="shell-submessage-value"] \{\n  display: inline-block;\n  vertical-align: baseline;\n  min-width: 0;\n  line-height: inherit;\n  white-space: nowrap;\n  opacity: 0;\n  filter: blur(var(--shell-sub-blur, 2px));\n  transition-property: opacity, filter;\n  transition-duration: var(--shell-sub-fade-ms, 320ms);\n  transition-timing-function: var(--shell-sub-fade-ease, cubic-bezier(0.22, 1, 0.36, 1));\n}\n\n[data-component="shell-submessage"][data-visible] [data-slot="shell-submessage-value"] \{\n  opacity: 1;\n  filter: blur(0px);\n}\n</style><div style=display:flex;gap:8px;flex-wrap:wrap><button>Replay entry</button><button></button><button></button></div><div style="display:grid;gap:10px;border-top:1px solid var(--color-divider, #333);padding-top:14px"><div style=display:flex;align-items:center;gap:12px><span>subtitle</span><input style="width:420px;max-width:100%;padding:6px 8px;border-radius:6px;border:1px solid var(--color-divider, #333);background:var(--color-fill-element, #222);color:var(--color-text, #eee)"></div><div style=display:flex;align-items:center;gap:12px><span>visualDuration</span><input type=range min=0.05 max=1.5 step=0.01><span>s</span></div><div style=display:flex;align-items:center;gap:12px><span>bounce</span><input type=range min=0 max=0.5 step=0.01><span></span></div><div style=display:flex;align-items:center;gap:12px><span>fade ease</span><button></button></div><div style=display:flex;align-items:center;gap:12px><span>fade</span><input type=range min=0 max=1400 step=10><span>ms</span></div><div style=display:flex;align-items:center;gap:12px><span>blur</span><input type=range min=0 max=14 step=0.5><span>px`),
   _tmpl$4 = /*#__PURE__*/_$template(`<div data-slot=basic-tool-tool-info-structured><div data-slot=basic-tool-tool-info-main><span data-slot=basic-tool-tool-title>Shell`);
-import { createEffect, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { BasicTool } from "./basic-tool.js";
 import { animate } from "motion";
 export default {

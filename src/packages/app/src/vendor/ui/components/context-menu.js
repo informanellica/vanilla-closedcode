@@ -1,8 +1,8 @@
 // Vanilla reimplementation of @kobalte/core's ContextMenu behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { createRenderEffect, getOwner, onCleanup } from "solid-js";
-import { insert } from "solid-js/web";
+import { createRenderEffect, getOwner, onCleanup } from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
 // Vanilla ContextMenu (no third-party UI dependency): the same menu primitive as

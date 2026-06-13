@@ -4,7 +4,7 @@
 // Port/derivative of @solid-primitives/storage (MIT License,
 // Copyright (c) 2021 Solid Core Team). See THIRD-PARTY-NOTICES.md.
 //
-// Imports from "solid-js" and "solid-js/store" (the latter is genuinely required:
+// Imports from "../reactivity.js" and "solid-js/store" (the latter is genuinely required:
 // the store-backed branch reconciles deserialized data into the store).
 // Behavior matches upstream on the real solid-js runtime.
 //
@@ -15,8 +15,8 @@
 // The function-signal branch and the `sync` plumbing are still ported for faithful
 // parity with the signature/return shape.
 
-import { createUniqueId, untrack } from "solid-js";
-import { reconcile } from "solid-js/store";
+import { createUniqueId, untrack } from "../reactivity.js";
+import { reconcile } from "../store.js";
 
 /**
  * Wrap a signal or store tuple so its value is persisted to (and rehydrated from)

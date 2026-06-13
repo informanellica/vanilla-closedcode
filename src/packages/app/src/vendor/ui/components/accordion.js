@@ -7,8 +7,8 @@ import {
   createUniqueId,
   splitProps,
   untrack
-} from "solid-js";
-import { insert } from "solid-js/web";
+} from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 
 // Vanilla reimplementation of the original Accordion compound component, modelled
 // as a set of collapsibles with single/multiple expansion plus roving focus.

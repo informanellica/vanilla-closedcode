@@ -4,13 +4,13 @@
 // Port/derivative of @solid-primitives/event-listener (MIT License,
 // Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
 //
-// Imports only from "solid-js" so it follows the import-map flip to a self-written
+// Imports only from "../reactivity.js" so it follows the import-map flip to a self-written
 // reactive core. Behavior matches the upstream package on the real solid-js runtime.
 //
 // Scope note: the upstream package also exports `createEventSignal` and an
 // `eventListener` directive; those are not used here and are intentionally omitted.
 
-import { createEffect, createRenderEffect, getOwner, onCleanup } from "solid-js";
+import { createEffect, createRenderEffect, getOwner, onCleanup } from "../reactivity.js";
 
 // Upstream uses `tryOnCleanup` from "@solid-primitives/utils": Solid's `onCleanup`
 // that does not warn (in dev) when used outside of an owner. Inlined here.

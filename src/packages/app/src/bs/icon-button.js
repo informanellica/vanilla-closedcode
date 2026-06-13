@@ -1,4 +1,4 @@
-import { createRenderEffect } from "solid-js";
+import { createRenderEffect } from "../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
 function getClassList(classList, variantClass, sizeClass, extraClass) {

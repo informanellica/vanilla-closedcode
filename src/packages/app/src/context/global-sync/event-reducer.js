@@ -1,5 +1,5 @@
 import { Binary } from "core/util/binary";
-import { produce, reconcile } from "solid-js/store";
+import { produce, reconcile } from "../../lib/store.js";
 import { trimSessions } from "./session-trim.js";
 import { dropSessionCaches } from "./session-cache.js";
 import { diffs as list, message as clean } from "@/utils/diffs.js";

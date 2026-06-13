@@ -1,5 +1,5 @@
 import { attachSpring, motionValue } from "motion";
-import { createEffect, createSignal, onCleanup } from "solid-js";
+import { createEffect, createSignal, onCleanup } from "../../../lib/reactivity.js";
 const eq = (a, b) => a?.visualDuration === b?.visualDuration && a?.bounce === b?.bounce && a?.stiffness === b?.stiffness && a?.damping === b?.damping && a?.mass === b?.mass && a?.velocity === b?.velocity;
 export function useSpring(target, options) {
   const read = () => typeof options === "function" ? options() : options;

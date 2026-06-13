@@ -1,4 +1,4 @@
-import { createEffect, createMemo, createRenderEffect, createResource, createRoot, createSignal, on, onCleanup, untrack } from "solid-js";
+import { createEffect, createMemo, createRenderEffect, createResource, createRoot, createSignal, on, onCleanup, untrack } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { dataUrlFromMediaValue, hasMediaValue, isBinaryContent, mediaKindFromPath, normalizeMimeType, svgTextFromValue } from "../pierre/media.js";
 

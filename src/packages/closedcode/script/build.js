@@ -27,6 +27,16 @@ const SEA = process.argv.includes("--sea");
 // `-musl` name suffix + a `libc:["musl"]` field so npm installs it only on musl
 // (Alpine). Default glibc. Cross-platform CI passes this per matrix entry.
 const libc = process.argv.includes("--libc") ? process.argv[process.argv.indexOf("--libc") + 1] : "glibc";
+// Earliest-possible startup feedback. A large unsigned SEA on Windows can spend
+// ~1s+ on in-process module evaluation (and, on a cold first run, antivirus
+// scanning the binary) before any command prints — a blank screen reads as
+// "hung". Prepend this to the SEA banner so esbuild emits it at the very top of
+// the bundle: it writes a one-line splash to stderr the instant JS starts,
+// BEFORE the module graph evaluates. Gated to interactive (TTY) launches and
+// skipped for machine-readable/quiet paths so scripted/piped output stays clean.
+const seaSplash = SEA
+  ? `(()=>{try{const a=process.argv.slice(2);if(process.stderr.isTTY&&!a.some(x=>x==='--version'||x==='-v'||x==='--help'||x==='-h'||x==='completion')){process.stderr.write('\\n  \\x1b[38;5;214mclosedcode\\x1b[0m \\x1b[2m${Script.version}\\x1b[0m  starting...\\n');}}catch{}})();`
+  : "";
 const migrationDirs = (await fs.promises.readdir(path.join(dir, "migration"), {
   withFileTypes: true
 })).filter(entry => entry.isDirectory() && /^\d{4}\d{2}\d{2}\d{2}\d{2}\d{2}/.test(entry.name)).map(entry => entry.name).sort();
@@ -63,9 +73,16 @@ const platform = process.platform === "win32" ? "windows" : process.platform;
 const name = [pkg.name, platform, process.arch, libc === "musl" ? "musl" : null].filter(Boolean).join("-");
 console.log(`building ${name}`);
 const outDir = path.join(dir, "dist", name);
+// On Windows the previous SEA binary in dist/<name>/bin can be held by a transient
+// handle (antivirus scan after the last build, an Explorer preview, etc.), making
+// the recursive wipe fail with EBUSY/EPERM/ENOTEMPTY. Retry rather than abort.
 await fs.promises.rm(outDir, {
   recursive: true,
-  force: true
+  force: true,
+  // Defender can hold the ~100 MB exe for several seconds; give the retry loop a
+  // ~9 s window (20 × 450 ms) so a transient scan doesn't abort the build.
+  maxRetries: 20,
+  retryDelay: 450
 });
 await fs.promises.mkdir(path.join(outDir, "bin"), {
   recursive: true
@@ -185,7 +202,7 @@ await esbuild({
     // sidecars (terminal-kit/string-kit/node-pty/tree-sitter/koffi) resolve from
     // <execDir>/node_modules at runtime — a single-file SEA has no node_modules tree.
     js: SEA
-      ? "const __ccMetaUrl=require('node:url').pathToFileURL(process.execPath).href;(()=>{const p=require('node:path'),m=require('node:module');const dir=p.dirname(process.execPath);const d=p.join(dir,'node_modules');process.env.NODE_PATH=[d,process.env.NODE_PATH].filter(Boolean).join(p.delimiter);m._initPaths();globalThis.__CLOSEDCODE_SEA_DIR=dir;globalThis.__ccRequire=m.createRequire(p.join(dir,'_sea_anchor.js'));globalThis.__ccWorkerPath=p.join(dir,'worker.cjs');})();"
+      ? seaSplash + "const __ccMetaUrl=require('node:url').pathToFileURL(process.execPath).href;(()=>{const p=require('node:path'),m=require('node:module');const dir=p.dirname(process.execPath);const d=p.join(dir,'node_modules');process.env.NODE_PATH=[d,process.env.NODE_PATH].filter(Boolean).join(p.delimiter);m._initPaths();globalThis.__CLOSEDCODE_SEA_DIR=dir;globalThis.__ccRequire=m.createRequire(p.join(dir,'_sea_anchor.js'));globalThis.__ccWorkerPath=p.join(dir,'worker.cjs');})();"
       : "import { createRequire as __createRequire_banner } from 'node:module'; import { fileURLToPath as __fileURLToPath_banner } from 'node:url'; import { dirname as __dirname_banner } from 'node:path'; const require = __createRequire_banner(import.meta.url); const __filename = __fileURLToPath_banner(import.meta.url); const __dirname = __dirname_banner(__filename);"
   },
   define: {

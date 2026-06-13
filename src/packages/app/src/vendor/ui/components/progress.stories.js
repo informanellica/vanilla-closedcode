@@ -1,4 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 import * as mod from "./progress.js";
 import { create } from "../storybook/scaffold.js";
 const docs = `### Overview

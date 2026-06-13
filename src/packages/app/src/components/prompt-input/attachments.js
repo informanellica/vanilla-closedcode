@@ -1,4 +1,4 @@
-import { onMount } from "solid-js";
+import { onMount } from "../../lib/reactivity.js";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { showToast } from "@/lib/toast.js";
 import { usePrompt } from "@/context/prompt.js";

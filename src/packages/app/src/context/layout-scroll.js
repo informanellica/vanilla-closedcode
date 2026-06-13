@@ -1,4 +1,4 @@
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce } from "../lib/store.js";
 export function createScrollPersistence(opts) {
   const wait = opts.debounceMs ?? 200;
   const [cache, setCache] = createStore({});

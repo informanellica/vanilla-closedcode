@@ -1,4 +1,4 @@
-import { createComponent, createRenderEffect } from "solid-js";
+import { createComponent, createRenderEffect } from "../lib/reactivity.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Select } from "@/bs/select.js";
 import { useSettings } from "@/context/settings.js";

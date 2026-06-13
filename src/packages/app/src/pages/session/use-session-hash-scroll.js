@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "../../lib/router/index.js";
-import { createEffect, createMemo, onCleanup, onMount } from "solid-js";
+import { createEffect, createMemo, onCleanup, onMount } from "../../lib/reactivity.js";
 import { messageIdFromHash } from "./message-id-from-hash.js";
 export const useSessionHashScroll = input => {
   const visibleUserMessages = createMemo(() => input.visibleUserMessages());

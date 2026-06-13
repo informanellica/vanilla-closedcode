@@ -8,8 +8,8 @@ import {
   createUniqueId,
   splitProps,
   untrack
-} from "solid-js";
-import { insert } from "solid-js/web";
+} from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
 // Vanilla reimplementation of the original Collapsible compound component.

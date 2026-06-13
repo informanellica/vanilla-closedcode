@@ -1,4 +1,4 @@
-import { createComponent } from "solid-js";
+import { createComponent } from "../lib/reactivity.js";
 import { useDialog } from "@/lib/dialog.js";
 import { popularProviders, useProviders } from "@/hooks/use-providers.js";
 import { Dialog } from "@/bs/dialog.js";

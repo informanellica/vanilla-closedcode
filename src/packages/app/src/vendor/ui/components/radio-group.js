@@ -1,7 +1,7 @@
 // Vanilla reimplementation of @kobalte/core's RadioGroup behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { createRenderEffect, createSignal, createUniqueId, onCleanup, splitProps } from "solid-js";
+import { createRenderEffect, createSignal, createUniqueId, onCleanup, splitProps } from "../../../lib/reactivity.js";
 
 // Vanilla port of the original SegmentedControl wrapper (a segmented single-
 // select radio group). No bs/ twin existed, so the a11y is built here:

@@ -1,6 +1,6 @@
-import { createRenderEffect, onMount } from "solid-js";
+import { createRenderEffect, onMount } from "../../../lib/reactivity.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../../lib/store.js";
 import { useSpring } from "./motion-spring.js";
 
 export function TextStrikethrough(props) {

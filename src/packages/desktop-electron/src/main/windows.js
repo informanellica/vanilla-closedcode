@@ -52,7 +52,11 @@ function overlay(theme = {}) {
 }
 export function setTitlebar(win, theme = {}) {
   if (process.platform !== "win32") return;
-  win.setTitleBarOverlay(overlay(theme));
+  // setTitleBarOverlay throws ("Titlebar overlay is not enabled") when the window
+  // wasn't created with a titlebar overlay. The overlay is only a cosmetic accent
+  // (symbol color) and the renderer fires this as void/fire-and-forget, so swallow
+  // the error rather than surface it as an uncaught IPC rejection.
+  try { win.setTitleBarOverlay(overlay(theme)); } catch {}
 }
 export function setDockIcon() {
   if (process.platform !== "darwin") return;
@@ -386,7 +390,20 @@ async function rewriteModule(code, diskPath) {
       url = toRouteUrl(resolveFile(join(APP_SRC, spec.slice(2))));
     } else if (isRel) {
       // Resolve relative imports to a real file (handles extensionless / dir/index.js).
-      url = toRouteUrl(resolveFile(resolve(fromDir, spec)));
+      let resolved = resolve(fromDir, spec);
+      // Packaged-layout fix: the desktop renderer is copied to <asar>/src/renderer but
+      // the app source tree goes to <asar>/out/app-src, so the renderer's dev-relative
+      // "../../../app/src/..." (which assumes packages/desktop-electron/src/renderer +
+      // packages/app/src side by side) escapes the asar and 404s — the module graph
+      // never loads, so boot() never runs (packaged white screen). Re-anchor any
+      // ".../app/src/<rest>" onto APP_SRC so it resolves AND dedups to the SAME
+      // canonical /src/ URL as every other importer; a mismatched URL would
+      // double-instantiate the reactivity module and break context identity.
+      if (PACKAGED) {
+        const appSrcRel = spec.match(/(?:^|\/)app\/src\/(.+)$/);
+        if (appSrcRel) resolved = join(APP_SRC, appSrcRel[1]);
+      }
+      url = toRouteUrl(resolveFile(resolved));
     } else if (isAbs) {
       continue;
     } else {

@@ -1,4 +1,4 @@
-import { createComponent, createContext, createMemo, Show, useContext } from "solid-js";
+import { createComponent, createContext, createMemo, Show, useContext } from "../../../lib/reactivity.js";
 export function createSimpleContext(input) {
   const ctx = createContext();
   return {

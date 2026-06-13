@@ -2,7 +2,7 @@
 // "チャット", with Output / Terminal / Debug to be added here later. Right:
 // session controls — a select box to switch sessions, "+" to start a new one,
 // and "×" to close (archive) the current one.
-import { createRenderEffect } from "solid-js";
+import { createRenderEffect } from "../../lib/reactivity.js";
 import { sessionTitle } from "@/utils/session-title.js";
 
 // View tabs of the bottom pane. Only "chat" is wired today; the others are

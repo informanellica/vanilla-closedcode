@@ -223,7 +223,7 @@ for (const f of await fs.readdir(closedcodeServerDist, { withFileTypes: true }))
 // We only copy the .aac sound assets referenced by utils/sound.js (./assets/audio/).
 console.log("[2/5] copy renderer audio assets...")
 {
-  const audioSrc = path.join(repoRoot, "packages/ui/src/assets/audio")
+  const audioSrc = path.join(repoRoot, "packages/app/src/vendor/ui/assets/audio")
   const audioDst = "out/renderer/assets/audio"
   await fs.mkdir(audioDst, { recursive: true })
   for (const entry of await fs.readdir(audioSrc, { withFileTypes: true })) {

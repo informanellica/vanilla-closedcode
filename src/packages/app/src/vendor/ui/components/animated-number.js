@@ -8,8 +8,8 @@ import {
   on,
   onCleanup,
   untrack
-} from "solid-js";
-import { createStore } from "solid-js/store";
+} from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 
 const TRACK = Array.from({
   length: 30

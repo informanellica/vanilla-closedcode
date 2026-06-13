@@ -1,5 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style="padding:20px;border:1px dashed var(--border-weak);border-radius:8px;color:var(--text-weak)">Right click (or open) here`);
 import * as mod from "./context-menu.js";
 const docs = `### Overview

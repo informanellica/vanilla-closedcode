@@ -1,5 +1,5 @@
-import { createStore, reconcile } from "solid-js/store";
-import { batch, createEffect, createMemo, onCleanup } from "solid-js";
+import { createStore, reconcile } from "../lib/store.js";
+import { batch, createEffect, createMemo, onCleanup } from "../lib/reactivity.js";
 import { useParams } from "../lib/router/index.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { useGlobalSDK } from "./global-sdk.js";

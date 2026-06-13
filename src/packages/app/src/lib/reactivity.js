@@ -12,7 +12,15 @@
 
 let Owner = null;     // current ownership scope (cleanups, child computations, context)
 let Listener = null;  // current computation collecting dependencies
-let BatchQueue = null; // non-null while inside batch(): Set<Computation>
+// Pending computations to (re-)run. Non-null while a flush is open — opened
+// either explicitly by batch() or implicitly by the first write/notify outside
+// a flush. Draining is iterative + de-duplicated: each computation runs at most
+// once per drain wave, and any node re-dirtied during the wave is picked up by
+// the next wave. This is what makes propagation glitch-free (a node downstream
+// of a diamond runs once after BOTH parents update) and re-entrancy-safe (a
+// write made while running a computation is enqueued, never recursed into).
+let PendingQueue = null; // Set<Computation> | null
+let Flushing = false;    // true while draining PendingQueue (re-entrancy guard)
 
 class OwnerNode {
   constructor(parent) {
@@ -86,7 +94,10 @@ class Computation extends OwnerNode {
       if (this.kind === "memo") {
         const changed = !this.equals(this.value, next);
         this.value = next;
-        if (changed && this.observers) notify([...this.observers]);
+        // Enqueue observers instead of running them recursively: this is the
+        // memo's "I changed" notification, deferred into the current flush wave
+        // so each downstream computation runs at most once per propagation.
+        if (changed && this.observers && this.observers.size) notify(this.observers);
       } else {
         this.value = next;
       }
@@ -106,12 +117,48 @@ class Computation extends OwnerNode {
 // memos participate as signal-like sources for unsubscribe symmetry
 Object.defineProperty(Computation.prototype, "observersDelete", { value: undefined });
 
+// Enqueue computations into the active flush. If no flush is open, open one and
+// drive it to completion synchronously (preserving the previous "writes settle
+// before write() returns" behavior). `computations` is any iterable of
+// Computation (a memo's observer Set, or a one-off array).
 function notify(computations) {
-  if (BatchQueue) {
-    for (const c of computations) BatchQueue.add(c);
+  if (PendingQueue) {
+    for (const c of computations) PendingQueue.add(c);
     return;
   }
-  for (const c of computations) c.run();
+  PendingQueue = new Set();
+  for (const c of computations) PendingQueue.add(c);
+  flush();
+}
+
+// Drain PendingQueue in waves. Within a wave we snapshot the current set and run
+// each member once; runs may enqueue more work (memo observers, effects) into a
+// fresh set, which the next wave drains. A computation re-dirtied mid-wave is
+// simply re-added and handled next wave — so genuine cycles still terminate per
+// run (no recursion blowup) and converge unless a computation unconditionally
+// re-dirties itself. Re-entrant notify() during draining just feeds the queue.
+function flush() {
+  if (Flushing) return; // a notify() during drain only enqueues; outer loop runs it
+  Flushing = true;
+  try {
+    let guard = 0;
+    while (PendingQueue && PendingQueue.size) {
+      const wave = PendingQueue;
+      PendingQueue = new Set();
+      for (const c of wave) {
+        if (!c.disposed) c.run();
+      }
+      // Safety valve: a pathological self-re-dirtying graph would otherwise spin
+      // forever. Cap waves and surface it rather than hard-freezing the renderer.
+      if (++guard > 1e6) {
+        PendingQueue = null;
+        throw new Error("reactivity: update did not converge (possible reactive cycle)");
+      }
+    }
+  } finally {
+    PendingQueue = null;
+    Flushing = false;
+  }
 }
 
 class Signal {
@@ -173,7 +220,17 @@ export function createComputed(fn, value) {
 }
 
 export function createRoot(fn, detachedOwner) {
-  const root = new OwnerNode(detachedOwner ?? null);
+  // Match solid: when no explicit `detachedOwner` is passed, the root INHERITS the
+  // current owner so descendants still resolve context (useContext walks the parent
+  // chain) — pass `null` to fully detach. The root owns its own disposal via the
+  // dispose callback, so it is deliberately NOT registered in the parent's children
+  // (a caller re-run must not tear it down). Earlier this used the parent ctor arg
+  // (`detachedOwner ?? null`), which both detached context (undefined -> null parent,
+  // so e.g. useQueryClient inside a createRoot threw "No QueryClient set") and
+  // auto-registered as a child. Set the parent link manually to get context without
+  // the registration.
+  const root = new OwnerNode(null);
+  root.parent = detachedOwner !== undefined ? detachedOwner : Owner;
   const prevOwner = Owner, prevListener = Listener;
   Owner = root; Listener = null;
   try {
@@ -239,14 +296,12 @@ export function startTransition(fn) {
 }
 
 export function batch(fn) {
-  if (BatchQueue) return fn();
-  BatchQueue = new Set();
+  // Already inside a flush (nested batch, or a write mid-propagation): just run;
+  // writes enqueue into the existing PendingQueue and drain with it.
+  if (PendingQueue) return fn();
+  PendingQueue = new Set();
   try { return fn(); }
-  finally {
-    const queue = BatchQueue;
-    BatchQueue = null;
-    for (const c of queue) c.run();
-  }
+  finally { flush(); }
 }
 
 export function on(deps, fn, options) {
@@ -270,11 +325,18 @@ export function createContext(defaultValue) {
     id,
     defaultValue,
     Provider(props) {
-      // Children evaluate under an owner that carries the value; the getter is
-      // resolved through children() so lazy re-evaluation also sees it.
+      // Children are created ONCE under an owner node that carries the context
+      // value, then returned as-is (a stable accessor/value). Reading props.children
+      // more than once re-invokes the getter (-> createComponent), re-creating the
+      // whole child subtree (incl. createResource instances) — a re-create loop in
+      // which a persisted resource never settles, so a gate keyed on `resource.ready`
+      // never opens (desktop white screen). Creating once preserves component
+      // identity (matches solid: a Provider's children JSX is created once); the
+      // descendants were created with `node` as owner, so useContext resolves the
+      // value, and insert()'s nested effects keep inner dynamics live.
       const node = new OwnerNode(Owner);
       node.context = { ...(Owner?.context), [id]: props.value };
-      return runWithOwner(node, () => children(() => props.children)());
+      return runWithOwner(node, () => props.children);
     }
   };
   return ctx;
@@ -370,32 +432,71 @@ export function template(html, isImportNode, isSVG) {
   return fn;
 }
 
-function nodesOf(value) {
-  if (value == null || value === false || value === true) return [];
-  if (typeof value === "function" && !value.length) return nodesOf(value());
-  if (Array.isArray(value)) return value.flatMap(nodesOf);
-  if (value instanceof Node) return [value];
-  return [document.createTextNode(String(value))];
+// Reactive child renderer — the solid-js/web insert() equivalent. Each DYNAMIC
+// (function) child renders inside its OWN render effect, bounded by a pair of
+// comment markers, so its reactive reads stay isolated: a deep signal change
+// re-runs only that boundary's effect, never an ancestor's. The previous version
+// resolved children inline in a single render effect, which subscribed that one
+// effect to the WHOLE transitive subtree — so any leaf change re-ran it, and
+// re-running re-read the `get children()` getters along the way (-> createComponent),
+// re-creating whole component subtrees (and their resources) until nothing settled
+// (the desktop white screen). Mirrors dom-expressions' insertExpression (MIT),
+// simplified to the value shapes this app produces (nullish/boolean, string/number,
+// Node, Array, accessor fn) with full-replace reconciliation; keyed lists go
+// through For/mapArray.
+export function insert(parent, accessor, marker) {
+  const start = document.createComment("");
+  const end = document.createComment("");
+  if (marker === undefined || marker === null) { parent.appendChild(start); parent.appendChild(end); }
+  else { parent.insertBefore(start, marker); parent.insertBefore(end, marker); }
+  insertExpression(parent, accessor, start, end);
 }
 
-// Reactive child renderer (solid-js/web insert() equivalent for our usage:
-// element parents, optional null marker meaning "append region at the end").
-export function insert(parent, accessor, marker) {
-  const anchor = document.createComment("");
-  if (marker === undefined || marker === null) parent.appendChild(anchor);
-  else parent.insertBefore(anchor, marker);
-  let current = [];
-  createRenderEffect(() => {
-    const next = nodesOf(typeof accessor === "function" ? accessor() : accessor);
-    for (const n of current) if (n.parentNode) n.parentNode.removeChild(n);
-    for (const n of next) anchor.parentNode.insertBefore(n, anchor);
-    current = next;
-  });
+// Remove every node strictly between the `start` and `end` markers.
+function clearBetween(start, end) {
+  const region = end.parentNode;
+  if (!region) return;
+  let n = start.nextSibling;
+  while (n && n !== end) { const next = n.nextSibling; region.removeChild(n); n = next; }
+}
+
+// Render `value` into the region delimited by the [start, end) markers. A
+// function value is a dynamic boundary: it gets its own render effect (which
+// subscribes only to what THAT accessor reads), and the recursion gives every
+// nested dynamic its own effect too. Static values reconcile by full replace.
+function insertExpression(parent, value, start, end) {
+  if (typeof value === "function" && !value.length) {
+    createRenderEffect(() => { insertExpression(parent, value(), start, end); });
+    return;
+  }
+  const region = end.parentNode;
+  if (!region) return;
+  clearBetween(start, end);
+  if (value == null || typeof value === "boolean") return;
+  if (Array.isArray(value)) {
+    // Each element gets its own sub-region (own marker pair) so a dynamic
+    // element re-renders in place without disturbing its siblings.
+    for (const item of value) {
+      const itemStart = document.createComment("");
+      const itemEnd = document.createComment("");
+      region.insertBefore(itemStart, end);
+      region.insertBefore(itemEnd, end);
+      insertExpression(parent, item, itemStart, itemEnd);
+    }
+    return;
+  }
+  region.insertBefore(value instanceof Node ? value : document.createTextNode(String(value)), end);
 }
 
 export function render(code, element) {
   return createRoot(dispose => {
-    insert(element, code);
+    // Create the root component ONCE (code()), then insert its result. Passing
+    // `code` itself to insert() makes insert's render effect re-run code() on every
+    // re-render — re-creating the entire root component tree (and its resources)
+    // on each inner update, which loops (a re-created context/resource never
+    // settles). Calling code() once keeps the tree stable; the returned accessor's
+    // reactivity drives in-place DOM updates through insert's render effect.
+    insert(element, code());
     return dispose;
   });
 }
@@ -423,13 +524,30 @@ export function Portal(props) {
 // ---- control flow (accessor-returning, consumed through insert()) ----------
 export function Show(props) {
   const condition = createMemo(() => props.when, undefined, { equals: props.keyed ? undefined : (a, b) => !!a === !!b });
+  // Read props.children EXACTLY ONCE (lazily, on the first truthy run) and cache
+  // it. Reading the getter re-invokes it (-> createComponent), so reading it every
+  // run — even just to test whether it's a render-prop — re-creates the whole child
+  // subtree + its resources; the resource's loading then flips the condition, which
+  // re-runs this memo, which re-creates again: an infinite loop (desktop white
+  // screen). Capture under `node` (a child of Show's owner, so context still
+  // resolves). A render-prop child (arity >= 1, e.g. keyed <Show>{v => ...}</Show>)
+  // is the cached FUNCTION and is re-invoked per run so keyed values stay dynamic;
+  // a plain subtree is the cached value and is returned as a stable accessor for
+  // insert()'s nested effects to resolve in place.
+  const node = new OwnerNode(Owner);
+  let captured, hasCaptured = false, isRenderProp = false;
   return createMemo(() => {
-    const c = condition();
-    if (c) {
-      const child = props.children;
-      return typeof child === "function" && child.length ? child(props.keyed ? c : () => props.when) : resolveChildren(child);
+    const conditionValue = condition();
+    if (conditionValue) {
+      if (!hasCaptured) {
+        captured = runWithOwner(node, () => props.children);
+        isRenderProp = typeof captured === "function" && captured.length > 0;
+        hasCaptured = true;
+      }
+      if (isRenderProp) return captured(props.keyed ? conditionValue : () => props.when);
+      return captured;
     }
-    return resolveChildren(props.fallback);
+    return props.fallback;
   });
 }
 
@@ -525,10 +643,10 @@ export function Switch(props) {
     const list = Array.isArray(branches) ? branches : [branches];
     for (const branch of list) {
       if (branch && typeof branch === "object" && "when" in branch && branch.when) {
-        return resolveChildren(branch.children);
+        return branch.children;
       }
     }
-    return resolveChildren(props.fallback);
+    return props.fallback;
   });
 }
 export function Match(props) {
@@ -538,20 +656,29 @@ export function Match(props) {
 
 export function ErrorBoundary(props) {
   const [error, setError] = createSignal();
+  // Capture children ONCE. Reading props.children inside the memo would re-invoke
+  // the `children` getter (-> createComponent) on every re-run, re-creating the
+  // whole subtree. Create it once and return the SAME stable accessor; insert()'s
+  // nested effects resolve it without subscribing this memo to descendant signals.
+  let childrenOnce;
+  try { childrenOnce = props.children; } catch (e) { setError(() => e); }
   return createMemo(() => {
     const err = error();
     if (err !== undefined) {
       const fb = props.fallback;
       return typeof fb === "function" ? fb(err, () => setError(undefined)) : fb;
     }
-    try { return resolveChildren(props.children); }
-    catch (e) { setError(() => e); return undefined; }
+    return childrenOnce;
   });
 }
 
 export function Suspense(props) {
   // suspense-lite: no transitions; resources render their loading state inline.
-  return createMemo(() => resolveChildren(props.children) ?? resolveChildren(props.fallback));
+  // Capture children once (see ErrorBoundary) so a descendant signal flicker doesn't
+  // re-create the subtree on every re-run.
+  let childrenOnce;
+  try { childrenOnce = props.children; } catch { /* leave undefined -> fallback */ }
+  return createMemo(() => childrenOnce ?? props.fallback);
 }
 
 export function lazy(loader) {
@@ -563,22 +690,39 @@ export function lazy(loader) {
   };
 }
 
-export function createResource(sourceOrFetcher, maybeFetcher) {
-  const hasSource = maybeFetcher !== undefined;
-  const fetcher = hasSource ? maybeFetcher : sourceOrFetcher;
-  const source = hasSource ? sourceOrFetcher : () => true;
-  const [value, setValue] = createSignal(undefined);
-  const [loading, setLoading] = createSignal(true);
+export function createResource(sourceOrFetcher, fetcherOrOptions, optionsArg) {
+  // Signatures (solid): createResource(fetcher, options?) |
+  // createResource(source, fetcher, options?). A function in the 2nd slot means
+  // the source form; otherwise the 2nd slot is the options bag. (The previous
+  // implementation dropped the options arg entirely — losing `initialValue`.)
+  let source, fetcher, options;
+  if (typeof fetcherOrOptions === "function") { source = sourceOrFetcher; fetcher = fetcherOrOptions; options = optionsArg || {}; }
+  else { source = undefined; fetcher = sourceOrFetcher; options = (fetcherOrOptions && typeof fetcherOrOptions === "object") ? fetcherOrOptions : {}; }
+  const hasSource = source !== undefined;
+  const sourceAccessor = hasSource ? source : () => true;
+  const hasInitial = Object.prototype.hasOwnProperty.call(options, "initialValue");
+  const [value, setValue] = createSignal(hasInitial ? options.initialValue : undefined);
+  // With an initialValue the resource already has data to serve, so it starts
+  // NOT loading (matches solid); otherwise it loads until the first fetch settles.
+  const [loading, setLoading] = createSignal(!hasInitial);
   const [error, setError] = createSignal(undefined);
-  let generation = 0;
+  let latestRequestId = 0;
+  let firstRun = true;
   createRenderEffect(() => {
-    const s = typeof source === "function" ? source() : source;
-    if (s === false || s == null) return;
-    const gen = ++generation;
-    setLoading(true);
-    Promise.resolve(untrack(() => fetcher(s))).then(
-      v => { if (gen === generation) { setValue(() => v); setLoading(false); } },
-      e => { if (gen === generation) { setError(() => e); setLoading(false); } }
+    const sourceValue = typeof sourceAccessor === "function" ? sourceAccessor() : sourceAccessor;
+    if (sourceValue === false || sourceValue == null) return;
+    const requestId = ++latestRequestId;
+    // Don't flip loading->true on the FIRST fetch when an initialValue exists.
+    // That transient true->false flip drove an infinite loop: a <Show> gated on
+    // `resource.ready` (createSimpleContext) would close then re-open, re-mounting
+    // its children, which re-create persisted resources, which flip loading again.
+    // Source-change refetches after the first run still surface loading normally.
+    const skipLoading = firstRun && hasInitial;
+    firstRun = false;
+    if (!skipLoading) setLoading(true);
+    Promise.resolve(untrack(() => fetcher(sourceValue))).then(
+      resolvedValue => { if (requestId === latestRequestId) { setValue(() => resolvedValue); setLoading(false); } },
+      rejection => { if (requestId === latestRequestId) { setError(() => rejection); setLoading(false); } }
     );
   });
   const read = () => value();
@@ -587,6 +731,6 @@ export function createResource(sourceOrFetcher, maybeFetcher) {
     error: { get: error },
     latest: { get: value },
   });
-  const refetch = () => { generation++; /* re-run by bumping source readers */ };
-  return [read, { refetch, mutate: v => setValue(() => v) }];
+  const refetch = () => { latestRequestId++; /* re-run by bumping source readers */ };
+  return [read, { refetch, mutate: v => setValue(typeof v === "function" ? v : () => v) }];
 }

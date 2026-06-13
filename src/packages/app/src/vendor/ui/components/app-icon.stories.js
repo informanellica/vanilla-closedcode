@@ -1,6 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style="display:grid;gap:12px;grid-template-columns:repeat(auto-fill, minmax(72px, 1fr))">`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style=display:grid;gap:6px;justify-items:center><div style=font-size:10px;color:var(--text-weak);text-align:center>`);
 

@@ -1,5 +1,5 @@
 import { useDragDropContext } from "../lib/dnd/index.js";
-import { createRoot, onCleanup } from "solid-js";
+import { createRoot, onCleanup } from "../lib/reactivity.js";
 const isDragEvent = event => {
   if (typeof event !== "object" || event === null) return false;
   return "draggable" in event;

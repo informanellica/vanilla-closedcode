@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
-import { createSignal } from "solid-js";
+import { createSignal } from "../../../app/src/lib/reactivity.js";
 const OS_NAME = (() => {
   if (navigator.userAgent.includes("Mac")) return "macos";
   if (navigator.userAgent.includes("Windows")) return "windows";

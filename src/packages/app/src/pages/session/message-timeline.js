@@ -3,9 +3,9 @@
 // component-valued children (presence-gated Popover/Dropdown content,
 // runtime Show/For/Index output, memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
-import { insert } from "solid-js/web";
-import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { insert } from "../../lib/reactivity.js";
+import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "../../lib/reactivity.js";
+import { createStore, produce } from "../../lib/store.js";
 import { useMutation } from "../../lib/query/index.js";
 import { useNavigate } from "../../lib/router/index.js";
 import { Button } from "@/bs/button.js";

@@ -1,4 +1,4 @@
-import { createRenderEffect, untrack } from "solid-js";
+import { createRenderEffect, untrack } from "../../../lib/reactivity.js";
 
 // Brand mark: Bootstrap `c-square` icon as an inline SVG. Rendered as SVG (not
 // an <i> font glyph) so it scales with the width utility classes the callers

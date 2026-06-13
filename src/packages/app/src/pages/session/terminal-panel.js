@@ -1,6 +1,6 @@
-import { insert } from "solid-js/web";
-import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { insert } from "../../lib/reactivity.js";
+import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { Tabs } from "@/bs/tabs.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";

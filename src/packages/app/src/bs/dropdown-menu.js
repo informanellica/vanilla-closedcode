@@ -1,5 +1,5 @@
-import { createRenderEffect, getOwner, onCleanup } from "solid-js";
-import { insert } from "solid-js/web";
+import { createRenderEffect, getOwner, onCleanup } from "../lib/reactivity.js";
+import { insert } from "../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
 const PLACEMENT_CLASS = {

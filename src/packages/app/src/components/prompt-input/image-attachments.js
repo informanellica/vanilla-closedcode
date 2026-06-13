@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect, mapArray } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, mapArray } from "../../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 import { Tooltip } from "@/bs/tooltip.js";
 

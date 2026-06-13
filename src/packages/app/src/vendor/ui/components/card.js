@@ -1,4 +1,4 @@
-import { insert } from "solid-js/web";
+import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
 function splitProps(props, keys) {

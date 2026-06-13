@@ -1,12 +1,10 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
+import { createComponent as _$createComponent } from "../../../app/src/lib/reactivity.js";
 // @refresh reload
 
 import { ACCEPTED_FILE_EXTENSIONS, ACCEPTED_FILE_TYPES, AppBaseProviders, AppInterface, handleNotificationClick, loadLocaleDict, normalizeLocale, PlatformProvider, ServerConnection, useCommand } from "app";
 import * as Sentry from "@sentry/browser";
 import { MemoryRouter } from "../../../app/src/lib/router/index.js";
-import { createEffect, createResource, onCleanup, onMount, Show } from "solid-js";
-import { render } from "solid-js/web";
+import { createEffect, render } from "../../../app/src/lib/reactivity.js";
 import pkg from "../../package.json" with { type: "json" };
 import { initI18n, t } from "./i18n/index.js";
 import { webviewZoom } from "./webview-zoom.js";
@@ -227,57 +225,67 @@ window.api.onMenuCommand(id => {
   menuTrigger?.(id);
 });
 listenForDeepLinks();
-render(() => {
-  const platform = createPlatform();
-  const [windowConfig] = createResource(() => window.api.getWindowConfig().catch(() => ({
-    updaterEnabled: false
-  })));
-  const loadLocale = async () => {
-    const current = await platform.storage?.("closedcode.global.dat").getItem("language");
-    const legacy = current ? undefined : (await platform.storage?.("opencode.global.dat").getItem("language")) ?? (await platform.storage?.().getItem("language.v1"));
-    const raw = current ?? legacy;
-    if (!raw) return;
-    const locale = raw.match(/"locale"\s*:\s*"([^"]+)"/)?.[1];
-    if (!locale) return;
-    const next = normalizeLocale(locale);
-    if (next !== "en") await loadLocaleDict(next);
-    return next;
-  };
-  const [windowCount] = createResource(() => window.api.getWindowCount());
 
-  // Fetch sidecar credentials (available immediately, before health check)
-  const [sidecar] = createResource(() => window.api.awaitInitialization(() => undefined));
-  const [defaultServer] = createResource(() => platform.getDefaultServer?.().then(url => {
-    if (url) return ServerConnection.key({
-      type: "http",
-      http: {
-        url
-      }
-    });
-  }));
-  const [locale] = createResource(loadLocale);
-  const servers = () => {
-    const data = sidecar();
-    if (!data) return [];
-    const server = {
+// Resolve the persisted UI locale (plain async — no reactive resource).
+async function loadLocale(platform) {
+  const current = await platform.storage?.("closedcode.global.dat").getItem("language");
+  const legacy = current ? undefined : (await platform.storage?.("opencode.global.dat").getItem("language")) ?? (await platform.storage?.().getItem("language.v1"));
+  const raw = current ?? legacy;
+  if (!raw) return undefined;
+  const locale = raw.match(/"locale"\s*:\s*"([^"]+)"/)?.[1];
+  if (!locale) return undefined;
+  const next = normalizeLocale(locale);
+  if (next !== "en") await loadLocaleDict(next);
+  return next;
+}
+
+function showBootError(error) {
+  console.error("[boot] renderer failed to start:", error);
+  const msg = document.getElementById("app-boot-msg");
+  if (msg) {
+    msg.textContent = "Failed to start: " + (error && (error.stack || error.message) || String(error));
+    msg.style.cssText = "white-space:pre-wrap;max-width:80ch;padding:16px;font-family:var(--font-family-mono,monospace);text-align:left";
+  }
+}
+
+// Top-level startup is PLAIN async, not reactive: load the data the app needs,
+// keep the static #app-boot shell visible meanwhile, then mount ONLY AppInterface
+// into #app-mount. No top-level <Show>/createResource gate — so the whole window is
+// never a blank #root, and a reactive-mount issue can't wipe the screen.
+async function boot() {
+  const platform = createPlatform();
+
+  // windowConfig/windowCount were only the old reactive gate's `when` inputs; we
+  // still await them for parity (the app shouldn't start before they settle), but
+  // only sidecar/defaultServer/locale feed the component tree.
+  const [, , sidecar, defaultServer, locale] = await Promise.all([
+    window.api.getWindowConfig().catch(() => ({ updaterEnabled: false })),
+    window.api.getWindowCount().catch(() => 1),
+    window.api.awaitInitialization(() => undefined),
+    Promise.resolve(platform.getDefaultServer?.())
+      .then(url => (url ? ServerConnection.key({ type: "http", http: { url } }) : undefined))
+      .catch(() => undefined),
+    loadLocale(platform).catch(() => undefined),
+  ]);
+
+  const servers = (() => {
+    if (!sidecar) return [];
+    return [{
       displayName: "Local Server",
       type: "sidecar",
       variant: "base",
-      http: {
-        url: data.url,
-        username: data.username ?? undefined,
-        password: data.password ?? undefined
-      }
-    };
-    return [server];
-  };
-  function handleClick(e) {
+      http: { url: sidecar.url, username: sidecar.username ?? undefined, password: sidecar.password ?? undefined },
+    }];
+  })();
+
+  document.addEventListener("click", e => {
     const link = e.target.closest("a.external-link");
     if (link?.href) {
       e.preventDefault();
       platform.openLink(link.href);
     }
-  }
+  });
+
   function Inner() {
     const cmd = useCommand();
     menuTrigger = id => cmd.trigger(id);
@@ -286,47 +294,54 @@ render(() => {
       theme.themeId();
       theme.mode();
       const bg = getComputedStyle(document.documentElement).getPropertyValue("--background-base").trim();
-      if (bg) {
-        void window.api.setBackgroundColor(bg);
-      }
+      if (bg) void window.api.setBackgroundColor(bg);
     });
     return null;
   }
-  onMount(() => {
-    document.addEventListener("click", handleClick);
-    onCleanup(() => {
-      document.removeEventListener("click", handleClick);
-    });
-  });
-  return _$createComponent(PlatformProvider, {
+
+  const mount = document.getElementById("app-mount") ?? root;
+  render(() => _$createComponent(PlatformProvider, {
     value: platform,
     get children() {
       return _$createComponent(AppBaseProviders, {
-        get locale() {
-          return locale.latest;
-        },
+        locale,
         get children() {
-          return _$createComponent(Show, {
-            get when() {
-              return _$memo(() => !!(!defaultServer.loading && !sidecar.loading && !windowConfig.loading && !windowCount.loading))() && !locale.loading;
+          return _$createComponent(AppInterface, {
+            defaultServer: defaultServer ?? ServerConnection.Key.make("sidecar"),
+            servers,
+            router: MemoryRouter,
+            get children() {
+              return _$createComponent(Inner, {});
             },
-            children: _ => {
-              return _$createComponent(AppInterface, {
-                get defaultServer() {
-                  return defaultServer.latest ?? ServerConnection.Key.make("sidecar");
-                },
-                get servers() {
-                  return servers();
-                },
-                router: MemoryRouter,
-                get children() {
-                  return _$createComponent(Inner, {});
-                }
-              });
-            }
           });
-        }
+        },
       });
-    }
-  });
-}, root);
+    },
+  }), mount);
+
+  // Reveal the app only once it has actually rendered DOM; otherwise keep the
+  // static shell up (so a reactive-mount failure shows loading, never a blank
+  // screen) and surface it. render() returns synchronously, but the first paint
+  // is gated on async work (persisted settings/server resources settle a few
+  // hundred ms later), so a single rAF check fires before any element exists.
+  // Watch #app-mount and reveal as soon as content appears, with a timeout that
+  // surfaces a genuine no-DOM failure.
+  const reveal = () => document.getElementById("app-boot")?.remove();
+  if (mount.childElementCount > 0) {
+    reveal();
+  } else {
+    const observer = new MutationObserver(() => {
+      if (mount.childElementCount > 0) { observer.disconnect(); reveal(); }
+    });
+    observer.observe(mount, { childList: true, subtree: true });
+    setTimeout(() => {
+      if (mount.childElementCount > 0) return;
+      observer.disconnect();
+      console.error("[boot] AppInterface mounted no DOM into #app-mount");
+      const msg = document.getElementById("app-boot-msg");
+      if (msg) msg.textContent = "App mounted no content (reactive render produced no DOM).";
+    }, 10000);
+  }
+}
+
+boot().catch(showBootError);

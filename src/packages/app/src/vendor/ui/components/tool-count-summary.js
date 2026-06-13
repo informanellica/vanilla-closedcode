@@ -7,7 +7,7 @@ import {
   createSignal,
   onCleanup,
   untrack
-} from "solid-js";
+} from "../../../lib/reactivity.js";
 import { AnimatedCountLabel } from "./tool-count-label.js";
 
 // Normalize a component result into appendable DOM nodes (strings become text

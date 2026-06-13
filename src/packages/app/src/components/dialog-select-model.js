@@ -2,8 +2,8 @@
 // from an @kobalte/core Popover. Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
 import { Popover } from "@/vendor/ui/components/popover.js";
-import { createComponent, createMemo, createRoot, getOwner, runWithOwner } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createMemo, createRoot, getOwner, runWithOwner } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { useLocal } from "@/context/local.js";
 import { useDialog } from "@/lib/dialog.js";
 import { popularProviders } from "@/hooks/use-providers.js";

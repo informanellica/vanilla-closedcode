@@ -1,4 +1,4 @@
-import { createMemo, createResource } from "solid-js";
+import { createMemo, createResource } from "../lib/reactivity.js";
 import fuzzysort from "fuzzysort";
 import { getFilename } from "core/util/path";
 import { useGlobalSDK } from "@/context/global-sdk.js";

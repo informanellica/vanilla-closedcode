@@ -1,8 +1,8 @@
 // @refresh reload
 
 import * as Sentry from "@sentry/browser";
-import { createComponent } from "solid-js";
-import { render } from "solid-js/web";
+import { createComponent } from "./lib/reactivity.js";
+import { render } from "./lib/reactivity.js";
 import { AppBaseProviders, AppInterface } from "@/app.js";
 import { PlatformProvider } from "@/context/platform.js";
 import { dict as en } from "@/i18n/en.js";

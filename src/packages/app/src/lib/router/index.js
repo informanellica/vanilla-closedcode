@@ -11,7 +11,7 @@
 // https://github.com/solidjs/solid-router for the original, and
 // THIRD-PARTY-NOTICES.md for the license text.
 //
-// Reactivity is imported ONLY from "solid-js" / "solid-js/web" so a later
+// Reactivity is imported ONLY from "../reactivity.js" / "solid-js/web" so a later
 // import-map flip can swap the reactive runtime without touching this code.
 import {
   createComponent,
@@ -31,11 +31,11 @@ import {
   mergeProps,
   Show,
   startTransition,
-} from "solid-js";
+} from "../reactivity.js";
 import {
   createComponent as createComponent$web,
   insert,
-} from "solid-js/web";
+} from "../reactivity.js";
 
 // --- path helpers -----------------------------------------------------------
 

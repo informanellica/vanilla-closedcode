@@ -3,7 +3,7 @@ import { Dialog } from "@/bs/dialog.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { List } from "@/bs/list.js";
 import { getDirectory, getFilename } from "core/util/path";
-import { createComponent, createSignal } from "solid-js";
+import { createComponent, createSignal } from "../lib/reactivity.js";
 import { cleanInput, displayPath, useProjectController } from "@/controllers/project.js";
 import { useLanguage } from "@/context/language.js";
 

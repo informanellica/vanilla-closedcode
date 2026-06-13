@@ -1,6 +1,6 @@
 import * as i18n from "../lib/primitives/i18n.js";
-import { createEffect, createMemo, createResource } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createMemo, createResource } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { createSimpleContext } from "@/vendor/ui/context/index.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { dict as en } from "@/i18n/en.js";

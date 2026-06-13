@@ -4,7 +4,7 @@
 // Port/derivative of @solid-primitives/media (MIT License,
 // Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
 //
-// Imports only from "solid-js". Behavior matches upstream on the real solid-js
+// Imports only from "../reactivity.js". Behavior matches upstream on the real solid-js
 // runtime in a client (browser) environment.
 //
 // Scope note: the upstream package also exports `makeMediaQueryListener`,
@@ -16,7 +16,7 @@
 // renderer is client-only (build-less native ESM), so the hydratable path is never
 // taken and the runtime behavior is identical to upstream.
 
-import { createSignal, getOwner, onCleanup } from "solid-js";
+import { createSignal, getOwner, onCleanup } from "../reactivity.js";
 
 // Inlined `tryOnCleanup` (Solid's `onCleanup` without the dev-only out-of-owner warning).
 const tryOnCleanup = fn => (getOwner() ? onCleanup(fn) : fn);

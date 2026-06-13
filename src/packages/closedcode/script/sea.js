@@ -57,7 +57,44 @@ const injectArgs = [postject, exe, "NODE_SEA_BLOB", blob, "--sentinel-fuse", FUS
 if (targetOs === "darwin") injectArgs.push("--macho-segment-name", "NODE_SEA");
 execFileSync(process.execPath, injectArgs, { stdio: "inherit" });
 
-// 4. Tidy the build inputs (keep only the binary + sidecars + assets).
+// 4. Code-sign. Blob injection invalidates the binary's existing signature, so a
+// distributable build must be re-signed.
+//   - Windows (Authenticode): needs the Windows SDK `signtool` + a code-signing
+//     cert. Enable with CC_WIN_SIGN=1 and either CC_WIN_CERT=<pfx>[+CC_WIN_CERT_PASSWORD]
+//     or CC_WIN_CERT_THUMBPRINT=<sha1 of a cert in the store>. CC_SIGNTOOL overrides
+//     the signtool path; CC_WIN_TIMESTAMP overrides the RFC-3161 timestamp server.
+//   - macOS: ad-hoc sign by default; set CC_MAC_IDENTITY=<Developer ID> to sign for
+//     distribution (run on macOS).
+// Without config the binary still runs but is unsigned (Windows SmartScreen will
+// warn); we print a note rather than fail.
+if (targetOs === "windows") {
+  const want = process.env.CC_WIN_SIGN === "1" || process.argv.includes("--sign");
+  const tool = process.env.CC_SIGNTOOL || "signtool";
+  const ts = process.env.CC_WIN_TIMESTAMP || "http://timestamp.digicert.com";
+  let signArgs;
+  if (process.env.CC_WIN_CERT) {
+    signArgs = ["sign", "/fd", "sha256", "/f", process.env.CC_WIN_CERT,
+      ...(process.env.CC_WIN_CERT_PASSWORD ? ["/p", process.env.CC_WIN_CERT_PASSWORD] : []),
+      "/tr", ts, "/td", "sha256", exe];
+  } else if (process.env.CC_WIN_CERT_THUMBPRINT) {
+    signArgs = ["sign", "/fd", "sha256", "/sha1", process.env.CC_WIN_CERT_THUMBPRINT, "/tr", ts, "/td", "sha256", exe];
+  }
+  if (want && signArgs) {
+    execFileSync(tool, signArgs, { stdio: "inherit" });
+    try { execFileSync(tool, ["verify", "/pa", exe], { stdio: "inherit" }); } catch { /* verify is best-effort */ }
+    console.log("signed (Authenticode)");
+  } else if (want) {
+    console.error("CC_WIN_SIGN set but no cert — provide CC_WIN_CERT[+CC_WIN_CERT_PASSWORD] or CC_WIN_CERT_THUMBPRINT; left unsigned.");
+  } else {
+    console.log("note: unsigned (injection invalidated node's signature). Sign with CC_WIN_SIGN=1 + a code-signing cert.");
+  }
+} else if (targetOs === "darwin") {
+  const identity = process.env.CC_MAC_IDENTITY || "-"; // "-" = ad-hoc
+  try { execFileSync("codesign", ["--sign", identity, "--force", "--timestamp" + (identity === "-" ? "=none" : ""), exe], { stdio: "inherit" }); console.log(`codesigned (${identity === "-" ? "ad-hoc" : identity})`); }
+  catch (e) { console.error("codesign skipped/failed:", e.message); }
+}
+
+// 5. Tidy the build inputs (keep only the binary + sidecars + assets).
 fs.rmSync(cfg, { force: true });
 fs.rmSync(blob, { force: true });
 console.log(`SEA binary -> ${path.relative(dir, exe)}`);

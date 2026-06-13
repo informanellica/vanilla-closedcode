@@ -1,5 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<span style=text-decoration:underline>Hover for keybind`);
 import * as mod from "./tooltip.js";
 import { create } from "../storybook/scaffold.js";

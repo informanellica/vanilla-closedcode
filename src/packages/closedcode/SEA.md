@@ -70,6 +70,49 @@ Cross-building from a single host is possible (`sea.js --node <target-node>
 target's native prebuilds for the sidecars (e.g. `npm i --os=<os> --cpu=<arch>
 --libc=<libc>` into the sidecar tree), so per-machine builds are usually simpler.
 
+### linux-x64 via Docker (no Linux box needed)
+
+`Dockerfile.sea-linux` (repo root `src/`) builds the linux-x64 (glibc) package in a
+container — it installs the Linux native prebuilds, runs `build.js --sea` +
+`sea.js`, and prints the in-container `--version`. `.git` is excluded from the build
+context, so the build pins `CLOSEDCODE_VERSION` (a Docker `ENV`) instead of probing
+`git branch`. Build + extract (bind mounts hang on Windows, so use `docker cp`):
+
+```sh
+docker build -f src/Dockerfile.sea-linux -t cc-sea-linux src/
+docker create --name cc-sea-x cc-sea-linux
+docker cp cc-sea-x:/app/packages/closedcode/dist/closedcode-linux-x64 ./dist/
+docker rm -f cc-sea-x
+```
+
+## Startup performance (Windows)
+
+A large unsigned SEA can feel slow to launch on Windows for two distinct reasons:
+
+1. **In-process startup (~1 s, warm):** evaluating the bundled module graph (effect,
+   sequelize, every command) before the first command runs. Cheap `node` is ~45 ms.
+2. **Cold antivirus scan (pre-execution):** Defender scans the ~100 MB unsigned PE
+   the first time it runs (and holds a transient file handle — `build.js` retries its
+   `dist/<name>/bin` wipe to survive that lock).
+
+To keep an interactive launch from looking hung, the SEA banner writes a one-line
+splash to **stderr the instant JS starts** (before the module graph evaluates) —
+gated to a TTY and skipped for `--version`/`-v`/`--help`/`-h`/`completion` and
+piped/non-TTY output, so scripted use stays clean. A splash cannot help #2 (the
+process isn't executing yet). Reduce the cold scan with one of:
+
+- **Code-signing** (`sea.js`, `CC_WIN_SIGN=1` + a cert) — also clears SmartScreen
+  (instantly with an EV cert; an OV cert still warns until it accrues reputation).
+- **Defender exclusion** for the install dir (per-machine; needs an elevated shell):
+
+  ```powershell
+  Add-MpPreference -ExclusionPath "C:\path\to\closedcode-windows-x64"
+  ```
+
+- A **smaller binary** — most of the ~100 MB is Node itself, so on Windows there is
+  little to strip; the Linux build (`--version` shows it is "not stripped") can be
+  `strip`-ped in the Docker stage to shed its debug info.
+
 ## Verified
 
 win-x64 is verified end to end: `closedcode --version`, `--help` (closedcode

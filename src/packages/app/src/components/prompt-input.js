@@ -2,11 +2,11 @@
 // children: PromptPopover and Show return memo accessors that must keep being
 // reconciled (the popover-backed model selector lives under one of them), so
 // freezing their first value would break open/close and branch switches.
-import { insert } from "solid-js/web";
+import { insert } from "../lib/reactivity.js";
 import { useFilteredList } from "@/lib/hooks.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
-import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { useLocal } from "@/context/local.js";
 import { useProvidersController } from "@/controllers/providers.js";
 import { showToast } from "@/lib/toast.js";

@@ -1,4 +1,4 @@
-import { createComponent, createRenderEffect } from "solid-js";
+import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
 import { Button } from "@/bs/button.js";
 import { DockPrompt } from "@/vendor/ui/components/dock-prompt.js";
 import { Icon } from "@/bs/icon.js";

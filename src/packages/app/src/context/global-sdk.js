@@ -1,7 +1,7 @@
 import { createSimpleContext } from "@/lib/context.js";
 import { createGlobalEmitter } from "../lib/primitives/event-bus.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
-import { batch, onCleanup, onMount } from "solid-js";
+import { batch, onCleanup, onMount } from "../lib/reactivity.js";
 import z from "zod";
 import { createSdkForServer } from "@/utils/server.js";
 import { useLanguage } from "./language.js";

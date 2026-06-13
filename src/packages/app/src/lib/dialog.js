@@ -1,4 +1,4 @@
-import { createComponent, createContext, createEffect, createMemo, createRenderEffect, createRoot, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "solid-js";
+import { createComponent, createContext, createEffect, createMemo, createRenderEffect, createRoot, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "./reactivity.js";
 
 // Self-contained replacement for ui/context/dialog.
 //

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
-import { createMemo, createRoot } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createMemo, createRoot } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { createOpenReviewFile, createOpenSessionFileTab, createSessionTabs, focusTerminalById, getTabReorderIndex, shouldFocusTerminalOnKeyDown } from "./helpers.js";
 describe("createOpenReviewFile", () => {
   test("opens and loads selected review file", () => {

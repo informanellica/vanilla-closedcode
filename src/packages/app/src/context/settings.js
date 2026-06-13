@@ -1,5 +1,5 @@
-import { createStore, reconcile } from "solid-js/store";
-import { createEffect, createMemo } from "solid-js";
+import { createStore, reconcile } from "../lib/store.js";
+import { createEffect, createMemo } from "../lib/reactivity.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { persisted } from "@/utils/persist.js";
 export const monoDefault = "System Mono";

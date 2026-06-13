@@ -1,4 +1,4 @@
-import { createRenderEffect } from "solid-js";
+import { createRenderEffect } from "../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 
 function template(html) {

@@ -1,5 +1,5 @@
-import { template as _$template } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style="color:var(--text-weak);padding:8px 0">Accordion content.`);
 import { Accordion } from "./accordion.js";
 import * as mod from "./sticky-accordion-header.js";

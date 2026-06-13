@@ -1,6 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:flex;gap:12px;align-items:center>`);
 import * as mod from "./icon-button.js";
 import { create } from "../storybook/scaffold.js";

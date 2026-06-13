@@ -1,7 +1,7 @@
 import { createSimpleContext } from "@/lib/context.js";
 import { useDialog } from "@/lib/dialog.js";
-import { createEffect, createMemo, onCleanup, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createMemo, onCleanup, onMount } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { useLanguage } from "@/context/language.js";
 import { useSettings } from "@/context/settings.js";

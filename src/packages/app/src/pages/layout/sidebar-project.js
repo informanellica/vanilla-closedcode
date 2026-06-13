@@ -4,9 +4,9 @@
 // session lists are For-reconciled rows inside the hover-card panel. insert()
 // reconciles those arrays in place instead of detaching the live trigger or
 // session nodes, so it stays (established exception).
-import { insert } from "solid-js/web";
-import { createComponent, createMemo, createRenderEffect, For, mergeProps, Show, untrack } from "solid-js";
-import { createStore } from "solid-js/store";
+import { insert } from "../../lib/reactivity.js";
+import { createComponent, createMemo, createRenderEffect, For, mergeProps, Show, untrack } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { base64Encode } from "core/util/encode";
 import { Button } from "@/bs/button.js";
 import { ContextMenu } from "@/vendor/ui/components/context-menu.js";

@@ -1,5 +1,5 @@
-import { createComponent, createRenderEffect } from "solid-js";
-import { insert } from "solid-js/web";
+import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 import { AnimatedNumber } from "./animated-number.js";
 
 function split(text) {

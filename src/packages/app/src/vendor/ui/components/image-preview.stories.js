@@ -1,5 +1,5 @@
-import { createComponent as _$createComponent } from "solid-js/web";
-import { onMount } from "solid-js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { onMount } from "../../../lib/reactivity.js";
 import * as mod from "./image-preview.js";
 import { Button } from "./button.js";
 import { useDialog } from "../context/dialog.js";

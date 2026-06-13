@@ -54,7 +54,18 @@
   </head>
   <body class="antialiased overscroll-none text-12-regular overflow-hidden">
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root" class="flex flex-col h-dvh"></div>
+    <!-- Static, non-reactive boot shell. The app mounts into #app-mount; #app-boot
+         is a full-screen loading/error overlay shown from first paint and removed by
+         renderer/index.js once the app has actually rendered DOM. This guarantees the
+         window is never a blank #root even if the reactive runtime misbehaves. -->
+    <style>@keyframes cc-boot-spin { to { transform: rotate(360deg); } }</style>
+    <div id="root" class="flex flex-col h-dvh">
+      <div id="app-mount" class="flex flex-col h-dvh"></div>
+      <div id="app-boot" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--background-base,#131010);color:var(--text-base,#9a9a9a);font:13px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto">
+        <div style="width:28px;height:28px;border:3px solid rgba(150,150,150,.25);border-top-color:#f59e0b;border-radius:50%;animation:cc-boot-spin .8s linear infinite"></div>
+        <div id="app-boot-msg">Loading…</div>
+      </div>
+    </div>
     <!-- Bootstrap JS bundle (Popper + Modal/Dropdown/etc.) as a classic global,
          so window.bootstrap is available before the renderer module runs. -->
     <script src="./vendor/bootstrap/bootstrap.bundle.min.js"></script>

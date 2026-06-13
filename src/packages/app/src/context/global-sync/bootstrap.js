@@ -1,8 +1,8 @@
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
 import { retry } from "core/util/retry";
-import { batch } from "solid-js";
-import { reconcile } from "solid-js/store";
+import { batch } from "../../lib/reactivity.js";
+import { reconcile } from "../../lib/store.js";
 import { cmp, normalizeAgentList, normalizeProviderList } from "./utils.js";
 import { formatServerError } from "@/utils/server-errors.js";
 import { queryOptions, skipToken } from "../../lib/query/index.js";

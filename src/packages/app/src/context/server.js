@@ -1,6 +1,6 @@
 import { createSimpleContext } from "@/lib/context.js";
-import { batch, createEffect, createMemo, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { batch, createEffect, createMemo, onCleanup } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { useCheckServerHealth } from "@/utils/server-health.js";
 const HEALTH_POLL_INTERVAL_MS = 10_000;

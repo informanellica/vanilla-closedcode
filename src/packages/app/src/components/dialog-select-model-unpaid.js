@@ -1,4 +1,4 @@
-import { createComponent, createRenderEffect } from "solid-js";
+import { createComponent, createRenderEffect } from "../lib/reactivity.js";
 import { Button } from "@/bs/button.js";
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";

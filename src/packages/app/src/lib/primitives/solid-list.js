@@ -9,7 +9,7 @@
 // are not exercised by those call sites.
 //
 // Two tiny upstream helpers are inlined to keep this module dependency-free
-// (importing only from "solid-js"):
+// (importing only from "../reactivity.js"):
 //   - `access` from `@corvu/utils/reactivity`
 //   - `createControllableSignal` from `@corvu/utils/create/controllableSignal`
 //
@@ -17,7 +17,7 @@
 //
 // Port/derivative of solid-list and @corvu/utils (both MIT License,
 // Copyright (c) 2023-2024 Jasmin Noetzli). See THIRD-PARTY-NOTICES.md.
-import { createSignal, mergeProps, untrack } from "solid-js";
+import { createSignal, mergeProps, untrack } from "../reactivity.js";
 
 // Inlined from `@corvu/utils/reactivity` (`access`): unwrap a value that may be
 // either a static value or a zero-arg accessor function.

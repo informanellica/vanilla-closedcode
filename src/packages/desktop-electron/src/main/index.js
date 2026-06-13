@@ -193,7 +193,12 @@ function setInitStep(step) {
 async function initialize() {
   const needsMigration = !sqliteFileExists();
   const sqliteDone = needsMigration ? defer() : undefined;
-  let overlay = null;
+  // Show the splash window immediately on EVERY launch. Previously it was created
+  // only during a first-run DB migration (and only after a 1s delay), so a normal
+  // launch showed nothing on screen until the sidecar server passed its health
+  // check (up to 30s) and the main window painted. Creating it up front means a
+  // window appears at once; it is closed when the main window is ready to show.
+  const overlay = createLoadingWindow();
   const port = await getSidecarPort();
   const hostname = "127.0.0.1";
   const url = `http://${hostname}:${port}`;
@@ -254,23 +259,20 @@ async function initialize() {
     });
     logger.log("loading task finished");
   })();
-  if (needsMigration) {
-    const show = await Promise.race([loadingTask.then(() => false), delay(1_000).then(() => true)]);
-    if (show) {
-      overlay = createLoadingWindow();
-      await delay(1_000);
-    }
-  }
   await loadingTask;
   setInitStep({
     phase: "done"
   });
-  if (overlay) {
-    await loadingComplete.promise;
+  // First-run migration: let the splash settle on "All done / 100%" before the
+  // swap (the loading renderer signals via loadingWindowComplete). Cap the wait so
+  // a missed signal can't hang startup. Normal launches pass straight through.
+  if (needsMigration) {
+    await Promise.race([loadingComplete.promise, delay(2_500)]);
   }
   mainWindow = createMainWindow();
   wireMenu();
-  overlay?.close();
+  // Close the splash only once the main window has actually painted — no blank gap.
+  mainWindow.once("ready-to-show", () => overlay?.close());
 }
 function wireMenu() {
   if (!mainWindow) return;

@@ -1,6 +1,6 @@
 import { useMutation } from "../lib/query/index.js";
 import { useNavigate } from "../lib/router/index.js";
-import { createMemo } from "solid-js";
+import { createMemo } from "../lib/reactivity.js";
 import { useDialog } from "@/lib/dialog.js";
 import { showToast } from "@/lib/toast.js";
 import { useLanguage } from "@/context/language.js";

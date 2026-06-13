@@ -1,6 +1,6 @@
-import { onMount, splitProps, mergeProps, createRenderEffect, createRoot, onCleanup } from "solid-js";
+import { onMount, splitProps, mergeProps, createRenderEffect, createRoot, onCleanup } from "../../../lib/reactivity.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../../lib/store.js";
 import { useI18n } from "../context/i18n.js";
 
 export const scrollKey = event => {

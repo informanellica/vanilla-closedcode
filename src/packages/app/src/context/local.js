@@ -1,8 +1,8 @@
 import { createSimpleContext } from "@/lib/context.js";
 import { base64Encode } from "core/util/encode";
 import { useParams } from "../lib/router/index.js";
-import { batch, createEffect, createMemo } from "solid-js";
-import { createStore } from "solid-js/store";
+import { batch, createEffect, createMemo } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { useModels } from "@/context/models.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { Persist, persisted } from "@/utils/persist.js";

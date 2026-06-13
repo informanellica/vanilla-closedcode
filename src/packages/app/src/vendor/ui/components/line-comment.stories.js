@@ -1,11 +1,11 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style="position:relative;height:160px;padding:16px 16px 16px 40px;border:1px solid var(--border-weak);border-radius:8px;font-family:var(--font-family-mono);font-size:12px;color:var(--text-weak)"><div>12 | const total = sum(values)</div><div>13 | return total / values.length`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style="position:relative;height:220px;padding:16px 16px 16px 40px;border:1px solid var(--border-weak);border-radius:8px;font-family:var(--font-family-mono);font-size:12px;color:var(--text-weak)"><div>40 | if (values.length === 0) return 0`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div data-slot=line-comment-content>Anchor content`),
   _tmpl$4 = /*#__PURE__*/_$template(`<div style="position:relative;height:120px;padding:16px 16px 16px 40px;border:1px solid var(--border-weak);border-radius:8px;font-family:var(--font-family-mono);font-size:12px;color:var(--text-weak)"><div>20 | const ready = true`);
-import { createSignal } from "solid-js";
+import { createSignal } from "../../../lib/reactivity.js";
 import * as mod from "./line-comment.js";
 const docs = `### Overview
 Inline comment anchor and editor for code review or annotation flows.

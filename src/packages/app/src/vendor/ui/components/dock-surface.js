@@ -1,4 +1,4 @@
-import { createRenderEffect, splitProps } from "solid-js";
+import { createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
 // Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
 // keep Nodes, stringify the rest. Called inside a render effect so reactive

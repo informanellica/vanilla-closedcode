@@ -6,8 +6,8 @@
 // Port/derivative of @thisbeyond/solid-dnd (MIT License,
 // Copyright (c) 2021 Martin Pengelly-Phillips). See THIRD-PARTY-NOTICES.md.
 //
-// Reactivity is sourced ONLY from "solid-js" / "solid-js/store". The upstream
-// DragOverlay used Portal from "solid-js/web"; here the overlay element is
+// Reactivity is sourced ONLY from "../reactivity.js" / "solid-js/store". The upstream
+// DragOverlay used Portal from "../reactivity.js"; here the overlay element is
 // appended to document.body manually (mount + onCleanup) to avoid that import,
 // which is equivalent to <Portal mount={document.body}> for a single element.
 import {
@@ -22,8 +22,8 @@ import {
   onMount,
   untrack,
   useContext
-} from "solid-js";
-import { createStore } from "solid-js/store";
+} from "../reactivity.js";
+import { createStore } from "../store.js";
 
 // ---------------------------------------------------------------------------
 // Layout geometry (src/layout.ts)

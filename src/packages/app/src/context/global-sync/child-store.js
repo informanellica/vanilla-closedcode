@@ -1,5 +1,5 @@
-import { createRoot, getOwner, onCleanup, runWithOwner } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createRoot, getOwner, onCleanup, runWithOwner } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { DIR_IDLE_TTL_MS, MAX_DIR_STORES } from "./types.js";
 import { canDisposeDirectory, pickDirectoriesToEvict } from "./eviction.js";

@@ -1,4 +1,4 @@
-import { createComponent } from "solid-js";
+import { createComponent } from "../../../lib/reactivity.js";
 import { Accordion } from "./accordion.js";
 
 // Thin wrapper over Accordion.Header that tags the sticky header variant.

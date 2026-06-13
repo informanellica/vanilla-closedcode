@@ -1,6 +1,6 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:grid;gap:8px><div style=color:var(--text-weak);font-size:12px>Head tags are injected for favicon and app icons.`);
 import * as mod from "./favicon.js";
 const docs = `### Overview

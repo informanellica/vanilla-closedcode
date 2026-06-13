@@ -3,9 +3,9 @@
 // reactive/component-valued children (presence-gated Collapsible and
 // Accordion content, Dynamic and memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
-import { Dynamic, insert } from "solid-js/web";
-import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, Match, mergeProps, onMount, Show, Switch, onCleanup, Index } from "solid-js";
-import { createStore } from "solid-js/store";
+import { Dynamic, insert } from "../../../lib/reactivity.js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, Match, mergeProps, onMount, Show, Switch, onCleanup, Index } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import stripAnsi from "strip-ansi";
 import { useData } from "../context/index.js";
 import { useFileComponent } from "../context/file.js";

@@ -1,5 +1,5 @@
-import { insert } from "solid-js/web";
-import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, on, onCleanup } from "solid-js";
+import { insert } from "../../../lib/reactivity.js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, on, onCleanup } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { Card } from "./card.js";
 import { Tooltip } from "./tooltip.js";

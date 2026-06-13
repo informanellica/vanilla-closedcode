@@ -1,7 +1,7 @@
-import { template as _$template } from "solid-js/web";
-import { mergeProps as _$mergeProps } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { mergeProps as _$mergeProps } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:flex;align-items:center;gap:8px><span>Details`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style=color:var(--text-weak);padding-top:8px>Optional details sit here.`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div style=display:flex;align-items:center;gap:8px><span>Ghost trigger`),

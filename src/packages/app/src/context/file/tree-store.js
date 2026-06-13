@@ -1,4 +1,4 @@
-import { createStore, produce, reconcile } from "solid-js/store";
+import { createStore, produce, reconcile } from "../../lib/store.js";
 export function createFileTreeStore(options) {
   const [tree, setTree] = createStore({
     node: {},

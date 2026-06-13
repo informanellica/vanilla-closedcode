@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../lib/store.js";
 import { applyDirectoryEvent, applyGlobalEvent, cleanupDroppedSessionCaches } from "./event-reducer.js";
 const rootSession = input => ({
   id: input.id,

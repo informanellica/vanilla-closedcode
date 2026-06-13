@@ -1,8 +1,8 @@
 // Vanilla reimplementation of @kobalte/core's Switch behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { createRenderEffect, createSignal, splitProps } from "solid-js";
-import { insert } from "solid-js/web";
+import { createRenderEffect, createSignal, splitProps } from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 
 // Vanilla port of the original Switch wrapper. The original previously owned the
 // switch behavior (controlled/uncontrolled state, aria wiring, the

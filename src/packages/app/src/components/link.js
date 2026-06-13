@@ -1,5 +1,5 @@
-import { createRenderEffect, splitProps } from "solid-js";
-import { insert } from "solid-js/web";
+import { createRenderEffect, splitProps } from "../lib/reactivity.js";
+import { insert } from "../lib/reactivity.js";
 import { usePlatform } from "@/context/platform.js";
 
 // Assign one forwarded (rest) prop onto the anchor, mirroring Solid's spread

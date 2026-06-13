@@ -1,4 +1,4 @@
-import { createComponent as _$createComponent } from "solid-js/web";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 
 import { Card, CardActions, CardDescription, CardTitle } from "./card.js";
 import { Button } from "./button.js";

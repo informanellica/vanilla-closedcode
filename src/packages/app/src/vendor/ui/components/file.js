@@ -1,12 +1,12 @@
 // insert() is the established exception for reactive/component-valued
 // children: the presence-gated search bar (Show + Portal-backed FileSearchBar)
 // must stay reconciled by Solid instead of being frozen at mount.
-import { insert } from "solid-js/web";
+import { insert } from "../../../lib/reactivity.js";
 import { sampledChecksum } from "core/util/encode";
 import { DEFAULT_VIRTUAL_FILE_METRICS, File as PierreFile, FileDiff, VirtualizedFile, VirtualizedFileDiff, Virtualizer } from "@pierre/diffs";
 import { createMediaQuery } from "../../../lib/primitives/media.js";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
-import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, onMount, Show, splitProps } from "solid-js";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, onMount, Show, splitProps } from "../../../lib/reactivity.js";
 import { createDefaultOptions, styleVariables } from "../pierre/index.js";
 import { markCommentedDiffLines, markCommentedFileLines } from "../pierre/commented-lines.js";
 import { fixDiffSelection, findDiffSide } from "../pierre/diff-selection.js";

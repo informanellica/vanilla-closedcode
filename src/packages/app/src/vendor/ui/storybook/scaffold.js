@@ -1,5 +1,5 @@
-import { createComponent, mergeProps, ErrorBoundary } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { createComponent, mergeProps, ErrorBoundary } from "../../../lib/reactivity.js";
+import { Dynamic } from "../../../lib/reactivity.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — dynamic

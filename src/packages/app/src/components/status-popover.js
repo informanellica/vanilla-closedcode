@@ -1,7 +1,7 @@
 import { Button } from "@/bs/button.js";
 import { Icon } from "@/bs/icon.js";
 import { Popover } from "@/vendor/ui/components/popover.js";
-import { createComponent, createMemo, createRenderEffect, createSignal } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, createSignal } from "../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 import { useServer } from "@/context/server.js";
 import { useSync } from "@/context/sync.js";

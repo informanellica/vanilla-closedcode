@@ -1,4 +1,4 @@
-import { createComponent, createEffect, createMemo } from "solid-js";
+import { createComponent, createEffect, createMemo } from "../lib/reactivity.js";
 import { Dialog } from "@/bs/dialog.js";
 import { Tabs } from "@/bs/tabs.js";
 import { Icon } from "@/bs/icon.js";

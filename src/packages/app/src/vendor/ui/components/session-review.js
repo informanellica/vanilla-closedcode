@@ -13,12 +13,12 @@ import { useFileComponent } from "../context/file.js";
 import { useI18n } from "../context/i18n.js";
 import { getDirectory, getFilename } from "core/util/path";
 import { checksum } from "core/util/encode";
-import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, onCleanup, Show, Switch, untrack } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, onCleanup, Show, Switch, untrack } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 // insert() is the established exception for reactive/component-valued children
 // (most of them rendered inside presence-gated Accordion content) so
 // Solid keeps reconciling accessors instead of freezing them.
-import { insert } from "solid-js/web";
+import { insert } from "../../../lib/reactivity.js";
 import { mediaKindFromPath } from "../pierre/media.js";
 import { cloneSelectedLineRange, previewSelectedLines } from "../pierre/selection-bridge.js";
 import { createLineCommentController } from "./line-comment-annotations.js";

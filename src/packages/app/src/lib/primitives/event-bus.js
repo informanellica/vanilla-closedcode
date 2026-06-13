@@ -4,13 +4,13 @@
 // Port/derivative of @solid-primitives/event-bus (MIT License,
 // Copyright (c) 2021 Solid Primitives Working Group). See THIRD-PARTY-NOTICES.md.
 //
-// Imports only from "solid-js". Behavior matches upstream on the real solid-js runtime.
+// Imports only from "../reactivity.js". Behavior matches upstream on the real solid-js runtime.
 //
 // Scope note: the upstream package also exports `createEmitter`, `createEventBus`,
 // `createEventHub`, `createEventStack`, and the `EmitterCore`/`EventBusCore` classes.
 // Only the internals required by `createGlobalEmitter` are ported here.
 
-import { getOwner, onCleanup } from "solid-js";
+import { getOwner, onCleanup } from "../reactivity.js";
 
 // Inlined `tryOnCleanup` (Solid's `onCleanup` without the dev-only out-of-owner warning).
 const tryOnCleanup = fn => (getOwner() ? onCleanup(fn) : fn);

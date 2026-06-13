@@ -1,7 +1,7 @@
 // Vanilla reimplementation of an @kobalte/core Dialog-based image preview (no
 // external UI dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { createRenderEffect, onCleanup, onMount } from "solid-js";
+import { createRenderEffect, onCleanup, onMount } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
 

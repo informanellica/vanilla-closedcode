@@ -1,4 +1,4 @@
-import { createRenderEffect } from "solid-js";
+import { createRenderEffect } from "../../../lib/reactivity.js";
 import { TextShimmer } from "./text-shimmer.js";
 
 function common(active, done) {

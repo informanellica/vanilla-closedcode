@@ -1,5 +1,5 @@
-import { createComponent, createRenderEffect } from "solid-js";
-import { Portal } from "solid-js/web";
+import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
+import { Portal } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { Icon } from "./icon.js";
 

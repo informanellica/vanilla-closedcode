@@ -1,4 +1,4 @@
-import { createMemo, createRenderEffect, splitProps } from "solid-js";
+import { createMemo, createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 

@@ -1,5 +1,5 @@
-import { createEffect, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, onMount } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createSimpleContext } from "../context/helper.js";
 

@@ -26,24 +26,6 @@ its own issues; this file is the high-level index.
   plus a SQLCipher-capable driver, (b) app-level encryption of sensitive columns,
   or (c) relying on full-disk encryption. Decide the threat model first.
 
-- **ORM migration: Drizzle → Sequelize.** The data layer currently uses **Drizzle
-  ORM** (`drizzle-orm` / `drizzle-kit`) with `*.sql.js` schema files and SQL
-  migrations under `packages/closedcode/migration/`. Migrate the ORM to
-  **Sequelize** (models, migrations, queries) — a staged swap on a dedicated
-  branch that preserves the existing `closedcode.db` schema and user data.
-
-- **Refactor SolidJS-compiler-output UI → template literals + named slots.** Some
-  UI files (e.g. `packages/app/src/pages/home.js`) are still in raw SolidJS
-  compiler-output form (`_$template` / `_$createComponent` / `_$insert`) and depend
-  on positional `firstChild` / `nextSibling` wiring, which is brittle to edit. Since
-  there is no JSX/TS compile step we cannot reintroduce `.jsx`; instead rewrite the
-  plain `.js` (starting with the home screen) as **template literals + named slots**:
-  static skeleton in a template literal with `data-slot` placeholders; dynamic text
-  via `textContent` (**not** string interpolation into the literal — XSS / layout
-  breakage); dynamic lists via `replaceChildren(...)`; events via `addEventListener`;
-  insertion by `querySelector("[data-slot=…]")`. Full guidance and a worked example
-  live in the Pure Vanilla milestone (see below).
-
 - **VS Code extension (standalone, NOT via Copilot).** Ship a first-party VS Code
   extension as a **new front-end onto the same engine (Model)** — a sibling of the
   desktop GUI and the CLI, not a wrapper around either. It must be a fully
@@ -55,9 +37,39 @@ its own issues; this file is the high-level index.
   (a chat/agent view, editor actions, the command palette) so it is usable inside
   the editor while remaining provider- and Copilot-independent.
 
+## Recently completed (formerly backlog)
+
+Verified against the codebase 2026-06-13 (the two items below were previously listed
+as backlog but are now effectively done):
+
+- **ORM migration: Drizzle → Sequelize — done at runtime.** The data layer is fully
+  on **Sequelize v6** (`src/storage/sequelize.js` defines the models; `db.js` exposes
+  the async `useAsync`/`transactionAsync`/`ormInit` layer; `migrate.js` runs the raw
+  SQL journal through the Sequelize connection). There are **zero** `drizzle-orm` /
+  `drizzle-kit` imports in runtime source. Residual cleanup only (non-runtime):
+  - Remove the now-unused `drizzle-orm` dependency from
+    `packages/closedcode/package.json` (and uninstall it).
+  - Delete the orphaned `packages/closedcode/drizzle.config.js` (imports `drizzle-kit`,
+    points at `*.sql.ts` files that no longer exist).
+  - Update/remove 3 stale tests that still import `eq` from `drizzle-orm` + the deleted
+    `#session/session.sql.js` and call the removed synchronous `Database.use`:
+    `test/server/{session-list,httpapi-session,httpapi-workspace-routing}.test.js`.
+  - Fix the stale comment in `src/storage/schema.js` claiming the `*.sql.js` table
+    defs still exist (they are all deleted).
+
+- **SolidJS-compiler-output UI refactor — done.** The renderer under
+  `packages/app/src` (including `pages/home.js`) is rewritten to the prescribed style:
+  static skeleton in a template literal with `data-slot` placeholders,
+  `querySelector("[data-slot=…]")` binding, `textContent` for dynamic text,
+  `replaceChildren(…)` for lists, `addEventListener` for events. No renderer page or
+  component contains real compiler output. The only `_$template` / `_$createComponent`
+  holdouts are `*.stories.js` Storybook demos under `vendor/ui/components/`, which are
+  not the renderer UI and are out of scope.
+
 ## Known preview-time issues
 
 Tracked in the milestones (see
 [pure-vanilla-standardization](milestones/pure-vanilla-standardization.md) →
-"Known preview-time issues"): compiled-looking SolidJS UI source to be refactored;
-Windows e2e cold-start flakiness (renderer launch + per-test DB migration).
+"Known preview-time issues"): Windows e2e cold-start flakiness (renderer launch +
+per-test DB migration). (The previously-listed "compiled-looking SolidJS UI source"
+is resolved — see "Recently completed" above.)

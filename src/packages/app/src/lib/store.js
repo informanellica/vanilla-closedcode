@@ -30,29 +30,29 @@ const $RAW = Symbol("store-raw"),
   $SELF = Symbol("store-self");
 // $PROXY (cached-proxy tag) and $TRACK (whole-object tracking) are imported
 // from reactivity.js so they are the SAME symbols first-party consumers import
-// from "solid-js" — e.g. `items[$TRACK]` must hit this module's proxy traps.
+// from "./reactivity.js" — e.g. `items[$TRACK]` must hit this module's proxy traps.
 
 function wrap(value) {
-  let p = value[$PROXY];
-  if (!p) {
+  let proxy = value[$PROXY];
+  if (!proxy) {
     Object.defineProperty(value, $PROXY, {
-      value: p = new Proxy(value, proxyTraps)
+      value: proxy = new Proxy(value, proxyTraps)
     });
     if (!Array.isArray(value)) {
       const keys = Object.keys(value),
         desc = Object.getOwnPropertyDescriptors(value);
-      for (let i = 0, l = keys.length; i < l; i++) {
+      for (let i = 0, length = keys.length; i < length; i++) {
         const prop = keys[i];
         if (desc[prop].get) {
           Object.defineProperty(value, prop, {
             enumerable: desc[prop].enumerable,
-            get: desc[prop].get.bind(p)
+            get: desc[prop].get.bind(proxy)
           });
         }
       }
     }
   }
-  return p;
+  return proxy;
 }
 
 function isWrappable(obj) {
@@ -74,7 +74,7 @@ export function unwrap(item, set = new Set()) {
   if (Array.isArray(item)) {
     if (Object.isFrozen(item)) item = item.slice(0);
     else set.add(item);
-    for (let i = 0, l = item.length; i < l; i++) {
+    for (let i = 0, length = item.length; i < length; i++) {
       v = item[i];
       if ((unwrapped = unwrap(v, set)) !== v) item[i] = unwrapped;
     }
@@ -83,7 +83,7 @@ export function unwrap(item, set = new Set()) {
     else set.add(item);
     const keys = Object.keys(item),
       desc = Object.getOwnPropertyDescriptors(item);
-    for (let i = 0, l = keys.length; i < l; i++) {
+    for (let i = 0, length = keys.length; i < length; i++) {
       prop = keys[i];
       if (desc[prop].get) continue;
       v = item[prop];
@@ -359,27 +359,27 @@ const proxyTrapsMut = {
   getOwnPropertyDescriptor: proxyDescriptorMut
 };
 function wrapMut(value) {
-  let p = value[$PROXY];
-  if (!p) {
+  let proxy = value[$PROXY];
+  if (!proxy) {
     Object.defineProperty(value, $PROXY, {
-      value: p = new Proxy(value, proxyTrapsMut)
+      value: proxy = new Proxy(value, proxyTrapsMut)
     });
     const keys = Object.keys(value),
       desc = Object.getOwnPropertyDescriptors(value);
-    for (let i = 0, l = keys.length; i < l; i++) {
+    for (let i = 0, length = keys.length; i < length; i++) {
       const prop = keys[i];
       if (desc[prop].get) {
-        const get = desc[prop].get.bind(p);
+        const get = desc[prop].get.bind(proxy);
         Object.defineProperty(value, prop, { get, configurable: true });
       }
       if (desc[prop].set) {
         const og = desc[prop].set,
-          set = v => batch(() => og.call(p, v));
+          set = v => batch(() => og.call(proxy, v));
         Object.defineProperty(value, prop, { set, configurable: true });
       }
     }
   }
-  return p;
+  return proxy;
 }
 export function createMutable(state) {
   const unwrappedStore = unwrap(state || {});

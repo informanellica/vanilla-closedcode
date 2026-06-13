@@ -11,7 +11,7 @@ import {
   runWithOwner,
   Show,
   useContext
-} from "solid-js";
+} from "./reactivity.js";
 import { makeEventListener } from "./primitives/event-listener.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
@@ -32,7 +32,8 @@ export function createSimpleContext(input) {
         });
       }
 
-      // Access init.ready inside the memo to make it reactive for getter properties
+      // Read init.ready inside the memo so the gate stays reactive even when
+      // `ready` is exposed as a getter property on the init object.
       const isReady = createMemo(() => {
         const ready = init.ready;
         return ready === undefined || (typeof ready === "function" ? ready() : ready);

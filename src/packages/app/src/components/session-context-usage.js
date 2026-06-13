@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect } from "solid-js";
+import { createComponent, createMemo, createRenderEffect } from "../lib/reactivity.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { ProgressCircle } from "@/vendor/ui/components/progress-circle.js";
 import { Button } from "@/bs/button.js";

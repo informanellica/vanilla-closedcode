@@ -1,4 +1,4 @@
-import { createRenderEffect, onCleanup } from "solid-js";
+import { createRenderEffect, onCleanup } from "../../../lib/reactivity.js";
 
 export const TextShimmer = props => {
   const swap = 220;

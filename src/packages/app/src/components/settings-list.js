@@ -1,4 +1,4 @@
-import { createEffect, createMemo } from "solid-js";
+import { createEffect, createMemo } from "../lib/reactivity.js";
 
 // Resolve Solid-style children: call zero-argument function children until
 // they yield values and flatten nested arrays (same contract as the compiled

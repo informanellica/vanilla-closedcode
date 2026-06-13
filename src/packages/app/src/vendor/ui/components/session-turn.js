@@ -3,13 +3,13 @@
 // reactive/component-valued children (presence-gated Accordion
 // content, memo-accessor returns) so Solid keeps reconciling accessors
 // instead of freezing them.
-import { Dynamic, insert } from "solid-js/web";
+import { Dynamic, insert } from "../../../lib/reactivity.js";
 import { useData } from "../context/index.js";
 import { useFileComponent } from "../context/file.js";
 import { Binary } from "core/util/binary";
 import { getDirectory, getFilename } from "core/util/path";
-import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, on, Show } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { AssistantParts, Message, MessageDivider, PART_MAPPING } from "./message-part.js";
 import { Card } from "./card.js";
 import { Accordion } from "./accordion.js";

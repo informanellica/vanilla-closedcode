@@ -1,5 +1,5 @@
-import { createEffect, createRenderEffect, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createRenderEffect, onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 
 export const Typewriter = props => {
   const [store, setStore] = createStore({

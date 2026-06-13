@@ -1,6 +1,6 @@
 import { DIFFS_TAG_NAME, FileDiff, VirtualizedFileDiff } from "@pierre/diffs";
-import { createComponent, createEffect, createRenderEffect, onCleanup, onMount, Show, splitProps } from "solid-js";
-import { Dynamic, isServer } from "solid-js/web";
+import { createComponent, createEffect, createRenderEffect, onCleanup, onMount, Show, splitProps } from "../../../lib/reactivity.js";
+import { Dynamic, isServer } from "../../../lib/reactivity.js";
 import { useWorkerPool } from "../context/worker-pool.js";
 import { createDefaultOptions, styleVariables } from "../pierre/index.js";
 import { markCommentedDiffLines } from "../pierre/commented-lines.js";

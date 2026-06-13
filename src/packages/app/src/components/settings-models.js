@@ -4,7 +4,7 @@ import { Switch } from "@/bs/switch.js";
 import { Icon } from "@/bs/icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TextField } from "@/bs/text-field.js";
-import { createComponent, createEffect } from "solid-js";
+import { createComponent, createEffect } from "../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 import { useModels } from "@/context/models.js";
 import { popularProviders } from "@/hooks/use-providers.js";

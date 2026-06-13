@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect, mapArray, mergeProps, splitProps } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, mapArray, mergeProps, splitProps } from "../../../lib/reactivity.js";
 import { DiffChanges } from "./diff-changes.js";
 import { Tooltip } from "./tooltip.js";
 import { useI18n } from "../context/i18n.js";

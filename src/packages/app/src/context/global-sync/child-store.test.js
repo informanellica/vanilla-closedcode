@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
-import { createRoot, getOwner } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createRoot, getOwner } from "../../lib/reactivity.js";
+import { createStore } from "../../lib/store.js";
 import { createChildStoreManager } from "./child-store.js";
 const child = () => createStore({});
 describe("createChildStoreManager", () => {

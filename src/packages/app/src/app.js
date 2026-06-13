@@ -1,7 +1,7 @@
 // insert() from solid-js/web is the established exception for reactive /
 // component-valued children (Suspense/Show branches, For-mapped rows): Solid
 // keeps reconciling the accessors instead of freezing a one-time snapshot.
-import { insert } from "solid-js/web";
+import { insert } from "./lib/reactivity.js";
 import * as Sentry from "@sentry/browser";
 import { I18nProvider } from "@/lib/context.js";
 import { DialogProvider } from "@/lib/dialog.js";
@@ -15,8 +15,8 @@ import { MetaProvider } from "./lib/primitives/meta.js";
 import { Navigate, Route, Router } from "./lib/router/index.js";
 import { QueryClient, QueryClientProvider } from "./lib/query/index.js";
 import { Effect } from "effect";
-import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";
-import { Dynamic } from "solid-js/web";
+import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "./lib/reactivity.js";
+import { Dynamic } from "./lib/reactivity.js";
 import { CommandProvider } from "@/context/command.js";
 import { CommentsProvider } from "@/context/comments.js";
 import { FileProvider } from "@/context/file.js";

@@ -1,5 +1,5 @@
-import { createComponent, createMemo, createRenderEffect, onCleanup, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createMemo, createRenderEffect, onCleanup, onMount } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { useMutation } from "../../../lib/query/index.js";
 import { Button } from "@/bs/button.js";
 import { DockPrompt } from "@/vendor/ui/components/dock-prompt.js";

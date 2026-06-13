@@ -1,13 +1,13 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { setStyleProperty as _$setStyleProperty } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
-import { use as _$use } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { delegateEvents as _$delegateEvents } from "../../../lib/reactivity.js";
+import { setAttribute as _$setAttribute } from "../../../lib/reactivity.js";
+import { setStyleProperty as _$setStyleProperty } from "../../../lib/reactivity.js";
+import { style as _$style } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
+import { use as _$use } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=padding:8px;color:var(--text-weak);font-size:13px>File viewer stub`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style=font-size:10px;color:var(--text-weaker);line-height:1.4> • <!> • <!> message`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div style=font-size:10px;color:var(--text-on-critical-base);line-height:1.4>`),
@@ -27,8 +27,8 @@ var _tmpl$ = /*#__PURE__*/_$template(`<div style=padding:8px;color:var(--text-we
   _tmpl$15 = /*#__PURE__*/_$template(`<div>: <!> = `),
   _tmpl$16 = /*#__PURE__*/_$template(`<div style=display:flex;align-items:center;justify-content:center;height:400px;color:var(--text-weak);font-size:14px>Click a generator button or import a session`),
   _tmpl$17 = /*#__PURE__*/_$template(`<div style=width:100%>`);
-import { createSignal, createMemo, createEffect, on, For, Show, batch } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createSignal, createMemo, createEffect, on, For, Show, batch } from "../../../lib/reactivity.js";
+import { createStore, produce } from "../../../lib/store.js";
 import { DataProvider } from "../context/data.js";
 import { FileComponentProvider } from "../context/file.js";
 import { SessionTurn } from "./session-turn.js";

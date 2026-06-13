@@ -1,4 +1,4 @@
-import { insert } from "solid-js/web";
+import { insert } from "../lib/reactivity.js";
 const placementStyle = (placement) => {
   switch (placement) {
     case "bottom":

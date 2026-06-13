@@ -1,5 +1,5 @@
-import { batch, createEffect, createMemo, onCleanup } from "solid-js";
-import { createStore, produce, reconcile } from "solid-js/store";
+import { batch, createEffect, createMemo, onCleanup } from "../lib/reactivity.js";
+import { createStore, produce, reconcile } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { showToast } from "@/lib/toast.js";
 import { useParams } from "../lib/router/index.js";

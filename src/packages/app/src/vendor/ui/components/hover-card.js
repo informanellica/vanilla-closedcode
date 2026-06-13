@@ -1,9 +1,9 @@
 // Vanilla reimplementation of @kobalte/core's HoverCard behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { insert } from "solid-js/web";
-import { createComponent, createRenderEffect, createRoot, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
-import { createStore } from "solid-js/store";
+import { insert } from "../../../lib/reactivity.js";
+import { createComponent, createRenderEffect, createRoot, getOwner, onCleanup, runWithOwner, splitProps } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { autoPosition } from "./floating.js";
 
 // Apply a Solid-style classList ({ "a b": true, c: false }) onto an element.

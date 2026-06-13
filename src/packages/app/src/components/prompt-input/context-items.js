@@ -1,4 +1,4 @@
-import { createComponent, createRenderEffect, untrack } from "solid-js";
+import { createComponent, createRenderEffect, untrack } from "../../lib/reactivity.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip } from "@/bs/tooltip.js";

@@ -1,7 +1,7 @@
 import { usePlatform } from "@/context/platform.js";
 import { makePersisted } from "../lib/primitives/storage.js";
 import { checksum } from "core/util/encode";
-import { createResource } from "solid-js";
+import { createResource } from "../lib/reactivity.js";
 import { pathKey } from "@/utils/path-key.js";
 const LEGACY_STORAGE = "default.dat";
 const GLOBAL_STORAGE = "closedcode.global.dat";

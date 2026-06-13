@@ -1,7 +1,7 @@
-import { createEffect, createSignal, onCleanup, onMount } from "solid-js";
+import { createEffect, createSignal, onCleanup, onMount } from "../../../lib/reactivity.js";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
-import { createStore } from "solid-js/store";
+import { createStore } from "../../../lib/store.js";
 const hosts = new Set();
 let target;
 let current;

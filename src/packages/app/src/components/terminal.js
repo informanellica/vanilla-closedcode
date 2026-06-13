@@ -1,7 +1,7 @@
 import { withAlpha, useTheme } from "@/lib/theme.js";
 import { showToast } from "@/lib/toast.js";
 import { env } from "@/lib/env.js";
-import { createEffect, createMemo, createRenderEffect, mergeProps, onCleanup, onMount, splitProps } from "solid-js";
+import { createEffect, createMemo, createRenderEffect, mergeProps, onCleanup, onMount, splitProps } from "../lib/reactivity.js";
 import { SerializeAddon } from "@/addons/serialize.js";
 import { matchKeybind, parseKeybind } from "@/context/command.js";
 import { useLanguage } from "@/context/language.js";

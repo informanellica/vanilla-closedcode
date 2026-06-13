@@ -1,5 +1,5 @@
-import { createEffect, createRenderEffect, on, onCleanup, onMount } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createEffect, createRenderEffect, on, onCleanup, onMount } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 const px = (value, fallback) => {
   if (typeof value === "number") return `${value}px`;
   if (typeof value === "string") return value;

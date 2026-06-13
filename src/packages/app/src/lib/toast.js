@@ -1,5 +1,5 @@
-import { For, createComponent, createRenderEffect, createSignal, getOwner, mergeProps, onCleanup, splitProps } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { For, createComponent, createRenderEffect, createSignal, getOwner, mergeProps, onCleanup, splitProps } from "./reactivity.js";
+import { createStore, produce } from "./store.js";
 import { Icon } from "@/bs/icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 

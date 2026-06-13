@@ -1,5 +1,5 @@
-import { createEffect, createRoot } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createEffect, createRoot } from "../../lib/reactivity.js";
+import { createStore, produce } from "../../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { createScopedCache } from "@/utils/scoped-cache.js";
 const WORKSPACE_KEY = "__workspace__";

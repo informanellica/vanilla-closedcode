@@ -1,5 +1,5 @@
-import { createComponent, createEffect, createMemo, createRenderEffect, createRoot, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRenderEffect, createRoot, onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { Button } from "@/bs/button.js";
 import { DockTray } from "@/vendor/ui/components/dock-surface.js";
 import { IconButton } from "@/bs/icon-button.js";

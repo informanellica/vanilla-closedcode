@@ -1,4 +1,4 @@
-import { createComponent, createMemo, createRenderEffect, untrack } from "solid-js";
+import { createComponent, createMemo, createRenderEffect, untrack } from "../../lib/reactivity.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
 import { getDirectory, getFilename } from "core/util/path";

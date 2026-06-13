@@ -1,5 +1,5 @@
 import { describe, expect, test } from "@jest/globals";
-import { createRoot, createSignal } from "solid-js";
+import { createRoot, createSignal } from "../lib/reactivity.js";
 import { createSessionKeyReader, ensureSessionKey, pruneSessionKeys } from "./layout.js";
 describe("layout session-key helpers", () => {
   test("couples touch and scroll seed in order", () => {

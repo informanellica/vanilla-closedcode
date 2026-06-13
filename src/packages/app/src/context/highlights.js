@@ -1,5 +1,5 @@
-import { createComponent, createEffect, onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, onCleanup } from "../lib/reactivity.js";
+import { createStore } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { useDialog } from "@/lib/dialog.js";
 import { usePlatform } from "@/context/platform.js";

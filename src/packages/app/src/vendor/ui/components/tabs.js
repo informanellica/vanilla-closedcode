@@ -8,8 +8,8 @@ import {
   createUniqueId,
   splitProps,
   untrack
-} from "solid-js";
-import { insert } from "solid-js/web";
+} from "../../../lib/reactivity.js";
+import { insert } from "../../../lib/reactivity.js";
 
 // Vanilla reimplementation of the original Tabs compound component. Mirrors the
 // original tabs primitive: a roving-focus tablist with single selection, the

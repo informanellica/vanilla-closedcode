@@ -1,11 +1,11 @@
-import { createComponent, createEffect, createMemo, createRoot, createSignal, onCleanup, Show } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createComponent, createEffect, createMemo, createRoot, createSignal, onCleanup, Show } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 // Each annotation gets its own reactive root (createRoot + the insert()
 // exception) mounted into a detached host <div> that the external annotation
 // layer adopts. LineComment/LineCommentEditor are Solid components, so they
 // need a real root (owner + disposal). This mirrors solid-js/web render()
 // exactly, without using anything from solid-js/web beyond insert().
-import { insert } from "solid-js/web";
+import { insert } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { createHoverCommentUtility } from "../pierre/comment-hover.js";
 import { cloneSelectedLineRange, formatSelectedLineLabel, lineInSelectedRange } from "../pierre/selection-bridge.js";

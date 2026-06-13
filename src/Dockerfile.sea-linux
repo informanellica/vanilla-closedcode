@@ -1,0 +1,26 @@
+# Build the linux-x64 (glibc) Node SEA platform package in a container, since the
+# native sidecars must be Linux. Output: /app/packages/closedcode/dist/closedcode-linux-x64
+# Extract it with: docker create + docker cp (no bind mount needed).
+FROM node:22
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
+    HUSKY=0 \
+    CI=1 \
+    npm_config_fund=false \
+    npm_config_audit=false \
+    # .git is excluded from the build context (.dockerignore), so the build's
+    # `git branch --show-current` channel probe (packages/script/src/index.js)
+    # would fail with exit 128. Pin the version explicitly — the build supports
+    # this override — so it never shells out to git. Matches the v0.1.0-dev tag.
+    CLOSEDCODE_VERSION=0.1.0-dev
+COPY . /app
+# Install the workspace (linux native prebuilds). Fall back to `npm install` if the
+# lockfile can't be satisfied with `ci`.
+RUN npm ci 2>&1 | tail -25 || npm install 2>&1 | tail -25
+WORKDIR /app/packages/closedcode
+RUN node script/build.js --sea --skip-embed-web-ui
+RUN node script/sea.js
+# sanity: the linux SEA prints its version
+RUN ./dist/closedcode-linux-x64/bin/closedcode --version || true

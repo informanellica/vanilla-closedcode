@@ -1,5 +1,5 @@
-import { batch, createEffect, untrack } from "solid-js";
-import { produce, reconcile } from "solid-js/store";
+import { batch, createEffect, untrack } from "../lib/reactivity.js";
+import { produce, reconcile } from "../lib/store.js";
 import { base64Encode } from "core/util/encode";
 import { Binary } from "core/util/binary";
 import { retry } from "core/util/retry";

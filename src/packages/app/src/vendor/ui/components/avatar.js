@@ -1,4 +1,4 @@
-import { insert } from "solid-js/web";
+import { insert } from "../../../lib/reactivity.js";
 const segmenter = typeof Intl !== "undefined" && "Segmenter" in Intl ? new Intl.Segmenter(undefined, { granularity: "grapheme" }) : undefined;
 
 function first(value) {

@@ -1,5 +1,5 @@
-import { batch, createMemo } from "solid-js";
-import { createStore, produce, reconcile } from "solid-js/store";
+import { batch, createMemo } from "../lib/reactivity.js";
+import { createStore, produce, reconcile } from "../lib/store.js";
 import { Binary } from "core/util/binary";
 import { retry } from "core/util/retry";
 import { createSimpleContext } from "@/lib/context.js";

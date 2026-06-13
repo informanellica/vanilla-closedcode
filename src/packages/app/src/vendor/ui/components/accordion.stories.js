@@ -1,11 +1,11 @@
-import { template as _$template } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style="color:var(--text-weak);padding:8px 0">Accordion content.`),
   _tmpl$2 = /*#__PURE__*/_$template(`<div style="color:var(--text-weak);padding:8px 0">More content.`),
   _tmpl$3 = /*#__PURE__*/_$template(`<div style=display:grid;gap:8px;width:420px>`);
 
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal } from "../../../lib/reactivity.js";
 import * as mod from "./accordion.js";
 import { create } from "../storybook/scaffold.js";
 const docs = `### Overview

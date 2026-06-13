@@ -1,6 +1,6 @@
-import { createStore, produce } from "solid-js/store";
+import { createStore, produce } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
-import { batch, createEffect, createMemo, createRoot, on, onCleanup } from "solid-js";
+import { batch, createEffect, createMemo, createRoot, on, onCleanup } from "../lib/reactivity.js";
 import { useParams } from "../lib/router/index.js";
 import { useSDK } from "./sdk.js";
 import { defaultTitle, titleNumber } from "./terminal-title.js";

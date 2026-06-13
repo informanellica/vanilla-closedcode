@@ -1,17 +1,17 @@
-import { template as _$template } from "solid-js/web";
-import { delegateEvents as _$delegateEvents } from "solid-js/web";
-import { style as _$style } from "solid-js/web";
-import { setAttribute as _$setAttribute } from "solid-js/web";
-import { effect as _$effect } from "solid-js/web";
-import { insert as _$insert } from "solid-js/web";
-import { createComponent as _$createComponent } from "solid-js/web";
-import { memo as _$memo } from "solid-js/web";
+import { template as _$template } from "../../../lib/reactivity.js";
+import { delegateEvents as _$delegateEvents } from "../../../lib/reactivity.js";
+import { style as _$style } from "../../../lib/reactivity.js";
+import { setAttribute as _$setAttribute } from "../../../lib/reactivity.js";
+import { effect as _$effect } from "../../../lib/reactivity.js";
+import { insert as _$insert } from "../../../lib/reactivity.js";
+import { createComponent as _$createComponent } from "../../../lib/reactivity.js";
+import { memo as _$memo } from "../../../lib/reactivity.js";
 var _tmpl$ = /*#__PURE__*/_$template(`<div style=display:grid;gap:24px;padding:20px;max-width:520px><span style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--text-strong, #eee);min-width:0"><span style=flex-shrink:0></span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;color:var(--text-base, #ccc)"></span></span><div style=display:flex;gap:8px;flex-wrap:wrap><button></button><button>Reset</button><button></button></div><div style=display:flex;gap:8px;flex-wrap:wrap><button>+ read</button><button>+ search</button><button>+ list</button></div><div style="font-size:11px;color:var(--color-text-weak, #888);font-family:monospace">motion: <!> · active: <!> · reads: <!> · searches: <!> · lists: `),
   _tmpl$2 = /*#__PURE__*/_$template(`<style>[data-reduced-motion="true"] *,\n              [data-reduced-motion="true"] *::before,\n              [data-reduced-motion="true"] *::after \{\n                transition-duration: 0ms !important;\n              }`),
   _tmpl$3 = /*#__PURE__*/_$template(`<span style=display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500>`),
   _tmpl$4 = /*#__PURE__*/_$template(`<span style=display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500><span style="font-weight:400;color:var(--text-base, #ccc)">`);
-import { onCleanup } from "solid-js";
-import { createStore } from "solid-js/store";
+import { onCleanup } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { AnimatedCountList } from "./tool-count-summary.js";
 import { ToolStatusTitle } from "./tool-status-title.js";
 export default {

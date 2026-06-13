@@ -1,5 +1,5 @@
-import { createEffect, createMemo, onCleanup } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createEffect, createMemo, onCleanup } from "../lib/reactivity.js";
+import { createStore, produce } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";

@@ -11,7 +11,7 @@
 // `file.pathFromTab(tab)` — the exact same normalized, project-relative string
 // the tab derives via `path()`. So the key matches the tab identity directly and
 // needs no `file://` decoding here.
-import { createStore } from "solid-js/store";
+import { createStore } from "./store.js";
 
 // Module-level store: { [relPath]: true } for files with unsaved edits.
 const [dirty, setDirty] = createStore({});

@@ -1,9 +1,9 @@
 // Vanilla reimplementation of @kobalte/core's Popover behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
-import { insert } from "solid-js/web";
-import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, onCleanup, runWithOwner, splitProps } from "solid-js";
-import { createStore } from "solid-js/store";
+import { insert } from "../../../lib/reactivity.js";
+import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, onCleanup, runWithOwner, splitProps } from "../../../lib/reactivity.js";
+import { createStore } from "../../../lib/store.js";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { useI18n } from "../context/i18n.js";
 import { IconButton } from "./icon-button.js";
