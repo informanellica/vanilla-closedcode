@@ -1,11 +1,15 @@
 # Milestone: vanilla TUI (remove @opentui/* + solid-js from the terminal UI)
 
-> Status: **T0–T3 DONE (view layer), T4 flag-flip runnable, SDK chat loop wired**
-> (2026-06-13). The vanilla `tui/vanilla/` shell runs behind
-> `CLOSEDCODE_VANILLA_TUI=1` and, with a server url, streams real sessions via
-> `vanilla/data/` (no solid-js/store — immediate-mode rev-bump). 224 headless tests
-> green. @opentui/solid-js stay until the remaining SDK parity (Markdown/Code/Diff
-> rendering, permission/question prompts) lands — see "Remaining work". Sibling of
+> Status: **view layer + SDK chat loop + renderers (markdown/diff/permission/
+> question) DONE; flip NOT yet — breadth gaps remain** (2026-06-13). The vanilla
+> `tui/vanilla/` shell runs behind `CLOSEDCODE_VANILLA_TUI=1` and, with a server
+> url, streams real sessions via `vanilla/data/` (no solid-js/store — immediate-
+> mode rev-bump). Assistant markdown, edit/write/revert diffs (indentation
+> preserved), tool output, and permission/question modals are first-party +
+> adversarially hardened. **293 headless tests green.** @opentui/solid-js stay
+> until the breadth checklist clears (keybinds, remaining dialogs, sidebar, theme
+> 24-bit, syntax highlighting, mouse/selection, plugins) — see "Flip-readiness
+> assessment". Sibling of
 > `solid-free-reactivity.md` (the desktop renderer milestone). The reactive core
 > built there (`lib/reactivity.js`) is reused for TUI state; everything else in
 > the TUI rendering stack is replaced by a pure-JavaScript base.
@@ -235,15 +239,47 @@ bump per event batch.
 3. [DONE — core] real sources fed: providers/agents -> model/agent dialogs;
    sdk.find.files -> `@`; server command.list merged into `/`. (session/theme
    lists + frecency sort: remaining.)
-4. Re-cover the remaining @opentui/core widgets the timeline needs (Markdown /
-   Code highlight / Diff) — the non-trivial renderers still handed to @opentui.
-   THE LARGEST remaining item.
-5. The deferred renderer features (selection, console, terminal title, debug
-   overlay) and the animated logo shimmer.
+   permission + question PROMPT widgets: [DONE] vanilla/prompts.js (data-driven
+   modal; Allow once/always/Reject with the edit diff, question single-select;
+   replies via sdk.permission/question.*). Still remaining for 1-3: model/agent
+   SELECTION persistence + variants (local.js cycle/favorite/variant); the
+   session-list / rename / stash / skill / provider-connect dialogs; sidebar +
+   todo + diff; theme from the real ThemeProvider (24-bit); keybind/project/editor.
+2. [DONE — core] streaming + permission/question wired.
+3. [DONE — core] real sources fed (providers/agents, find.files, command.list).
+4. [DONE] the non-trivial renderers, previously handed to @opentui/core, are now
+   first-party (richtext.js styled segments + markdown.js + diff.js): assistant
+   markdown (headings/bold/italic/code/lists/quote/fence/hr/links), unified +
+   LCS diffs (edit/write/revert) with preserved indentation, tool output. Hardened
+   by a 19-agent adversarial bug-hunt (10 confirmed bugs fixed, all regression-
+   tested). STILL OPEN here: per-language syntax HIGHLIGHTING of code blocks
+   (currently one codeBlock color, no tree-sitter), and split-diff view.
+5. The deferred renderer features (mouse selection/copy, console, terminal title,
+   debug overlay) and the animated logo shimmer.
 6. THEN T4-final: flip default, prune @opentui/* + solid-js + yoga-layout (keep
    terminal-kit), npm install, confirm no native dep; and T5(c) cross-terminal
-   smoke. NOTE: cannot flip default until 4 (+ permission/question prompts) land,
-   or sessions with tool output / diffs / approvals regress.
+   smoke.
+
+### Flip-readiness assessment (2026-06-13) — NOT YET; do not delete @opentui
+
+The hard, novel work is done: the chat loop streams real sessions, and the
+markdown/diff/tool/permission/question renderers are first-party + adversarially
+hardened (293 headless tests green). What remains before the vanilla path can be
+made DEFAULT (and @opentui/solid-js/yoga physically removed) is BREADTH, not new
+hard problems — but it is real, and flipping now would regress the live app:
+- [ ] full keybind system (leader Ctrl-X chords + all configurable keybinds)
+- [ ] remaining dialogs: session-list / rename / stash / skill / provider-connect
+      / theme-list / mcp / status / variant / console-org / export
+- [ ] sidebar (files / todos / diffs), subagent view, timeline-jump
+- [ ] model/agent selection persistence + variants + favorites + cycle keybinds
+- [ ] real ThemeProvider (24-bit color — needs terminal-kit ScreenBufferHD, the
+      current stand-in is the 16-color named palette)
+- [ ] per-language syntax highlighting; split-diff view
+- [ ] mouse + text selection/copy, paste-image, external editor, drag-drop
+- [ ] plugin runtime + slots; startup/TTFD; win32 ctrl-c guard / suspend
+Conclusion: deleting @opentui now would break sessions that rely on these (most
+real usage). The default stays @opentui; the vanilla path remains opt-in behind
+`CLOSEDCODE_VANILLA_TUI=1` until the checklist above is cleared.
 
 ## Risks / open items
 
