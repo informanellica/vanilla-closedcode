@@ -1,7 +1,7 @@
 // Node-run tests for the vanilla dialog families (Stage T3, stage 3). A minimal
 // mock dialog manager mirrors the shell's open/close + onClose contract so the
 // promise-returning helpers can be driven headlessly.
-//   node src/cli/cmd/tui/vanilla/dialogs.test.mjs
+//   node src/cli/cmd/tui/vanilla/dialogs.test.js
 import tk from "terminal-kit";
 import { makeRegion } from "../runtime/layout.js";
 import * as Dialogs from "./dialogs.js";

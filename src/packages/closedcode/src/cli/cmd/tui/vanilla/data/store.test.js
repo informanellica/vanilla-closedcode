@@ -1,6 +1,6 @@
 // Node-run tests for the vanilla data store (SDK-integration phase). Feeds a
 // synthetic event stream (a real streaming chat turn) and asserts the derived
-// timeline + status. No SDK/server.   node src/cli/cmd/tui/vanilla/data/store.test.mjs
+// timeline + status. No SDK/server.   node src/cli/cmd/tui/vanilla/data/store.test.js
 import { createRoot, createRenderEffect } from "../../runtime/reactivity.js";
 import { createDataStore } from "./store.js";
 

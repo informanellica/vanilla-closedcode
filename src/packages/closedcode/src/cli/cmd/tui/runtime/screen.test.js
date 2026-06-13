@@ -1,7 +1,7 @@
 // Node-run tests for the vanilla TUI app shell loop (screen.js). No TTY: inject a
 // mock terminal + a mock ScreenBuffer (options.createBuffer) so start()/stop() and
 // the error safety net can be exercised headlessly.
-//   node src/cli/cmd/tui/runtime/screen.test.mjs
+//   node src/cli/cmd/tui/runtime/screen.test.js
 import { createApp } from "./screen.js";
 import { createSignal } from "./reactivity.js";
 

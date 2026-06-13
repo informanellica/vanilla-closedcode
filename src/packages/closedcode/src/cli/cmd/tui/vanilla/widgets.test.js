@@ -1,6 +1,6 @@
 // Node-run unit tests for the vanilla prompt / autocomplete / timeline (Stage
 // T3, stage 2). Headless: drive the controllers directly and render into a
-// detached ScreenBuffer.   node src/cli/cmd/tui/vanilla/widgets.test.mjs
+// detached ScreenBuffer.   node src/cli/cmd/tui/vanilla/widgets.test.js
 import tk from "terminal-kit";
 import { makeRegion } from "../runtime/layout.js";
 import { createAutocomplete } from "./autocomplete.js";

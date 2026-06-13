@@ -1,7 +1,7 @@
 // Node-run tests for the vanilla TUI runtime (Stage T2). No TTY needed: render
 // into a DETACHED terminal-kit ScreenBuffer and inspect cells; drive reactivity
 // with solid-js signals (the createApp render loop uses the same pattern).
-//   node src/cli/cmd/tui/runtime/runtime.test.mjs   (from packages/closedcode)
+//   node src/cli/cmd/tui/runtime/runtime.test.js   (from packages/closedcode)
 import tk from "terminal-kit";
 import { createRoot, createRenderEffect, createSignal, batch } from "./reactivity.js";
 import { makeRegion, column, row, box } from "./layout.js";

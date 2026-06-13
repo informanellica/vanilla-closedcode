@@ -1,6 +1,6 @@
 // Node-run tests for the vanilla data layer actions (SDK-integration phase). A
 // mock SDK client records calls; events are driven through an injected in-process
-// source.   node src/cli/cmd/tui/vanilla/data/index.test.mjs
+// source.   node src/cli/cmd/tui/vanilla/data/index.test.js
 import { createDataLayer } from "./index.js";
 
 let passed = 0, failed = 0;

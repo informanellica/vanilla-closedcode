@@ -39,6 +39,18 @@ Namespace-private helpers stay as non-exported top-level declarations in the
 same file — they remain inaccessible to consumers (they are not projected by
 `export * as`) but are usable by the file's own code.
 
+## File extensions: `.js` only, no `.mjs`
+
+Every package is `"type": "module"`, so a plain `.js` file is already ESM —
+`.mjs` is never functionally required. New files use `.js`; do not add `.mjs`.
+
+Standalone tests that run under bare `node` (not jest) use `.test.js` and stay
+out of jest via its `testMatch` — closedcode's jest only matches
+`test/**/*.test.js`, so `src/**/*.test.js` is safe to run by hand
+(`node <path>`). (Pre-existing `.mjs` exceptions: `src/util/node-ffi-preload.mjs`
+is tied to the @opentui removal; vendored files such as
+`app/public/vendor/fuzzysort.mjs` stay as upstream ships them.)
+
 ## When the file is an `index.js`
 
 If the module is `foo/index.js` (single-namespace directory), use `"."` for

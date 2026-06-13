@@ -1,7 +1,7 @@
 // Node-run tests for the vanilla TUI app shell (Stage T3, stage 1). No TTY: the
 // shell model's draw() renders into a DETACHED terminal-kit ScreenBuffer and we
-// drive it with dispatch(), exactly as runtime.test.mjs does for the toolkit.
-//   node src/cli/cmd/tui/vanilla/shell.test.mjs   (from packages/closedcode)
+// drive it with dispatch(), exactly as runtime.test.js does for the toolkit.
+//   node src/cli/cmd/tui/vanilla/shell.test.js   (from packages/closedcode)
 import tk from "terminal-kit";
 import { createRoot, createRenderEffect, createSignal } from "../runtime/reactivity.js";
 import { makeRegion } from "../runtime/layout.js";
