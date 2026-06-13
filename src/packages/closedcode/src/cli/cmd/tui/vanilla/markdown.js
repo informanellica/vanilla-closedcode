@@ -8,6 +8,7 @@
 // and can be added later; unknown syntax falls through as plain text.
 import { seg, wrapRich, withGutter } from "./richtext.js";
 import { width } from "../runtime/text.js";
+import { highlightLine } from "./syntax.js";
 
 // Inline scan -> styled segments. Recurses for nestable spans (bold/italic/link).
 const ALNUM = c => c != null && /[A-Za-z0-9]/.test(c);
@@ -95,8 +96,10 @@ export function markdownToRichLines(md, maxWidth, opts = {}) {
       if (lang) lines.push([seg(lang, { token: "markdownQuote", dim: true })]);
       i++;
       for (; i < src.length && !src[i].match(FENCE); i++) {
-        // verbatim code line, left-gutter bar; truncated (not wrapped) to width
-        lines.push([seg("│ ", { token: "markdownQuote", dim: true }), seg(src[i], { token: "codeBlock", code: true })]);
+        // verbatim code line, left-gutter bar; syntax-highlighted (highlightLine
+        // tiles the input EXACTLY so the text is unchanged — only colors added).
+        const body = highlightLine(src[i], lang);
+        lines.push([seg("│ ", { token: "markdownQuote", dim: true }), ...(body.length ? body : [seg("", { token: "codeBlock", code: true })])]);
       }
       continue;
     }

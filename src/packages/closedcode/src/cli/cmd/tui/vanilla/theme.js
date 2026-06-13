@@ -27,6 +27,15 @@ export const defaultTheme = {
   diffAdded: "brightGreen",
   diffRemoved: "brightRed",
   diffContext: "gray",
+  // syntax-highlight tokens (vanilla/syntax.js); stand-ins until the real theme
+  syntaxKeyword: "brightMagenta",
+  syntaxString: "brightGreen",
+  syntaxComment: "gray",
+  syntaxNumber: "brightYellow",
+  syntaxType: "brightCyan",
+  syntaxFunction: "brightBlue",
+  syntaxOperator: "white",
+  syntaxPunctuation: "gray",
 };
 
 // Build a terminal-kit attr from a theme token (+ optional bg token / flags).
