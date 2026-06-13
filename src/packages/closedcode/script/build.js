@@ -15,6 +15,14 @@ import { Script } from "script";
 import pkg from "../package.json" with { type: "json" };
 const sourcemapsFlag = process.argv.includes("--sourcemaps");
 const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui");
+// --sea: emit a CommonJS bundle for Node SEA (Single Executable Application).
+// SEA runs the embedded main as CJS, so ESM (the default output) fails with
+// "Cannot use import statement outside a module". The native/dynamic deps
+// (terminal-kit/string-kit + node-pty/tree-sitter/koffi) can't be embedded in a
+// single-file binary, so they ship as sidecars next to the exe and are resolved
+// from process.execPath at runtime (see the CJS banner below). script/sea.js then
+// turns the .cjs bundle into the platform binary.
+const SEA = process.argv.includes("--sea");
 const migrationDirs = (await fs.promises.readdir(path.join(dir, "migration"), {
   withFileTypes: true
 })).filter(entry => entry.isDirectory() && /^\d{4}\d{2}\d{2}\d{2}\d{2}\d{2}/.test(entry.name)).map(entry => entry.name).sort();
@@ -77,6 +85,11 @@ const externalize = {
       if (args.path.startsWith("#")) return null;
       const pkgName = args.path.startsWith("@") ? args.path.split("/").slice(0, 2).join("/") : args.path.split("/")[0];
       if (EXTERNAL_NATIVE.has(pkgName)) {
+        // SEA: a single-file binary's require() is built-in-only (embedderRequire),
+        // so a bare `require("node-pty")` throws ERR_UNKNOWN_BUILTIN_MODULE. Route
+        // these through the exe-adjacent createRequire (__ccRequire, set in the
+        // banner) which resolves <execDir>/node_modules. ESM build: plain external.
+        if (SEA) return { path: args.path, namespace: "sea-ext" };
         return {
           path: args.path,
           external: true
@@ -84,6 +97,10 @@ const externalize = {
       }
       return null;
     });
+    if (SEA) build.onLoad({ filter: /.*/, namespace: "sea-ext" }, args => ({
+      contents: `module.exports = globalThis.__ccRequire(${JSON.stringify(args.path)});`,
+      loader: "js",
+    }));
   }
 };
 // Alias plugin: rewrite our path aliases (@/, @tui/, @test/, #db/#pty) at
@@ -125,11 +142,11 @@ const optionalStubs = new Set([
 
 await esbuild({
   entryPoints: [path.join(dir, "src/index.js")],
-  outfile: path.join(outDir, "bin/closedcode.js"),
+  outfile: path.join(outDir, SEA ? "bin/closedcode.cjs" : "bin/closedcode.js"),
   bundle: true,
   platform: "node",
   target: "node22",
-  format: "esm",
+  format: SEA ? "cjs" : "esm",
   minify: true,
   sourcemap: sourcemapsFlag ? "linked" : false,
   plugins: [pathAliases, externalize, {
@@ -157,18 +174,31 @@ await esbuild({
   },
   conditions: ["browser"],
   banner: {
-    // The bundle is ESM but some bundled CJS deps (e.g. swagger-ui-dist via
-    // swagger-ui-express) reference require/__dirname/__filename. Without the
-    // __dirname/__filename shims, Node sees both __dirname and top-level await
-    // and bails with ERR_AMBIGUOUS_MODULE_SYNTAX. Shim all three.
-    js: "import { createRequire as __createRequire_banner } from 'node:module'; import { fileURLToPath as __fileURLToPath_banner } from 'node:url'; import { dirname as __dirname_banner } from 'node:path'; const require = __createRequire_banner(import.meta.url); const __filename = __fileURLToPath_banner(import.meta.url); const __dirname = __dirname_banner(__filename);"
+    // ESM build: shim require/__dirname/__filename for bundled CJS deps (e.g.
+    // swagger-ui-dist) so Node doesn't bail with ERR_AMBIGUOUS_MODULE_SYNTAX.
+    // SEA (CJS) build: require/__dirname exist natively; instead prepend the
+    // exe-adjacent node_modules to the module search path so the externalized
+    // sidecars (terminal-kit/string-kit/node-pty/tree-sitter/koffi) resolve from
+    // <execDir>/node_modules at runtime — a single-file SEA has no node_modules tree.
+    js: SEA
+      ? "const __ccMetaUrl=require('node:url').pathToFileURL(process.execPath).href;(()=>{const p=require('node:path'),m=require('node:module');const dir=p.dirname(process.execPath);const d=p.join(dir,'node_modules');process.env.NODE_PATH=[d,process.env.NODE_PATH].filter(Boolean).join(p.delimiter);m._initPaths();globalThis.__CLOSEDCODE_SEA_DIR=dir;globalThis.__ccRequire=m.createRequire(p.join(dir,'_sea_anchor.js'));globalThis.__ccWorkerPath=p.join(dir,'worker.cjs');})();"
+      : "import { createRequire as __createRequire_banner } from 'node:module'; import { fileURLToPath as __fileURLToPath_banner } from 'node:url'; import { dirname as __dirname_banner } from 'node:path'; const require = __createRequire_banner(import.meta.url); const __filename = __fileURLToPath_banner(import.meta.url); const __dirname = __dirname_banner(__filename);"
   },
   define: {
+    // CJS/SEA: import.meta.url is empty under cjs output, which breaks
+    // fileURLToPath(import.meta.url) (e.g. db.js) with ERR_INVALID_ARG_VALUE.
+    // Point it at the exe's file URL (set in the banner) so path math resolves
+    // relative to the binary.
+    ...(SEA ? { "import.meta.url": "__ccMetaUrl" } : {}),
     CLOSEDCODE_VERSION: JSON.stringify(Script.version),
     CLOSEDCODE_MIGRATIONS: JSON.stringify(migrations),
     CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
     CLOSEDCODE_LIBC: JSON.stringify("glibc"),
-    CLOSEDCODE_WORKER_PATH: JSON.stringify("./src/cli/cmd/tui/worker.js"),
+    // SEA: the TUI Worker entry is a sidecar worker.cjs next to the exe (built
+    // below); compute its path from the exe dir at runtime. ESM: the source path.
+    CLOSEDCODE_WORKER_PATH: SEA
+      ? "globalThis.__ccWorkerPath"
+      : JSON.stringify("./src/cli/cmd/tui/worker.js"),
     OTUI_TREE_SITTER_WORKER_PATH: JSON.stringify(""),
     CLOSEDCODE_EMBEDDED_WEB_UI: JSON.stringify(embeddedFileMap ?? {})
   },
@@ -178,17 +208,69 @@ await esbuild({
   }
 });
 
-// Wrapper script that invokes the bundle via node.
-const wrapperPath = path.join(outDir, "bin/closedcode");
-await fs.promises.writeFile(wrapperPath, `#!/usr/bin/env node\nimport(new URL("./closedcode.js", import.meta.url).href).catch((err) => { console.error(err); process.exit(1); });\n`, {
-  mode: 0o755
-});
+// SEA: bundle the TUI Worker entry as a sidecar CJS file next to the binary
+// (worker_threads can't load a module from inside a single-file SEA). Same CJS +
+// exe-adjacent sidecar-require setup as the main bundle; CLOSEDCODE_WORKER_PATH
+// (above) resolves it at runtime.
+if (SEA) {
+  await esbuild({
+    entryPoints: [path.join(dir, "src/cli/cmd/tui/worker.js")],
+    outfile: path.join(outDir, "bin/worker.cjs"),
+    bundle: true,
+    platform: "node",
+    target: "node22",
+    format: "cjs",
+    minify: true,
+    plugins: [pathAliases, externalize, {
+      name: "optional-stubs",
+      setup(b) {
+        b.onResolve({ filter: /.*/ }, (args) => {
+          const pkgName = args.path.startsWith("@") ? args.path.split("/").slice(0, 2).join("/") : args.path.split("/")[0];
+          if (optionalStubs.has(pkgName)) return { path: args.path, namespace: "optional-stub" };
+          return null;
+        });
+        b.onLoad({ filter: /.*/, namespace: "optional-stub" }, (args) => ({
+          contents: `module.exports = new Proxy({}, { get(target, prop) { if (prop === '__esModule' || typeof prop === 'symbol') return undefined; throw new Error('Optional dep ${args.path} not bundled'); } });`,
+          loader: "js",
+        }));
+      },
+    }],
+    alias: {
+      "bun": path.join(dir, "src/util/bun-stub.js"),
+      "jsonc-parser": path.join(dir, "../../node_modules/jsonc-parser/lib/esm/main.js"),
+      "ws": path.join(dir, "node_modules/ws/index.js")
+    },
+    conditions: ["browser"],
+    banner: { js: "const __ccMetaUrl=require('node:url').pathToFileURL(process.execPath).href;(()=>{const p=require('node:path'),m=require('node:module');const dir=p.dirname(process.execPath);const d=p.join(dir,'node_modules');process.env.NODE_PATH=[d,process.env.NODE_PATH].filter(Boolean).join(p.delimiter);m._initPaths();globalThis.__CLOSEDCODE_SEA_DIR=dir;globalThis.__ccRequire=m.createRequire(p.join(dir,'_sea_anchor.js'));globalThis.__ccWorkerPath=p.join(dir,'worker.cjs');})();" },
+    define: {
+      "import.meta.url": "__ccMetaUrl",
+      CLOSEDCODE_VERSION: JSON.stringify(Script.version),
+      CLOSEDCODE_MIGRATIONS: JSON.stringify(migrations),
+      CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
+      CLOSEDCODE_LIBC: JSON.stringify("glibc"),
+      CLOSEDCODE_WORKER_PATH: "globalThis.__ccWorkerPath",
+      OTUI_TREE_SITTER_WORKER_PATH: JSON.stringify(""),
+      CLOSEDCODE_EMBEDDED_WEB_UI: JSON.stringify(embeddedFileMap ?? {})
+    },
+    loader: { ".wav": "file", ".node": "file" }
+  });
+  console.log("built sidecar worker.cjs");
+}
+
+// ESM build only: a node wrapper that imports the bundle. The SEA build skips
+// this — script/sea.js turns bin/closedcode.cjs into the platform binary.
+if (!SEA) {
+  const wrapperPath = path.join(outDir, "bin/closedcode");
+  await fs.promises.writeFile(wrapperPath, `#!/usr/bin/env node\nimport(new URL("./closedcode.js", import.meta.url).href).catch((err) => { console.error(err); process.exit(1); });\n`, {
+    mode: 0o755
+  });
+}
 await fs.promises.writeFile(path.join(outDir, "package.json"), JSON.stringify({
   name,
   version: Script.version,
   type: "module",
   bin: {
-    closedcode: "./bin/closedcode"
+    closedcode: SEA ? (process.platform === "win32" ? "./bin/closedcode.exe" : "./bin/closedcode") : "./bin/closedcode"
   },
   os: [process.platform],
   cpu: [process.arch]
@@ -213,6 +295,37 @@ function copyTextAssets(outRoot) {
 }
 
 copyTextAssets(path.join(outDir, "bin"));
+
+// SEA: copy the externalized native/dynamic deps + their dependency closure next
+// to the bundle (bin/node_modules), where __ccRequire (createRequire(<execDir>))
+// resolves them at runtime. For win-x64 the host node_modules already holds the
+// matching native prebuilds; cross-platform CI installs per-target natives.
+function copySidecars(outRoot) {
+  const nm = path.join(dir, "../../node_modules"); // workspace (hoisted) node_modules
+  const roots = ["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit"];
+  const seen = new Set();
+  const queue = [...roots];
+  while (queue.length) {
+    const depName = queue.shift();
+    if (seen.has(depName)) continue;
+    const pkgDir = path.join(nm, depName);
+    if (!fs.existsSync(path.join(pkgDir, "package.json"))) continue; // absent/nested — best effort
+    seen.add(depName);
+    try {
+      const pj = JSON.parse(fs.readFileSync(path.join(pkgDir, "package.json"), "utf8"));
+      for (const d2 of Object.keys(pj.dependencies ?? {})) queue.push(d2);
+      for (const d2 of Object.keys(pj.optionalDependencies ?? {})) queue.push(d2);
+    } catch { /* ignore unreadable package.json */ }
+  }
+  let count = 0;
+  for (const depName of seen) {
+    fs.cpSync(path.join(nm, depName), path.join(outRoot, "node_modules", depName), { recursive: true, dereference: true });
+    count++;
+  }
+  console.log(`copied ${count} sidecar packages -> ${path.relative(dir, outRoot)}/node_modules`);
+}
+if (SEA) copySidecars(path.join(outDir, "bin"));
+
 console.log(`built ${name} → ${outDir}`);
 export const binaries = {
   [name]: Script.version

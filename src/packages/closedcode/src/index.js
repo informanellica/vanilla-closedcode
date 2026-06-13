@@ -136,6 +136,10 @@ const cli = yargs(args).parserConfiguration({
   if (err) throw err;
   process.exit(1);
 }).strict();
+// Wrapped in an async IIFE (not top-level await) so the bundle can be emitted as
+// CommonJS for the Node SEA build — SEA runs the embedded main as CJS, which
+// forbids top-level await. Harmless for the ESM build.
+void (async () => {
 try {
   if (args.includes("-h") || args.includes("--help")) {
     await cli.parseAsync(args, (err, _argv, out) => {
@@ -188,3 +192,4 @@ try {
   // Explicitly exit to avoid any hanging subprocesses.
   process.exit();
 }
+})();
