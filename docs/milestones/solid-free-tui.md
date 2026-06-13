@@ -189,8 +189,20 @@ re-entrant setOffset during draw + scroll drift on append (now an absolute-from-
 top scroll model, draw is pure); idle toasts never expiring (repaint scheduled at
 duration); toast CJK off-screen (.length -> display width); typeahead default
 clock stuck open; history Up<->Down round-trip; `--prompt "!…"` tripping shell
-mode (setText path). Test totals after Step 0: 162 green (runtime 57 / screen 7 /
-widgets 39 / shell 43 / dialogs 16).
+mode (setText path).
+
+Then an in-house adversarial multi-agent pass (independently verify all 10 fixes +
+hunt the changed code for NEW bugs + refute each) confirmed the 10 fixes correct,
+flagged 2 regression tests that passed trivially on old code (timeline / typeahead
+— now strengthened), and surfaced **6 more confirmed bugs** (4 candidates refuted):
+createFocusRing Shift-Tab (terminal-kit emits a distinct SHIFT_TAB key, not
+TAB+shift); paint() after stop() redrawing over the restored terminal (a deferred
+toast timer) — paint now bails when !running; prompt history desync after editing
+mid-browse (history.reset() on edit/setText); PageUp on a viewport-fitting timeline
+breaking bottom-follow (no-op when nothing to scroll); wrap() phantom empty line for
+an over-wide glyph; textarea cursor landing on the previous row's trailing cell at a
+CJK soft-wrap boundary (piece-width predicate). Test totals after Step 0: **179 green**
+(runtime 63 / screen 9 / widgets 48 / shell 43 / dialogs 16).
 
 Then the **SDK-integration phase**:
 
