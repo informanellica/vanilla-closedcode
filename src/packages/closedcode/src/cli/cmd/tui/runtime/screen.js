@@ -34,13 +34,16 @@ export function createApp(rootDraw, options = {}) {
   // in raw/fullscreen mode (unusable). Restore first, then surface the error via
   // options.onError or rethrow.
   function onFatal(error) {
-    stop();
+    try { stop(); } catch { /* never let teardown mask the original error */ }
     if (options.onError) options.onError(error);
     else throw error;
   }
 
   function paint() {
-    if (!buf) return;
+    // Bail if stopped: repaint()/onResize and (notably) a deferred toast repaint
+    // timer can fire AFTER stop() restored the terminal — drawing then would emit
+    // stray escapes over the user's recovered shell.
+    if (!buf || !running) return;
     try {
       buf.fill({ attr: baseAttr, char: " " });
       let cursor = null;
@@ -109,6 +112,7 @@ export function createApp(rootDraw, options = {}) {
     term.hideCursor(false);
     term.styleReset();
     term.fullscreen(false);
+    buf = null; // so any late repaint() bails on the !buf guard too
   }
 
   // Register a key handler; returns an unsubscribe. Inside a solid owner it

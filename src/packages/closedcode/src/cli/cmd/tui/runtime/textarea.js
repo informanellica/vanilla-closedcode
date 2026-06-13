@@ -98,12 +98,16 @@ export function createTextArea(initial = "", opts = {}) {
     const rows = buildRows(W);
     const { line, col } = locate();
     const curDispCol = width([...lines()[line]].slice(0, col).join(""));
-    // cursor's display row: the row of `line` containing curDispCol (last if past end)
+    // cursor's display row: the last row of `line` whose dispColStart <= curDispCol.
+    // Comparing against dispColStart (not dispColStart + W) means a cursor exactly
+    // at a wrap boundary lands at the START of the next visual row, not the empty
+    // trailing cell of the previous one — wrapped CJK pieces are often < W wide, so
+    // the old "+ W" test mis-placed the hardware cursor on odd-width terminals.
     let curRow = 0;
     for (let i = 0; i < rows.length; i++) {
       if (rows[i].line !== line) continue;
-      curRow = i;
-      if (curDispCol < rows[i].dispColStart + W) break;
+      if (curDispCol >= rows[i].dispColStart) curRow = i;
+      else break;
     }
     let start = curRow >= h ? curRow - h + 1 : 0;
     start = Math.min(start, Math.max(0, rows.length - h));

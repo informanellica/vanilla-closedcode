@@ -54,5 +54,19 @@ const exited = c => c.some(([k, v]) => k === "fullscreen" && v === false);
   ok(exited(term.calls), "terminal restored after the throw (not left raw/fullscreen)");
 }
 
+// 3. repaint() after stop() is inert (a deferred toast timer must not draw over
+//    the restored terminal)
+{
+  const term = mockTerm();
+  let draws = 0;
+  const app = createApp(() => { draws++; }, { terminal: term, createBuffer: mockBuffer, installProcessHandlers: false });
+  app.start();
+  const afterStart = draws;
+  ok(afterStart >= 1, "at least one paint during start");
+  app.stop();
+  app.repaint(); // simulates a late scheduled toast repaint
+  eq(draws, afterStart, "repaint() after stop() draws nothing (no stray frame over the restored shell)");
+}
+
 console.log(`tui screen tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

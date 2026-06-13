@@ -54,7 +54,7 @@ export function createShell(opts = {}) {
 
   // Global keys work even while a dialog captures input (grabInput suppresses
   // SIGINT, so without this Ctrl-C would be a dead key behind a modal).
-  router.setGlobal((name) => { if (name === "CTRL_C") { opts.onExit?.(); return true; } return false; });
+  router.setGlobal((name) => { if (name === "CTRL_C" && opts.onExit) { opts.onExit(); return true; } return false; });
 
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();

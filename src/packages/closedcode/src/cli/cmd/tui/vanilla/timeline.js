@@ -61,6 +61,10 @@ export function createTimeline(messages, opts = {}) {
 
   function pin() { setFollow(true); }
   function scrollBy(deltaLines) {
+    // Nothing to scroll back to (content fits the viewport): keep following the
+    // tail. Otherwise a PageUp here would unfollow at topIndex 0, freezing the
+    // view so later streamed/appended lines never scroll in.
+    if (lastMaxStart <= 0) { setFollow(true); return; }
     const next = curStart() + deltaLines;
     if (next >= lastMaxStart) { setFollow(true); return; }
     setFollow(false); setTopIndex(Math.max(0, next));

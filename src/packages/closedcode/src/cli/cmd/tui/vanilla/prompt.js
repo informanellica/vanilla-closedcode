@@ -28,7 +28,7 @@ export function createPrompt(opts = {}) {
   // Set the whole prompt text programmatically (e.g. --prompt prefill, a stash
   // restore). Goes through the textarea directly so a leading "!" does NOT trip
   // shell mode the way feeding it key-by-key would.
-  function setText(str) { textarea.setText(str ?? ""); historyActive = false; refreshAC(); }
+  function setText(str) { textarea.setText(str ?? ""); setMode("normal"); historyActive = false; history?.reset?.(); refreshAC(); }
 
   function applyAccept(splice) {
     const cs = [...textarea.value()];
@@ -90,7 +90,10 @@ export function createPrompt(opts = {}) {
     // 6. default: edit, then refresh suggestions; an actual edit exits browsing
     const handled = textarea.handleKey(name, data);
     if (handled) {
-      if ((data && data.isCharacter) || name === "BACKSPACE" || name === "DELETE") historyActive = false;
+      // An actual edit exits history browsing — and must also reset the history
+      // cursor, else the next Up resumes from a stale idx (skipping items and
+      // discarding the just-edited buffer).
+      if ((data && data.isCharacter) || name === "BACKSPACE" || name === "DELETE") { historyActive = false; history?.reset?.(); }
       refreshAC();
     }
     return handled;
@@ -140,8 +143,9 @@ export function createPromptHistory() {
   let idx = null;
   let draft = "";
   return {
-    append(entry) { if (entry?.input?.trim()) items.push({ input: entry.input, mode: entry.mode ?? "normal" }); idx = null; },
+    append(entry) { if (entry?.input?.trim()) items.push({ input: entry.input, mode: entry.mode ?? "normal" }); idx = null; draft = ""; },
     list: () => items,
+    reset() { idx = null; draft = ""; }, // back to "not browsing" so the next Up captures a fresh draft + starts at latest
     move(dir, current) {
       if (items.length === 0) return;
       if (dir < 0) {

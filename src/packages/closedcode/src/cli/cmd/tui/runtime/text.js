@@ -32,7 +32,9 @@ export function wrap(str, max) {
   let w = 0;
   for (const [ch, cw] of cells(str)) {
     if (ch === "\n") { out.push(line); line = ""; w = 0; continue; }
-    if (w + cw > max) { out.push(line); line = ch; w = cw; }
+    // Only flush a NON-empty line: a single glyph wider than max (e.g. a CJK
+    // glyph at width 1) must not emit a phantom empty line before it.
+    if (w + cw > max) { if (w > 0) out.push(line); line = ch; w = cw; }
     else { line += ch; w += cw; }
   }
   out.push(line);

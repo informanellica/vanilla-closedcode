@@ -134,16 +134,46 @@ const char = () => ({ isCharacter: true });
   const tl = createTimeline(() => msgs, {});
   const buf = new tk.ScreenBuffer({ width: 30, height: 5 }); buf.fill({ char: " " });
   const reg = makeRegion(buf, 0, 0, 30, 5);
-  tl.draw(reg);
-  const before = tl.offset();
-  tl.draw(reg);
-  eq(tl.offset(), before, "draw() does not mutate scroll state (no re-entrant repaint)");
-  tl.handleKey("PAGE_UP");
+  const viewport = () => { const r = []; for (let y = 0; y < 5; y++) r.push(rowText(buf, y, 30)); return r; };
+  tl.draw(reg); // establish viewport bounds (maxStart) before scrolling
+  tl.handleKey("PAGE_UP"); // scroll up so offset>0 (meaningful purity check)
   buf.fill({ char: " " }); tl.draw(reg);
-  const topLine = rowText(buf, 0, 30);
+  const scrolled = tl.offset();
+  ok(scrolled > 0, "PageUp scrolls up on overflowing content");
+  const v1 = viewport();
+  buf.fill({ char: " " }); tl.draw(reg); // draw again, no state change
+  eq(tl.offset(), scrolled, "draw() does not mutate scroll state (no re-entrant repaint)");
+  // append below: the WHOLE scrolled viewport must stay put (not just row 0, which is blank)
+  const beforeAppend = viewport();
   msgs.push({ role: "assistant", parts: [{ type: "text", text: "NEWEST" }] });
   buf.fill({ char: " " }); tl.draw(reg);
-  eq(rowText(buf, 0, 30), topLine, "scrolled-up view stays put when content is appended below");
+  eq(viewport(), beforeAppend, "scrolled-up viewport stays put when content is appended below");
+}
+
+// --- timeline: PageUp on a viewport-fitting conversation keeps follow -------
+{
+  const msgs = [{ role: "assistant", parts: [{ type: "text", text: "only message" }] }];
+  const tl = createTimeline(() => msgs, {});
+  const buf = new tk.ScreenBuffer({ width: 20, height: 5 }); buf.fill({ char: " " });
+  const reg = makeRegion(buf, 0, 0, 20, 5);
+  tl.draw(reg);
+  tl.handleKey("PAGE_UP"); // nothing to scroll back to -> must NOT break follow
+  eq(tl.follow(), true, "PageUp on a fitting timeline keeps follow=true");
+  for (let i = 0; i < 10; i++) msgs.push({ role: "assistant", parts: [{ type: "text", text: "stream" + i }] });
+  buf.fill({ char: " " }); tl.draw(reg);
+  ok(rowText(buf, 4, 20).includes("stream9"), "streamed lines still auto-scroll into view (newest at bottom)");
+}
+
+// --- prompt history: edit mid-browse, then Up recalls latest + keeps draft --
+{
+  const h = createPromptHistory();
+  const p = createPrompt({ placeholders: { normal: [], shell: [] }, history: h, onSubmit: () => {} });
+  for (const s of ["one", "two", "three"]) { for (const c of s) p.handleKey(c, char()); p.handleKey("ENTER"); }
+  p.handleKey("UP"); p.handleKey("UP"); eq(p.value(), "two", "Up Up -> two");
+  p.handleKey("Z", char()); eq(p.value(), "Ztwo", "edit the recalled buffer");
+  p.textarea.setCursor(0);
+  p.handleKey("UP"); eq(p.value(), "three", "after an edit, Up recalls the LATEST (history cursor reset, not stale)");
+  p.handleKey("DOWN"); eq(p.value(), "Ztwo", "Down at the end restores the edited draft (not silently lost)");
 }
 
 // --- prompt: history Up/Down round-trip + setText doesn't trip shell mode --
@@ -160,6 +190,10 @@ const char = () => ({ isCharacter: true });
   p.setText("!ls -la");
   eq(p.value(), "!ls -la", "setText keeps the leading '!'");
   eq(p.mode(), "normal", "setText('!...') does not trip shell mode");
+  p.setText(""); // empty + cursor at 0 so "!" triggers shell mode
+  p.handleKey("!", char()); eq(p.mode(), "shell", "entered shell mode");
+  p.setText("plain recall");
+  eq(p.mode(), "normal", "setText resets mode to normal (e.g. stash restore from shell mode)");
 }
 
 console.log(`tui vanilla widgets tests: ${passed} passed, ${failed} failed`);

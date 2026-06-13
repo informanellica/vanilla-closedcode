@@ -40,7 +40,11 @@ export function createFocusRing(widgets, opts = {}) {
   const next = () => setIndex(i => (len() === 0 ? 0 : (i + 1) % len()));
   const prev = () => setIndex(i => (len() === 0 ? 0 : (i - 1 + len()) % len()));
   function handleKey(name, data) {
-    if (name === "TAB") { (data && data.shift ? prev : next)(); return true; }
+    // terminal-kit emits Shift-Tab as a DISTINCT key name "SHIFT_TAB" (not TAB
+    // with data.shift — it only sets shift on mouse events). Handle both so the
+    // back-cycle works against the real key source; keep the data.shift path for
+    // callers/tests that synthesize it.
+    if (name === "TAB" || name === "SHIFT_TAB") { (name === "SHIFT_TAB" || (data && data.shift) ? prev : next)(); return true; }
     const w = get()[index()];
     return w && w.handleKey ? w.handleKey(name, data) : false;
   }

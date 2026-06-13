@@ -182,6 +182,9 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   ring.handleKey("TAB", { shift: true });
   ring.handleKey("z");
   eq(log[log.length - 1], "a:z", "Shift-Tab moves focus back");
+  ring.handleKey("SHIFT_TAB"); // the DISTINCT key name terminal-kit actually emits
+  ring.handleKey("w");
+  eq(log[log.length - 1], "b:w", "SHIFT_TAB (real key name) cycles focus back");
 }
 
 // 11. centerBox: centered overlay returns inner region
@@ -220,6 +223,14 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   // fullwidth glyphs occupy a char-cell + a filler-cell, so read glyph cells directly
   eq([buf.get({ x: 0, y: 0 }).char, buf.get({ x: 2, y: 0 }).char], ["あ", "い"], "textarea row 0 = first 2 fullwidth glyphs");
   eq(cur, [2, 2], "textarea cursor at end is row 2, display col 2 (after お)");
+  // cursor exactly at a CJK soft-wrap boundary on an ODD width must land at the
+  // START of the next visual row, not the empty trailing cell of the previous row
+  const ta3 = createTextArea("あいうえお");
+  const b2 = new tk.ScreenBuffer({ width: 5, height: 6 }); b2.fill({ char: " " });
+  let cur2 = null;
+  ta3.setCursor(2); // before 'う', which renders at row 1 col 0 (rows: あい / うえ / お)
+  ta3.draw(makeRegion(b2, 0, 0, 5, 6), { focused: true, ctx: { focusCursor: (x, y) => (cur2 = [x, y]) } });
+  eq(cur2, [0, 1], "textarea cursor at a CJK wrap boundary -> start of the next visual row");
 }
 
 // 13. wordWrap hard-wraps an over-long no-space word (CJK-loss regression)
@@ -230,6 +241,20 @@ eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap");
   eq(lines.map(l => l.replace(/\s/g, "")).join("").includes("日本語日本語"), true, "wordWrap: CJK content preserved (not dropped)");
   eq(wordWrap("aaaaaaaa", 3), ["aaa", "aaa", "aa"], "wordWrap: over-long ascii word hard-wrapped mid-line");
   eq(wordWrap("foo bar baz", 7), ["foo bar", "baz"], "wordWrap: ordinary wrapping unchanged");
+  // wrap: a single glyph wider than max must not emit a phantom empty leading line
+  eq(wrap("あ", 1), ["あ"], "wrap: over-wide single glyph -> no phantom empty line");
+  eq(wrapMessages(["あ", "ok"], 1)[0], "あ", "wrapMessages: no leading blank line at width 1");
+}
+
+// 14. select-list typeahead: the DEFAULT (un-injected) clock resets after 800ms
+{
+  const { createSelectList } = await import("./list.js");
+  const list = createSelectList(["Apple", "Banana", "Cherry", "Avocado"]); // no `now` -> default real clock
+  list.handleKey("b", { isCharacter: true });
+  eq(list.active(), 1, "default-clock typeahead 'b' -> Banana");
+  await new Promise(r => setTimeout(r, 810)); // exceed the 800ms window with the REAL clock
+  list.handleKey("a", { isCharacter: true }); // a fresh search, not "ba"
+  eq(list.active(), 3, "after >800ms the window resets: 'a' -> Avocado (not stuck on 'ba')");
 }
 
 console.log(`tui runtime tests: ${passed} passed, ${failed} failed`);
