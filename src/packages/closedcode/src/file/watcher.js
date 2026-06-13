@@ -24,7 +24,10 @@ export const Event = {
 };
 const watcher = lazy(() => {
   try {
-    const binding = require(`@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? `-${CLOSEDCODE_LIBC || "glibc"}` : ""}`);
+    // In a Node SEA the embedded require resolves built-ins only, so route the
+    // platform watcher binding through the exe-adjacent createRequire (__ccRequire,
+    // set by the SEA banner) which finds <execDir>/node_modules; plain require otherwise.
+    const binding = (globalThis.__ccRequire ?? require)(`@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? `-${CLOSEDCODE_LIBC || "glibc"}` : ""}`);
     return createWrapper(binding);
   } catch (error) {
     log.error("failed to load watcher binding", {

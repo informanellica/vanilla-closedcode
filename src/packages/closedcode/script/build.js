@@ -278,7 +278,9 @@ await fs.promises.writeFile(path.join(outDir, "package.json"), JSON.stringify({
   },
   os: [process.platform],
   cpu: [process.arch],
-  ...(libc === "musl" ? { libc: ["musl"] } : {})
+  // libc is Linux-only; set it on BOTH variants (glibc + musl) so npm installs
+  // exactly the matching one on Alpine vs glibc distros.
+  ...(process.platform === "linux" ? { libc: [libc] } : {})
 }, null, 2));
 
 // Stage 2 (pure-vanilla): prompts/tool descriptions are read via fs at runtime
@@ -307,7 +309,11 @@ copyTextAssets(path.join(outDir, "bin"));
 // matching native prebuilds; cross-platform CI installs per-target natives.
 function copySidecars(outRoot) {
   const nm = path.join(dir, "../../node_modules"); // workspace (hoisted) node_modules
-  const roots = ["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit"];
+  // @parcel/watcher's wrapper.js is bundled, but its platform binding is loaded by
+  // a computed require at runtime (file/watcher.js) — ship that binding (+ the
+  // @parcel/watcher closure) as a sidecar so the watcher works in the SEA build.
+  const watcherBinding = `@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? "-" + libc : ""}`;
+  const roots = ["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit", "@parcel/watcher", watcherBinding];
   const seen = new Set();
   const queue = [...roots];
   while (queue.length) {
