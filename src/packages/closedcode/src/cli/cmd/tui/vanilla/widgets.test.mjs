@@ -6,6 +6,7 @@ import { makeRegion } from "../runtime/layout.js";
 import { createAutocomplete } from "./autocomplete.js";
 import { createPrompt, createPromptHistory } from "./prompt.js";
 import { createTimeline, buildTimelineLines } from "./timeline.js";
+import { createToast } from "./toast.js";
 
 let passed = 0, failed = 0;
 function eq(a, b, label) {
@@ -96,6 +97,20 @@ const char = () => ({ isCharacter: true });
   eq(res.offset, 0, "timeline bottom-pinned by default");
   eq(res.maxScroll, 2, "maxScroll = content(4) - viewport(2)");
   ok(rowText(buf, 1, 40).includes("done"), "newest line pinned to the bottom row when content overflows");
+}
+
+// --- toast: injectable-clock expiry + bottom-right draw -------------------
+{
+  let clock = 0;
+  const t = createToast({ now: () => clock });
+  t.show({ message: "hello", duration: 1000 });
+  eq(t.visible().length, 1, "toast visible after show");
+  clock = 500; eq(t.visible().length, 1, "toast visible before expiry");
+  clock = 1500; eq(t.visible().length, 0, "toast expired after its duration");
+  clock = 2000; t.show({ message: "saved", variant: "success", duration: 1000 });
+  const buf = new tk.ScreenBuffer({ width: 30, height: 4 }); buf.fill({ char: " " });
+  t.draw(makeRegion(buf, 0, 0, 30, 4));
+  ok(rowText(buf, 3, 30).includes("saved"), "toast drawn on the bottom row");
 }
 
 console.log(`tui vanilla widgets tests: ${passed} passed, ${failed} failed`);

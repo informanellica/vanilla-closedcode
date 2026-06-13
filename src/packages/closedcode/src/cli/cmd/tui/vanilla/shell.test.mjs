@@ -184,5 +184,13 @@ const type = (shell, str) => { for (const ch of str) shell.dispatch(ch, char());
   ok(shell.timeline.offset() > 0, "PageUp scrolls the timeline back");
 }
 
+// 13. toast overlay renders over the shell
+{
+  const shell = createShell();
+  shell.toast.show({ message: "ping", variant: "info", duration: 9999 });
+  const { buf, w, h } = render(shell);
+  ok(screenText(buf, w, h).includes("ping"), "shell composites the toast overlay");
+}
+
 console.log(`tui vanilla shell tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

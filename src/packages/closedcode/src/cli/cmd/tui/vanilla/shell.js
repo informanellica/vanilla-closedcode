@@ -22,6 +22,7 @@ import { defaultTheme, attr } from "./theme.js";
 import { drawLogo, LOGO_HEIGHT } from "./logo.js";
 import { createPrompt, createPromptHistory } from "./prompt.js";
 import { createTimeline } from "./timeline.js";
+import { createToast } from "./toast.js";
 import * as Dialogs from "./dialogs.js";
 
 const STATUS_ROWS = 1;
@@ -49,6 +50,7 @@ export function createShell(opts = {}) {
   const [messages, setMessages] = createSignal([]);
   const pushMessage = m => setMessages(list => [...list, m]);
   const timeline = createTimeline(messages, { theme });
+  const toast = createToast({ theme, now: opts.now });
 
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();
@@ -118,8 +120,10 @@ export function createShell(opts = {}) {
       case "session.new": setMessages([]); navigate({ type: "home" }); break;
       case "route.home": navigate({ type: "home" }); break;
       case "help": openHelp(); break;
-      case "models": openStub("Models", ["opus-4.8", "sonnet-4.6", "haiku-4.5"]); break;
-      case "agents": openStub("Agents", ["build", "plan", "general"]); break;
+      case "models": openStub("Models", ["opus-4.8", "sonnet-4.6", "haiku-4.5"])
+        .then(o => o && toast.show({ message: `Switched model: ${o.value}`, variant: "success" })); break;
+      case "agents": openStub("Agents", ["build", "plan", "general"])
+        .then(o => o && toast.show({ message: `Switched agent: ${o.value}`, variant: "success" })); break;
       case "app.exit": opts.onExit?.(); break;
     }
   }
@@ -141,7 +145,7 @@ export function createShell(opts = {}) {
   // Model/agent pickers: a filtered select from the dialog families. The real
   // SDK-backed option lists are injected at the integration stage.
   function openStub(title, options) {
-    Dialogs.select(dialog, { title, theme, now: opts.now, width: 40, options });
+    return Dialogs.select(dialog, { title, theme, now: opts.now, width: 40, options });
   }
 
   // --- base layer: global hotkeys + timeline scroll + the prompt -----------
@@ -167,7 +171,8 @@ export function createShell(opts = {}) {
 
   function drawStatus(region) {
     const r = route();
-    const left = r.type === "home" ? " home" : ` session:${r.sessionID}`;
+    const mode = prompt.mode() === "shell" ? "  · shell" : "";
+    const left = (r.type === "home" ? " home" : ` session:${r.sessionID}`) + mode;
     const right = "Ctrl-P commands  Ctrl-C exit ";
     region.line(0, fit(left, Math.max(0, region.width - right.length), "left") + right, attr(theme, "textMuted"));
   }
@@ -206,9 +211,10 @@ export function createShell(opts = {}) {
     ]);
     drawAutocomplete(region, promptH, promptW, aoffset);
     drawDialog(region, ctx);
+    toast.draw(region);
   }
 
-  return { route, navigate, messages, pushMessage, prompt, timeline, dialog, openCommands, openHelp, dispatch, draw, theme };
+  return { route, navigate, messages, pushMessage, prompt, timeline, dialog, toast, openCommands, openHelp, dispatch, draw, theme };
 }
 
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.
