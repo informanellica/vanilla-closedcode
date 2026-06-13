@@ -127,8 +127,6 @@ await esbuild({
     },
   }],
   alias: {
-    "node:ffi": path.join(dir, "src/util/node-ffi-polyfill.js"),
-    "bun:ffi": path.join(dir, "src/util/bun-ffi-stub.js"),
     "jsonc-parser": path.join(dir, "../../node_modules/jsonc-parser/lib/esm/main.js"),
   },
   banner: {

@@ -1,11 +1,11 @@
 // insert() is the established exception for reactive/component-valued
 // children: the presence-gated search bar (Show + Portal-backed FileSearchBar)
 // must stay reconciled by Solid instead of being frozen at mount.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { sampledChecksum } from "core/util/encode";
 import { DEFAULT_VIRTUAL_FILE_METRICS, File as PierreFile, FileDiff, VirtualizedFile, VirtualizedFileDiff, Virtualizer } from "@pierre/diffs";
-import { createMediaQuery } from "@solid-primitives/media";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { createMediaQuery } from "../../../lib/primitives/media.js";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, onMount, Show, splitProps } from "solid-js";
 import { createDefaultOptions, styleVariables } from "../pierre/index.js";
 import { markCommentedDiffLines, markCommentedFileLines } from "../pierre/commented-lines.js";
@@ -465,7 +465,7 @@ function ViewerShell(props) {
   // Presence-gated search bar: Show + Portal-backed FileSearchBar placed
   // before the container element. insert() keeps when() live and rebuilds
   // the bar once per truthiness flip, as compiled.
-  _solidInsert(el, createComponent(Show, {
+  insert(el, createComponent(Show, {
     get when() {
       return props.viewer.find.open();
     },

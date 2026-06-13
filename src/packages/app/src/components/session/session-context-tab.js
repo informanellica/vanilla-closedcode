@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "solid-js";
 import { useSync } from "@/context/sync.js";
 import { checksum } from "core/util/encode";
@@ -40,7 +40,7 @@ function textValue(value) {
 
 // Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
 // keep Nodes, stringify the rest. Used (inside a render effect) to mount
-// Kobalte component results — which resolve through context providers and
+// the original component results — which resolve through context providers and
 // Dynamic to memo accessors — into plain DOM.
 function resolveNodes(value) {
   if (value == null || value === false || value === true) return [];
@@ -132,9 +132,9 @@ function RawMessage(props) {
         get children() {
           const body = template(`<div class="p-3"></div>`);
           // File resolves through FileMedia (a Show) to a possibly-function
-          // value and remounts whenever this presence-gated Kobalte Content
+          // value and remounts whenever this presence-gated Content
           // reopens, so it stays on solid's insert() (established exception).
-          _solidInsert(body, createComponent(RawMessageContent, {
+          insert(body, createComponent(RawMessageContent, {
             get message() {
               return props.message;
             },
@@ -422,7 +422,7 @@ export function SessionContextTab() {
         rawTitle.textContent = textValue(language.t("context.rawMessages.title"));
       });
 
-      // The Kobalte Accordion resolves to a memo accessor; create it once and
+      // The accordion resolves to a memo accessor; create it once and
       // mount the resolved root element. For keeps per-message rows alive
       // across message updates, preserving expansion state and File viewers.
       const accordion = createComponent(Accordion, {

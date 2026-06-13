@@ -62,7 +62,10 @@ await fs.promises.mkdir(path.join(outDir, "bin"), {
 // Native modules and runtime-specific packages stay external; everything else
 // is bundled so Node's strict ESM resolver doesn't trip on extension-less
 // imports inside CJS-era dependencies (vscode-jsonrpc/node, @parcel/watcher/wrapper).
-const EXTERNAL_NATIVE = new Set(["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi"]);
+// terminal-kit (the vanilla TUI's terminal library) dynamically loads its
+// termconfig/* files (incl. a non-JS README), which esbuild cannot bundle — keep
+// it + its string-kit dep external and resolve them from node_modules at runtime.
+const EXTERNAL_NATIVE = new Set(["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit"]);
 const externalize = {
   name: "externalize-natives",
   setup(build) {
@@ -94,16 +97,6 @@ const ALIASES = [
 const pathAliases = {
   name: "path-aliases",
   setup(build) {
-    // Force `node:ffi` / `bun:ffi` to the polyfill/stub. esbuild treats `node:`
-    // specifiers as external builtins for platform:node (even non-existent ones
-    // like node:ffi), which the `alias` config does not override — so without
-    // this onResolve the bundle keeps a live `import("node:ffi")` that crashes
-    // Node (ERR_UNKNOWN_BUILTIN_MODULE) when @opentui/core loads. Resolving here
-    // bundles the polyfill in place, so no `node --import` preload is required.
-    build.onResolve({ filter: /^(node:ffi|bun:ffi)$/ }, (args) => {
-      if (args.path === "node:ffi") return { path: path.join(dir, "src/util/node-ffi-polyfill.js") }
-      return { path: path.join(dir, "src/util/bun-ffi-stub.js") }
-    })
     build.onResolve({ filter: /^#/ }, async (args) => {
       for (const a of ALIASES) {
         if (a.prefix === "#db" || a.prefix === "#pty") {
@@ -128,142 +121,7 @@ const optionalStubs = new Set([
   "@babel/preset-typescript",
 ]);
 
-// @opentui/core needs TWO source rewrites, both on the SAME hoisted file
-// (index-*.js). esbuild only allows one onLoad handler per filter/namespace, so
-// both transforms MUST live in a single onLoad callback (otherwise the first one
-// wins and the second silently never runs).
-//
-//  (1) file-imports: `import foo from "./x.scm" with { type: "file" }` which
-//      esbuild cannot parse -> rewrite to `const foo = "./x.scm"` (values are
-//      just path strings at runtime).
-//
-//  (2) ffi dynamic-import indirection: bun-ffi-structs loads FFI via
-//      `import(specifier)` where the specifier is a VARIABLE ("node:ffi" /
-//      "bun:ffi"). esbuild's onResolve/alias only fire for string-LITERAL
-//      specifiers, so the variable-indirected `import(specifier)` survives into
-//      the bundle and runs as a live `import("node:ffi")`, crashing plain Node
-//      with ERR_UNKNOWN_BUILTIN_MODULE. We rewrite the two `importModule`
-//      wrappers so the FFI module is selected by STATIC top-level imports
-//      (header) that onResolve/alias CAN route to our bundled polyfill/stub.
-//      No `node --import` preload is needed. The package bundles TWO copies of
-//      bun-ffi-structs (importModule + importModule2); both are rewritten.
-const patchOpentuiFileImports = {
-  name: "patch-opentui-file-imports",
-  setup(b) {
-    b.onLoad({ filter: /[\\/]@opentui[\\/]core[\\/]index-.*\.js$/ }, async (args) => {
-      let contents = await fs.promises.readFile(args.path, "utf8");
-
-      // (1) Rewrite `import x from "...scm" with { type: "file" }`.
-      contents = contents.replace(
-        /import\s+(\w+)\s+from\s+(\"[^\"]+\")\s+with\s+\{\s*type:\s*\"file\"\s*\};/g,
-        "const $1 = $2;",
-      );
-
-      // (2) Rewrite the variable-indirected dynamic FFI imports.
-      // @opentui/core ships several hoisted `index-*.js` chunks; only the one
-      // carrying bun-ffi-structs has the `import(specifier)` FFI loader. Skip
-      // the rest cleanly, but if a file DOES contain the FFI loader marker yet
-      // our wrapper regexes fail to match, hard-fail (the shape changed and a
-      // live import("node:ffi") would otherwise survive into the bundle).
-      const hasFfiLoader = contents.includes("import(specifier)");
-      if (hasFfiLoader) {
-        // Static imports here are resolvable by onResolve/alias -> polyfill/stub.
-        const header =
-          'import * as __cc_node_ffi from "node:ffi";\n' +
-          'import * as __cc_bun_ffi from "bun:ffi";\n';
-
-        const beforeImportModule = contents;
-        contents = contents.replace(
-          /function importModule\(specifier\)\s*\{\s*return import\(specifier\);?\s*\}/,
-          'function importModule(specifier){return Promise.resolve(specifier==="bun:ffi"?__cc_bun_ffi:__cc_node_ffi);}',
-        );
-        if (contents === beforeImportModule) {
-          throw new Error(
-            "patch-opentui-file-imports: importModule rewrite did not match in " +
-              args.path +
-              " — @opentui/core FFI shape changed; a live import(\"node:ffi\") would survive into the bundle.",
-          );
-        }
-
-        const beforeImportModule2 = contents;
-        contents = contents.replace(
-          /function importModule2\(specifier\)\s*\{\s*return import\(specifier\)\.then\(\(module\)\s*=>\s*module\.default\s*\?\?\s*module\);?\s*\}/,
-          'function importModule2(specifier){var m=specifier==="bun:ffi"?__cc_bun_ffi:__cc_node_ffi;return Promise.resolve(m.default??m);}',
-        );
-        if (contents === beforeImportModule2) {
-          throw new Error(
-            "patch-opentui-file-imports: importModule2 rewrite did not match in " +
-              args.path +
-              " — @opentui/core FFI shape changed; a live import(\"node:ffi\") would survive into the bundle.",
-          );
-        }
-
-        contents = header + contents;
-      }
-
-      // (3) Native-lib loader (src/zig.ts):
-      //       await import(`@opentui/core-${process.platform}-${process.arch}/index.ts`)
-      //     resolves at runtime to `@opentui/core-win32-x64/index.ts`, a .ts file
-      //     under node_modules that plain Node refuses to type-strip
-      //     (ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING). This is a TOP-LEVEL
-      //     await import, so it runs on module load and blocks even `--version`.
-      //     Rewrite it to a STATIC import of our virtual shim, which returns the
-      //     absolute path to the platform `opentui.dll` (resolved at runtime).
-      const hasNativeLoader = contents.includes(
-        "@opentui/core-${process.platform}-${process.arch}/index.ts",
-      );
-      if (hasNativeLoader) {
-        const beforeNativeLoader = contents;
-        contents = contents.replace(
-          /import\(`@opentui\/core-\$\{process\.platform\}-\$\{process\.arch\}\/index\.ts`\)/,
-          'import("closedcode:opentui-native")',
-        );
-        if (contents === beforeNativeLoader) {
-          throw new Error(
-            "patch-opentui-file-imports: native-loader rewrite did not match in " +
-              args.path +
-              " — @opentui/core zig.ts loader shape changed; a live import of a .ts file would survive into the bundle.",
-          );
-        }
-      }
-
-      return { contents, loader: "js" };
-    });
-  },
-};
-
-// Virtual shim for @opentui/core's native-lib loader (rewritten in transform (3)
-// above). At runtime it resolves the platform package's native library and
-// returns its absolute path as `default`, matching the original index.ts which
-// did `import("./opentui.dll", { with: { type: "file" } })` and exported the
-// path. The native package + its .dll stay external (resolved from node_modules
-// at runtime), so no .dll is bundled. Only needed for real `tui` rendering;
-// `--version`/`serve` just need this to load without throwing.
-const opentuiNativeShim = {
-  name: "opentui-native-shim",
-  setup(b) {
-    b.onResolve({ filter: /^closedcode:opentui-native$/ }, () => ({
-      path: "closedcode:opentui-native",
-      namespace: "opentui-native",
-    }));
-    b.onLoad({ filter: /.*/, namespace: "opentui-native" }, () => ({
-      contents: [
-        'import { createRequire } from "node:module";',
-        'import path from "node:path";',
-        'const require = createRequire(import.meta.url);',
-        '// Resolve the platform native package directory, then point at its dll.',
-        'const pkgJson = require.resolve(',
-        '  `@opentui/core-${process.platform}-${process.arch}/package.json`,',
-        ');',
-        'const dllName = process.platform === "win32" ? "opentui.dll"',
-        '  : process.platform === "darwin" ? "libopentui.dylib" : "libopentui.so";',
-        'export default path.join(path.dirname(pkgJson), dllName);',
-      ].join("\n"),
-      loader: "js",
-      resolveDir: dir,
-    }));
-  },
-};
+// (@opentui-specific esbuild plugins removed — @opentui is no longer a dependency)
 
 await esbuild({
   entryPoints: [path.join(dir, "src/index.js")],
@@ -274,7 +132,7 @@ await esbuild({
   format: "esm",
   minify: true,
   sourcemap: sourcemapsFlag ? "linked" : false,
-  plugins: [pathAliases, externalize, patchOpentuiFileImports, opentuiNativeShim, {
+  plugins: [pathAliases, externalize, {
     name: "optional-stubs",
     setup(b) {
       b.onResolve({ filter: /.*/ }, (args) => {
@@ -289,8 +147,6 @@ await esbuild({
     },
   }],
   alias: {
-    "node:ffi": path.join(dir, "src/util/node-ffi-polyfill.js"),
-    "bun:ffi": path.join(dir, "src/util/bun-ffi-stub.js"),
     "bun": path.join(dir, "src/util/bun-stub.js"),
     "jsonc-parser": path.join(dir, "../../node_modules/jsonc-parser/lib/esm/main.js"),
     // `conditions: ["browser"]` (below) otherwise resolves `ws` to its browser

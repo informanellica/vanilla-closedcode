@@ -1,6 +1,6 @@
 import { createSimpleContext } from "@/lib/context.js";
-import { createGlobalEmitter } from "@solid-primitives/event-bus";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { createGlobalEmitter } from "../lib/primitives/event-bus.js";
+import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { batch, onCleanup, onMount } from "solid-js";
 import z from "zod";
 import { createSdkForServer } from "@/utils/server.js";

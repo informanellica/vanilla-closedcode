@@ -109,13 +109,13 @@
     height: 0;
   }
   to {
-    height: var(--kb-accordion-content-height);
+    height: var(--vcc-accordion-content-height);
   }
 }
 
 @keyframes slideUp {
   from {
-    height: var(--kb-accordion-content-height);
+    height: var(--vcc-accordion-content-height);
   }
   to {
     height: 0;

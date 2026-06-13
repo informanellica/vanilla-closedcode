@@ -1,7 +1,10 @@
-import { insert as _solidInsert } from "solid-js/web";
-import { Tooltip as KobalteTooltip } from "@kobalte/core/tooltip";
-import { createComponent, createEffect, Match, mergeProps, onCleanup, splitProps, Switch } from "solid-js";
+// Vanilla reimplementation of @kobalte/core's Tooltip behavior (no external UI
+// dependency). Derivative of @kobalte/core (MIT License,
+// Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
+import { insert } from "solid-js/web";
+import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwner, mergeProps, onCleanup, runWithOwner, splitProps } from "solid-js";
 import { createStore } from "solid-js/store";
+import { autoPosition } from "./floating.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
@@ -21,37 +24,67 @@ export function TooltipKeybind(props) {
       const titleEl = root.firstElementChild;
       const keybindEl = titleEl.nextElementSibling;
       // title/keybind are arbitrary (possibly reactive) children rendered
-      // inside the presence-gated tooltip content, so they go through solid's
-      // insert() to stay live (established exception).
-      _solidInsert(titleEl, () => local.title);
-      _solidInsert(keybindEl, () => local.keybind);
+      // inside the tooltip content, so they go through solid's insert() to
+      // stay live (established exception).
+      insert(titleEl, () => local.title);
+      insert(keybindEl, () => local.keybind);
       return root;
     }
   }));
 }
 
 export function Tooltip(props) {
-  let ref;
+  // The previously-rendered trigger element (the original wrapped the children in a
+  // <div data-component="tooltip-trigger">). Captured for hover/focus + the
+  // expand/block heuristics below.
+  let triggerEl;
+  // Owner captured at construction so deferred work (timers, the portal render)
+  // runs inside the caller's reactive scope even when fired from a DOM event
+  // handler where Solid's owner is null.
+  const owner = getOwner();
+  const id = createUniqueId();
   const [state, setState] = createStore({
     open: false,
     block: false,
     expand: false
   });
-  const [local, others] = splitProps(props, ["children", "class", "contentClass", "contentStyle", "inactive", "forceOpen", "ignoreSafeArea", "value"]);
+  const [local, others] = splitProps(props, [
+    "children", "class", "contentClass", "contentStyle", "inactive", "forceOpen",
+    "ignoreSafeArea", "value", "placement", "gutter", "shift", "overlap", "openDelay", "closeDelay"
+  ]);
+
+  // Inactive passthrough: render the children verbatim, no tooltip machinery.
+  if (local.inactive) {
+    return local.children;
+  }
+
+  const isOpen = () => !!local.forceOpen || state.open;
+  let openTimer = 0;
+  let closeTimer = 0;
+  const clearTimers = () => {
+    clearTimeout(openTimer);
+    clearTimeout(closeTimer);
+    openTimer = 0;
+    closeTimer = 0;
+  };
+
   const close = () => setState("open", false);
   const inside = () => {
     const active = document.activeElement;
-    if (!ref || !active) return false;
-    return ref.contains(active);
+    if (!triggerEl || !active) return false;
+    return triggerEl.contains(active);
   };
+  // The trigger may itself wrap an expandable control (e.g. a popover trigger):
+  // while that child is expanded we suppress the tooltip so it doesn't sit on
+  // top of the opened panel.
   const drop = (expand = state.expand) => {
     if (expand) return;
-    if (ref?.matches(":hover")) return;
+    if (triggerEl?.matches(":hover")) return;
     if (inside()) return;
     setState("block", false);
   };
   const sync = () => {
-    const expand = !!ref?.querySelector('[aria-expanded="true"], [data-expanded]');
+    const expand = !!triggerEl?.querySelector('[aria-expanded="true"], [data-expanded]');
     setState("expand", expand);
     if (expand) {
       setState("block", true);
@@ -64,112 +97,162 @@ export function Tooltip(props) {
     setState("block", true);
     close();
   };
+
+  // Show with the open delay (original default 700ms unless overridden).
+  const requestOpen = () => {
+    if (local.forceOpen) return;
+    if (state.block) return;
+    clearTimeout(closeTimer);
+    closeTimer = 0;
+    const delay = local.openDelay ?? 700;
+    if (delay <= 0) {
+      setState("open", true);
+      return;
+    }
+    if (openTimer) return;
+    openTimer = setTimeout(() => {
+      openTimer = 0;
+      if (!state.block) setState("open", true);
+    }, delay);
+  };
+  // closeDelay is forced to 0, matching the original wrapper.
+  const requestClose = () => {
+    clearTimeout(openTimer);
+    openTimer = 0;
+    if (!inside()) close();
+    drop();
+  };
   const leave = () => {
     if (!inside()) close();
     drop();
   };
-  createEffect(() => {
-    if (!ref) return;
-    sync();
-    const obs = new MutationObserver(sync);
-    obs.observe(ref, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["aria-expanded", "data-expanded"]
-    });
-    onCleanup(() => obs.disconnect());
+
+  // The wrapping trigger div (the original rendered `as: "div"` with display:contents
+  // semantics via class). data-component preserved for styling/test hooks.
+  triggerEl = document.createElement("div");
+  triggerEl.setAttribute("data-component", "tooltip-trigger");
+  createRenderEffect(() => {
+    const cls = local.class;
+    triggerEl.className = cls == null ? "" : String(cls);
   });
-  let justClickedTrigger = false;
-  // Switch/Match are the same runtime solid-js components the original used:
-  // non-keyed truthiness switching between the inactive passthrough and the
-  // Kobalte tooltip (a flip disposes and rebuilds the active branch).
-  return createComponent(Switch, {
-    get children() {
-      return [createComponent(Match, {
-        get when() {
-          return local.inactive;
-        },
-        get children() {
-          return local.children;
-        }
-      }), createComponent(Match, {
-        when: true,
-        get children() {
-          return createComponent(KobalteTooltip, mergeProps({
-            gutter: 4
-          }, others, {
-            closeDelay: 0,
-            get ignoreSafeArea() {
-              return local.ignoreSafeArea ?? true;
-            },
-            get open() {
-              return local.forceOpen || state.open;
-            },
-            onOpenChange: open => {
-              if (local.forceOpen) return;
-              if (state.block && open) return;
-              if (justClickedTrigger) {
-                justClickedTrigger = false;
-                return;
-              }
-              setState("open", open);
-            },
-            get children() {
-              return [createComponent(KobalteTooltip.Trigger, {
-                // Capture the rendered trigger element. The compiled ref
-                // forwarder special-cased a function-valued `ref`, but the
-                // local `ref` above is only ever undefined or an element.
-                ref(r) {
-                  ref = r;
-                },
-                as: "div",
-                "data-component": "tooltip-trigger",
-                get ["class"]() {
-                  return local.class;
-                },
-                onPointerDownCapture: arm,
-                onKeyDownCapture: event => {
-                  if (event.key !== "Enter" && event.key !== " ") return;
-                  arm();
-                },
-                onPointerLeave: leave,
-                onFocusOut: () => requestAnimationFrame(() => drop()),
-                get children() {
-                  return local.children;
-                }
-              }), createComponent(KobalteTooltip.Portal, {
-                get children() {
-                  return createComponent(KobalteTooltip.Content, {
-                    "data-component": "tooltip",
-                    get ["data-placement"]() {
-                      return props.placement;
-                    },
-                    get ["data-force-open"]() {
-                      return local.forceOpen;
-                    },
-                    get ["class"]() {
-                      return local.contentClass;
-                    },
-                    get style() {
-                      return local.contentStyle;
-                    },
-                    onPointerDownOutside: e => {
-                      if (ref === e.target || e.target instanceof Node && ref?.contains(e.target)) {
-                        justClickedTrigger = true;
-                      }
-                      e.preventDefault();
-                    },
-                    get children() {
-                      return local.value;
-                    }
-                  });
-                }
-              })];
-            }
-          }));
-        }
-      })];
+
+  triggerEl.addEventListener("pointerenter", requestOpen);
+  triggerEl.addEventListener("pointerleave", leave);
+  triggerEl.addEventListener("focusin", requestOpen);
+  triggerEl.addEventListener("pointerdown", arm, true);
+  triggerEl.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    arm();
+  }, true);
+  triggerEl.addEventListener("focusout", () => requestAnimationFrame(() => requestClose()));
+
+  // Children: mirror bs/tooltip — strings/Nodes appended directly (no
+  // cloneNode, which would drop listeners), component/accessor children go
+  // through insert() so they stay reactive.
+  const children = local.children;
+  if (typeof children === "string") {
+    triggerEl.textContent = children;
+  } else if (children instanceof Node) {
+    triggerEl.appendChild(children);
+  } else if (children != null) {
+    insert(triggerEl, () => local.children);
+  }
+
+  // Watch the trigger subtree for expand/collapse of inner controls (the original
+  // relied on its own state; we observe the DOM the way the old wrapper did).
+  const obs = new MutationObserver(sync);
+  obs.observe(triggerEl, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ["aria-expanded", "data-expanded"]
+  });
+  sync();
+
+  // Build the floating tooltip content node (portaled to <body>).
+  const renderContent = () => {
+    const popEl = document.createElement("div");
+    popEl.setAttribute("data-component", "tooltip");
+    popEl.setAttribute("role", "tooltip");
+    popEl.id = id;
+    popEl.setAttribute("data-placement", local.placement ?? "top");
+    if (local.forceOpen) popEl.setAttribute("data-force-open", "true");
+    if (local.contentClass) {
+      popEl.classList.add(...String(local.contentClass).split(/\s+/).filter(Boolean));
+    }
+    popEl.style.position = "fixed";
+    popEl.style.zIndex = "1080";
+    popEl.style.width = "max-content";
+    popEl.style.maxWidth = "320px";
+    popEl.style.pointerEvents = "none";
+    if (local.contentStyle && typeof local.contentStyle === "string") {
+      popEl.setAttribute("style", popEl.getAttribute("style") + local.contentStyle);
+    } else if (local.contentStyle && typeof local.contentStyle === "object") {
+      for (const key in local.contentStyle) popEl.style[key] = local.contentStyle[key];
+    }
+    // `value` may be a reactive/component child — keep it live through insert().
+    insert(popEl, () => local.value);
+    return popEl;
+  };
+
+  // Presence: mount the content into <body> only while open, and keep it
+  // positioned against the trigger (placement + gutter + flip), mirroring the
+  // bs/dropdown-menu floating technique via the shared helper. Each mount gets
+  // its own reactive root (disposed on close) so the value getter's render
+  // effects don't leak across open/close cycles.
+  let stopPosition = null;
+  let disposeContent = null;
+  let contentEl = null;
+  const mountContent = () => {
+    if (contentEl) return;
+    const build = () => createRoot((dispose) => {
+      contentEl = renderContent();
+      document.body.appendChild(contentEl);
+      stopPosition = autoPosition(triggerEl, contentEl, {
+        placement: local.placement ?? "top",
+        gutter: local.gutter ?? 4,
+        shift: local.shift,
+        overlap: local.overlap
+      });
+      disposeContent = dispose;
+    });
+    // Restore the caller's owner so context (i18n, etc.) read inside `value`
+    // resolves, even when mountContent runs from a DOM event handler.
+    if (owner) runWithOwner(owner, build);
+    else build();
+  };
+  const unmountContent = () => {
+    if (stopPosition) {
+      stopPosition();
+      stopPosition = null;
+    }
+    if (disposeContent) {
+      disposeContent();
+      disposeContent = null;
+    }
+    if (contentEl) {
+      contentEl.remove();
+      contentEl = null;
+    }
+  };
+
+  createRenderEffect(() => {
+    if (isOpen()) {
+      triggerEl.setAttribute("aria-describedby", id);
+      mountContent();
+    } else {
+      triggerEl.removeAttribute("aria-describedby");
+      unmountContent();
     }
   });
+
+  if (owner) {
+    onCleanup(() => {
+      clearTimers();
+      obs.disconnect();
+      unmountContent();
+    });
+  }
+
+  return triggerEl;
 }

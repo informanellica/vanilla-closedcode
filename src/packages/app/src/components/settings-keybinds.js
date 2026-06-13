@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { Button } from "@/bs/button.js";
 import { Icon } from "@/bs/icon.js";
 import { IconButton } from "@/bs/icon-button.js";

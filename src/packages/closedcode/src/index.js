@@ -1,4 +1,3 @@
-import "./util/node-ffi-polyfill.js";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { RunCommand } from "./cli/cmd/run.js";

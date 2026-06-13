@@ -1,13 +1,13 @@
 // Compiled solid-js/web template helpers are replaced with hand-written DOM
 // construction. insert() is the established exception for reactive and
-// component-valued children (Kobalte presence-gated Popover/Dropdown content,
+// component-valued children (presence-gated Popover/Dropdown content,
 // runtime Show/For/Index output, memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { For, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, Show, Index, createSignal } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { useMutation } from "@tanstack/solid-query";
-import { useNavigate } from "@solidjs/router";
+import { useMutation } from "../../lib/query/index.js";
+import { useNavigate } from "../../lib/router/index.js";
 import { Button } from "@/bs/button.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
@@ -22,11 +22,11 @@ import { TextField } from "@/bs/text-field.js";
 import { showToast } from "@/lib/toast.js";
 import { Binary } from "core/util/binary";
 import { getFilename } from "core/util/path";
-import { Popover as KobaltePopover } from "@kobalte/core/popover";
+import { Popover as VanillaPopover } from "@/vendor/ui/components/popover.js";
 import { shouldMarkBoundaryGesture, normalizeWheelDelta } from "@/pages/session/message-gesture.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
 import { useDialog } from "@/lib/dialog.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "../../lib/primitives/resize-observer.js";
 import { useLanguage } from "@/context/language.js";
 import { useSessionKey } from "@/pages/session/session-layout.js";
 import { usePlatform } from "@/context/platform.js";
@@ -36,7 +36,7 @@ import { useSync } from "@/context/sync.js";
 import { messageAgentColor } from "@/utils/agent.js";
 import { sessionTitle } from "@/utils/session-title.js";
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note.js";
-import { makeTimer } from "@solid-primitives/timer";
+import { makeTimer } from "../../lib/primitives/timer.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated and
@@ -481,7 +481,7 @@ export function MessageTimeline(props) {
             name: name()
           });
         });
-        _solidInsert(footerEl, createComponent(Button, {
+        insert(footerEl, createComponent(Button, {
           variant: "ghost",
           size: "large",
           onClick: () => dialog.close(),
@@ -489,7 +489,7 @@ export function MessageTimeline(props) {
             return language.t("common.cancel");
           }
         }), null);
-        _solidInsert(footerEl, createComponent(Button, {
+        insert(footerEl, createComponent(Button, {
           variant: "primary",
           size: "large",
           onClick: handleDelete,
@@ -522,10 +522,10 @@ export function MessageTimeline(props) {
   // ----- Header actions (keyed Show(sessionID()) children, _tmpl$12) -----
   const buildHeaderActions = id => {
     const actionsEl = template(`<div class="shrink-0 d-flex align-items-center gap-3"></div>`);
-    _solidInsert(actionsEl, createComponent(SessionContextUsage, {
+    insert(actionsEl, createComponent(SessionContextUsage, {
       placement: "bottom"
     }), null);
-    _solidInsert(actionsEl, createComponent(Show, {
+    insert(actionsEl, createComponent(Show, {
       get when() {
         return !parentID();
       },
@@ -642,53 +642,35 @@ export function MessageTimeline(props) {
               }
             })];
           }
-        }), createComponent(KobaltePopover, {
+        }), createComponent(VanillaPopover, {
           get open() {
             return share.open;
           },
+          // Anchor-only popover: positioned against the "more" dropdown button,
+          // no own trigger. Esc/outside dismissal + flip handled internally; the
+          // dismiss reason arrives via onDismiss (was onEscapeKeyDown /
+          // onPointerDownOutside / onFocusOutside on the original Content).
           anchorRef: () => more,
           placement: "bottom-end",
           gutter: 4,
           modal: false,
+          contentProps: {
+            style: {
+              "min-width": "320px"
+            }
+          },
           onOpenChange: open => {
             if (open) setShare("dismiss", null);
             setShare("open", open);
           },
+          onDismiss: reason => {
+            setShare("dismiss", reason);
+          },
           get children() {
-            return createComponent(KobaltePopover.Portal, {
-              get children() {
-                return createComponent(KobaltePopover.Content, {
-                  "data-component": "popover-content",
-                  style: {
-                    "min-width": "320px"
-                  },
-                  onEscapeKeyDown: event => {
-                    setShare({
-                      dismiss: "escape",
-                      open: false
-                    });
-                    event.preventDefault();
-                    event.stopPropagation();
-                  },
-                  onPointerDownOutside: () => {
-                    setShare({
-                      dismiss: "outside",
-                      open: false
-                    });
-                  },
-                  onFocusOutside: () => {
-                    setShare({
-                      dismiss: "outside",
-                      open: false
-                    });
-                  },
-                  onCloseAutoFocus: event => {
-                    if (share.dismiss === "outside") event.preventDefault();
-                    setShare("dismiss", null);
-                  },
-                  get children() {
-                    // _tmpl$11: share popover body (Kobalte presence-gated
-                    // content, rebuilt per open).
+            return () => {
+                    // _tmpl$11: share popover body (presence-gated content,
+                    // rebuilt per open via the Popover body insert()).
+                    if (!share.open) return undefined;
                     const body = template(`<div class="d-flex flex-column p-3"><div class="d-flex flex-column gap-1"><div class="fw-medium text-body-emphasis"></div><div class="small fw-normal text-secondary"></div></div><div class="mt-3 d-flex flex-column gap-2"></div></div>`);
                     const popTitleEl = body.firstChild.firstChild;
                     const popDescEl = popTitleEl.nextSibling;
@@ -699,7 +681,7 @@ export function MessageTimeline(props) {
                     createRenderEffect(() => {
                       popDescEl.textContent = shareUrl() ? language.t("session.share.popover.description.shared") : language.t("session.share.popover.description.unshared");
                     });
-                    _solidInsert(popActionsEl, createComponent(Show, {
+                    insert(popActionsEl, createComponent(Show, {
                       get when() {
                         return shareUrl();
                       },
@@ -721,7 +703,7 @@ export function MessageTimeline(props) {
                         // _tmpl$10: shared-state actions.
                         const grid = template(`<div class="d-flex flex-column gap-2"><div class="grid grid-cols-2 gap-2"></div></div>`);
                         const gridRow = grid.firstChild;
-                        _solidInsert(grid, createComponent(TextField, {
+                        insert(grid, createComponent(TextField, {
                           get value() {
                             return shareUrl() ?? "";
                           },
@@ -731,7 +713,7 @@ export function MessageTimeline(props) {
                           tabIndex: -1,
                           "class": "w-100"
                         }), gridRow);
-                        _solidInsert(gridRow, createComponent(Button, {
+                        insert(gridRow, createComponent(Button, {
                           size: "large",
                           variant: "secondary",
                           "class": "w-100 shadow-none border",
@@ -743,7 +725,7 @@ export function MessageTimeline(props) {
                             return controller.timelineUnsharePending() ? language.t("session.share.action.unpublishing") : language.t("session.share.action.unpublish");
                           }
                         }), null);
-                        _solidInsert(gridRow, createComponent(Button, {
+                        insert(gridRow, createComponent(Button, {
                           size: "large",
                           variant: "primary",
                           "class": "w-100",
@@ -759,10 +741,7 @@ export function MessageTimeline(props) {
                       }
                     }));
                     return body;
-                  }
-                });
-              }
-            });
+            };
           }
         })];
       }
@@ -781,7 +760,7 @@ export function MessageTimeline(props) {
     head = headerEl;
     setBar("ms", pace(headerEl.clientWidth));
     // Progress strip, inserted before the title row.
-    _solidInsert(headerEl, createComponent(Show, {
+    insert(headerEl, createComponent(Show, {
       get when() {
         return workingStatus() !== "hidden" && settings.general.showSessionProgressBar();
       },
@@ -790,7 +769,7 @@ export function MessageTimeline(props) {
       }
     }), rowEl);
     // Parent session crumb + separator (_tmpl$3/_tmpl$4), before the spinner box.
-    _solidInsert(titleRowEl, createComponent(Show, {
+    insert(titleRowEl, createComponent(Show, {
       get when() {
         return parentID();
       },
@@ -805,13 +784,13 @@ export function MessageTimeline(props) {
       }
     }), spinnerBoxEl);
     // Working spinner (_tmpl$5).
-    _solidInsert(spinnerBoxEl, createComponent(Show, {
+    insert(spinnerBoxEl, createComponent(Show, {
       get when() {
         return workingStatus() !== "hidden";
       },
       get children() {
         const wrap = template(`<div class="transition-opacity duration-200 ease-out"></div>`);
-        _solidInsert(wrap, createComponent(Spinner, {
+        insert(wrap, createComponent(Spinner, {
           "class": "size-4",
           get style() {
             return {
@@ -824,7 +803,7 @@ export function MessageTimeline(props) {
       }
     }));
     // Session title: static heading (_tmpl$1) or the inline editor.
-    _solidInsert(titleRowEl, createComponent(Show, {
+    insert(titleRowEl, createComponent(Show, {
       get when() {
         return childTitle() || title.editing;
       },
@@ -878,7 +857,7 @@ export function MessageTimeline(props) {
       }
     }), null);
     // Header actions, keyed by session id.
-    _solidInsert(rowEl, createComponent(Show, {
+    insert(rowEl, createComponent(Show, {
       get when() {
         return sessionID();
       },
@@ -912,7 +891,7 @@ export function MessageTimeline(props) {
     const headRowEl = card.firstChild;
     const nameEl = headRowEl.firstChild;
     const bodyEl = headRowEl.nextSibling;
-    _solidInsert(headRowEl, createComponent(FileIcon, {
+    insert(headRowEl, createComponent(FileIcon, {
       get node() {
         return {
           path: c().path,
@@ -924,7 +903,7 @@ export function MessageTimeline(props) {
     createRenderEffect(() => {
       nameEl.textContent = getFilename(c().path);
     });
-    _solidInsert(headRowEl, createComponent(Show, {
+    insert(headRowEl, createComponent(Show, {
       get when() {
         return c().selection;
       },
@@ -952,7 +931,7 @@ export function MessageTimeline(props) {
     const commentCount = createMemo(() => comments().length);
     const row = template(`<div></div>`);
     row.setAttribute("data-message-id", messageID);
-    _solidInsert(row, createComponent(Show, {
+    insert(row, createComponent(Show, {
       get when() {
         return commentCount() > 0;
       },
@@ -962,7 +941,7 @@ export function MessageTimeline(props) {
         const stripRow = strip.firstChild.firstChild;
         // Runtime Index reuses card slots per position while comments() only
         // changes identity on real content changes (custom equals above).
-        _solidInsert(stripRow, createComponent(Index, {
+        insert(stripRow, createComponent(Index, {
           get each() {
             return comments();
           },
@@ -979,7 +958,7 @@ export function MessageTimeline(props) {
         return strip;
       }
     }), null);
-    _solidInsert(row, createComponent(SessionTurn, {
+    insert(row, createComponent(SessionTurn, {
       get sessionID() {
         return sessionID() ?? "";
       },
@@ -1056,7 +1035,7 @@ export function MessageTimeline(props) {
     const contentRef = props.setContentRef;
     if (typeof contentRef === "function") contentRef(contentEl);
     else props.setContentRef = contentEl;
-    _solidInsert(contentEl, createComponent(Show, {
+    insert(contentEl, createComponent(Show, {
       get when() {
         return showHeader();
       },
@@ -1065,13 +1044,13 @@ export function MessageTimeline(props) {
       }
     }), turnListEl);
     // Load-earlier control (_tmpl$7).
-    _solidInsert(turnListEl, createComponent(Show, {
+    insert(turnListEl, createComponent(Show, {
       get when() {
         return props.turnStart > 0 || props.historyMore;
       },
       get children() {
         const wrap = template(`<div class="w-100 d-flex justify-content-center"></div>`);
-        _solidInsert(wrap, createComponent(Button, {
+        insert(wrap, createComponent(Button, {
           variant: "ghost",
           size: "large",
           "class": "small fw-medium opacity-50",
@@ -1091,7 +1070,7 @@ export function MessageTimeline(props) {
     // Runtime For keeps row nodes keyed by message id, so turns (and their
     // content-visibility state) are reused across sync updates even though
     // rendered() returns a fresh array identity each time.
-    _solidInsert(turnListEl, createComponent(For, {
+    insert(turnListEl, createComponent(For, {
       get each() {
         return rendered();
       },
@@ -1120,11 +1099,11 @@ export function MessageTimeline(props) {
     // Compiled delegated $$click -> direct listener (handler read once at
     // creation, exactly like the compiled addEventListener).
     jumpBtn.addEventListener("click", props.onResumeScroll);
-    _solidInsert(jumpIconBox, createComponent(Icon, {
+    insert(jumpIconBox, createComponent(Icon, {
       name: "arrow-down-to-line",
       size: "small"
     }));
-    _solidInsert(rootEl, createComponent(ScrollView, {
+    insert(rootEl, createComponent(ScrollView, {
       get viewportRef() {
         return props.setScrollRef;
       },
@@ -1213,7 +1192,7 @@ export function MessageTimeline(props) {
       // _tmpl$0: mobile fallback host; the forwarded child stays reactive
       // through insert().
       const fallbackEl = template(`<div class="relative h-full overflow-hidden"></div>`);
-      _solidInsert(fallbackEl, () => props.mobileFallback);
+      insert(fallbackEl, () => props.mobileFallback);
       return fallbackEl;
     },
     get children() {

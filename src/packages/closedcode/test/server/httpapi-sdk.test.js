@@ -5,7 +5,7 @@ import {  resetDatabase  } from "../fixture/db.js"
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
 import {  it  } from "../lib/effect.js"
 import {  Flag  } from "core/flag/flag"
-import {  createOpencodeClient  } from "sdk/v2"
+import {  createClosedcodeClient  } from "sdk/v2"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  ExperimentalHttpApiServer  } from "../../src/server/routes/instance/httpapi/server.js"
 import {  Server  } from "../../src/server/server.js"
@@ -45,7 +45,7 @@ function client(backend, directory, input) {
   const fetch = Object.assign(async (request, init) => await serverApp.fetch(request instanceof Request ? request : new Request(request, init)), {
     preconnect: globalThis.fetch.preconnect
   });
-  return createOpencodeClient({
+  return createClosedcodeClient({
     baseUrl: "http://localhost",
     directory,
     headers: input?.headers,

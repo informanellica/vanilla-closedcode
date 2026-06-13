@@ -1,7 +1,7 @@
 import { createEffect, on, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createEventListener } from "@solid-primitives/event-listener";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createEventListener } from "../../../lib/primitives/event-listener.js";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 export function createAutoScroll(options) {
   let settling = false;
   let settleTimer;

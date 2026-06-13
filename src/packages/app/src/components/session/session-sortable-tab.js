@@ -1,5 +1,5 @@
 import { createComponent, createMemo, createRenderEffect } from "solid-js";
-import { createSortable } from "@thisbeyond/solid-dnd";
+import { createSortable } from "../../lib/dnd/index.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";

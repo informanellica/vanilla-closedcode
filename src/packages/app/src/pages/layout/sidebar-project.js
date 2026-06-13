@@ -1,10 +1,10 @@
-// Kobalte presence-gated content flows through the insertions below: the
+// Presence-gated content flows through the insertions below: the
 // ContextMenu/HoverCard component trees resolve to [trigger, portal marker]
 // arrays whose membership changes whenever a portal mounts/unmounts, and the
 // session lists are For-reconciled rows inside the hover-card panel. insert()
 // reconciles those arrays in place instead of detaching the live trigger or
 // session nodes, so it stays (established exception).
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createMemo, createRenderEffect, For, mergeProps, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
 import { base64Encode } from "core/util/encode";
@@ -12,7 +12,7 @@ import { Button } from "@/bs/button.js";
 import { ContextMenu } from "@/vendor/ui/components/context-menu.js";
 import { HoverCard } from "@/vendor/ui/components/hover-card.js";
 import { Icon } from "@/bs/icon.js";
-import { createSortable } from "@thisbeyond/solid-dnd";
+import { createSortable } from "../../lib/dnd/index.js";
 import { useLayout } from "@/context/layout.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLanguage } from "@/context/language.js";
@@ -210,7 +210,7 @@ const ProjectPreviewPanel = props => {
   bindText(recentLabel, () => props.language.t("sidebar.project.recentSessions"));
   // Session rows live inside the presence-gated hover-card content; keep
   // Show/For + insert so row identity is preserved across list updates.
-  _solidInsert(sessionList, createComponent(Show, {
+  insert(sessionList, createComponent(Show, {
     get when() {
       return props.workspaceEnabled();
     },
@@ -252,7 +252,7 @@ const ProjectPreviewPanel = props => {
             "class": "text-secondary"
           }));
           bindText(labelEl, () => props.label(directory));
-          _solidInsert(row, createComponent(For, {
+          insert(row, createComponent(For, {
             get each() {
               return sessions().slice(0, 2);
             },
@@ -374,7 +374,7 @@ export const SortableProject = props => {
   // use:sortable directive (compiled use() helper): run untracked, exactly
   // like solid-js/web's use() does.
   untrack(() => sortable(root, () => true));
-  _solidInsert(root, createComponent(Show, {
+  insert(root, createComponent(Show, {
     get when() {
       return preview() && !selected();
     },

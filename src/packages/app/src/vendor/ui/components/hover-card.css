@@ -17,7 +17,7 @@
   background-clip: padding-box;
   box-shadow: var(--shadow-md);
 
-  transform-origin: var(--kb-hovercard-content-transform-origin);
+  transform-origin: var(--vcc-hovercard-content-transform-origin);
 
   &:focus-within {
     outline: none;

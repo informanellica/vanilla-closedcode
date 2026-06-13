@@ -1,6 +1,6 @@
 import { createEffect, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createSimpleContext } from "../context/helper.js";
 
 // Bootstrap 5.3 color modes only. The single source of truth for colors is the
@@ -47,7 +47,7 @@ export const {
 } = createSimpleContext({
   name: "Theme",
   init: props => {
-    const stored = read(STORAGE_KEYS.COLOR_SCHEME) ?? read("opencode-color-scheme");
+    const stored = read(STORAGE_KEYS.COLOR_SCHEME);
     const colorScheme = stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
     const [store, setStore] = createStore({
       colorScheme,

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-const src = await readFile(fileURLToPath(new URL("../public/oc-theme-preload.js", import.meta.url)), "utf8");
+const src = await readFile(fileURLToPath(new URL("../public/vcc-theme-preload.js", import.meta.url)), "utf8");
 const run = () => Function(src)();
 const setMatchMedia = matches => {
   Object.defineProperty(window, "matchMedia", {
@@ -36,19 +36,14 @@ describe("theme preload", () => {
     run();
     expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
   });
-  test("falls back to legacy opencode-color-scheme key", () => {
+  test("ignores legacy opencode-color-scheme key", () => {
     localStorage.setItem("opencode-color-scheme", "dark");
-    run();
-    expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
-  });
-  test("canonical key takes precedence over legacy key", () => {
-    localStorage.setItem("closedcode-color-scheme", "light");
-    localStorage.setItem("opencode-color-scheme", "dark");
+    setMatchMedia(false);
     run();
     expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
   });
   test("does not inject token CSS", () => {
     run();
-    expect(document.getElementById("oc-theme-preload")).toBeNull();
+    expect(document.getElementById("vcc-theme-preload")).toBeNull();
   });
 });

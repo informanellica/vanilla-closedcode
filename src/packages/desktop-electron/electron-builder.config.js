@@ -19,7 +19,7 @@ const getBase = () => ({
     buildResources: "resources"
   },
   // Build-less: include src/ (main + preload + renderer entry) alongside
-  // out/ (static assets, workspace source trees, sidecar). The oc:// resolver
+  // out/ (static assets, workspace source trees, sidecar). The vcc:// resolver
   // serves renderer modules from src/ and out/ with import rewriting.
   files: ["out/**/*", "src/**/*", "resources/**/*"],
   // The sidecar bundle uses ESM dynamic imports + sibling .wasm files; those

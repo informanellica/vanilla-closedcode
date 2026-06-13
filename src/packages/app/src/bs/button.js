@@ -1,4 +1,4 @@
-import { createRenderEffect as _solidRenderEffect } from "solid-js";
+import { createRenderEffect } from "solid-js";
 import { Icon } from "@/bs/icon.js";
 
 const VARIANT_CLASS = {
@@ -74,7 +74,7 @@ export function Button(props) {
 
   // Attribute props (disabled, aria-*, …) are often signal-backed getters;
   // re-apply them in an effect instead of reading them once at creation.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     for (const key in props) {
       if (STATIC_KEYS.includes(key) || /^on[A-Z]/.test(key)) continue;
       const value = props[key];
@@ -85,7 +85,7 @@ export function Button(props) {
 
   children.forEach(child => button.appendChild(child));
 
-  // Solid ref forwarding: Kobalte's Popover Trigger measures its anchor via
+  // Solid ref forwarding: the popover trigger measures its anchor via
   // ref — without this the popover renders at the viewport origin (top-left).
   if (typeof props.ref === "function") props.ref(button);
   else if ("ref" in props) { try { props.ref = button; } catch {} }

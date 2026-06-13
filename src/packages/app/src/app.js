@@ -1,8 +1,8 @@
 // insert() from solid-js/web is the established exception for reactive /
 // component-valued children (Suspense/Show branches, For-mapped rows): Solid
 // keeps reconciling the accessors instead of freezing a one-time snapshot.
-import { insert as _solidInsert } from "solid-js/web";
-import * as Sentry from "@sentry/solid";
+import { insert } from "solid-js/web";
+import * as Sentry from "@sentry/browser";
 import { I18nProvider } from "@/lib/context.js";
 import { DialogProvider } from "@/lib/dialog.js";
 import { FileComponentProvider } from "@/vendor/ui/context/file.js";
@@ -11,9 +11,9 @@ import { File } from "@/vendor/ui/components/file.js";
 import { Font } from "@/vendor/ui/components/font.js";
 import { Splash } from "@/vendor/ui/components/logo.js";
 import { ThemeProvider } from "@/lib/theme.js";
-import { MetaProvider } from "@solidjs/meta";
-import { Navigate, Route, Router } from "@solidjs/router";
-import { QueryClient, QueryClientProvider } from "@tanstack/solid-query";
+import { MetaProvider } from "./lib/primitives/meta.js";
+import { Navigate, Route, Router } from "./lib/router/index.js";
+import { QueryClient, QueryClientProvider } from "./lib/query/index.js";
 import { Effect } from "effect";
 import { createComponent, createMemo, createRenderEffect, createResource, createSignal, ErrorBoundary, For, lazy, onCleanup, Show, Suspense } from "solid-js";
 import { Dynamic } from "solid-js/web";
@@ -325,7 +325,7 @@ function ConnectionError(props) {
   // Other-servers block. Show + For are kept so row DOM identity survives
   // list updates; appended after the message column via insert() with an
   // explicit null marker (append mode, established exception).
-  _solidInsert(root, createComponent(Show, {
+  insert(root, createComponent(Show, {
     get when() {
       return others().length > 0;
     },
@@ -336,7 +336,7 @@ function ConnectionError(props) {
       createRenderEffect(() => {
         label.textContent = language.t("app.server.otherServers");
       });
-      _solidInsert(list, createComponent(For, {
+      insert(list, createComponent(For, {
         get each() {
           return others();
         },

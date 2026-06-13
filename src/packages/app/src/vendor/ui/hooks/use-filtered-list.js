@@ -2,7 +2,7 @@ import fuzzysort from "fuzzysort";
 import { entries, flatMap, groupBy, map, pipe } from "remeda";
 import { createEffect, createMemo, createResource, on } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createList } from "solid-list";
+import { createList } from "../../../lib/primitives/solid-list.js";
 export function useFilteredList(props) {
   const [store, setStore] = createStore({
     filter: ""

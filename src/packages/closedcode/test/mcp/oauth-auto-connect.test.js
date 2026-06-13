@@ -118,7 +118,7 @@ const {
 test("first connect to OAuth server shows needs_auth instead of failed", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-oauth": {
             type: "remote",
@@ -208,7 +208,7 @@ test("state() returns existing state when one is saved", async () => {
 test("authenticate() stores a connected client when auth completes without redirect", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await writeFile(`${dir}/opencode.json`, JSON.stringify({
+      await writeFile(`${dir}/closedcode.json`, JSON.stringify({
         mcp: {
           "test-oauth-connect": {
             type: "remote",

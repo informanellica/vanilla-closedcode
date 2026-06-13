@@ -1,7 +1,7 @@
 import { DataProvider } from "@/lib/context.js";
 import { showToast } from "@/lib/toast.js";
 import { base64Encode } from "core/util/encode";
-import { useLocation, useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "../lib/router/index.js";
 import { createComponent, createEffect, createMemo, createResource } from "solid-js";
 import { useLanguage } from "@/context/language.js";
 import { LocalProvider } from "@/context/local.js";

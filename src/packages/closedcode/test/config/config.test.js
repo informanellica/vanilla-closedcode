@@ -64,13 +64,13 @@ afterEach(async () => {
   }).catch(() => {});
   await clear(true);
 });
-async function writeManagedSettings(settings, filename = "opencode.json") {
+async function writeManagedSettings(settings, filename = "closedcode.json") {
   await fs.mkdir(managedConfigDir, {
     recursive: true
   });
   await Filesystem.write(path.join(managedConfigDir, filename), JSON.stringify(settings));
 }
-async function writeConfig(dir, config, name = "opencode.json") {
+async function writeConfig(dir, config, name = "closedcode.json") {
   await Filesystem.write(path.join(dir, name), JSON.stringify(config));
 }
 async function check(map) {
@@ -88,7 +88,7 @@ async function check(map) {
   try {
     await writeConfig(globalTmp.path, {
       snapshot: false
-    });
+    }, "closedcode.json");
     await WithInstance.provide({
       directory: map(tmp.path),
       fn: async () => {
@@ -172,7 +172,7 @@ test("updates global config and omits empty shell key in json", async () => {
     init: async dir => {
       await writeConfig(dir, {
         shell: "bash"
-      });
+      }, "closedcode.json");
     }
   });
   const prev = Global.Path.config;
@@ -182,7 +182,7 @@ test("updates global config and omits empty shell key in json", async () => {
     await saveGlobal({
       shell: ""
     });
-    const writtenConfig = await Filesystem.readJson(path.join(tmp.path, "opencode.json"));
+    const writtenConfig = await Filesystem.readJson(path.join(tmp.path, "closedcode.json"));
     expect("shell" in writtenConfig).toBe(false);
   } finally {
     ;
@@ -193,7 +193,7 @@ test("updates global config and omits empty shell key in json", async () => {
 test("updates global config and omits empty shell key in jsonc", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.jsonc"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.jsonc"), JSON.stringify({
         shell: "bash",
         model: "test/model"
       }));
@@ -206,7 +206,7 @@ test("updates global config and omits empty shell key in jsonc", async () => {
     await saveGlobal({
       shell: ""
     });
-    const file = path.join(tmp.path, "opencode.jsonc");
+    const file = path.join(tmp.path, "closedcode.jsonc");
     const writtenConfig = await Filesystem.readText(file);
     const parsed = ConfigParse.schema(Config.Info.zod, ConfigParse.jsonc(writtenConfig, file), file);
     expect(writtenConfig).not.toContain('"shell"');
@@ -290,7 +290,7 @@ test("ignores legacy tui keys in opencode config", async () => {
 test("loads JSONC config file", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.jsonc"), `{
+      await Filesystem.write(path.join(dir, "closedcode.jsonc"), `{
         // This is a comment
         "model": "test/model",
         "username": "testuser"
@@ -312,7 +312,7 @@ test("jsonc overrides json in the same directory", async () => {
       await writeConfig(dir, {
         model: "base",
         username: "base"
-      }, "opencode.jsonc");
+      }, "closedcode.jsonc");
       await writeConfig(dir, {
         model: "override"
       });
@@ -360,7 +360,7 @@ test("does not rewrite config file or leak resolved env variables on load", asyn
     await using tmp = await tmpdir({
       init: async dir => {
         // Config without $schema - loading must not rewrite the file
-        await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+        await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
           username: "{env:PRESERVE_VAR}"
         }));
       }
@@ -372,7 +372,7 @@ test("does not rewrite config file or leak resolved env variables on load", asyn
         expect(config.username).toBe("secret_value");
 
         // Read the file to verify the env variable was preserved
-        const content = await Filesystem.readText(path.join(tmp.path, "opencode.json"));
+        const content = await Filesystem.readText(path.join(tmp.path, "closedcode.json"));
         expect(content).toContain("{env:PRESERVE_VAR}");
         expect(content).not.toContain("secret_value");
         // No $schema auto-injection: closedcode does not host a public config schema.
@@ -486,7 +486,7 @@ test("validates config schema and throws on invalid fields", async () => {
 test("throws error for invalid JSON", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), "{ invalid json }");
+      await Filesystem.write(path.join(dir, "closedcode.json"), "{ invalid json }");
     }
   });
   await provideTestInstance({
@@ -578,7 +578,7 @@ test("handles command configuration", async () => {
 test("migrates autoshare to share field", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         autoshare: true
       }));
     }
@@ -595,7 +595,7 @@ test("migrates autoshare to share field", async () => {
 test("migrates mode field to agent field", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         mode: {
           test_mode: {
             model: "test/model",
@@ -619,14 +619,14 @@ test("migrates mode field to agent field", async () => {
     }
   });
 });
-test("loads config from .opencode directory", async () => {
+test("loads config from .closedcode directory", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      const agentDir = path.join(opencodeDir, "agent");
+      const agentDir = path.join(closedcodeDir, "agent");
       await fs.mkdir(agentDir, {
         recursive: true
       });
@@ -651,7 +651,7 @@ Test agent prompt`);
 test("agent markdown permission config preserves user key order", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const agentDir = path.join(dir, ".opencode", "agent");
+      const agentDir = path.join(dir, ".closedcode", "agent");
       await fs.mkdir(agentDir, {
         recursive: true
       });
@@ -672,14 +672,14 @@ Ordered permissions`);
     }
   });
 });
-test("loads agents from .opencode/agents (plural)", async () => {
+test("loads agents from .closedcode/agents (plural)", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      const agentsDir = path.join(opencodeDir, "agents");
+      const agentsDir = path.join(closedcodeDir, "agents");
       await fs.mkdir(path.join(agentsDir, "nested"), {
         recursive: true
       });
@@ -714,14 +714,14 @@ Nested agent prompt`);
     }
   });
 });
-test("loads commands from .opencode/command (singular)", async () => {
+test("loads commands from .closedcode/command (singular)", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      const commandDir = path.join(opencodeDir, "command");
+      const commandDir = path.join(closedcodeDir, "command");
       await fs.mkdir(path.join(commandDir, "nested"), {
         recursive: true
       });
@@ -750,14 +750,14 @@ Nested command template`);
     }
   });
 });
-test("loads commands from .opencode/commands (plural)", async () => {
+test("loads commands from .closedcode/commands (plural)", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      const commandsDir = path.join(opencodeDir, "commands");
+      const commandsDir = path.join(closedcodeDir, "commands");
       await fs.mkdir(path.join(commandsDir, "nested"), {
         recursive: true
       });
@@ -894,7 +894,7 @@ test("resolves scoped npm plugins in config", async () => {
         main: "./index.js"
       }, null, 2));
       await Filesystem.write(path.join(pluginDir, "index.js"), "export default {}\n");
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         plugin: ["@scope/plugin"]
       }, null, 2));
     }
@@ -911,20 +911,20 @@ test("resolves scoped npm plugins in config", async () => {
 test("merges plugin arrays from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      // Create a nested project structure with local .opencode config
+      // Create a nested project structure with local .closedcode config
       const projectDir = path.join(dir, "project");
-      const opencodeDir = path.join(projectDir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(projectDir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
 
       // Global config with plugins
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         plugin: ["global-plugin-1", "global-plugin-2"]
       }));
 
-      // Local .opencode config with different plugins
-      await Filesystem.write(path.join(opencodeDir, "opencode.json"), JSON.stringify({
+      // Local .closedcode config with different plugins
+      await Filesystem.write(path.join(closedcodeDir, "closedcode.json"), JSON.stringify({
         plugin: ["local-plugin-1"]
       }));
     }
@@ -949,11 +949,11 @@ test("merges plugin arrays from global and local configs", async () => {
 test("does not error when only custom agent is a subagent", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      const agentDir = path.join(opencodeDir, "agent");
+      const agentDir = path.join(closedcodeDir, "agent");
       await fs.mkdir(agentDir, {
         recursive: true
       });
@@ -981,14 +981,14 @@ test("merges instructions arrays from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
       const projectDir = path.join(dir, "project");
-      const opencodeDir = path.join(projectDir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(projectDir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         instructions: ["global-instructions.md", "shared-rules.md"]
       }));
-      await Filesystem.write(path.join(opencodeDir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(closedcodeDir, "closedcode.json"), JSON.stringify({
         instructions: ["local-instructions.md"]
       }));
     }
@@ -1009,14 +1009,14 @@ test("deduplicates duplicate instructions from global and local configs", async 
   await using tmp = await tmpdir({
     init: async dir => {
       const projectDir = path.join(dir, "project");
-      const opencodeDir = path.join(projectDir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(projectDir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         instructions: ["duplicate.md", "global-only.md"]
       }));
-      await Filesystem.write(path.join(opencodeDir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(closedcodeDir, "closedcode.json"), JSON.stringify({
         instructions: ["duplicate.md", "local-only.md"]
       }));
     }
@@ -1038,20 +1038,20 @@ test("deduplicates duplicate instructions from global and local configs", async 
 test("deduplicates duplicate plugins from global and local configs", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      // Create a nested project structure with local .opencode config
+      // Create a nested project structure with local .closedcode config
       const projectDir = path.join(dir, "project");
-      const opencodeDir = path.join(projectDir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      const closedcodeDir = path.join(projectDir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
 
       // Global config with plugins
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         plugin: ["duplicate-plugin", "global-plugin-1"]
       }));
 
-      // Local .opencode config with some overlapping plugins
-      await Filesystem.write(path.join(opencodeDir, "opencode.json"), JSON.stringify({
+      // Local .closedcode config with some overlapping plugins
+      await Filesystem.write(path.join(closedcodeDir, "closedcode.json"), JSON.stringify({
         plugin: ["duplicate-plugin", "local-plugin-1"]
       }));
     }
@@ -1081,16 +1081,16 @@ test("keeps plugin origins aligned with merged plugin list", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
       const project = path.join(dir, "project");
-      const local = path.join(project, ".opencode");
+      const local = path.join(project, ".closedcode");
       await fs.mkdir(local, {
         recursive: true
       });
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         plugin: [["shared-plugin@1.0.0", {
           source: "global"
         }], "global-only@1.0.0"]
       }));
-      await Filesystem.write(path.join(local, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(local, "closedcode.json"), JSON.stringify({
         plugin: [["shared-plugin@2.0.0", {
           source: "local"
         }], "local-only@1.0.0"]
@@ -1120,7 +1120,7 @@ test("keeps plugin origins aligned with merged plugin list", async () => {
 test("migrates legacy tools config to permissions - allow", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1146,7 +1146,7 @@ test("migrates legacy tools config to permissions - allow", async () => {
 test("migrates legacy tools config to permissions - deny", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1172,7 +1172,7 @@ test("migrates legacy tools config to permissions - deny", async () => {
 test("migrates legacy write tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1262,7 +1262,7 @@ test("missing managed settings file is not an error", async () => {
 test("migrates legacy edit tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1286,7 +1286,7 @@ test("migrates legacy edit tool to edit permission", async () => {
 test("migrates legacy patch tool to edit permission", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1310,7 +1310,7 @@ test("migrates legacy patch tool to edit permission", async () => {
 test("migrates mixed legacy tools config", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             tools: {
@@ -1340,7 +1340,7 @@ test("migrates mixed legacy tools config", async () => {
 test("merges legacy tools with existing permission config", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         agent: {
           test: {
             permission: {
@@ -1370,7 +1370,7 @@ test("permission config preserves user key order", async () => {
   // must not canonicalise known keys ahead of wildcard or custom keys.
   await using tmp = await tmpdir({
     init: async dir => {
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         permission: {
           "*": "deny",
           edit: "ask",
@@ -1424,7 +1424,7 @@ test("project config can override MCP server enabled status", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
       // Simulates a base config (like from remote .well-known) with disabled MCP
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         mcp: {
           jira: {
             type: "remote",
@@ -1439,7 +1439,7 @@ test("project config can override MCP server enabled status", async () => {
         }
       }));
       // Project config enables just jira
-      await Filesystem.write(path.join(dir, "opencode.jsonc"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.jsonc"), JSON.stringify({
         mcp: {
           jira: {
             type: "remote",
@@ -1473,7 +1473,7 @@ test("MCP config deep merges preserving base config properties", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
       // Base config with full MCP definition
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         mcp: {
           myserver: {
             type: "remote",
@@ -1486,7 +1486,7 @@ test("MCP config deep merges preserving base config properties", async () => {
         }
       }));
       // Override just enables it, should preserve other properties
-      await Filesystem.write(path.join(dir, "opencode.jsonc"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.jsonc"), JSON.stringify({
         mcp: {
           myserver: {
             type: "remote",
@@ -1512,11 +1512,11 @@ test("MCP config deep merges preserving base config properties", async () => {
     }
   });
 });
-test("local .opencode config can override MCP from project config", async () => {
+test("local .closedcode config can override MCP from project config", async () => {
   await using tmp = await tmpdir({
     init: async dir => {
       // Project config with disabled MCP
-      await Filesystem.write(path.join(dir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(dir, "closedcode.json"), JSON.stringify({
         mcp: {
           docs: {
             type: "remote",
@@ -1525,12 +1525,12 @@ test("local .opencode config can override MCP from project config", async () => 
           }
         }
       }));
-      // Local .opencode directory config enables it
-      const opencodeDir = path.join(dir, ".opencode");
-      await fs.mkdir(opencodeDir, {
+      // Local .closedcode directory config enables it
+      const closedcodeDir = path.join(dir, ".closedcode");
+      await fs.mkdir(closedcodeDir, {
         recursive: true
       });
-      await Filesystem.write(path.join(opencodeDir, "opencode.json"), JSON.stringify({
+      await Filesystem.write(path.join(closedcodeDir, "closedcode.json"), JSON.stringify({
         mcp: {
           docs: {
             type: "remote",

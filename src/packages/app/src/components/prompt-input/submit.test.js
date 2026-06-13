@@ -61,12 +61,12 @@ const clientFor = directory => {
 };
 beforeAll(async () => {
   const rootClient = clientFor("/repo/main");
-  mock.module("@solidjs/router", () => ({
+  mock.module("../../lib/router/index.js", () => ({
     useNavigate: () => () => undefined,
     useParams: () => params
   }));
   mock.module("sdk/v2/client", () => ({
-    createOpencodeClient: input => {
+    createClosedcodeClient: input => {
       createdClients.push(input.directory);
       return clientFor(input.directory);
     }

@@ -22,12 +22,9 @@ describe("layout deep links", () => {
   test("parses closedcode:// open-project deep links", () => {
     expect(parseDeepLink("closedcode://open-project?directory=/tmp/demo")).toBe("/tmp/demo");
   });
-  test("parses legacy opencode:// open-project deep links", () => {
-    expect(parseDeepLink("opencode://open-project?directory=/tmp/demo")).toBe("/tmp/demo");
-  });
   test("ignores non-project deep links", () => {
     expect(parseDeepLink("closedcode://other?directory=/tmp/demo")).toBeUndefined();
-    expect(parseDeepLink("opencode://other?directory=/tmp/demo")).toBeUndefined();
+    expect(parseDeepLink("opencode://open-project?directory=/tmp/demo")).toBeUndefined();
     expect(parseDeepLink("https://example.com")).toBeUndefined();
   });
   test("ignores malformed deep links safely", () => {
@@ -55,9 +52,9 @@ describe("layout deep links", () => {
     const result = collectOpenProjectDeepLinks(["closedcode://open-project?directory=/a", "closedcode://other?directory=/b", "closedcode://open-project?directory=/c"]);
     expect(result).toEqual(["/a", "/c"]);
   });
-  test("collects open-project directories from mixed protocols", () => {
+  test("ignores opencode:// links when collecting open-project directories", () => {
     const result = collectOpenProjectDeepLinks(["closedcode://open-project?directory=/a", "opencode://open-project?directory=/b"]);
-    expect(result).toEqual(["/a", "/b"]);
+    expect(result).toEqual(["/a"]);
   });
   test("parses closedcode:// new-session deep links with optional prompt", () => {
     expect(parseNewSessionDeepLink("closedcode://new-session?directory=/tmp/demo")).toEqual({
@@ -68,10 +65,8 @@ describe("layout deep links", () => {
       prompt: "hello world"
     });
   });
-  test("parses legacy opencode:// new-session deep links", () => {
-    expect(parseNewSessionDeepLink("opencode://new-session?directory=/tmp/demo")).toEqual({
-      directory: "/tmp/demo"
-    });
+  test("ignores opencode:// new-session deep links", () => {
+    expect(parseNewSessionDeepLink("opencode://new-session?directory=/tmp/demo")).toBeUndefined();
   });
   test("ignores new-session deep links without directory", () => {
     expect(parseNewSessionDeepLink("closedcode://new-session")).toBeUndefined();

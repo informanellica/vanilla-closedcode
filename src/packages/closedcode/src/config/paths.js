@@ -18,11 +18,11 @@ export const files = Effect.fn("ConfigPaths.projectFiles")(function* (name, dire
 export const directories = Effect.fn("ConfigPaths.directories")(function* (directory, worktree) {
   const afs = yield* AppFileSystem.Service;
   return unique([Global.Path.config, ...(!Flag.CLOSEDCODE_DISABLE_PROJECT_CONFIG ? yield* afs.up({
-    targets: [".closedcode", ".opencode"],
+    targets: [".closedcode"],
     start: directory,
     stop: worktree
   }) : []), ...(yield* afs.up({
-    targets: [".closedcode", ".opencode"],
+    targets: [".closedcode"],
     start: Global.Path.home,
     stop: Global.Path.home
   })), ...(Flag.CLOSEDCODE_CONFIG_DIR ? [Flag.CLOSEDCODE_CONFIG_DIR] : [])]);

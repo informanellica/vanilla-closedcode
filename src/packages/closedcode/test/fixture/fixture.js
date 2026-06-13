@@ -67,7 +67,7 @@ export async function tmpdir(options) {
   }
   if (options?.config) {
     await fs.writeFile(
-      path.join(dirpath, "opencode.json"),
+      path.join(dirpath, "closedcode.json"),
       JSON.stringify({ ...options.config }),
     );
   }
@@ -114,7 +114,7 @@ export function tmpdirScoped(options) {
     if (options?.config) {
       yield* Effect.promise(() =>
         fs.writeFile(
-          path.join(dir, "opencode.json"),
+          path.join(dir, "closedcode.json"),
           JSON.stringify({ ...options.config }),
         ),
       );

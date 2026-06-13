@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, For, Show } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { insert } from "solid-js/web";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "../../lib/dnd/index.js";
 import { ConstrainDragXAxis } from "@/utils/solid-dnd.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip, TooltipKeybind } from "@/bs/tooltip.js";
@@ -52,7 +52,7 @@ export const SidebarContent = props => {
 
   // Drag-and-drop provider holding the sortable project list and the
   // "add project" tooltip/button. Inserted into projectList.
-  _solidInsert(projectList, createComponent(DragDropProvider, {
+  insert(projectList, createComponent(DragDropProvider, {
     get onDragStart() {
       return props.handleDragStart;
     },
@@ -69,7 +69,7 @@ export const SidebarContent = props => {
         const column = document.createElement("div");
         column.className = "h-100 w-100 d-flex flex-column align-items-center gap-3 px-3 py-3 overflow-y-auto no-scrollbar";
 
-        _solidInsert(column, createComponent(SortableProvider, {
+        insert(column, createComponent(SortableProvider, {
           get ids() {
             return props.projects().map(p => p.worktree);
           },
@@ -83,7 +83,7 @@ export const SidebarContent = props => {
           }
         }), null);
 
-        _solidInsert(column, createComponent(Tooltip, {
+        insert(column, createComponent(Tooltip, {
           get placement() {
             return placement();
           },
@@ -94,8 +94,8 @@ export const SidebarContent = props => {
             tip.className = "d-flex align-items-center gap-2";
             const labelSpan = document.createElement("span");
             tip.appendChild(labelSpan);
-            _solidInsert(labelSpan, () => props.openProjectLabel);
-            _solidInsert(tip, createComponent(Show, {
+            insert(labelSpan, () => props.openProjectLabel);
+            insert(tip, createComponent(Show, {
               get when() {
                 return !props.mobile && !!props.openProjectKeybind();
               },
@@ -103,7 +103,7 @@ export const SidebarContent = props => {
                 // _tmpl$3: keybind hint span.
                 const hint = document.createElement("span");
                 hint.className = "text-secondary small fw-medium";
-                _solidInsert(hint, () => props.openProjectKeybind());
+                insert(hint, () => props.openProjectKeybind());
                 return hint;
               }
             }), null);
@@ -134,7 +134,7 @@ export const SidebarContent = props => {
   }));
 
   // Rail footer: settings (keybind tooltip) + help (plain tooltip) buttons.
-  _solidInsert(railFooter, createComponent(TooltipKeybind, {
+  insert(railFooter, createComponent(TooltipKeybind, {
     get placement() {
       return placement();
     },
@@ -159,7 +159,7 @@ export const SidebarContent = props => {
     }
   }), null);
 
-  _solidInsert(railFooter, createComponent(Tooltip, {
+  insert(railFooter, createComponent(Tooltip, {
     get placement() {
       return placement();
     },
@@ -182,7 +182,7 @@ export const SidebarContent = props => {
   }), null);
 
   // Panel content.
-  _solidInsert(panelEl, () => props.renderPanel());
+  insert(panelEl, () => props.renderPanel());
 
   // Panel dynamic class list + aria-hidden, change-guarded like the compiled
   // effect(). The base classes are always present; "pointer-events-none" and

@@ -1,6 +1,23 @@
+// Wordmark block-glyphs. Each glyph is 4 rows x 4 cols built from █ ▀ ▄ plus the
+// shadow markers (_ ^ ~ ,) that the renderers (cli/ui.js, vanilla/logo.js)
+// flatten/recolor. Spells "closedcode" — left half "closed", right half "code".
+// Reuses the original c/o/d/e glyphs; l/s were added for the opencode->closedcode
+// rebrand. Assembled programmatically so the per-row glyph spacing can't drift.
+// Most glyphs are 4 cols wide; the narrow 'l' is 1 col so it kerns tightly
+// against its neighbors (the per-row join just separates glyphs with one space).
+const G = {
+  c: ["    ", "█▀▀▀", "█___", "▀▀▀▀"],
+  l: ["▄", "█", "█", "▀"],
+  o: ["    ", "█▀▀█", "█__█", "▀▀▀▀"],
+  s: ["    ", "█▀▀▀", "▀▀▀█", "▀▀▀▀"],
+  e: ["    ", "█▀▀█", "█^^^", "▀▀▀▀"],
+  d: ["   ▄", "█▀▀█", "█__█", "▀▀▀▀"],
+};
+const word = (...letters) => [0, 1, 2, 3].map(r => letters.map(ch => G[ch][r]).join(" "));
+
 export const logo = {
-  left: ["                   ", "█▀▀█ █▀▀█ █▀▀█ █▀▀▄", "█__█ █__█ █^^^ █__█", "▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀~~▀"],
-  right: ["             ▄     ", "█▀▀▀ █▀▀█ █▀▀█ █▀▀█", "█___ █__█ █__█ █^^^", "▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"]
+  left: word("c", "l", "o", "s", "e", "d"),
+  right: word("c", "o", "d", "e"),
 };
 export const go = {
   left: ["    ", "█▀▀▀", "█_^█", "▀▀▀▀"],

@@ -28,7 +28,7 @@ const node = CrossSpawnSpawner.defaultLayer;
 const it = testEffect(Layer.mergeAll(ToolRegistry.defaultLayer, node));
 describe("tool.skill", () => {
   it.live("execute returns skill content block with files", () => provideTmpdirInstance(dir => Effect.gen(function* () {
-    const skill = path.join(dir, ".opencode", "skill", "tool-skill");
+    const skill = path.join(dir, ".closedcode", "skill", "tool-skill");
     yield* Effect.promise(() => writeFile(path.join(skill, "SKILL.md"), `---
 name: tool-skill
 description: Skill for tool tests.

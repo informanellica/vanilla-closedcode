@@ -1,9 +1,9 @@
 // Dynamic is a runtime component, not a compiled template helper (it is only
 // exported from solid-js/web). insert() is the established exception for
-// reactive/component-valued children (Kobalte presence-gated Collapsible and
+// reactive/component-valued children (presence-gated Collapsible and
 // Accordion content, Dynamic and memo-accessor returns) so Solid keeps
 // reconciling accessors instead of freezing them.
-import { Dynamic, insert as _solidInsert } from "solid-js/web";
+import { Dynamic, insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, For, Match, mergeProps, onMount, Show, Switch, onCleanup, Index } from "solid-js";
 import { createStore } from "solid-js/store";
 import stripAnsi from "strip-ansi";
@@ -32,7 +32,7 @@ import { AnimatedCountList } from "./tool-count-summary.js";
 import { ToolStatusTitle } from "./tool-status-title.js";
 import { patchFiles } from "./apply-patch-file.js";
 import { animate } from "motion";
-import { useLocation } from "@solidjs/router";
+import { useLocation } from "../../../lib/router/index.js";
 import { attached, inline, kind } from "./message-file.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
@@ -154,7 +154,7 @@ function DiagnosticsDisplay(props) {
     },
     get children() {
       const root = template(`<div data-component="diagnostics"></div>`);
-      _solidInsert(root, createComponent(For, {
+      insert(root, createComponent(For, {
         get each() {
           return props.diagnostics;
         },
@@ -716,7 +716,7 @@ function ExaOutput(props) {
     get children() {
       const root = template(`<div data-component="exa-tool-output"><div data-slot="exa-tool-links"></div></div>`);
       const linksEl = root.firstChild;
-      _solidInsert(linksEl, createComponent(For, {
+      insert(linksEl, createComponent(For, {
         get each() {
           return links();
         },
@@ -877,7 +877,7 @@ function ContextToolGroup(props) {
           const title = root.firstChild;
           const label = title.firstChild;
           const summaryEl = label.nextSibling;
-          _solidInsert(label, createComponent(ToolStatusTitle, {
+          insert(label, createComponent(ToolStatusTitle, {
             get active() {
               return pending();
             },
@@ -889,7 +889,7 @@ function ContextToolGroup(props) {
             },
             split: false
           }));
-          _solidInsert(summaryEl, createComponent(AnimatedCountList, {
+          insert(summaryEl, createComponent(AnimatedCountList, {
             get items() {
               return [{
                 key: "read",
@@ -910,13 +910,13 @@ function ContextToolGroup(props) {
             },
             fallback: ""
           }));
-          _solidInsert(root, createComponent(Collapsible.Arrow, {}), null);
+          insert(root, createComponent(Collapsible.Arrow, {}), null);
           return root;
         }
       }), createComponent(Collapsible.Content, {
         get children() {
           const listEl = template(`<div data-component="context-tool-group-list"></div>`);
-          _solidInsert(listEl, createComponent(Index, {
+          insert(listEl, createComponent(Index, {
             get each() {
               return props.parts;
             },
@@ -926,7 +926,7 @@ function ContextToolGroup(props) {
               const item = template(`<div data-slot="context-tool-group-item"><div data-component="tool-trigger"><div data-slot="basic-tool-tool-trigger-content"><div data-slot="basic-tool-tool-info"><div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div></div></div></div></div>`);
               const main = item.firstChild.firstChild.firstChild.firstChild.firstChild;
               const titleEl = main.firstChild;
-              _solidInsert(titleEl, createComponent(TextShimmer, {
+              insert(titleEl, createComponent(TextShimmer, {
                 get text() {
                   return trigger().title;
                 },
@@ -934,7 +934,7 @@ function ContextToolGroup(props) {
                   return running();
                 }
               }));
-              _solidInsert(main, createComponent(Show, {
+              insert(main, createComponent(Show, {
                 get when() {
                   return !running() && trigger().subtitle;
                 },
@@ -946,7 +946,7 @@ function ContextToolGroup(props) {
                   return subtitle;
                 }
               }), null);
-              _solidInsert(main, createComponent(Show, {
+              insert(main, createComponent(Show, {
                 get when() {
                   return !running() && trigger().args?.length;
                 },
@@ -1034,13 +1034,13 @@ export function UserMessageDisplay(props) {
     })).finally(() => setState("busy", false));
   };
   const root = template(`<div data-component="user-message"></div>`);
-  _solidInsert(root, createComponent(Show, {
+  insert(root, createComponent(Show, {
     get when() {
       return attachments().length > 0;
     },
     get children() {
       const wrap = template(`<div data-slot="user-message-attachments"></div>`);
-      _solidInsert(wrap, createComponent(For, {
+      insert(wrap, createComponent(For, {
         get each() {
           return attachments();
         },
@@ -1056,12 +1056,12 @@ export function UserMessageDisplay(props) {
           setAttr(item, "data-type", type);
           setAttr(item, "data-clickable", type === "image" ? "true" : undefined);
           setAttr(item, "title", type === "file" ? name : undefined);
-          _solidInsert(item, createComponent(Show, {
+          insert(item, createComponent(Show, {
             when: type === "image",
             get fallback() {
               const fileEl = template(`<div data-slot="user-message-attachment-file"><span data-slot="user-message-attachment-name"></span></div>`);
               const nameEl = fileEl.firstChild;
-              _solidInsert(fileEl, createComponent(FileIcon, {
+              insert(fileEl, createComponent(FileIcon, {
                 node: {
                   path: name,
                   type: "file"
@@ -1083,14 +1083,14 @@ export function UserMessageDisplay(props) {
       return wrap;
     }
   }), null);
-  _solidInsert(root, createComponent(Show, {
+  insert(root, createComponent(Show, {
     get when() {
       return text();
     },
     get children() {
       const body = template(`<div data-slot="user-message-body"><div data-slot="user-message-text"></div></div>`);
       const textEl = body.firstChild;
-      _solidInsert(textEl, createComponent(HighlightedText, {
+      insert(textEl, createComponent(HighlightedText, {
         get text() {
           return text();
         },
@@ -1102,13 +1102,13 @@ export function UserMessageDisplay(props) {
         }
       }));
       const copyWrap = template(`<div data-slot="user-message-copy-wrapper"></div>`);
-      _solidInsert(copyWrap, createComponent(Show, {
+      insert(copyWrap, createComponent(Show, {
         get when() {
           return metaHead() || metaTail();
         },
         get children() {
           const metaWrap = template(`<span data-slot="user-message-meta-wrap"></span>`);
-          _solidInsert(metaWrap, createComponent(Show, {
+          insert(metaWrap, createComponent(Show, {
             get when() {
               return metaHead();
             },
@@ -1120,7 +1120,7 @@ export function UserMessageDisplay(props) {
               return head;
             }
           }), null);
-          _solidInsert(metaWrap, createComponent(Show, {
+          insert(metaWrap, createComponent(Show, {
             get when() {
               return !!metaHead() && metaTail();
             },
@@ -1128,7 +1128,7 @@ export function UserMessageDisplay(props) {
               return template(`<span data-slot="user-message-meta-sep" class="small fw-normal text-secondary cursor-default"> · </span>`);
             }
           }), null);
-          _solidInsert(metaWrap, createComponent(Show, {
+          insert(metaWrap, createComponent(Show, {
             get when() {
               return metaTail();
             },
@@ -1143,7 +1143,7 @@ export function UserMessageDisplay(props) {
           return metaWrap;
         }
       }), null);
-      _solidInsert(copyWrap, createComponent(Show, {
+      insert(copyWrap, createComponent(Show, {
         get when() {
           return props.actions?.revert;
         },
@@ -1175,7 +1175,7 @@ export function UserMessageDisplay(props) {
           });
         }
       }), null);
-      _solidInsert(copyWrap, createComponent(Tooltip, {
+      insert(copyWrap, createComponent(Tooltip, {
         get value() {
           return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyMessage");
         },
@@ -1325,7 +1325,7 @@ function ToolFileAccordion(props) {
                   const nameContainer = info.firstChild;
                   const filename = nameContainer.firstChild;
                   const actions = info.nextSibling;
-                  _solidInsert(info, createComponent(FileIcon, {
+                  insert(info, createComponent(FileIcon, {
                     get node() {
                       return {
                         path: props.path,
@@ -1333,7 +1333,7 @@ function ToolFileAccordion(props) {
                       };
                     }
                   }), nameContainer);
-                  _solidInsert(nameContainer, createComponent(Show, {
+                  insert(nameContainer, createComponent(Show, {
                     get when() {
                       return props.path.includes("/");
                     },
@@ -1348,8 +1348,8 @@ function ToolFileAccordion(props) {
                   createRenderEffect(() => {
                     filename.textContent = getFilename(props.path);
                   });
-                  _solidInsert(actions, () => props.actions, null);
-                  _solidInsert(actions, createComponent(Icon, {
+                  insert(actions, () => props.actions, null);
+                  insert(actions, createComponent(Icon, {
                     name: "chevron-grabber-vertical",
                     size: "small"
                   }), null);
@@ -1399,7 +1399,7 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
     },
     get children() {
       const wrapper = template(`<div data-component="tool-part-wrapper"></div>`);
-      _solidInsert(wrapper, createComponent(Switch, {
+      insert(wrapper, createComponent(Switch, {
         get children() {
           return [createComponent(Match, {
             get when() {
@@ -1550,7 +1550,7 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     get children() {
       const root = template(`<div data-component="text-part"><div data-slot="text-part-body"></div></div>`);
       const body = root.firstChild;
-      _solidInsert(body, createComponent(Show, {
+      insert(body, createComponent(Show, {
         get when() {
           return streaming();
         },
@@ -1579,13 +1579,13 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
           });
         }
       }));
-      _solidInsert(root, createComponent(Show, {
+      insert(root, createComponent(Show, {
         get when() {
           return showCopy();
         },
         get children() {
           const copyWrap = template(`<div data-slot="text-part-copy-wrapper"></div>`);
-          _solidInsert(copyWrap, createComponent(Tooltip, {
+          insert(copyWrap, createComponent(Tooltip, {
             get value() {
               return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copyResponse");
             },
@@ -1606,7 +1606,7 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
               });
             }
           }), null);
-          _solidInsert(copyWrap, createComponent(Show, {
+          insert(copyWrap, createComponent(Show, {
             get when() {
               return meta();
             },
@@ -1636,7 +1636,7 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
     },
     get children() {
       const root = template(`<div data-component="reasoning-part"></div>`);
-      _solidInsert(root, createComponent(Show, {
+      insert(root, createComponent(Show, {
         get when() {
           return streaming();
         },
@@ -1700,7 +1700,7 @@ ToolRegistry.register({
         const row = template(`<div data-component="tool-loaded-file"><span> </span></div>`);
         const span = row.firstChild;
         const space = span.firstChild;
-        _solidInsert(row, createComponent(Icon, {
+        insert(row, createComponent(Icon, {
           name: "enter",
           size: "small"
         }), span);
@@ -1740,7 +1740,7 @@ ToolRegistry.register({
           },
           get children() {
             const output = template(`<div data-component="tool-output" data-scrollable></div>`);
-            _solidInsert(output, createComponent(Markdown, {
+            insert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
@@ -1772,7 +1772,7 @@ ToolRegistry.register({
           },
           get children() {
             const output = template(`<div data-component="tool-output" data-scrollable></div>`);
-            _solidInsert(output, createComponent(Markdown, {
+            insert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
@@ -1807,7 +1807,7 @@ ToolRegistry.register({
           },
           get children() {
             const output = template(`<div data-component="tool-output" data-scrollable></div>`);
-            _solidInsert(output, createComponent(Markdown, {
+            insert(output, createComponent(Markdown, {
               get text() {
                 return props.output;
               }
@@ -1836,7 +1836,7 @@ ToolRegistry.register({
         const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div>`);
         const main = box.firstChild;
         const titleEl = main.firstChild;
-        _solidInsert(titleEl, createComponent(TextShimmer, {
+        insert(titleEl, createComponent(TextShimmer, {
           get text() {
             return i18n.t("ui.tool.webfetch");
           },
@@ -1844,7 +1844,7 @@ ToolRegistry.register({
             return pending();
           }
         }));
-        _solidInsert(main, createComponent(Show, {
+        insert(main, createComponent(Show, {
           get when() {
             return !pending() && url();
           },
@@ -1858,13 +1858,13 @@ ToolRegistry.register({
             return link;
           }
         }), null);
-        _solidInsert(box, createComponent(Show, {
+        insert(box, createComponent(Show, {
           get when() {
             return !pending() && url();
           },
           get children() {
             const action = template(`<div data-component="tool-action"></div>`);
-            _solidInsert(action, createComponent(Icon, {
+            insert(action, createComponent(Icon, {
               name: "square-arrow-top-right",
               size: "small"
             }));
@@ -1947,13 +1947,13 @@ ToolRegistry.register({
       const structured = card.firstChild;
       const main = structured.firstChild;
       const titleEl = main.firstChild;
-      _solidInsert(main, createComponent(Show, {
+      insert(main, createComponent(Show, {
         get when() {
           return running();
         },
         get children() {
           const spinner = template(`<span data-component="task-tool-spinner"></span>`);
-          _solidInsert(spinner, createComponent(Spinner, {}));
+          insert(spinner, createComponent(Spinner, {}));
           createRenderEffect(() => {
             spinner.style.setProperty("color", tone() ?? "var(--icon-interactive-base)");
           });
@@ -1963,7 +1963,7 @@ ToolRegistry.register({
       createRenderEffect(() => {
         titleEl.textContent = title();
       });
-      _solidInsert(main, createComponent(Show, {
+      insert(main, createComponent(Show, {
         get when() {
           return subtitle();
         },
@@ -1975,13 +1975,13 @@ ToolRegistry.register({
           return sub;
         }
       }), null);
-      _solidInsert(card, createComponent(Show, {
+      insert(card, createComponent(Show, {
         get when() {
           return clickable();
         },
         get children() {
           const action = template(`<div data-component="task-tool-action"></div>`);
-          _solidInsert(action, createComponent(Icon, {
+          insert(action, createComponent(Icon, {
             name: "square-arrow-top-right",
             size: "small"
           }));
@@ -2037,7 +2037,7 @@ ToolRegistry.register({
         const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title"></span></div></div>`);
         const main = box.firstChild;
         const titleEl = main.firstChild;
-        _solidInsert(titleEl, createComponent(TextShimmer, {
+        insert(titleEl, createComponent(TextShimmer, {
           get text() {
             return i18n.t("ui.tool.shell");
           },
@@ -2045,7 +2045,7 @@ ToolRegistry.register({
             return pending();
           }
         }));
-        _solidInsert(main, createComponent(Show, {
+        insert(main, createComponent(Show, {
           get when() {
             return !pending() && props.input.description;
           },
@@ -2066,7 +2066,7 @@ ToolRegistry.register({
         const scrollEl = copyEl.nextSibling;
         const preEl = scrollEl.firstChild;
         const codeEl = preEl.firstChild;
-        _solidInsert(copyEl, createComponent(Tooltip, {
+        insert(copyEl, createComponent(Tooltip, {
           get value() {
             return copied() ? i18n.t("ui.message.copied") : i18n.t("ui.message.copy");
           },
@@ -2105,7 +2105,7 @@ ToolRegistry.register({
     const filename = () => getFilename(props.input.filePath ?? "");
     const pending = () => props.status === "pending" || props.status === "running";
     const root = template(`<div data-component="edit-tool"></div>`);
-    _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+    insert(root, createComponent(BasicTool, mergeProps(props, {
       icon: "code-lines",
       defer: true,
       get trigger() {
@@ -2114,7 +2114,7 @@ ToolRegistry.register({
         const titleRow = titleArea.firstChild;
         const titleText = titleRow.firstChild;
         const actionsEl = titleArea.nextSibling;
-        _solidInsert(titleText, createComponent(TextShimmer, {
+        insert(titleText, createComponent(TextShimmer, {
           get text() {
             return i18n.t("ui.messagePart.title.edit");
           },
@@ -2122,7 +2122,7 @@ ToolRegistry.register({
             return pending();
           }
         }));
-        _solidInsert(titleRow, createComponent(Show, {
+        insert(titleRow, createComponent(Show, {
           get when() {
             return !pending();
           },
@@ -2134,7 +2134,7 @@ ToolRegistry.register({
             return name;
           }
         }), null);
-        _solidInsert(titleArea, createComponent(Show, {
+        insert(titleArea, createComponent(Show, {
           get when() {
             return !pending() && props.input.filePath?.includes("/");
           },
@@ -2147,7 +2147,7 @@ ToolRegistry.register({
             return pathEl;
           }
         }), null);
-        _solidInsert(actionsEl, createComponent(Show, {
+        insert(actionsEl, createComponent(Show, {
           get when() {
             return !pending() && props.metadata.filediff;
           },
@@ -2187,7 +2187,7 @@ ToolRegistry.register({
               },
               get children() {
                 const content = template(`<div data-component="edit-content"></div>`);
-                _solidInsert(content, createComponent(Dynamic, {
+                insert(content, createComponent(Dynamic, {
                   component: fileComponent,
                   mode: "diff",
                   get before() {
@@ -2227,7 +2227,7 @@ ToolRegistry.register({
     const filename = () => getFilename(props.input.filePath ?? "");
     const pending = () => props.status === "pending" || props.status === "running";
     const root = template(`<div data-component="write-tool"></div>`);
-    _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+    insert(root, createComponent(BasicTool, mergeProps(props, {
       icon: "code-lines",
       defer: true,
       get trigger() {
@@ -2235,7 +2235,7 @@ ToolRegistry.register({
         const titleArea = trigger.firstChild;
         const titleRow = titleArea.firstChild;
         const titleText = titleRow.firstChild;
-        _solidInsert(titleText, createComponent(TextShimmer, {
+        insert(titleText, createComponent(TextShimmer, {
           get text() {
             return i18n.t("ui.messagePart.title.write");
           },
@@ -2243,7 +2243,7 @@ ToolRegistry.register({
             return pending();
           }
         }));
-        _solidInsert(titleRow, createComponent(Show, {
+        insert(titleRow, createComponent(Show, {
           get when() {
             return !pending();
           },
@@ -2255,7 +2255,7 @@ ToolRegistry.register({
             return name;
           }
         }), null);
-        _solidInsert(titleArea, createComponent(Show, {
+        insert(titleArea, createComponent(Show, {
           get when() {
             return !pending() && props.input.filePath?.includes("/");
           },
@@ -2282,7 +2282,7 @@ ToolRegistry.register({
               },
               get children() {
                 const content = template(`<div data-component="write-content"></div>`);
-                _solidInsert(content, createComponent(Dynamic, {
+                insert(content, createComponent(Dynamic, {
                   component: fileComponent,
                   mode: "text",
                   get file() {
@@ -2340,7 +2340,7 @@ ToolRegistry.register({
       },
       get fallback() {
         const root = template(`<div data-component="apply-patch-tool"></div>`);
-        _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+        insert(root, createComponent(BasicTool, mergeProps(props, {
             icon: "code-lines",
             defer: true,
             get trigger() {
@@ -2404,7 +2404,7 @@ ToolRegistry.register({
                                       const nameContainer = info.firstChild;
                                       const filename = nameContainer.firstChild;
                                       const actions = info.nextSibling;
-                                      _solidInsert(info, createComponent(FileIcon, {
+                                      insert(info, createComponent(FileIcon, {
                                         get node() {
                                           return {
                                             path: file.relativePath,
@@ -2446,7 +2446,7 @@ ToolRegistry.register({
                                       } else {
                                         // DiffChanges returns a memo
                                         // accessor; insert() resolves it.
-                                        _solidInsert(actions, createComponent(DiffChanges, {
+                                        insert(actions, createComponent(DiffChanges, {
                                           get changes() {
                                             return {
                                               additions: file.additions,
@@ -2455,7 +2455,7 @@ ToolRegistry.register({
                                           }
                                         }), null);
                                       }
-                                      _solidInsert(actions, createComponent(Icon, {
+                                      insert(actions, createComponent(Icon, {
                                         name: "chevron-grabber-vertical",
                                         size: "small"
                                       }), null);
@@ -2465,7 +2465,7 @@ ToolRegistry.register({
                                 }
                               }), createComponent(Accordion.Content, {
                                 get children() {
-                                  // Kobalte presence-gated content: keep the
+                                  // Presence-gated content: keep the
                                   // Show + insert() path.
                                   return createComponent(Show, {
                                     get when() {
@@ -2473,7 +2473,7 @@ ToolRegistry.register({
                                     },
                                     get children() {
                                       const view = template(`<div data-component="apply-patch-file-diff"></div>`);
-                                      _solidInsert(view, createComponent(Dynamic, {
+                                      insert(view, createComponent(Dynamic, {
                                         component: fileComponent,
                                         mode: "diff",
                                         get fileDiff() {
@@ -2499,7 +2499,7 @@ ToolRegistry.register({
       },
       get children() {
         const root = template(`<div data-component="apply-patch-tool"></div>`);
-        _solidInsert(root, createComponent(BasicTool, mergeProps(props, {
+        insert(root, createComponent(BasicTool, mergeProps(props, {
           icon: "code-lines",
           defer: true,
           get trigger() {
@@ -2508,7 +2508,7 @@ ToolRegistry.register({
             const titleRow = titleArea.firstChild;
             const titleText = titleRow.firstChild;
             const actionsEl = titleArea.nextSibling;
-            _solidInsert(titleText, createComponent(TextShimmer, {
+            insert(titleText, createComponent(TextShimmer, {
               get text() {
                 return i18n.t("ui.tool.patch");
               },
@@ -2516,7 +2516,7 @@ ToolRegistry.register({
                 return pending();
               }
             }));
-            _solidInsert(titleRow, createComponent(Show, {
+            insert(titleRow, createComponent(Show, {
               get when() {
                 return !pending();
               },
@@ -2528,7 +2528,7 @@ ToolRegistry.register({
                 return name;
               }
             }), null);
-            _solidInsert(titleArea, createComponent(Show, {
+            insert(titleArea, createComponent(Show, {
               get when() {
                 return !pending() && single().relativePath.includes("/");
               },
@@ -2541,7 +2541,7 @@ ToolRegistry.register({
                 return pathEl;
               }
             }), null);
-            _solidInsert(actionsEl, createComponent(Show, {
+            insert(actionsEl, createComponent(Show, {
               get when() {
                 return !pending();
               },
@@ -2618,7 +2618,7 @@ ToolRegistry.register({
               },
               get children() {
                 const view = template(`<div data-component="apply-patch-file-diff"></div>`);
-                _solidInsert(view, createComponent(Dynamic, {
+                insert(view, createComponent(Dynamic, {
                   component: fileComponent,
                   mode: "diff",
                   get fileDiff() {
@@ -2667,7 +2667,7 @@ ToolRegistry.register({
           },
           get children() {
             const listEl = template(`<div data-component="todos"></div>`);
-            _solidInsert(listEl, createComponent(For, {
+            insert(listEl, createComponent(For, {
               get each() {
                 return todos();
               },
@@ -2726,7 +2726,7 @@ ToolRegistry.register({
           },
           get children() {
             const listEl = template(`<div data-component="question-answers"></div>`);
-            _solidInsert(listEl, createComponent(For, {
+            insert(listEl, createComponent(For, {
               get each() {
                 return questions();
               },
@@ -2768,7 +2768,7 @@ ToolRegistry.register({
     const trigger = () => {
       const box = template(`<div data-slot="basic-tool-tool-info-structured"><div data-slot="basic-tool-tool-info-main"><span data-slot="basic-tool-tool-title" class="capitalize agent-title"></span></div></div>`);
       const titleEl = box.firstChild.firstChild;
-      _solidInsert(titleEl, titleContent);
+      insert(titleEl, titleContent);
       return box;
     };
     return createComponent(BasicTool, {

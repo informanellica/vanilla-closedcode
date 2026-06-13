@@ -21,7 +21,7 @@ function rewrite(request, directory) {
   next.headers.delete("x-closedcode-directory");
   return next;
 }
-export function createOpencodeClient(config) {
+export function createClosedcodeClient(config) {
   if (!config?.fetch) {
     const customFetch = req => {
       req.timeout = false;

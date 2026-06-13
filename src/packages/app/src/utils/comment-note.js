@@ -25,7 +25,7 @@ export function createCommentMetadata(input) {
 }
 export function readCommentMetadata(value) {
   if (!value || typeof value !== "object") return;
-  const meta = value.closedcodeComment ?? value.opencodeComment;
+  const meta = value.closedcodeComment;
   if (!meta || typeof meta !== "object") return;
   const path = meta.path;
   const comment = meta.comment;

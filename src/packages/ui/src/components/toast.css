@@ -61,7 +61,7 @@
   }
 
   &[data-swipe="move"] {
-    transform: translateX(var(--kb-toast-swipe-move-x));
+    transform: translateX(var(--vcc-toast-swipe-move-x));
   }
 
   &[data-swipe="cancel"] {
@@ -198,7 +198,7 @@
 
   [data-slot="toast-progress-fill"] {
     height: 100%;
-    width: var(--kb-toast-progress-fill-width);
+    width: var(--vcc-toast-progress-fill-width);
     background-color: var(--color-primary);
     transition: width 250ms linear;
   }
@@ -228,7 +228,7 @@
 
 @keyframes toastSwipeOut {
   from {
-    transform: translateX(var(--kb-toast-swipe-end-x));
+    transform: translateX(var(--vcc-toast-swipe-end-x));
   }
   to {
     transform: translateX(100%);

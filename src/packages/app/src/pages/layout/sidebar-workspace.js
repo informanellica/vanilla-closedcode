@@ -5,12 +5,12 @@
 // updates. insert() reconciles that nested array/accessor shape in place
 // instead of detaching live rows (established exception, same as
 // sidebar-project.js).
-import { insert as _solidInsert } from "solid-js/web";
-import { useNavigate, useParams } from "@solidjs/router";
+import { insert } from "solid-js/web";
+import { useNavigate, useParams } from "../../lib/router/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Show, untrack } from "solid-js";
 import { createStore } from "solid-js/store";
-import { createSortable } from "@thisbeyond/solid-dnd";
-import { createMediaQuery } from "@solid-primitives/media";
+import { createSortable } from "../../lib/dnd/index.js";
+import { createMediaQuery } from "../../lib/primitives/media.js";
 import { base64Encode } from "core/util/encode";
 import { getFilename } from "core/util/path";
 import { Button } from "@/bs/button.js";
@@ -25,7 +25,7 @@ import { useLanguage } from "@/context/language.js";
 import { pathKey } from "@/utils/path-key.js";
 import { NewSessionItem, SessionItem, SessionSkeleton } from "./sidebar-items.js";
 import { sortedRootSessions } from "./helpers.js";
-import { useQuery } from "@tanstack/solid-query";
+import { useQuery } from "../../lib/query/index.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
@@ -364,7 +364,7 @@ const WorkspaceSessionList = props => {
   // Session rows: For + insert() so row identity survives list updates and
   // the nested child-session accessor each SessionItem returns stays live
   // (established exception, see header note).
-  _solidInsert(nav, createComponent(For, {
+  insert(nav, createComponent(For, {
     get each() {
       return props.sessions();
     },

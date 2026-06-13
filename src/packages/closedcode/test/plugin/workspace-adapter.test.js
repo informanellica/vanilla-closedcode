@@ -42,7 +42,7 @@ describe("plugin.workspace", () => {
     const mark = path.join(dir, "created.json");
     const space = path.join(dir, "space");
     yield* Effect.promise(() => writeFile(file, ["export default async ({ experimental_workspace }) => {", `  experimental_workspace.register(${JSON.stringify(type)}, {`, '    name: "plug",', '    description: "plugin workspace adapter",', "    configure(input) {", `      return { ...input, name: "plug", branch: "plug/main", directory: ${JSON.stringify(space)} }`, "    },", "    async create(input) {", `      await (await import("node:fs/promises")).writeFile(${JSON.stringify(mark)}, JSON.stringify(input))`, "    },", "    async remove() {},", "    target(input) {", '      return { type: "local", directory: input.directory }', "    },", "  })", "  return {}", "}", ""].join("\n")));
-    yield* Effect.promise(() => writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+    yield* Effect.promise(() => writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
       plugin: [pathToFileURL(file).href]
     }, null, 2)));
     const plugin = yield* Plugin.Service;

@@ -1,4 +1,4 @@
-import { useParams } from "@solidjs/router";
+import { useParams } from "../../lib/router/index.js";
 import { createMemo } from "solid-js";
 import { useLayout } from "@/context/layout.js";
 export const useSessionKey = () => {

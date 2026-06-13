@@ -1,5 +1,5 @@
 import { onMount, splitProps, mergeProps, createRenderEffect, createRoot, onCleanup } from "solid-js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { createStore } from "solid-js/store";
 import { useI18n } from "../context/i18n.js";
 

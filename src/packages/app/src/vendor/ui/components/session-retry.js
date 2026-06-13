@@ -1,4 +1,4 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, on, onCleanup } from "solid-js";
 import { useI18n } from "../context/i18n.js";
 import { Card } from "./card.js";
@@ -79,10 +79,10 @@ export function SessionRetry(props) {
     // Show(truncated) with fallback: swap between the tooltip-wrapped and the
     // plain message div only when the truncation flag flips; the message text
     // itself stays live inside whichever div is mounted. Tooltip is still
-    // compiled Solid (Kobalte, presence-gated), so its accessor result must
+    // compiled Solid (the original component, presence-gated), so its accessor result must
     // flow through solid's insert() (established exception); the null marker
     // keeps this region's position stable next to the info line.
-    _solidInsert(body, createMemo(() => {
+    insert(body, createMemo(() => {
       if (!truncated()) {
         const messageEl = template(`<div data-slot="session-turn-retry-message"></div>`);
         createRenderEffect(() => {
@@ -108,7 +108,7 @@ export function SessionRetry(props) {
     // Show(info()): mount the info line only while the string is non-empty;
     // the text itself tracks the live countdown/attempt message.
     const hasInfo = createMemo(() => !!info());
-    _solidInsert(body, createMemo(() => {
+    insert(body, createMemo(() => {
       if (!hasInfo()) return undefined;
       const infoEl = template(`<div data-slot="session-turn-retry-info"></div>`);
       createRenderEffect(() => {

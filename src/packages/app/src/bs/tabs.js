@@ -1,5 +1,5 @@
-import { createEffect as _solidEffect, createRenderEffect as _solidRenderEffect, createRoot as _solidRoot, getOwner as _solidGetOwner } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { createEffect, createRenderEffect, createRoot, getOwner } from "solid-js";
+import { insert } from "solid-js/web";
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -34,7 +34,7 @@ function appendChildren(parent, children) {
     // solid-js/web insert() track it so later updates re-render. Calling it
     // once and appending froze conditional UI (e.g. the provider edit form
     // behind the settings pencil never appeared after setEditor()).
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -169,8 +169,8 @@ function createTabsState(props) {
       void props.value;
       sync();
     };
-    if (_solidGetOwner()) {
-      _solidEffect(watch);
+    if (getOwner()) {
+      createEffect(watch);
     } else {
       // isConnected is NOT reactive, so an effect alone would only notice the
       // unmount if some signal happened to fire afterwards. Watch the DOM
@@ -178,8 +178,8 @@ function createTabsState(props) {
       // dispose the standalone reactive root. (In-app Tabs always have an
       // owner; this path exists for detached/manual usage only.)
       let wasConnected = false;
-      _solidRoot(dispose => {
-        _solidEffect(watch);
+      createRoot(dispose => {
+        createEffect(watch);
         const observer = new MutationObserver(() => {
           if (!rootEl) return;
           if (rootEl.isConnected) {
@@ -266,7 +266,7 @@ function TabsList(props) {
   listEl.classList.add("nav", "nav-pills");
   // Render effect (runs immediately, then re-runs) so the list follows a
   // dynamically changing orientation instead of freezing the initial value.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     listEl.setAttribute("data-orientation", tabs?.orientation() || "horizontal");
     listEl.classList.toggle("flex-column", tabs?.orientation() === "vertical");
   });

@@ -2,7 +2,7 @@ import { batch, createEffect, createMemo, onCleanup } from "solid-js";
 import { createStore, produce, reconcile } from "solid-js/store";
 import { createSimpleContext } from "@/lib/context.js";
 import { showToast } from "@/lib/toast.js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "../lib/router/index.js";
 import { getFilename } from "core/util/path";
 import { useSDK } from "./sdk.js";
 import { useSync } from "./sync.js";

@@ -1,6 +1,6 @@
 // @refresh reload
 
-import * as Sentry from "@sentry/solid";
+import * as Sentry from "@sentry/browser";
 import { createComponent } from "solid-js";
 import { render } from "solid-js/web";
 import { AppBaseProviders, AppInterface } from "@/app.js";
@@ -12,7 +12,6 @@ import { env } from "@/lib/env.js";
 import pkg from "../package.json" with { type: "json" };
 import { ServerConnection } from "./context/server.js";
 const DEFAULT_SERVER_URL_KEY = "closedcode.settings.dat:defaultServerUrl";
-const LEGACY_DEFAULT_SERVER_URL_KEY = "opencode.settings.dat:defaultServerUrl";
 const getLocale = () => {
   if (typeof navigator !== "object") return "en";
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
@@ -47,7 +46,7 @@ const setStorage = (key, value) => {
     return;
   }
 };
-const readDefaultServerUrl = () => getStorage(DEFAULT_SERVER_URL_KEY) ?? getStorage(LEGACY_DEFAULT_SERVER_URL_KEY);
+const readDefaultServerUrl = () => getStorage(DEFAULT_SERVER_URL_KEY);
 const writeDefaultServerUrl = url => setStorage(DEFAULT_SERVER_URL_KEY, url);
 const notify = async (title, description, href) => {
   if (!("Notification" in window)) return;

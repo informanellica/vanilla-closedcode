@@ -1,5 +1,5 @@
 import { createComponent, createMemo } from "solid-js";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "../lib/router/index.js";
 import { useSync } from "@/context/sync.js";
 import { useSDK } from "@/context/sdk.js";
 import { usePrompt } from "@/context/prompt.js";

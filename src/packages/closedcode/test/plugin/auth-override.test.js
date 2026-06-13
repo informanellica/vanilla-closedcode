@@ -21,7 +21,7 @@ function layer(directory, plugins) {
       plugin: plugins,
       plugin_origins: plugins.map(plugin => ({
         spec: plugin,
-        source: path.join(directory, "opencode.json"),
+        source: path.join(directory, "closedcode.json"),
         scope: "local"
       }))
     }),
@@ -32,7 +32,7 @@ describe("plugin.auth-override", () => {
   test("user plugin overrides built-in github-copilot auth", async () => {
     await using tmp = await tmpdir({
       init: async dir => {
-        const pluginDir = path.join(dir, ".opencode", "plugin");
+        const pluginDir = path.join(dir, ".closedcode", "plugin");
         await fs.mkdir(pluginDir, {
           recursive: true
         });
@@ -41,7 +41,7 @@ describe("plugin.auth-override", () => {
       }
     });
     await using plain = await tmpdir();
-    const plugin = pathToFileURL(path.join(tmp.path, ".opencode", "plugin", "custom-copilot-auth.js")).href;
+    const plugin = pathToFileURL(path.join(tmp.path, ".closedcode", "plugin", "custom-copilot-auth.js")).href;
     const [methods, plainMethods] = await Promise.all([provideTestInstance({
       directory: tmp.path,
       fn: async () => {

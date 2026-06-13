@@ -5,7 +5,7 @@ import { IconButton } from "@/bs/icon-button.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
 import { TextReveal } from "@/vendor/ui/components/text-reveal.js";
 import { TextStrikethrough } from "@/vendor/ui/components/text-strikethrough.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { Index, createComponent, createEffect, createMemo, createRenderEffect } from "solid-js";
 import { createStore } from "solid-js/store";
 import { useLanguage } from "@/context/language.js";

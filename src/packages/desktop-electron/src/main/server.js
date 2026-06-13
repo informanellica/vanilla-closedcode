@@ -85,7 +85,7 @@ export async function spawnLocalServer(hostname, port, password) {
     hostname,
     username: "closedcode",
     password,
-    cors: ["oc://renderer"]
+    cors: ["vcc://renderer"]
   });
   const wait = (async () => {
     const url = `http://${hostname}:${port}`;

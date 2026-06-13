@@ -1,7 +1,7 @@
 import { createStore, produce } from "solid-js/store";
 import { batch, createEffect, createMemo, onCleanup, onMount } from "solid-js";
 import { createSimpleContext } from "@/lib/context.js";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { useGlobalSync } from "./global-sync.js";
 import { useGlobalSDK } from "./global-sdk.js";
 import { useServer } from "./server.js";

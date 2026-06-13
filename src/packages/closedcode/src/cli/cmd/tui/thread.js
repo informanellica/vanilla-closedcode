@@ -93,10 +93,12 @@ export const TuiThreadCommand = cmd({
   handler: async args => {
     // Keep ENABLE_PROCESSED_INPUT cleared even if other code flips it.
     const unguard = win32InstallCtrlCGuard();
+    let restoreInput;
     try {
       // Must be the very first thing — disables CTRL_C_EVENT before any Worker
-      // spawn or async work so the OS cannot kill the process group.
-      win32DisableProcessedInput();
+      // spawn or async work so the OS cannot kill the process group. Returns a
+      // restore() (called in finally) so the parent shell's Ctrl-C is not left broken.
+      restoreInput = win32DisableProcessedInput();
       if (args.fork && !args.continue && !args.session) {
         UI.error("--fork requires --continue or --session");
         process.exitCode = 1;
@@ -188,10 +190,9 @@ export const TuiThreadCommand = cmd({
         }).catch(() => {});
       }, 1000).unref?.();
       try {
-        // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
-      // cannot load (the documented third-party interop wall) — load it only
-      // when the TUI actually starts.
-      const { tui } = await import("./app.js");
+        // The TUI is the native-free terminal-kit vanilla shell (no @opentui /
+      // solid-js / yoga). Loaded lazily so its graph is only built when the TUI runs.
+      const { tui } = await import("./vanilla/main.js");
       await tui({
           url: transport.url,
           async onSnapshot() {
@@ -216,6 +217,7 @@ export const TuiThreadCommand = cmd({
         await stop();
       }
     } finally {
+      restoreInput?.(); // restore ENABLE_PROCESSED_INPUT for the parent shell
       unguard?.();
     }
     process.exit(0);

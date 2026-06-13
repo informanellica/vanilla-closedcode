@@ -1,5 +1,5 @@
 import { createRenderEffect } from "solid-js";
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { Icon } from "./icon.js";
 
 // Getter-preserving split (Solid's splitProps semantics): copying values
@@ -29,7 +29,7 @@ function appendChildren(parent, children) {
   if (typeof children === "function") {
     // Reactive child (Solid Show/For/components return accessors): let
     // solid-js/web insert() track it so updates re-render instead of freezing.
-    _solidInsert(parent, children);
+    insert(parent, children);
     return;
   }
   parent.appendChild(document.createTextNode(String(children)));
@@ -119,7 +119,7 @@ export function Checkbox(props) {
   root.appendChild(input);
 
   // State props are live getters (e.g. a todo's status signal); track them and
-  // expose the Kobalte-style data attributes checkbox.css selects on
+  // expose the standard data attributes checkbox.css selects on
   // ([data-checked] / [data-indeterminate] / [data-disabled] / [data-readonly]).
   createRenderEffect(() => {
     const checked = !!local.checked;

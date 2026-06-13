@@ -27,7 +27,15 @@ target
 
 # Local dev files
 opencode-dev
+closedcode-dev
 UPCOMING_CHANGELOG.md
 logs/
 *.bun-build
 tsconfig.tsbuildinfo
+
+# Local closedcode runtime/config (post opencode->closedcode rebrand): never commit
+# local DBs / WAL / logs / state / device-id / generated config.
+closedcode.json
+.closedcode-self-improvement/
+.closedcode/
+.opencode/

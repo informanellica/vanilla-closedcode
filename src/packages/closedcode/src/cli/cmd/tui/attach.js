@@ -32,8 +32,9 @@ export const AttachCommand = cmd({
   }),
   handler: async args => {
     const unguard = win32InstallCtrlCGuard();
+    let restoreInput;
     try {
-      win32DisableProcessedInput();
+      restoreInput = win32DisableProcessedInput();
       if (args.fork && !args.continue && !args.session) {
         UI.error("--fork requires --continue or --session");
         process.exitCode = 1;
@@ -71,10 +72,9 @@ export const AttachCommand = cmd({
         process.exitCode = 1;
         return;
       }
-      // Lazy: app.js pulls @opentui/core, whose .scm/.ts imports plain Node
-      // cannot load (the documented third-party interop wall) — load it only
-      // when the TUI actually starts.
-      const { tui } = await import("./app.js");
+      // The TUI is the native-free terminal-kit vanilla shell (no @opentui /
+      // solid-js / yoga). Loaded lazily so its graph is only built when the TUI runs.
+      const { tui } = await import("./vanilla/main.js");
       await tui({
         url: args.url,
         config,
@@ -87,6 +87,7 @@ export const AttachCommand = cmd({
         headers
       });
     } finally {
+      restoreInput?.(); // restore ENABLE_PROCESSED_INPUT for the parent shell
       unguard?.();
     }
   }

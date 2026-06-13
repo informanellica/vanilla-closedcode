@@ -1,4 +1,4 @@
-import { useDragDropContext } from "@thisbeyond/solid-dnd";
+import { useDragDropContext } from "../lib/dnd/index.js";
 import { createRoot, onCleanup } from "solid-js";
 const isDragEvent = event => {
   if (typeof event !== "object" || event === null) return false;

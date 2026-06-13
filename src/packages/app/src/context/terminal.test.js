@@ -3,7 +3,7 @@ let getWorkspaceTerminalCacheKey;
 let getLegacyTerminalStorageKeys;
 let migrateTerminalState;
 beforeAll(async () => {
-  mock.module("@solidjs/router", () => ({
+  mock.module("../lib/router/index.js", () => ({
     useNavigate: () => () => undefined,
     useParams: () => ({})
   }));

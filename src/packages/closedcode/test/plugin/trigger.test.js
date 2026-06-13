@@ -25,7 +25,7 @@ afterAll(() => {
 function withProject(source, self) {
   return provideTmpdirInstance(dir => Effect.gen(function* () {
     const file = path.join(dir, "plugin.ts");
-    yield* Effect.all([Effect.promise(() => writeFile(file, source)), Effect.promise(() => writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+    yield* Effect.all([Effect.promise(() => writeFile(file, source)), Effect.promise(() => writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
       plugin: [pathToFileURL(file).href]
     }, null, 2)))], {
       discard: true,

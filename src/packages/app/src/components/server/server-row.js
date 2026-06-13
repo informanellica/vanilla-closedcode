@@ -1,5 +1,5 @@
 import { Tooltip } from "@/bs/tooltip.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "../../lib/primitives/resize-observer.js";
 import { children, createComponent, createEffect, createMemo, createRenderEffect, createSignal, onMount } from "solid-js";
 import { useLanguage } from "@/context/language.js";
 import { serverName } from "@/context/server.js";

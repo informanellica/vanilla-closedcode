@@ -1,4 +1,4 @@
-import { createRenderEffect as _solidRenderEffect } from "solid-js";
+import { createRenderEffect } from "solid-js";
 import { TextShimmer } from "./text-shimmer.js";
 
 function common(active, done) {
@@ -36,7 +36,7 @@ export function ToolStatusTitle(props) {
 
   // Texts come from i18n getters, so rebuild the structure when they change
   // (locale switch); the active flip alone is handled by CSS via data-active.
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const activeText = props.activeText ?? "";
     const doneText = props.doneText ?? "";
     const split = common(activeText, doneText);
@@ -72,7 +72,7 @@ export function ToolStatusTitle(props) {
     root.replaceChildren(swap);
   });
 
-  _solidRenderEffect(() => {
+  createRenderEffect(() => {
     const active = isActive();
     root.dataset.active = active ? "true" : "false";
     root.setAttribute("aria-label", active ? props.activeText : props.doneText);

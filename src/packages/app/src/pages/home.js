@@ -2,7 +2,7 @@ import { createMemo, createEffect, createComponent } from "solid-js";
 import { Button } from "@/bs/button.js";
 import { Logo } from "@/vendor/ui/components/logo.js";
 import { useLayout } from "@/context/layout.js";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "../lib/router/index.js";
 import { base64Encode } from "core/util/encode";
 import { usePlatform } from "@/context/platform.js";
 import { DateTime } from "luxon";
@@ -130,7 +130,7 @@ export default function Home() {
     server.projects.touch(directory);
     navigate(`/${base64Encode(directory)}`);
   }
-  // e2e hook: the router uses memory integration (no browser history on oc://),
+  // e2e hook: the router uses memory integration (no browser history on vcc://),
   // so tests cannot navigate via pushState — expose the real open flow instead.
   // Gated to CDP-debug launches (CLOSEDCODE_REMOTE_DEBUG) so it never exists in
   // a normal run.

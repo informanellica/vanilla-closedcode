@@ -1,7 +1,7 @@
 import { batch, createMemo, createRoot, onCleanup } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { createSimpleContext } from "@/lib/context.js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "../lib/router/index.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { createScopedCache } from "@/utils/scoped-cache.js";
 import { uuid } from "@/utils/uuid.js";

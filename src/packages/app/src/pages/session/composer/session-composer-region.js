@@ -1,6 +1,6 @@
 import { createComponent, createEffect, createMemo, onCleanup } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useNavigate } from "@solidjs/router";
+import { useNavigate } from "../../../lib/router/index.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
 import { PromptInput } from "@/components/prompt-input.js";
 import { useLanguage } from "@/context/language.js";
@@ -13,7 +13,7 @@ import { SessionQuestionDock } from "@/pages/session/composer/session-question-d
 import { SessionFollowupDock } from "@/pages/session/composer/session-followup-dock.js";
 import { SessionRevertDock } from "@/pages/session/composer/session-revert-dock.js";
 import { SessionTodoDock } from "@/pages/session/composer/session-todo-dock.js";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.

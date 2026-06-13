@@ -27,7 +27,7 @@ import path from "path";
 import fs from "fs/promises";
 const node = CrossSpawnSpawner.defaultLayer;
 const configLayer = TestConfig.layer({
-  directories: () => InstanceState.directory.pipe(Effect.map(dir => [path.join(dir, ".opencode")]))
+  directories: () => InstanceState.directory.pipe(Effect.map(dir => [path.join(dir, ".closedcode")]))
 });
 const registryLayer = ToolRegistry.layer.pipe(Layer.provide(configLayer), Layer.provide(Plugin.defaultLayer), Layer.provide(Question.defaultLayer), Layer.provide(Todo.defaultLayer), Layer.provide(Skill.defaultLayer), Layer.provide(Agent.defaultLayer), Layer.provide(Session.defaultLayer), Layer.provide(Provider.defaultLayer), Layer.provide(LSP.defaultLayer), Layer.provide(Instruction.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Bus.layer), Layer.provide(FetchHttpClient.layer), Layer.provide(Format.defaultLayer), Layer.provide(node), Layer.provide(Ripgrep.defaultLayer), Layer.provide(Truncate.defaultLayer));
 const it = testEffect(Layer.mergeAll(registryLayer, node));
@@ -35,10 +35,10 @@ afterEach(async () => {
   await disposeAllInstances();
 });
 describe("tool.registry", () => {
-  it.instance("loads tools from .opencode/tool (singular)", () => Effect.gen(function* () {
+  it.instance("loads tools from .closedcode/tool (singular)", () => Effect.gen(function* () {
     const test = yield* TestInstance;
-    const opencode = path.join(test.directory, ".opencode");
-    const tool = path.join(opencode, "tool");
+    const closedcode = path.join(test.directory, ".closedcode");
+    const tool = path.join(closedcode, "tool");
     yield* Effect.promise(() => fs.mkdir(tool, {
       recursive: true
     }));
@@ -47,10 +47,10 @@ describe("tool.registry", () => {
     const ids = yield* registry.ids();
     expect(ids).toContain("hello");
   }));
-  it.instance("loads tools from .opencode/tools (plural)", () => Effect.gen(function* () {
+  it.instance("loads tools from .closedcode/tools (plural)", () => Effect.gen(function* () {
     const test = yield* TestInstance;
-    const opencode = path.join(test.directory, ".opencode");
-    const tools = path.join(opencode, "tools");
+    const closedcode = path.join(test.directory, ".closedcode");
+    const tools = path.join(closedcode, "tools");
     yield* Effect.promise(() => fs.mkdir(tools, {
       recursive: true
     }));
@@ -61,19 +61,19 @@ describe("tool.registry", () => {
   }));
   it.instance("loads tools with external dependencies without crashing", () => Effect.gen(function* () {
     const test = yield* TestInstance;
-    const opencode = path.join(test.directory, ".opencode");
-    const tools = path.join(opencode, "tools");
+    const closedcode = path.join(test.directory, ".closedcode");
+    const tools = path.join(closedcode, "tools");
     yield* Effect.promise(() => fs.mkdir(tools, {
       recursive: true
     }));
-    yield* Effect.promise(() => writeFile(path.join(opencode, "package.json"), JSON.stringify({
+    yield* Effect.promise(() => writeFile(path.join(closedcode, "package.json"), JSON.stringify({
       name: "custom-tools",
       dependencies: {
         "plugin": "^0.0.0",
         cowsay: "^1.6.0"
       }
     })));
-    yield* Effect.promise(() => writeFile(path.join(opencode, "package-lock.json"), JSON.stringify({
+    yield* Effect.promise(() => writeFile(path.join(closedcode, "package-lock.json"), JSON.stringify({
       name: "custom-tools",
       lockfileVersion: 3,
       packages: {
@@ -85,7 +85,7 @@ describe("tool.registry", () => {
         }
       }
     })));
-    const cowsay = path.join(opencode, "node_modules", "cowsay");
+    const cowsay = path.join(closedcode, "node_modules", "cowsay");
     yield* Effect.promise(() => fs.mkdir(cowsay, {
       recursive: true
     }));

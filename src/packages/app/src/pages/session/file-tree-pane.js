@@ -1,7 +1,7 @@
 import { Show, createComponent, createEffect, createMemo, onCleanup } from "solid-js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "../../lib/router/index.js";
 import { base64Decode } from "core/util/encode";
-import { createMediaQuery } from "@solid-primitives/media";
+import { createMediaQuery } from "../../lib/primitives/media.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import FileTree from "@/components/file-tree.js";
 import { env } from "@/lib/env.js";

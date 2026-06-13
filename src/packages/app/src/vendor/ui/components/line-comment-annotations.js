@@ -5,7 +5,7 @@ import { createStore } from "solid-js/store";
 // layer adopts. LineComment/LineCommentEditor are Solid components, so they
 // need a real root (owner + disposal). This mirrors solid-js/web render()
 // exactly, without using anything from solid-js/web beyond insert().
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { useI18n } from "../context/i18n.js";
 import { createHoverCommentUtility } from "../pierre/comment-hover.js";
 import { cloneSelectedLineRange, formatSelectedLineLabel, lineInSelectedRange } from "../pierre/selection-bridge.js";
@@ -130,7 +130,7 @@ export function createLineCommentAnnotationRenderer(props) {
     let disposer;
     createRoot(d => {
       disposer = d;
-      _solidInsert(host, ui());
+      insert(host, ui());
     });
     const dispose = () => {
       disposer();

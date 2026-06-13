@@ -1,12 +1,12 @@
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { makeEventListener } from "@solid-primitives/event-listener";
+import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { Tabs } from "@/bs/tabs.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";
-import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "@thisbeyond/solid-dnd";
+import { DragDropProvider, DragDropSensors, DragOverlay, SortableProvider, closestCenter } from "../../lib/dnd/index.js";
 import { ConstrainDragYAxis, getDraggableId } from "@/utils/solid-dnd.js";
 import { SortableTerminalTab } from "@/components/session/index.js";
 import { Terminal } from "@/components/terminal.js";
@@ -247,7 +247,7 @@ export function TerminalPanel() {
     // non-keyed Show keeps it mounted while the pty still exists, feeding the
     // live pty accessor through the props getter. insert() reconciles so the
     // terminal node is never re-attached without an actual branch change.
-    _solidInsert(body, createComponent(Show, {
+    insert(body, createComponent(Show, {
       get when() {
         return terminal.active();
       },
@@ -350,7 +350,7 @@ export function TerminalPanel() {
   // Ready/loading switch appended after the resize-handle host. insert() with
   // a null marker keeps append semantics and reconciles the provider output
   // (sensors/overlay markers + the area element) without remounting it.
-  _solidInsert(column, createComponent(Show, {
+  insert(column, createComponent(Show, {
     get when() {
       return terminal.ready();
     },

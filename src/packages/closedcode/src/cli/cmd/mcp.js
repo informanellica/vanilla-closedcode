@@ -335,12 +335,10 @@ export const McpLogoutCommand = effectCmd({
   })
 });
 async function resolveConfigPath(baseDir, global = false) {
-  // Check for existing config files. Prefer closedcode names (the default for
-  // new configs); fall back to the legacy opencode names so existing configs
-  // keep working. Also check the .closedcode/.opencode subdirectory.
-  const candidates = [path.join(baseDir, "closedcode.json"), path.join(baseDir, "closedcode.jsonc"), path.join(baseDir, "opencode.json"), path.join(baseDir, "opencode.jsonc")];
+  // Check for existing config files. Also check the .closedcode subdirectory.
+  const candidates = [path.join(baseDir, "closedcode.json"), path.join(baseDir, "closedcode.jsonc")];
   if (!global) {
-    candidates.push(path.join(baseDir, ".closedcode", "closedcode.json"), path.join(baseDir, ".closedcode", "closedcode.jsonc"), path.join(baseDir, ".opencode", "opencode.json"), path.join(baseDir, ".opencode", "opencode.jsonc"));
+    candidates.push(path.join(baseDir, ".closedcode", "closedcode.json"), path.join(baseDir, ".closedcode", "closedcode.jsonc"));
   }
   for (const candidate of candidates) {
     if (await Filesystem.exists(candidate)) {

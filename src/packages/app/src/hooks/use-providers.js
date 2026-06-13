@@ -1,6 +1,6 @@
 import { useGlobalSync } from "@/context/global-sync.js";
 import { decode64 } from "@/utils/base64.js";
-import { useParams } from "@solidjs/router";
+import { useParams } from "../lib/router/index.js";
 import { createMemo } from "solid-js";
 export const popularProviders = ["lmstudio", "ollama"];
 const popularProviderSet = new Set(popularProviders);

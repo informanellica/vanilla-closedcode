@@ -282,7 +282,7 @@ describe("session.llm.stream", () => {
     }));
     await using tmp = await tmpdir({
       init: async dir => {
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           enabled_providers: [providerID],
           provider: {
             [providerID]: {
@@ -367,7 +367,7 @@ describe("session.llm.stream", () => {
     const pending = waitStreamingRequest("/chat/completions");
     await using tmp = await tmpdir({
       init: async dir => {
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           enabled_providers: [providerID],
           provider: {
             [providerID]: {
@@ -452,7 +452,7 @@ describe("session.llm.stream", () => {
     }));
     await using tmp = await tmpdir({
       init: async dir => {
-        await writeFile(path.join(dir, "opencode.json"), JSON.stringify({
+        await writeFile(path.join(dir, "closedcode.json"), JSON.stringify({
           enabled_providers: [providerID],
           provider: {
             [providerID]: {

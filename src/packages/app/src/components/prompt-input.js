@@ -1,8 +1,8 @@
 // insert() is the established exception for reactive/component-valued
 // children: PromptPopover and Show return memo accessors that must keep being
-// reconciled (the Kobalte-backed model selector lives under one of them), so
+// reconciled (the popover-backed model selector lives under one of them), so
 // freezing their first value would break open/close and branch switches.
-import { insert as _solidInsert } from "solid-js/web";
+import { insert } from "solid-js/web";
 import { useFilteredList } from "@/lib/hooks.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
 import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal } from "solid-js";
@@ -1307,7 +1307,7 @@ export const PromptInput = props => {
   })];
   const buildModelControl = () => {
     const el = template(`<div data-component="prompt-model-control"></div>`);
-    _solidInsert(el, createComponent(Show, {
+    insert(el, createComponent(Show, {
       get when() {
         return providers.connected().length > 0;
       },
@@ -1355,7 +1355,7 @@ export const PromptInput = props => {
           get keybind() {
             return command.keybind("model.choose");
           },
-          // Kobalte-backed popover: its accessor tree is resolved by the
+          // Popover-backed selector: its accessor tree is resolved by the
           // vanilla Tooltip through insert().
           children: createComponent(ModelSelectorPopover, {
             get model() {
@@ -1478,7 +1478,7 @@ export const PromptInput = props => {
         return language.t("common.cancel");
       }
     }));
-    _solidInsert(controls, createComponent(Show, {
+    insert(controls, createComponent(Show, {
       get when() {
         return !agentsLoading();
       },
@@ -1486,7 +1486,7 @@ export const PromptInput = props => {
         return buildAgentControl();
       }
     }), null);
-    _solidInsert(controls, createComponent(Show, {
+    insert(controls, createComponent(Show, {
       get when() {
         return !providersLoading();
       },
@@ -1530,7 +1530,7 @@ export const PromptInput = props => {
   // PromptPopover returns a Show-style memo accessor; insert() keeps
   // resolving it (an opening popover is appended at the end of the root,
   // matching the compiled null-marker insert).
-  _solidInsert(rootEl, createComponent(PromptPopover, {
+  insert(rootEl, createComponent(PromptPopover, {
     get popover() {
       return store.popover;
     },
@@ -1610,7 +1610,7 @@ export const PromptInput = props => {
   }));
   // Bottom tray. The mode is only ever "normal" | "shell", so the Show stays
   // mounted; it is kept for structural parity with the compiled output.
-  _solidInsert(rootEl, createComponent(Show, {
+  insert(rootEl, createComponent(Show, {
     get when() {
       return store.mode === "normal" || store.mode === "shell";
     },

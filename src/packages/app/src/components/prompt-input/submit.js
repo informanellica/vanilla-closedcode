@@ -1,7 +1,7 @@
 import { showToast } from "@/lib/toast.js";
 import { base64Encode } from "core/util/encode";
 import { Binary } from "core/util/binary";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "../../lib/router/index.js";
 import { batch } from "solid-js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { useLanguage } from "@/context/language.js";

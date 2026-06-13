@@ -1,8 +1,11 @@
 # Milestone: solid-free reactivity (replacing solid-js core)
 
-> Status: **design + Stage R1 implementation** (2026-06-12)
+> Status: **Stage R1 complete** (2026-06-12) — reactive core (independent
+> implementation) + store layer (a faithful PORT of solid-js/store) implemented,
+> semantics tests green (reactivity 16/16, store 13/13). Next: R2 pilot.
 > Prerequisite (done): every first-party renderer file is hand-written vanilla —
 > zero compiler output; reactivity runs on solid-js core APIs only.
+> Attribution for the ported/derived pieces is tracked in THIRD-PARTY-NOTICES.md.
 
 ## Inventory (what "solid-js" means to us today)
 
@@ -29,7 +32,10 @@ vendored components), `@sentry/solid`, `@solidjs/meta`, `@opentui/solid`
 
 Because call sites are in the thousands but the API surface is small, we do NOT
 rewrite call sites. We implement **`lib/reactivity.js` — an API-compatible
-self-written core** for the subset we use, and swap what the specifier
+reimplementation** of the subset we use (its reactive core — signals/effects/
+memos/owners — is an independent implementation; the memo/template DOM helpers
+reproduce the solid-js/web (dom-expressions) runtime, and **`lib/store.js` is a
+faithful port of solid-js/store**), and swap what the specifier
 `solid-js` RESOLVES to (renderer import map / `package.json#imports`), keeping
 the source untouched. Third-party packages keep resolving to the real solid-js
 until each is replaced (Stage R3) — two runtimes can coexist because every
@@ -40,18 +46,54 @@ already catalogued per component from the conversion campaign.
 ## Stages
 
 ```
-R1  lib/reactivity.js: signals/effects/memos/batch/untrack/on +
-    owners (root/cleanup/getOwner/runWithOwner) + context + store-lite +
-    helpers (createComponent/children/mergeProps/splitProps/Show/For/...)
-    — with a node-run unit-test file proving the semantics we rely on.
-R2  pilot: alias solid-js -> lib/reactivity.js for a bounded leaf area
-    (storybook scaffold or a single page) via the import map; e2e-verify.
+R1  [DONE] lib/reactivity.js: signals/effects/memos/batch/untrack/on +
+    owners (root/cleanup/getOwner/runWithOwner) + context +
+    helpers (createComponent/children/mergeProps/splitProps/Show/For/...).
+    [DONE] lib/store.js: createStore/produce/reconcile/unwrap (+createMutable/
+    modifyMutable) ported from solid-js/store onto our core via the three
+    runtime deps it needs (getListener/batch/createSignal). Both have node-run
+    unit tests (reactivity.test.mjs 16, store.test.mjs 13) proving the trap-list
+    semantics. `solid-js` -> reactivity.js, `solid-js/store` -> store.js when aliased.
+R2  pilot: alias solid-js -> lib/reactivity.js (and solid-js/store -> lib/store.js)
+    for a bounded leaf area (storybook scaffold or a single page) via the import
+    map; e2e-verify. Both alias specifiers must flip together since store imports
+    getListener/batch/createSignal from the core.
 R3  replace third-party solid deps one at a time (router -> the memory router
     we already drive; solid-query -> small fetch cache; primitives -> trivial
     utilities; dnd/kobalte leftovers -> bs/ equivalents; sentry/solid ->
     @sentry/browser). Each removal shrinks the wall.
 R4  flip the global alias; solid-js leaves package.json.
 ```
+
+## R3 progress (2026-06-12)
+
+Each R3 item is an "internalization": the third-party's used behavior is
+reimplemented in first-party space, still `import`ing from "solid-js" (so it
+follows the R4 import-map flip), and is verified behavior-equivalent on the
+CURRENT real-solid runtime BEFORE the flip.
+
+- **[DONE] @solid-primitives/\*** (7 pkgs) -> `lib/primitives/{event-listener,
+  resize-observer,media,event-bus,timer,storage,i18n}.js`. Faithful ports of the
+  used exports; 33 first-party files repointed to `@/lib/primitives/*`. Zero
+  runtime imports remain. (mechanical repoint — node-check sufficient)
+- **[DONE] solid-list** -> `lib/primitives/solid-list.js` (createList + inlined
+  @corvu access/controllableSignal). **@solidjs/meta** -> `lib/primitives/meta.js`
+  (pass-through MetaProvider — app uses no Title/Meta). **@sentry/solid** ->
+  `@sentry/browser` (only init/captureException/isEnabled used; non-solid pkg).
+- **[TODO — needs build+e2e verification, not node-check]** these are complex
+  runtime reimplementations whose correctness can't be proven statically:
+  - `@solidjs/router` (97 hook sites + Router/Route/Navigate mount in app.js):
+    nested routes, params/search, navigation, useIsRouting.
+  - `@tanstack/solid-query` (17 sites + global-sync bootstrap): QueryClient
+    (fetchQuery/ensureQueryData/invalidate/refetch/setQueryData), useQuery/
+    useQueries/useMutation/useQueryClient, queryOptions/skipToken.
+  - `@thisbeyond/solid-dnd` (9 files) -> bs/ sortable equivalents.
+  - `@kobalte/core` (20 files) -> bs/ equivalents (bs/ already covers a subset).
+
+  Verification plan: build the reimplementations, run the e2e gate with the flip
+  OFF (real solid) to confirm the internalizations are behavior-equivalent, then
+  R4 (flip ON) + e2e again. package.json dep pruning is batched into R4 (one
+  `npm install` to confirm the tree still resolves).
 
 ## Semantics R1 must reproduce (from the campaign's trap list)
 
@@ -78,5 +120,9 @@ R4  flip the global alias; solid-js leaves package.json.
   owner will NOT be disposed by Kobalte. The conversion campaign already
   routes such cases through getOwner/runWithOwner — those sites keep solid-js
   resolution until their host third-party is replaced.
-- `@opentui/solid` (TUI) is bundled and stays on real solid-js permanently
-  (third-party interop wall, same status as `.scm` imports).
+- `@opentui/solid` (TUI): SUPERSEDED. This was the original "stays on solid-js
+  permanently" wall, but the TUI is being rebuilt native-free on terminal-kit +
+  the first-party reactivity core (see docs/milestones/solid-free-tui.md — T0–T3
+  done, view layer runs behind CLOSEDCODE_VANILLA_TUI=1). Once the vanilla shell
+  is SDK-connected and promoted to default, `@opentui/*` + the TUI's solid-js are
+  removed outright, so this is no longer a permanent wall.

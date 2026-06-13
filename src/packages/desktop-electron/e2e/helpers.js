@@ -153,7 +153,7 @@ export async function launchDesktopWithConfig(config) {
   return { browser, child, root, configDir };
 }
 
-// Resolve the renderer window: wait for the oc://renderer page to finish the
+// Resolve the renderer window: wait for the vcc://renderer page to finish the
 // loading.html -> index.html navigation on the same page object.
 export async function rendererPage(browser) {
   // 150s: cold starts (fresh temp profile = full DB migration + first-run
@@ -161,11 +161,11 @@ export async function rendererPage(browser) {
   const deadline = Date.now() + 150_000;
   while (Date.now() < deadline) {
     const pages = browser.contexts().flatMap((context) => context.pages());
-    const renderer = pages.find((page) => page.url().startsWith("oc://renderer/"));
+    const renderer = pages.find((page) => page.url().startsWith("vcc://renderer/"));
     if (renderer) {
       try {
-        if (!renderer.url().startsWith("oc://renderer/index.html")) {
-          await renderer.waitForURL("oc://renderer/index.html**", {
+        if (!renderer.url().startsWith("vcc://renderer/index.html")) {
+          await renderer.waitForURL("vcc://renderer/index.html**", {
             timeout: Math.max(1_000, deadline - Date.now()),
           });
         }
@@ -187,7 +187,7 @@ export function base64Dir(value) {
 }
 
 // Navigate the SPA to the session route of a directory. The app router uses
-// MEMORY integration on oc:// (pushState/popstate are ignored), so this calls
+// MEMORY integration on vcc:// (pushState/popstate are ignored), so this calls
 // the e2e hook home.js exposes (the real openProject flow: projects.open +
 // touch + navigate) instead of touching browser history.
 export async function gotoProject(page, directory) {

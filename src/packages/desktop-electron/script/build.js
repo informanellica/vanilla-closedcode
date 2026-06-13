@@ -217,7 +217,7 @@ for (const f of await fs.readdir(closedcodeServerDist, { withFileTypes: true }))
 }
 
 // ---- renderer: NOT bundled (Stage C: build-less, native ESM) ---------------
-// The renderer runs as native ESM served by the oc:// protocol handler
+// The renderer runs as native ESM served by the vcc:// protocol handler
 // (src/main/windows.js), which serves packages/app/src + src/renderer +
 // node_modules and rewrites bare import specifiers on the fly. No esbuild bundle.
 // We only copy the .aac sound assets referenced by utils/sound.js (./assets/audio/).
@@ -232,7 +232,7 @@ console.log("[2/5] copy renderer audio assets...")
 }
 
 // ---- workspace source trees for packaged build-less -------------------------
-// When electron-builder packages the app, the oc:// resolver needs the renderer
+// When electron-builder packages the app, the vcc:// resolver needs the renderer
 // source code inside the asar. Copy workspace packages' src trees and create
 // package.json stubs so bare imports (*) resolve correctly.
 console.log("[3/5] copy workspace source trees for packaged build-less...")

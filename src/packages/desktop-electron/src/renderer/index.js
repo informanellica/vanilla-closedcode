@@ -3,8 +3,8 @@ import { memo as _$memo } from "solid-js/web";
 // @refresh reload
 
 import { ACCEPTED_FILE_EXTENSIONS, ACCEPTED_FILE_TYPES, AppBaseProviders, AppInterface, handleNotificationClick, loadLocaleDict, normalizeLocale, PlatformProvider, ServerConnection, useCommand } from "app";
-import * as Sentry from "@sentry/solid";
-import { MemoryRouter } from "@solidjs/router";
+import * as Sentry from "@sentry/browser";
+import { MemoryRouter } from "../../../app/src/lib/router/index.js";
 import { createEffect, createResource, onCleanup, onMount, Show } from "solid-js";
 import { render } from "solid-js/web";
 import pkg from "../../package.json" with { type: "json" };

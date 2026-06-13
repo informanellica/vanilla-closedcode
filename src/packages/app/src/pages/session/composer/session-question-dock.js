@@ -1,14 +1,14 @@
 import { createComponent, createMemo, createRenderEffect, onCleanup, onMount } from "solid-js";
 import { createStore } from "solid-js/store";
-import { useMutation } from "@tanstack/solid-query";
+import { useMutation } from "../../../lib/query/index.js";
 import { Button } from "@/bs/button.js";
 import { DockPrompt } from "@/vendor/ui/components/dock-prompt.js";
 import { Icon } from "@/bs/icon.js";
 import { showToast } from "@/lib/toast.js";
 import { useLanguage } from "@/context/language.js";
 import { useComposerController } from "@/controllers/session-composer.js";
-import { makeEventListener } from "@solid-primitives/event-listener";
-import { createResizeObserver } from "@solid-primitives/resize-observer";
+import { makeEventListener } from "../../../lib/primitives/event-listener.js";
+import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 const cache = new Map();
 
 // Build a detached element from compact HTML (no inter-element whitespace,
