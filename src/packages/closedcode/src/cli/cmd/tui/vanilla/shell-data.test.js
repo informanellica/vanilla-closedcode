@@ -104,7 +104,7 @@ function makeShell() {
   ok(screenText(shell).includes("Opus 4.8"), "models dialog lists the provider's model");
   shell.dispatch("ENTER"); // pick it
   await settle();
-  ok(screenText(shell).includes("opus-4-8"), "meta line reflects the selected model");
+  ok(screenText(shell).includes("Opus 4.8"), "meta line reflects the selected model (display name)");
 }
 
 // 4. '@' file autocomplete queries sdk.find.files

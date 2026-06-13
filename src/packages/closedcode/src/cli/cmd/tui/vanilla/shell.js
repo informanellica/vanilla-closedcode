@@ -22,6 +22,7 @@ import { createTimeline } from "./timeline.js";
 import { createToast } from "./toast.js";
 import * as Dialogs from "./dialogs.js";
 import { createPermissionPrompt, createQuestionPrompt } from "./prompts.js";
+import { createSelection } from "./selection.js";
 
 const STATUS_ROWS = 1;
 const HOME_PROMPT_COLS = 75; // matches the live home (maxWidth 75)
@@ -45,21 +46,6 @@ export function createShell(opts = {}) {
   function navigate(next) { setRoute(next); if (data && next.type === "session") data.syncSession(next.sessionID); }
   const currentSid = () => { const r = route(); return r.type === "session" ? r.sessionID : undefined; };
 
-  // --- selection (model/agent) ---------------------------------------------
-  const [agentSel, setAgentSel] = createSignal();
-  const [modelSel, setModelSel] = createSignal();
-  function firstModel() {
-    for (const p of data?.store.providers() ?? []) {
-      const mids = Object.keys(p.models ?? {});
-      if (mids.length) return { providerID: p.id, modelID: mids[0] };
-    }
-    return undefined;
-  }
-  const currentAgentName = () => agentSel() ?? data?.store.agents()[0]?.name ?? opts.agent ?? "build";
-  const currentModel = () => modelSel() ?? firstModel();
-  const metaModel = () => currentModel()?.modelID ?? opts.model;
-  const metaProvider = () => currentModel()?.providerID ?? opts.provider;
-
   // --- timeline ------------------------------------------------------------
   const [localMessages, setLocalMessages] = createSignal([]); // stub-mode timeline
   const pushMessage = m => setLocalMessages(list => [...list, m]);
@@ -69,6 +55,13 @@ export function createShell(opts = {}) {
 
   // Global keys work even while a dialog captures input.
   router.setGlobal(name => { if (name === "CTRL_C" && opts.onExit) { opts.onExit(); return true; } return false; });
+
+  // --- selection (model / agent / variant) ---------------------------------
+  const selection = data ? createSelection({ data, toast, agent: opts.agent }) : null;
+  const currentAgentName = () => (selection ? selection.agent.current() : (opts.agent ?? "build"));
+  const currentModel = () => (selection ? selection.model.current() : undefined);
+  const metaModel = () => (selection ? selection.model.parsed().model : opts.model);
+  const metaProvider = () => (selection ? selection.model.parsed().provider : opts.provider);
 
   // --- prompt --------------------------------------------------------------
   const history = createPromptHistory();
@@ -95,7 +88,7 @@ export function createShell(opts = {}) {
     }
     if (data) {
       timeline.pin();
-      data.submit(currentSid(), text, { mode, agent: currentAgentName(), model: currentModel() })
+      data.submit(currentSid(), text, { mode, agent: currentAgentName(), model: currentModel(), variant: selection?.variant.current() })
         .then(newSid => { if (route().type === "home") navigate({ type: "session", sessionID: newSid }); else data.syncSession(newSid); })
         .catch(e => toast.error(e));
       return;
@@ -158,7 +151,7 @@ export function createShell(opts = {}) {
       const options = [];
       for (const p of data.store.providers()) for (const [mid, m] of Object.entries(p.models ?? {})) options.push({ label: `${m.name ?? mid}  ·  ${p.name ?? p.id}`, value: { providerID: p.id, modelID: mid } });
       if (!options.length) { toast.show({ message: "No providers connected", variant: "warning" }); return; }
-      Dialogs.select(dialog, { title: "Models", theme, now: opts.now, options }).then(o => { if (o) { setModelSel(o.value); toast.show({ message: `Model: ${o.value.modelID}`, variant: "success" }); } });
+      Dialogs.select(dialog, { title: "Models", theme, now: opts.now, options }).then(o => { if (o) { selection.model.set(o.value); toast.show({ message: `Model: ${o.value.modelID}`, variant: "success" }); } });
       return;
     }
     openStub("Models", ["opus-4.8", "sonnet-4.6", "haiku-4.5"]).then(o => o && toast.show({ message: `Switched model: ${o.value}`, variant: "success" }));
@@ -167,7 +160,7 @@ export function createShell(opts = {}) {
     if (data) {
       const options = data.store.agents().map(a => ({ label: a.name, value: a.name }));
       if (!options.length) { toast.show({ message: "No agents available", variant: "warning" }); return; }
-      Dialogs.select(dialog, { title: "Agents", theme, now: opts.now, options }).then(o => { if (o) { setAgentSel(o.value); toast.show({ message: `Agent: ${o.value}`, variant: "success" }); } });
+      Dialogs.select(dialog, { title: "Agents", theme, now: opts.now, options }).then(o => { if (o) { selection.agent.set(o.value); toast.show({ message: `Agent: ${o.value}`, variant: "success" }); } });
       return;
     }
     openStub("Agents", ["build", "plan", "general"]).then(o => o && toast.show({ message: `Switched agent: ${o.value}`, variant: "success" }));
@@ -291,7 +284,7 @@ export function createShell(opts = {}) {
     catch (e) { toast.error(e); }
   }
 
-  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, openCommands, openHelp, dispatch, draw, init, theme, data };
+  return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, openCommands, openHelp, dispatch, draw, init, theme, data };
 }
 
 // Wire the shell model into a live terminal-kit app. Returns { app, shell }.
