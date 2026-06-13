@@ -23,6 +23,10 @@ const skipEmbedWebUi = process.argv.includes("--skip-embed-web-ui");
 // from process.execPath at runtime (see the CJS banner below). script/sea.js then
 // turns the .cjs bundle into the platform binary.
 const SEA = process.argv.includes("--sea");
+// --libc musl tags a Linux build as the musl variant: the platform package gets a
+// `-musl` name suffix + a `libc:["musl"]` field so npm installs it only on musl
+// (Alpine). Default glibc. Cross-platform CI passes this per matrix entry.
+const libc = process.argv.includes("--libc") ? process.argv[process.argv.indexOf("--libc") + 1] : "glibc";
 const migrationDirs = (await fs.promises.readdir(path.join(dir, "migration"), {
   withFileTypes: true
 })).filter(entry => entry.isDirectory() && /^\d{4}\d{2}\d{2}\d{2}\d{2}\d{2}/.test(entry.name)).map(entry => entry.name).sort();
@@ -56,7 +60,7 @@ async function buildEmbeddedWebUI() {
 }
 const embeddedFileMap = await buildEmbeddedWebUI();
 const platform = process.platform === "win32" ? "windows" : process.platform;
-const name = [pkg.name, platform, process.arch].join("-");
+const name = [pkg.name, platform, process.arch, libc === "musl" ? "musl" : null].filter(Boolean).join("-");
 console.log(`building ${name}`);
 const outDir = path.join(dir, "dist", name);
 await fs.promises.rm(outDir, {
@@ -193,7 +197,7 @@ await esbuild({
     CLOSEDCODE_VERSION: JSON.stringify(Script.version),
     CLOSEDCODE_MIGRATIONS: JSON.stringify(migrations),
     CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
-    CLOSEDCODE_LIBC: JSON.stringify("glibc"),
+    CLOSEDCODE_LIBC: JSON.stringify(libc),
     // SEA: the TUI Worker entry is a sidecar worker.cjs next to the exe (built
     // below); compute its path from the exe dir at runtime. ESM: the source path.
     CLOSEDCODE_WORKER_PATH: SEA
@@ -247,7 +251,7 @@ if (SEA) {
       CLOSEDCODE_VERSION: JSON.stringify(Script.version),
       CLOSEDCODE_MIGRATIONS: JSON.stringify(migrations),
       CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
-      CLOSEDCODE_LIBC: JSON.stringify("glibc"),
+      CLOSEDCODE_LIBC: JSON.stringify(libc),
       CLOSEDCODE_WORKER_PATH: "globalThis.__ccWorkerPath",
       OTUI_TREE_SITTER_WORKER_PATH: JSON.stringify(""),
       CLOSEDCODE_EMBEDDED_WEB_UI: JSON.stringify(embeddedFileMap ?? {})
@@ -273,7 +277,8 @@ await fs.promises.writeFile(path.join(outDir, "package.json"), JSON.stringify({
     closedcode: SEA ? (process.platform === "win32" ? "./bin/closedcode.exe" : "./bin/closedcode") : "./bin/closedcode"
   },
   os: [process.platform],
-  cpu: [process.arch]
+  cpu: [process.arch],
+  ...(libc === "musl" ? { libc: ["musl"] } : {})
 }, null, 2));
 
 // Stage 2 (pure-vanilla): prompts/tool descriptions are read via fs at runtime

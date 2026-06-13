@@ -28,7 +28,8 @@ const arg = (flag, dflt) => { const i = process.argv.indexOf(flag); return i >= 
 const targetOs = arg("--target-os", process.platform === "win32" ? "windows" : process.platform);
 const targetArch = arg("--target-arch", process.arch);
 const nodeBin = arg("--node", process.execPath); // target-platform node binary to embed into
-const name = [pkg.name, targetOs, targetArch].join("-");
+const targetLibc = arg("--target-libc", null);    // "musl" tags the Linux musl variant
+const name = [pkg.name, targetOs, targetArch, targetLibc === "musl" ? "musl" : null].filter(Boolean).join("-");
 const binDir = path.join(dir, "dist", name, "bin");
 const exeName = targetOs === "windows" ? "closedcode.exe" : "closedcode";
 const exe = path.join(binDir, exeName);
