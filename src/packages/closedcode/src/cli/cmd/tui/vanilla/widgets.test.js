@@ -88,8 +88,9 @@ const char = () => ({ isCharacter: true });
     { role: "assistant", parts: [{ type: "tool", name: "read", title: "file.js", status: "completed" }, { type: "text", text: "done" }] },
   ];
   const lines = buildTimelineLines(msgs, 40);
-  ok(lines.some(l => l.str === "› hello"), "user text gets the '›' marker");
-  ok(lines.some(l => l.str.startsWith("● read")), "tool part renders a bullet line");
+  const lineText = l => l.map(s => s.text).join("");
+  ok(lines.some(l => lineText(l) === "› hello"), "user text gets the '›' marker (rich line)");
+  ok(lines.some(l => lineText(l).startsWith("● read")), "tool part renders a bullet line");
   const tl = createTimeline(() => msgs, {});
   const buf = new tk.ScreenBuffer({ width: 40, height: 2 }); // smaller than the 4 content lines
   buf.fill({ char: " " });

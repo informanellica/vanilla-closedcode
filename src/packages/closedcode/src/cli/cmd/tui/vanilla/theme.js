@@ -17,6 +17,16 @@ export const defaultTheme = {
   secondary: "brightBlue",
   border: "gray",
   backgroundElement: "default",
+  // markdown / syntax / diff tokens (the live ThemeProvider resolves these to
+  // 24-bit hex; here they map to terminal-kit named colors as a stand-in)
+  markdownHeading: "brightCyan",
+  markdownCode: "brightYellow",
+  markdownLink: "brightBlue",
+  markdownQuote: "gray",
+  codeBlock: "brightGreen",
+  diffAdded: "brightGreen",
+  diffRemoved: "brightRed",
+  diffContext: "gray",
 };
 
 // Build a terminal-kit attr from a theme token (+ optional bg token / flags).
