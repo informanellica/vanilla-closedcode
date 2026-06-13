@@ -1,16 +1,15 @@
 # Milestone: vanilla TUI (remove @opentui/* + solid-js from the terminal UI)
 
-> Status: **view layer + SDK chat loop + renderers (markdown/diff/permission/
-> question) DONE; flip NOT yet — breadth gaps remain** (2026-06-13). The vanilla
-> `tui/vanilla/` shell runs behind `CLOSEDCODE_VANILLA_TUI=1` and, with a server
-> url, streams real sessions via `vanilla/data/` (no solid-js/store — immediate-
-> mode rev-bump). Assistant markdown, edit/write/revert diffs (indentation
-> preserved), tool output, and permission/question modals are first-party +
-> adversarially hardened; then a 4-way parallel breadth pass added keybinds
-> (leader chords), the command/dialog registry, model/agent/variant selection,
-> and syntax highlighting. **507 headless tests green.** @opentui/solid-js stay
-> until the remaining gaps clear — chiefly 24-bit theme (ScreenBufferHD),
-> mouse/selection, sidebar, plugins — see "Flip-readiness assessment". Sibling of
+> Status: **DONE — @opentui/solid-js DELETED; vanilla is the DEFAULT TUI**
+> (2026-06-13, flip-first). The build succeeds with @opentui absent from
+> node_modules; the bundle has zero @opentui/solid-js; 515 headless tests green.
+> Strategy (per the user): not a code port — features are rebuilt from scratch on
+> the first-party terminal-kit toolkit, so the old @opentui tree was deleted
+> outright (112+ files) once the chat loop + renderers + breadth (keybinds,
+> command/dialog registry, model/agent/variant selection, markdown/diff/syntax)
+> were in place. Known feature REGRESSIONS to rebuild next on the vanilla default:
+> 24-bit theme (ScreenBufferHD), mouse/selection, sidebar, plugin runtime — see
+> "Post-deletion: rebuild list". Sibling of
 > `solid-free-reactivity.md` (the desktop renderer milestone). The reactive core
 > built there (`lib/reactivity.js`) is reused for TUI state; everything else in
 > the TUI rendering stack is replaced by a pure-JavaScript base.
@@ -261,7 +260,42 @@ bump per event batch.
    terminal-kit), npm install, confirm no native dep; and T5(c) cross-terminal
    smoke.
 
-### Flip-readiness assessment (2026-06-13) — NOT YET; do not delete @opentui
+### DONE (2026-06-13): @opentui DELETED — vanilla is the default TUI
+
+Per the user's flip-first call ("rebuild from features, not a code port — so it can
+be deleted anytime; the toolkit was designed for that"), the @opentui tree was
+removed outright:
+- thread.js/attach.js load vanilla/main.js by default (no flag, no app.js branch).
+- Deleted cli/cmd/tui/{app.js, routes, context, component, plugin, ui, util, asset,
+  feature-plugins, layer.js} (112+ files) + util/node-ffi-preload.mjs + the old tui
+  jest suites + @opentui test stubs/fixtures. KEPT: thread/attach/win32/
+  validate-session/worker/config/runtime/vanilla, and event.js (TuiEvent — shared
+  with server/mcp, effect-based, @opentui-free).
+- package.json: removed @opentui/core, @opentui/solid, @solid-primitives/*,
+  opentui-spinner, solid-js. packages/plugin: removed its dead @opentui peer/dev
+  decls. `npm install` pruned 47 packages; `npm ls @opentui/core` is empty.
+- script/build.js: terminal-kit + string-kit marked external (dynamic termconfig
+  load can't be bundled).
+VERIFIED: `node script/build.js` succeeds with @opentui absent from node_modules;
+the built bundle has 0 @opentui/solid-js refs; src has 0 such imports; 515 tests green.
+
+### Post-deletion: rebuild list (features regressed vs the old @opentui TUI)
+
+Now built FROM SCRATCH on the vanilla default (no port), in roughly this order:
+- [ ] 24-bit theme — migrate the render stack to terminal-kit ScreenBufferHD; load
+      the real theme JSON (hex). Biggest visual gap.
+- [ ] sidebar (files/todos/diffs) — add todo.updated/session.diff to vanilla/data,
+      then a sidebar panel; subagent view; timeline-jump.
+- [ ] mouse + text selection/copy, paste-image, external editor, drag-drop.
+- [ ] plugin runtime + slots (the vanilla TUI plugin API).
+- [ ] startup/TTFD, win32 ctrl-c guard/suspend; remaining dialogs (stash/skill/
+      mcp/console-org); split-diff; selection DISK persistence; syntax-highlight
+      inside diffs.
+- [ ] cosmetic: remove the now-dead @opentui plugins from script/build.js
+      (patchOpentuiFileImports / opentuiNativeShim / node:ffi onResolve) + the
+      setup-globals node-ffi-polyfill import.
+
+### (historical) Flip-readiness assessment — superseded by the deletion above
 
 The hard, novel work is done, plus a large breadth pass (a 4-way parallel build:
 keybind / syntax-highlight / command-registry / selection, each new-file + self-
