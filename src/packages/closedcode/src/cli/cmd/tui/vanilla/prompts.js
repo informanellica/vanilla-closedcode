@@ -10,6 +10,7 @@ import { truncate } from "../runtime/text.js";
 import { attr, defaultTheme } from "./theme.js";
 import { drawRichLine } from "./richtext.js";
 import { renderUnifiedDiff } from "./diff.js";
+import { langFromPath } from "./syntax.js";
 
 // Permission: Allow once / Allow always / Reject, with the edit diff if present.
 export function createPermissionPrompt(req = {}, opts = {}) {
@@ -36,7 +37,7 @@ export function createPermissionPrompt(req = {}, opts = {}) {
       {
         size: "flex", draw: r => {
           if (diff) {
-            const lines = renderUnifiedDiff(diff, r.width);
+            const lines = renderUnifiedDiff(diff, r.width, { lang: langFromPath(filepath) });
             const overflow = lines.length > r.height;
             const shown = overflow ? r.height - 1 : lines.length;
             for (let i = 0; i < shown; i++) drawRichLine(r, i, lines[i], theme);

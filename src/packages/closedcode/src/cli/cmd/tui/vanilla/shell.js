@@ -67,14 +67,17 @@ export function createShell(opts = {}) {
   const [localMessages, setLocalMessages] = createSignal([]); // stub-mode timeline
   const pushMessage = m => setLocalMessages(list => [...list, m]);
   const timelineSource = () => (data ? data.store.timeline(currentSid()) : localMessages());
-  const timeline = createTimeline(timelineSource, { theme });
+  // Diff display mode for tool diffs: "unified" (stacked) or "split" (side-by-side).
+  const [diffView, setDiffView] = createSignal(opts.diffView ?? "unified");
+  const toggleDiffView = () => setDiffView(v => (v === "split" ? "unified" : "split"));
+  const timeline = createTimeline(timelineSource, { theme, diffView });
   const toast = createToast({ theme, now: opts.now, scheduleRepaint: opts.scheduleRepaint });
 
   // Global keys work even while a dialog captures input.
   router.setGlobal(name => { if (name === "CTRL_C" && opts.onExit) { opts.onExit(); return true; } return false; });
 
   // --- selection (model / agent / variant) ---------------------------------
-  const selection = data ? createSelection({ data, toast, agent: opts.agent }) : null;
+  const selection = data ? createSelection({ data, toast, agent: opts.agent, storage: opts.selectionStorage }) : null;
   const sidebar = data ? createSidebar({ data, theme, sessionID: currentSid }) : null;
   const currentAgentName = () => (selection ? selection.agent.current() : (opts.agent ?? "build"));
   const currentModel = () => (selection ? selection.model.current() : undefined);
@@ -148,7 +151,7 @@ export function createShell(opts = {}) {
   // --- commands ------------------------------------------------------------
   // Data mode: the full registry (vanilla/commands.js) drives the palette + slash.
   // Stub mode (no SDK, for shell.test.js): the small inline set below.
-  const registry = data ? buildCommands({ data, dialog, toast, route, navigate, selection, onExit: opts.onExit, theme, now: opts.now }) : null;
+  const registry = data ? buildCommands({ data, dialog, toast, route, navigate, selection, onExit: opts.onExit, theme, now: opts.now, diffView, toggleDiffView }) : null;
   const registryBySlash = registry ? new Map(registry.filter(c => c.slash).map(c => [c.slash, c])) : null;
   const runRegistry = value => registry?.find(c => c.value === value)?.run();
 
@@ -281,6 +284,7 @@ export function createShell(opts = {}) {
       case "status_view": registry ? run("app.status") : openHelp(); break;
       case "help_show": registry ? run("app.help") : openHelp(); break;
       case "sidebar_toggle": sidebar?.toggle(); break;
+      case "diff_view_toggle": toggleDiffView(); toast.show({ message: `Diff view: ${diffView()}`, variant: "info" }); break;
       case "app_exit": opts.onExit?.(); break;
       default: break;
     }

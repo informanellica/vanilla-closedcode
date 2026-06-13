@@ -3,7 +3,7 @@ import tk from "terminal-kit";
 import { makeRegion } from "../runtime/layout.js";
 import { drawRichLine } from "./richtext.js";
 import { defaultTheme } from "./theme.js";
-import { renderSplitDiff, pairRows, splitLayout } from "./splitdiff.js";
+import { renderSplitDiff, renderSplitUnified, hunksFromUnified, pairRows, splitLayout } from "./splitdiff.js";
 import { computeLineDiff } from "./diff.js";
 
 let passed = 0, failed = 0;
@@ -149,6 +149,26 @@ const sepIdx = (rowStr) => rowStr.indexOf("│");
   // a genuinely ABSENT cell (surplus add -> empty left) stays neutral ctx, not a change.
   const padd = renderSplitDiff("a", "x\ny", 21); // row 1 has a null left cell
   eq(padd[1][0].style.token, "diffContext", "absent (null) cell stays neutral ctx pad");
+}
+
+// --- unified-string entry point (renderSplitUnified / hunksFromUnified) -------
+{
+  const unified = ["--- a/f.js", "+++ b/f.js", "@@ -1,2 +1,2 @@", " keep", "-old", "+new", "\\ No newline"].join("\n");
+  eq(hunksFromUnified(unified), [
+    { type: "ctx", text: "keep" }, { type: "del", text: "old" }, { type: "add", text: "new" },
+  ], "hunksFromUnified drops headers/markers, keeps +/-/ctx verbatim");
+  eq(hunksFromUnified(""), [], "empty unified -> []");
+  eq(hunksFromUnified(null), [], "null unified -> []");
+
+  // renderSplitUnified produces the same shape as the {old,new} path for the same change.
+  const u = renderSplitUnified(unified, 21);
+  const rows = screen(u, 21);
+  ok(rows.some(r => r.includes("keep") && r.lastIndexOf("keep") !== r.indexOf("keep")), "ctx 'keep' shows on both columns");
+  ok(rows.some(r => { const i = sepIdx(r); return i > 0 && r.slice(0, i).includes("old") && r.slice(i).includes("new"); }), "old on left, new on right of separator");
+  // never overflows and lang highlighting is safe on the unified path.
+  const ul = renderSplitUnified("@@\n-let x=1\n+let x=2", 41, { lang: "js" });
+  ok(ul.every(line => line.reduce((w, s) => w + [...s.text].length, 0) <= 41 * 2), "unified split lang path renders without error");
+  ok(ul.some(line => line.some(s => s.style.bg === "diffRemovedBg")) && ul.some(line => line.some(s => s.style.bg === "diffAddedBg")), "unified split lang path tints del/add backgrounds");
 }
 
 console.log(`tui vanilla splitdiff tests: ${passed} passed, ${failed} failed`);

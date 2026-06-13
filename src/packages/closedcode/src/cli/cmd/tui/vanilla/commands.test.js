@@ -112,6 +112,23 @@ const find = (cmds, value) => cmds.find(c => c.value === value);
   ok(find(cmds, "session.switch").category === "Session", "categories are present");
 }
 
+// --- diff.view command toggles the shell diff view + toasts ----------------
+{
+  const t = mockToast();
+  let mode = "unified";
+  const { ctx } = mockCtx({ toast: t });
+  ctx.diffView = () => mode;
+  ctx.toggleDiffView = () => { mode = mode === "split" ? "unified" : "split"; };
+  const cmds = buildCommands(ctx);
+  const diffCmd = find(cmds, "diff.view");
+  ok(diffCmd && diffCmd.slash === "diff" && diffCmd.category === "View", "diff.view command present (/diff, View)");
+  await diffCmd.run();
+  eq(mode, "split", "diff.view run toggles unified -> split");
+  ok(t.shown.some(s => s.message.includes("split")), "diff.view toasts the new mode");
+  await diffCmd.run();
+  eq(mode, "unified", "diff.view run toggles split -> unified");
+}
+
 // --- relativeTime ----------------------------------------------------------
 {
   const now = 1000000;

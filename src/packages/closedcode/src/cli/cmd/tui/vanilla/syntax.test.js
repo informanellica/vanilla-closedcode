@@ -1,5 +1,5 @@
 // Node-run tests for the syntax highlighter.  node src/cli/cmd/tui/vanilla/syntax.test.js
-import { highlightLine, highlight, normalizeLang, SUPPORTED_LANGUAGES } from "./syntax.js";
+import { highlightLine, highlight, normalizeLang, langFromPath, SUPPORTED_LANGUAGES } from "./syntax.js";
 
 let passed = 0, failed = 0;
 function eq(a, b, label) { if (JSON.stringify(a) === JSON.stringify(b)) passed++; else { failed++; console.error(`FAIL ${label}: got ${JSON.stringify(a)}, want ${JSON.stringify(b)}`); } }
@@ -141,6 +141,21 @@ const tokensPresent = segs => new Set(segs.map(s => s.style?.token));
   ok(recon(block[0]) === "const a = 1" && recon(block[1]) === "const b = 2", "each block line reconstructs");
   const crlf = highlight("a\r\nb", "js");
   eq(crlf.length, 2, "CRLF normalized to 2 lines (no phantom empty line)");
+}
+
+// --- langFromPath (extension -> language id) --------------------------------
+{
+  eq(langFromPath("src/app.ts"), "typescript", "‑.ts -> typescript");
+  eq(langFromPath("a/b/c.js"), "javascript", ".js -> javascript");
+  eq(langFromPath("C:\\win\\path\\main.py"), "python", "windows path .py -> python");
+  eq(langFromPath("deploy.sh"), "bash", ".sh -> bash");
+  eq(langFromPath("pkg.json"), "json", ".json -> json");
+  eq(langFromPath("README.md"), null, "unknown extension -> null");
+  eq(langFromPath("Makefile"), null, "no extension -> null");
+  eq(langFromPath(".bashrc"), null, "leading-dot dotfile -> null (no real extension)");
+  eq(langFromPath("a.test.tsx"), "typescript", "multi-dot uses last extension");
+  eq(langFromPath(undefined), null, "undefined path -> null (no throw)");
+  eq(langFromPath(""), null, "empty path -> null");
 }
 
 console.log(`tui vanilla syntax tests: ${passed} passed, ${failed} failed`);

@@ -134,6 +134,7 @@ export function defaultKeybinds() {
     editor_open: "<leader>e",
     theme_list: "<leader>t",
     sidebar_toggle: "<leader>b",
+    diff_view_toggle: "<leader>d", // vanilla TUI: cycle tool diffs unified <-> split
     status_view: "<leader>s",
     session_export: "<leader>x",
     session_new: "<leader>n",

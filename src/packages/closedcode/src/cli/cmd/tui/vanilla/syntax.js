@@ -209,6 +209,17 @@ export function normalizeLang(lang) {
   return ALIASES[key] ?? null;
 }
 
+// Derive a canonical language id from a file path's extension, or null. Callers
+// that have a filename but no explicit fence language (the diff renderers, given
+// a tool's edited file) use this to turn on syntax coloring. Dotfiles with no
+// real extension (".bashrc") and extension-less names ("Makefile") return null.
+export function langFromPath(filepath) {
+  const base = String(filepath ?? "").replace(/\\/g, "/").split("/").pop() ?? "";
+  const dot = base.lastIndexOf(".");
+  if (dot <= 0) return null; // no extension, or a leading-dot dotfile
+  return normalizeLang(base.slice(dot + 1));
+}
+
 function rulesFor(lang) {
   const canon = normalizeLang(lang);
   return canon ? LANGS[canon] : null;

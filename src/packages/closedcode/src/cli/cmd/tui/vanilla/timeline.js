@@ -11,11 +11,13 @@ import { defaultTheme } from "./theme.js";
 import { seg, wrapRich, withGutter, drawRichLine } from "./richtext.js";
 import { markdownToRichLines } from "./markdown.js";
 import { renderUnifiedDiff, renderTextDiff } from "./diff.js";
+import { renderSplitDiff, renderSplitUnified } from "./splitdiff.js";
+import { langFromPath } from "./syntax.js";
 
 const TOOL_DETAIL_CAP = 8; // max detail (diff/output) lines shown per tool part
 
-// One message -> rich display lines.
-function messageLines(msg, width) {
+// One message -> rich display lines. opts.split renders tool diffs side-by-side.
+function messageLines(msg, width, opts = {}) {
   const out = [];
   for (const part of msg.parts ?? []) {
     if (part.type === "text") {
@@ -35,8 +37,17 @@ function messageLines(msg, width) {
       out.push([seg(truncate("● " + title, width), { token })]);
       // detail: a diff (edit/write) or text output (read/bash/…), indented + capped
       const innerW = Math.max(1, width - 2);
+      // The tool's edited file path drives syntax coloring of the diff. Use the
+      // real path the store derives (part.path); fall back to the title only when
+      // it is a single-line string (a path), never a multi-line apply_patch summary.
+      const titlePath = typeof part.title === "string" && !part.title.includes("\n") ? part.title : undefined;
+      const diffOpts = { lang: langFromPath(part.path ?? titlePath) };
+      const split = !!opts.split;
       let detail = [];
-      if (part.diff) detail = typeof part.diff === "string" ? renderUnifiedDiff(part.diff, innerW) : renderTextDiff(part.diff.old, part.diff.new, innerW);
+      if (part.diff) {
+        if (typeof part.diff === "string") detail = split ? renderSplitUnified(part.diff, innerW, diffOpts) : renderUnifiedDiff(part.diff, innerW, diffOpts);
+        else detail = split ? renderSplitDiff(part.diff.old, part.diff.new, innerW, diffOpts) : renderTextDiff(part.diff.old, part.diff.new, innerW, diffOpts);
+      }
       else if (part.output) detail = part.output.replace(/\r\n/g, "\n").split("\n").map(l => [seg(truncate(l, innerW), { token: "codeBlock", code: true })]);
       for (const l of detail.slice(0, TOOL_DETAIL_CAP)) out.push([seg("  ", {}), ...l]);
       if (detail.length > TOOL_DETAIL_CAP) out.push([seg(`  … (+${detail.length - TOOL_DETAIL_CAP} more lines)`, { token: "textMuted", dim: true })]);
@@ -48,11 +59,12 @@ function messageLines(msg, width) {
 }
 
 // Flatten all messages to rich lines, with a blank separator between them.
-export function buildTimelineLines(messages, width) {
+// opts.split is forwarded to each message's tool-diff rendering.
+export function buildTimelineLines(messages, width, opts = {}) {
   const lines = [];
   messages.forEach((m, i) => {
     if (i > 0) lines.push([seg("", {})]);
-    for (const l of messageLines(m, width)) lines.push(l);
+    for (const l of messageLines(m, width, opts)) lines.push(l);
   });
   return lines;
 }
@@ -60,6 +72,7 @@ export function buildTimelineLines(messages, width) {
 export function createTimeline(messages, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const getMessages = typeof messages === "function" ? messages : () => messages;
+  const isSplit = () => (typeof opts.diffView === "function" ? opts.diffView() === "split" : false);
   const [follow, setFollow] = createSignal(true);
   const [topIndex, setTopIndex] = createSignal(0);
   let lastViewH = 1, lastMaxStart = 0;
@@ -84,7 +97,7 @@ export function createTimeline(messages, opts = {}) {
 
   function draw(region) {
     const h = Math.max(1, region.height);
-    const lines = buildTimelineLines(getMessages(), region.width);
+    const lines = buildTimelineLines(getMessages(), region.width, { split: isSplit() });
     lastViewH = h;
     lastMaxStart = Math.max(0, lines.length - h);
     const start = curStart();

@@ -121,15 +121,30 @@ export function createDataStore() {
         else if (part.type === "tool") {
           const st = part.state ?? {};
           const tool = part.tool;
-          let diff, output;
+          let diff, output, path;
           if (["edit", "write", "apply_patch", "patch"].includes(tool)) {
             diff = st.metadata?.diff ?? st.metadata?.patch;
             if (!diff && st.input && (st.input.oldString != null || st.input.newString != null || st.input.content != null)) {
               diff = { old: st.input.oldString ?? "", new: st.input.newString ?? st.input.content ?? "" };
             }
+            // A REAL file path for syntax-highlighting the diff — never st.title,
+            // which for apply_patch is a multi-line summary ("Success. Updated…").
+            // Prefer the tool input's file path; for a single-file apply_patch use
+            // its one changed file; a multi-file apply_patch has no single language
+            // so path stays undefined and the diff renders without highlighting.
+            path = st.input?.filePath ?? st.input?.path ?? st.input?.filename;
+            if (!path) {
+              const files = st.metadata?.files;
+              if (Array.isArray(files) && files.length === 1) {
+                const f = files[0];
+                path = typeof f === "string" ? f : (f?.path ?? f?.relativePath ?? f?.filePath ?? f?.filename);
+              }
+            }
+            // edit/write set title to the edited file's path (single line) — a fine fallback.
+            if (!path && (tool === "edit" || tool === "write") && typeof st.title === "string" && !st.title.includes("\n")) path = st.title;
           }
           if (typeof st.output === "string" && st.output) output = st.output;
-          parts.push({ type: "tool", name: tool, title: st.title, status: st.status, diff, output });
+          parts.push({ type: "tool", name: tool, title: st.title, status: st.status, diff, output, path });
         } else if (part.type === "file") { parts.push({ type: "file", filename: part.filename ?? part.source?.path }); }
       }
       return { role: m.role, parts };

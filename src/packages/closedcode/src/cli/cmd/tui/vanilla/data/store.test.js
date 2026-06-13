@@ -97,5 +97,25 @@ const TURN = [
   eq(store.todos("ses_001").length, 0, "todo.updated replaces wholesale");
 }
 
+// 6. tool-diff parts derive a REAL file path (for syntax highlighting), not the
+//    apply_patch summary title
+{
+  const store = createDataStore();
+  store.applyBatch([
+    ev("session.updated", { info: { id: "ses_p", title: "P", time: { created: 1 } } }),
+    ev("message.updated", { info: { id: "m_p", sessionID: "ses_p", role: "assistant", time: { created: 1 } } }),
+    // edit: input.filePath is the path
+    ev("message.part.updated", { part: { id: "p_edit", messageID: "m_p", type: "tool", tool: "edit", state: { status: "completed", title: "src/app.ts", input: { filePath: "src/app.ts" }, metadata: { diff: "@@\n-a\n+b" } } } }),
+    // multi-file apply_patch: title is a multi-line summary -> no single path
+    ev("message.part.updated", { part: { id: "p_ap", messageID: "m_p", type: "tool", tool: "apply_patch", state: { status: "completed", title: "Success. Updated the following files:\nM a.js\nA b.py", metadata: { diff: "@@\n-x\n+y", files: [{ path: "a.js" }, { path: "b.py" }] } } } }),
+    // single-file apply_patch: path from its one changed file
+    ev("message.part.updated", { part: { id: "p_ap1", messageID: "m_p", type: "tool", tool: "apply_patch", state: { status: "completed", title: "Success. Updated the following files:\nM only.py", metadata: { diff: "@@\n-x\n+y", files: [{ path: "only.py" }] } } } }),
+  ]);
+  const parts = store.timeline("ses_p")[0].parts;
+  eq(parts.find(p => p.name === "edit").path, "src/app.ts", "edit tool: path from input.filePath");
+  eq(parts.find(p => p.title.includes("M a.js")).path, undefined, "multi-file apply_patch: no single path (plain diff)");
+  eq(parts.find(p => p.title.includes("only.py")).path, "only.py", "single-file apply_patch: path from its one file");
+}
+
 console.log(`tui vanilla data-store tests: ${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

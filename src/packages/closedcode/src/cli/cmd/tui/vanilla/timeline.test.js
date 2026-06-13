@@ -29,6 +29,31 @@ const text = l => l.map(s => s.text).join("");
   ok(!lines.some(l => l.includes("line 19")), "lines past the cap are not shown");
 }
 
+// 2b. split diff view: opts.split renders the tool diff side-by-side (separator)
+{
+  const msgs = [{ role: "assistant", parts: [
+    { type: "tool", name: "edit", title: "app.js", status: "completed", diff: { old: "const a = 1", new: "const a = 2" } },
+  ] }];
+  const unified = buildTimelineLines(msgs, 60).map(text);
+  ok(!unified.some(l => l.includes("│")), "unified view has no side-by-side separator");
+  const split = buildTimelineLines(msgs, 60, { split: true }).map(text);
+  ok(split.some(l => l.includes("│")), "split view draws the column separator");
+  ok(split.some(l => { const i = l.indexOf("│"); return i > 0 && l.slice(0, i).includes("const a = 1") && l.slice(i).includes("const a = 2"); }), "split view: old left, new right of separator");
+  // a unified-STRING diff also splits
+  const strMsgs = [{ role: "assistant", parts: [{ type: "tool", name: "edit", title: "x.js", status: "completed", diff: "@@\n-foo\n+bar" }] }];
+  ok(buildTimelineLines(strMsgs, 60, { split: true }).map(text).some(l => { const i = l.indexOf("│"); return i > 0 && l.slice(0, i).includes("foo") && l.slice(i).includes("bar"); }), "split view handles a unified-string diff");
+}
+
+// 2c. diff syntax highlighting uses the tool's real path, not a summary title
+{
+  const tk = s => s.style?.token;
+  const edit = [{ role: "assistant", parts: [{ type: "tool", name: "edit", title: "app.ts", path: "app.ts", status: "completed", diff: { old: "let a = 1", new: "const a = 2" } }] }];
+  ok(buildTimelineLines(edit, 60).some(l => l.some(s => s.text === "const" && tk(s) === "syntaxKeyword")), "tool diff highlighted from part.path (const -> keyword)");
+  // a multi-line apply_patch summary title with no path -> NOT highlighted (plain)
+  const ap = [{ role: "assistant", parts: [{ type: "tool", name: "apply_patch", title: "Success. Updated:\nM app.ts", status: "completed", diff: { old: "let a = 1", new: "const a = 2" } }] }];
+  ok(!buildTimelineLines(ap, 60).some(l => l.some(s => s.text === "const" && tk(s) === "syntaxKeyword")), "multi-line summary title does NOT highlight (plain diff)");
+}
+
 // 3. assistant markdown still renders (bold marker stripped, list bullet present)
 {
   const msgs = [{ role: "assistant", parts: [{ type: "text", text: "**bold** text\n- item" }] }];

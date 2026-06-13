@@ -108,16 +108,15 @@ function cellSegments(cell, inner, pad, useSyntax, lang) {
   return segs;
 }
 
-// Render a side-by-side diff of oldText vs newText into RICH LINES (an array of
-// segment arrays). Two columns of inner width floor((width-1)/2) with a 1-col
-// `border` separator ("│") between them. CJK-safe; cells truncate to stay aligned.
-// opts.lang (when normalizeLang(opts.lang) is non-null) turns on per-cell syntax
-// highlighting, tinting each segment's bg to convey add/removed. Never throws.
-export function renderSplitDiff(oldText, newText, width, opts = {}) {
+// Render already-paired rows into RICH LINES — the shared back end for both the
+// before/after and unified-string entry points. Two columns of inner width
+// floor((width-1)/2) with a 1-col `border` separator ("│") between them. CJK-safe;
+// cells truncate to stay aligned. opts.lang (when normalizeLang is non-null) turns
+// on per-cell syntax highlighting, tinting each segment's bg to convey add/removed.
+function renderRows(rows, width, opts) {
   const { inner } = splitLayout(width);
   const useSyntax = opts.lang != null && normalizeLang(opts.lang) != null;
   const lang = opts.lang;
-  const rows = pairRows(computeLineDiff(oldText, newText));
   const out = [];
   for (const r of rows) {
     const left = cellSegments(r.left, inner, true, useSyntax, lang);   // left pads to align the separator
@@ -125,4 +124,30 @@ export function renderSplitDiff(oldText, newText, width, opts = {}) {
     out.push([...left, seg("│", { token: "border" }), ...right]);
   }
   return out;
+}
+
+// Side-by-side diff of oldText vs newText (the {old,new} tool-diff form). Never throws.
+export function renderSplitDiff(oldText, newText, width, opts = {}) {
+  return renderRows(pairRows(computeLineDiff(oldText, newText)), width, opts);
+}
+
+// Parse a unified-diff STRING into hunks [{type,text}], dropping header/marker
+// lines (+++/---/@@/\) and preserving the exact +/-/context structure verbatim
+// (no re-diff, unlike renderSplitDiff which recomputes the LCS). "" / null -> [].
+export function hunksFromUnified(diffText) {
+  if (diffText == null || diffText === "") return [];
+  const hunks = [];
+  for (const raw of String(diffText).replace(/\r\n/g, "\n").split("\n")) {
+    if (raw.startsWith("+++") || raw.startsWith("---") || raw.startsWith("@@") || raw.startsWith("\\")) continue;
+    if (raw.startsWith("+")) hunks.push({ type: "add", text: raw.slice(1) });
+    else if (raw.startsWith("-")) hunks.push({ type: "del", text: raw.slice(1) });
+    else hunks.push({ type: "ctx", text: raw.startsWith(" ") ? raw.slice(1) : raw });
+  }
+  return hunks;
+}
+
+// Side-by-side view from a unified-diff STRING (the permission-prompt / tool-diff
+// string form). Faithful to the diff's own hunk structure. Never throws.
+export function renderSplitUnified(diffText, width, opts = {}) {
+  return renderRows(pairRows(hunksFromUnified(diffText)), width, opts);
 }

@@ -17,15 +17,23 @@ export function tui(input = {}) {
   const args = input.args ?? {};
   return new Promise(async resolve => {
     let data;
+    let selectionStorage;
     if (input.url) {
       try {
         // Lazy: keeps the stub path from loading sdk/v2 at all.
         const { createConnection } = await import("./data/connection.js");
         data = createDataLayer(createConnection(input));
-      } catch { data = undefined; /* stub fallback */ }
+        // Persist model/agent/variant + favorites across runs (real backend only;
+        // the stub shell has nothing meaningful to persist). Best-effort: resolve
+        // the app config dir and hand it to the file-backed adapter.
+        const { createSelectionStorage } = await import("./data/selection-storage.js");
+        const { Global } = await import("core/global");
+        selectionStorage = createSelectionStorage({ dir: Global?.Path?.config });
+      } catch { data = data ?? undefined; /* stub fallback / no persistence */ }
     }
     const { app, shell } = mountShell({
       data,
+      selectionStorage,
       agent: args.agent,
       initialRoute: args.sessionID ? { type: "session", sessionID: args.sessionID } : undefined,
       onExit: () => { data?.stop(); resolve(); },

@@ -269,6 +269,13 @@ export function buildCommands(ctx = {}) {
     await Dialogs.alert(dialog, { ...base, title: "Help", message: lines.join("\n") });
   }
 
+  // Toggle tool-diff rendering between unified (stacked) and split (side-by-side).
+  // The shell owns the diffView signal + toggle; we just flip it and report.
+  async function toggleDiffView() {
+    ctx.toggleDiffView?.();
+    notify(`Diff view: ${ctx.diffView?.() ?? "unified"}`, "info");
+  }
+
   async function exit() { onExit?.(); }
 
   // --------------------------------------------------------------------------
@@ -290,6 +297,7 @@ export function buildCommands(ctx = {}) {
     { label: "Switch variant", value: "variant.switch", slash: "variant", category: "Config", run: switchVariant },
     { label: "Switch theme", value: "theme.switch", slash: "theme", category: "Config", run: switchTheme },
     { label: "Connect provider", value: "provider.connect", slash: "connect", category: "Config", run: connectProvider },
+    { label: "Toggle split / unified diff", value: "diff.view", slash: "diff", category: "View", run: toggleDiffView },
     { label: "View status", value: "app.status", slash: "status", category: "App", run: viewStatus },
     { label: "Help", value: "app.help", slash: "help", category: "App", run: help },
     { label: "Exit", value: "app.exit", slash: "exit", category: "App", run: exit },
