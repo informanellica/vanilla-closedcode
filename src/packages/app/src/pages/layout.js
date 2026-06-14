@@ -1531,6 +1531,11 @@ export default function Layout(props) {
   };
   const SidebarPanel = panelProps => {
     const project = panelProps.project;
+    // Hold the last project for the workspace list items: while navigating to the
+    // no-project home, project() goes undefined and the per-item memos (which read
+    // props.project.worktree) re-run before the list disposes them. Holding the
+    // previous value keeps them string-safe for that transient frame.
+    const heldProject = createMemo(prev => project() ?? prev);
     const merged = createMemo(() => panelProps.mobile || (panelProps.merged ?? layout.sidebar.opened()));
     const hover = createMemo(() => !panelProps.mobile && panelProps.merged === false && !layout.sidebar.opened());
     const empty = createMemo(() => !params.dir && layout.projects.list().length === 0);
@@ -1776,7 +1781,7 @@ export default function Layout(props) {
               insert(host, createComponent(LocalWorkspace, {
                 ctx: workspaceSidebarCtx,
                 get project() {
-                  return project();
+                  return heldProject();
                 },
                 sortNow: sortNow,
                 get mobile() {
@@ -1830,7 +1835,7 @@ export default function Layout(props) {
                             ctx: workspaceSidebarCtx,
                             directory: directory,
                             get project() {
-                              return project();
+                              return heldProject();
                             },
                             sortNow: sortNow,
                             get mobile() {
@@ -2142,6 +2147,13 @@ export default function Layout(props) {
         return layout.chatPanel.toggle;
       },
       onOpenChat: () => {
+        // Toggle the bottom chat pane: if it's already open, close it (so this
+        // button can hide the pane, not only reveal it); otherwise open it and
+        // focus the composer. The pane's own "×" also closes it.
+        if (layout.chatPanel.opened()) {
+          layout.chatPanel.close();
+          return;
+        }
         layout.chatPanel.open();
         // Focus the chat composer (the only contenteditable on the page) so the
         // user can type immediately. CodeMirror uses a textarea, so no conflict.

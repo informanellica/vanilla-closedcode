@@ -9,8 +9,14 @@ const trimTrailingSlashes = value => {
   }
   return "";
 };
-const isWindowsPath = value => value[1] === ":" || value.startsWith("\\\\");
+const isWindowsPath = value => !!value && (value[1] === ":" || value.startsWith("\\\\"));
 export const pathKey = path => {
+  // Tolerate an absent path: route-param-driven workspaces (terminal, layout, …)
+  // briefly re-run with `params.dir === undefined` while navigating to the
+  // no-project home ("/") before their owner is disposed. Without this guard
+  // isWindowsPath(undefined) / value.length threw, breaking the whole flush so the
+  // home route never rendered (the Home button appeared dead).
+  if (!path) return path;
   const value = isWindowsPath(path) ? path.replaceAll("\\", "/") : path;
   const trimmed = trimTrailingSlashes(value);
   if (!trimmed && value.startsWith("/")) return "/";

@@ -340,7 +340,12 @@ export const {
       prune();
       return entry.value;
     };
-    const workspace = createMemo(() => loadWorkspace(params.dir, params.id));
+    // Keep the last workspace while `params.dir` is momentarily undefined — this
+    // memo is subscribed to the route params and re-runs during navigation to the
+    // no-project home ("/") before this context's owner is disposed. Loading a
+    // workspace with no directory threw deep in the persist layer, breaking the
+    // whole flush so the home route never rendered.
+    const workspace = createMemo(prev => params.dir ? loadWorkspace(params.dir, params.id) : prev);
     createEffect(on(() => ({
       dir: params.dir,
       id: params.id

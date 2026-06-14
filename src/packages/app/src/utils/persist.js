@@ -253,8 +253,11 @@ async function migrateLegacyAsync(input) {
   return null;
 }
 function workspaceStorage(dir) {
-  const head = (dir.slice(0, 12) || "workspace").replace(/[^a-zA-Z0-9._-]/g, "-");
-  const sum = checksum(dir) ?? "0";
+  // Defensive: a route-param-driven workspace may be requested with no directory
+  // during navigation to the no-project home before its owner is disposed.
+  const safe = dir || "";
+  const head = (safe.slice(0, 12) || "workspace").replace(/[^a-zA-Z0-9._-]/g, "-");
+  const sum = checksum(safe) ?? "0";
   return `closedcode.workspace.${head}.${sum}.dat`;
 }
 function legacyWorkspaceStorage(dir) {
@@ -370,19 +373,26 @@ export const Persist = {
     };
   },
   workspace(dir, key, legacy) {
-    const storage = workspaceStorage(pathKey(dir));
+    // Coerce an absent directory to a stable placeholder so the whole workspace
+    // persist chain (workspaceStorage / pathKey / legacyWorkspaceStorage) stays
+    // string-safe. Route-param-driven workspaces are briefly requested with no
+    // dir while navigating to the no-project home before their owner is disposed;
+    // throwing here broke the flush so the home route never rendered.
+    const safeDir = dir || "_no_workspace_";
+    const storage = workspaceStorage(pathKey(safeDir));
     return {
       storage,
-      legacyStorageNames: legacyWorkspaceStorage(dir),
+      legacyStorageNames: legacyWorkspaceStorage(safeDir),
       key: `workspace:${key}`,
       legacy
     };
   },
   session(dir, session, key, legacy) {
-    const storage = workspaceStorage(pathKey(dir));
+    const safeDir = dir || "_no_workspace_";
+    const storage = workspaceStorage(pathKey(safeDir));
     return {
       storage,
-      legacyStorageNames: legacyWorkspaceStorage(dir),
+      legacyStorageNames: legacyWorkspaceStorage(safeDir),
       key: `session:${session}:${key}`,
       legacy
     };

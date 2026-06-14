@@ -305,13 +305,21 @@ export function batch(fn) {
 }
 
 export function on(deps, fn, options) {
-  const list = Array.isArray(deps) ? deps : [deps];
+  const isArray = Array.isArray(deps);
+  const list = isArray ? deps : [deps];
   let defer = options?.defer;
   let prevInput;
   return prevValue => {
     const input = list.map(d => d());
     if (defer) { defer = false; prevInput = input; return undefined; }
-    const result = untrack(() => fn(Array.isArray(deps) ? input : input[0], prevInput, prevValue));
+    // Pass the PREVIOUS input unwrapped the same way as the current one: for a
+    // single (non-array) dep solid hands the callback the bare previous value, not
+    // a one-element array. Passing the wrapped `prevInput` made `prev` an array
+    // here, so callers like the router's routeStates (prevMatches[i].route.key)
+    // read .route off the whole matches array -> "undefined reading 'key'" -> the
+    // route outlet stopped re-rendering on navigation.
+    const prev = prevInput === undefined ? undefined : (isArray ? prevInput : prevInput[0]);
+    const result = untrack(() => fn(isArray ? input : input[0], prev, prevValue));
     prevInput = input;
     return result;
   };
