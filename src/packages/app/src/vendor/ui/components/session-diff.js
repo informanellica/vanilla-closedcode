@@ -57,7 +57,13 @@ function patch(diff) {
   return value;
 }
 function fileDiff(file, patch, before, after) {
-  if (!patch) return { additionLines: [], deletionLines: [] };
+  // Include an empty `hunks` array: @pierre/diffs' VirtualizedFileDiff /
+  // iterateOverDiff does `fileDiff.hunks.at(-1)`, so a patch-less entry (binary
+  // files like images, or an empty patch) without `hunks` threw
+  // "undefined reading 'at'" inside the SHARED review virtualizer's size
+  // computation — which aborted layout for EVERY diff in the panel, so all of
+  // them rendered blank.
+  if (!patch) return { additionLines: [], deletionLines: [], hunks: [] };
   const hit = fileDiffCache.get(patch);
   if (hit) return hit;
   const value = parseDiffFromFile({
