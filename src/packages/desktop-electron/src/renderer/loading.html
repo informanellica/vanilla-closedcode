@@ -1,75 +1,71 @@
 <!doctype html>
-<html lang="en" style="background-color: var(--background-base, #f7f7f7)">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>vanilla-closedcode</title>
     <link rel="icon" type="image/png" href="./favicon-96x96-v3.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="./favicon-v3.svg" />
-    <link rel="shortcut icon" href="./favicon-v3.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon-v3.png" />
     <meta name="theme-color" content="#F8F7F7" />
     <meta name="theme-color" content="#131010" media="(prefers-color-scheme: dark)" />
-    <meta property="og:image" content="./social-share.png" />
-    <meta property="twitter:image" content="./social-share.png" />
-    <script id="vcc-theme-preload-script" src="./vcc-theme-preload.js"></script>
-    <!-- Runtime env (replaces Vite's import.meta.env). Build-less renderer (Stage C). -->
-    <script>
-      globalThis.process = globalThis.process || {
-        env: { NODE_ENV: "production" },
-        platform: "browser",
-        argv: [],
-        version: "",
-        versions: {},
-        cwd: function () { return "/"; },
-        nextTick: function (f) { queueMicrotask(f); },
-      };
-      window.__APP_ENV__ = {
-        MODE: "production",
-        DEV: false,
-        PROD: true,
-        CLOSEDCODE_CHANNEL: "prod",
-        VITE_CLOSEDCODE_CHANNEL: "prod",
-        VITE_SENTRY_DSN: "",
-        VITE_SENTRY_RELEASE: "",
-        VITE_SENTRY_ENVIRONMENT: "",
-        VITE_BUILD_ID: "dev",
-      };
-    </script>
-    <!-- Bootstrap 5 (vendored) + app utilities for Tailwind-valued classes -->
-    <link rel="stylesheet" href="./vendor/bootstrap/bootstrap.min.css" />
-    <link rel="stylesheet" href="./app.css" />
+    <!-- The startup splash is fully self-contained: no external stylesheet and no
+         preload script, so a missing/broken app.css, bootstrap.css, import map or
+         reactive runtime cannot white it out or block first paint. Colors follow
+         the OS color scheme; the BrowserWindow backgroundColor (set in main) uses
+         the same values, so there is no white flash before this paints. -->
+    <style>
+      :root { color-scheme: light dark; }
+      html, body { margin: 0; height: 100%; }
+      body {
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background-color: #f8f7f7;
+        color: #1a1a1a;
+      }
+      #loading-track { background: #e6e4e3; }
+      @media (prefers-color-scheme: dark) {
+        body { background-color: #131010; color: #ededed; }
+        #loading-track { background: #2a2624; }
+      }
+    </style>
   </head>
-  <body class="antialiased overscroll-none text-12-regular overflow-hidden" style="margin: 0">
+  <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <!-- Startup splash, rendered STATICALLY with inline styles so it appears even
-         if app.css, the import map or the reactive runtime fail to load. This is
-         the surface that must survive a broken renderer the most, so it owns no
-         framework dependency. loading.js only updates the status text and the
-         progress fill width, then signals completion. -->
-    <div
-      id="root"
-      style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; background-color: var(--background-base, #f7f7f7)"
-    >
+    <div id="root" style="width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center">
       <div style="display: flex; flex-direction: column; align-items: center; gap: 2.75rem">
-        <img src="./favicon-v3.svg" alt="" width="80" height="100" style="opacity: 0.15" />
+        <!-- Brand mark (Bootstrap c-square), inlined so it never 404s as an <img>. -->
+        <svg
+          viewBox="0 0 16 16"
+          width="72"
+          height="72"
+          fill="currentColor"
+          xmlns="http://www.w3.org/2000/svg"
+          style="opacity: 0.2"
+          aria-hidden="true"
+        >
+          <path
+            d="M8.146 4.992c-1.212 0-1.927.92-1.927 2.502v1.06c0 1.571.703 2.462 1.927 2.462.979 0 1.641-.586 1.729-1.418h1.295v.093c-.1 1.448-1.354 2.467-3.03 2.467-2.091 0-3.269-1.336-3.269-3.603V7.482c0-2.261 1.201-3.638 3.27-3.638 1.681 0 2.935 1.054 3.029 2.572v.088H9.875c-.088-.879-.768-1.512-1.729-1.512"
+          ></path>
+          <path
+            d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 0a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1z"
+          ></path>
+        </svg>
         <div
           style="display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 15rem"
           aria-live="polite"
         >
           <span
             id="loading-status"
-            style="width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; color: var(--text-strong, #1a1a1a); font-size: 14px"
+            style="width: 100%; overflow: hidden; text-align: center; text-overflow: ellipsis; white-space: nowrap; font-size: 14px"
             >Just a moment...</span
           >
           <div
+            id="loading-track"
             role="progressbar"
             aria-label="Database migration progress"
-            style="width: 5rem; height: 4px; overflow: hidden; background: var(--surface-weak, #e5e5e5)"
+            style="width: 5rem; height: 4px; overflow: hidden; border-radius: 1px"
           >
             <div
               id="loading-progress"
-              style="height: 100%; width: 25%; background: var(--icon-warning-base, #e0a000); transition: width 0.2s ease"
+              style="height: 100%; width: 25%; background: #e0a000; transition: width 0.2s ease"
             ></div>
           </div>
         </div>

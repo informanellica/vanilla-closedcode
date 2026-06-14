@@ -32,6 +32,14 @@ export function setBackgroundColor(color) {
 export function getBackgroundColor() {
   return backgroundColor;
 }
+// Theme-appropriate window background used BEFORE the renderer reports its real
+// background via setBackgroundColor(). Without this, the loading/main windows are
+// created with an undefined backgroundColor and Electron paints them white first,
+// flashing white before the HTML paints. Values match loading.html / the
+// theme-color meta tags (#f8f7f7 light, #131010 dark).
+function defaultBackgroundColor(mode) {
+  return (mode ?? tone()) === "dark" ? "#131010" : "#f8f7f7";
+}
 function iconsDir() {
   return app.isPackaged ? join(process.resourcesPath, "icons") : join(root, "../../resources/icons");
 }
@@ -76,7 +84,7 @@ export function createMainWindow() {
     show: false,
     title: "vanilla-closedcode",
     icon: iconPath(),
-    backgroundColor,
+    backgroundColor: backgroundColor ?? defaultBackgroundColor(),
     frame: true,
     autoHideMenuBar: true,
     webPreferences: {
@@ -126,7 +134,7 @@ export function createLoadingWindow() {
     center: true,
     show: true,
     icon: iconPath(),
-    backgroundColor,
+    backgroundColor: backgroundColor ?? defaultBackgroundColor(mode),
     ...(process.platform === "darwin" ? {
       titleBarStyle: "hidden"
     } : {}),
