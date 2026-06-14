@@ -17,6 +17,7 @@ import { showToast } from "@/lib/toast.js";
 import { createSessionTabs } from "@/pages/session/helpers.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
 import { useSessionController } from "@/controllers/session.js";
+import { useProviders } from "../../hooks/use-providers.js";
 const withCategory = category => {
   return option => ({
     ...option,
@@ -26,6 +27,7 @@ const withCategory = category => {
 export const useSessionCommands = actions => {
   const command = useCommand();
   const dialog = useDialog();
+  const providers = useProviders();
   const file = useFile();
   const language = useLanguage();
   const local = useLocal();
@@ -215,6 +217,15 @@ export const useSessionCommands = actions => {
     view().terminal.open();
   };
   const chooseModel = () => {
+    // With no connected provider there is nothing to choose, so send the user to
+    // Settings -> サーバー・プロバイダ to set one up — same as the prompt's model
+    // button — instead of opening an empty model picker.
+    if (providers.connected().length === 0) {
+      void import("../../components/dialog-settings.js").then(x => {
+        dialog.show(() => createComponent(x.DialogSettings, { tab: "connection" }));
+      });
+      return;
+    }
     void import("@/components/dialog-select-model.js").then(x => {
       dialog.show(() => createComponent(x.DialogSelectModel, {
         get model() {

@@ -1331,11 +1331,12 @@ export const PromptInput = props => {
               return control();
             },
             onClick: () => {
-              void import("@/components/dialog-select-model-unpaid.js").then(x => {
-                dialog.show(() => createComponent(x.DialogSelectModelUnpaid, {
-                  get model() {
-                    return local.model;
-                  }
+              // No connected provider yet: jump straight to Settings ->
+              // サーバー・プロバイダ (where servers/providers are set up) rather than
+              // showing a separate "recommended providers" picker.
+              void import("./dialog-settings.js").then(x => {
+                dialog.show(() => createComponent(x.DialogSettings, {
+                  tab: "connection"
                 }));
               });
             },
