@@ -22,7 +22,8 @@ import { useSearchParams, useNavigate } from "../lib/router/index.js";
 import { base64Encode } from "core/util/encode";
 import { sortedRootSessions } from "@/pages/layout/helpers.js";
 import { SessionTabBar } from "@/pages/session/session-tab-bar.js";
-import { showFileContextMenu } from "@/pages/session/file-context-menu.js";
+import { showFileContextMenu, runFileOp } from "@/pages/session/file-context-menu.js";
+import { confirmModal } from "../bs/confirm.js";
 import { NewSessionView, SessionHeader, SortableTab, FileVisual } from "@/components/session/index.js";
 import { useComments } from "@/context/comments.js";
 import { getSessionPrefetch, SESSION_PREFETCH_TTL } from "@/context/global-sync/session-prefetch.js";
@@ -325,31 +326,42 @@ export default function Page() {
   const composer = createSessionComposerState();
   const workspaceKey = createMemo(() => params.dir ?? "");
   const workspaceTabs = createMemo(() => layout.tabs(workspaceKey));
-  createEffect(on(() => params.id, (id, prev) => {
+  // Carry the open file tabs from the workspace (no-session) bucket into a newly
+  // created session. The first chat creates the session and navigates; the new
+  // session's tab bucket gets transiently seeded then EMPTIED by the
+  // create/seed/persist sequence (which used to silently drop the open file). So
+  // rather than a one-shot carry, this reactive effect re-asserts the workspace
+  // tabs into the session whenever the session is (or becomes) empty while a
+  // fresh handoff is pending — surviving the transient clear — then settles
+  // (clears the pending + the workspace bucket) shortly after so closing a tab
+  // sticks. It is a no-op for normal session switches (no pending handoff).
+  let handoffSettleScheduled = false;
+  createEffect(() => {
+    const id = params.id;
+    const cur = tabs().tabs();
+    const from = workspaceTabs().tabs();
     if (!id) return;
-    if (prev) return;
     const pending = layout.handoff.tabs();
-    if (!pending) return;
+    if (!pending || pending.id !== id || pending.dir !== (params.dir ?? "")) return;
     if (Date.now() - pending.at > 60_000) {
       layout.handoff.clearTabs();
       return;
     }
-    if (pending.id !== id) return;
-    layout.handoff.clearTabs();
-    if (pending.dir !== (params.dir ?? "")) return;
-    const from = workspaceTabs().tabs();
     if (from.all.length === 0 && !from.active) return;
-    const current = tabs().tabs();
-    if (current.all.length > 0 || current.active) return;
+    if (cur.all.length > 0 || cur.active) return;
     const all = normalizeTabs(from.all);
     const active = from.active ? normalizeTab(from.active) : undefined;
     tabs().setAll(all);
     tabs().setActive(active && all.includes(active) ? active : all[0]);
-    workspaceTabs().setAll([]);
-    workspaceTabs().setActive(undefined);
-  }, {
-    defer: true
-  }));
+    if (!handoffSettleScheduled) {
+      handoffSettleScheduled = true;
+      setTimeout(() => {
+        layout.handoff.clearTabs();
+        workspaceTabs().setAll([]);
+        workspaceTabs().setActive(undefined);
+      }, 800);
+    }
+  });
   const isDesktop = createMediaQuery("(min-width: 768px)");
   const size = createSizing();
   const desktopReviewOpen = createMemo(() => isDesktop() && view().reviewPanel.opened());
@@ -825,6 +837,36 @@ export default function Page() {
     tabs().setActive(tab);
     openReviewPanel();
   };
+  // Closing a tab with unsaved edits would silently discard them, so prompt
+  // first (Bootstrap modal). Only the active tab's editor is mounted, so the
+  // dirty flag reflects the active tab; non-active tabs close immediately.
+  const closeFileTab = async tab => {
+    if (tab === activeFileTab() && layout.editor.dirty()) {
+      const choice = await confirmModal({
+        title: "保存しますか？",
+        message: file.pathFromTab(tab) ?? String(tab),
+        buttons: [
+          { id: "save", label: "保存", variant: "primary" },
+          { id: "discard", label: "保存しない", variant: "danger" },
+          { id: "cancel", label: "キャンセル", variant: "secondary" }
+        ]
+      });
+      if (choice == null || choice === "cancel") return;
+      if (choice === "save") layout.editor.save();
+    }
+    tabs().close(tab);
+  };
+  // Toolbar file-operation buttons (app-toolbar) dispatch vcc:fileop; run the op
+  // against the active file with the same logic as the explorer right-click menu
+  // — the session page owns the file-tree context the toolbar lacks.
+  makeEventListener(window, "vcc:fileop", e => {
+    const op = e.detail?.op;
+    if (!op) return;
+    const ctx = { directory: sdk.directory, refresh: dir => file.tree.refresh(dir), openFile: openFileFromTree };
+    const activePath = file.pathFromTab(activeFileTab());
+    const node = activePath ? { path: activePath, type: "file" } : null;
+    runFileOp(op, node, ctx);
+  });
   // Close a session tab = archive it; if it was the active session, switch to
   // another (or a fresh new session).
   const archiveSessionTab = async session => {
@@ -1513,7 +1555,7 @@ export default function Page() {
                         children: tab => createComponent(SortableTab, {
                           tab: tab,
                           get onTabClose() {
-                            return tabs().close;
+                            return closeFileTab;
                           }
                         })
                       });

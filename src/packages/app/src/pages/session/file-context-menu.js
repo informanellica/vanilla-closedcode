@@ -2,6 +2,7 @@
 // (.dropdown-menu) positioned at the cursor, kept inside the viewport. File
 // operations go through the window.api fs-* IPC bridge (see preload). A
 // module-level clipboard holds the copy/cut source for paste.
+import { confirmModal } from "../../bs/confirm.js";
 let menuEl = null;
 let clipboard = null; // { op: "copy" | "cut", path }
 let lastXY = { x: 120, y: 120 };
@@ -84,7 +85,15 @@ async function rename(node, ctx) {
   await refresh(ctx, dirname(node.path));
 }
 async function del(node, ctx) {
-  if (!window.confirm(`削除しますか?\n${node.path}`)) return;
+  const choice = await confirmModal({
+    title: "削除しますか？",
+    message: node.path,
+    buttons: [
+      { id: "delete", label: "削除", variant: "danger" },
+      { id: "cancel", label: "キャンセル", variant: "secondary" }
+    ]
+  });
+  if (choice !== "delete") return;
   await api()?.fsDelete?.(toAbs(ctx, node.path));
   await refresh(ctx, dirname(node.path));
 }
@@ -115,6 +124,12 @@ export function showFileContextMenu(node, event, ctx) {
   const parent = dirname(node.path);
   const targetDir = isDir ? node.path : parent;
   const items = [
+    // Open the file in the in-app editor (same action as double-clicking it).
+    // Only for files; directories expand via the tree itself.
+    ...(isDir ? [] : [
+      { label: "開く", icon: "bi-file-earmark-text", run: () => ctx.openFile?.(node.path) },
+      { divider: true },
+    ]),
     { label: "新規ファイル", icon: "bi-file-earmark-plus", run: () => newFile(targetDir, ctx) },
     { label: "新規フォルダ", icon: "bi-folder-plus", run: () => newFolder(targetDir, ctx) },
     { divider: true },
@@ -150,4 +165,24 @@ export function showFileContextMenu(node, event, ctx) {
   menuEl.style.top = y + "px";
   document.addEventListener("pointerdown", onDoc, true);
   document.addEventListener("keydown", onKey, true);
+}
+
+// Run a named file operation, reusing the exact same logic as the right-click
+// menu. The toolbar's file-op buttons call this with the active file as `node`
+// (null when no file is open — only the project-relative newFile/newFolder run
+// then, targeting the project root). ctx is the same shape the menu receives:
+// { directory, refresh, openFile }.
+export function runFileOp(op, node, ctx) {
+  const isDir = node?.type === "directory";
+  const baseDir = node ? (isDir ? node.path : dirname(node.path)) : "";
+  switch (op) {
+    case "newFile": return newFile(baseDir, ctx);
+    case "newFolder": return newFolder(baseDir, ctx);
+    case "rename": return node ? rename(node, ctx) : undefined;
+    case "duplicate": return node ? duplicate(node, ctx) : undefined;
+    case "delete": return node ? del(node, ctx) : undefined;
+    case "copyPath": return node ? navigator.clipboard?.writeText(toAbs(ctx, node.path)) : undefined;
+    case "openLocation": return node ? api()?.openPath?.(toAbs(ctx, isDir ? node.path : dirname(node.path))) : undefined;
+    default: return undefined;
+  }
 }
