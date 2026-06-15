@@ -64,7 +64,13 @@ const defaultSettings = {
     fontSize: 14,
     mono: "",
     sans: "",
-    terminal: ""
+    terminal: "",
+    // Toolbar customization. toolbarOrder is the user-chosen ordering of the
+    // toolbar item ids (see app-toolbar.js TOOLBAR_ITEMS); an empty array means
+    // "use the built-in default order". toolbarHidden lists item ids the user
+    // has hidden. Both are plain arrays (replaced wholesale on change).
+    toolbarOrder: [],
+    toolbarHidden: []
   },
   keybinds: {},
   permissions: {
@@ -195,6 +201,14 @@ export const {
         terminalFont: withFallback(() => store.appearance?.terminal, defaultSettings.appearance.terminal),
         setTerminalFont(value) {
           setStore("appearance", "terminal", value.trim() ? value : "");
+        },
+        toolbarOrder: withFallback(() => store.appearance?.toolbarOrder, defaultSettings.appearance.toolbarOrder),
+        setToolbarOrder(value) {
+          setStore("appearance", "toolbarOrder", Array.isArray(value) ? [...value] : []);
+        },
+        toolbarHidden: withFallback(() => store.appearance?.toolbarHidden, defaultSettings.appearance.toolbarHidden),
+        setToolbarHidden(value) {
+          setStore("appearance", "toolbarHidden", Array.isArray(value) ? [...value] : []);
         }
       },
       keybinds: {

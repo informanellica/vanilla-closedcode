@@ -4,9 +4,9 @@ import { Select } from "@/bs/select.js";
 import { Switch } from "@/bs/switch.js";
 import { TextField } from "@/bs/text-field.js";
 import { Tooltip } from "@/bs/tooltip.js";
-import { createComponent, createEffect, createMemo, createResource } from "../lib/reactivity.js";
+import { batch, createComponent, createEffect, createMemo, createResource } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
-import { env, envAll } from "@/lib/env.js";
+import { env } from "@/lib/env.js";
 import { useTheme } from "@/lib/theme.js";
 import { showToast } from "@/lib/toast.js";
 import { useParams } from "../lib/router/index.js";
@@ -19,6 +19,7 @@ import { decode64 } from "@/utils/base64.js";
 import { playSoundById, SOUND_OPTIONS } from "@/utils/sound.js";
 import { Link } from "./link.js";
 import { SettingsList } from "./settings-list.js";
+import { TOOLBAR_ITEMS, DEFAULT_TOOLBAR_ORDER } from "./app-toolbar.js";
 let demoSoundState = {
   cleanup: undefined,
   timeout: undefined,
@@ -496,6 +497,211 @@ export const SettingsGeneral = () => {
     return el;
   };
 
+  // Toolbar customization, modeled on Office's Quick Access Toolbar dialog: a
+  // two-pane add/remove + reorder UI. Left pane = available (hidden) commands,
+  // right pane = commands shown in the toolbar (in order). Writes to
+  // settings.appearance.toolbarOrder / toolbarHidden (consumed by AppToolbar).
+  const ToolbarSection = () => {
+    const el = template(`
+      <div class="d-flex flex-column gap-1">
+        <div class="d-flex align-items-center justify-content-between pb-2">
+          <h3 class="fw-medium text-body-emphasis m-0">ツールバー</h3>
+          <button type="button" class="btn btn-link btn-sm p-0" data-slot="reset">既定に戻す</button>
+        </div>
+        <p class="small text-secondary m-0 pb-2">上部ツールバーに表示するアイコンと並び順を変更できます。左の一覧から「追加」で表示し、「削除」で隠せます。右の一覧で選んで「↑」「↓」で並べ替えます。「スペーサー」より後ろのアイコンは右端に寄ります。</p>
+        <div class="d-flex gap-2 align-items-stretch">
+          <div class="d-flex flex-column gap-1" style="flex:1 1 0;min-width:0">
+            <span class="small text-secondary">利用できるアイコン</span>
+            <div class="border rounded-2 bg-body-tertiary overflow-y-auto p-1 d-flex flex-column gap-1" style="height:260px" data-slot="avail" role="listbox" aria-label="利用できるアイコン"></div>
+          </div>
+          <div class="d-flex flex-column justify-content-center gap-2 flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-secondary text-nowrap" data-slot="add" disabled>追加 ≫</button>
+            <button type="button" class="btn btn-sm btn-outline-secondary text-nowrap" data-slot="remove" disabled>≪ 削除</button>
+          </div>
+          <div class="d-flex flex-column gap-1" style="flex:1 1 0;min-width:0">
+            <span class="small text-secondary">ツールバーに表示するアイコン</span>
+            <div class="border rounded-2 bg-body-tertiary overflow-y-auto p-1 d-flex flex-column gap-1" style="height:260px" data-slot="shown" role="listbox" aria-label="ツールバーに表示するアイコン"></div>
+          </div>
+          <div class="d-flex flex-column justify-content-center gap-2 flex-shrink-0">
+            <button type="button" class="btn btn-sm btn-link p-1 d-inline-flex" data-slot="up" title="上へ" aria-label="上へ" disabled><i class="bi bi-chevron-up"></i></button>
+            <button type="button" class="btn btn-sm btn-link p-1 d-inline-flex" data-slot="down" title="下へ" aria-label="下へ" disabled><i class="bi bi-chevron-down"></i></button>
+          </div>
+        </div>
+      </div>`);
+    const availBox = el.querySelector('[data-slot="avail"]');
+    const shownBox = el.querySelector('[data-slot="shown"]');
+    const addBtn = el.querySelector('[data-slot="add"]');
+    const removeBtn = el.querySelector('[data-slot="remove"]');
+    const upBtn = el.querySelector('[data-slot="up"]');
+    const downBtn = el.querySelector('[data-slot="down"]');
+    const resetBtn = el.querySelector('[data-slot="reset"]');
+
+    const labelOf = id => TOOLBAR_ITEMS.find(it => it.id === id)?.label ?? id;
+    // Selected id per pane, kept by id (not DOM) so it survives the rebuild.
+    const [sel, setSel] = createStore({ avail: null, shown: null });
+
+    // Effective FULL order = saved ids (deduped, known only) then any default
+    // ids not yet placed, so new toolbar items appear without a forced re-save.
+    // Hidden items remain in this order; the panes are derived by filtering.
+    const effectiveOrder = () => {
+      const saved = settings.appearance.toolbarOrder() ?? [];
+      const known = new Set(DEFAULT_TOOLBAR_ORDER);
+      const seen = new Set();
+      const order = [];
+      for (const id of saved) if (known.has(id) && !seen.has(id)) { order.push(id); seen.add(id); }
+      for (const id of DEFAULT_TOOLBAR_ORDER) if (!seen.has(id)) { order.push(id); seen.add(id); }
+      return order;
+    };
+    const hiddenList = () => (settings.appearance.toolbarHidden() ?? []).slice();
+
+    // Swap two ids wherever they sit in the full order (both visible, so hidden
+    // items interleaved between them stay put and reordering looks contiguous).
+    // NOTE: this persists the full materialized order (effectiveOrder) into
+    // toolbarOrder rather than a sparse delta. That is intentional and harmless:
+    // the visible result is always correct, "既定に戻す" still resets to [], and
+    // any item added to DEFAULT_TOOLBAR_ORDER in a future build still appears
+    // (appended by effectiveOrder). A sparse delta was considered and rejected:
+    // filtering to only user-touched ids drops reorders between two default
+    // items entirely.
+    const swapInOrder = (a, b) => {
+      const order = effectiveOrder();
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      if (ia < 0 || ib < 0) return;
+      order[ia] = b;
+      order[ib] = a;
+      settings.appearance.setToolbarOrder(order);
+    };
+    // Move a hidden id into the shown pane (un-hide), inserting it right after
+    // the currently selected shown item, or at the bottom of the list. All store
+    // writes (order, hidden, selection) are batched so the effects re-run once
+    // with the final, consistent state (no stale-selection intermediate render).
+    const addToShown = id => {
+      if (!id) return;
+      batch(() => {
+        const hidden = hiddenList().filter(h => h !== id);
+        const order = effectiveOrder().filter(x => x !== id);
+        const anchor = sel.shown && order.includes(sel.shown) ? sel.shown : null;
+        const insertAt = anchor ? order.indexOf(anchor) + 1 : order.length;
+        order.splice(insertAt, 0, id);
+        settings.appearance.setToolbarOrder(order);
+        settings.appearance.setToolbarHidden(hidden);
+        setSel("avail", null);
+        setSel("shown", id);
+      });
+    };
+    const removeFromShown = id => {
+      if (!id) return;
+      batch(() => {
+        const hidden = hiddenList();
+        if (!hidden.includes(id)) hidden.push(id);
+        settings.appearance.setToolbarHidden(hidden);
+        setSel("shown", null);
+        setSel("avail", id);
+      });
+    };
+    const moveShown = dir => {
+      const id = sel.shown;
+      if (!id) return;
+      const hidden = new Set(hiddenList());
+      const shown = effectiveOrder().filter(x => !hidden.has(x));
+      const idx = shown.indexOf(id);
+      if (idx < 0) return;
+      const j = idx + dir;
+      if (j < 0 || j >= shown.length) return;
+      swapInOrder(id, shown[j]);
+    };
+
+    addBtn.addEventListener("click", () => addToShown(sel.avail));
+    removeBtn.addEventListener("click", () => removeFromShown(sel.shown));
+    upBtn.addEventListener("click", () => moveShown(-1));
+    downBtn.addEventListener("click", () => moveShown(1));
+    resetBtn.addEventListener("click", () => {
+      batch(() => {
+        settings.appearance.setToolbarOrder([]);
+        settings.appearance.setToolbarHidden([]);
+        setSel("avail", null);
+        setSel("shown", null);
+      });
+    });
+
+    const makeRow = (id, pane) => {
+      const r = document.createElement("button");
+      r.type = "button";
+      r.dataset.id = id;
+      r.setAttribute("role", "option");
+      r.setAttribute("aria-selected", "false");
+      // Base (unselected) classes; the highlight effect toggles selection.
+      r.className = "btn btn-sm text-start w-100 rounded-1 px-2 py-1 border-0 bg-transparent text-body-emphasis";
+      const label = document.createElement("span");
+      label.className = "small";
+      label.textContent = labelOf(id);
+      r.appendChild(label);
+      r.addEventListener("click", () => setSel(pane, id));
+      r.addEventListener("dblclick", () => pane === "avail" ? addToShown(id) : removeFromShown(id));
+      return r;
+    };
+    const emptyHint = text => {
+      const d = document.createElement("div");
+      d.className = "small text-secondary px-2 py-1 fst-italic";
+      d.textContent = text;
+      return d;
+    };
+
+    // Structure effect: (re)build the rows only when the panes' CONTENTS change
+    // (add/remove/move/reset). NOT on selection change — rebuilding on every
+    // click would destroy the row between the two clicks of a double-click, so
+    // selection highlighting is handled separately below and rows persist.
+    createEffect(() => {
+      const hidden = new Set(hiddenList());
+      const order = effectiveOrder();
+      const shown = order.filter(id => !hidden.has(id));
+      // Available pane keeps default order for a stable layout.
+      const avail = DEFAULT_TOOLBAR_ORDER.filter(id => hidden.has(id));
+      availBox.replaceChildren(...(avail.length ? avail.map(id => makeRow(id, "avail")) : [emptyHint("（すべて表示中）")]));
+      shownBox.replaceChildren(...(shown.length ? shown.map(id => makeRow(id, "shown")) : [emptyHint("（なし）")]));
+    });
+
+    // Highlight + button-state effect: runs on selection OR structure change and
+    // updates the existing rows in place (no rebuild), plus the disabled states.
+    const applyHighlight = (box, selId) => {
+      for (const r of box.children) {
+        const id = r.dataset?.id;
+        if (id == null) continue;
+        const on = id === selId;
+        r.classList.toggle("bg-primary", on);
+        r.classList.toggle("text-white", on);
+        r.classList.toggle("bg-transparent", !on);
+        r.classList.toggle("text-body-emphasis", !on);
+        r.setAttribute("aria-selected", on ? "true" : "false");
+      }
+    };
+    createEffect(() => {
+      const selAvail = sel.avail;
+      const selShown = sel.shown;
+      const hidden = new Set(hiddenList());
+      const shown = effectiveOrder().filter(id => !hidden.has(id));
+      applyHighlight(availBox, selAvail);
+      applyHighlight(shownBox, selShown);
+      addBtn.disabled = !selAvail || !hidden.has(selAvail);
+      removeBtn.disabled = !selShown || hidden.has(selShown);
+      const sIdx = selShown ? shown.indexOf(selShown) : -1;
+      upBtn.disabled = sIdx <= 0;
+      downBtn.disabled = sIdx < 0 || sIdx >= shown.length - 1;
+    });
+
+    // Keep the selection consistent: if the selected id leaves its pane (e.g.
+    // reset, or external settings change), clear it. Converges in one extra pass
+    // (clearing to null makes the guard false), so it cannot loop.
+    createEffect(() => {
+      const hidden = new Set(hiddenList());
+      const shown = effectiveOrder().filter(id => !hidden.has(id));
+      if (sel.shown && !shown.includes(sel.shown)) setSel("shown", null);
+      if (sel.avail && !hidden.has(sel.avail)) setSel("avail", null);
+    });
+    return el;
+  };
+
   const NotificationsSection = () => {
     const el = section("settings.general.section.notifications");
     el.appendChild(createComponent(SettingsList, {
@@ -610,8 +816,6 @@ export const SettingsGeneral = () => {
     return el;
   };
 
-  console.log(envAll());
-
   const root = template(`
     <div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10">
       <div class="sticky top-0 z-10 bg-[linear-gradient(to_bottom,var(--surface-stronger-non-alpha)_calc(100%_-_24px),transparent)]">
@@ -628,6 +832,7 @@ export const SettingsGeneral = () => {
   });
   content.appendChild(GeneralSection());
   content.appendChild(AppearanceSection());
+  content.appendChild(ToolbarSection());
   content.appendChild(NotificationsSection());
   content.appendChild(SoundsSection());
   content.appendChild(UpdatesSection());
