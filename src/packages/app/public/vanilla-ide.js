@@ -53,16 +53,15 @@
     hostEl.classList.add("vide-host");
 
     var bar = el("div", "vide-toolbar");
-    var name = el("span", "vide-name", relName || "");
     var spacer = el("span", "vide-spacer");
     var dirty = el("span", "vide-dirty", "●"); // ● unsaved indicator
     dirty.title = "未保存の変更";
     dirty.style.visibility = "hidden";
     var status = el("span", "vide-status", "");
-    // Save and view-mode controls live in the app toolbar now, so the chrome
-    // bar only shows the file name, the unsaved (●) indicator, and status.
+    // Save and view-mode controls live in the app toolbar now, and the file name
+    // is already shown in the editor tab, so the chrome bar only carries the
+    // unsaved (●) indicator and status — no redundant in-pane file name header.
 
-    bar.appendChild(name);
     bar.appendChild(dirty);
     bar.appendChild(spacer);
     bar.appendChild(status);
@@ -72,7 +71,7 @@
     hostEl.appendChild(bar);
     hostEl.appendChild(editorWrap);
 
-    return { bar: bar, editorWrap: editorWrap, dirty: dirty, status: status, name: name };
+    return { bar: bar, editorWrap: editorWrap, dirty: dirty, status: status };
   }
 
   function setStatus(inst, msg, isError) {

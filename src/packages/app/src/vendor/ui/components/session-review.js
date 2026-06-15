@@ -319,7 +319,10 @@ export const SessionReview = props => {
       return createComponent(Button, {
         size: "small",
         icon: "chevron-grabber-vertical",
-        "class": "w-[106px] justify-start",
+        // min-w keeps the toggle width stable (no jitter between expand/collapse
+        // labels) while letting longer localized labels (e.g. ja "すべて折りたたむ")
+        // grow the button instead of being clipped by a fixed width + nowrap.
+        "class": "min-w-[106px] justify-start",
         onClick: handleExpandOrCollapseAll,
         get children() {
           // Switch output is an accessor; the vanilla Button insert()s

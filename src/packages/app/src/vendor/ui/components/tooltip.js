@@ -203,6 +203,16 @@ export function Tooltip(props) {
   let stopPosition = null;
   let disposeContent = null;
   let contentEl = null;
+  // Backstop observer: while the content is portaled to <body>, the only thing
+  // tying it to the trigger is this code. If the trigger is removed from the
+  // document by an ancestor re-render (a list row swapped, a panel torn down)
+  // rather than by our owner disposing, no pointerleave/onCleanup fires and the
+  // portaled node would orphan in <body> — accumulating one stuck tooltip per
+  // re-render. Watch for the trigger's disconnect and force an unmount. Only
+  // active while mounted, so it costs nothing in the common (closed) case.
+  const disconnectObs = new MutationObserver(() => {
+    if (!triggerEl.isConnected) unmountContent();
+  });
   const mountContent = () => {
     if (contentEl) return;
     const build = () => createRoot((dispose) => {
@@ -220,8 +230,10 @@ export function Tooltip(props) {
     // resolves, even when mountContent runs from a DOM event handler.
     if (owner) runWithOwner(owner, build);
     else build();
+    disconnectObs.observe(document.body, { childList: true, subtree: true });
   };
   const unmountContent = () => {
+    disconnectObs.disconnect();
     if (stopPosition) {
       stopPosition();
       stopPosition = null;
@@ -246,13 +258,16 @@ export function Tooltip(props) {
     }
   });
 
-  if (owner) {
-    onCleanup(() => {
-      clearTimers();
-      obs.disconnect();
-      unmountContent();
-    });
-  }
+  // Always register cleanup (a no-op when there is no owner): unmountContent()
+  // must run on disposal so the <body>-portaled content is removed. Gating this
+  // on `owner` left the portaled node orphaned whenever the owner disposed while
+  // the tooltip was open (the disconnect observer above is the further backstop
+  // for trigger removals that don't go through owner disposal at all).
+  onCleanup(() => {
+    clearTimers();
+    obs.disconnect();
+    unmountContent();
+  });
 
   return triggerEl;
 }

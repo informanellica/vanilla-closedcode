@@ -13,14 +13,6 @@
   border-bottom: 1px solid var(--bs-border-color, rgba(128, 128, 128, 0.25));
   flex: 0 0 auto;
 }
-.vide-name {
-  font-family: var(--bs-font-monospace, monospace);
-  font-size: 0.8rem;
-  opacity: 0.85;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 .vide-dirty {
   color: var(--bs-warning, #f0a000);
   font-size: 0.7rem;
