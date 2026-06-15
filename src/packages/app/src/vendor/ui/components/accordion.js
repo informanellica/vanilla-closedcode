@@ -197,21 +197,21 @@ function AccordionRoot(props) {
 
   // Owned triggers in DOM order (for roving focus).
   const orderedTriggers = () =>
-    [...root.querySelectorAll('[data-slot="accordion-trigger"]')].filter(ownedBy);
+    [...root.querySelectorAll('[data-accordion="trigger"]')].filter(ownedBy);
 
-  const itemId = el => el.closest('[data-slot="accordion-item"]');
+  const itemId = el => el.closest('[data-accordion="item"]');
 
   // DOM-walking sync: apply the expanded set to every owned part.
   const sync = () => {
     const keys = expandedKeys();
-    for (const item of root.querySelectorAll('[data-slot="accordion-item"]')) {
+    for (const item of root.querySelectorAll('[data-accordion="item"]')) {
       if (!ownedBy(item)) continue;
       const value = item.dataset.value ?? "";
       const open = keys.has(value);
       const disabled = item.dataset.disabled === "true";
       setOpenAttrs(item, open, disabled);
     }
-    for (const header of root.querySelectorAll('[data-slot="accordion-header"]')) {
+    for (const header of root.querySelectorAll('[data-accordion="header"]')) {
       if (!ownedBy(header)) continue;
       const item = itemId(header);
       const value = item?.dataset.value ?? "";
@@ -219,7 +219,7 @@ function AccordionRoot(props) {
       const disabled = item?.dataset.disabled === "true";
       setOpenAttrs(header, open, disabled);
     }
-    for (const trigger of root.querySelectorAll('[data-slot="accordion-trigger"]')) {
+    for (const trigger of root.querySelectorAll('[data-accordion="trigger"]')) {
       if (!ownedBy(trigger)) continue;
       const item = itemId(trigger);
       const value = item?.dataset.value ?? "";
@@ -231,7 +231,7 @@ function AccordionRoot(props) {
       const disabled = item?.dataset.disabled === "true";
       trigger.setAttribute("aria-expanded", open ? "true" : "false");
       trigger.setAttribute("data-key", value);
-      const content = item?.querySelector('[data-slot="accordion-content"]');
+      const content = item?.querySelector('[data-accordion="content"]');
       if (open && content?.id) trigger.setAttribute("aria-controls", content.id);
       else trigger.removeAttribute("aria-controls");
       setOpenAttrs(trigger, open, disabled);
@@ -245,7 +245,7 @@ function AccordionRoot(props) {
         trigger.setAttribute("tabindex", "0");
       }
     }
-    for (const content of root.querySelectorAll('[data-slot="accordion-content"]')) {
+    for (const content of root.querySelectorAll('[data-accordion="content"]')) {
       if (!ownedBy(content)) continue;
       const item = itemId(content);
       const value = item?.dataset.value ?? "";
@@ -254,7 +254,7 @@ function AccordionRoot(props) {
       setOpenAttrs(content, open, disabled);
       if (open) content.removeAttribute("hidden");
       else content.setAttribute("hidden", "");
-      const trigger = item?.querySelector('[data-slot="accordion-trigger"]');
+      const trigger = item?.querySelector('[data-accordion="trigger"]');
       if (trigger?.id) content.setAttribute("aria-labelledby", trigger.id);
       const rect = content.getBoundingClientRect?.();
       if (rect && rect.height) content.style.setProperty("--vcc-collapsible-content-height", `${rect.height}px`);
@@ -270,11 +270,13 @@ function AccordionRoot(props) {
   // trigger, so a trigger built in any tick is handled correctly.
   root.addEventListener("click", e => {
     const target = e.target instanceof Element ? e.target : null;
-    const trigger = target?.closest('[data-slot="accordion-trigger"]');
+    const trigger = target?.closest('[data-accordion="trigger"]');
     if (!trigger || !ownedBy(trigger)) return;
     if (trigger.hasAttribute("disabled")) return;
-    const value = trigger.dataset.value;
-    if (value == null) return;
+    // Read the owning item's current value (it can resolve after construction)
+    // rather than the trigger's synced copy, which may lag a late value.
+    const value = trigger.closest('[data-accordion="item"]')?.dataset.value ?? trigger.dataset.value;
+    if (value == null || value === "") return;
     toggle(value);
   });
 
@@ -283,11 +285,12 @@ function AccordionRoot(props) {
   root.addEventListener("keydown", e => {
     const key = e.key;
     if (key !== "ArrowDown" && key !== "ArrowUp" && key !== "Home" && key !== "End" && key !== "Enter" && key !== " ") return;
-    const target = e.target instanceof Element ? e.target.closest('[data-slot="accordion-trigger"]') : null;
+    const target = e.target instanceof Element ? e.target.closest('[data-accordion="trigger"]') : null;
     if (!target || !ownedBy(target)) return;
     if (key === "Enter" || key === " ") {
       e.preventDefault();
-      if (!target.hasAttribute("disabled") && target.dataset.value != null) toggle(target.dataset.value);
+      const value = target.closest('[data-accordion="item"]')?.dataset.value ?? target.dataset.value;
+      if (!target.hasAttribute("disabled") && value != null && value !== "") toggle(value);
       return;
     }
     const list = orderedTriggers().filter(el => !el.hasAttribute("disabled"));
@@ -337,11 +340,24 @@ function setOpenAttrs(el, open, disabled) {
 
 function AccordionItem(props) {
   const [local, others] = splitProps(props, ["value", "disabled", "class", "className", "classList", "children", "ref"]);
-  const value = local.value;
   const el = document.createElement("div");
   el.setAttribute("data-slot", "accordion-item");
+  // Stable internal marker for the Root's DOM-walking sync()/delegation. Unlike
+  // data-slot (which consumers freely override, e.g. session-review sets
+  // "session-review-accordion-item"), this is never passed by consumers, so the
+  // item is always findable and its value reaches the trigger.
+  el.setAttribute("data-accordion", "item");
   el.id = `accordion-item-${createUniqueId()}`;
-  if (value != null) el.dataset.value = String(value);
+
+  // value can resolve reactively: session-review gates it on per-file diff stats
+  // that stream in after the row is built (added files report 0 additions until
+  // their patch arrives). Keep dataset.value live so a late-resolving value still
+  // makes the item expandable, instead of being frozen empty at construction.
+  createRenderEffect(() => {
+    const value = local.value;
+    if (value != null) el.dataset.value = String(value);
+    else delete el.dataset.value;
+  });
 
   createRenderEffect(() => {
     if (local.disabled) el.dataset.disabled = "true";
@@ -361,6 +377,7 @@ function AccordionHeader(props) {
   const tag = local.as || "h3";
   const el = document.createElement(tag);
   el.setAttribute("data-slot", "accordion-header");
+  el.setAttribute("data-accordion", "header");
 
   applyClassProp(el, local);
   applyRest(el, others, CONTROL_KEYS);
@@ -375,6 +392,7 @@ function AccordionTrigger(props) {
   const el = document.createElement("button");
   el.setAttribute("type", "button");
   el.setAttribute("data-slot", "accordion-trigger");
+  el.setAttribute("data-accordion", "trigger");
   el.id = local.id ?? `accordion-trigger-${createUniqueId()}`;
 
   // The Root's delegated handlers drive selection/keyboard; the Root's sync()
@@ -392,6 +410,7 @@ function AccordionContent(props) {
   const [local, others] = splitProps(props, ["class", "className", "classList", "children", "id", "style", "ref"]);
   const el = document.createElement("div");
   el.setAttribute("data-slot", "accordion-content");
+  el.setAttribute("data-accordion", "content");
   el.setAttribute("role", "region");
   el.id = local.id ?? `accordion-content-${createUniqueId()}`;
   // Bridge the collapsible height var to the accordion var, like the original.

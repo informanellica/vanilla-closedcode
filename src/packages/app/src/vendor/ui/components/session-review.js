@@ -7,7 +7,6 @@ import { FileIcon } from "./file-icon.js";
 import { Icon } from "./icon.js";
 import { IconButton } from "./icon-button.js";
 import { StickyAccordionHeader } from "./sticky-accordion-header.js";
-import { Tooltip } from "./tooltip.js";
 import { ScrollView } from "./scroll-view.js";
 import { useFileComponent } from "../context/file.js";
 import { useI18n } from "../context/i18n.js";
@@ -200,7 +199,14 @@ export const SessionReview = props => {
   };
   const queue = () => {
     if (frame !== undefined) return;
-    frame = requestAnimationFrame(syncVisible);
+    // Schedule via setTimeout, NOT requestAnimationFrame: rAF callbacks are
+    // paused while the window is occluded/hidden (document.visibilityState
+    // === "hidden"), so a rAF-gated syncVisible never runs in that state and
+    // every expanded diff is stuck on its placeholder (never marked visible ->
+    // mounted() stays false -> blank box). setTimeout fires regardless of
+    // visibility, and getBoundingClientRect still reports correct layout, so
+    // visibility is computed reliably whether or not the window is painting.
+    frame = setTimeout(syncVisible, 0);
   };
   const pinned = file => props.focusedComment?.file === file || props.focusedFile === file || selection()?.file === file || commenting()?.file === file || opened()?.file === file;
   const handleScroll = event => {
@@ -217,7 +223,7 @@ export const SessionReview = props => {
   };
   onCleanup(() => {
     if (frame === undefined) return;
-    cancelAnimationFrame(frame);
+    clearTimeout(frame);
   });
   createEffect(() => {
     props.open;
@@ -316,36 +322,32 @@ export const SessionReview = props => {
       return hasDiffs();
     },
     get children() {
-      return createComponent(Button, {
+      // Icon-only toggle: a text label ("すべて折りたたむ" / "Expand all") cannot
+      // fit alongside the Unified/Split radio group in a narrow review panel and
+      // was being clipped at the panel edge. The glyph SWITCHES with state
+      // (arrows-collapse when expanded, arrows-expand when collapsed) so the
+      // action reads clearly, and stays discoverable + accessible via a reactive
+      // aria-label + native title tooltip (no portaled Tooltip, so nothing can
+      // be left orphaned in the body).
+      const button = createComponent(Button, {
         size: "small",
-        icon: "chevron-grabber-vertical",
-        // min-w keeps the toggle width stable (no jitter between expand/collapse
-        // labels) while letting longer localized labels (e.g. ja "すべて折りたたむ")
-        // grow the button instead of being clipped by a fixed width + nowrap.
-        "class": "min-w-[106px] justify-start",
-        onClick: handleExpandOrCollapseAll,
-        get children() {
-          // Switch output is an accessor; the vanilla Button insert()s
-          // function children, so the label stays live.
-          return createComponent(Switch, {
-            get children() {
-              return [createComponent(Match, {
-                get when() {
-                  return open().length > 0;
-                },
-                get children() {
-                  return i18n.t("ui.sessionReview.collapseAll");
-                }
-              }), createComponent(Match, {
-                when: true,
-                get children() {
-                  return i18n.t("ui.sessionReview.expandAll");
-                }
-              })];
-            }
-          });
-        }
+        "class": "shrink-0",
+        onClick: handleExpandOrCollapseAll
       });
+      const icon = createComponent(Icon, {
+        name: "expand",
+        size: "small"
+      });
+      button.appendChild(icon);
+      createRenderEffect(() => {
+        const collapsing = open().length > 0;
+        icon.classList.toggle("bi-arrows-collapse", collapsing);
+        icon.classList.toggle("bi-arrows-expand", !collapsing);
+        const label = i18n.t(collapsing ? "ui.sessionReview.collapseAll" : "ui.sessionReview.expandAll");
+        button.setAttribute("aria-label", label);
+        button.setAttribute("title", label);
+      });
+      return button;
     }
   }), null);
   insert(actionsEl, () => props.actions, null);
@@ -389,10 +391,27 @@ export const SessionReview = props => {
                 children: diff => {
                     const file = diff.file;
 
-                    // binary files have empty diffs that we can't render
-                    const diffCanRender = () => diff.additions !== 0 || diff.deletions !== 0;
+                    // Renderable when there are line changes OR the file is wholly
+                    // added/deleted. Added/deleted files carry 0 in their additions/
+                    // deletions metadata (those counts come from the patch, which
+                    // streams in later) yet are perfectly renderable — as a full
+                    // add/remove diff, or an image preview for media. Gating only on
+                    // the line counts left added files with no chevron and no
+                    // accordion value, so they couldn't be expanded individually.
+                    // Binary *modified* files with no diff and no media stay excluded.
+                    const diffCanRender = () => diff.additions !== 0 || diff.deletions !== 0 || diff.status === "added" || diff.status === "deleted";
                     const expanded = createMemo(() => open().includes(file));
-                    const mounted = createMemo(() => expanded() && (!!store.visible[file] || pinned(file)));
+                    // Mount the diff as soon as it is expanded. The previous
+                    // viewport-virtualization gate (expanded && store.visible[file])
+                    // depended on syncVisible writing store.visible — a chain that
+                    // proved fragile (rAF pauses while occluded; the store-visible
+                    // signal not reliably re-flipping mounted()), repeatedly leaving
+                    // expanded diffs stuck on their blank placeholder. A review has
+                    // few files and very large diffs are still deferred behind
+                    // tooLarge()'s "render anyway", so mounting on expand is safe and
+                    // removes the blank-preview failure mode entirely. pinned() is
+                    // subsumed: focusing a comment opens (expands) its file.
+                    const mounted = expanded;
                     const force = () => !!store.force[file];
                     const comments = createMemo(() => grouped().get(file) ?? []);
                     const commentedLines = createMemo(() => comments().map(c => c.selection));
@@ -547,45 +566,32 @@ export const SessionReview = props => {
                                   nameContainer.insertBefore(dir, filenameEl);
                                 }
                                 filenameEl.textContent = getFilename(file);
-                                // Show(when onViewFile && diffCanRender()):
-                                // Tooltip is a Solid component tree, so the
-                                // runtime Show keeps its mount/dispose contract.
-                                insert(nameContainer, createComponent(Show, {
-                                  get when() {
-                                    return !!props.onViewFile && diffCanRender();
-                                  },
-                                  get children() {
-                                    return createComponent(Tooltip, {
-                                      get value() {
-                                        return openFileLabel();
-                                      },
-                                      placement: "top",
-                                      gutter: 4,
-                                      get children() {
-                                        const viewButton = template(`<button data-slot="session-review-view-button" type="button"></button>`);
-                                        // Compiled delegated $$click -> native
-                                        // listener. The stopPropagation still
-                                        // suppresses the accordion
-                                        // trigger's (delegated) click handler:
-                                        // the event no longer reaches the
-                                        // document where the delegation walk
-                                        // starts.
-                                        viewButton.addEventListener("click", e => {
-                                          e.stopPropagation();
-                                          props.onViewFile?.(file);
-                                        });
-                                        viewButton.appendChild(createComponent(Icon, {
-                                          name: "open-file",
-                                          size: "small"
-                                        }));
-                                        // aria-label stays live across
-                                        // language switches.
-                                        createRenderEffect(() => viewButton.setAttribute("aria-label", openFileLabel()));
-                                        return viewButton;
-                                      }
-                                    });
-                                  }
-                                }), null);
+                                // Open-file affordance: the filename itself is
+                                // the link (the separate open-file icon button
+                                // was removed). `file` and diffCanRender() are
+                                // fixed per row, so this is decided once at
+                                // creation. stopPropagation keeps the click from
+                                // toggling the accordion trigger; Enter/Space
+                                // mirror the click for keyboard access. No
+                                // Tooltip is attached here on purpose -- the
+                                // accessible name comes from aria-label, which
+                                // avoids the body-portaled tooltip lifecycle.
+                                if (!!props.onViewFile && diffCanRender()) {
+                                  filenameEl.classList.add("cursor-pointer", "hover:underline");
+                                  filenameEl.setAttribute("role", "link");
+                                  filenameEl.setAttribute("tabindex", "0");
+                                  createRenderEffect(() => filenameEl.setAttribute("aria-label", openFileLabel()));
+                                  filenameEl.addEventListener("click", e => {
+                                    e.stopPropagation();
+                                    props.onViewFile?.(file);
+                                  });
+                                  filenameEl.addEventListener("keydown", e => {
+                                    if (e.key !== "Enter" && e.key !== " ") return;
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    props.onViewFile?.(file);
+                                  });
+                                }
                                 // Switch over the change type: every condition
                                 // depends only on the per-row `diff` object
                                 // (rows are recreated when the diff changes),

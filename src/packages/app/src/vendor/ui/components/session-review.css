@@ -37,12 +37,20 @@
     font-weight: var(--font-weight-medium);
     line-height: var(--line-height-large);
     color: var(--text-strong);
+    /* Title yields space first in a narrow panel so the actions (Unified/Split +
+       expand-all toggle) are never clipped at the panel edge. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   [data-slot="session-review-actions"] {
     display: flex;
     align-items: center;
     column-gap: 12px;
+    /* Keep the controls at their natural width; the title shrinks instead. */
+    flex-shrink: 0;
   }
 
   [data-slot="session-review-actions"] [data-component="radio-group"] {
