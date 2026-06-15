@@ -1944,7 +1944,7 @@ export default function Layout(props) {
     settingsKeybind: () => command.keybind("settings.open"),
     onOpenSettings: openSettings,
     helpLabel: () => language.t("sidebar.help"),
-    onOpenHelp: () => platform.openLink("https://github.com/informanellica/vanilla-closedcode"),
+    onOpenHelp: () => platform.openLink("https://informanellica.github.io/vanilla-closedcode/manual.html"),
     renderPanel: () => mobile ? createComponent(SidebarPanel, {
       project: currentProject,
       mobile: true
@@ -2179,7 +2179,7 @@ export default function Layout(props) {
       onSave: () => layout.editor.save(),
       colorScheme: () => theme.colorScheme(),
       onSetTheme: scheme => theme.setColorScheme(scheme),
-      onHelp: () => platform.openLink("https://github.com/informanellica/vanilla-closedcode"),
+      onHelp: () => platform.openLink("https://informanellica.github.io/vanilla-closedcode/manual.html"),
       onUndo: () => {
         if (layout.editor.editing()) layout.editor.undo();
         else document.execCommand("undo");

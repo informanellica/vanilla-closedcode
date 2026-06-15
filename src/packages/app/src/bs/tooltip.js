@@ -7,6 +7,13 @@ const placementStyle = (placement) => {
       return "position:absolute;right:100%;top:50%;transform:translateY(-50%);margin-right:4px;";
     case "right":
       return "position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:4px;";
+    // *-start variants are left-aligned (no centering translate) so a tooltip on
+    // a trigger near the viewport's left edge extends rightward instead of
+    // overflowing left and being clipped by an ancestor's overflow.
+    case "top-start":
+      return "position:absolute;bottom:100%;left:0;margin-bottom:4px;";
+    case "bottom-start":
+      return "position:absolute;top:100%;left:0;margin-top:4px;";
     case "top":
     default:
       return "position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:4px;";

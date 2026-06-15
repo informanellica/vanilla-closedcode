@@ -1191,7 +1191,9 @@ export const PromptInput = props => {
       })
     }));
     attachHost.appendChild(createComponent(TooltipKeybind, {
-      placement: "top",
+      // Left-aligned: the attach button sits at the bottom-left of the prompt, so
+      // a centered "top" tooltip overflows left and gets clipped.
+      placement: "top-start",
       get title() {
         return language.t("prompt.action.attachFile");
       },
