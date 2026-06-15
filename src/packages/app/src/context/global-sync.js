@@ -380,20 +380,17 @@ function createGlobalSync() {
     }
   });
   onMount(() => {
-    if (typeof requestAnimationFrame === "function") {
-      eventFrame = requestAnimationFrame(() => {
-        eventFrame = undefined;
-        eventTimer = setTimeout(() => {
-          eventTimer = undefined;
-          void globalSDK.event.start();
-        }, 0);
-      });
-    } else {
-      eventTimer = setTimeout(() => {
-        eventTimer = undefined;
-        void globalSDK.event.start();
-      }, 0);
-    }
+    // Start the global SSE event stream after mount. This must NOT be gated behind
+    // requestAnimationFrame: rAF is paused while the window is occluded/backgrounded
+    // at startup, so the rAF callback never fired and the ENTIRE event stream
+    // (notifications, permission prompts, live diffs, message deltas, file-watcher
+    // updates, session status) never started. start() is async/non-blocking, so a
+    // plain setTimeout(0) after mount is enough and fires reliably (background
+    // timers are throttled, not paused).
+    eventTimer = setTimeout(() => {
+      eventTimer = undefined;
+      void globalSDK.event.start();
+    }, 0);
   });
   const projectApi = {
     loadSessions,
