@@ -1,8 +1,25 @@
 <!doctype html>
-<html lang="en" style="background-color: var(--background-base)">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- First-paint safety net. The previous html background used
+         var(--background-base), which is undefined until the theme stylesheets
+         load over vcc:// — an undefined var() with no fallback resolves to
+         transparent, so the very first frame painted the browser's default
+         WHITE before any CSS arrived (the "真っ白 on first launch" splash). These
+         fixed colors apply immediately (before the theme preload + app.css),
+         follow the OS scheme, and match the window backgroundColor + loading
+         splash (light #f8f7f7 / dark #131010). The reactive theme overrides them
+         once app.css loads. Must stay before any external CSS. -->
+    <style>
+      html, body { margin: 0; min-height: 100%; background-color: #131010; color: #ededed; }
+      #app-boot { background: #131010; color: #9a9a9a; }
+      @media (prefers-color-scheme: light) {
+        html, body { background-color: #f8f7f7; color: #1a1a1a; }
+        #app-boot { background: #f8f7f7; color: #6b6b6b; }
+      }
+    </style>
     <title>vanilla-closedcode</title>
     <link rel="icon" type="image/png" href="./favicon-96x96-v3.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="./favicon-v3.svg" />
@@ -61,7 +78,7 @@
     <style>@keyframes cc-boot-spin { to { transform: rotate(360deg); } }</style>
     <div id="root" class="flex flex-col h-dvh">
       <div id="app-mount" class="flex flex-col h-dvh"></div>
-      <div id="app-boot" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:var(--background-base,#131010);color:var(--text-base,#9a9a9a);font:13px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto">
+      <div id="app-boot" style="position:fixed;inset:0;z-index:2147483647;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font:13px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif;overflow:auto">
         <div style="width:28px;height:28px;border:3px solid rgba(150,150,150,.25);border-top-color:#f59e0b;border-radius:50%;animation:cc-boot-spin .8s linear infinite"></div>
         <div id="app-boot-msg">Loading…</div>
       </div>

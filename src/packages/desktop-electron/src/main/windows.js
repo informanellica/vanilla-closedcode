@@ -132,7 +132,12 @@ export function createLoadingWindow() {
     height: 480,
     resizable: false,
     center: true,
-    show: true,
+    // show:false + ready-to-show, like the main window. The renderer process +
+    // vcc:// protocol cold start takes ~1.5-2s before loading.html first paints;
+    // show:true would put a near-white (backgroundColor) window on screen for
+    // that whole time — the "最初だけ真っ白" splash. Showing only after first
+    // paint means the user never sees the pre-paint blank window.
+    show: false,
     icon: iconPath(),
     backgroundColor: backgroundColor ?? defaultBackgroundColor(mode),
     ...(process.platform === "darwin" ? {
@@ -151,6 +156,9 @@ export function createLoadingWindow() {
       nodeIntegration: false,
       sandbox: true
     }
+  });
+  win.once("ready-to-show", () => {
+    if (!win.isDestroyed()) win.show();
   });
   loadWindow(win, "loading.html");
   return win;
@@ -508,6 +516,14 @@ export function registerRendererProtocol() {
     if (ext === ".html") {
       try {
         let html = await readFile(disk, "utf8");
+        // The startup splash (loading.html) is fully self-contained — no module
+        // scripts — so it must NOT block on buildImportMap(), which scans the
+        // app/renderer/core/sdk trees and delays returning the HTML, leaving a
+        // blank splash window on launch (the small white box). Serve it verbatim
+        // so first paint is immediate.
+        if (pathname.endsWith("/loading.html")) {
+          return new Response(html, { headers: { "content-type": "text/html" } });
+        }
         const tag = `<script type="importmap">${await buildImportMap()}</script>`;
         html = html.includes("</title>")
           ? html.replace("</title>", `</title>\n    ${tag}`)

@@ -21,9 +21,21 @@
         color: #1a1a1a;
       }
       #loading-track { background: #e6e4e3; }
+      /* The brand mark is solid (not a faint 0.2 ghost that reads as blank on
+         a near-white background) and gently pulses, so the splash is always
+         visibly "alive" while loading. Pure CSS — no JS/rAF, which keeps it
+         working even when first paint races a busy cold start. */
+      #loading-logo { opacity: 0.92; animation: loading-pulse 1.6s ease-in-out infinite; }
+      @keyframes loading-pulse {
+        0%, 100% { opacity: 0.55; }
+        50% { opacity: 0.95; }
+      }
       @media (prefers-color-scheme: dark) {
         body { background-color: #131010; color: #ededed; }
         #loading-track { background: #2a2624; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #loading-logo { animation: none; opacity: 0.92; }
       }
     </style>
   </head>
@@ -33,12 +45,12 @@
       <div style="display: flex; flex-direction: column; align-items: center; gap: 2.75rem">
         <!-- Brand mark (Bootstrap c-square), inlined so it never 404s as an <img>. -->
         <svg
+          id="loading-logo"
           viewBox="0 0 16 16"
-          width="72"
-          height="72"
+          width="80"
+          height="80"
           fill="currentColor"
           xmlns="http://www.w3.org/2000/svg"
-          style="opacity: 0.2"
           aria-hidden="true"
         >
           <path
