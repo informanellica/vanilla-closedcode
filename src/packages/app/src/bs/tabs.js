@@ -168,6 +168,14 @@ function createTabsState(props) {
     const watch = () => {
       void props.value;
       sync();
+      // Re-sync on a deferred tick. Content panes are often (re)created in
+      // response to the same value change that triggers this effect (e.g. a
+      // keyed <Show> over the active tab), so they attach to the DOM AFTER this
+      // synchronous sync() walks it — leaving the now-active pane stuck on its
+      // creation-time d-none. A macrotask later they are attached, so a second
+      // sync() makes the active pane visible. setTimeout, never rAF (paused while
+      // the window is occluded).
+      setTimeout(sync, 0);
     };
     if (getOwner()) {
       createEffect(watch);

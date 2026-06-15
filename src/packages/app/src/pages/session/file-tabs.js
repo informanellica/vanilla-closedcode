@@ -293,25 +293,65 @@ export function FileTabContent(props) {
     if (!root) return null;
     return root + "/" + rel;
   });
+  let editorRetry = 0;
+  let editorRetryTimer;
   const syncEditor = () => {
-    if (typeof window === "undefined" || !window.VanillaIDE || !editorHost) return;
-    const ap = absolutePath();
-    if (editMode() && ap) {
-      window.VanillaIDE.mount(editorHost, {
-        absPath: ap,
-        relName: path(),
-        onExit: () => setEditMode(false)
-      });
-    } else {
-      window.VanillaIDE.unmount(editorHost);
+    if (typeof window === "undefined" || !editorHost) return;
+    if (editorRetryTimer) {
+      clearTimeout(editorRetryTimer);
+      editorRetryTimer = undefined;
     }
+    const ap = absolutePath();
+    if (!editMode() || !ap) {
+      if (window.VanillaIDE) window.VanillaIDE.unmount(editorHost);
+      return;
+    }
+    // Never leave the tab a silently-blank host when the editor runtime isn't
+    // ready: the classic ./vanilla-ide.js normally loads before this module, so
+    // this only guards a momentary startup race — show a status and retry, then
+    // surface an error rather than returning with an empty host.
+    if (!window.VanillaIDE) {
+      if (editorRetry < 40) {
+        editorHost.textContent = "エディタを読み込み中…";
+        editorRetry++;
+        editorRetryTimer = setTimeout(syncEditor, 50);
+      } else {
+        editorHost.textContent = "エディタの読み込みに失敗しました (CodeMirror)。";
+      }
+      return;
+    }
+    editorRetry = 0;
+    window.VanillaIDE.mount(editorHost, {
+      absPath: ap,
+      relName: path(),
+      onExit: () => setEditMode(false)
+    });
   };
   createEffect(() => {
     editMode();
     absolutePath();
     syncEditor();
   });
+  // Refresh the editor whenever THIS tab becomes the active one. Tab panes are
+  // hidden with display:none; a CodeMirror created/measured while its pane was
+  // hidden renders a single line (blank), and neither ResizeObserver nor
+  // IntersectionObserver fires reliably for an ancestor display:none -> visible
+  // toggle. So when the tab is switched to, explicitly refresh once layout has
+  // settled (a few staggered ticks cover any layout timing; refresh is cheap and
+  // idempotent). setTimeout, never requestAnimationFrame (rAF is paused while the
+  // window is occluded).
+  createEffect(() => {
+    if (activeFileTab() !== props.tab) return;
+    for (const delay of [0, 60, 200]) {
+      setTimeout(() => {
+        if (editorHost && typeof window !== "undefined" && window.VanillaIDE) {
+          try { window.VanillaIDE.refresh(editorHost); } catch {}
+        }
+      }, delay);
+    }
+  });
   onCleanup(() => {
+    if (editorRetryTimer) clearTimeout(editorRetryTimer);
     if (editorHost && typeof window !== "undefined" && window.VanillaIDE) window.VanillaIDE.unmount(editorHost);
   });
   const selectedLines = createMemo(() => {
@@ -630,7 +670,14 @@ export function FileTabContent(props) {
     get children() {
       const host = template(`<div class="h-full"></div>`);
       editorHost = host;
-      requestAnimationFrame(syncEditor);
+      // Mount now and again on a macrotask. NOT requestAnimationFrame: rAF is
+      // paused while the window is occluded/hidden, so a rAF-gated mount never
+      // fires on a cold first paint and the tab is left with an empty host (no
+      // editor DOM at all — VanillaIDE.mount() was never reached). syncEditor()
+      // is idempotent (mount() calls unmount() first), so the immediate call
+      // mounts ASAP and the timeout re-syncs once the host is attached.
+      syncEditor();
+      setTimeout(syncEditor, 0);
       return host;
     },
     get fallback() {

@@ -16,6 +16,10 @@
 
   // host element -> instance state
   var instances = new WeakMap();
+  // absPath -> unsaved buffer. Switching tabs destroys the editor (the tab
+  // content is recreated per active tab), so unsaved edits would be lost on
+  // switch. We stash the dirty buffer here on unmount and restore it on remount.
+  var unsavedCache = Object.create(null);
 
   function hasBridge() {
     return typeof window !== "undefined" && window.api && typeof window.api.readFile === "function";
@@ -135,6 +139,7 @@
     var content = inst.cm.getValue();
     setStatus(inst, "保存中…");
     window.api.writeFile(inst.absPath, content).then(function () {
+      delete unsavedCache[inst.absPath];
       inst.baseGen = inst.cm.changeGeneration(true);
       refreshDirty(inst);
       setStatus(inst, "保存しました");
@@ -195,12 +200,50 @@
       cm.setSize("100%", "100%");
       inst.cm = cm;
       inst.baseGen = cm.changeGeneration(true);
+      // Restore unsaved edits cached when this file's editor was unmounted (tab
+      // switch). The cached buffer differs from disk, so setting it registers as
+      // a change against baseGen -> the tab correctly shows dirty.
+      var cached = unsavedCache[absPath];
+      if (cached != null && cached !== raw) cm.setValue(cached);
       cm.on("change", function () { refreshDirty(inst); emitEditorState(inst); });
       cm.on("cursorActivity", function () { emitEditorState(inst); });
       refreshDirty(inst);
       emitEditorState(inst);
-      // CM mis-measures when mounted hidden; refresh on next frame.
-      requestAnimationFrame(function () { if (inst.cm) inst.cm.refresh(); });
+      // CM mis-measures when mounted before layout settles (or while the window
+      // is occluded). Do NOT gate the corrective refresh on requestAnimationFrame:
+      // rAF is paused while the window is hidden/occluded, so a one-shot rAF never
+      // fires on a cold first launch and the editor is left mis-sized (content
+      // missing / wrong height with blank below) until a later launch. setTimeout
+      // fires regardless of visibility, and a ResizeObserver keeps the editor
+      // correctly sized whenever the pane first gains a real size or is resized.
+      setTimeout(function () { if (inst.cm) inst.cm.refresh(); }, 0);
+      if (typeof ResizeObserver === "function") {
+        var lastH = 0, lastW = 0;
+        inst.resizeObserver = new ResizeObserver(function () {
+          if (!inst.cm) return;
+          var rect = chrome.editorWrap.getBoundingClientRect();
+          // Only refresh on a real size change to avoid redundant reflows.
+          if (Math.round(rect.height) === lastH && Math.round(rect.width) === lastW) return;
+          lastH = Math.round(rect.height);
+          lastW = Math.round(rect.width);
+          inst.cm.refresh();
+        });
+        inst.resizeObserver.observe(chrome.editorWrap);
+      }
+      // File tabs are hidden with display:none, so an editor created in a
+      // background tab measures 0 and renders a single line. ResizeObserver does
+      // NOT reliably fire for a display:none -> visible transition driven by an
+      // ancestor, so also refresh when the editor actually becomes visible:
+      // IntersectionObserver is the canonical "became visible" signal and fires
+      // when the tab is switched to.
+      if (typeof IntersectionObserver === "function") {
+        inst.visObserver = new IntersectionObserver(function (entries) {
+          for (var k = 0; k < entries.length; k++) {
+            if (entries[k].isIntersecting && inst.cm) inst.cm.refresh();
+          }
+        });
+        inst.visObserver.observe(chrome.editorWrap);
+      }
 
       // Follow Bootstrap light/dark theme switches.
       inst.observer = new MutationObserver(function () { applyTheme(inst); });
@@ -216,8 +259,16 @@
     var inst = instances.get(hostEl);
     if (!inst) return;
     if (inst.observer) { try { inst.observer.disconnect(); } catch (e) {} }
+    if (inst.resizeObserver) { try { inst.resizeObserver.disconnect(); } catch (e) {} }
+    if (inst.visObserver) { try { inst.visObserver.disconnect(); } catch (e) {} }
     clearTimeout(inst._statusTimer);
     emitDirty(inst, false); // clear tab indicator on unmount
+    // Preserve unsaved edits across tab switches: cache the dirty buffer by path
+    // (a clean buffer clears any stale cache) so remounting restores the edits.
+    if (inst.cm && inst.absPath) {
+      if (!inst.cm.isClean(inst.baseGen)) unsavedCache[inst.absPath] = inst.cm.getValue();
+      else delete unsavedCache[inst.absPath];
+    }
     instances.delete(hostEl);
     inst.cm = null;
     if (hostEl) {

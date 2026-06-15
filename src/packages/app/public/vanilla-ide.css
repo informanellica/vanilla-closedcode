@@ -1,17 +1,30 @@
 /* vanilla-ide.js layout (classic stylesheet, no bundler) */
 .vide-host {
+  position: relative;
   display: flex;
   flex-direction: column;
   height: 100%;
   min-height: 0;
 }
+/* Overlay, not a layout row. The chrome bar only carries the transient save
+   status and the unsaved dot (which is also shown on the file tab), so it floats
+   in the top-right corner instead of pushing the editor content down with an
+   always-present empty band between the tab and the first line. */
 .vide-toolbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 4;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.35rem 0.6rem;
-  border-bottom: 1px solid var(--bs-border-color, rgba(128, 128, 128, 0.25));
-  flex: 0 0 auto;
+  padding: 2px 8px;
+  pointer-events: none;
+}
+.vide-status:not(:empty) {
+  background: var(--bs-tertiary-bg, rgba(128, 128, 128, 0.18));
+  padding: 1px 6px;
+  border-radius: 4px;
 }
 .vide-dirty {
   color: var(--bs-warning, #f0a000);
