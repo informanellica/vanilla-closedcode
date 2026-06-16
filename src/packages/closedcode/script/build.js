@@ -330,7 +330,11 @@ function copySidecars(outRoot) {
   // a computed require at runtime (file/watcher.js) — ship that binding (+ the
   // @parcel/watcher closure) as a sidecar so the watcher works in the SEA build.
   const watcherBinding = `@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? "-" + libc : ""}`;
-  const roots = ["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit", "@parcel/watcher", watcherBinding];
+  // sqlite3 (+ its bindings/file-uri-to-path deps) is loaded by Sequelize via a
+  // runtime require esbuild can't see, so it must ship as a sidecar or the SEA
+  // binary fails the moment the ORM loads. The desktop build already unpacks
+  // these (electron-builder.config.js asarUnpack); this is the SEA equivalent.
+  const roots = ["@lydell/node-pty", "node-pty", "tree-sitter", "tree-sitter-bash", "tree-sitter-powershell", "web-tree-sitter", "koffi", "terminal-kit", "string-kit", "@parcel/watcher", watcherBinding, "sqlite3", "bindings", "file-uri-to-path"];
   const seen = new Set();
   const queue = [...roots];
   while (queue.length) {
