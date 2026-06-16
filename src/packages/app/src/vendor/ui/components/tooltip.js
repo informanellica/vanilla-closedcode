@@ -203,6 +203,11 @@ export function Tooltip(props) {
   let stopPosition = null;
   let disposeContent = null;
   let contentEl = null;
+  // pointerleave does NOT fire when the trigger scrolls out from under a
+  // stationary pointer, so a hover-opened tooltip lingers and floats over the
+  // scrolling content (e.g. the chat message copy/revert tooltips). Close on any
+  // scroll; capture phase on window catches scrolls in any ancestor pane.
+  let onScrollClose = null;
   // Backstop observer: while the content is portaled to <body>, the only thing
   // tying it to the trigger is this code. If the trigger is removed from the
   // document by an ancestor re-render (a list row swapped, a panel torn down)
@@ -231,8 +236,16 @@ export function Tooltip(props) {
     if (owner) runWithOwner(owner, build);
     else build();
     disconnectObs.observe(document.body, { childList: true, subtree: true });
+    if (!local.forceOpen && !onScrollClose) {
+      onScrollClose = () => close();
+      window.addEventListener("scroll", onScrollClose, true);
+    }
   };
   const unmountContent = () => {
+    if (onScrollClose) {
+      window.removeEventListener("scroll", onScrollClose, true);
+      onScrollClose = null;
+    }
     disconnectObs.disconnect();
     if (stopPosition) {
       stopPosition();
