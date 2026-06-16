@@ -1,0 +1,34 @@
+# Build the Linux desktop GUI packages (AppImage / deb / rpm) in a container.
+# Output: /app/dist/vanilla-closedcode-linux-x64.{AppImage}, *.deb, *.rpm
+# Extract with: docker create + docker cp (bind mounts hang on Windows).
+#
+# node:22 matches the toolchain the SEA build verified; electron-builder fetches
+# its own helpers, plus the apt deps below for deb (dpkg/fakeroot) and rpm.
+FROM node:22-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ ca-certificates \
+      dpkg fakeroot rpm binutils \
+    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+ENV HUSKY=0 \
+    CI=1 \
+    npm_config_fund=false \
+    npm_config_audit=false \
+    # .git is excluded from the build context; pin the version so the build's
+    # `git branch` channel probe never shells out.
+    CLOSEDCODE_VERSION=0.1.0-dev \
+    ELECTRON_CACHE=/root/.cache/electron \
+    ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder
+COPY . /app
+# Drop the obsolete solid-js patch: this is a solid-free build, so solid-js is not
+# installed and patch-package's postinstall would otherwise fail on a clean tree.
+RUN rm -f patches/solid-js+*.patch
+# Full workspace install (Linux native prebuilds + electron + electron-builder +
+# the `script` workspace pkg that prebuild.js imports). Do NOT mask failures.
+RUN npm ci || npm install
+# Desktop build (its `prebuild` builds icons + the closedcode-server sidecar).
+WORKDIR /app/packages/desktop-electron
+RUN npm run build
+# Package the Linux targets (AppImage + deb + rpm); certificate-free.
+RUN npx --yes electron-builder --linux --config electron-builder.config.js
+RUN ls -la /app/dist/ && ls -la /app/dist/*.AppImage /app/dist/*.deb /app/dist/*.rpm
