@@ -295,14 +295,20 @@ export function FileTabContent(props) {
   });
   let editorRetry = 0;
   let editorRetryTimer;
+  // Untitled (new) buffers use a sentinel project path "__untitled__/<name>";
+  // they are in-memory only — the editor must NOT read them from disk (which
+  // would ENOENT) and must save-as on first save.
+  const isUntitledPath = p => typeof p === "string" && p.startsWith("__untitled__/");
   const syncEditor = () => {
     if (typeof window === "undefined" || !editorHost) return;
     if (editorRetryTimer) {
       clearTimeout(editorRetryTimer);
       editorRetryTimer = undefined;
     }
+    const p = path();
+    const untitled = isUntitledPath(p);
     const ap = absolutePath();
-    if (!editMode() || !ap) {
+    if (!editMode() || (!ap && !untitled)) {
       if (window.VanillaIDE) window.VanillaIDE.unmount(editorHost);
       return;
     }
@@ -321,9 +327,16 @@ export function FileTabContent(props) {
       return;
     }
     editorRetry = 0;
+    const dir = (sdk.directory || "").replace(/[\\/]+$/, "");
+    const baseName = p ? p.split("/").pop() : "untitled.md";
     window.VanillaIDE.mount(editorHost, {
-      absPath: ap,
-      relName: path(),
+      absPath: untitled ? null : ap,
+      relName: p,
+      newBuffer: untitled,
+      tabId: props.tab,
+      // Default the Save dialog to <project>/<name> so an untitled buffer most
+      // naturally lands inside the open project.
+      saveDefaultPath: untitled ? (dir ? dir + "/" + baseName : baseName) : undefined,
       onExit: () => setEditMode(false)
     });
   };

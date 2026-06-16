@@ -135,11 +135,15 @@
 
   function save(inst) {
     if (!inst.cm || !hasBridge()) return;
+    // A new (untitled) in-memory buffer has no disk path yet: prompt the user
+    // for a destination via the native Save dialog rather than writing a
+    // pre-named "untitled" file into the project.
+    if (inst.newBuffer) { saveAs(inst); return; }
     if (inst.cm.isClean(inst.baseGen)) return;
     var content = inst.cm.getValue();
     setStatus(inst, "保存中…");
     window.api.writeFile(inst.absPath, content).then(function () {
-      delete unsavedCache[inst.absPath];
+      delete unsavedCache[inst.cacheKey];
       inst.baseGen = inst.cm.changeGeneration(true);
       refreshDirty(inst);
       setStatus(inst, "保存しました");
@@ -149,8 +153,111 @@
     });
   }
 
+  // Save-as for a brand-new untitled buffer: ask where to write, then write and
+  // signal the app (vide:saved-as) to swap the untitled tab for the real file.
+  function saveAs(inst) {
+    if (!inst.cm) return;
+    if (!window.api || typeof window.api.saveFilePicker !== "function") {
+      setStatus(inst, "保存ダイアログを利用できません", true);
+      return;
+    }
+    var content = inst.cm.getValue();
+    var def = inst.saveDefaultPath || inst.relName || "untitled.md";
+    setStatus(inst, "保存先を選択…");
+    window.api.saveFilePicker({ title: "名前を付けて保存", defaultPath: def }).then(function (dest) {
+      if (!dest) { setStatus(inst, ""); return; } // canceled
+      window.api.writeFile(dest, content).then(function () {
+        delete unsavedCache[inst.cacheKey];
+        if (inst.cm) inst.baseGen = inst.cm.changeGeneration(true);
+        refreshDirty(inst);
+        setStatus(inst, "保存しました");
+        try {
+          window.dispatchEvent(new CustomEvent("vide:saved-as", { detail: { tab: inst.tabId, path: dest } }));
+        } catch (e) {}
+      }, function (err) {
+        setStatus(inst, "保存に失敗: " + (err && err.message ? err.message : err), true);
+      });
+    }, function (err) {
+      setStatus(inst, "保存に失敗: " + (err && err.message ? err.message : err), true);
+    });
+  }
+
   function applyTheme(inst) {
     if (inst.cm) inst.cm.setOption("theme", themeName());
+  }
+
+  // Build the CodeMirror editor into the (already-mounted) host from a raw
+  // string. Shared by the disk-read path and the new-buffer (untitled) path.
+  function buildEditor(inst, raw) {
+    var chrome = inst.chrome;
+    chrome.editorWrap.innerHTML = "";
+    // Detect line ending + encoding from the original bytes-as-string (CM
+    // normalizes to \n internally, so capture this before mounting).
+    inst.eol = /\r\n/.test(raw) ? "CRLF" : /\r/.test(raw) ? "CR" : "LF";
+    inst.encoding = raw.charCodeAt(0) === 0xFEFF ? "UTF-8-BOM" : "UTF-8";
+    var CM = window.CodeMirror;
+    var cm = CM(chrome.editorWrap, {
+      value: raw,
+      lineNumbers: true,
+      theme: themeName(),
+      mode: detectMode(inst.relName),
+      lineWrapping: false,
+      extraKeys: {
+        "Ctrl-S": function () { save(inst); },
+        "Cmd-S": function () { save(inst); }
+      }
+    });
+    cm.setSize("100%", "100%");
+    inst.cm = cm;
+    inst.baseGen = cm.changeGeneration(true);
+    // Restore unsaved edits cached when this buffer's editor was unmounted (tab
+    // switch). The cached buffer differs from baseGen, so setting it registers
+    // as a change -> the tab correctly shows dirty. Keyed by inst.cacheKey
+    // (absPath for real files, relName for untitled buffers).
+    var cached = unsavedCache[inst.cacheKey];
+    if (cached != null && cached !== raw) cm.setValue(cached);
+    cm.on("change", function () { refreshDirty(inst); emitEditorState(inst); });
+    cm.on("cursorActivity", function () { emitEditorState(inst); });
+    refreshDirty(inst);
+    emitEditorState(inst);
+    // CM mis-measures when mounted before layout settles (or while the window
+    // is occluded). Do NOT gate the corrective refresh on requestAnimationFrame:
+    // rAF is paused while the window is hidden/occluded, so a one-shot rAF never
+    // fires on a cold first launch and the editor is left mis-sized (content
+    // missing / wrong height with blank below) until a later launch. setTimeout
+    // fires regardless of visibility, and a ResizeObserver keeps the editor
+    // correctly sized whenever the pane first gains a real size or is resized.
+    setTimeout(function () { if (inst.cm) inst.cm.refresh(); }, 0);
+    if (typeof ResizeObserver === "function") {
+      var lastH = 0, lastW = 0;
+      inst.resizeObserver = new ResizeObserver(function () {
+        if (!inst.cm) return;
+        var rect = chrome.editorWrap.getBoundingClientRect();
+        // Only refresh on a real size change to avoid redundant reflows.
+        if (Math.round(rect.height) === lastH && Math.round(rect.width) === lastW) return;
+        lastH = Math.round(rect.height);
+        lastW = Math.round(rect.width);
+        inst.cm.refresh();
+      });
+      inst.resizeObserver.observe(chrome.editorWrap);
+    }
+    // File tabs are hidden with display:none, so an editor created in a
+    // background tab measures 0 and renders a single line. ResizeObserver does
+    // NOT reliably fire for a display:none -> visible transition driven by an
+    // ancestor, so also refresh when the editor actually becomes visible:
+    // IntersectionObserver is the canonical "became visible" signal and fires
+    // when the tab is switched to.
+    if (typeof IntersectionObserver === "function") {
+      inst.visObserver = new IntersectionObserver(function (entries) {
+        for (var k = 0; k < entries.length; k++) {
+          if (entries[k].isIntersecting && inst.cm) inst.cm.refresh();
+        }
+      });
+      inst.visObserver.observe(chrome.editorWrap);
+    }
+    // Follow Bootstrap light/dark theme switches.
+    inst.observer = new MutationObserver(function () { applyTheme(inst); });
+    inst.observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
   }
 
   function mount(hostEl, opts) {
@@ -158,6 +265,7 @@
     unmount(hostEl); // idempotent
 
     var absPath = opts && opts.absPath;
+    var newBuffer = !!(opts && opts.newBuffer);
     var relName = (opts && opts.relName) || absPath || "";
 
     if (!hasBridge()) {
@@ -172,82 +280,34 @@
     }
 
     var chrome = buildChrome(hostEl, relName, opts && opts.onExit);
-    var inst = { hostEl: hostEl, absPath: absPath, relName: relName, chrome: chrome, cm: null, baseGen: 1 };
+    var inst = {
+      hostEl: hostEl,
+      absPath: newBuffer ? null : absPath,
+      relName: relName,
+      chrome: chrome,
+      cm: null,
+      baseGen: 1,
+      newBuffer: newBuffer,
+      tabId: opts && opts.tabId,
+      saveDefaultPath: opts && opts.saveDefaultPath
+    };
+    // Cache key for unsaved-edit stashing: untitled buffers have no absPath, so
+    // key them by their (stable) relName/tab path instead.
+    inst.cacheKey = newBuffer ? relName : absPath;
     instances.set(hostEl, inst);
+
+    if (newBuffer) {
+      // Brand-new buffer: never touch the disk. Start empty (buildEditor
+      // restores any unsaved content stashed across a tab switch).
+      buildEditor(inst, "");
+      return;
+    }
 
     chrome.editorWrap.appendChild(el("div", "vide-loading", "読み込み中…"));
 
     window.api.readFile(absPath).then(function (content) {
       if (instances.get(hostEl) !== inst) return; // unmounted/replaced meanwhile
-      chrome.editorWrap.innerHTML = "";
-      var raw = content == null ? "" : String(content);
-      // Detect line ending + encoding from the original bytes-as-string (CM
-      // normalizes to \n internally, so capture this before mounting).
-      inst.eol = /\r\n/.test(raw) ? "CRLF" : /\r/.test(raw) ? "CR" : "LF";
-      inst.encoding = raw.charCodeAt(0) === 0xFEFF ? "UTF-8-BOM" : "UTF-8";
-      var CM = window.CodeMirror;
-      var cm = CM(chrome.editorWrap, {
-        value: raw,
-        lineNumbers: true,
-        theme: themeName(),
-        mode: detectMode(relName),
-        lineWrapping: false,
-        extraKeys: {
-          "Ctrl-S": function () { save(inst); },
-          "Cmd-S": function () { save(inst); }
-        }
-      });
-      cm.setSize("100%", "100%");
-      inst.cm = cm;
-      inst.baseGen = cm.changeGeneration(true);
-      // Restore unsaved edits cached when this file's editor was unmounted (tab
-      // switch). The cached buffer differs from disk, so setting it registers as
-      // a change against baseGen -> the tab correctly shows dirty.
-      var cached = unsavedCache[absPath];
-      if (cached != null && cached !== raw) cm.setValue(cached);
-      cm.on("change", function () { refreshDirty(inst); emitEditorState(inst); });
-      cm.on("cursorActivity", function () { emitEditorState(inst); });
-      refreshDirty(inst);
-      emitEditorState(inst);
-      // CM mis-measures when mounted before layout settles (or while the window
-      // is occluded). Do NOT gate the corrective refresh on requestAnimationFrame:
-      // rAF is paused while the window is hidden/occluded, so a one-shot rAF never
-      // fires on a cold first launch and the editor is left mis-sized (content
-      // missing / wrong height with blank below) until a later launch. setTimeout
-      // fires regardless of visibility, and a ResizeObserver keeps the editor
-      // correctly sized whenever the pane first gains a real size or is resized.
-      setTimeout(function () { if (inst.cm) inst.cm.refresh(); }, 0);
-      if (typeof ResizeObserver === "function") {
-        var lastH = 0, lastW = 0;
-        inst.resizeObserver = new ResizeObserver(function () {
-          if (!inst.cm) return;
-          var rect = chrome.editorWrap.getBoundingClientRect();
-          // Only refresh on a real size change to avoid redundant reflows.
-          if (Math.round(rect.height) === lastH && Math.round(rect.width) === lastW) return;
-          lastH = Math.round(rect.height);
-          lastW = Math.round(rect.width);
-          inst.cm.refresh();
-        });
-        inst.resizeObserver.observe(chrome.editorWrap);
-      }
-      // File tabs are hidden with display:none, so an editor created in a
-      // background tab measures 0 and renders a single line. ResizeObserver does
-      // NOT reliably fire for a display:none -> visible transition driven by an
-      // ancestor, so also refresh when the editor actually becomes visible:
-      // IntersectionObserver is the canonical "became visible" signal and fires
-      // when the tab is switched to.
-      if (typeof IntersectionObserver === "function") {
-        inst.visObserver = new IntersectionObserver(function (entries) {
-          for (var k = 0; k < entries.length; k++) {
-            if (entries[k].isIntersecting && inst.cm) inst.cm.refresh();
-          }
-        });
-        inst.visObserver.observe(chrome.editorWrap);
-      }
-
-      // Follow Bootstrap light/dark theme switches.
-      inst.observer = new MutationObserver(function () { applyTheme(inst); });
-      inst.observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
+      buildEditor(inst, content == null ? "" : String(content));
     }, function (err) {
       if (instances.get(hostEl) !== inst) return;
       chrome.editorWrap.innerHTML = "";
@@ -263,11 +323,12 @@
     if (inst.visObserver) { try { inst.visObserver.disconnect(); } catch (e) {} }
     clearTimeout(inst._statusTimer);
     emitDirty(inst, false); // clear tab indicator on unmount
-    // Preserve unsaved edits across tab switches: cache the dirty buffer by path
-    // (a clean buffer clears any stale cache) so remounting restores the edits.
-    if (inst.cm && inst.absPath) {
-      if (!inst.cm.isClean(inst.baseGen)) unsavedCache[inst.absPath] = inst.cm.getValue();
-      else delete unsavedCache[inst.absPath];
+    // Preserve unsaved edits across tab switches: cache the dirty buffer by its
+    // cacheKey (absPath for real files, relName for untitled buffers); a clean
+    // buffer clears any stale cache so remounting restores the edits.
+    if (inst.cm && inst.cacheKey) {
+      if (!inst.cm.isClean(inst.baseGen)) unsavedCache[inst.cacheKey] = inst.cm.getValue();
+      else delete unsavedCache[inst.cacheKey];
     }
     instances.delete(hostEl);
     inst.cm = null;
@@ -288,5 +349,10 @@
   }, refresh: function (hostEl) {
     var inst = instances.get(hostEl);
     if (inst && inst.cm) inst.cm.refresh();
+  }, dropUnsaved: function (key) {
+    // Drop a stashed unsaved buffer (called when a tab is closed, so a future
+    // tab reusing the same path — e.g. a recycled "untitled-N" name — does not
+    // resurrect the discarded content).
+    if (key != null) delete unsavedCache[key];
   } };
 })();

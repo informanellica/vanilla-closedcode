@@ -841,10 +841,12 @@ export default function Page() {
   // first (Bootstrap modal). Only the active tab's editor is mounted, so the
   // dirty flag reflects the active tab; non-active tabs close immediately.
   const closeFileTab = async tab => {
+    const rel = file.pathFromTab(tab);
+    const untitled = !!rel && rel.startsWith("__untitled__/");
     if (tab === activeFileTab() && layout.editor.dirty()) {
       const choice = await confirmModal({
         title: "保存しますか？",
-        message: file.pathFromTab(tab) ?? String(tab),
+        message: untitled ? rel.split("/").pop() : rel ?? String(tab),
         buttons: [
           { id: "save", label: "保存", variant: "primary" },
           { id: "discard", label: "保存しない", variant: "danger" },
@@ -852,9 +854,22 @@ export default function Page() {
         ]
       });
       if (choice == null || choice === "cancel") return;
-      if (choice === "save") layout.editor.save();
+      if (choice === "save") {
+        layout.editor.save();
+        // An untitled buffer's save is an async save-as dialog; the
+        // vide:saved-as listener closes this tab once the file is actually
+        // written (and cancelling the dialog keeps it open — no data loss).
+        if (untitled) return;
+      }
     }
     tabs().close(tab);
+    // Closing discards the buffer: drop any stashed unsaved content so a future
+    // tab with the same path (esp. a recycled "untitled-N" name) starts clean.
+    if (typeof window !== "undefined" && window.VanillaIDE?.dropUnsaved && rel) {
+      window.VanillaIDE.dropUnsaved(rel);
+      const root = (sdk.directory || "").replace(/[\\/]+$/, "");
+      if (root) window.VanillaIDE.dropUnsaved(root + "/" + rel);
+    }
   };
   // Toolbar file-operation buttons (app-toolbar) dispatch vcc:fileop; run the op
   // against the active file with the same logic as the explorer right-click menu
@@ -866,6 +881,17 @@ export default function Page() {
     const activePath = file.pathFromTab(activeFileTab());
     const node = activePath ? { path: activePath, type: "file" } : null;
     runFileOp(op, node, ctx);
+  });
+  // An untitled (in-memory) buffer was just saved via the editor's save-as
+  // dialog (vanilla-ide.js). Open the real file it was written to and close the
+  // untitled tab, then refresh the tree so the new file shows up.
+  makeEventListener(window, "vide:saved-as", e => {
+    const dest = e.detail?.path;
+    const tab = e.detail?.tab;
+    if (!dest) return;
+    openFileFromTree(dest);
+    if (tab) tabs().close(tab);
+    void file.tree.refresh("");
   });
   // Close a session tab = archive it; if it was the active session, switch to
   // another (or a fresh new session).
@@ -884,7 +910,11 @@ export default function Page() {
     normalizeTab,
     openTab: tabs().open,
     pathFromTab: file.pathFromTab,
-    loadFile: file.load,
+    // Untitled in-memory buffers have no disk file to load on tab switch.
+    loadFile: path => {
+      if (typeof path === "string" && path.startsWith("__untitled__/")) return;
+      return file.load(path);
+    },
     openReviewPanel,
     setActive: tabs().setActive
   });
@@ -1207,6 +1237,8 @@ export default function Page() {
     if (!tab) return;
     const path = file.pathFromTab(tab);
     if (!path) return;
+    // Untitled in-memory buffers have no disk file to (re)load.
+    if (path.startsWith("__untitled__/")) return;
     void file.load(path, {
       force: true
     });
@@ -1578,24 +1610,18 @@ export default function Page() {
                           iconSize: "large",
                           "class": "!rounded-md",
                           onClick: () => {
-                            // Create a blank untitled file in the project dir and open it
-                            // as a new tab (no file-picker modal).
-                            void (async () => {
-                              const dir = sdk.directory;
-                              if (!dir) return;
-                              const base = dir.replace(/[\\/]+$/, "");
-                              let name = "untitled.md", abs = base + "/" + name, n = 1;
-                              while (openedTabs().some(t => t.endsWith("/" + name)) && n < 100) {
-                                n++;
-                                name = `untitled-${n}.md`;
-                                abs = base + "/" + name;
-                              }
-                              // Do NOT touch the disk here: creating the empty file on
-                              // "+" wrote to the project before the user asked. The tab
-                              // opens against the (not-yet-existing) path; the file is
-                              // only written when the Save button (bindSave) is pressed.
-                              openFileFromTree(abs);
-                            })();
+                            // New tab = a fresh in-memory "untitled" buffer. It is NOT a
+                            // real file: nothing is read from or written to disk until the
+                            // user saves (which prompts for a destination via the native
+                            // Save dialog). The sentinel path "__untitled__/untitled-N.md"
+                            // keeps the path-based tab label / dirty logic working without
+                            // creating a file (so no ENOENT, no stray untitled file).
+                            const used = new Set(openedTabs().map(t => file.pathFromTab(t)).filter(Boolean));
+                            let n = 1;
+                            while (used.has(`__untitled__/untitled-${n}.md`) && n < 1000) n++;
+                            const tab = file.tab(`__untitled__/untitled-${n}.md`);
+                            tabs().open(tab);
+                            tabs().setActive(tab);
                           },
                           get ["aria-label"]() {
                             return language.t("command.file.open");
