@@ -12,9 +12,16 @@ import { useLanguage } from "@/context/language.js";
 const doneToken = "\u0000done\u0000";
 const totalToken = "\u0000total\u0000";
 
+/** @file Collapsible bottom dock that shows the agent's TODO list: an animated done/total progress header, a live preview of the active item, and an expandable checklist. */
+
 // Build a detached element from compact HTML (static markup only — dynamic
 // text always flows through textContent / component props, never string
 // interpolation).
+/**
+ * Build a detached element from a compact static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -23,6 +30,11 @@ function template(html) {
 
 // Resolve Solid-style children to DOM nodes: unwrap zero-arg accessors,
 // flatten arrays, keep Nodes, stringify the rest.
+/**
+ * Resolve a Solid-style children value into a flat array of DOM nodes.
+ * @param {*} value - A node, array, zero-arg accessor, primitive, or nullish/boolean value.
+ * @returns {Array} Flattened DOM nodes (text nodes for stringified primitives; empty for nullish/boolean).
+ */
 function resolveNodes(value) {
   if (value == null || value === true || value === false) return [];
   if (typeof value === "function" && !value.length) return resolveNodes(value());
@@ -36,6 +48,14 @@ function resolveNodes(value) {
 // compiled insert()'s array reconciliation — so an Index memo re-emitting the
 // same nodes never restarts in-flight CSS transitions or disturbs the
 // scrolled list.
+/**
+ * Reconcile the nodes produced by a reactive accessor as the sole children of a
+ * parent, leaving already-positioned nodes untouched so in-flight CSS
+ * transitions and scroll position are preserved.
+ * @param {Node} parent - The container that holds only these nodes.
+ * @param {Function} accessor - A reactive accessor returning the children value.
+ * @returns {void}
+ */
 function liveInsert(parent, accessor) {
   let current = [];
   createRenderEffect(() => {
@@ -56,10 +76,24 @@ function liveInsert(parent, accessor) {
 }
 
 // Pulsing in-progress marker (compiled _tmpl$).
+/**
+ * Build the pulsing dot icon shown for an in-progress todo.
+ * @param {string} status - Todo status.
+ * @returns {Element} The SVG marker for "in_progress", or undefined otherwise.
+ */
 function dot(status) {
   if (status !== "in_progress") return undefined;
   return template(`<svg viewBox="0 0 12 12" width="12" height="12" fill="currentColor" xmlns="http://www.w3.org/2000/svg" class="block"><circle cx="6" cy="6" r="3" style="animation:var(--animate-pulse-scale);transform-origin:center;transform-box:fill-box"></circle></svg>`);
 }
+/**
+ * Collapsible TODO dock component. Renders a header with an animated done/total
+ * progress label and a reveal-on-collapse preview of the active todo, a
+ * collapse/expand toggle, and the scrollable todo checklist. Animates open/close
+ * via a spring and follows the composer's dock-progress so it slides away with
+ * the composer.
+ * @param {Object} props - `{ todos, dockProgress, expandLabel, collapseLabel }`: the todo array, the composer's 0..1 dock-open progress, and the toggle button aria-labels.
+ * @returns {Node} The dock tray element.
+ */
 export function SessionTodoDock(props) {
   const language = useLanguage();
   const [store, setStore] = createStore({
@@ -233,6 +267,13 @@ export function SessionTodoDock(props) {
     }
   });
 }
+/**
+ * Scrollable todo checklist with a top scroll-shadow overlay. Each todo renders
+ * as a read-only checkbox (checked when completed, indeterminate while in
+ * progress) with strikethrough text for completed/cancelled items.
+ * @param {Object} props - `{ todos }`: the array of todo items to render.
+ * @returns {Node} The scrollable list element.
+ */
 function TodoList(props) {
   const [store, setStore] = createStore({
     stuck: false

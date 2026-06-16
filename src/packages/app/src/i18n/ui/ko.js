@@ -1,3 +1,10 @@
+/** @file Korean (ko) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their Korean strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "세션 변경 사항",
   "ui.sessionReview.title.lastTurn": "마지막 턴 변경 사항",

@@ -1,9 +1,18 @@
+/** @file Main editor toolbar: reorderable/hideable icon buttons, font/size/language selects, theme toggle, and an editor find/replace box. */
+
 import { createComponent, createRenderEffect } from "../lib/reactivity.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Select } from "@/bs/select.js";
 import { useSettings } from "@/context/settings.js";
 import { useLanguage } from "@/context/language.js";
 
+/**
+ * Canonical list of every reorderable toolbar item as `{id, label}`, in the
+ * built-in default order. The settings UI renders this so the user can reorder
+ * / hide items; {@link AppToolbar} builds the actual elements under the same
+ * ids. Keep these ids in sync with the `add(...)` calls in AppToolbar.
+ * @type {Array}
+ */
 // Canonical list of every reorderable toolbar item (id + display label), in the
 // built-in default order. The settings UI (settings-general.js) renders this so
 // the user can reorder / hide items; AppToolbar builds the actual elements under
@@ -38,20 +47,33 @@ export const TOOLBAR_ITEMS = [
   { id: "settings", label: "設定" },
   { id: "help", label: "ヘルプ" }
 ];
+/**
+ * The default toolbar item order: the ids of {@link TOOLBAR_ITEMS}.
+ * @type {Array}
+ */
 export const DEFAULT_TOOLBAR_ORDER = TOOLBAR_ITEMS.map(it => it.id);
 
-// Parse a static HTML string into its root element. Only static markup goes
-// through here; dynamic text is assigned via textContent/properties.
+/**
+ * Parses a static HTML string into its root element. Only static markup goes
+ * through here; dynamic text is assigned via textContent/properties.
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
-// The vanilla Select reads its controlled `current` prop once at build time,
-// so push external changes (settings dialog, commands) into the native select
-// in an effect or it goes stale. Self-driven picks round-trip through the
-// store unchanged, so this never fights the user's selection.
+/**
+ * Keeps a native `<select>` in sync with an external reactive value via a
+ * render effect. The vanilla Select reads its controlled `current` prop once at
+ * build time, so external changes (settings dialog, commands) must be pushed in
+ * or it goes stale. Falls back to the first option for unknown values.
+ * @param {HTMLSelectElement} select - The select element to keep in sync.
+ * @param {Function} value - Reactive accessor returning the desired value.
+ * @returns {void}
+ */
 function trackSelectValue(select, value) {
   createRenderEffect(() => {
     select.value = value();
@@ -61,8 +83,14 @@ function trackSelectValue(select, value) {
   });
 }
 
-// Light/Dark toggle button in the toolbar. The icon shows the current theme
-// (sun = light, moon = dark) and clicking flips to the other one.
+/**
+ * Light/Dark toggle button. The icon shows the current theme (sun = light,
+ * moon = dark) and clicking flips to the other one.
+ * @param {Object} props - Component props: `colorScheme` (reactive accessor
+ *   returning "light"/"dark"/"system") and `onSetTheme` (called with the new
+ *   theme string "light"/"dark").
+ * @returns {HTMLElement} The toggle button element.
+ */
 function ThemeToggle(props) {
   const btn = template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center" title="ライト/ダーク切替" aria-label="ライト/ダーク切替"><i class="bi"></i></button>`);
   const icon = btn.firstChild;
@@ -78,9 +106,15 @@ function ThemeToggle(props) {
   return btn;
 }
 
-// View/Edit toggle for the active file editor. Hidden when no editable file is
-// open. The icon reflects the CURRENT mode (eye = viewing, pencil = editing);
-// the tooltip describes what a click does.
+/**
+ * View/Edit toggle for the active file editor. Hidden when no editable file is
+ * open. The icon reflects the CURRENT mode (eye = viewing, pencil = editing);
+ * the tooltip describes what a click does.
+ * @param {Object} props - Component props: `editorCanEdit` (reactive accessor;
+ *   whether an editable file is open), `editorEditing` (reactive accessor;
+ *   whether currently editing), and `onToggleEdit` (click callback).
+ * @returns {HTMLElement} The toggle button element.
+ */
 function EditModeToggle(props) {
   const btn = template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center"><i class="bi"></i></button>`);
   const icon = btn.firstChild;
@@ -97,8 +131,14 @@ function EditModeToggle(props) {
   return btn;
 }
 
-// Save button for the active file editor. Visible while editing; enabled (and
-// highlighted) only when there are unsaved changes.
+/**
+ * Save button for the active file editor. Visible while editing; enabled (and
+ * highlighted) only when there are unsaved changes.
+ * @param {Object} props - Component props: `editorEditing` (reactive accessor;
+ *   whether currently editing), `editorDirty` (reactive accessor; whether
+ *   there are unsaved changes), and `onSave` (click callback).
+ * @returns {HTMLElement} The save button element.
+ */
 function SaveButton(props) {
   const btn = template(`<button type="button" class="btn btn-link btn-sm d-inline-flex align-items-center justify-content-center" title="保存" aria-label="保存"><i class="bi bi-floppy"></i></button>`);
   btn.addEventListener("click", () => {
@@ -115,11 +155,17 @@ function SaveButton(props) {
   return btn;
 }
 
-// VS Code-style find/replace widget for the active editor. Operates directly on
-// the visible CodeMirror instance (found via the DOM — only one editor is
-// visible at a time), so it needs no plumbing. Find input with case/word/regex
-// toggles, a match counter, prev/next, a replace toggle, and a clear button.
-// Shown only when an editable file is open. Enter = next, Shift+Enter = prev.
+/**
+ * VS Code-style find/replace widget for the active editor. Operates directly on
+ * the visible CodeMirror instance (found via the DOM — only one editor is
+ * visible at a time), so it needs no plumbing. Provides a find input with
+ * case/word/regex toggles, a match counter, prev/next, a replace toggle, and a
+ * clear button. Shown only when an editable file is open. Enter = next,
+ * Shift+Enter = prev.
+ * @param {Object} props - Component props: `editorCanEdit` (reactive accessor;
+ *   controls visibility).
+ * @returns {HTMLElement} The search box wrapper element.
+ */
 function EditorSearchBox(props) {
   const activeCM = () =>
     document.querySelector('[data-slot="tabs-content"]:not(.d-none) .CodeMirror')?.CodeMirror ||
@@ -254,9 +300,13 @@ function EditorSearchBox(props) {
   return wrap;
 }
 
-// One reorderable file-op button (mirrors the explorer right-click menu). The
-// toolbar lacks file-tree context, so a click dispatches a vcc:fileop window
-// event handled by the session page, acting on the active file.
+/**
+ * Builds one reorderable file-operation button (mirrors the explorer
+ * right-click menu). Click wiring is added by the caller.
+ * @param {string} icon - The Bootstrap-icon class (e.g. "bi-pencil").
+ * @param {string} title - The button title/aria-label text.
+ * @returns {HTMLButtonElement} The file-op button element.
+ */
 function fileOpButton(icon, title) {
   const b = document.createElement("button");
   b.type = "button";
@@ -269,6 +319,20 @@ function fileOpButton(icon, title) {
   return b;
 }
 
+/**
+ * The main editor toolbar: a single flat flex container whose items are built
+ * once and laid out (reparented) per the user-chosen, persisted order, with
+ * hidden items detached. Items include navigation/file-op buttons, font and
+ * size selects, save/undo/redo/clipboard buttons, layout toggles, an editor
+ * find/replace box, a language switcher, a theme toggle, settings, and help.
+ * @param {Object} props - Component props supplying the action callbacks and
+ *   reactive editor state: `onHome`, `onOpenChat`, `onOpenProject`,
+ *   `editorCanEdit`, `editorEditing`, `onToggleEdit`, `editorDirty`, `onSave`,
+ *   `onUndo`, `onRedo`, `onCut`, `onCopy`, `onPaste`, `onToggleFileTree`,
+ *   `onToggleReviewPanel`, `colorScheme`, `onSetTheme`, `onOpenSettings`, and
+ *   `onHelp`.
+ * @returns {HTMLElement} The toolbar root element.
+ */
 export function AppToolbar(props) {
   // Single flat flex container. Every item is laid out directly into it in the
   // user-chosen order (settings.appearance.toolbarOrder), so there are no fixed

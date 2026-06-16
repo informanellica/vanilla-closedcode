@@ -1,7 +1,19 @@
+/** @file DiffChanges component: summarizes additions/deletions as +/- counts or a five-block colored bar gauge. */
 import { createMemo, createRenderEffect } from "../../../lib/reactivity.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
+/**
+ * DiffChanges component. Aggregates additions/deletions from a single change or
+ * an array of changes and renders them as one of three variants: "default"
+ * (`+N`/`-N` text, hidden when there are no changes), "bars" (a five-block SVG
+ * gauge proportioned by add/delete ratio), or "none" (empty).
+ * @param {Object} props - Component props.
+ * @param {string} props.variant - Display variant: "default", "bars", or otherwise none.
+ * @param {*} props.changes - A change object with additions/deletions, or an array of such objects to sum.
+ * @param {*} props.class - Class string(s) applied to the root.
+ * @returns {Function} A reactive accessor resolving to the root element, or undefined when hidden.
+ */
 export function DiffChanges(props) {
   const variant = () => props.variant ?? "default";
   const additions = createMemo(() => Array.isArray(props.changes) ? props.changes.reduce((acc, diff) => acc + (diff.additions ?? 0), 0) : props.changes.additions);

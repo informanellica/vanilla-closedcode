@@ -5,14 +5,33 @@ import { DockTray } from "@/vendor/ui/components/dock-surface.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { useLanguage } from "@/context/language.js";
 
+/** @file Session followup dock: a collapsible tray listing queued followup prompts with per-item send/edit actions and a one-line preview when collapsed. */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Collapsible dock listing queued followup prompts. Shows a summary label with
+ * a one-line preview when collapsed, and per-item send/edit rows when expanded.
+ *
+ * @param {Object} props - Component props.
+ * @param {Array} props.items - Queued followup items ({ id, text }).
+ * @param {*} props.sending - Truthy while a followup is being sent (disables actions).
+ * @param {Function} props.onSend - Sends the followup with the given id.
+ * @param {Function} props.onEdit - Loads the followup with the given id into the composer.
+ * @returns {Node} The followup dock component.
+ */
 export function SessionFollowupDock(props) {
   const language = useLanguage();
   const [store, setStore] = createStore({
@@ -86,6 +105,14 @@ export function SessionFollowupDock(props) {
   // One queued-followup row: live item text plus the send/edit actions.
   // Labels come from the caller's effect so a locale change rebuilds rows
   // (the vanilla Button renders its children once).
+  /**
+   * Builds a single queued-followup row with live text and send/edit buttons.
+   *
+   * @param {Object} item - The followup item ({ id, text }).
+   * @param {string} sendLabel - Translated label for the send button.
+   * @param {string} editLabel - Translated label for the edit button.
+   * @returns {HTMLElement} The followup row element.
+   */
   const buildRow = (item, sendLabel, editLabel) => {
     const row = template(`<div class="d-flex align-items-center gap-2 min-w-0 py-1"><span class="min-w-0 flex-1 truncate fw-normal text-body-emphasis" data-slot="text"></span></div>`);
     const textEl = row.querySelector('[data-slot="text"]');
@@ -119,6 +146,12 @@ export function SessionFollowupDock(props) {
   // For-equivalent: the scroll container stays mounted while expanded; rows
   // are rebuilt when the items array or the locale changes. The sending flag
   // flows through the Button disabled getters without a rebuild.
+  /**
+   * Builds the scrollable list of followup rows, rebuilding rows when the items
+   * array or the locale changes.
+   *
+   * @returns {HTMLElement} The followup list container element.
+   */
   const buildList = () => {
     const list = template(`<div class="px-3 pb-7 d-flex flex-column gap-1.5 max-h-42 overflow-y-auto no-scrollbar"></div>`);
     createEffect(() => {
@@ -129,6 +162,11 @@ export function SessionFollowupDock(props) {
     return list;
   };
 
+  /**
+   * Builds a spacer that keeps the tray bottom padding stable while collapsed.
+   *
+   * @returns {HTMLElement} The spacer element.
+   */
   const buildSpacer = () => template(`<div class="h-5" aria-hidden="true"></div>`);
 
   return createComponent(DockTray, {

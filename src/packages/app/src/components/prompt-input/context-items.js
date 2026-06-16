@@ -1,17 +1,32 @@
+/** @file PromptContextItems component: the horizontal strip of file/comment context cards attached to the prompt input. */
 import { createComponent, createRenderEffect, untrack } from "../../lib/reactivity.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { getDirectory, getFilename, getFilenameTruncated } from "core/util/path";
 
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Shared base classes for a context card.
+ * @type {string}
+ */
 const CARD_BASE_CLASS = "group shrink-0 d-flex flex-column rounded-[6px] pl-2 pr-1 py-1 max-w-[200px] h-12 cursor-default transition-all transition-transform shadow-xs-border hover:shadow-xs-border-hover";
 
+/**
+ * Strip of context cards (attached files and review comments) shown above the prompt input.
+ * @param {Object} props - Component props: `items` (Array of context items), `active` (Function predicate marking the highlighted item), `openComment` (Function to open an item's comment), `remove` (Function to detach an item) and `t` (translation Function).
+ * @returns {HTMLElement} A `display: contents` container that rebuilds the strip when the item list changes.
+ */
 export const PromptContextItems = props => {
   // Pass-through wrapper: the original Show inserted the strip directly into
   // the parent, so this must not introduce a layout box of its own.
@@ -20,6 +35,12 @@ export const PromptContextItems = props => {
 
   // Tooltip body: directory (truncated from the start) + filename. Built
   // fresh per access; both parts are fixed per item, set via textContent.
+  /**
+   * Build the tooltip body showing a file's directory and filename.
+   * @param {string} directory - The directory portion of the path.
+   * @param {string} filename - The file name portion of the path.
+   * @returns {Element} The tooltip content element.
+   */
   const buildTooltipValue = (directory, filename) => {
     const value = template(`<span class="d-flex max-w-[300px]"><span class="text-white truncate-start [unicode-bidi:plaintext] min-w-0"></span><span class="shrink-0"></span></span>`);
     value.firstElementChild.textContent = directory;
@@ -27,6 +48,11 @@ export const PromptContextItems = props => {
     return value;
   };
 
+  /**
+   * Build a single context card: file icon, truncated label, optional selection-range suffix, remove button, optional comment line and a tooltip wrapper.
+   * @param {Object} item - A context item with `path`, optional `selection` and optional `comment`.
+   * @returns {Element} The Tooltip-wrapped card element.
+   */
   const buildItem = item => {
     const directory = getDirectory(item.path);
     const filename = getFilename(item.path);

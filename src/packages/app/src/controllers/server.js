@@ -1,3 +1,4 @@
+/** @file Server-connection management controller (MVC): owns add/edit/connect mutations, health/preview checks, default-server helpers and the terminal's server/url/client wiring. */
 import { useMutation } from "../lib/query/index.js";
 import { useNavigate } from "../lib/router/index.js";
 import { createMemo } from "../lib/reactivity.js";
@@ -11,6 +12,11 @@ import { useCheckServerHealth } from "@/utils/server-health.js";
 
 const DEFAULT_USERNAME = "closedcode";
 
+/**
+ * Show an error toast for a failed request, using the error message when available.
+ * @param {Object} language - The language context (provides `t` for translations).
+ * @param {*} err - The thrown error or value.
+ */
 function showRequestError(language, err) {
   showToast({
     variant: "error",
@@ -27,6 +33,11 @@ function showRequestError(language, err) {
 // server/url/client wiring derived from the active ServerConnection.
 //
 // MUST be invoked inside a component/hook reactive scope (it calls context hooks).
+/**
+ * Server-connection management controller. Orchestrates the server Model, the SDK
+ * and server-health checks. Must be invoked inside a component/hook reactive scope.
+ * @returns {Object} State accessors and actions (server/serverKey/list/current, canDefault/getDefault/setDefault, previewStatus/checkHealth, select/replaceServer/removeServer, addMutation/editMutation, terminalConnection, DEFAULT_USERNAME).
+ */
 export function useServerController() {
   const navigate = useNavigate();
   const dialog = useDialog();
@@ -36,8 +47,21 @@ export function useServerController() {
   const checkServerHealth = useCheckServerHealth();
 
   // --- default-server (platform-backed) helpers ----------------------------
+  /**
+   * Memo: whether the platform supports get/set of a default server.
+   * @returns {boolean} True when both platform default-server hooks exist.
+   */
   const canDefault = createMemo(() => !!platform.getDefaultServer && !!platform.setDefaultServer);
+  /**
+   * Read the platform's stored default-server key.
+   * @returns {*} The default-server key (or undefined when unsupported/unset).
+   */
   const getDefault = () => platform.getDefaultServer?.();
+  /**
+   * Persist the platform's default-server key, surfacing a toast on failure.
+   * @param {*} key - The server key to set as default.
+   * @returns {Promise} Resolves once persisted (rethrows on failure).
+   */
   const setDefault = async key => {
     try {
       await platform.setDefaultServer?.(key);
@@ -48,6 +72,12 @@ export function useServerController() {
   };
 
   // --- preview / health ------------------------------------------------------
+  /**
+   * Heuristic: does a typed server value look complete enough to probe? Localhost
+   * counts; otherwise the host must contain a dot or a port.
+   * @param {string} value - The raw server URL/host value.
+   * @returns {boolean} True when the value looks like a probeable server.
+   */
   const looksComplete = value => {
     const normalized = normalizeServerUrl(value);
     if (!normalized) return false;
@@ -56,6 +86,14 @@ export function useServerController() {
     if (host.includes("localhost") || host.startsWith("127.0.0.1")) return true;
     return host.includes(".") || host.includes(":");
   };
+  /**
+   * Probe a typed server's health for live preview (returns undefined when the
+   * value does not yet look complete or cannot be normalized).
+   * @param {string} value - The raw server URL/host value.
+   * @param {string} username - Optional basic-auth username.
+   * @param {string} password - Optional basic-auth password.
+   * @returns {Promise} Resolves to the health boolean, or undefined.
+   */
   const previewStatus = async (value, username, password) => {
     if (!looksComplete(value)) return undefined;
     const normalized = normalizeServerUrl(value);
@@ -66,12 +104,27 @@ export function useServerController() {
     const result = await checkServerHealth(http);
     return result.healthy;
   };
+  /**
+   * Check a server's health.
+   * @param {Object} http - The HTTP connection descriptor (url + optional auth).
+   * @returns {Promise} Resolves to the health-check result.
+   */
   const checkHealth = http => checkServerHealth(http);
 
   // --- connect orchestration -------------------------------------------------
   // select(conn, persist): connect to a server. When not persisting, refuses
   // connecting to a server already known to be unhealthy (caller passes the
   // pre-checked healthy flag).
+  /**
+   * Connect to a server connection and navigate home. When `persist` and the
+   * connection is HTTP, the server is added to the saved list; otherwise it is
+   * set active transiently. When not persisting, refuses an already-known-unhealthy
+   * server.
+   * @param {Object} conn - The server connection descriptor.
+   * @param {boolean} persist - Whether to save the server to the list.
+   * @param {boolean} knownHealthy - The caller's pre-checked health flag.
+   * @returns {Promise} Resolves once the connect/navigate completes.
+   */
   const select = async (conn, persist, knownHealthy) => {
     if (!persist && knownHealthy === false) return;
     dialog.close();
@@ -84,6 +137,13 @@ export function useServerController() {
     queueMicrotask(() => server.setActive(ServerConnection.key(conn)));
   };
 
+  /**
+   * Replace a saved server with a new connection, preserving the active selection
+   * (re-pointing it at the replacement when the original was active), then remove
+   * the original.
+   * @param {Object} original - The server connection being replaced.
+   * @param {Object} next - The replacement server connection.
+   */
   const replaceServer = (original, next) => {
     const active = server.key;
     const newConn = server.add(next);
@@ -93,6 +153,11 @@ export function useServerController() {
     server.remove(ServerConnection.key(original));
   };
 
+  /**
+   * Remove a saved server by key, clearing it as the platform default if it was set.
+   * @param {*} key - The server key to remove.
+   * @returns {Promise} Resolves once removal (and default-clearing) completes.
+   */
   const removeServer = async key => {
     server.remove(key);
     if ((await platform.getDefaultServer?.()) === key) {
@@ -102,6 +167,11 @@ export function useServerController() {
 
   // --- add / edit mutations --------------------------------------------------
   // mutate input shape: { url, name, username, password } (raw form values).
+  /**
+   * Mutation that adds a new HTTP server: normalizes the URL, health-checks it,
+   * and on success connects+persists. Resolves to `{ ok: true }` or
+   * `{ ok: false, error }`. Mutate input shape: `{ url, name, username, password }`.
+   */
   const addMutation = useMutation(() => ({
     mutationFn: async input => {
       const normalized = normalizeServerUrl(input.url);
@@ -124,6 +194,12 @@ export function useServerController() {
   }));
 
   // mutate input shape: { original, value, name, username, password }.
+  /**
+   * Mutation that edits an existing HTTP server: no-ops when nothing changed,
+   * otherwise health-checks and either re-adds (same URL) or replaces it.
+   * Resolves to `{ ok: true }` or `{ ok: false, error }`. Mutate input shape:
+   * `{ original, value, name, username, password }`.
+   */
   const editMutation = useMutation(() => ({
     mutationFn: async input => {
       if (input.original.type !== "http") return { ok: true };
@@ -168,6 +244,12 @@ export function useServerController() {
   // terminal.js, which is project-scoped and always mounted under SDKProvider,
   // so useSDK() resolves there. On the home route the function is never called,
   // so useSDK() never runs.
+  /**
+   * Lazy factory (NOT a memo) deriving the terminal's connection wiring from the
+   * active ServerConnection + SDK. Must only be called from within an SDKProvider
+   * scope. Falls back to DEFAULT_USERNAME / empty password when no auth is set.
+   * @returns {Object} `{ client, url, directory, username, password, sameOrigin }`.
+   */
   const terminalConnection = () => {
     const sdk = useSDK();
     const auth = server.current?.http;

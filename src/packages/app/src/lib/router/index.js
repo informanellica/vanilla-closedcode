@@ -37,6 +37,8 @@ import {
   insert,
 } from "../reactivity.js";
 
+/** @module lib/router First-party reimplementation of the @solidjs/router subset the app uses (browser + memory history, nested route matching, reactive location/params, A/Navigate). */
+
 // --- path helpers -----------------------------------------------------------
 
 const hasSchemeRegex = /^(?:[a-z0-9]+:)?\/\//i;
@@ -45,6 +47,13 @@ const trimPathRegex = /^\/+|(\/)\/+$/g;
 // to the user-visible location. Matches @solidjs/router's "http://sr".
 const mockBase = "http://sr";
 
+/**
+ * Normalize a path: trim redundant slashes and ensure a single leading slash.
+ *
+ * @param {string} path - The raw path string.
+ * @param {boolean} omitSlash - Skip the leading slash when true.
+ * @returns {string} The normalized path (possibly empty).
+ */
 function normalizePath(path, omitSlash = false) {
   const s = path.replace(trimPathRegex, "$1");
   return s ? (omitSlash || /^[?#]/.test(s) ? s : "/" + s) : "";
@@ -53,6 +62,14 @@ function normalizePath(path, omitSlash = false) {
 // Resolve `path` against `base`, optionally relative to `from` (the current
 // route's matched path). This is the exact algorithm @solidjs/router uses for
 // relative navigation/href (e.g. <Navigate href="session"> inside "/:dir").
+/**
+ * Resolve `path` against `base`, optionally relative to the current route `from`.
+ *
+ * @param {string} base - The router base path.
+ * @param {string} path - The target path (absolute, relative, or query/hash).
+ * @param {string} from - The current matched route path for relative resolution.
+ * @returns {string} The resolved absolute path, or undefined for external schemes.
+ */
 function resolvePath(base, path, from) {
   if (hasSchemeRegex.test(path)) {
     return undefined;
@@ -70,10 +87,23 @@ function resolvePath(base, path, from) {
   return (result || "/") + normalizePath(path, !result);
 }
 
+/**
+ * Join two path segments, stripping any trailing splat from `from`.
+ *
+ * @param {string} from - The base path segment.
+ * @param {string} to - The path segment to append.
+ * @returns {string} The joined path.
+ */
 function joinPaths(from, to) {
   return normalizePath(from).replace(/\/*(\*.*)?$/g, "") + normalizePath(to);
 }
 
+/**
+ * Extract a query string into a params object (repeated keys become arrays).
+ *
+ * @param {URL} url - The URL whose searchParams to read.
+ * @returns {Object} A map of query keys to string or string-array values.
+ */
 function extractSearchParams(url) {
   const params = {};
   url.searchParams.forEach((value, key) => {
@@ -87,6 +117,12 @@ function extractSearchParams(url) {
 
 // Expand optional params (`:id?`) into the set of concrete patterns, in the
 // order @solidjs/router produces (shorter first), so earlier params win.
+/**
+ * Expand optional params (`:id?`) into the set of concrete patterns.
+ *
+ * @param {string} pattern - A route pattern possibly containing optional params.
+ * @returns {Array} The list of expanded patterns (shorter first).
+ */
 function expandOptionals(pattern) {
   let match = /(\/?\:[^\/]+)\?/.exec(pattern);
   if (!match) return [pattern];
@@ -103,6 +139,13 @@ function expandOptionals(pattern) {
   );
 }
 
+/**
+ * Test whether a single location segment satisfies a match filter.
+ *
+ * @param {string} input - The location segment value.
+ * @param {*} filter - undefined, a string, function, array, or RegExp filter.
+ * @returns {boolean} True when the segment matches the filter.
+ */
 function matchSegment(input, filter) {
   const isEqual = (s) => s === input;
   if (filter === undefined) {
@@ -122,6 +165,14 @@ function matchSegment(input, filter) {
 // Build a matcher for a single (already-expanded, no-optional) pattern.
 // `partial` allows the location to have extra trailing segments (used for the
 // non-leaf parent routes of a nested tree).
+/**
+ * Build a matcher function for a single concrete (no-optional) route pattern.
+ *
+ * @param {string} path - The route pattern (may end with a `/*` splat).
+ * @param {boolean} partial - Allow extra trailing location segments.
+ * @param {Object} matchFilters - Per-param segment filters.
+ * @returns {Function} A matcher `(location)` returning `{ path, params }` or null.
+ */
 function createMatcher(path, partial, matchFilters) {
   const [pattern, splat] = path.split("/*", 2);
   const segments = pattern.split("/").filter(Boolean);
@@ -162,6 +213,12 @@ function createMatcher(path, partial, matchFilters) {
   };
 }
 
+/**
+ * Score a route by specificity (static segments outrank dynamic ones).
+ *
+ * @param {Object} route - A route record with a `pattern`.
+ * @returns {number} The specificity score (higher is more specific).
+ */
 function scoreRoute(route) {
   const [pattern, splat] = route.pattern.split("/*", 2);
   const segments = pattern.split("/").filter(Boolean);
@@ -171,12 +228,25 @@ function scoreRoute(route) {
   );
 }
 
+/**
+ * Wrap a value in an array if it is not already one.
+ *
+ * @param {*} value - A value or array.
+ * @returns {Array} The value as an array.
+ */
 function asArray(value) {
   return Array.isArray(value) ? value : [value];
 }
 
 // Flatten a RouteDefinition (the descriptor produced by <Route>) plus `base`
 // into one route record per expanded path.
+/**
+ * Expand a route definition into one route record per concrete path.
+ *
+ * @param {Object} routeDef - The route descriptor (path/component/children).
+ * @param {string} base - The parent base path.
+ * @returns {Array} The expanded route records.
+ */
 function createRoutes(routeDef, base = "") {
   const { component, children } = routeDef;
   const isLeaf = !children || (Array.isArray(children) && !children.length);
@@ -202,6 +272,13 @@ function createRoutes(routeDef, base = "") {
   }, []);
 }
 
+/**
+ * Build a branch (a root-to-leaf chain of routes) with a score and matcher.
+ *
+ * @param {Array} routes - The route chain from root to leaf.
+ * @param {number} index - Tie-breaking index (earlier branches win on equal score).
+ * @returns {Object} A branch `{ routes, score, matcher }`.
+ */
 function createBranch(routes, index = 0) {
   return {
     routes,
@@ -227,6 +304,15 @@ function createBranch(routes, index = 0) {
 // Recursively flatten the route tree into a sorted list of branches. Each
 // branch is the chain of routes from root to a leaf; higher-scored (more
 // specific) branches sort first.
+/**
+ * Recursively flatten a route tree into a score-sorted list of branches.
+ *
+ * @param {*} routeDef - A route definition or array of them.
+ * @param {string} base - The parent base path.
+ * @param {Array} stack - Accumulator of the current route chain (internal).
+ * @param {Array} branches - Accumulator of completed branches (internal).
+ * @returns {Array} The sorted list of branches.
+ */
 function createBranches(routeDef, base = "", stack = [], branches = []) {
   const routeDefs = asArray(routeDef);
   for (let i = 0, len = routeDefs.length; i < len; i++) {
@@ -251,6 +337,13 @@ function createBranches(routeDef, base = "", stack = [], branches = []) {
   return stack.length ? branches : branches.sort((a, b) => b.score - a.score);
 }
 
+/**
+ * Find the matches for the first branch that matches the location.
+ *
+ * @param {Array} branches - The score-sorted branches.
+ * @param {string} location - The current pathname.
+ * @returns {Array} The matched route chain, or an empty array.
+ */
 function getRouteMatches(branches, location) {
   for (let i = 0, len = branches.length; i < len; i++) {
     const match = branches[i].matcher(location);
@@ -264,6 +357,13 @@ function getRouteMatches(branches, location) {
 // A proxy whose property reads each create a memo, so consumers that read e.g.
 // `params.dir` subscribe to exactly that key and update live on navigation.
 // This is what makes useParams()/useLocation().query reactive per-field.
+/**
+ * Wrap an object accessor in a proxy whose per-property reads each create a memo,
+ * so consumers subscribe to exactly the keys they read.
+ *
+ * @param {Function} fn - Accessor returning the source object.
+ * @returns {Object} A proxy with reactive per-key reads.
+ */
 function createMemoObject(fn) {
   const map = new Map();
   const owner = getOwner();
@@ -299,6 +399,13 @@ function createMemoObject(fn) {
 
 // Merge an object of updates into a query string, deleting empty/null/undefined
 // keys. Mirrors @solidjs/router's mergeSearchString (used by setSearchParams).
+/**
+ * Merge updates into a query string, deleting empty/null/undefined/empty-array keys.
+ *
+ * @param {string} search - The existing query string.
+ * @param {Object} params - Updates to apply (values, arrays, or nullish to delete).
+ * @returns {string} The merged query string (with leading `?`, or empty).
+ */
 function mergeSearchString(search, params) {
   const merged = new URLSearchParams(search);
   Object.entries(params).forEach(([key, value]) => {
@@ -319,6 +426,14 @@ function mergeSearchString(search, params) {
 
 // --- reactive location ------------------------------------------------------
 
+/**
+ * Build a reactive location object (pathname/search/hash/state/key/query) driven
+ * by a path accessor.
+ *
+ * @param {Function} path - Accessor returning the current location string.
+ * @param {Function} state - Accessor returning the current history state.
+ * @returns {Object} The reactive location object.
+ */
 function createLocation(path, state) {
   const origin = new URL(mockBase);
   const url = createMemo(
@@ -380,6 +495,15 @@ const useRoute = () => useContext(RouteContextObj) || useRouter().base;
 // Build the core router state from a history integration. `integration`
 // provides a [source, setSource] signal of { value, state } plus a `set`/`go`
 // utility. Matches createRouterContext from @solidjs/router for our subset.
+/**
+ * Build the core router state (location/params/isRouting/navigation) from a
+ * history integration and the route branches.
+ *
+ * @param {Object} integration - `{ signal: [source, setSource], utils }` history adapter.
+ * @param {Function} branches - Accessor returning the route branches.
+ * @param {Object} options - `{ base }` router options.
+ * @returns {Object} The router state `{ base, location, params, isRouting, navigatorFactory, matches }`.
+ */
 function createRouterContext(integration, branches, options = {}) {
   const {
     signal: [source, setSource],
@@ -448,6 +572,14 @@ function createRouterContext(integration, branches, options = {}) {
     ),
   );
 
+  /**
+   * Navigate from a given route to `to` (number = history delta, string = path).
+   *
+   * @param {Object} route - The route to resolve relative paths against.
+   * @param {*} to - A history delta number or a target path string.
+   * @param {Object} options - `{ replace, resolve, scroll, state }` nav options.
+   * @returns {void}
+   */
   function navigateFromRoute(route, to, options) {
     untrack(() => {
       if (typeof to === "number") {
@@ -487,11 +619,24 @@ function createRouterContext(integration, branches, options = {}) {
     });
   }
 
+  /**
+   * Produce a navigate function bound to a route (defaults to the current route).
+   *
+   * @param {Object} route - The route to bind navigation to.
+   * @returns {Function} A navigate function `(to, options)`.
+   */
   function navigatorFactory(route) {
     route = route || useContext(RouteContextObj) || baseRoute;
     return (to, options) => navigateFromRoute(route, to, options);
   }
 
+  /**
+   * Commit a completed navigation back to the history source using the original
+   * referrer's replace/scroll flags.
+   *
+   * @param {Object} next - The settled transition target.
+   * @returns {void}
+   */
   function navigateEnd(next) {
     const first = referrers[0];
     if (first) {
@@ -516,6 +661,16 @@ function createRouterContext(integration, branches, options = {}) {
 
 // Build the route node (with its resolvePath bound to the matched path) for one
 // matched level. `outlet` renders the next (nested) level.
+/**
+ * Build the route node for one matched level, with its outlet rendering the
+ * nested level and resolvePath bound to its matched path.
+ *
+ * @param {Object} router - The router state.
+ * @param {Object} parent - The parent route node.
+ * @param {Function} outlet - Accessor rendering the next nested level.
+ * @param {Function} match - Accessor returning this level's match.
+ * @returns {Object} The route node `{ parent, path, outlet, resolvePath }`.
+ */
 function createRouteContext(router, parent, outlet, match) {
   const { base, location, params } = router;
   const { component } = match().route;
@@ -540,6 +695,13 @@ function createRouteContext(router, parent, outlet, match) {
   return route;
 }
 
+/**
+ * Build an outlet accessor that renders a route node's content via a keyed Show,
+ * providing the node on RouteContext.
+ *
+ * @param {Function} child - Accessor returning the route node to render.
+ * @returns {Function} An accessor producing the outlet component.
+ */
 const createOutlet = (child) => {
   return () =>
     createComponent$web(Show, {
@@ -560,6 +722,15 @@ const createOutlet = (child) => {
 // Render the matched route chain as nested outlets, reusing route nodes whose
 // matched route key is unchanged (so navigation within the same component
 // updates params instead of remounting). Mirrors @solidjs/router's <Routes>.
+/**
+ * Render the matched route chain as nested outlets, reusing route nodes whose
+ * matched key is unchanged so navigation within a component updates params
+ * instead of remounting.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.routerState - The router state (from createRouterContext).
+ * @returns {*} The rendered outlet tree.
+ */
 function Routes(props) {
   const disposers = [];
   let root;
@@ -604,6 +775,16 @@ function Routes(props) {
 
 // Optional layout wrapper given {children} (the `root` prop). Matches the keyed
 // Show in @solidjs/router's Root so the layout receives params/location too.
+/**
+ * Optional layout wrapper: renders `props.root` (a layout component receiving
+ * params/location) around `props.children`, falling back to children alone.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.routerState - The router state.
+ * @param {*} props.root - Optional layout component.
+ * @param {*} props.children - The routed content.
+ * @returns {*} The rendered (optionally wrapped) content.
+ */
 function Root(props) {
   const location = props.routerState.location;
   const params = props.routerState.params;
@@ -629,6 +810,13 @@ function Root(props) {
 // Glue an integration to the route tree and provide the router context. The
 // route tree is collected from <Route> children via the solid children()
 // helper, exactly mirroring how @solidjs/router builds its RouteDefinition tree.
+/**
+ * Create a Router component for a given history integration: collects the route
+ * tree from <Route> children and provides the router context.
+ *
+ * @param {Object} integration - `{ signal, utils }` history adapter.
+ * @returns {Function} A Router component taking `{ base, root, children }`.
+ */
 const createRouterComponent = (integration) => (props) => {
   const routeDefs = resolveChildren(() => props.children);
   const branches = createMemo(() =>
@@ -657,11 +845,26 @@ const createRouterComponent = (integration) => (props) => {
 
 // --- history integration ----------------------------------------------------
 
+/**
+ * Add an event listener and return a function that removes it.
+ *
+ * @param {EventTarget} target - The event target.
+ * @param {string} type - The event type.
+ * @param {Function} handler - The event handler.
+ * @returns {Function} An unbind function.
+ */
 function bindEvent(target, type, handler) {
   target.addEventListener(type, handler);
   return () => target.removeEventListener(type, handler);
 }
 
+/**
+ * Scroll to the element matching `hash`, or to the top as a fallback.
+ *
+ * @param {string} hash - The element id to scroll into view.
+ * @param {boolean} fallbackTop - Scroll to top when no element is found.
+ * @returns {void}
+ */
 function scrollToHash(hash, fallbackTop) {
   const el = hash && document.getElementById(hash);
   if (el) {
@@ -671,6 +874,12 @@ function scrollToHash(hash, fallbackTop) {
   }
 }
 
+/**
+ * Build a `{ signal: [source, setSource] }` integration backed by window.history
+ * (pushState/replaceState + popstate).
+ *
+ * @returns {Object} A history integration `{ signal }`.
+ */
 function createBrowserSignal() {
   // Read the current browser location into a { value, state } source. The
   // pathname is normalized to a single leading slash and the search/hash are
@@ -713,6 +922,12 @@ function createBrowserSignal() {
   return { signal: [signal, setSource] };
 }
 
+/**
+ * Browser-history Router component.
+ *
+ * @param {Object} props - Router props `{ base, root, children }`.
+ * @returns {*} The rendered router.
+ */
 function Router(props) {
   const integration = createBrowserSignal();
   return createRouterComponent({
@@ -731,6 +946,12 @@ function Router(props) {
 // location (e.g. the desktop renderer mounted from vcc://renderer/index.html,
 // whose pathname would otherwise mismatch the app's `/` and `/:dir` routes).
 // Starts at "/" so the initial render matches the root route.
+/**
+ * Create an in-memory history stack (entries + index cursor) with get/set/back/
+ * forward/go/listen, for environments without a real browser location.
+ *
+ * @returns {Object} A memory-history object.
+ */
 function createMemoryHistory() {
   const entries = ["/"];
   let index = 0;
@@ -780,6 +1001,13 @@ function createMemoryHistory() {
 // the location SOURCE: here get()/set()/listen() drive a string-valued stack
 // instead of window.location + pushState/popstate. Memory history has no `state`,
 // so state is tracked alongside the signal and threaded back through set().
+/**
+ * Bridge a memory history into the `{ signal: [source, setSource] }` integration
+ * shape the router expects.
+ *
+ * @param {Object} history - A memory-history object (get/set/listen).
+ * @returns {Object} A history integration `{ signal }`.
+ */
 function createMemorySignal(history) {
   const getSource = () => ({ value: history.get(), state: null });
   const [signal, setSignal] = createSignal(getSource(), {
@@ -804,6 +1032,12 @@ function createMemorySignal(history) {
   return { signal: [signal, setSource] };
 }
 
+/**
+ * Memory-history Router component (uses props.history or a fresh memory history).
+ *
+ * @param {Object} props - Router props `{ history, base, root, children }`.
+ * @returns {*} The rendered router.
+ */
 function MemoryRouter(props) {
   const history = props.history || createMemoryHistory();
   const integration = createMemorySignal(history);
@@ -820,6 +1054,13 @@ function MemoryRouter(props) {
 // <Route> is declaration-only: it returns a RouteDefinition descriptor (its own
 // props with resolved children). createBranches() reads these descriptors; the
 // element is never rendered to DOM itself.
+/**
+ * Declaration-only <Route>: returns a RouteDefinition descriptor consumed by the
+ * branch builder (never rendered to DOM itself).
+ *
+ * @param {Object} props - Route props (path/component/children/matchFilters).
+ * @returns {Object} A RouteDefinition descriptor.
+ */
 const Route = (props) => {
   const childRoutes = resolveChildren(() => props.children);
   return mergeProps(props, {
@@ -829,16 +1070,39 @@ const Route = (props) => {
   });
 };
 
+/**
+ * @returns {Function} A navigate function bound to the current route.
+ */
 const useNavigate = () => useRouter().navigatorFactory();
+/**
+ * @returns {Object} The reactive location object.
+ */
 const useLocation = () => useRouter().location;
+/**
+ * @returns {Function} An accessor for whether a navigation is in progress.
+ */
 const useIsRouting = () => useRouter().isRouting;
+/**
+ * @returns {Object} The reactive params object (per-key reactive).
+ */
 const useParams = () => useRouter().params;
 
+/**
+ * Resolve a (possibly relative) path accessor against the current route.
+ *
+ * @param {Function} path - Accessor returning the path to resolve.
+ * @returns {Function} A memo accessor for the resolved path.
+ */
 const useResolvedPath = (path) => {
   const route = useRoute();
   return createMemo(() => route.resolvePath(path()));
 };
 
+/**
+ * Reactive search-params hook.
+ *
+ * @returns {Array} `[query, setSearchParams]` reactive query and updater.
+ */
 const useSearchParams = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -858,6 +1122,14 @@ const useSearchParams = () => {
 // <Navigate href> performs an immediate replace-navigation on render. `href`
 // may be relative (resolved against the current route, e.g. "session" inside
 // "/:dir") because navigate() defaults resolve:true for non-query paths.
+/**
+ * Perform an immediate replace-navigation on render to `props.href`.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.href - Target path string, or a function `({ navigate, location }) => path`.
+ * @param {*} props.state - History state to attach.
+ * @returns {null} Renders nothing.
+ */
 function Navigate(props) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -876,6 +1148,19 @@ function Navigate(props) {
 // children, …) pass straight through. @solidjs/router routes link clicks via a
 // document-level delegated listener; here an element-level onClick that runs
 // after the consumer handler does the same navigation, with identical guards.
+/**
+ * Router link: renders an <a> with reactive href/active-class/aria-current and
+ * intercepts plain left-clicks to navigate via history instead of reloading.
+ *
+ * @param {Object} props - Link props.
+ * @param {*} props.href - The target path (resolved against the current route).
+ * @param {*} props.state - History state to attach on navigation.
+ * @param {string} props.class - Base class always applied.
+ * @param {string} props.activeClass - Class applied when the link is active.
+ * @param {string} props.inactiveClass - Class applied when the link is inactive.
+ * @param {boolean} props.end - Match the path exactly (vs prefix) for active state.
+ * @returns {HTMLElement} The anchor element.
+ */
 function A(props) {
   props = mergeProps({ inactiveClass: "inactive", activeClass: "active" }, props);
   const [, rest] = splitProps(props, [
@@ -899,6 +1184,13 @@ function A(props) {
       path === loc,
     ];
   });
+  /**
+   * Click interceptor: navigate via history on a plain left-click, deferring to
+   * the browser for modified clicks, non-left buttons, or targeted links.
+   *
+   * @param {MouseEvent} evt - The click event.
+   * @returns {void}
+   */
   const navigateOnClick = (evt) => {
     if (
       evt.defaultPrevented ||
@@ -927,6 +1219,13 @@ function A(props) {
   // guards as @solidjs/router's delegated click listener).
   const el = document.createElement("a");
   insert(el, () => rest.children);
+  /**
+   * Invoke a Solid-style event handler (a function or `[fn, data]` tuple).
+   *
+   * @param {*} handler - The handler function or `[fn, data]` tuple.
+   * @param {Event} evt - The event to pass.
+   * @returns {void}
+   */
   const callHandler = (handler, evt) => {
     if (typeof handler === "function") handler(evt);
     else if (Array.isArray(handler)) handler[0](handler[1], evt);

@@ -1,3 +1,4 @@
+/** @file ProgressCircle component: an SVG ring whose stroke offset reflects a percentage. */
 import { createMemo, createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -7,6 +8,18 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 // because splitProps already extracts them).
 const OVERRIDDEN = new Set(["width", "height", "viewBox", "fill", "data-component"]);
 
+/**
+ * Circular progress indicator rendered as an SVG ring.
+ * The background circle is fully drawn and the progress circle's stroke-dashoffset
+ * shrinks as `percentage` (0-100) increases. Remaining props are spread onto the <svg>.
+ * @param {Object} props - Component props.
+ * @param {number} props.percentage - Progress value 0-100 (clamped); drives the stroke offset.
+ * @param {number} props.size - Pixel width/height of the SVG (default 16).
+ * @param {number} props.strokeWidth - Ring stroke width (default 3).
+ * @param {string} props.class - Class string toggled onto the SVG.
+ * @param {Object} props.classList - Solid-style classList map of class tokens to booleans.
+ * @returns {SVGSVGElement} The progress-circle SVG element.
+ */
 export function ProgressCircle(props) {
   const [split, rest] = splitProps(props, ["percentage", "size", "strokeWidth", "class", "classList"]);
   const size = () => split.size || 16;

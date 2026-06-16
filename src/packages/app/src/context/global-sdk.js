@@ -1,3 +1,4 @@
+/** @file Global SDK context provider: manages the server SSE event stream (with coalescing, batching, heartbeat/reconnect) and SDK client factories. */
 import { createSimpleContext } from "@/lib/context.js";
 import { createGlobalEmitter } from "../lib/primitives/event-bus.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
@@ -10,6 +11,11 @@ import { useServer } from "./server.js";
 const abortError = z.object({
   name: z.literal("AbortError")
 });
+/**
+ * Global SDK context: owns the SSE event stream to the server, coalesces/batches incoming events,
+ * and exposes SDK clients. `useGlobalSDK()` reads the context; `GlobalSDKProvider` provides it.
+ * The context value is `{url, client, event: {on, listen, start}, createClient(opts)}`.
+ */
 export const {
   use: useGlobalSDK,
   provider: GlobalSDKProvider
@@ -47,7 +53,20 @@ export const {
     const staleDeltas = new Set();
     let timer;
     let last = 0;
+    /**
+     * Build a coalescing key identifying a specific streaming message-part delta.
+     * @param {string} directory - Workspace directory the event belongs to.
+     * @param {string} messageID - Message id.
+     * @param {string} partID - Message part id.
+     * @returns {string} Composite delta key.
+     */
     const deltaKey = (directory, messageID, partID) => `${directory}:${messageID}:${partID}`;
+    /**
+     * Compute a coalescing key for event payloads that should overwrite rather than queue duplicates.
+     * @param {string} directory - Workspace directory the event belongs to.
+     * @param {Object} payload - Event payload.
+     * @returns {string} Coalescing key, or undefined if the payload type is not coalesced.
+     */
     const key = (directory, payload) => {
       if (payload.type === "session.status") return `session.status:${directory}:${payload.properties.sessionID}`;
       if (payload.type === "lsp.updated") return `lsp.updated:${directory}`;
@@ -56,6 +75,11 @@ export const {
         return `message.part.updated:${directory}:${part.messageID}:${part.id}`;
       }
     };
+    /**
+     * Emit all queued events in a single reactive batch, skipping deltas superseded by a newer part update,
+     * then swap the queue/buffer arrays for reuse.
+     * @returns {void}
+     */
     const flush = () => {
       if (timer) clearTimeout(timer);
       timer = undefined;
@@ -79,13 +103,27 @@ export const {
       });
       buffer.length = 0;
     };
+    /**
+     * Schedule a flush at most once per ~frame, accounting for time since the last flush.
+     * @returns {void}
+     */
     const schedule = () => {
       if (timer) return;
       const elapsed = Date.now() - last;
       timer = setTimeout(flush, Math.max(0, FLUSH_FRAME_MS - elapsed));
     };
     let streamErrorLogged = false;
+    /**
+     * Resolve after a delay.
+     * @param {number} ms - Milliseconds to wait.
+     * @returns {Promise} Resolves once the delay elapses.
+     */
     const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
+    /**
+     * Test whether an error is an AbortError (expected on intentional aborts).
+     * @param {*} error - Caught error.
+     * @returns {boolean} True if the error matches the AbortError shape.
+     */
     const aborted = error => abortError.safeParse(error).success;
     let attempt;
     let run;
@@ -93,6 +131,10 @@ export const {
     const HEARTBEAT_TIMEOUT_MS = 15_000;
     let lastEventAt = Date.now();
     let heartbeat;
+    /**
+     * Restart the heartbeat timer; if no event arrives within the timeout, abort the current attempt to force reconnect.
+     * @returns {void}
+     */
     const resetHeartbeat = () => {
       lastEventAt = Date.now();
       if (heartbeat) clearTimeout(heartbeat);
@@ -100,11 +142,20 @@ export const {
         attempt?.abort();
       }, HEARTBEAT_TIMEOUT_MS);
     };
+    /**
+     * Cancel and clear any pending heartbeat timer.
+     * @returns {void}
+     */
     const clearHeartbeat = () => {
       if (!heartbeat) return;
       clearTimeout(heartbeat);
       heartbeat = undefined;
     };
+    /**
+     * Start the long-lived SSE event loop: connect, coalesce/queue incoming events, and auto-reconnect
+     * on error or heartbeat timeout until aborted or stopped. Idempotent (returns the existing run).
+     * @returns {Promise} The running loop promise.
+     */
     const start = () => {
       if (started) return run;
       started = true;
@@ -189,6 +240,10 @@ export const {
       });
       return run;
     };
+    /**
+     * Stop the event loop: clear the started flag, abort the in-flight attempt, and clear the heartbeat.
+     * @returns {void}
+     */
     const stop = () => {
       started = false;
       attempt?.abort();
@@ -220,6 +275,11 @@ export const {
         listen: emitter.listen.bind(emitter),
         start
       },
+      /**
+       * Create a fresh SDK client bound to the current server, merging in caller options (e.g. `directory`).
+       * @param {Object} opts - Extra options spread onto the SDK client config.
+       * @returns {Object} A configured SDK client.
+       */
       createClient(opts) {
         const s = server.current;
         if (!s) throw new Error(language.t("error.globalSDK.serverNotAvailable"));

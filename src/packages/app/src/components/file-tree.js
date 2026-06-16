@@ -1,19 +1,42 @@
+/** @file FileTree component: a recursive, collapsible file/directory tree with diff markers, drag-to-attach support and an optional allow-list filter. */
 import { useFile } from "@/context/file.js";
 import { encodeFilePath } from "@/context/file/path.js";
 import { Collapsible } from "@/bs/collapsible.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
 import { Icon } from "@/bs/icon.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, Match, on, Show, splitProps, Switch, untrack } from "../lib/reactivity.js";
+
+/**
+ * Maximum recursion depth for nested FileTree rendering, guarding against runaway/circular trees.
+ * @type {number}
+ */
 const MAX_DEPTH = 128;
+
+/**
+ * Build a file:// URL for a filesystem path.
+ * @param {string} filepath - The path to encode.
+ * @returns {string} The file URL.
+ */
 function pathToFileUrl(filepath) {
   return `file://${encodeFilePath(filepath)}`;
 }
+
+/**
+ * Decide whether the root level of the tree should trigger an initial directory listing.
+ * @param {Object} input - State with `level` (number) and `dir` (directory state with `loaded`/`loading`).
+ * @returns {boolean} True when the root has not yet been (and is not currently being) listed.
+ */
 export function shouldListRoot(input) {
   if (input.level !== 0) return false;
   if (input.dir?.loaded) return false;
   if (input.dir?.loading) return false;
   return true;
 }
+/**
+ * Decide whether an expanded directory needs its children listed.
+ * @param {Object} input - State with `level` (number) and `dir` (directory state with `expanded`/`loaded`/`loading`).
+ * @returns {boolean} True when a non-root, expanded directory has not yet been listed.
+ */
 export function shouldListExpanded(input) {
   if (input.level === 0) return false;
   if (!input.dir?.expanded) return false;
@@ -21,21 +44,43 @@ export function shouldListExpanded(input) {
   if (input.dir.loading) return false;
   return true;
 }
+/**
+ * At the root level, compute which filtered directories should be auto-expanded (those not already expanded).
+ * @param {Object} input - State with `level` (number), `filter` (object with a `dirs` set, optional) and `expanded` (Function predicate).
+ * @returns {Array} The directory paths to expand.
+ */
 export function dirsToExpand(input) {
   if (input.level !== 0) return [];
   if (!input.filter) return [];
   return [...input.filter.dirs].filter(dir => !input.expanded(dir));
 }
+
+/**
+ * Map a diff kind to its single-letter label (A/D/M).
+ * @param {string} kind - The diff kind ("add", "del" or other for modified).
+ * @returns {string} The label letter.
+ */
 const kindLabel = kind => {
   if (kind === "add") return "A";
   if (kind === "del") return "D";
   return "M";
 };
+/**
+ * Map a diff kind to an inline text-color style for the marker letter/icon.
+ * @param {string} kind - The diff kind ("add", "del" or other for modified).
+ * @returns {string} An inline CSS `color` declaration.
+ */
 const kindTextColor = kind => {
   if (kind === "add") return "color: var(--icon-diff-add-base)";
   if (kind === "del") return "color: var(--icon-diff-delete-base)";
   return "color: var(--icon-diff-modified-base)";
 };
+
+/**
+ * Map a diff kind to an inline background-color style for the directory marker dot.
+ * @param {string} kind - The diff kind ("add", "del" or other for modified).
+ * @returns {string} An inline CSS `background-color` declaration.
+ */
 const kindDotColor = kind => {
   if (kind === "add") return "background-color: var(--icon-diff-add-base)";
   if (kind === "del") return "background-color: var(--icon-diff-delete-base)";
@@ -45,7 +90,20 @@ const kindDotColor = kind => {
 // slash), but node.path uses OS separators on Windows — so look up with a
 // normalized key, or every nested entry misses and only top-level names
 // (which contain no separator) ever show their marker.
+/**
+ * Normalize a node path into the key shape used by diff maps/sets ("/" separators, no trailing slash).
+ * @param {string} p - The path to normalize.
+ * @returns {string} The normalized diff key.
+ */
 const diffKey = p => p.replaceAll("\\", "/").replace(/\/+$/, "");
+
+/**
+ * Resolve the diff kind that should be displayed for a node, requiring both a known kind and an explicit mark.
+ * @param {Object} node - The tree node (with `path`).
+ * @param {Map} kinds - Map of normalized path to diff kind.
+ * @param {Set} marks - Set of normalized paths that may show a marker.
+ * @returns {string} The diff kind, or undefined when no marker should show.
+ */
 const visibleKind = (node, kinds, marks) => {
   const key = diffKey(node.path);
   const kind = kinds?.get(key);
@@ -53,6 +111,11 @@ const visibleKind = (node, kinds, marks) => {
   if (!marks?.has(key)) return;
   return kind;
 };
+/**
+ * Build an off-screen drag image cloning a row's icon and name for use as the native drag preview.
+ * @param {HTMLElement} target - The row element being dragged.
+ * @returns {HTMLElement} The drag-image element, or undefined when the row lacks an icon or name.
+ */
 const buildDragImage = target => {
   const icon = target.querySelector('[data-component="file-icon"]') ?? target.querySelector("svg");
   const text = target.querySelector("span");
@@ -64,6 +127,11 @@ const buildDragImage = target => {
   image.innerHTML = icon.outerHTML + text.outerHTML;
   return image;
 };
+/**
+ * Attach a custom drag image to a dragstart event, mounting it briefly so the browser can snapshot it.
+ * @param {DragEvent} event - The dragstart event whose dataTransfer receives the drag image.
+ * @returns {void}
+ */
 const withFileDragImage = event => {
   const image = buildDragImage(event.currentTarget);
   if (!image) return;
@@ -71,6 +139,13 @@ const withFileDragImage = event => {
   event.dataTransfer?.setDragImage(image, 0, 12);
   setTimeout(() => document.body.removeChild(image), 0);
 };
+/**
+ * Diff-apply a Solid-style classList object onto an element, toggling only the keys that changed and leaving externally-set classes intact.
+ * @param {HTMLElement} el - The element to update.
+ * @param {Object} value - The next classList map (key may hold space-separated class names; truthy enables).
+ * @param {Object} prev - The previously-applied classList map.
+ * @returns {Object} A shallow copy of the applied map, to pass back as `prev` next time.
+ */
 // Diff-apply a Solid classList object, mirroring the compiled classList()
 // helper: a key may hold several space-separated classes and only changed keys
 // are touched, so classes applied elsewhere on the element survive.
@@ -92,6 +167,12 @@ function applyClassList(el, value, prev) {
   }
   return { ...nextObj };
 }
+/**
+ * Flatten possibly-reactive children into an output array of Nodes, calling functions, recursing arrays and dropping null/boolean values; non-Node primitives become text nodes.
+ * @param {Array} out - The accumulator array of Nodes to push into.
+ * @param {*} value - A child value: Node, function, array, primitive or nullish.
+ * @returns {void}
+ */
 // Flatten possibly-reactive children into `out`. Function values (the memos
 // returned by For/Switch/Show) are called here, inside the caller's render
 // effect, so branch flips re-run that effect; arrays recurse and
@@ -109,6 +190,12 @@ function appendResolved(out, value) {
   }
   out.push(value instanceof Node ? value : document.createTextNode(String(value)));
 }
+/**
+ * Replace a parent's children with the given nodes, skipping the write entirely when the child list is already identical.
+ * @param {Node} parent - The element whose children are synced.
+ * @param {Array} next - The desired child nodes in order.
+ * @returns {void}
+ */
 // Replace `parent`'s children with `next`, skipping the no-op case so re-runs
 // that resolve to the same nodes do not detach and reattach them.
 function syncChildren(parent, next) {
@@ -125,6 +212,11 @@ function syncChildren(parent, next) {
   }
   parent.replaceChildren(...next);
 }
+/**
+ * A single file-tree row (file or directory label) with indentation, drag support, name, diff marker and caller-supplied lead children (chevron/icon).
+ * @param {Object} p - Row props: `node` (the tree node), `level` (depth), `active` (active path), `nodeClass`/`class`/`classList` (styling), `draggable` (boolean), `kinds`/`marks` (diff maps), `as` (element tag), `children` (lead content) plus forwarded rest props (e.g. `type`, `onDblClick`, `onContextMenu`).
+ * @returns {HTMLElement} The row element.
+ */
 // Single row (file or directory label). The compiled version rendered this
 // through solid-js/web's Dynamic + reactive spread; `as` and the leftover rest
 // props (type / onDblClick / onContextMenu) are static at both call sites, so
@@ -224,6 +316,11 @@ const FileTreeNode = p => {
   });
   return el;
 };
+/**
+ * Recursive, collapsible file/directory tree component that lazily lists directories, renders diff markers and supports drag-to-attach and an optional allow-list filter.
+ * @param {Object} props - Component props: `path` (root directory), `level` (depth, default 0), `allowed` (optional Array of allowed paths to filter by), `modified`/`kinds` (diff state), `active` (highlighted path), `draggable` (boolean), `nodeClass`/`class` (styling), `onFileClick`/`onContextMenu` (Function handlers) and internal `_filter`/`_marks`/`_deeps`/`_kinds`/`_chain` props threaded into nested instances.
+ * @returns {HTMLElement} The tree container element.
+ */
 export default function FileTree(props) {
   const file = useFile();
   const level = props.level ?? 0;

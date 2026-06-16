@@ -15,14 +15,42 @@ import { SessionRevertDock } from "@/pages/session/composer/session-revert-dock.
 import { SessionTodoDock } from "@/pages/session/composer/session-todo-dock.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 
+/** @file Session composer region: the bottom prompt dock that gates between the question dock, permission dock, and the main composer (todo dock, revert dock, followup dock, and prompt input), with a spring-animated todo tray and child-session notice. */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Bottom prompt dock region for a session. Selects between the question dock,
+ * permission dock, and the main composer branch (todo/revert/followup docks
+ * plus the prompt input or a child-session notice), driving the spring-animated
+ * todo tray and handoff-prompt loading preview.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.state - Composer state (blocked, dock, closing, todos, question/permission requests, decide, etc.).
+ * @param {boolean} props.ready - Whether the page is settled enough to render the composer.
+ * @param {boolean} props.centered - Whether to constrain the dock to the centered max-width.
+ * @param {Function} props.inputRef - Ref callback (or assignable slot) for the prompt input element.
+ * @param {string} props.newSessionWorktree - Worktree selection for a new session.
+ * @param {Function} props.onNewSessionWorktreeReset - Resets the new-session worktree selection.
+ * @param {Function} props.onSubmit - Called when a prompt is submitted.
+ * @param {Function} props.onResponseSubmit - Called when a question/permission response is submitted.
+ * @param {Object} props.followup - Followup config (items, sending, edit, onQueue, onSend, onEdit, onAbort, queue).
+ * @param {Object} props.revert - Revert config (items, restoring, disabled, onRestore).
+ * @param {Function} props.setPromptDockRef - Ref callback (or assignable slot) for the dock root element.
+ * @returns {HTMLElement} The prompt dock root element.
+ */
 export function SessionComposerRegion(props) {
   const navigate = useNavigate();
   const prompt = usePrompt();
@@ -109,6 +137,12 @@ export function SessionComposerRegion(props) {
 
   // Both keyed revert Shows render the same dock; `revert` is the keyed
   // snapshot, so the getters mirror the original children closure.
+  /**
+   * Builds a SessionRevertDock from a keyed revert snapshot.
+   *
+   * @param {Object} revert - The revert config (items, restoring, disabled, onRestore).
+   * @returns {Node} The revert dock component.
+   */
   const revertDock = revert => createComponent(SessionRevertDock, {
     get items() {
       return revert.items;
@@ -184,6 +218,12 @@ export function SessionComposerRegion(props) {
 
   // Fallback branch while the prompt context is not ready yet: optional revert
   // dock plus a read-only preview of the handed-off prompt text.
+  /**
+   * Builds the loading branch: an optional revert dock and a read-only preview
+   * of the handed-off prompt text shown until the prompt context is ready.
+   *
+   * @returns {Array} The [revert slot, preview] node pair to mount.
+   */
   const buildLoading = () => {
     const revertSlot = template(`<div style="display: contents"></div>`);
     createEffect(() => {
@@ -206,6 +246,12 @@ export function SessionComposerRegion(props) {
   // Child-session notice shown instead of the prompt input. The original
   // applied the inputRef to this element and kept a trailing space after the
   // label inside the span, followed by the back-to-parent button.
+  /**
+   * Builds the child-session notice that replaces the prompt input, including
+   * a "back to parent" button when a parent session exists.
+   *
+   * @returns {HTMLElement} The child-session notice element.
+   */
   const buildChildNotice = () => {
     const notice = template(`<div class="w-full rounded-[12px] border bg-body p-3 fs-6 fw-normal text-secondary"><span> </span></div>`);
     const inputRef = props.inputRef;
@@ -237,6 +283,12 @@ export function SessionComposerRegion(props) {
 
   // Main branch once the prompt context is ready: collapsible todo dock,
   // optional revert dock, then the composer (followup dock + prompt input).
+  /**
+   * Builds the ready branch: the spring-animated todo dock, an optional revert
+   * dock, and the composer (followup dock plus the prompt input or child notice).
+   *
+   * @returns {Array} The [dock slot, revert slot, composer] node list to mount.
+   */
   const buildReady = () => {
     const dockSlot = template(`<div style="display: contents"></div>`);
     createEffect(() => {

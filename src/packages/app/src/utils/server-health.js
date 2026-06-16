@@ -1,3 +1,4 @@
+/** @file Probes a server's /health endpoint with timeout, retry, and short-lived caching. */
 import { usePlatform } from "@/context/platform.js";
 import { createSdkForServer } from "./server.js";
 const defaultTimeoutMs = 3000;
@@ -5,9 +6,19 @@ const defaultRetryCount = 2;
 const defaultRetryDelayMs = 100;
 const cacheMs = 750;
 const healthCache = new Map();
+/**
+ * Build a cache key uniquely identifying a server by url and credentials.
+ * @param {Object} server - The server descriptor with url, username, and password.
+ * @returns {string} A newline-joined key string.
+ */
 function cacheKey(server) {
   return `${server.url}\n${server.username ?? ""}\n${server.password ?? ""}`;
 }
+/**
+ * Produce an abort signal that fires after a timeout, preferring AbortSignal.timeout.
+ * @param {number} timeoutMs - Milliseconds before the signal aborts.
+ * @returns {Object} An object with the signal and an optional clear() to cancel the fallback timer.
+ */
 function timeoutSignal(timeoutMs) {
   const timeout = AbortSignal.timeout;
   if (timeout) {
@@ -25,6 +36,12 @@ function timeoutSignal(timeoutMs) {
     clear: () => clearTimeout(timer)
   };
 }
+/**
+ * Resolve after a delay, rejecting early with an AbortError if the signal aborts.
+ * @param {number} ms - Milliseconds to wait.
+ * @param {AbortSignal} signal - Optional signal whose abort rejects the wait.
+ * @returns {Promise} Resolves when the delay elapses, rejects on abort.
+ */
 function wait(ms, signal) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
@@ -44,6 +61,12 @@ function wait(ms, signal) {
     });
   });
 }
+/**
+ * Decide whether a failed health attempt should be retried.
+ * @param {*} error - The error thrown by the attempt.
+ * @param {AbortSignal} signal - Optional signal; an aborted signal disables retry.
+ * @returns {boolean} True for transient network-style errors, false otherwise.
+ */
 function retryable(error, signal) {
   if (signal?.aborted) return false;
   if (!(error instanceof Error)) return false;
@@ -51,6 +74,13 @@ function retryable(error, signal) {
   if (error instanceof TypeError) return true;
   return /network|fetch|econnreset|econnrefused|enotfound|timedout/i.test(error.message);
 }
+/**
+ * Probe a server's health endpoint, retrying transient failures with backoff.
+ * @param {Object} server - The server descriptor (url and optional credentials).
+ * @param {Function} fetch - The fetch implementation passed to the SDK client.
+ * @param {Object} opts - Optional config: signal, timeoutMs, retryCount, retryDelayMs.
+ * @returns {Promise<Object>} Resolves to a result with a healthy boolean and optional version.
+ */
 export async function checkServerHealth(server, fetch, opts) {
   const timeout = opts?.signal ? undefined : timeoutSignal(opts?.timeoutMs ?? defaultTimeoutMs);
   const signal = opts?.signal ?? timeout?.signal;
@@ -74,6 +104,12 @@ export async function checkServerHealth(server, fetch, opts) {
   }).catch(error => next(count, error));
   return attempt(0).finally(() => timeout?.clear?.());
 }
+/**
+ * Hook returning a health-check function that dedupes and briefly caches results.
+ * Uses the platform fetch (falling back to globalThis.fetch) and keys cache entries
+ * per server; in-flight and recently completed probes are reused within cacheMs.
+ * @returns {Function} A function taking a server descriptor and returning a Promise of the health result.
+ */
 export function useCheckServerHealth() {
   const platform = usePlatform();
   const fetcher = platform.fetch ?? globalThis.fetch;

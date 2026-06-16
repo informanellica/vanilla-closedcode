@@ -1,3 +1,7 @@
+/**
+ * @file Imperative confirm/choice dialog (Bootstrap modal) for use outside the
+ * reactive UI tree.
+ */
 // Imperative Bootstrap-modal confirm/choice dialog, for code OUTSIDE the
 // reactive UI tree (the file context menu, tab close) where the reactive
 // Dialog component isn't convenient. Returns a Promise that resolves to the
@@ -6,6 +10,15 @@
 // script in index.html); falls back to null if Bootstrap isn't available.
 //
 // buttons: [{ id, label, variant?: "primary" | "danger" | "secondary" }]
+/**
+ * Show an imperative Bootstrap-modal confirm/choice dialog and resolve with the
+ * id of the button the user clicked (or null when dismissed).
+ * @param {Object} options - Dialog options.
+ * @param {string} options.title - Optional dialog title.
+ * @param {string} options.message - Body message text.
+ * @param {Array} options.buttons - Footer buttons, each `{id, label, variant}` where variant is "primary"|"danger"|"secondary".
+ * @returns {Promise<string>} Resolves to the clicked button's id, or null if dismissed or Bootstrap is unavailable.
+ */
 export function confirmModal({ title, message, buttons } = {}) {
   return new Promise(resolve => {
     if (typeof document === "undefined") {

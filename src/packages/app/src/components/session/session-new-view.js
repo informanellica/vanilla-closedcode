@@ -1,3 +1,4 @@
+/** @file New-session empty state: brand mark, project path, selected worktree label, and a relative "last modified" time. */
 import { createComponent, createEffect, createMemo } from "../../lib/reactivity.js";
 import { DateTime } from "luxon";
 import { useSync } from "@/context/sync.js";
@@ -11,12 +12,26 @@ const MAIN_WORKTREE = "main";
 const CREATE_WORKTREE = "create";
 const ROOT_CLASS = "size-full d-flex flex-column";
 
+/**
+ * Parse a trimmed HTML string into a single detached root element.
+ * @param {string} html - Markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * The new-session empty state view. Shows the brand mark and title, the
+ * project's directory/filename path, the currently selected worktree label
+ * (main, a sandbox, or "create new"), and, while a project is loaded, a
+ * relative "last modified" timestamp.
+ * @param {Object} props - Component props.
+ * @param {string} props.worktree - The currently selected worktree identifier ("main", "create", or a sandbox path).
+ * @returns {HTMLElement} The view root element.
+ */
 export function NewSessionView(props) {
   const sync = useSync();
   const sdk = useSDK();
@@ -31,6 +46,11 @@ export function NewSessionView(props) {
   });
   const projectRoot = createMemo(() => controller.projectRoot());
   const isWorktree = createMemo(() => controller.isWorktree());
+  /**
+   * Resolve the display label for a worktree option.
+   * @param {string} value - A worktree identifier ("main", "create", or a sandbox path).
+   * @returns {string} The translated/derived label, including the branch name for "main" when available.
+   */
   const label = value => {
     if (value === MAIN_WORKTREE) {
       if (isWorktree()) return language.t("session.new.worktree.main");

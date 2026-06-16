@@ -1,14 +1,37 @@
+/** @file Inline-editor controller for the sidebar: manages a single active inline editor (open/close/save, keyboard handling) and provides an InlineEditor component that swaps between a display span and an editable input. */
 import { createComponent, createMemo, createRenderEffect, onCleanup } from "../../lib/reactivity.js";
 import { createStore } from "../../lib/store.js";
 import { InlineInput } from "@/vendor/ui/components/inline-input.js";
+/**
+ * Create a controller that coordinates a single active inline text editor.
+ * Returns the editor store plus open/close/save helpers, a keydown handler, and
+ * an `InlineEditor` component that renders an editable input while active and a
+ * static display span otherwise.
+ * @returns {Object} The inline-editor controller API (editor, editorOpen, editorValue, openEditor, closeEditor, saveEditor, editorKeyDown, setEditor, InlineEditor).
+ */
 export function createInlineEditorController() {
   // This controller intentionally supports one active inline editor at a time.
   const [editor, setEditor] = createStore({
     active: "",
     value: ""
   });
+  /**
+   * Check whether the editor with the given id is currently open.
+   * @param {string} id - The editor id.
+   * @returns {boolean} True when that editor is active.
+   */
   const editorOpen = id => editor.active === id;
+  /**
+   * Get the current draft value of the active editor.
+   * @returns {string} The draft value.
+   */
   const editorValue = () => editor.value;
+  /**
+   * Open the editor for a given id, seeding its draft value.
+   * @param {string} id - The editor id to activate.
+   * @param {string} value - The initial draft value.
+   * @returns {void}
+   */
   const openEditor = (id, value) => {
     if (!id) return;
     setEditor({
@@ -16,10 +39,19 @@ export function createInlineEditorController() {
       value
     });
   };
+  /**
+   * Close the active editor and clear its draft value.
+   * @returns {void}
+   */
   const closeEditor = () => setEditor({
     active: "",
     value: ""
   });
+  /**
+   * Commit the trimmed draft value: close the editor and, if non-empty, invoke the callback with it.
+   * @param {Function} callback - Receives the trimmed value when it is non-empty.
+   * @returns {void}
+   */
   const saveEditor = callback => {
     const next = editor.value.trim();
     if (!next) {
@@ -29,6 +61,12 @@ export function createInlineEditorController() {
     closeEditor();
     callback(next);
   };
+  /**
+   * Keyboard handler for the editor input: Enter commits (via saveEditor), Escape cancels.
+   * @param {KeyboardEvent} event - The keydown event.
+   * @param {Function} callback - Save callback forwarded to saveEditor on Enter.
+   * @returns {void}
+   */
   const editorKeyDown = (event, callback) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -39,6 +77,20 @@ export function createInlineEditorController() {
     event.preventDefault();
     closeEditor();
   };
+  /**
+   * Component that renders an inline value: a static display span by default,
+   * swapping to an editable input while editing (auto-focused on mount).
+   * @param {Object} props - Component props.
+   * @param {string} props.id - Editor id used to track the active editor.
+   * @param {Function} props.value - Accessor returning the current display value.
+   * @param {Function} props.onSave - Called with the new value when an edit is committed.
+   * @param {boolean} props.editing - Optional override forcing edit mode regardless of active id.
+   * @param {boolean} props.stopPropagation - Optional flag to stop propagation of pointer/click events on the display span.
+   * @param {boolean} props.openOnDblClick - Optional flag (default true) enabling double-click to open the editor.
+   * @param {string} props.class - Class applied to the input and (by default) the display span.
+   * @param {string} props.displayClass - Optional class applied to the display span instead of `class`.
+   * @returns {*} A reactive accessor yielding the input or display element.
+   */
   const InlineEditor = props => {
     let frame;
     onCleanup(() => {

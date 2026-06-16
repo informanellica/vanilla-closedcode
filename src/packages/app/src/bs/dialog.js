@@ -1,6 +1,16 @@
+/**
+ * @file Dialog component: a reactive Bootstrap-modal wrapper used inside the UI
+ * tree, with header/title/action, optional description and floating close
+ * button, and cleanup of Bootstrap's modal artifacts on unmount.
+ */
 import { IconButton } from "@/bs/icon-button.js";
 import { onCleanup } from "../lib/reactivity.js";
 
+/**
+ * Request that the dialog close: invoke the `onClose` prop and dispatch a
+ * synthetic Escape keydown so listeners that close on Escape also fire.
+ * @param {Object} props - The dialog props (read for `onClose`).
+ */
 function requestClose(props) {
   props.onClose?.();
   if (typeof window === "undefined") return;
@@ -9,6 +19,10 @@ function requestClose(props) {
   );
 }
 
+/**
+ * Remove leftover Bootstrap modal artifacts (orphaned backdrop, body lock,
+ * inline overflow/padding) that remain if a modal is torn down out of band.
+ */
 function cleanupBootstrapModalLeftovers() {
   if (typeof document === "undefined") return;
   document.querySelectorAll(".modal-backdrop").forEach(b => b.remove());
@@ -17,6 +31,11 @@ function cleanupBootstrapModalLeftovers() {
   document.body.style.removeProperty("padding-right");
 }
 
+/**
+ * Map a logical dialog size to its Bootstrap modal-dialog size class.
+ * @param {string} size - Size keyword (x-large/large/small/normal).
+ * @returns {string} The Bootstrap size class, or empty string for normal.
+ */
 const dialogSizeClass = size => {
   switch (size) {
     case "x-large":
@@ -30,6 +49,23 @@ const dialogSizeClass = size => {
   }
 };
 
+/**
+ * Reactive Bootstrap modal dialog component. Builds the modal DOM (optional
+ * header with title/action or floating close button, optional description, and
+ * a body holding the children), shows it via `window.bootstrap.Modal` when
+ * available, and tears the modal down on cleanup. Mounts itself immediately on
+ * creation.
+ * @param {Object} props - Component props.
+ * @param {string} props.title - Optional header title.
+ * @param {Node} props.action - Optional header action element (replaces the close button).
+ * @param {string} props.description - Optional description text below the header.
+ * @param {*} props.children - Dialog body content (string/number, Node, or array of Nodes).
+ * @param {string} props.size - Dialog size (x-large/large/small/normal).
+ * @param {boolean} props.fit - When true, sets the `data-fit` styling hint.
+ * @param {string} props.class - Extra class applied to the modal content.
+ * @param {Function} props.onClose - Called when the dialog requests to close.
+ * @returns {HTMLElement} The modal root element.
+ */
 export function Dialog(props) {
   let modalEl;
   let instance;

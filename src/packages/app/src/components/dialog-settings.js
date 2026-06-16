@@ -1,3 +1,4 @@
+/** @file Settings dialog: a vertical tabbed dialog (General, Shortcuts, server/providers) with an app name/version/build footer. */
 import { createComponent, createEffect, createMemo } from "../lib/reactivity.js";
 import { Dialog } from "@/bs/dialog.js";
 import { Tabs } from "@/bs/tabs.js";
@@ -10,10 +11,23 @@ import { SettingsServer } from "./settings-server.js";
 import { SettingsProviders } from "./settings-providers.js";
 import { SettingsModels } from "./settings-models.js";
 
+/**
+ * Settings dialog component. Renders a vertical Tabs layout with a tab list (General, Shortcuts,
+ * server/providers) and matching content panes, plus an app name/version/build info footer.
+ * @param {Object} props - Component props; props.tab selects the initially active tab (defaults to "general").
+ * @returns {Node} The dialog component instance.
+ */
 export const DialogSettings = props => {
   const language = useLanguage();
   const platform = usePlatform();
 
+  /**
+   * Create a DOM element with optional class, attributes, and children.
+   * @param {string} tag - The element tag name.
+   * @param {Object} options - Optional {class, attrs} where attrs is a name/value record of attributes.
+   * @param {Array} children - Child strings (text nodes) or Node instances to append.
+   * @returns {HTMLElement} The created element.
+   */
   const el = (tag, options = {}, children = []) => {
     const node = document.createElement(tag);
     if (options.class) node.className = options.class;
@@ -29,6 +43,10 @@ export const DialogSettings = props => {
 
   // App name / "V{version}" / "build {buildId}" block pinned to the bottom of
   // the tab list; the texts are signal-backed, so connect them via effects.
+  /**
+   * Build the footer block showing the localized app name, version, and build id (reactively bound).
+   * @returns {HTMLElement} The footer element.
+   */
   const buildInfo = () => {
     const appName = el("span");
     createEffect(() => { appName.textContent = language.t("app.name.desktop"); });
@@ -46,6 +64,11 @@ export const DialogSettings = props => {
     return el("div", { class: "d-flex flex-column gap-1 pl-1 py-1 small fw-medium text-secondary" }, [appName, version, build]);
   };
 
+  /**
+   * Build the vertical tab list: a Desktop section (General, Shortcuts triggers) and an LLM section
+   * (server/provider trigger), with the build-info footer pinned to the bottom.
+   * @returns {HTMLElement} The tab list container element.
+   */
   const tabsList = () => {
     const sectionTitle = createComponent(Tabs.SectionTitle, {
       get children() { return language.t("settings.section.desktop"); }
@@ -96,6 +119,10 @@ export const DialogSettings = props => {
     return el("div", { class: "d-flex flex-column justify-content-between h-100 w-100" }, [sections, buildInfo()]);
   };
 
+  /**
+   * Build the tab content panes (General, Shortcuts, and the consolidated server/provider manager).
+   * @returns {Array} The Tabs.Content component instances.
+   */
   const tabsContent = () => [
     createComponent(Tabs.Content, {
       value: "general",

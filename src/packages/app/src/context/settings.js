@@ -1,3 +1,4 @@
+/** @file Settings context: persisted user preferences (general/appearance/keybinds/notifications/sounds) plus font-family helpers and CSS variable wiring. */
 import { createStore, reconcile } from "../lib/store.js";
 import { createEffect, createMemo } from "../lib/reactivity.js";
 import { createSimpleContext } from "@/lib/context.js";
@@ -11,33 +12,79 @@ const terminalFallback = '"JetBrainsMono Nerd Font Mono", ui-monospace, SFMono-R
 const monoBase = monoFallback;
 const sansBase = sansFallback;
 const terminalBase = terminalFallback;
+/**
+ * Normalize a stored font value into a form-input string (empty string when unset).
+ * @param {string} font - The stored font name, or undefined.
+ * @returns {string} The font name, or an empty string when not set.
+ */
 function input(font) {
   return font ?? "";
 }
+/**
+ * Quote a font name for use in a CSS font-family stack, escaping backslashes and quotes.
+ * @param {string} font - The font name to format.
+ * @returns {string} The bare name (if a simple identifier) or a quoted, escaped name.
+ */
 function family(font) {
   if (/^[\w-]+$/.test(font)) return font;
   return `"${font.replaceAll("\\", "\\\\").replaceAll('"', '\\"')}"`;
 }
+/**
+ * Build a CSS font-family stack from a chosen font and a fallback stack.
+ * @param {string} font - The user-chosen font name; falls back to base when empty.
+ * @param {string} base - The fallback font stack to append.
+ * @returns {string} The chosen font prepended to the base stack, or just the base.
+ */
 function stack(font, base) {
   const value = font?.trim() ?? "";
   if (!value) return base;
   return `${family(value)}, ${base}`;
 }
+/**
+ * Get the monospace font value for a form input.
+ * @param {string} font - The stored monospace font name.
+ * @returns {string} The input string for the monospace font.
+ */
 export function monoInput(font) {
   return input(font);
 }
+/**
+ * Get the sans-serif font value for a form input.
+ * @param {string} font - The stored sans-serif font name.
+ * @returns {string} The input string for the sans-serif font.
+ */
 export function sansInput(font) {
   return input(font);
 }
+/**
+ * Build the CSS monospace font-family stack for the chosen font.
+ * @param {string} font - The user-chosen monospace font name.
+ * @returns {string} The CSS font-family value (chosen font + monospace fallback).
+ */
 export function monoFontFamily(font) {
   return stack(font, monoBase);
 }
+/**
+ * Build the CSS sans-serif font-family stack for the chosen font.
+ * @param {string} font - The user-chosen sans-serif font name.
+ * @returns {string} The CSS font-family value (chosen font + sans-serif fallback).
+ */
 export function sansFontFamily(font) {
   return stack(font, sansBase);
 }
+/**
+ * Get the terminal font value for a form input.
+ * @param {string} font - The stored terminal font name.
+ * @returns {string} The input string for the terminal font.
+ */
 export function terminalInput(font) {
   return input(font);
 }
+/**
+ * Build the CSS terminal font-family stack for the chosen font.
+ * @param {string} font - The user-chosen terminal font name.
+ * @returns {string} The CSS font-family value (chosen font + terminal fallback).
+ */
 export function terminalFontFamily(font) {
   return stack(font, terminalBase);
 }
@@ -90,9 +137,22 @@ const defaultSettings = {
     errors: "nope-03"
   }
 };
+/**
+ * Wrap a reactive accessor with a default, returning the fallback when the read is nullish.
+ * @param {Function} read - Reactive accessor returning the stored value (or nullish).
+ * @param {*} fallback - Value to use when the read returns null/undefined.
+ * @returns {Function} A memo accessor yielding the value or the fallback.
+ */
 function withFallback(read, fallback) {
   return createMemo(() => read() ?? fallback);
 }
+/**
+ * Settings context. `useSettings` returns the settings store with reactive
+ * accessors and setters grouped by section (general, updates, appearance,
+ * keybinds, permissions, notifications, sounds); `SettingsProvider` provides it.
+ * The init effect mirrors appearance settings onto CSS custom properties and
+ * pins the CodeMirror editor font.
+ */
 export const {
   use: useSettings,
   provider: SettingsProvider

@@ -1,4 +1,13 @@
+/** @file Hover/focus tooltip component and a keybind-labelled variant (vanilla reimplementation). */
+
 import { insert, onCleanup } from "../lib/reactivity.js";
+
+/**
+ * Builds the inline CSS positioning the tooltip popover relative to its trigger.
+ * @param {string} placement - One of "top", "bottom", "left", "right",
+ *   "top-start", "bottom-start". Unknown values fall back to "top".
+ * @returns {string} A CSS text string for the popover's `style` attribute.
+ */
 const placementStyle = (placement) => {
   switch (placement) {
     case "bottom":
@@ -20,6 +29,19 @@ const placementStyle = (placement) => {
   }
 };
 
+/**
+ * Wraps its children in a trigger element that shows a tooltip popover on
+ * hover/focus. The popover is created lazily and removed when closed; it also
+ * closes on any ancestor scroll.
+ * @param {Object} props - Component props. Recognized keys: `children`
+ *   (trigger content; string, Node, function, or array), `value` (tooltip
+ *   content; string or Node), `placement` (see placementStyle; default "top"),
+ *   `forceOpen` (boolean; keeps the tooltip permanently shown), `inactive`
+ *   (boolean; returns children unwrapped with no tooltip), `class` (CSS classes
+ *   on the trigger), `contentClass` (CSS classes on the popover), and
+ *   `contentStyle` (extra inline style appended to the popover).
+ * @returns {*} The trigger element, or the raw `children` when `inactive`.
+ */
 export function Tooltip(props) {
   const inert = { open: false };
   const id = "tooltip-" + Math.random().toString(36).slice(2);
@@ -134,6 +156,15 @@ export function Tooltip(props) {
   return triggerEl;
 }
 
+/**
+ * A Tooltip whose content is a title text plus a styled keybind badge. Forwards
+ * all other props to {@link Tooltip}.
+ * @param {Object} props - Component props. Recognized keys: `title` (tooltip
+ *   text; string or Node), `keybind` (shortcut label rendered in a badge;
+ *   string or Node), plus any prop accepted by {@link Tooltip} (e.g.
+ *   `children`, `placement`, `forceOpen`).
+ * @returns {*} The Tooltip element produced with the composed content.
+ */
 export function TooltipKeybind(props) {
   const container = document.createElement("span");
   container.setAttribute("data-slot", "tooltip-keybind");

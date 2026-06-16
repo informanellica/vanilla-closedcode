@@ -1,3 +1,5 @@
+/** @file Session page: the main session view assembling the editor/file-tab area, message timeline, composer dock, review panel, file tree, and terminal, plus history-windowing and scroll/auto-scroll management. */
+
 // insert() from solid-js/web is the established exception for reactive and
 // component-valued children (runtime Show/For/Switch return memo accessors),
 // so Solid keeps reconciling accessors instead of freezing them.
@@ -62,6 +64,12 @@ import { same } from "@/utils/same.js";
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Static markup only — translated/user strings are assigned via textContent.
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -74,6 +82,18 @@ const emptyFollowups = [];
  *
  * It keeps initial paint bounded to recent turns, reveals cached turns in
  * small batches while scrolling upward, and prefetches older history near top.
+ *
+ * @param {Object} input - Reactive inputs and callbacks.
+ * @param {Function} input.sessionID - Accessor for the current session id.
+ * @param {Function} input.messagesReady - Accessor: true once messages are loaded.
+ * @param {Function} input.loaded - Accessor for the total loaded message count.
+ * @param {Function} input.visibleUserMessages - Accessor for the visible user messages.
+ * @param {Function} input.historyMore - Accessor: true when more history can be fetched.
+ * @param {Function} input.historyLoading - Accessor: true while history is loading.
+ * @param {Function} input.loadMore - Fetches more history for a session id.
+ * @param {Function} input.userScrolled - Accessor: true when the user has scrolled.
+ * @param {Function} input.scroller - Accessor for the scroll container element.
+ * @returns {Object} The window controls: turnStart, setTurnStart, renderedUserMessages, loadAndReveal, onScrollerScroll.
  */
 function createSessionHistoryWindow(input) {
   const turnInit = 10;
@@ -264,6 +284,14 @@ function createSessionHistoryWindow(input) {
     onScrollerScroll
   };
 }
+/**
+ * Session page component. Builds the full session view: editor/file-tab area,
+ * message timeline, composer dock, review panel, file tree, terminal, and the
+ * surrounding reactive state (history windowing, scroll/auto-scroll, VCS diffs,
+ * followups, reverts, and keyboard handling).
+ *
+ * @returns {HTMLElement} The session page root element.
+ */
 export default function Page() {
   const globalSync = useGlobalSync();
   const layout = useLayout();
@@ -373,10 +401,22 @@ export default function Page() {
     return "";
   });
   const centered = createMemo(() => isDesktop() && !desktopReviewOpen());
+  /**
+   * Normalizes a tab id, converting raw "file://" URIs into the file tab form.
+   *
+   * @param {string} tab - The tab identifier to normalize.
+   * @returns {string} The normalized tab identifier.
+   */
   function normalizeTab(tab) {
     if (!tab.startsWith("file://")) return tab;
     return file.tab(tab);
   }
+  /**
+   * Normalizes a list of tab ids and removes duplicates, preserving order.
+   *
+   * @param {Array} list - The tab identifiers to normalize.
+   * @returns {Array} The de-duplicated, normalized tab identifiers.
+   */
   function normalizeTabs(list) {
     const seen = new Set();
     const next = [];
@@ -584,6 +624,13 @@ export default function Page() {
     if (near) return near.id;
     return list.filter(item => item.top <= line).at(-1)?.id ?? list[0]?.id ?? store.messageId;
   };
+  /**
+   * Moves the active-message cursor by a relative offset over the visible user
+   * messages, scrolling to the target turn (or resuming bottom auto-scroll).
+   *
+   * @param {number} offset - Signed number of turns to move (negative = older).
+   * @returns {void}
+   */
   function navigateMessageByOffset(offset) {
     const msgs = visibleUserMessages();
     if (msgs.length === 0) return;
@@ -840,6 +887,13 @@ export default function Page() {
   // Closing a tab with unsaved edits would silently discard them, so prompt
   // first (Bootstrap modal). Only the active tab's editor is mounted, so the
   // dirty flag reflects the active tab; non-active tabs close immediately.
+  /**
+   * Closes a file tab, prompting to save/discard when the active tab has
+   * unsaved edits, and dropping any stashed unsaved buffer content.
+   *
+   * @param {string} tab - The file tab identifier to close.
+   * @returns {Promise} Resolves once the tab is closed (or the close is cancelled).
+   */
   const closeFileTab = async tab => {
     const rel = file.pathFromTab(tab);
     const untitled = !!rel && rel.startsWith("__untitled__/");
@@ -895,6 +949,13 @@ export default function Page() {
   });
   // Close a session tab = archive it; if it was the active session, switch to
   // another (or a fresh new session).
+  /**
+   * Archives a session (closing its tab); if it was the active session,
+   * navigates to another open session or a fresh new-session route.
+   *
+   * @param {Object} session - The session record to archive (id, directory).
+   * @returns {Promise} Resolves once the archive and any navigation complete.
+   */
   const archiveSessionTab = async session => {
     if (!session?.id) return;
     const wasActive = session.id === params.id;
@@ -960,12 +1021,25 @@ export default function Page() {
   };
   // Empty-state container (_tmpl$): callers pass an already-evaluated string,
   // matching the compiled static insert.
+  /**
+   * Builds a centered empty-state container with a message.
+   *
+   * @param {string} text - The already-translated message to display.
+   * @returns {HTMLElement} The empty-state element.
+   */
   const empty = text => {
     const root = template(`<div class="h-full pb-64 -mt-4 d-flex flex-column align-items-center justify-content-center text-center gap-6"><div class="text-secondary max-w-56"></div></div>`);
     root.firstChild.textContent = text;
     return root;
   };
   // "Create git repo" empty state (_tmpl$2).
+  /**
+   * Builds the "create git repo" empty state with an init-git action button.
+   *
+   * @param {Object} input - Options.
+   * @param {string} input.emptyClass - CSS class applied to the root container.
+   * @returns {HTMLElement} The create-git empty-state element.
+   */
   const createGit = input => {
     const root = template(`<div><div class="d-flex flex-column gap-3"><div class="fw-medium text-body-emphasis"></div><div class="text-body max-w-md" style="line-height:var(--line-height-normal)"></div></div></div>`);
     const column = root.firstChild;
@@ -1005,6 +1079,15 @@ export default function Page() {
     if (store.changes === "branch") return language.t("session.review.noBranchChanges");
     return language.t("session.review.noChanges");
   });
+  /**
+   * Builds the appropriate review empty-state for the current changes mode
+   * (loading placeholder, no-changes message, or the create-git prompt).
+   *
+   * @param {Object} input - Options.
+   * @param {string} input.loadingClass - CSS class for the loading placeholder.
+   * @param {string} input.emptyClass - CSS class for the empty-state container.
+   * @returns {HTMLElement} The review empty-state element.
+   */
   const reviewEmpty = input => {
     if (store.changes === "git" || store.changes === "branch") {
       if (!reviewReady()) {
@@ -1045,6 +1128,13 @@ export default function Page() {
     });
     return root;
   };
+  /**
+   * Builds the review tab content (deferred until the page settles), wiring
+   * the diff list, comments, and review interaction callbacks.
+   *
+   * @param {Object} input - Review options (diffStyle, onDiffStyleChange, classes, empty/loading classes).
+   * @returns {Node} The review content component (a Show gate).
+   */
   const reviewContent = input => createComponent(Show, {
     get when() {
       return !store.deferRender;

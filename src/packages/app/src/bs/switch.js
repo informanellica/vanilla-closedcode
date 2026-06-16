@@ -1,3 +1,17 @@
+/** @file Bootstrap form-switch (toggle) component (vanilla reimplementation). */
+
+/**
+ * Renders a Bootstrap toggle switch: a checkbox input styled as a switch with
+ * an associated label.
+ * @param {Object} props - Component props. Recognized keys: `checked` (boolean
+ *   initial state), `disabled` (boolean), `class` (extra CSS classes on the
+ *   container), `hideLabel` (boolean; visually hides the label), `children`
+ *   (label content; Node, function, array, or primitive), `onChange` (called
+ *   with the new boolean checked state), `style` (object applied to the
+ *   container), and any other `on*` handler or attribute applied to the
+ *   container.
+ * @returns {HTMLElement} The container `<div>` holding the input and label.
+ */
 export function Switch(props) {
   const container = document.createElement("div");
   container.setAttribute("data-component", "switch");

@@ -1,7 +1,15 @@
+/**
+ * @file DropdownMenu component family: a vanilla, context-driven dropdown menu
+ * (Root/Trigger/Content/Portal/Item/RadioGroup/CheckboxItem/Sub/...) that
+ * positions a body-portaled content panel relative to its trigger, manages
+ * controlled/uncontrolled open state, outside-click/Escape dismissal, and
+ * radio/checkbox selection — all on plain DOM with reactive prop tracking.
+ */
 import { createRenderEffect, getOwner, onCleanup } from "../lib/reactivity.js";
 import { insert } from "../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
+/** Maps a placement keyword to the Bootstrap dropdown-menu alignment class. */
 const PLACEMENT_CLASS = {
   bottom: "dropdown-menu-start",
   "bottom-start": "dropdown-menu-start",
@@ -11,6 +19,11 @@ const PLACEMENT_CLASS = {
   "top-end": "dropdown-menu-end"
 };
 
+/**
+ * Build a detached element from a compact static HTML string.
+ * @param {string} html - Static markup.
+ * @returns {Element} The first element parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -21,6 +34,14 @@ function template(html) {
 // createComponent props are signal-backed getters, and copying their value once
 // freezes every controlled prop (open/checked/disabled/value/placement/…) at
 // its creation-time value. Mirrors Solid's own splitProps semantics.
+/**
+ * Split props into a `local` set (the given keys) and a `rest` set, forwarding
+ * each key as a live getter so signal-backed (controlled) props are not frozen
+ * at their creation-time value.
+ * @param {Object} props - The source props.
+ * @param {Array} keys - Keys to route into the `local` object.
+ * @returns {Array} A two-element array `[local, rest]`.
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -35,6 +56,14 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Recursively append a children value to a parent. Reactive (function) children
+ * are tracked via insert() so they re-render; `wrap` re-establishes the
+ * dropdown's module-variable context around each lazy evaluation.
+ * @param {Element} parent - Parent element to append into.
+ * @param {*} children - Children value (node, array, function, primitive, or nullish).
+ * @param {Function} wrap - Optional wrapper that restores context around reactive children.
+ */
 function appendChildren(parent, children, wrap) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -57,6 +86,12 @@ function appendChildren(parent, children, wrap) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Apply a Solid-style classList map to an element, splitting space-separated
+ * multi-class keys (which DOMTokenList.add/remove reject) into single tokens.
+ * @param {Element} el - Target element.
+ * @param {Object} classList - Map of class key to boolean (truthy = add).
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -70,6 +105,13 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Apply the "rest" props to an element: `on*` props become event listeners,
+ * DOM-property names are set directly when possible, otherwise attributes are
+ * set/removed. Skips class/classList/children.
+ * @param {Element} el - Target element.
+ * @param {Object} rest - The remaining props to apply.
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -95,18 +137,36 @@ function applyRestProps(el, rest) {
   }
 }
 
+/** Module-scoped current dropdown state, set while a Root subtree is built. */
 let DropdownContext = null;
+/** Module-scoped current radio-group state, set while a group subtree is built. */
 let RadioContext = null;
+/** Monotonic counter used to mint unique trigger element ids. */
 let nextId = 0;
 
+/**
+ * Read the dropdown state in scope for the current subtree.
+ * @returns {Object} The current dropdown state, or null.
+ */
 function useDropdown() {
   return DropdownContext;
 }
 
+/**
+ * Read the radio-group state in scope for the current subtree.
+ * @returns {Object} The current radio-group state, or null.
+ */
 function useRadio() {
   return RadioContext;
 }
 
+/**
+ * Create the state object that drives a dropdown menu: open/close logic
+ * (controlled via `local.open` or uncontrolled), content positioning relative
+ * to the trigger, element registration, and DOM syncing.
+ * @param {Object} local - The dropdown's local props (open/onOpenChange/placement/gutter).
+ * @returns {Object} The dropdown state API (isOpen, setOpen, toggle, close, register helpers, sync, etc.).
+ */
 function createDropdownState(local) {
   let uncontrolled = !!local.defaultOpen;
   let rootEl = null;
@@ -125,6 +185,11 @@ function createDropdownState(local) {
   const toggle = () => setOpen(!isOpen());
   const close = () => setOpen(false);
 
+  /**
+   * Position the content panel (position:fixed) next to the trigger on the next
+   * animation frame, honoring placement/gutter and flipping/clamping to keep it
+   * within the viewport.
+   */
   const positionContent = () => {
     if (!contentEl || !triggerEl || !isOpen()) return;
     requestAnimationFrame(() => {
@@ -151,6 +216,11 @@ function createDropdownState(local) {
     });
   };
 
+  /**
+   * Reflect the current open state onto the registered root/trigger/content
+   * elements (show classes, aria-expanded, placement class, display) and
+   * reposition the content.
+   */
   const sync = () => {
     const open = isOpen();
     if (rootEl) {
@@ -207,10 +277,20 @@ function createDropdownState(local) {
   };
 }
 
+/**
+ * Create the state object that drives a radio group: tracks registered items
+ * and indicators, exposes the controlled value, and syncs each item's
+ * active/aria-checked state and each indicator's visibility.
+ * @param {Object} local - The radio group's local props (value/onChange).
+ * @returns {Object} The radio-group state API (value/onChange/isSelected/registerItem/registerIndicator/sync).
+ */
 function createRadioState(local) {
   const items = new Set();
   const indicators = new Set();
   const readValue = () => local.value;
+  /**
+   * Reflect the selected value onto every registered item and indicator.
+   */
   const sync = () => {
     const selected = readValue();
     for (const item of items) {
@@ -242,6 +322,21 @@ function createRadioState(local) {
   };
 }
 
+/**
+ * Root of a dropdown menu. Creates the dropdown state, builds the root element,
+ * installs document-level outside-click/Escape listeners (self-healing if
+ * created without an owner), re-syncs on controlled-prop changes, and renders
+ * its children within this menu's context.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.open - Controlled open state.
+ * @param {Function} props.onOpenChange - Called with the new open boolean.
+ * @param {number} props.gutter - Gap in pixels between trigger and content.
+ * @param {string} props.placement - Placement keyword (e.g. "bottom-start").
+ * @param {string} props.class - Extra class string.
+ * @param {Object} props.classList - Class-name-to-boolean map.
+ * @param {*} props.children - Trigger, content, and other menu parts.
+ * @returns {HTMLElement} The dropdown root element.
+ */
 function DropdownMenuRoot(props) {
   const [local, rest] = splitProps(props, ["open", "onOpenChange", "gutter", "placement", "class", "classList", "children"]);
   const previousContext = DropdownContext;

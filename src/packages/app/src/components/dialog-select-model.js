@@ -16,12 +16,37 @@ import { Tooltip } from "@/bs/tooltip.js";
 import { ModelTooltip } from "./model-tooltip.js";
 import { useLanguage } from "@/context/language.js";
 import { isLocalURL } from "@/utils/is-local-url.js";
+
+/** @file Model-selection UI: a searchable, grouped list of configured local models, rendered both as a Popover (ModelSelectorPopover) and a Dialog (DialogSelectModel), with shortcuts to connect/manage providers. */
+
+/**
+ * Whether a model is free (cost-free opencode model).
+ * @param {string} provider - The provider id.
+ * @param {Object} cost - The model cost descriptor (may have an `input` price).
+ * @returns {boolean} True if the model is treated as free.
+ */
 const isFree = (provider, cost) => provider === "opencode" && (!cost || cost.input === 0);
+/**
+ * Whether the provider points at a local endpoint (by its baseURL).
+ * @param {Object} options - Provider options that may contain a `baseURL` string.
+ * @returns {boolean} True if the baseURL is a local URL.
+ */
 function isLocalProvider(options) {
   const baseURL = options?.["baseURL"];
   if (typeof baseURL !== "string" || !baseURL) return false;
   return isLocalURL(baseURL);
 }
+/**
+ * Searchable, provider-grouped list of locally-configured models with hover
+ * tooltips and free/latest tags. Selecting a model sets it as current.
+ * @param {Object} props - Component props.
+ * @param {Object} props.model - Optional model store (defaults to the local model store).
+ * @param {string} props.provider - Optional provider id to scope the list to.
+ * @param {*} props.action - Optional action node(s) rendered in the search bar.
+ * @param {string} props.class - Optional extra CSS classes for the list.
+ * @param {Function} props.onSelect - Called after a model is selected.
+ * @returns {Node} The List element.
+ */
 const ModelList = props => {
   const model = props.model ?? useLocal().model;
   const language = useLanguage();
@@ -146,16 +171,37 @@ const ModelList = props => {
     }
   });
 };
+/**
+ * Popover wrapper around ModelList: a click-toggle trigger that opens a panel
+ * with the model picker and shortcuts to connect/manage providers in Settings.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - The trigger content.
+ * @param {string} props.provider - Optional provider id to scope the list.
+ * @param {Object} props.model - Optional model store passed to ModelList.
+ * @param {string} props.triggerAs - Optional element/component to render the trigger as (defaults to "div").
+ * @param {Object} props.triggerProps - Optional props forwarded to the trigger.
+ * @param {Function} props.onClose - Called with the dismiss reason ("escape"/"select").
+ * @returns {Node} The Popover element.
+ */
 export function ModelSelectorPopover(props) {
   const [store, setStore] = createStore({
     open: false,
     dismiss: null
   });
   const dialog = useDialog();
+  /**
+   * Close the popover, recording the dismiss reason.
+   * @param {string} dismiss - The dismiss reason.
+   * @returns {void}
+   */
   const close = dismiss => {
     setStore("dismiss", dismiss);
     setStore("open", false);
   };
+  /**
+   * Close the popover and open Settings on the connection (LLM) tab to manage models.
+   * @returns {void}
+   */
   const handleManage = () => {
     close("manage");
     // Model management lives in Settings → LLM → サーバー・プロバイダ now
@@ -166,6 +212,10 @@ export function ModelSelectorPopover(props) {
       }));
     });
   };
+  /**
+   * Close the popover and open Settings on the connection (LLM) tab to connect a provider.
+   * @returns {void}
+   */
   const handleConnectProvider = () => {
     close("provider");
     // Pulling/adding models and connecting providers all happen in Settings →
@@ -181,11 +231,21 @@ export function ModelSelectorPopover(props) {
   // trigger, Esc/outside dismissal + flip positioning handled by the component.
   // The dismiss reason (escape/outside) arrives via onDismiss; select/manage
   // reasons are set on `store` by the handlers below before they close.
+  /**
+   * Forward escape/select dismissals to the caller's onClose.
+   * @param {string} dismiss - The dismiss reason.
+   * @returns {void}
+   */
   const onClose = dismiss => {
     if (dismiss === "escape" || dismiss === "select") {
       props.onClose?.(dismiss);
     }
   };
+  /**
+   * Build the popover body (sr-only title + ModelList with search-bar actions)
+   * while open; returns undefined when closed.
+   * @returns {Array|undefined} The body nodes, or undefined when closed.
+   */
   // Presence-gated content thunk: re-evaluated by the Popover's body insert()
   // only while open (the established insert() exception). The sr-only title and
   // the ModelList are rebuilt per open, matching the original content remount.
@@ -281,6 +341,14 @@ export function ModelSelectorPopover(props) {
     children: renderBody
   });
 }
+/**
+ * Dialog wrapper around ModelList: a full model picker with a header action to
+ * connect a provider and a footer link to manage models in Settings.
+ * @param {Object} props - Component props.
+ * @param {string} props.provider - Optional provider id to scope the list.
+ * @param {Object} props.model - Optional model store passed to ModelList.
+ * @returns {Node} The Dialog element.
+ */
 export const DialogSelectModel = props => {
   const dialog = useDialog();
   const language = useLanguage();

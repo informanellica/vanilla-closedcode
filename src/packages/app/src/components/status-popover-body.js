@@ -14,10 +14,19 @@ import { normalizeServerUrl, ServerConnection, useServer } from "@/context/serve
 import { useSync } from "@/context/sync.js";
 import { useCheckServerHealth } from "@/utils/server-health.js";
 import { useMcpController } from "@/controllers/mcp.js";
+
+/** @file Status popover body: tabbed view (servers / MCP / LSP / plugins) with live health and toggles. */
+
+/** Interval in milliseconds between server-health refresh polls. */
 const pollMs = 10_000;
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Build a detached element from compact HTML (first child returned).
+ * @param {string} html - Markup for a single root element.
+ * @returns {Element} The constructed element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -26,6 +35,12 @@ function template(html) {
 
 // Toggle space-separated class keys per the boolean map, mirroring Solid's
 // classList semantics (the key sets used here are constant across runs).
+/**
+ * Toggle space-separated class keys on an element per a boolean map.
+ * @param {Element} el - The element to update.
+ * @param {Object} classes - Map of "space separated class" keys to booleans.
+ * @returns {void}
+ */
 function applyClassList(el, classes) {
   for (const key in classes) {
     const tokens = key.split(/\s+/).filter(Boolean);
@@ -38,6 +53,13 @@ function applyClassList(el, classes) {
 // Plugins empty message, split so the config file name renders inside a
 // <code> chip. Returns an array of strings/nodes for replaceChildren; the
 // translated text always flows through text nodes (never markup).
+/**
+ * Split a translated "no plugins" message around a config file name so the file
+ * name can render inside a <code> chip.
+ * @param {string} value - The full translated message.
+ * @param {string} file - The config file name to highlight.
+ * @returns {Array} Strings/nodes suitable for replaceChildren.
+ */
 const pluginEmptyMessage = (value, file) => {
   const parts = value.split(file);
   if (parts.length === 1) return [value];
@@ -45,6 +67,14 @@ const pluginEmptyMessage = (value, file) => {
   code.textContent = file;
   return [parts[0], code, parts.slice(1).join(file)];
 };
+/**
+ * Sort server connections for display: the active server first, then by health
+ * (healthy, unknown, unhealthy), preserving the original order as a tie-breaker.
+ * @param {Array} list - The server connections.
+ * @param {string} active - Key of the active server connection.
+ * @param {Object} status - Map of connection key to health result.
+ * @returns {Array} A new sorted array of connections.
+ */
 const listServersByHealth = (list, active, status) => {
   if (!list.length) return list;
   const order = new Map(list.map((url, index) => [url, index]));
@@ -61,6 +91,12 @@ const listServersByHealth = (list, active, status) => {
     return (order.get(a) ?? 0) - (order.get(b) ?? 0);
   });
 };
+/**
+ * Reactive hook that polls health for a reactive server list while enabled.
+ * @param {Function} servers - Accessor returning the current server connections.
+ * @param {Function} enabled - Accessor returning whether polling is active.
+ * @returns {Object} A store mapping connection key to its latest health result.
+ */
 const useServerHealth = (servers, enabled) => {
   const checkServerHealth = useCheckServerHealth();
   const [status, setStatus] = createStore({});
@@ -88,6 +124,12 @@ const useServerHealth = (servers, enabled) => {
   });
   return status;
 };
+/**
+ * Reactive hook resolving the default server's connection key, supporting sync or
+ * Promise-returning getters and a manual refresh.
+ * @param {Function} get - Accessor/getter returning the default server URL (or a Promise of it).
+ * @returns {Object} An object with a key() accessor and a refresh() trigger.
+ */
 const useDefaultServerKey = get => {
   const [state, setState] = createStore({
     url: undefined,
@@ -133,6 +175,14 @@ const useDefaultServerKey = get => {
     refresh: () => setState("tick", value => value + 1)
   };
 };
+/**
+ * Status popover body. A tabbed panel (servers / MCP / LSP / plugins) with live
+ * counts in each tab label, server rows that switch the active server, MCP toggle
+ * switches, and LSP/plugin status lists.
+ * @param {Object} props - Component props.
+ * @param {Function} props.shown - Accessor returning whether the popover is open (gates health polling).
+ * @returns {Node} The popover body root element.
+ */
 export function StatusPopoverBody(props) {
   const sync = useSync();
   const server = useServer();
@@ -140,6 +190,11 @@ export function StatusPopoverBody(props) {
   const dialog = useDialog();
   const language = useLanguage();
   const navigate = useNavigate();
+  /**
+   * Show an error toast for a failed request.
+   * @param {*} err - The error (Error or otherwise).
+   * @returns {void}
+   */
   const fail = err => {
     showToast({
       variant: "error",
@@ -178,12 +233,21 @@ export function StatusPopoverBody(props) {
   const pluginEmpty = createMemo(() => pluginEmptyMessage(language.t("dialog.plugins.empty"), "closedcode.json"));
 
   // Shared per-tab body (_tmpl$2): outer padding wrapper + inner card.
+  /**
+   * Build the shared per-tab body shell.
+   * @returns {Object} An object with the {outer} wrapper and the inner {body} card element.
+   */
   const buildTabBody = () => {
     const outer = template(`<div class="d-flex flex-column px-2 pb-2"><div class="d-flex flex-column p-3 bg-body rounded-1 min-h-14"></div></div>`);
     return { outer, body: outer.firstElementChild };
   };
 
   // Centered empty-state line (_tmpl$7) whose translated text stays live.
+  /**
+   * Build a centered empty-state line whose text tracks a reactive reader.
+   * @param {Function} read - Accessor returning the (translated) text to display.
+   * @returns {Element} The empty-state element.
+   */
   const buildEmpty = read => {
     const empty = template(`<div class="fw-normal text-body text-center my-auto"></div>`);
     createRenderEffect(() => {
@@ -195,6 +259,13 @@ export function StatusPopoverBody(props) {
   // Tab trigger with a live "{count} {label}" caption. A SINGLE accessor:
   // the bs Trigger routes function children through marker-less insert(),
   // where sibling text accessors would clobber each other.
+  /**
+   * Build a tab trigger whose caption is a live "{count} {label}".
+   * @param {string} value - The tab's value (selection key).
+   * @param {Function} count - Accessor returning the current count shown before the label.
+   * @param {string} labelKey - i18n key for the tab label.
+   * @returns {Node} The Tabs.Trigger component.
+   */
   const buildTrigger = (value, count, labelKey) => createComponent(Tabs.Trigger, {
     value,
     class: "small fw-normal",
@@ -204,6 +275,12 @@ export function StatusPopoverBody(props) {
   });
 
   // One server row (_tmpl$5): health dot + ServerRow + spacer/check icon.
+  /**
+   * Build one server row (health dot, ServerRow, default badge, active check). Clicking
+   * a healthy row navigates home and activates that server; unhealthy rows are disabled.
+   * @param {Object} conn - The server connection to render.
+   * @returns {Element} The row button element.
+   */
   const buildServerRow = conn => {
     const key = ServerConnection.key(conn);
     const blocked = () => health[key]?.healthy === false;
@@ -260,6 +337,11 @@ export function StatusPopoverBody(props) {
     return row;
   };
 
+  /**
+   * Build the "servers" tab content: the health-sorted server rows plus a "manage
+   * servers" button that opens the server-selection dialog.
+   * @returns {Element} The tab content element.
+   */
   const buildServersContent = () => {
     const { outer, body } = buildTabBody();
     const rowsSlot = template(`<div style="display: contents"></div>`);
@@ -296,6 +378,12 @@ export function StatusPopoverBody(props) {
   };
 
   // One MCP row (_tmpl$8): status dot + name + toggle switch.
+  /**
+   * Build one MCP server row (colored status dot, name, enable/disable Switch). Clicking
+   * the row or toggling the switch flips the MCP server; the dot color tracks live status.
+   * @param {string} name - The MCP server name.
+   * @returns {Element} The row button element.
+   */
   const buildMcpRow = name => {
     const status = () => mcpStatus(name);
     const enabled = () => status() === "connected";
@@ -343,6 +431,10 @@ export function StatusPopoverBody(props) {
     return row;
   };
 
+  /**
+   * Build the "MCP" tab content: a row per configured MCP server, or an empty state.
+   * @returns {Element} The tab content element.
+   */
   const buildMcpContent = () => {
     const { outer, body } = buildTabBody();
     createEffect(() => {
@@ -357,6 +449,12 @@ export function StatusPopoverBody(props) {
   };
 
   // One LSP row (_tmpl$9): item is a store proxy, so name/status stay live.
+  /**
+   * Build one LSP server row (status dot + name). The item is a store proxy, so its
+   * name and status stay live via render effects.
+   * @param {Object} item - The LSP server record ({name, id, status}).
+   * @returns {Element} The row element.
+   */
   const buildLspRow = item => {
     const row = template(`<div class="d-flex align-items-center gap-2 w-100 px-2 py-1"><div></div><span class="fw-normal text-body truncate"></span></div>`);
     const dot = row.firstElementChild;
@@ -374,6 +472,10 @@ export function StatusPopoverBody(props) {
     return row;
   };
 
+  /**
+   * Build the "LSP" tab content: a row per LSP server, or an empty state.
+   * @returns {Element} The tab content element.
+   */
   const buildLspContent = () => {
     const { outer, body } = buildTabBody();
     createEffect(() => {
@@ -390,12 +492,22 @@ export function StatusPopoverBody(props) {
   };
 
   // One plugin row (_tmpl$0): static green dot + plugin name.
+  /**
+   * Build one plugin row (static green dot + plugin name).
+   * @param {string} plugin - The plugin name.
+   * @returns {Element} The row element.
+   */
   const buildPluginRow = plugin => {
     const row = template(`<div class="d-flex align-items-center gap-2 w-100 px-2 py-1"><div class="size-1.5 rounded-circle shrink-0 bg-success"></div><span class="fw-normal text-body truncate"></span></div>`);
     row.lastElementChild.textContent = plugin;
     return row;
   };
 
+  /**
+   * Build the "plugins" tab content: a row per plugin, or an empty state with the
+   * config file name in a <code> chip.
+   * @returns {Element} The tab content element.
+   */
   const buildPluginsContent = () => {
     const { outer, body } = buildTabBody();
     createEffect(() => {

@@ -1,3 +1,4 @@
+/** @file Collapsible error card for a failed tool invocation: shows a localized tool name, derived subtitle/body parsed from the error text, and a copy-to-clipboard control. */
 import { createComponent, createMemo, createRenderEffect, createRoot, onCleanup, splitProps } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 import { Card, CardDescription } from "./card.js";
@@ -7,6 +8,19 @@ import { IconButton } from "./icon-button.js";
 import { Tooltip } from "./tooltip.js";
 import { useI18n } from "../context/i18n.js";
 
+/**
+ * Collapsible card that displays a tool error. The header shows a localized tool
+ * name plus a subtitle derived from the error message (optionally a clickable
+ * subagent link when an href is supplied); the expanded body shows the cleaned
+ * error detail and a copy button. State (open/copied) is held in a local store.
+ * @param {Object} props - Component props (extra props pass through to the Card).
+ * @param {string} props.tool - Tool identifier used to resolve a localized display name.
+ * @param {string} props.error - Raw error message text; parsed into subtitle and body.
+ * @param {boolean} props.defaultOpen - Whether the card starts expanded.
+ * @param {string} props.subtitle - Optional explicit subtitle overriding the parsed one.
+ * @param {string} props.href - Optional link target; when set with a subtitle, renders the subtitle as an anchor.
+ * @returns {HTMLElement} The Card root element.
+ */
 export function ToolErrorCard(props) {
   const i18n = useI18n();
   const [state, setState] = createStore({
@@ -54,6 +68,11 @@ export function ToolErrorCard(props) {
     if (parts.length <= 1) return cleaned();
     return parts.slice(1).join(": ").trim() || cleaned();
   });
+  /**
+   * Copy the cleaned error text to the clipboard and flash the "copied" state
+   * for two seconds.
+   * @returns {Promise<void>} Resolves once the clipboard write completes.
+   */
   const copy = async () => {
     const text = cleaned();
     if (!text) return;
@@ -71,6 +90,12 @@ export function ToolErrorCard(props) {
   //         <div data-slot=basic-tool-tool-info-structured>
   //           <div data-slot=basic-tool-tool-info-main>
   //             <span data-slot=basic-tool-tool-title></span>
+  /**
+   * Build the Collapsible trigger subtree: the error icon, the live tool title,
+   * a reactively-mounted subtitle (anchor when an href + subtitle exist, else a
+   * plain span), and the collapsible arrow.
+   * @returns {HTMLElement} The trigger `<div>` element.
+   */
   const triggerContent = () => {
     const trigger = document.createElement("div");
     trigger.setAttribute("data-component", "tool-trigger");
@@ -120,6 +145,11 @@ export function ToolErrorCard(props) {
     // Both render the live `subtitle` memo as text. The branch is re-evaluated
     // reactively; a flip remounts the correct node in its own reactive root so
     // the previous branch's effects dispose, matching solid's <Show>.
+    /**
+     * Build the subtitle as a clickable subagent link with a live text and
+     * href, stopping click propagation so it doesn't toggle the collapsible.
+     * @returns {HTMLAnchorElement} The subtitle anchor element.
+     */
     const buildSubtitleLink = () => {
       const a = document.createElement("a");
       a.setAttribute("data-slot", "basic-tool-tool-subtitle");
@@ -143,6 +173,11 @@ export function ToolErrorCard(props) {
       });
       return a;
     };
+    /**
+     * Build the subtitle as a plain span with live text (used when there is no
+     * href or no subtitle to link).
+     * @returns {HTMLElement} The subtitle `<span>` element.
+     */
     const buildSubtitleSpan = () => {
       const span = document.createElement("span");
       span.setAttribute("data-slot", "basic-tool-tool-subtitle");
@@ -186,6 +221,13 @@ export function ToolErrorCard(props) {
 
   // ---- Collapsible.Content ----
   // Static skeleton mirroring _tmpl$4 (<div data-slot=tool-error-card-content>).
+  /**
+   * Build the Collapsible content subtree: a copy-button block that mounts only
+   * while the card is open, followed by a CardDescription that mounts only while
+   * there is body text. Both are kept in order via comment anchors and live in
+   * their own reactive roots so unmounting disposes their inner effects.
+   * @returns {HTMLElement} The content `<div>` element.
+   */
   const collapsibleContent = () => {
     const contentEl = document.createElement("div");
     contentEl.setAttribute("data-slot", "tool-error-card-content");
@@ -203,6 +245,12 @@ export function ToolErrorCard(props) {
     // the inner effects (icon/aria-label mirrors), matching solid's <Show>.
     let copyNode = null;
     let copyDispose = null;
+    /**
+     * Build the copy-button block: a tooltip-wrapped IconButton whose icon and
+     * aria-label reflect the current copied state and that copies the error on
+     * click.
+     * @returns {HTMLElement} The copy wrapper `<div>` element.
+     */
     const buildCopy = () => {
       // <div data-slot=tool-error-card-copy>
       const copyWrap = document.createElement("div");

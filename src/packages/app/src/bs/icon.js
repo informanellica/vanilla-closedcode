@@ -1,3 +1,8 @@
+/** @file Bootstrap-Icons-backed Icon component: maps internal icon names to Bootstrap Icons (bi-*) classes and renders an <i> element. */
+/**
+ * Map of internal icon names to their Bootstrap Icons (bi-*) class names.
+ * @type {Object}
+ */
 const iconMap = {
   agent: "bi-robot",
   theme: "bi-circle-half",

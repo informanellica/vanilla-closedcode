@@ -1,3 +1,4 @@
+/** @file File context: loads, caches, and watches file contents and the file tree for the active directory, with LRU content eviction and per-file editor view state. */
 import { batch, createEffect, createMemo, onCleanup } from "../lib/reactivity.js";
 import { createStore, produce, reconcile } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
@@ -16,11 +17,23 @@ import { invalidateFromWatcher } from "./file/watcher.js";
 import { selectionFromLines } from "./file/types.js";
 export { selectionFromLines };
 export { evictContentLru, getFileContentBytesTotal, getFileContentEntryCount, removeFileContentBytes, resetFileContentLru, setFileContentBytes, touchFileContent };
+/**
+ * Extract a human-readable message from a thrown error, falling back when none is available.
+ * @param {*} error - The caught error (Error, string, or other).
+ * @param {string} fallback - The message to return when no message can be extracted.
+ * @returns {string} The error message or the fallback.
+ */
 function errorMessage(error, fallback) {
   if (error instanceof Error && error.message) return error.message;
   if (typeof error === "string" && error) return error;
   return fallback;
 }
+/**
+ * File context. Provides `useFile` (consumer) and `FileProvider`. The context exposes file content
+ * loading/caching with LRU eviction, a watcher-driven invalidation pipeline, a lazily-loaded file
+ * tree, path normalization helpers, per-file editor view state (scroll/selection), and file/directory
+ * search. Re-exports content-cache utilities and selectionFromLines.
+ */
 export const {
   use: useFile,
   provider: FileProvider
@@ -54,6 +67,11 @@ export const {
         });
       }
     });
+    /**
+     * Evict least-recently-used file contents from the store, keeping the given files resident.
+     * @param {Set} keep - Set of file paths that must not be evicted.
+     * @returns {void}
+     */
     const evictContent = keep => {
       evictContentLru(keep, target => {
         if (!store.file[target]) return;
@@ -74,6 +92,11 @@ export const {
     });
     const viewCache = createFileViewCache();
     const view = createMemo(() => viewCache.load(scope(), params.id));
+    /**
+     * Ensure a file entry exists in the store, seeding its path and name.
+     * @param {string} file - The normalized file path.
+     * @returns {void}
+     */
     const ensure = file => {
       if (!file) return;
       if (store.file[file]) return;
@@ -82,12 +105,23 @@ export const {
         name: getFilename(file)
       });
     };
+    /**
+     * Mark a file as loading and clear any prior error.
+     * @param {string} file - The normalized file path.
+     * @returns {void}
+     */
     const setLoading = file => {
       setStore("file", file, produce(draft => {
         draft.loading = true;
         draft.error = undefined;
       }));
     };
+    /**
+     * Mark a file as loaded and store its content.
+     * @param {string} file - The normalized file path.
+     * @param {*} content - The loaded file content.
+     * @returns {void}
+     */
     const setLoaded = (file, content) => {
       setStore("file", file, produce(draft => {
         draft.loaded = true;
@@ -95,6 +129,12 @@ export const {
         draft.content = content;
       }));
     };
+    /**
+     * Mark a file load as failed, store the error message, and show an error toast.
+     * @param {string} file - The normalized file path.
+     * @param {string} message - The error message to record and display.
+     * @returns {void}
+     */
     const setLoadError = (file, message) => {
       setStore("file", file, produce(draft => {
         draft.loading = false;
@@ -106,6 +146,13 @@ export const {
         description: message
       });
     };
+    /**
+     * Load a file's content via the SDK (deduplicating in-flight requests and skipping already-loaded files
+     * unless forced), updating the store and content LRU; ignores responses from a stale directory scope.
+     * @param {string} input - The file path (will be normalized).
+     * @param {Object} options - Optional {force} to reload even when already loaded.
+     * @returns {Promise} Resolves when the load completes (or immediately when skipped).
+     */
     const load = (input, options) => {
       const file = path.normalize(input);
       if (!file) return Promise.resolve();
@@ -135,6 +182,12 @@ export const {
       inflight.set(key, promise);
       return promise;
     };
+    /**
+     * Search for files matching a query via the SDK, returning normalized paths (empty on error).
+     * @param {string} query - The search query.
+     * @param {string} dirs - Whether to include directories ("true"/"false").
+     * @returns {Promise<Array>} The matching normalized file paths.
+     */
     const search = (query, dirs) => sdk.client.find.files({
       query,
       dirs
@@ -158,6 +211,11 @@ export const {
         }
       });
     });
+    /**
+     * Get a file's current store state, touching its LRU entry when it has cached content.
+     * @param {string} input - The file path (will be normalized).
+     * @returns {Object} The file state record, or undefined when unknown.
+     */
     const get = input => {
       const file = path.normalize(input);
       const state = store.file[file];
@@ -170,6 +228,12 @@ export const {
       touchFileContent(file, approxBytes(content));
       return state;
     };
+    /**
+     * Normalize a file path and pass it to an action callback.
+     * @param {string} input - The file path to normalize.
+     * @param {Function} action - Callback invoked with the normalized path.
+     * @returns {*} The action's return value.
+     */
     function withPath(input, action) {
       return action(path.normalize(input));
     }

@@ -1,3 +1,4 @@
+/** @file Layout controller (MVC): orchestrates workspace-navigation business logic spanning worktree, session and project SDK domains (prefetch/cache, worktree CRUD, session helpers). */
 import { batch, createEffect, untrack } from "../lib/reactivity.js";
 import { produce, reconcile } from "../lib/store.js";
 import { base64Encode } from "core/util/encode";
@@ -23,6 +24,13 @@ const PREFETCH_PENDING_LIMIT = 10;
 const PREFETCH_SPAN = 4;
 const PREFETCH_MAX_SESSIONS_PER_DIR = 10;
 
+/**
+ * Merge two id-keyed item arrays, with `incoming` winning on id collisions, and
+ * return a new array sorted ascending by id.
+ * @param {Array} current - The existing items.
+ * @param {Array} incoming - The items to merge in (override on id match).
+ * @returns {Array} A new array of merged items sorted by id.
+ */
 const mergeByID = (current, incoming) => {
   if (current.length === 0) {
     return incoming.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
@@ -90,6 +98,11 @@ export function useLayoutController(deps) {
   const prefetchQueues = new Map();
   const prefetchedByDir = new Map();
 
+  /**
+   * Get (creating if needed) the per-directory LRU set tracking prefetched session ids.
+   * @param {string} directory - The workspace directory key.
+   * @returns {Set} The directory's prefetched-session id set.
+   */
   const lruFor = directory => {
     const existing = prefetchedByDir.get(directory);
     if (existing) return existing;
@@ -97,6 +110,13 @@ export function useLayoutController(deps) {
     prefetchedByDir.set(directory, created);
     return created;
   };
+  /**
+   * Record a session as prefetched in its directory's LRU and return session ids
+   * that should be evicted to stay within the per-directory cache limit.
+   * @param {string} directory - The workspace directory key.
+   * @param {string} sessionID - The session id just prefetched (kept).
+   * @returns {Array} The session ids selected for eviction.
+   */
   const markPrefetched = (directory, sessionID) => {
     const lru = lruFor(directory);
     return pickSessionCacheEvictions({
@@ -134,6 +154,12 @@ export function useLayoutController(deps) {
       }
     });
   }
+  /**
+   * Get (creating if needed) the per-directory prefetch queue holding inflight,
+   * pending and running bookkeeping.
+   * @param {string} directory - The workspace directory key.
+   * @returns {Object} The directory's prefetch queue record.
+   */
   const queueFor = directory => {
     const existing = prefetchQueues.get(directory);
     if (existing) return existing;
@@ -146,6 +172,15 @@ export function useLayoutController(deps) {
     prefetchQueues.set(directory, created);
     return created;
   };
+  /**
+   * Fetch a session's first chunk of messages/parts and merge them into the
+   * directory's global-sync store, evicting stale cached sessions as needed.
+   * Bails silently if the prefetch token/revision is no longer current.
+   * @param {string} directory - The workspace directory key.
+   * @param {string} sessionID - The session to prefetch.
+   * @param {number} token - The prefetch generation token captured at enqueue time.
+   * @returns {Promise} Resolves once the prefetch (and merge) completes.
+   */
   async function prefetchMessages(directory, sessionID, token) {
     const [store, setStore] = globalSync.child(directory, {
       bootstrap: false,
@@ -213,6 +248,11 @@ export function useLayoutController(deps) {
           .catch(() => undefined),
     });
   }
+  /**
+   * Drain the directory's pending prefetch queue while under the concurrency
+   * limit, scheduling the next session and re-pumping when each completes.
+   * @param {string} directory - The workspace directory key.
+   */
   const pumpPrefetch = directory => {
     const q = queueFor(directory);
     if (q.running >= PREFETCH_CONCURRENCY) return;
@@ -228,6 +268,12 @@ export function useLayoutController(deps) {
       pumpPrefetch(directory);
     });
   };
+  /**
+   * Enqueue a session for message prefetch (skipping already-cached/inflight
+   * sessions), respecting per-directory limits; "high" priority jumps the queue.
+   * @param {Object} session - The session record (needs `id` and `directory`).
+   * @param {string} priority - "high" or "low" (default "low").
+   */
   const prefetchSession = (session, priority = "low") => {
     const directory = session.directory;
     if (!directory) return;
@@ -267,6 +313,12 @@ export function useLayoutController(deps) {
     }
     pumpPrefetch(directory);
   };
+  /**
+   * Prefetch the sessions neighbouring a given index (within PREFETCH_SPAN),
+   * prioritizing the immediate neighbours.
+   * @param {Array} sessions - The ordered session list.
+   * @param {number} index - The index of the focused session.
+   */
   const warm = (sessions, index) => {
     for (let offset = 1; offset <= PREFETCH_SPAN; offset++) {
       const next = sessions[index + offset];
@@ -277,6 +329,12 @@ export function useLayoutController(deps) {
   };
 
   // --- session helpers -----------------------------------------------------
+  /**
+   * Archive a session (sets its archived time), remove it from the directory's
+   * store, and navigate away to an adjacent session if it was the active one.
+   * @param {Object} session - The session record (needs `id` and `directory`).
+   * @returns {Promise} Resolves once the update + navigation completes.
+   */
   async function archiveSession(session) {
     const [store, setStore] = globalSync.child(session.directory);
     const sessions = store.session ?? [];
@@ -304,7 +362,11 @@ export function useLayoutController(deps) {
     }
   }
 
-  // List a workspace's root sessions (cross-session file search in dialog-select-file).
+  /**
+   * List a workspace's root sessions (cross-session file search in dialog-select-file).
+   * @param {string} directory - The workspace directory.
+   * @returns {Promise<Array>} The root sessions (empty array on failure).
+   */
   const listSessions = directory =>
     globalSDK.client.session
       .list({
@@ -314,7 +376,11 @@ export function useLayoutController(deps) {
       .then(x => (x.data ?? []).filter(s => !!s?.id))
       .catch(() => []);
 
-  // List all of a workspace's sessions (used by the reset-workspace dialog).
+  /**
+   * List all of a workspace's sessions (used by the reset-workspace dialog).
+   * @param {string} directory - The workspace directory.
+   * @returns {Promise<Array>} All sessions (empty array on failure).
+   */
   const listWorkspaceSessions = directory =>
     globalSDK.client.session
       .list({
@@ -324,6 +390,12 @@ export function useLayoutController(deps) {
       .catch(() => []);
 
   // --- worktree CRUD -------------------------------------------------------
+  /**
+   * Create a new worktree workspace for a project, register its name/order/expanded
+   * state, and navigate into it. Surfaces a toast on failure.
+   * @param {Object} project - The project (needs `id` and `worktree`).
+   * @returns {Promise} Resolves once creation + navigation completes (no-op on failure).
+   */
   const createWorkspace = async project => {
     clearSidebarHoverState();
     const created = await globalSDK.client.worktree
@@ -361,6 +433,14 @@ export function useLayoutController(deps) {
     navigateWithSidebarReset(`/${base64Encode(created.directory)}/session`);
   };
 
+  /**
+   * Remove a workspace worktree (never the project root), updating project
+   * sandboxes/order/expansion and navigating away if the deleted workspace was active.
+   * @param {string} root - The project root directory.
+   * @param {string} directory - The workspace directory to delete.
+   * @param {boolean} leaveDeletedWorkspace - When true, skip the pre-emptive navigate-away (default false).
+   * @returns {Promise} Resolves once removal completes (no-op on root or failure).
+   */
   const deleteWorkspace = async (root, directory, leaveDeletedWorkspace = false) => {
     if (directory === root) return;
     const current = currentDir();
@@ -413,6 +493,14 @@ export function useLayoutController(deps) {
     }
   };
 
+  /**
+   * Reset a workspace worktree (never the project root): clears its terminals,
+   * disposes the instance, resets the worktree, archives its sessions, and shows
+   * progress/result toasts.
+   * @param {string} root - The project root directory.
+   * @param {string} directory - The workspace directory to reset.
+   * @returns {Promise} Resolves once the reset flow completes (no-op on root or failure).
+   */
   const resetWorkspace = async (root, directory) => {
     if (directory === root) return;
     setBusy(directory, true);
@@ -492,7 +580,11 @@ export function useLayoutController(deps) {
     });
   };
 
-  // Load file status (dirty check) for a workspace directory.
+  /**
+   * Load file status (dirty check) for a workspace directory.
+   * @param {string} directory - The workspace directory.
+   * @returns {Promise<Array>} The file status entries.
+   */
   const fileStatus = directory =>
     globalSDK.client.file
       .status({

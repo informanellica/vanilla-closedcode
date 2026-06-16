@@ -1,3 +1,4 @@
+/** @file Keyboard-shortcuts settings pane: a searchable, grouped list of commands with per-command keybind recording, conflict detection, and reset. */
 import { createComponent, createEffect, createMemo, onCleanup, onMount } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
@@ -24,6 +25,11 @@ const groupKey = {
   Terminal: "settings.shortcuts.group.terminal",
   Prompt: "settings.shortcuts.group.prompt"
 };
+/**
+ * Map a command id to its shortcut group, based on the id's prefix.
+ * @param {string} id - The command id.
+ * @returns {string} The group name (one of GROUPS), defaulting to "General".
+ */
 function groupFor(id) {
   if (id === PALETTE_ID) return "General";
   if (id.startsWith("terminal.")) return "Terminal";
@@ -33,15 +39,30 @@ function groupFor(id) {
   if (id.startsWith("session.") || id.startsWith("message.") || id.startsWith("permissions.") || id.startsWith("steps.") || id.startsWith("review.")) return "Session";
   return "General";
 }
+/**
+ * Whether a KeyboardEvent key value is a modifier key.
+ * @param {string} key - The event.key value.
+ * @returns {boolean} True for Shift/Control/Alt/Meta.
+ */
 function isModifier(key) {
   return key === "Shift" || key === "Control" || key === "Alt" || key === "Meta";
 }
+/**
+ * Normalize a key value into the canonical token used in keybind strings.
+ * @param {string} key - The event.key value.
+ * @returns {string} The lowercased/aliased key token (e.g. "comma", "plus", "space").
+ */
 function normalizeKey(key) {
   if (key === ",") return "comma";
   if (key === "+") return "plus";
   if (key === " ") return "space";
   return key.toLowerCase();
 }
+/**
+ * Build a keybind string ("mod+shift+p" style) from a keydown event, or undefined for modifier-only presses.
+ * @param {KeyboardEvent} event - The keydown event being recorded.
+ * @returns {string} The keybind string, or undefined when the event is a bare modifier.
+ */
 function recordKeybind(event) {
   if (isModifier(event.key)) return;
   const parts = [];
@@ -56,6 +77,11 @@ function recordKeybind(event) {
   parts.push(key);
   return parts.join("+");
 }
+/**
+ * Compute normalized conflict signatures for a keybind config (one per chord), used to detect collisions.
+ * @param {string} config - A keybind config string (may hold multiple chords).
+ * @returns {Array} The signature strings (e.g. "ctrl+shift+p"); empty when config is empty.
+ */
 function signatures(config) {
   if (!config) return [];
   const sigs = [];
@@ -71,10 +97,22 @@ function signatures(config) {
   }
   return sigs;
 }
+/**
+ * Coerce a stored keybinds value into a plain object, returning an empty object for invalid shapes.
+ * @param {*} value - The raw keybinds override value.
+ * @returns {Object} A record of command id to keybind override.
+ */
 function keybinds(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value;
 }
+/**
+ * Build the full id->metadata map of bindable commands from the command catalog, live options, and overrides.
+ * @param {Object} command - The command context (catalog and options collections).
+ * @param {Object} map - The keybind overrides record.
+ * @param {string} palette - The localized title for the command palette entry.
+ * @returns {Map} A Map of command id to {title, group}.
+ */
 function listFor(command, map, palette) {
   const out = new Map();
   out.set(PALETTE_ID, {
@@ -105,6 +143,11 @@ function listFor(command, map, palette) {
   }
   return out;
 }
+/**
+ * Group command ids by their group and sort each group's ids by localized title.
+ * @param {Map} list - The id->{title, group} map from listFor.
+ * @returns {Map} A Map of group name to a sorted array of command ids.
+ */
 function groupedFor(list) {
   const out = new Map();
   for (const group of GROUPS) out.set(group, []);
@@ -120,6 +163,14 @@ function groupedFor(list) {
   }
   return out;
 }
+/**
+ * Filter the grouped command ids by a fuzzy search over title and keybind text.
+ * @param {string} query - The search query (empty returns the unfiltered grouping).
+ * @param {Map} list - The id->{title, group} map.
+ * @param {Map} grouped - The precomputed grouping returned for an empty query.
+ * @param {Function} keybind - Maps a command id to its current keybind string.
+ * @returns {Map} A Map of group name to the matching command ids.
+ */
 function filteredFor(query, list, grouped, keybind) {
   const value = query.toLowerCase().trim();
   if (!value) return grouped;
@@ -142,8 +193,19 @@ function filteredFor(query, list, grouped, keybind) {
   }
   return out;
 }
+/**
+ * Reactive hook that captures keydown events while a command is recording, applying or clearing the
+ * binding (Escape cancels, Backspace/Delete clears) and rejecting bindings that conflict with others.
+ * @param {Object} input - Controller: active() (recording command id), stop(), set(id, keybind), used() (signature->users map), and language (translator).
+ * @returns {void}
+ */
 function useKeyCapture(input) {
   onMount(() => {
+    /**
+     * Handle a captured keydown while recording, applying/clearing/rejecting the binding.
+     * @param {KeyboardEvent} event - The captured keydown event.
+     * @returns {void}
+     */
     const handle = event => {
       const id = input.active();
       if (!id) return;
@@ -188,12 +250,22 @@ function useKeyCapture(input) {
   });
 }
 
+/**
+ * Build a detached DOM element from a static HTML string.
+ * @param {string} html - The HTML markup (no untrusted interpolation).
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Keyboard-shortcuts settings pane. Renders a search field, a reset-all button, and a grouped,
+ * filterable list of commands; each row can record a new keybind (with conflict detection) on click.
+ * @returns {HTMLElement} The settings pane root element.
+ */
 export const SettingsKeybinds = () => {
   const command = useCommand();
   const language = useLanguage();
@@ -202,11 +274,20 @@ export const SettingsKeybinds = () => {
     active: null,
     filter: ""
   });
+  /**
+   * Stop recording: clear the active command and re-enable command keybinds.
+   * @returns {void}
+   */
   const stop = () => {
     if (!store.active) return;
     setStore("active", null);
     command.keybinds(true);
   };
+  /**
+   * Start (or toggle off) recording a new keybind for a command, disabling live command keybinds meanwhile.
+   * @param {string} id - The command id to record.
+   * @returns {void}
+   */
   const start = id => {
     if (store.active === id) {
       stop();
@@ -218,6 +299,10 @@ export const SettingsKeybinds = () => {
   };
   const map = createMemo(() => keybinds(settings.current.keybinds));
   const hasOverrides = createMemo(() => Object.values(map()).some(x => typeof x === "string"));
+  /**
+   * Reset all keybind overrides to defaults and show a confirmation toast.
+   * @returns {void}
+   */
   const resetAll = () => {
     stop();
     settings.keybinds.resetAll();
@@ -278,6 +363,12 @@ export const SettingsKeybinds = () => {
     }
     return map;
   });
+  /**
+   * Persist a keybind override for a command.
+   * @param {string} id - The command id.
+   * @param {string} keybind - The keybind string to store ("none" clears it).
+   * @returns {void}
+   */
   const setKeybind = (id, keybind) => settings.keybinds.set(id, keybind);
   useKeyCapture({
     active: () => store.active,
@@ -354,6 +445,11 @@ export const SettingsKeybinds = () => {
     }
   });
 
+  /**
+   * Build a single shortcut row showing the command title and a button that displays/records its keybind.
+   * @param {string} id - The command id for the row.
+   * @returns {HTMLElement} The row element.
+   */
   const buildRow = id => {
     const row = template(`
       <div class="d-flex align-items-center justify-content-between gap-4 p-4 rounded-3 bg-body-tertiary">

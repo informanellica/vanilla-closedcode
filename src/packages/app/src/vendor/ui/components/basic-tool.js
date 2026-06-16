@@ -1,3 +1,4 @@
+/** @file BasicTool / GenericTool collapsible components: render a tool-call trigger row with optional animated, lazily-mounted details. */
 import { insert } from "../../../lib/reactivity.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, For, on, onCleanup } from "../../../lib/reactivity.js";
 import { animate } from "motion";
@@ -5,6 +6,11 @@ import { useI18n } from "../context/i18n.js";
 import { createStore } from "../../../lib/store.js";
 import { Collapsible } from "./collapsible.js";
 import { TextShimmer } from "./text-shimmer.js";
+/**
+ * Detects whether a trigger value is a structured title object (vs raw content/Node).
+ * @param {*} val - Candidate trigger value.
+ * @returns {boolean} True when val is a plain object carrying a `title` field and is not a DOM Node.
+ */
 const isTriggerTitle = val => {
   return typeof val === "object" && val !== null && "title" in val && (typeof Node === "undefined" || !(val instanceof Node));
 };
@@ -14,6 +20,11 @@ const SPRING = {
   bounce: 0
 };
 
+/**
+ * Builds a detached element from a compact HTML string.
+ * @param {string} html - HTML markup for a single root element.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
 function template(html) {
@@ -22,12 +33,26 @@ function template(html) {
   return wrapper.firstElementChild;
 }
 
+/**
+ * Sets or removes an attribute, removing it when the value is nullish.
+ * @param {Element} el - Target element.
+ * @param {string} name - Attribute name.
+ * @param {*} value - Attribute value; null/undefined removes the attribute.
+ * @returns {void}
+ */
 // Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
 function setAttr(el, name, value) {
   if (value == null) el.removeAttribute(name);
   else el.setAttribute(name, value);
 }
 
+/**
+ * Toggles each space-separated class token within a classList key.
+ * @param {Element} el - Target element.
+ * @param {string} key - One or more whitespace-separated class names.
+ * @param {boolean} value - Whether to add (true) or remove (false) the tokens.
+ * @returns {void}
+ */
 // classList keys may hold several space-separated class names; toggle each.
 function toggleClassKey(el, key, value) {
   for (const name of key.trim().split(/\s+/)) {
@@ -35,6 +60,13 @@ function toggleClassKey(el, key, value) {
   }
 }
 
+/**
+ * Diffs a desired classList map against the previous snapshot, toggling only the changed tokens.
+ * @param {Element} el - Target element.
+ * @param {Object} value - Desired class map (key to truthy/falsy).
+ * @param {Object} prev - Mutable snapshot of the previously-applied class map; updated in place.
+ * @returns {Object} The updated `prev` snapshot.
+ */
 // Mirror solid-js/web classList(): diff `value` against the mutable `prev`
 // snapshot, removing classes that turned falsy and adding ones that turned
 // truthy. Empty keys (a nullish class prop collapses to "") are skipped.
@@ -52,6 +84,26 @@ function applyClassList(el, value, prev) {
   }
   return prev;
 }
+/**
+ * BasicTool component. Renders a collapsible tool-call panel: a trigger row
+ * (structured title with subtitle/args/action, or raw content) plus optional
+ * details that can be height-animated and/or lazily mounted while open.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.defaultOpen - Whether the panel starts open.
+ * @param {boolean} props.forceOpen - When true, forces the panel open.
+ * @param {boolean} props.defer - Defer rendering the open content until a frame after opening.
+ * @param {string} props.status - Tool status; "pending"/"running" mark it busy.
+ * @param {boolean} props.animated - Animate the content height on open/close.
+ * @param {boolean} props.locked - Prevent closing via the trigger.
+ * @param {*} props.trigger - Structured title object or raw trigger content.
+ * @param {Function} props.onSubtitleClick - Handler invoked when the subtitle is clicked.
+ * @param {Function} props.onTriggerClick - Handler invoked when the trigger is clicked.
+ * @param {string} props.triggerHref - When set, renders the trigger as an anchor with this href.
+ * @param {boolean} props.hideDetails - Hide the collapsible details and arrow.
+ * @param {boolean} props.clickable - Marks the trigger as clickable (data-clickable).
+ * @param {*} props.children - Detail content shown when the panel is open.
+ * @returns {Node} The Collapsible root node for the tool panel.
+ */
 export function BasicTool(props) {
   const [state, setState] = createStore({
     open: props.defaultOpen ?? false,
@@ -312,10 +364,21 @@ export function BasicTool(props) {
     }
   });
 }
+/**
+ * Picks the most descriptive string field from a tool input to use as a subtitle.
+ * @param {Object} input - Tool input object.
+ * @returns {string} The first non-empty string among description/query/url/filePath/path/pattern/name, or undefined.
+ */
 function label(input) {
   const keys = ["description", "query", "url", "filePath", "path", "pattern", "name"];
   return keys.map(key => input?.[key]).find(value => typeof value === "string" && value.length > 0);
 }
+/**
+ * Formats up to three "key=value" argument chips from a tool input, skipping
+ * the fields already used as the label and any non-primitive values.
+ * @param {Object} input - Tool input object.
+ * @returns {Array} Up to three formatted "key=value" strings.
+ */
 function args(input) {
   if (!input) return [];
   const skip = new Set(["description", "query", "url", "filePath", "path", "pattern", "name"]);
@@ -326,6 +389,16 @@ function args(input) {
     return [];
   }).slice(0, 3);
 }
+/**
+ * GenericTool component. A BasicTool preset for generic/MCP tool calls: derives
+ * the title, subtitle, and argument chips from the tool name and input.
+ * @param {Object} props - Component props.
+ * @param {string} props.tool - Display name of the invoked tool.
+ * @param {Object} props.input - Tool input object used to derive subtitle and args.
+ * @param {string} props.status - Tool status forwarded to BasicTool.
+ * @param {boolean} props.hideDetails - Hide the collapsible details, forwarded to BasicTool.
+ * @returns {Node} The BasicTool node configured for a generic tool call.
+ */
 export function GenericTool(props) {
   const i18n = useI18n();
   return createComponent(BasicTool, {

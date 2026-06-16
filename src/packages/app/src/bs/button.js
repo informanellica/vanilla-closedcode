@@ -1,6 +1,12 @@
+/**
+ * @file Button component: a vanilla reimplementation of the Bootstrap-styled
+ * button, mapping variant/size props to Bootstrap classes and forwarding the
+ * rest as reactive attributes/event listeners.
+ */
 import { createRenderEffect } from "../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
+/** Maps a logical button variant to its Bootstrap class. */
 const VARIANT_CLASS = {
   primary: "btn-primary",
   secondary: "btn-outline-secondary",
@@ -8,11 +14,21 @@ const VARIANT_CLASS = {
   critical: "btn-danger"
 };
 
+/** Maps a logical button size to its Bootstrap class. */
 const SIZE_CLASS = {
   small: "btn-sm",
   large: "btn-lg"
 };
 
+/**
+ * Build the button's className from a classList map plus variant/size/extra
+ * classes, keeping the base `btn` and layout classes.
+ * @param {Object} classList - Map of class name to boolean (truthy = include).
+ * @param {string} variantClass - The resolved variant class.
+ * @param {string} sizeClass - The resolved size class (may be empty).
+ * @param {string} extraClass - Additional class string to append.
+ * @returns {string} The space-joined className.
+ */
 function getClassList(classList, variantClass, sizeClass, extraClass) {
   const classes = { ...classList };
   classes.btn = true;
@@ -23,6 +39,13 @@ function getClassList(classList, variantClass, sizeClass, extraClass) {
   return Object.keys(classes).filter(k => !!classes[k]).join(" ");
 }
 
+/**
+ * Recursively flatten a children value into an array of DOM nodes (functions
+ * are invoked, arrays flattened, nullish/boolean skipped, primitives wrapped in
+ * text nodes).
+ * @param {Array} target - Array that collected child nodes are pushed onto.
+ * @param {*} value - Child value (node, array, function, primitive, or nullish).
+ */
 function appendChildValue(target, value) {
   if (typeof value === "function") {
     appendChildValue(target, value());
@@ -40,6 +63,21 @@ function appendChildValue(target, value) {
   target.push(document.createTextNode(String(value)));
 }
 
+/**
+ * Bootstrap-styled button component. Renders a `<button type="button">` with an
+ * optional leading icon, applies variant/size classes, attaches `on*` event
+ * handlers, and reactively re-applies the remaining attribute props (which may
+ * be signal-backed, e.g. `disabled`). Supports Solid-style `ref` forwarding.
+ * @param {Object} props - Component props.
+ * @param {string} props.variant - Visual variant (primary/secondary/ghost/critical).
+ * @param {string} props.size - Size (small/large/normal).
+ * @param {string} props.icon - Optional icon name rendered before the children.
+ * @param {string} props.class - Extra class string.
+ * @param {Object} props.classList - Class-name-to-boolean map.
+ * @param {*} props.children - Button content.
+ * @param {Function} props.ref - Optional ref callback receiving the element.
+ * @returns {HTMLButtonElement} The button element.
+ */
 export function Button(props) {
   const button = document.createElement("button");
 

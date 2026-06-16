@@ -1,3 +1,4 @@
+/** @file Vanilla ContextMenu compound component: a pointer-positioned menu primitive (trigger, portal, content, items, radio/checkbox/sub menus) reimplemented without a third-party UI dependency. */
 // Vanilla reimplementation of @kobalte/core's ContextMenu behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -16,12 +17,24 @@ import { Icon } from "./icon.js";
 // attributes (data-expanded/data-highlighted/data-disabled/data-checked) that
 // ./context-menu.css styles.
 
+/**
+ * Builds a detached element from a compact HTML string.
+ * @param {string} html - HTML markup for a single root element.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Getter-forwarding props split: defines getters on both buckets so each
+ * signal-backed prop stays live (a value copy would freeze controlled props).
+ * @param {Object} props - Source props object.
+ * @param {Array} keys - Property names to forward into the first bucket.
+ * @returns {Array} A two-element array: [picked props, rest props].
+ */
 // Forward each key as a getter rather than copying its value once —
 // createComponent props are signal-backed getters, and a value copy would
 // freeze every controlled prop at its creation-time value.
@@ -39,6 +52,14 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Appends Solid-style children to a parent, optionally re-establishing the
+ * module-variable context around each lazily-evaluated reactive child.
+ * @param {Node} parent - Parent element to receive the children.
+ * @param {*} children - Child value: a Node, array, function accessor, or primitive.
+ * @param {Function} wrap - Optional wrapper that restores menu context around reactive children.
+ * @returns {void}
+ */
 function appendChildren(parent, children, wrap) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -60,6 +81,12 @@ function appendChildren(parent, children, wrap) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Applies a Solid-style classList map to an element, toggling each class token.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} classList - Map of (possibly space-separated) class keys to truthy/falsy values.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -71,6 +98,13 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Applies remaining props to an element: binds on* handlers, sets known DOM
+ * properties, and falls back to attributes (removing on null/false).
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - Remaining props excluding class/classList/children.
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -96,6 +130,12 @@ function applyRestProps(el, rest) {
   }
 }
 
+/**
+ * Adds the space-separated class tokens from a class prop to an element.
+ * @param {HTMLElement} el - Target element.
+ * @param {*} value - Class string (or value coercible to one).
+ * @returns {void}
+ */
 function applyClassProp(el, value) {
   if (value) el.classList.add(...String(value).split(/\s+/).filter(Boolean));
 }
@@ -104,14 +144,27 @@ let ContextContext = null;
 let RadioContext = null;
 let nextId = 0;
 
+/**
+ * Reads the current ContextMenu state from module-variable context.
+ * @returns {Object} The active context-menu state object, or null.
+ */
 function useContextMenu() {
   return ContextContext;
 }
 
+/**
+ * Reads the current radio-group state from module-variable context.
+ * @returns {Object} The active radio-group state object, or null.
+ */
 function useRadio() {
   return RadioContext;
 }
 
+/**
+ * Collects the enabled, focusable menu items within a content panel.
+ * @param {Element} contentEl - The menu content element to query.
+ * @returns {Array} The non-disabled item/checkbox/radio/sub-trigger elements.
+ */
 function menuItems(contentEl) {
   if (!contentEl) return [];
   return Array.from(
@@ -121,6 +174,12 @@ function menuItems(contentEl) {
   ).filter(el => el.getAttribute("data-disabled") == null && !el.disabled);
 }
 
+/**
+ * Marks one item as highlighted (and focuses it), clearing the rest.
+ * @param {Array} items - The candidate menu item elements.
+ * @param {Element} target - The element to highlight and focus.
+ * @returns {void}
+ */
 function highlight(items, target) {
   for (const el of items) {
     if (el === target) el.setAttribute("data-highlighted", "");
@@ -129,6 +188,13 @@ function highlight(items, target) {
   if (target) target.focus();
 }
 
+/**
+ * Creates the shared open/close + positioning state for a context menu root,
+ * supporting both controlled (`open`) and uncontrolled (`defaultOpen`) modes
+ * and exposing register hooks for the root/trigger/content/portal elements.
+ * @param {Object} local - The root's local props (open, defaultOpen, onOpenChange, modal).
+ * @returns {Object} The context-menu state API (isOpen, setOpen, close, openAt, registrars, sync, etc.).
+ */
 function createContextState(local) {
   let uncontrolled = !!local.defaultOpen;
   let rootEl = null;
@@ -224,6 +290,13 @@ function createContextState(local) {
   };
 }
 
+/**
+ * Creates the shared selection state for a radio group: tracks registered items
+ * and indicators, reflects the current value into data/aria attributes, and
+ * relays changes via onChange.
+ * @param {Object} local - The radio group's local props (value, onChange).
+ * @returns {Object} The radio-group state API (value, onChange, isSelected, registerItem, registerIndicator, sync).
+ */
 function createRadioState(local) {
   const items = new Set();
   const indicators = new Set();
@@ -260,6 +333,20 @@ function createRadioState(local) {
   };
 }
 
+/**
+ * ContextMenu root component. Owns the menu state, wires up document-level
+ * dismissal (Escape + outside pointerdown), and provides the menu context to
+ * its compound children.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.open - Controlled open state.
+ * @param {boolean} props.defaultOpen - Initial open state for uncontrolled use.
+ * @param {Function} props.onOpenChange - Called with the new open state on change.
+ * @param {boolean} props.modal - Whether the menu is modal.
+ * @param {*} props.class - Class string(s) for the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Compound menu parts (Trigger, Portal, Content, etc.).
+ * @returns {HTMLElement} The context-menu root element.
+ */
 function ContextMenuRoot(props) {
   const [local, rest] = splitProps(props, ["open", "defaultOpen", "onOpenChange", "modal", "class", "classList", "children"]);
   const previousContext = ContextContext;
@@ -327,6 +414,18 @@ function ContextMenuRoot(props) {
   return rootEl;
 }
 
+/**
+ * ContextMenu trigger component. Renders the trigger element (a tag, component,
+ * or default `<div>`) and opens the menu at the pointer on a `contextmenu` gesture.
+ * @param {Object} props - Component props.
+ * @param {*} props.as - Tag name or component to render as the trigger; defaults to "div".
+ * @param {*} props.class - Class string(s) for the trigger.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {Function} props.onContextMenu - Optional handler run before the menu opens; may preventDefault to cancel.
+ * @param {*} props.children - Trigger content.
+ * @param {Function} props.ref - Ref callback invoked with the trigger element.
+ * @returns {Node} The trigger element.
+ */
 function ContextMenuTrigger(props) {
   const ctx = useContextMenu();
   const [local, rest] = splitProps(props, ["as", "class", "classList", "onContextMenu", "children", "ref"]);
@@ -362,6 +461,14 @@ function ContextMenuTrigger(props) {
   return triggerEl;
 }
 
+/**
+ * ContextMenu icon slot component.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the slot.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Icon content.
+ * @returns {HTMLElement} The icon `<span>` element.
+ */
 function ContextMenuIcon(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=context-menu-icon>`);
@@ -372,6 +479,13 @@ function ContextMenuIcon(props) {
   return el;
 }
 
+/**
+ * ContextMenu portal component. Mounts its children in a container appended to
+ * `<body>`, registers it as the menu portal, and removes it on cleanup.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Portal content (typically the Content panel).
+ * @returns {Comment} A placeholder comment node returned in the original tree position.
+ */
 function ContextMenuPortal(props) {
   const ctx = useContextMenu();
   const portal = document.createElement("div");
@@ -383,6 +497,16 @@ function ContextMenuPortal(props) {
   return document.createComment("context-menu-portal");
 }
 
+/**
+ * ContextMenu content panel component. Renders the fixed-position menu panel,
+ * wires roving keyboard focus (arrows/Home/End/typeahead) and pointer hover
+ * highlighting, and registers itself for positioning at the pointer.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the panel.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Menu items and groups.
+ * @returns {HTMLElement} The content panel element.
+ */
 function ContextMenuContent(props) {
   const ctx = useContextMenu();
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
@@ -440,10 +564,21 @@ function ContextMenuContent(props) {
   return el;
 }
 
+/**
+ * ContextMenu arrow placeholder (the pointer-positioned menu has no anchor arrow).
+ * @returns {null} Always null.
+ */
 function ContextMenuArrow() {
   return null;
 }
 
+/**
+ * ContextMenu separator component. Renders a horizontal rule between groups.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the separator.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @returns {HTMLElement} The separator element.
+ */
 function ContextMenuSeparator(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
   const el = template(`<div data-slot=context-menu-separator role=separator>`);
@@ -453,6 +588,14 @@ function ContextMenuSeparator(props) {
   return el;
 }
 
+/**
+ * ContextMenu group component. Wraps related items in a `role=group` container.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the group.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Grouped items.
+ * @returns {HTMLElement} The group element.
+ */
 function ContextMenuGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<div data-slot=context-menu-group role=group>`);
@@ -463,6 +606,14 @@ function ContextMenuGroup(props) {
   return el;
 }
 
+/**
+ * ContextMenu group label component. Renders a non-interactive label for a group.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the label.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Label content.
+ * @returns {HTMLElement} The group-label element.
+ */
 function ContextMenuGroupLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<div data-slot=context-menu-group-label>`);
@@ -473,6 +624,18 @@ function ContextMenuGroupLabel(props) {
   return el;
 }
 
+/**
+ * ContextMenu item component. Renders an actionable `role=menuitem` button that
+ * fires onSelect (on click or Enter/Space) and closes the menu unless suppressed.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the item.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Item content.
+ * @param {Function} props.onSelect - Called with the triggering event when the item is selected.
+ * @param {boolean} props.disabled - Whether the item is disabled.
+ * @param {boolean} props.closeOnSelect - When false, the menu stays open after selection.
+ * @returns {HTMLButtonElement} The menu item button.
+ */
 function ContextMenuItem(props) {
   const ctx = useContextMenu();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "onSelect", "disabled", "closeOnSelect"]);
@@ -501,6 +664,14 @@ function ContextMenuItem(props) {
   return el;
 }
 
+/**
+ * ContextMenu item label component. Renders the primary text of a menu item.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the label.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Label content.
+ * @returns {HTMLElement} The item-label `<span>` element.
+ */
 function ContextMenuItemLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=context-menu-item-label>`);
@@ -511,6 +682,14 @@ function ContextMenuItemLabel(props) {
   return el;
 }
 
+/**
+ * ContextMenu item description component. Renders secondary text under an item.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the description.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Description content.
+ * @returns {HTMLElement} The item-description `<span>` element.
+ */
 function ContextMenuItemDescription(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=context-menu-item-description>`);
@@ -521,6 +700,16 @@ function ContextMenuItemDescription(props) {
   return el;
 }
 
+/**
+ * ContextMenu item indicator component. Renders the selection mark (default
+ * check icon) for radio/checkbox items, shown only when selected or force-mounted.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the indicator.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Custom indicator content; defaults to a check icon.
+ * @param {boolean} props.forceMount - Always render the indicator regardless of selection.
+ * @returns {HTMLElement} The item-indicator `<span>` element.
+ */
 function ContextMenuItemIndicator(props) {
   const radio = useRadio();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "forceMount"]);
@@ -543,6 +732,17 @@ function ContextMenuItemIndicator(props) {
   return el;
 }
 
+/**
+ * ContextMenu radio group component. Provides radio-selection context so child
+ * radio items reflect and update the group's selected value.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the group.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Radio items.
+ * @param {*} props.value - Currently selected value.
+ * @param {Function} props.onChange - Called with the new value when a radio item is selected.
+ * @returns {HTMLElement} The radio-group element.
+ */
 function ContextMenuRadioGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children", "value", "onChange"]);
   const previous = RadioContext;
@@ -561,6 +761,19 @@ function ContextMenuRadioGroup(props) {
   return el;
 }
 
+/**
+ * ContextMenu radio item component. Renders a `role=menuitemradio` button that
+ * reflects the group's selection and, on activation, updates the group value.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the item.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Item content.
+ * @param {*} props.value - The value this item represents.
+ * @param {Function} props.onSelect - Called with the triggering event when selected.
+ * @param {boolean} props.disabled - Whether the item is disabled.
+ * @param {boolean} props.closeOnSelect - When false, the menu stays open after selection.
+ * @returns {HTMLButtonElement} The radio item button.
+ */
 function ContextMenuRadioItem(props) {
   const menu = useContextMenu();
   const group = useRadio();
@@ -611,6 +824,20 @@ function ContextMenuRadioItem(props) {
   return el;
 }
 
+/**
+ * ContextMenu checkbox item component. Renders a `role=menuitemcheckbox` button
+ * that reflects `checked` and toggles it via onChange on activation.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) for the item.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Item content.
+ * @param {boolean} props.checked - Whether the item is currently checked.
+ * @param {Function} props.onChange - Called with the new checked state on toggle.
+ * @param {Function} props.onSelect - Called with the triggering event when selected.
+ * @param {boolean} props.disabled - Whether the item is disabled.
+ * @param {boolean} props.closeOnSelect - When false, the menu stays open after selection.
+ * @returns {HTMLButtonElement} The checkbox item button.
+ */
 function ContextMenuCheckboxItem(props) {
   const menu = useContextMenu();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "checked", "onChange", "onSelect", "disabled", "closeOnSelect"]);
@@ -659,10 +886,25 @@ function ContextMenuCheckboxItem(props) {
   return el;
 }
 
+/**
+ * ContextMenu submenu component. A nested menu root reusing the root behavior.
+ * @param {Object} props - Component props forwarded to ContextMenuRoot.
+ * @returns {HTMLElement} The nested context-menu root element.
+ */
 function ContextMenuSub(props) {
   return ContextMenuRoot(props);
 }
 
+/**
+ * ContextMenu submenu trigger component. Renders an item that toggles its
+ * nested submenu open/closed on click.
+ * @param {Object} props - Component props.
+ * @param {*} props.as - Tag name or component to render as; defaults to "button".
+ * @param {*} props.class - Class string(s) for the trigger.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Trigger content.
+ * @returns {HTMLElement} The sub-trigger element.
+ */
 function ContextMenuSubTrigger(props) {
   const ctx = useContextMenu();
   const [local, rest] = splitProps(props, ["as", "class", "classList", "children"]);
@@ -684,6 +926,12 @@ function ContextMenuSubTrigger(props) {
   return el;
 }
 
+/**
+ * ContextMenu submenu content component. Like Content, but tagged with the
+ * sub-content component/slot attributes for nested-menu styling.
+ * @param {Object} props - Component props forwarded to ContextMenuContent.
+ * @returns {HTMLElement} The sub-content panel element.
+ */
 function ContextMenuSubContent(props) {
   const el = ContextMenuContent(props);
   el.setAttribute("data-component", "context-menu-sub-content");
@@ -691,6 +939,10 @@ function ContextMenuSubContent(props) {
   return el;
 }
 
+/**
+ * ContextMenu compound component: the root function augmented with its part
+ * components (Trigger, Portal, Content, Item, RadioGroup, Sub, etc.).
+ */
 export const ContextMenu = Object.assign(ContextMenuRoot, {
   Trigger: ContextMenuTrigger,
   Icon: ContextMenuIcon,

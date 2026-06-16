@@ -1,3 +1,4 @@
+/** @file Server-side-rendered/hydratable diff viewer (FileSSR / DiffSSRViewer) backed by a preloaded, prerendered diff. */
 import { DIFFS_TAG_NAME, FileDiff, VirtualizedFileDiff } from "@pierre/diffs";
 import { createComponent, createEffect, createRenderEffect, onCleanup, onMount, Show, splitProps } from "../../../lib/reactivity.js";
 import { Dynamic, isServer } from "../../../lib/reactivity.js";
@@ -13,6 +14,13 @@ import { File } from "./file.js";
 // solid-js/web classList(node, value, prev): tokens that disappear between
 // runs are removed; truthy tokens added, falsy removed. Returns the value so
 // it can be carried as the next prev.
+/**
+ * Apply a Solid classList object to an element, diffing against the previous value.
+ * @param {Element} el - The target element.
+ * @param {Object} value - Map of space-separated class-token strings to truthy/falsy flags.
+ * @param {Object} prev - The previously applied classList map (used to remove dropped tokens).
+ * @returns {Object} The applied value, to carry as the next prev.
+ */
 function applyClassList(el, value, prev) {
   const next = value || {};
   const previous = prev || {};
@@ -44,6 +52,13 @@ function applyClassList(el, value, prev) {
 // module constant, so this mirrors solid-js/web style(node, value, prev):
 // numbers/strings flow through setProperty (coerced to string), and the prev
 // reference guard keeps the work to the first run.
+/**
+ * Apply a Solid style object to an element, removing dropped keys and setting changed ones.
+ * @param {Element} el - The target element.
+ * @param {Object} value - Map of CSS property names to values.
+ * @param {Object} prev - The previously applied style object (reference-guarded).
+ * @returns {Object} The applied value, to carry as the next prev.
+ */
 function applyStyle(el, value, prev) {
   if (value === prev) return prev;
   if (prev) {
@@ -59,6 +74,29 @@ function applyStyle(el, value, prev) {
   return value;
 }
 
+/**
+ * SSR/hydration diff viewer: renders a static skeleton plus a declarative shadow-root seeded
+ * with prerendered HTML on the server, then on mount instantiates the @pierre/diffs FileDiff
+ * (or VirtualizedFileDiff) and hydrates it, wiring selection, annotations and commented lines.
+ * @param {Object} props - Component props.
+ * @param {string} props.mode - Viewer mode (this viewer handles "diff").
+ * @param {*} props.media - Media descriptor (binary/image), forwarded.
+ * @param {Object} props.fileDiff - Precomputed file diff to hydrate from, when provided.
+ * @param {Object} props.before - The old file ({ name, contents }) when fileDiff is absent.
+ * @param {Object} props.after - The new file ({ name, contents }) when fileDiff is absent.
+ * @param {string} props.class - Class string applied to the root container.
+ * @param {Object} props.classList - Solid-style classList map applied to the root container.
+ * @param {Array} props.annotations - Line annotations to render.
+ * @param {Object} props.selectedLines - Currently selected line range.
+ * @param {Array} props.commentedLines - Line ranges to mark as commented.
+ * @param {Function} props.onLineSelected - Callback for an in-progress line selection.
+ * @param {Function} props.onLineSelectionEnd - Callback when a line selection ends.
+ * @param {Function} props.onLineNumberSelectionEnd - Callback when a line-number selection ends.
+ * @param {Function} props.onRendered - Callback fired once the diff has settled/rendered.
+ * @param {Object} props.preloadedDiff - Preloaded diff data ({ options, annotations, prerenderedHTML }).
+ * @param {string} props.diffStyle - Diff style key (e.g. "unified"/"split") for default options and worker pool.
+ * @returns {HTMLElement} The root container element.
+ */
 function DiffSSRViewer(props) {
   let container;
   let fileDiffRef;
@@ -212,6 +250,14 @@ function DiffSSRViewer(props) {
   });
   return root;
 }
+/**
+ * SSR-aware file viewer entry: uses the hydratable diff viewer when in diff mode with a
+ * preloaded diff, and otherwise falls back to the regular client File viewer.
+ * @param {Object} props - Component props (see DiffSSRViewer and File).
+ * @param {string} props.mode - Viewer mode; "diff" with preloadedDiff routes to the SSR viewer.
+ * @param {Object} props.preloadedDiff - Preloaded prerendered diff data, required for the SSR path.
+ * @returns {Node} The SSR diff viewer element, or the File component's output.
+ */
 export function FileSSR(props) {
   if (props.mode !== "diff" || !props.preloadedDiff) return File(props);
   return DiffSSRViewer(props);

@@ -1,3 +1,5 @@
+/** @file Settings controller (MVC) for the general settings view: loads available shells and persists the selected shell. */
+
 import { createMemo, createResource } from "../lib/reactivity.js";
 import { useGlobalSDK } from "@/context/global-sdk.js";
 import { useGlobalSync } from "@/context/global-sync.js";
@@ -14,6 +16,8 @@ import { useGlobalSync } from "@/context/global-sync.js";
  * context hooks and reactive primitives).
  *
  * Returns derived state accessors and action functions.
+ *
+ * @returns {Object} Controller API with `shells` (resource accessor of available shell list), `currentShell` (memo accessor of the persisted shell, "" means auto/default), and `setShell` (action to persist a shell selection).
  */
 export const useSettingsController = () => {
   const globalSync = useGlobalSync();

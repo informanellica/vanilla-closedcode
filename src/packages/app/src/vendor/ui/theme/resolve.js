@@ -1,4 +1,13 @@
+/** @file Resolves theme variants (palettes/seeds) into the full flat map of design-token CSS values, and serializes them to CSS. */
 import { blend, generateNeutralScale, generateScale, hexToOklch, hexToRgb, shift, withAlpha } from "./color.js";
+/**
+ * Resolve a single theme variant into the complete flat map of design tokens (background,
+ * surface, text, icon, border, syntax, markdown, avatar, etc.) for the given mode, applying
+ * any explicit token overrides last.
+ * @param {Object} variant - Theme variant definition (`palette` or `seeds`, optional `overrides`).
+ * @param {boolean} isDark - Whether to resolve for dark mode.
+ * @returns {Object} Flat map of token name to color/value string.
+ */
 export function resolveThemeVariant(variant, isDark) {
   const colors = getColors(variant);
   const {
@@ -449,6 +458,12 @@ export function resolveThemeVariant(variant, isDark) {
   }
   return tokens;
 }
+/**
+ * Normalize a theme variant's color inputs into a common shape, supporting either a `palette`
+ * (compact mode, with `ink`) or `seeds` (non-compact). Throws if both or neither are present.
+ * @param {Object} variant - Theme variant definition.
+ * @returns {Object} Normalized colors with a `compact` flag and named seed colors.
+ */
 function getColors(variant) {
   const input = variant;
   if (input.palette && input.seeds) {
@@ -488,20 +503,42 @@ function getColors(variant) {
   }
   throw new Error("Theme variant requires `palette` or `seeds`");
 }
+/**
+ * Build a 12-step opaque "alpha" neutral scale by blending the darkest neutral over the
+ * lightest neutral at mode-specific alpha levels.
+ * @param {Array} neutralScale - The 12-step neutral scale (index 0 lightest backdrop, 11 ink).
+ * @param {boolean} isDark - Whether to use dark-mode alpha levels.
+ * @returns {Array} Array of 12 opaque hex color strings.
+ */
 function generateNeutralAlphaScale(neutralScale, isDark) {
   const alphas = isDark ? [0.038, 0.066, 0.1, 0.142, 0.19, 0.252, 0.334, 0.446, 0.58, 0.718, 0.854, 0.985] : [0.03, 0.06, 0.1, 0.145, 0.2, 0.265, 0.35, 0.47, 0.61, 0.74, 0.86, 0.97];
   return alphas.map(alpha => blend(neutralScale[11], neutralScale[0], alpha));
 }
+/**
+ * Return the value only when it is a hex color string, otherwise undefined.
+ * @param {string} value - Candidate value (e.g. an override).
+ * @returns {string} The hex value, or undefined if it is not a hex string.
+ */
 function getHex(value) {
   if (!value?.startsWith("#")) return;
   return value;
 }
+/**
+ * Resolve a theme's light and dark variants into their token maps.
+ * @param {Object} theme - Theme with `light` and `dark` variant definitions.
+ * @returns {Object} Object with resolved `light` and `dark` token maps.
+ */
 export function resolveTheme(theme) {
   return {
     light: resolveThemeVariant(theme.light, false),
     dark: resolveThemeVariant(theme.dark, true)
   };
 }
+/**
+ * Serialize a token map into CSS custom-property declarations (one `--name: value;` per token).
+ * @param {Object} tokens - Flat map of token name to value.
+ * @returns {string} The CSS declarations joined by newlines and indentation.
+ */
 export function themeToCss(tokens) {
   return Object.entries(tokens).map(([key, value]) => `--${key}: ${value};`).join("\n  ");
 }

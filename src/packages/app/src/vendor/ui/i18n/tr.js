@@ -1,3 +1,10 @@
+/** @file Turkish (tr) translation dictionary for the diff/review UI; maps message keys to localized strings with {{placeholder}} interpolation tokens. */
+
+/**
+ * Turkish translation table keyed by message id.
+ * Values may contain `{{name}}` placeholders that are substituted at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Oturum değişiklikleri",
   "ui.sessionReview.title.lastTurn": "Son tur değişiklikleri",

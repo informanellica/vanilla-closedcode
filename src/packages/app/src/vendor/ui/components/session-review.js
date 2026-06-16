@@ -1,3 +1,4 @@
+/** @file SessionReview component: an accordion-based diff review panel rendering per-file diffs with unified/split toggle, expand/collapse, lazy mounting, line comments, and focus-to-comment scrolling. */
 import { Accordion } from "./accordion.js";
 import { Button } from "./button.js";
 import { DropdownMenu } from "./dropdown-menu.js";
@@ -29,6 +30,11 @@ const REVIEW_MOUNT_MARGIN = 300;
 // matching the compiled Solid templates). Static markup only — translated or
 // user-controlled strings are always assigned via textContent, never
 // interpolated. Built fresh per call: no cloneNode (listeners survive).
+/**
+ * Build a detached element from a compact static HTML string.
+ * @param {string} html - The HTML markup for a single root element (static only).
+ * @returns {Element} The first element parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -37,6 +43,15 @@ function template(html) {
 
 // Diff-based classList application, mirroring solid-js/web classList(): only
 // keys whose truthiness changed are toggled; space-separated keys supported.
+/**
+ * Apply a classList map by diffing against the previous map: only keys whose
+ * truthiness changed are toggled (removed when dropped/falsy, added when newly
+ * truthy). Space-separated multi-class keys are supported.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Object} value - The next classList map.
+ * @param {Object} prev - The previously applied classList map.
+ * @returns {Object} A shallow copy of the next map, to pass back as `prev` next time.
+ */
 function applyClassList(el, value, prev) {
   const prevObj = prev || {};
   const nextObj = value || {};
@@ -55,6 +70,13 @@ function applyClassList(el, value, prev) {
   }
   return { ...nextObj };
 }
+/**
+ * Type guard validating that a value is a renderable diff entry: it must have a
+ * string `file`, numeric `additions`/`deletions`, optional string
+ * `patch`/`before`/`after`, and (if present) a recognized `status`.
+ * @param {*} value - The candidate value.
+ * @returns {boolean} True if the value is a valid diff entry.
+ */
 function diff(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   if (!("file" in value) || typeof value.file !== "string") return false;
@@ -66,6 +88,13 @@ function diff(value) {
   if (!("status" in value) || value.status === undefined) return true;
   return value.status === "added" || value.status === "deleted" || value.status === "modified";
 }
+/**
+ * Coerce an arbitrary diffs prop into an array of valid diff entries: a clean
+ * array is returned as-is, a dirty array is filtered, a single diff is wrapped,
+ * and a plain object's values are filtered to valid diffs.
+ * @param {*} value - The diffs prop (array, single diff, object map, or other).
+ * @returns {Array} The array of valid diff entries.
+ */
 function list(value) {
   if (Array.isArray(value) && value.every(diff)) return value;
   if (Array.isArray(value)) return value.filter(diff);
@@ -73,6 +102,16 @@ function list(value) {
   if (!value || typeof value !== "object") return [];
   return Object.values(value).filter(diff);
 }
+/**
+ * Per-comment overflow menu component. Renders a dot-grid IconButton that opens
+ * a dropdown with Edit/Delete actions, and stops click/mousedown propagation so
+ * it does not trigger the surrounding line-comment popover handlers.
+ * @param {Object} props - Component props.
+ * @param {Object} props.labels - Localized labels { moreLabel, editLabel, deleteLabel }.
+ * @param {Function} props.onEdit - Called when the Edit item is selected.
+ * @param {Function} props.onDelete - Called when the Delete item is selected.
+ * @returns {HTMLElement} The menu root element.
+ */
 function ReviewCommentMenu(props) {
   const root = template(`<div></div>`);
   // The compiled output registered these as *delegated* $$click/$$mousedown
@@ -133,11 +172,53 @@ function ReviewCommentMenu(props) {
   }));
   return root;
 }
+/**
+ * Build a stable DOM id for a file's diff accordion item from its checksum.
+ * @param {string} file - The file path.
+ * @returns {string} The element id, or undefined when no checksum is available.
+ */
 function diffId(file) {
   const sum = checksum(file);
   if (!sum) return;
   return `session-review-diff-${sum}`;
 }
+/**
+ * Diff review panel component. Renders a header (title, unified/split RadioGroup,
+ * expand/collapse-all toggle, custom actions) above a scrollable accordion of
+ * per-file diffs. Each file row shows its icon/name/change summary and, when
+ * expanded, lazily mounts the inline diff (with a large-diff "render anyway"
+ * gate and media previews). Supports line comments (add/edit/delete) and
+ * scroll-to-focus when `focusedComment` changes. Works in controlled
+ * (`open`/`onOpenChange`) or uncontrolled open-state modes.
+ * @param {Object} props - Component props.
+ * @param {*} props.diffs - The diff entries to review (array, single, or object map; coerced via list()).
+ * @param {Array} props.comments - Existing line comments, grouped by file.
+ * @param {*} props.title - Optional custom title content (defaults to the localized review title).
+ * @param {*} props.actions - Extra action content appended to the header actions.
+ * @param {*} props.empty - Fallback content shown when there are no diffs.
+ * @param {Array} props.open - Controlled list of expanded file paths.
+ * @param {Function} props.onOpenChange - Called with the new expanded list when open state changes.
+ * @param {string} props.diffStyle - "unified" or "split"; falls back to props.split.
+ * @param {boolean} props.split - Whether to default to split diff style.
+ * @param {Function} props.onDiffStyleChange - Called with the chosen diff style from the toggle.
+ * @param {Function} props.onScroll - Scroll handler (function, or [fn, data] tuple) for the viewport.
+ * @param {Function} props.scrollRef - Ref callback invoked with the scroll viewport element.
+ * @param {string} props.focusedFile - File path to mark as selected/focused.
+ * @param {Object} props.focusedComment - Comment { file, id } to scroll into view and open.
+ * @param {Function} props.onFocusedCommentChange - Called with null after handling a focused comment.
+ * @param {Function} props.onViewFile - Called with a file path when its filename link is activated.
+ * @param {Function} props.onLineComment - Called when a new line comment is submitted.
+ * @param {Function} props.onLineCommentUpdate - Called when a line comment is edited.
+ * @param {Function} props.onLineCommentDelete - Called when a line comment is deleted.
+ * @param {Object} props.lineCommentActions - Localized edit/delete menu labels (enables the comment menu).
+ * @param {*} props.lineCommentMention - Mention configuration forwarded to the line comment controller.
+ * @param {Function} props.onDiffRendered - Called when a file's inline diff finishes rendering.
+ * @param {Function} props.readFile - Reader used for media previews.
+ * @param {Object} props.classes - Optional class overrides { root, container, header }.
+ * @param {string} props.class - Additional CSS class names for the root.
+ * @param {Object} props.classList - Solid-style class toggle map for the root.
+ * @returns {HTMLElement} The session-review root element.
+ */
 export const SessionReview = props => {
   let scroll;
   let focusToken = 0;

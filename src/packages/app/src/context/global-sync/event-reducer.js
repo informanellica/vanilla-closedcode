@@ -1,9 +1,15 @@
+/** @file Reducers that apply streamed SSE events (global and per-directory) into the sync stores: sessions, messages, parts, deltas, permissions, questions, vcs, todos, diffs, etc. */
 import { Binary } from "core/util/binary";
 import { produce, reconcile } from "../../lib/store.js";
 import { trimSessions } from "./session-trim.js";
 import { dropSessionCaches } from "./session-cache.js";
 import { diffs as list, message as clean } from "@/utils/diffs.js";
 const SKIP_PARTS = new Set(["patch", "step-start", "step-finish"]);
+/**
+ * Apply a global-scope event: trigger a refresh on disposal/connection, or upsert a project into the global list.
+ * @param {Object} input - `{event, project, refresh, setGlobalProject}`.
+ * @returns {void}
+ */
 export function applyGlobalEvent(input) {
   if (input.event.type === "global.disposed" || input.event.type === "server.connected") {
     input.refresh();
@@ -25,6 +31,13 @@ export function applyGlobalEvent(input) {
     draft.splice(result.index, 0, properties);
   }));
 }
+/**
+ * Drop all cached state (messages, parts, todos, diffs, permissions, etc.) for a single session.
+ * @param {Function} setStore - Child store setter.
+ * @param {string} sessionID - Session id; falsy is ignored.
+ * @param {Function} setSessionTodo - Optional setter to clear the session's global todo entry.
+ * @returns {void}
+ */
 function cleanupSessionCaches(setStore, sessionID, setSessionTodo) {
   if (!sessionID) return;
   setSessionTodo?.(sessionID, undefined);
@@ -32,6 +45,14 @@ function cleanupSessionCaches(setStore, sessionID, setSessionTodo) {
     dropSessionCaches(draft, [sessionID]);
   }));
 }
+/**
+ * Drop cached state for any session ids that are no longer present in the kept session list.
+ * @param {Object} store - Child store snapshot.
+ * @param {Function} setStore - Child store setter.
+ * @param {Array} next - The sessions to keep.
+ * @param {Function} setSessionTodo - Optional setter to clear each dropped session's global todo entry.
+ * @returns {void}
+ */
 export function cleanupDroppedSessionCaches(store, setStore, next, setSessionTodo) {
   const keep = new Set(next.map(item => item.id));
   const stale = [...Object.keys(store.message), ...Object.keys(store.session_diff), ...Object.keys(store.todo), ...Object.keys(store.permission), ...Object.keys(store.question), ...Object.keys(store.session_status), ...Object.values(store.part).map(parts => parts?.find(part => !!part?.sessionID)?.sessionID).filter(sessionID => !!sessionID)].filter((sessionID, index, list) => !keep.has(sessionID) && list.indexOf(sessionID) === index);

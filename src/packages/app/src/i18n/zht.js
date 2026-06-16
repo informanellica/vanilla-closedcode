@@ -1,3 +1,10 @@
+/** @file Traditional Chinese (zht) translation dictionary for application strings (command palette categories, themes, sessions, settings). */
+
+/**
+ * Mapping of application string keys to their Traditional Chinese translations.
+ * Values may contain `{{name}}` placeholders interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "command.category.suggested": "建議",
   "command.category.view": "檢視",

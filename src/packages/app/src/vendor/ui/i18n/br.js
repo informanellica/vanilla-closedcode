@@ -1,3 +1,9 @@
+/** @file Portuguese (br) translation dictionary mapping UI message keys to localized strings. */
+/**
+ * Portuguese translation table: maps dotted UI message keys to their localized strings.
+ * Placeholders in `{{name}}` form are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Alterações da sessão",
   "ui.sessionReview.title.lastTurn": "Alterações do último turno",

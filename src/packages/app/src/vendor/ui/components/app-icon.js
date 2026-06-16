@@ -1,3 +1,4 @@
+/** @file AppIcon component: renders the icon image for a known editor/terminal app id, switching themed variants on color-scheme changes. */
 const androidStudio = new URL("../assets/icons/app/android-studio.svg", import.meta.url).href;
 const antigravity = new URL("../assets/icons/app/antigravity.svg", import.meta.url).href;
 const cursor = new URL("../assets/icons/app/cursor.svg", import.meta.url).href;
@@ -37,11 +38,21 @@ const themed = {
     dark: zedDark
   }
 };
+/**
+ * Read the document's current color scheme from the root element dataset.
+ * @returns {string} "dark" when data-color-scheme is "dark", otherwise "light".
+ */
 const scheme = () => {
   if (typeof document !== "object") return "light";
   if (document.documentElement.dataset.colorScheme === "dark") return "dark";
   return "light";
 };
+/**
+ * Partition a props object into the keys listed and the remaining rest props.
+ * @param {Object} props - The props object to split.
+ * @param {Array} keys - Property names to pull into the first bag.
+ * @returns {Array} A [split, rest] pair of objects.
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -51,6 +62,13 @@ function splitProps(props, keys) {
   }
   return [split, rest];
 }
+/**
+ * Apply a Solid-style classList map to an element, supporting space-separated
+ * multi-class keys (which DOMTokenList.add/remove would otherwise reject).
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} classList - Map of class name(s) to boolean enabled state.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -63,6 +81,13 @@ function applyClassList(el, classList) {
     else el.classList.remove(...tokens);
   }
 }
+/**
+ * Apply leftover props to an element: bind `on*` handlers, set matching DOM
+ * properties when possible, and otherwise reflect/remove attributes.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - The rest-props bag (class/classList already handled by the caller).
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList") continue;
@@ -84,6 +109,17 @@ function applyRestProps(el, rest) {
     else el.setAttribute(key, String(value));
   }
 }
+/**
+ * Render an <img> for a known app id, picking the theme-appropriate icon source and
+ * updating it when the document color scheme changes.
+ * @param {Object} props - Component props.
+ * @param {string} props.id - The app id (e.g. "vscode", "zed") whose icon to render.
+ * @param {string} props.class - Optional class name(s) for the image.
+ * @param {Object} props.classList - Optional Solid-style classList map.
+ * @param {string} props.alt - Alt text for the image (defaults to empty).
+ * @param {boolean} props.draggable - Whether the image is draggable (defaults to false).
+ * @returns {HTMLElement} The icon <img> element.
+ */
 export const AppIcon = props => {
   const [local, rest] = splitProps(props, ["id", "class", "classList", "alt", "draggable"]);
   const img = document.createElement("img");

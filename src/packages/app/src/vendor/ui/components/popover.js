@@ -1,3 +1,4 @@
+/** @file Vanilla Popover component (a Kobalte-derived reimplementation): a trigger plus a portaled, positioned, dismissible content panel. */
 // Vanilla reimplementation of @kobalte/core's Popover behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -11,6 +12,11 @@ import { autoPosition } from "./floating.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
+/**
+ * Build a detached element from a compact static HTML string.
+ * @param {string} html - The HTML markup (single root element).
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -19,6 +25,12 @@ function template(html) {
 
 // Apply a Solid-style style prop (string or object) onto an element without
 // clobbering inline styles already set.
+/**
+ * Apply a Solid-style style prop onto an element, preserving existing inline styles.
+ * @param {HTMLElement} el - The target element.
+ * @param {*} style - A cssText string (appended) or a property object (camelCase or kebab keys accepted).
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (!style) return;
   if (typeof style === "string") {
@@ -37,6 +49,12 @@ function applyStyle(el, style) {
 }
 
 // Apply a Solid-style classList ({ "a b": true, c: false }) onto an element.
+/**
+ * Apply a Solid-style classList map onto an element (adding/removing token groups by flag).
+ * @param {Element} el - The target element.
+ * @param {Object} classList - Map of class-token strings to truthy/falsy flags.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -48,6 +66,35 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Vanilla popover (a Kobalte-derived reimplementation): renders a trigger and a dismissible,
+ * positioned content panel. Supports controlled/uncontrolled open state, an optional external
+ * anchor (anchor-only mode with no own trigger), portaling, an optional title/close header and
+ * description, autofocus, and dismissal via Escape / outside pointer / focus-out.
+ * @param {Object} props - Component props.
+ * @param {*} props.trigger - The trigger content (node, string, or accessor).
+ * @param {*} props.triggerAs - Tag name (default "div") or component used as the trigger element.
+ * @param {Object} props.triggerProps - Extra props/attributes applied to the trigger.
+ * @param {*} props.title - Optional header title content; presence renders the header + close button.
+ * @param {*} props.description - Optional description content rendered under the header.
+ * @param {string} props.class - Class string applied to the content panel.
+ * @param {Object} props.classList - Solid-style classList map applied to the content panel.
+ * @param {*} props.style - Style (string or object) applied to the content panel.
+ * @param {*} props.children - The popover body content.
+ * @param {boolean} props.portal - When set, controls whether content is portaled to document.body (default true).
+ * @param {boolean} props.open - Controlled open state; when provided the popover is controlled.
+ * @param {boolean} props.defaultOpen - Initial open state for uncontrolled usage.
+ * @param {Function} props.onOpenChange - Called with the next open boolean when open state changes.
+ * @param {boolean} props.modal - Modal flag (passed through).
+ * @param {string} props.placement - Preferred placement for positioning (default "bottom").
+ * @param {number} props.gutter - Gap between anchor and content (default 4).
+ * @param {number} props.shift - Cross-axis shift for positioning.
+ * @param {Function} props.anchorRef - Accessor returning an external anchor element (enables anchor-only mode).
+ * @param {Function} props.onDismiss - Called with the dismissal reason ("escape"/"outside"/"close").
+ * @param {boolean} props.noAutoFocus - When true, skip autofocusing the content panel on open.
+ * @param {Object} props.contentProps - Extra attributes/style merged onto the content panel.
+ * @returns {Node} The trigger element, or a comment placeholder in anchor-only mode.
+ */
 export function Popover(props) {
   const i18n = useI18n();
   const owner = getOwner();
@@ -125,6 +172,12 @@ export function Popover(props) {
     });
   }
 
+  /**
+   * Apply trigger props onto the trigger element (class/classList/style/event listeners/attributes).
+   * @param {Element} el - The trigger element.
+   * @param {Object} tp - The trigger props bag; the "children" key is ignored.
+   * @returns {void}
+   */
   function applyTriggerProps(el, tp) {
     for (const key in tp) {
       if (key === "children") continue;
@@ -149,6 +202,12 @@ export function Popover(props) {
       el.setAttribute(key, value === true ? "" : String(value));
     }
   }
+  /**
+   * Append trigger content into the trigger element (node, string, or reactive accessor).
+   * @param {Element} el - The trigger element.
+   * @param {*} content - The content: a Node (appended), a string (textContent), or otherwise inserted reactively.
+   * @returns {void}
+   */
   function appendTrigger(el, content) {
     if (content == null) return;
     if (content instanceof Node) {

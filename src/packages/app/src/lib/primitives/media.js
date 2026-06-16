@@ -16,13 +16,31 @@
 // renderer is client-only (build-less native ESM), so the hydratable path is never
 // taken and the runtime behavior is identical to upstream.
 
+/** @file First-party reimplementation of @solid-primitives/media's createMediaQuery (reactive media-query accessor). */
+
 import { createSignal, getOwner, onCleanup } from "../reactivity.js";
 
 // Inlined `tryOnCleanup` (Solid's `onCleanup` without the dev-only out-of-owner warning).
+/**
+ * Register a cleanup if inside a reactive owner, otherwise return the function
+ * unregistered (Solid's `onCleanup` without the dev-only out-of-owner warning).
+ *
+ * @param {Function} fn - Cleanup function to (conditionally) register.
+ * @returns {Function} The cleanup function.
+ */
 const tryOnCleanup = fn => (getOwner() ? onCleanup(fn) : fn);
 
 // Inlined `makeEventListener` (auto-removed on cleanup), matching the upstream helper
 // that `createMediaQuery` relies on internally.
+/**
+ * Attach an event listener that is automatically removed on scope cleanup.
+ *
+ * @param {EventTarget} target - Object to listen on.
+ * @param {string} type - Event type to subscribe to.
+ * @param {Function} handler - Event handler.
+ * @param {*} options - addEventListener options forwarded to the target.
+ * @returns {Function} A function that removes the listener.
+ */
 const makeEventListener = (target, type, handler, options) => {
   target.addEventListener(type, handler, options);
   return tryOnCleanup(target.removeEventListener.bind(target, type, handler, options));

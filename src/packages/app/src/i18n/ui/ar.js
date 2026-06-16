@@ -1,3 +1,10 @@
+/** @file Arabic (ar) UI-component translation dictionary for the desktop app renderer (ui.* keys). */
+
+/**
+ * Arabic translation table mapping ui.* component i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "تغييرات الجلسة",
   "ui.sessionReview.title.lastTurn": "تغييرات آخر دور",

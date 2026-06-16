@@ -1,3 +1,10 @@
+/** @file Spanish (es) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their Spanish strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Cambios de la sesión",
   "ui.sessionReview.title.lastTurn": "Cambios del último turno",

@@ -15,8 +15,15 @@ installLineCommentStyles();
 
 // --- Vanilla helpers replacing the compiled solid-js/web runtime calls ---
 
+/** @file Vanilla port of the compiled SolidJS line-comment components (anchor, comment, add, editor) with reactive DOM-binding helpers and a delegated-event system. */
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Build a detached element from a compact HTML string and return its first child.
+ *
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -26,6 +33,13 @@ function template(html) {
 // Resolve a possibly-reactive value the way solid-js/web's insert() does:
 // call accessors until a concrete value remains. Callers run this inside a
 // render effect, so the reads stay tracked.
+/**
+ * Resolve a possibly-reactive value by invoking accessor functions until a
+ * concrete (non-function) value remains.
+ *
+ * @param {*} value - The value or accessor chain to resolve.
+ * @returns {*} The resolved concrete value.
+ */
 function resolveValue(value) {
   while (typeof value === "function") value = value();
   return value;
@@ -33,6 +47,13 @@ function resolveValue(value) {
 
 // Normalize an insert() value (node, string/number, array, accessor) into an
 // array of DOM nodes.
+/**
+ * Normalize an insert()-style value (Node, string/number, array, accessor, or
+ * nullish/boolean) into a flat array of DOM nodes; primitives become text nodes.
+ *
+ * @param {*} value - The value to flatten into nodes.
+ * @returns {Array} An array of DOM nodes (empty for nullish/boolean values).
+ */
 function flattenNodes(value) {
   value = resolveValue(value);
   if (value == null || typeof value === "boolean") return [];
@@ -46,6 +67,14 @@ function flattenNodes(value) {
 
 // insert(el, accessor) replacement: render the value as the sole content of
 // `el` and keep it live.
+/**
+ * Reactively render an accessor's value as the sole content of an element,
+ * replacing its children whenever the value changes.
+ *
+ * @param {Element} el - The element whose children are bound.
+ * @param {Function} get - Accessor returning the content value.
+ * @returns {void}
+ */
 function bindContent(el, get) {
   createRenderEffect(() => {
     el.replaceChildren(...flattenNodes(get()));
@@ -53,6 +82,15 @@ function bindContent(el, get) {
 }
 
 // setAttribute() replacement: null/undefined removes the attribute.
+/**
+ * Reactively bind an attribute to an accessor's value (change-guarded); a
+ * nullish value removes the attribute.
+ *
+ * @param {Element} el - The target element.
+ * @param {string} name - The attribute name.
+ * @param {Function} get - Accessor returning the attribute value.
+ * @returns {void}
+ */
 function bindAttr(el, name, get) {
   let prev;
   createRenderEffect(() => {
@@ -66,6 +104,14 @@ function bindAttr(el, name, get) {
 
 // classList(el, { [name]: !!name }) replacement for a single dynamic
 // (possibly multi-token) class string.
+/**
+ * Reactively bind a single (possibly multi-token) class string to an element,
+ * adding/removing only the tokens that changed between updates.
+ *
+ * @param {Element} el - The target element.
+ * @param {Function} getName - Accessor returning the space-separated class string.
+ * @returns {void}
+ */
 function bindClass(el, getName) {
   let prev = [];
   createRenderEffect(() => {
@@ -82,6 +128,14 @@ function bindClass(el, getName) {
 }
 
 // style(el, value, prev) replacement for the object/undefined form.
+/**
+ * Reactively bind an element's inline styles to an accessor returning a style
+ * property map, setting changed properties and removing ones no longer present.
+ *
+ * @param {Element} el - The target element.
+ * @param {Function} get - Accessor returning a style property map (or falsy for none).
+ * @returns {void}
+ */
 function bindStyle(el, get) {
   let prev = {};
   createRenderEffect(() => {
@@ -127,6 +181,14 @@ const glyphPaths = {
   comment: '<path d="M16.25 3.75H3.75V16.25L6.875 14.4643H16.25V3.75Z" stroke="currentColor" stroke-linecap="square"></path>',
   plus: '<path d="M10 5.41699V10.0003M10 10.0003V14.5837M10 10.0003H5.4165M10 10.0003H14.5832" stroke="currentColor" stroke-linecap="square"></path>'
 };
+/**
+ * Render a small inline SVG glyph (comment or plus) whose path swaps reactively
+ * based on the icon name.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.icon - Glyph name; "comment" renders the comment path, otherwise the plus path.
+ * @returns {SVGSVGElement} The constructed SVG glyph element.
+ */
 function InlineGlyph(props) {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("data-slot", "line-comment-icon");
@@ -141,6 +203,30 @@ function InlineGlyph(props) {
   });
   return svg;
 }
+/**
+ * Render the base line-comment anchor: a positioned container with a trigger
+ * button and an open-gated popover, or an inline body popover. Position, variant,
+ * open/inline data attributes, class, and style are bound reactively, and handler
+ * props (onClick, onMouseEnter, onPopoverFocusOut) are wired into the rebuilt
+ * branch on change.
+ *
+ * @param {Object} props - Component props.
+ * @param {boolean} props.inline - Whether to render inline (relative) instead of absolutely positioned.
+ * @param {number} props.top - Absolute top offset in px; when undefined and not inline the anchor is hidden.
+ * @param {string} props.variant - Visual variant (data-variant); defaults to "default".
+ * @param {string} props.icon - Trigger glyph name ("comment" or "plus"); defaults to "comment".
+ * @param {boolean} props.hideButton - When inline, render the popover body directly without the trigger button.
+ * @param {boolean} props.open - Whether the open-gated popover is shown.
+ * @param {*} props.id - Comment id reflected as data-comment-id.
+ * @param {string} props.class - Class name(s) applied to the root.
+ * @param {string} props.popoverClass - Class name(s) applied to the popover.
+ * @param {string} props.buttonLabel - aria-label for the trigger button.
+ * @param {*} props.children - Popover content.
+ * @param {Function} props.onClick - Click handler for the button/inline body.
+ * @param {Function} props.onMouseEnter - Mouse-enter handler for the button/inline body.
+ * @param {Function} props.onPopoverFocusOut - Focus-out handler for the popover.
+ * @returns {HTMLDivElement} The anchor root element.
+ */
 export const LineCommentAnchor = props => {
   const hidden = () => !props.inline && props.top === undefined;
   const variant = () => props.variant ?? "default";
@@ -154,6 +240,14 @@ export const LineCommentAnchor = props => {
   // here, inside the rebuilding effect: the compiled Show evaluated its
   // branch (and these reads) inside its memo, so a handler identity change
   // rebuilds the branch with the new handler attached. Keep that contract.
+  /**
+   * Build the popover (or inline body) element, wiring focus-out and, when
+   * inline, mouse-enter/click handlers, plus mousedown stopPropagation, and
+   * binding its content and class reactively.
+   *
+   * @param {boolean} inline - Whether to build the inline body variant.
+   * @returns {HTMLDivElement} The constructed popover element.
+   */
   const buildPopover = inline => {
     const pop = document.createElement("div");
     pop.setAttribute("data-slot", "line-comment-popover");
@@ -233,6 +327,17 @@ export const LineCommentAnchor = props => {
   });
   return root;
 };
+/**
+ * Render a read-only line comment built on LineCommentAnchor: shows the comment
+ * text, optional action tools, and a localized selection label.
+ *
+ * @param {Object} props - Component props (forwarded to LineCommentAnchor).
+ * @param {*} props.comment - The comment text/content to display.
+ * @param {*} props.selection - The selection descriptor rendered in the label.
+ * @param {*} props.actions - Optional action UI shown beside the comment text.
+ * @param {boolean} props.inline - Whether to render inline (hides the trigger button).
+ * @returns {HTMLDivElement} The line-comment anchor element.
+ */
 export const LineComment = props => {
   const i18n = useI18n();
   const [split, rest] = splitProps(props, ["comment", "selection", "actions"]);
@@ -276,6 +381,14 @@ export const LineComment = props => {
     }
   }));
 };
+/**
+ * Render the "add comment" affordance: a plus-variant LineCommentAnchor that is
+ * always closed, used as the trigger to start a new comment.
+ *
+ * @param {Object} props - Component props (forwarded to LineCommentAnchor).
+ * @param {string} props.label - aria-label for the button; defaults to a localized submit label.
+ * @returns {HTMLDivElement} The line-comment anchor element.
+ */
 export const LineCommentAdd = props => {
   const [split, rest] = splitProps(props, ["label"]);
   const i18n = useI18n();
@@ -288,6 +401,28 @@ export const LineCommentAdd = props => {
     }
   }));
 };
+/**
+ * Render the line-comment editor: an editor-variant LineCommentAnchor with a
+ * textarea, a localized selection label, optional file-mention autocomplete, and
+ * cancel/submit actions (Button components on desktop, bare buttons inline).
+ * Handles keyboard navigation (Enter to submit, Shift+Enter newline, Escape to
+ * cancel, Tab/arrows for the mention list) and autofocuses on mount.
+ *
+ * @param {Object} props - Component props (forwarded to LineCommentAnchor).
+ * @param {string} props.value - The current editor text.
+ * @param {*} props.selection - The selection descriptor rendered in the label.
+ * @param {Function} props.onInput - Called with the new value on input.
+ * @param {Function} props.onCancel - Called when the edit is cancelled.
+ * @param {Function} props.onSubmit - Called with the trimmed value on submit.
+ * @param {string} props.placeholder - Textarea placeholder; defaults to a localized string.
+ * @param {number} props.rows - Textarea row count; defaults to 3.
+ * @param {boolean} props.autofocus - Whether to focus the textarea on mount; defaults to true.
+ * @param {string} props.cancelLabel - Cancel button label; defaults to a localized string.
+ * @param {string} props.submitLabel - Submit button label; defaults to a localized string.
+ * @param {Object} props.mention - Mention config with an async items(query) source for autocomplete.
+ * @param {boolean} props.inline - Whether to render inline (bare action buttons, hidden trigger).
+ * @returns {HTMLDivElement} The line-comment anchor element.
+ */
 export const LineCommentEditor = props => {
   const i18n = useI18n();
   const [split, rest] = splitProps(props, ["value", "selection", "onInput", "onCancel", "onSubmit", "placeholder", "rows", "autofocus", "cancelLabel", "submitLabel", "mention"]);
@@ -295,6 +430,13 @@ export const LineCommentEditor = props => {
     textarea: undefined
   };
   const [open, setOpen] = createSignal(false);
+  /**
+   * Insert the selected mention into the textarea, replacing the active "@query"
+   * token with "@<path> ", closing the mention list and restoring the caret.
+   *
+   * @param {Object} item - The chosen mention item with a path property.
+   * @returns {void}
+   */
   function selectMention(item) {
     if (!item) return;
     const textarea = refs.textarea;
@@ -335,6 +477,12 @@ export const LineCommentEditor = props => {
     setOpen(false);
     mention.clear();
   };
+  /**
+   * Detect an active "@query" mention token at the caret position.
+   *
+   * @returns {(Object|undefined)} The token { query, start, end } when the caret
+   *   follows an "@..." run with no selection, otherwise undefined.
+   */
   const currentMention = () => {
     const textarea = refs.textarea;
     if (!textarea) return;
@@ -429,6 +577,14 @@ export const LineCommentEditor = props => {
       });
       refs.textarea = textarea;
 
+      /**
+       * Build a mention-list row button for one path item: a file icon, the
+       * directory portion, and (for files) the filename, wired to select on
+       * click and highlight on hover.
+       *
+       * @param {Object} item - The mention item with a path property.
+       * @returns {HTMLButtonElement} The constructed row element.
+       */
       const buildMentionRow = item => {
         const directory = item.path.endsWith("/") ? item.path : getDirectory(item.path);
         const name = item.path.endsWith("/") ? "" : getFilename(item.path);

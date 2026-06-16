@@ -1,3 +1,4 @@
+/** @file Switch: a vanilla reimplementation of @kobalte/core's switch (controlled/uncontrolled toggle with aria wiring and data attributes the CSS keys off). */
 // Vanilla reimplementation of @kobalte/core's Switch behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -11,6 +12,13 @@ import { insert } from "../../../lib/reactivity.js";
 // house pattern (real DOM, render effects for reactive state, a hidden
 // checkbox input that owns focus/role).
 
+/**
+ * Append children to a parent node, handling arrays, DOM nodes, reactive
+ * accessor functions (tracked via insert()), and primitive text values.
+ * @param {Node} parent - Parent element to append into.
+ * @param {*} children - Child value(s): node, array, function accessor, or primitive.
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false || children === true) return;
   if (Array.isArray(children)) {
@@ -32,6 +40,14 @@ function appendChildren(parent, children) {
 
 // Object styles applied per property (compiled style() semantics); a plain
 // setAttribute would stringify the object to "[object Object]".
+/**
+ * Apply a style value to an element: removes the attribute for null, sets
+ * cssText for a string, or sets each property (including CSS custom properties)
+ * for an object.
+ * @param {HTMLElement} el - Target element.
+ * @param {*} style - Null, a cssText string, or a property map object.
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (style == null) {
     el.removeAttribute("style");
@@ -51,6 +67,14 @@ function applyStyle(el, style) {
 
 // Rest props on the root: handlers bound once, attribute props re-applied in a
 // render effect (they are often signal-backed getters), removed when falsy.
+/**
+ * Forward rest props onto the root element: event handlers (on*) are bound once,
+ * style is applied via applyStyle, and other attributes are reapplied reactively
+ * (removed when null/false, empty when true). Skips class/classList/children.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - The non-local props to forward.
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -78,6 +102,29 @@ function applyRestProps(el, rest) {
   });
 }
 
+/**
+ * Render an accessible toggle switch with a clipped checkbox input that owns
+ * focus/role and a visible control that toggles on click or Space. Supports
+ * controlled (`checked`) and uncontrolled (`defaultChecked`) state, optional
+ * label/description, and disabled/read-only/validation states reflected as
+ * data-* attributes for CSS.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Optional label content (omitted when absent).
+ * @param {string} props.class - Optional class name(s) for the root.
+ * @param {Object} props.classList - Optional class-name map for the root.
+ * @param {boolean} props.hideLabel - When true, visually hides the label (sr-only).
+ * @param {*} props.description - Optional description content.
+ * @param {boolean} props.checked - Controlled checked state (makes the switch controlled).
+ * @param {boolean} props.defaultChecked - Initial checked state when uncontrolled.
+ * @param {Function} props.onChange - Called with the new boolean when the switch toggles.
+ * @param {boolean} props.disabled - Disables interaction and commits.
+ * @param {boolean} props.readOnly - Prevents state changes while staying focusable.
+ * @param {string} props.validationState - "invalid" marks the switch invalid for aria/data attributes.
+ * @param {string} props.name - Name for the underlying checkbox input.
+ * @param {string} props.value - Value for the underlying checkbox input.
+ * @param {*} props.style - Style string or property map for the root.
+ * @returns {HTMLElement} The switch root element.
+ */
 export function Switch(props) {
   const [local, others] = splitProps(props, [
     "children",

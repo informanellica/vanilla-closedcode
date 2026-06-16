@@ -1,3 +1,4 @@
+/** @file Markdown rendering context: configures `marked` with KaTeX math and Shiki syntax highlighting under the custom "ClosedCode" theme, and exposes a Marked provider/hook. */
 import { marked } from "marked";
 import markedKatex from "marked-katex-extension";
 import markedShiki from "marked-shiki";
@@ -275,6 +276,12 @@ registerCustomTheme("ClosedCode", () => {
     }
   });
 });
+/**
+ * Renders inline (`$...$`) and display (`$$...$$`) KaTeX math expressions found in a text string to HTML.
+ * Invalid expressions are left as their original literal delimited text.
+ * @param {string} text - The text potentially containing KaTeX math delimiters.
+ * @returns {string} The text with math expressions replaced by rendered KaTeX HTML.
+ */
 function renderMathInText(text) {
   let result = text;
 
@@ -305,6 +312,11 @@ function renderMathInText(text) {
   });
   return result;
 }
+/**
+ * Renders KaTeX math in an HTML string while leaving the contents of `<pre>`, `<code>`, and `<kbd>` blocks untouched.
+ * @param {string} html - The HTML string to process.
+ * @returns {string} The HTML with math rendered outside of code blocks.
+ */
 function renderMathExpressions(html) {
   // Split on code/pre/kbd tags to avoid processing their contents
   const codeBlockPattern = /(<(?:pre|code|kbd)[^>]*>[\s\S]*?<\/(?:pre|code|kbd)>)/gi;
@@ -316,6 +328,12 @@ function renderMathExpressions(html) {
     return renderMathInText(part);
   }).join("");
 }
+/**
+ * Replaces `<pre><code>` blocks in an HTML string with Shiki-highlighted markup using the "ClosedCode" theme.
+ * Unescapes HTML entities, falls back to plain "text" for unknown languages, and lazily loads required languages.
+ * @param {string} html - The HTML string containing fenced code blocks.
+ * @returns {Promise<string>} A promise resolving to the HTML with highlighted code blocks.
+ */
 async function highlightCodeBlocks(html) {
   const codeBlockRegex = /<pre><code(?:\s+class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g;
   const matches = [...html.matchAll(codeBlockRegex)];
@@ -345,6 +363,14 @@ async function highlightCodeBlocks(html) {
   }
   return result;
 }
+/**
+ * Marked context exports.
+ * `useMarked` is the hook returning the configured markdown parser (with `parse(markdown)`),
+ * and `MarkedProvider` is the provider component. When a `nativeParser` prop is supplied,
+ * its HTML output is post-processed with math rendering and Shiki highlighting; otherwise the
+ * JS `marked` parser (with KaTeX and Shiki extensions) is used.
+ * @type {Object}
+ */
 export const {
   use: useMarked,
   provider: MarkedProvider

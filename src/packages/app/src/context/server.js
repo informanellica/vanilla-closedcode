@@ -3,34 +3,64 @@ import { batch, createEffect, createMemo, onCleanup } from "../lib/reactivity.js
 import { createStore } from "../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { useCheckServerHealth } from "@/utils/server-health.js";
+/** @file Server context: manages the list of known server connections, the active one and its health polling, and the per-server list of open projects (open/close/expand/move). */
 const HEALTH_POLL_INTERVAL_MS = 10_000;
+/**
+ * Normalizes a user-entered server URL: trims it, prepends `http://` when no protocol is present, and strips trailing slashes.
+ * @param {string} input - The raw URL string.
+ * @returns {string} The normalized URL, or undefined when the input is empty.
+ */
 export function normalizeServerUrl(input) {
   const trimmed = input.trim();
   if (!trimmed) return;
   const withProtocol = /^https?:\/\//.test(trimmed) ? trimmed : `http://${trimmed}`;
   return withProtocol.replace(/\/+$/, "");
 }
+/**
+ * Produces a display name for a server connection: its display name when set, otherwise the URL with protocol and trailing slashes stripped.
+ * @param {Object} conn - The connection ({displayName, http: {url}}).
+ * @param {boolean} ignoreDisplayName - When true, always derive the name from the URL.
+ * @returns {string} The display name (empty string when no connection).
+ */
 export function serverName(conn, ignoreDisplayName = false) {
   if (!conn) return "";
   if (conn.displayName && !ignoreDisplayName) return conn.displayName;
   return conn.http.url.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 }
+/**
+ * Maps an active-connection key to the key used to store its open-projects list, collapsing the sidecar and localhost connections to "local".
+ * @param {string} key - The active connection key.
+ * @returns {string} The projects-store key.
+ */
 function projectsKey(key) {
   if (!key) return "";
   if (key === "sidecar") return "local";
   if (isLocalHost(key)) return "local";
   return key;
 }
+/**
+ * Whether a URL points at the local host (localhost or 127.0.0.1).
+ * @param {string} url - The URL or host string.
+ * @returns {string} The string "local" when local, otherwise undefined.
+ */
 function isLocalHost(url) {
   const host = url.replace(/^https?:\/\//, "").split(":")[0];
   if (host === "localhost" || host === "127.0.0.1") return "local";
 }
+/**
+ * Namespace of server-connection helpers: stable key derivation for a connection and the opaque Key type maker.
+ */
 export let ServerConnection;
 (function (_ServerConnection) {
   // Regular web connections
 
   // Remote server desktop can SSH into
 
+  /**
+   * Derives a stable identity key for a connection (by URL for http, by distro/sidecar tag, or by host for ssh).
+   * @param {Object} conn - The connection ({type, http, distro, host, variant}).
+   * @returns {string} The connection key.
+   */
   const key = _ServerConnection.key = conn => {
     switch (conn.type) {
       case "http":
@@ -44,10 +74,18 @@ export let ServerConnection;
         return Key.make(`ssh:${conn.host}`);
     }
   };
+  // Opaque key constructor (identity); brands a raw string as a connection Key.
   const Key = _ServerConnection.Key = {
     make: v => v
   };
 })(ServerConnection || (ServerConnection = {}));
+/**
+ * Server context. Holds the persisted list of server connections plus the active connection and
+ * its reactive health, and stores the open-projects list per server.
+ * Exposes: `ready`, `healthy`, `isLocal`, `key`/`name`/`list`/`current` accessors, connection
+ * mutators (`setActive`, `add`, `remove`), and a `projects` namespace
+ * (`list`, `open`, `close`, `expand`, `collapse`, `move`, `last`, `touch`) scoped to the active server.
+ */
 export const {
   use: useServer,
   provider: ServerProvider
@@ -82,6 +120,11 @@ export const {
       healthy: undefined
     });
     const healthy = () => state.healthy;
+    /**
+     * Starts polling a connection's health on an interval, writing the result into state until stopped.
+     * @param {Object} conn - The connection to poll ({http}).
+     * @returns {Function} A cleanup function that stops polling.
+     */
     function startHealthPolling(conn) {
       let alive = true;
       let busy = false;
@@ -102,9 +145,15 @@ export const {
         clearInterval(interval);
       };
     }
+    // Set the active connection key (no-op when already active).
     function setActive(input) {
       if (state.active !== input) setState("active", input);
     }
+    /**
+     * Adds (or updates by URL) a server connection in the persisted list and makes it active.
+     * @param {Object} input - The connection to add ({http: {url}, ...}); its URL is normalized.
+     * @returns {Object} The stored connection, or undefined when the URL is empty.
+     */
     function add(input) {
       const url_ = normalizeServerUrl(input.http.url);
       if (!url_) return;

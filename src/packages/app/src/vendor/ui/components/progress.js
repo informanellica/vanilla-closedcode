@@ -1,4 +1,11 @@
+/** @file Vanilla Progress component: renders a progress bar with optional label/value header and ARIA value attributes. */
 import { insert } from "../../../lib/reactivity.js";
+/**
+ * Split a props object into a [selected, rest] pair by key list.
+ * @param {Object} props - The source props object.
+ * @param {Array} keys - Keys to pull into the first (selected) object.
+ * @returns {Array} A two-element array: [picked props, remaining props].
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -12,6 +19,13 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Apply a Solid-style classList map to an element, toggling each class on/off.
+ * Space-separated multi-class keys are split into individual tokens.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Object} classList - Map of class name (or space-separated names) to truthy/falsy.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -25,6 +39,14 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Apply remaining (non-class/children) props onto an element as DOM properties,
+ * event handlers, or attributes. Event handlers (keys starting with "on") are
+ * bound as lowercased DOM event properties; class/classList/children are skipped.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Object} rest - The passthrough props.
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -50,6 +72,14 @@ function applyRestProps(el, rest) {
   }
 }
 
+/**
+ * Recursively append Solid-style children to a parent: arrays are flattened,
+ * Nodes appended directly, functions tracked reactively via insert(), and other
+ * values stringified into text nodes.
+ * @param {Node} parent - The parent node to append into.
+ * @param {*} children - The children value (Node, array, function, primitive, or nullish).
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -69,11 +99,31 @@ function appendChildren(parent, children) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Compute a clamped 0-100 percentage from a value and its maximum.
+ * @param {number} value - The current value.
+ * @param {number} maxValue - The maximum value (must be greater than 0).
+ * @returns {number} The percentage in [0, 100], or null if inputs are invalid.
+ */
 function percentage(value, maxValue) {
   if (typeof value !== "number" || typeof maxValue !== "number" || maxValue <= 0) return null;
   return Math.max(0, Math.min(100, (value / maxValue) * 100));
 }
 
+/**
+ * Progress bar component. Renders a track with a fill sized to value/maxValue,
+ * an optional header (label and/or percentage value label), and ARIA value
+ * attributes (aria-valuenow/min/max) for accessibility.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Optional label content rendered in the header.
+ * @param {string} props.class - Additional CSS class names for the root.
+ * @param {Object} props.classList - Solid-style class toggle map for the root.
+ * @param {boolean} props.hideLabel - When true, visually hides the label (sr-only).
+ * @param {boolean} props.showValueLabel - When true, renders the percentage value label.
+ * @param {number} props.value - The current progress value (passed through as a rest prop).
+ * @param {number} props.maxValue - The maximum progress value (passed through as a rest prop).
+ * @returns {HTMLElement} The progress root element.
+ */
 export function Progress(props) {
   const [local, others] = splitProps(props, ["children", "class", "classList", "hideLabel", "showValueLabel"]);
   const root = document.createElement("div");

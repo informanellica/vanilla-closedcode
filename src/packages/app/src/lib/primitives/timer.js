@@ -9,6 +9,8 @@
 // Scope note: the upstream package also exports `createTimer`, `createTimeoutLoop`,
 // `createPolled`, and `createIntervalCounter`; none are used here and are omitted.
 
+/** @file First-party reimplementation of @solid-primitives/timer's makeTimer (auto-cleared timer tied to the reactive scope). */
+
 import { onCleanup } from "../reactivity.js";
 
 /**

@@ -1,3 +1,4 @@
+/** @file Providers controller (MVC): owns provider auth/credential management (OAuth + API key + custom providers) and the SDK orchestration (dispose/refresh) behind the provider Views. */
 import { useGlobalSDK } from "@/context/global-sdk.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { fetchLocalModels } from "@/components/fetch-local-models.js";
@@ -25,24 +26,41 @@ export function useProvidersController() {
   // The connected-provider list comes from a cached `[dir, "providers"]` query.
   // After a config change + dispose, re-fetch it so newly added/removed
   // providers show up immediately (without a full reload).
+  /**
+   * Invalidate every cached `[dir, "providers"]` query so the connected-provider
+   * list re-fetches after a config change.
+   * @returns {Promise} Resolves once the matching queries are invalidated.
+   */
   const refreshProviders = () => queryClient.invalidateQueries({
     predicate: q => Array.isArray(q.queryKey) && q.queryKey[1] === "providers",
   });
 
-  /** Look up a provider record by id, falling back to the global sync list. */
+  /**
+   * Look up a provider record by id, falling back to the global sync list.
+   * @param {string} id - The provider id.
+   * @param {Array} fromHook - An optional provider list to check first.
+   * @returns {Object} The provider record, or undefined.
+   */
   const findProvider = (id, fromHook) => {
     const fromList = fromHook?.find(x => x.id === id);
     if (fromList) return fromList;
     return globalSync.data.provider.all.find(x => x.id === id);
   };
 
-  /** Cached auth methods for a provider (read-through cache in global sync). */
+  /**
+   * Cached auth methods for a provider (read-through cache in global sync).
+   * @param {string} providerID - The provider id.
+   * @returns {Object} The cached auth methods, or undefined.
+   */
   const cachedAuth = providerID => globalSync.data.provider_auth[providerID];
 
   /**
    * Fetch the available auth methods for a provider. Uses the global-sync
    * `provider_auth` cache; on a network fetch it primes the cache. `isAlive`
    * lets the caller bail (and use `fallback`) if its scope was disposed.
+   * @param {string} providerID - The provider id.
+   * @param {Object} options - Has `fallback` (function for the bail/missing value) and `isAlive` (function returning whether the scope is still live).
+   * @returns {Promise} Resolves to the provider's auth methods (or the fallback).
    */
   const fetchAuthMethods = async (providerID, { fallback, isAlive } = {}) => {
     const cached = cachedAuth(providerID);
@@ -53,10 +71,20 @@ export function useProvidersController() {
     return res.data?.[providerID] ?? (fallback ? fallback() : undefined);
   };
 
-  /** Centralized: refresh server state after any credential change. */
+  /**
+   * Centralized: refresh server state after any credential change (disposes the
+   * global instance so it rebuilds).
+   * @returns {Promise} Resolves once the dispose request completes.
+   */
   const disposeGlobal = () => globalSDK.client.global.dispose();
 
-  /** Begin OAuth: request an authorization for the chosen method. */
+  /**
+   * Begin OAuth: request an authorization for the chosen method.
+   * @param {string} providerID - The provider id.
+   * @param {string} method - The chosen auth method id.
+   * @param {Object} inputs - Method-specific authorization inputs.
+   * @returns {Promise} Resolves to the authorization data.
+   */
   const authorizeOAuth = (providerID, method, inputs) =>
     globalSDK.client.provider.oauth
       .authorize({ providerID, method, inputs }, { throwOnError: true })
@@ -66,6 +94,10 @@ export function useProvidersController() {
    * Complete an OAuth flow with the provider callback. Returns a discriminated
    * result so the View can render success/error without SDK knowledge. On
    * success the global server state is refreshed.
+   * @param {string} providerID - The provider id.
+   * @param {string} method - The auth method id.
+   * @param {string} code - The OAuth callback code.
+   * @returns {Promise<Object>} Resolves to `{ ok: true }` or `{ ok: false, error }`.
    */
   const completeOAuth = async (providerID, method, code) => {
     const result = await globalSDK.client.provider.oauth
@@ -78,6 +110,9 @@ export function useProvidersController() {
 
   /**
    * Connect via an API key: persist the credential then refresh server state.
+   * @param {string} providerID - The provider id.
+   * @param {string} apiKey - The API key to store.
+   * @returns {Promise} Resolves once the credential is saved and state refreshed.
    */
   const connect = async (providerID, apiKey) => {
     await globalSDK.client.auth.set({
@@ -87,7 +122,11 @@ export function useProvidersController() {
     await disposeGlobal();
   };
 
-  /** Discover models exposed by a custom/local provider endpoint. */
+  /**
+   * Discover models exposed by a custom/local provider endpoint.
+   * @param {Object} config - Has `baseURL`, `headers`, and `apiKey`.
+   * @returns {Promise} Resolves to the discovered local models.
+   */
   const discover = ({ baseURL, headers, apiKey }) =>
     fetchLocalModels({ baseURL, headers, apiKey });
 
@@ -95,6 +134,8 @@ export function useProvidersController() {
    * Save a custom provider: optionally persist its API key, then merge its
    * config (re-enabling it if previously disabled). Returns the input result so
    * the caller can drive success UI.
+   * @param {Object} result - Has `providerID`, `config`, and an optional `key`.
+   * @returns {Promise<Object>} Resolves to the passed-in `result`.
    */
   const saveCustom = async result => {
     const disabledProviders = globalSync.data.config.disabled_providers ?? [];
@@ -116,7 +157,11 @@ export function useProvidersController() {
     return result;
   };
 
-  /** Add a provider id to the disabled list (optimistic, with rollback). */
+  /**
+   * Add a provider id to the disabled list (optimistic, with rollback on failure).
+   * @param {string} providerID - The provider id to disable.
+   * @returns {Promise} Resolves once the config update persists (rolls back and rethrows on error).
+   */
   const disableProvider = async providerID => {
     const before = globalSync.data.config.disabled_providers ?? [];
     const next = before.includes(providerID) ? before : [...before, providerID];
@@ -129,7 +174,11 @@ export function useProvidersController() {
     }
   };
 
-  /** Is this provider id a config-defined custom (openai-compatible) provider? */
+  /**
+   * Is this provider id a config-defined custom (openai-compatible) provider?
+   * @param {string} providerID - The provider id.
+   * @returns {boolean} True when the provider is a config-custom openai-compatible provider.
+   */
   const isConfigCustom = providerID => {
     const provider = globalSync.data.config.provider?.[providerID];
     if (!provider) return false;
@@ -146,6 +195,8 @@ export function useProvidersController() {
    * Remove / disconnect a provider's credential. Config-custom providers are
    * also disabled in config; everything else refreshes server state via
    * dispose. Returns { configCustom } so the View can branch its toast.
+   * @param {string} providerID - The provider id to remove.
+   * @returns {Promise<Object>} Resolves to `{ configCustom }` indicating which branch ran.
    */
   const removeProvider = async providerID => {
     if (isConfigCustom(providerID)) {

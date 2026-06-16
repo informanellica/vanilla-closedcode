@@ -5,6 +5,13 @@ import { useDialog } from "@/lib/dialog.js";
 import { useLanguage } from "@/context/language.js";
 import { useSettings } from "@/context/settings.js";
 
+/** @file Release-notes dialog: a paged carousel of highlight features (title, description, image/video media) with dot navigation and a "don't show again" toggle. */
+
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 // Build a detached element from an HTML string.
 function template(html) {
   const wrapper = document.createElement("div");
@@ -12,6 +19,14 @@ function template(html) {
   return wrapper.firstElementChild;
 }
 
+/**
+ * Release-notes dialog component. Renders the highlights as a paged carousel
+ * with optional media, pagination dots, keyboard navigation and a control to
+ * disable future release notes.
+ * @param {Object} props - Component props.
+ * @param {Array} props.highlights - Highlight entries (title, description, optional media with type/src/alt).
+ * @returns {Node} The Dialog element wrapping the carousel.
+ */
 export function DialogReleaseNotes(props) {
   const dialog = useDialog();
   const language = useLanguage();
@@ -23,17 +38,34 @@ export function DialogReleaseNotes(props) {
   const isFirst = () => index() === 0;
   const isLast = () => index() >= last();
   const paged = () => total() > 1;
+  /**
+   * Advance to the next highlight unless already on the last page.
+   * @returns {void}
+   */
   function handleNext() {
     if (isLast()) return;
     setIndex(index() + 1);
   }
+  /**
+   * Close the dialog.
+   * @returns {void}
+   */
   function handleClose() {
     dialog.close();
   }
+  /**
+   * Disable future release-notes display and close the dialog.
+   * @returns {void}
+   */
   function handleDisable() {
     settings.general.setReleaseNotes(false);
     handleClose();
   }
+  /**
+   * Keyboard handler: Escape closes; Left/Right arrows page when paged.
+   * @param {KeyboardEvent} e - The keydown event.
+   * @returns {void}
+   */
   function handleKeyDown(e) {
     if (e.key === "Escape") {
       e.preventDefault();
@@ -51,6 +83,11 @@ export function DialogReleaseNotes(props) {
     }
   }
 
+  /**
+   * Build the dialog body: the title/description, the next/get-started action,
+   * the "don't show again" button, pagination dots and the media panel.
+   * @returns {Element} The body root element.
+   */
   // Dialog body. Called from the children getter below, so — like the
   // compiled output — it builds a fresh tree on every getter access.
   function buildContent() {

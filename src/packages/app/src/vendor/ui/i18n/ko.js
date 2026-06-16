@@ -1,3 +1,11 @@
+/** @file Korean (ko) UI translation strings for the desktop renderer i18n layer. */
+
+/**
+ * Korean translation dictionary mapping UI message keys to localized strings.
+ * Keys are dotted identifiers (e.g. "ui.common.cancel") and values may contain
+ * `{{placeholder}}` tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "세션 변경 사항",
   "ui.sessionReview.title.lastTurn": "마지막 턴 변경 사항",

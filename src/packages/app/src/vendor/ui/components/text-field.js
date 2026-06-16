@@ -1,3 +1,4 @@
+/** @file Vanilla TextField component (a Kobalte-derived reimplementation): a labeled, validatable input/textarea with optional description, error, and copy-to-clipboard affordance. */
 // Vanilla reimplementation of @kobalte/core's TextField behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -18,6 +19,13 @@ import { Tooltip } from "./tooltip.js";
 // Rest props forwarded to the input/textarea: handlers bound once, attribute
 // props re-applied in a render effect (they may be signal-backed getters),
 // `ref` invoked once with the element.
+/**
+ * Forward arbitrary rest props onto the field element: bind on* handlers once, invoke ref once, and
+ * reactively apply remaining attribute/property values (skipping class/classList/children).
+ * @param {HTMLElement} el - The input/textarea element.
+ * @param {Object} rest - The rest props bag to forward.
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -56,6 +64,12 @@ function applyRestProps(el, rest) {
 // The original createControllableSignal: controlled when `value` is supplied,
 // uncontrolled (internal, seeded from defaultValue) otherwise; onChange fires
 // with the new string. Returns [read, write].
+/**
+ * Create a controllable value: controlled when local.value is supplied, otherwise an internal signal
+ * seeded from local.defaultValue; writes call local.onChange and update internal state only when uncontrolled.
+ * @param {Object} local - The local props ({ value, defaultValue, onChange }).
+ * @returns {Array} A [read, write, controlled] tuple of accessors.
+ */
 function controllableValue(local) {
   const controlled = () => local.value !== undefined;
   const [internal, setInternal] = createSignal(local.defaultValue ?? "");
@@ -67,6 +81,11 @@ function controllableValue(local) {
   return [read, write, controlled];
 }
 
+/**
+ * Auto-size a textarea to fit its content by resetting and re-measuring its scroll height.
+ * @param {HTMLTextAreaElement} el - The textarea element to resize.
+ * @returns {void}
+ */
 function adjustHeight(el) {
   const prevAlignment = el.style.alignSelf;
   const prevOverflow = el.style.overflow;
@@ -79,6 +98,32 @@ function adjustHeight(el) {
   el.style.alignSelf = prevAlignment;
 }
 
+/**
+ * Labeled text field: renders a role="group" wrapper with an optional label, a (single-line input or
+ * multiline auto-sizing textarea) field, optional description and error slots, validation/disabled/
+ * read-only data attributes the CSS keys off, and an optional copy-to-clipboard button. Supports
+ * controlled or uncontrolled value; rest props are forwarded onto the field.
+ * @param {Object} props - Component props.
+ * @param {string} props.name - The form field name.
+ * @param {string} props.defaultValue - Initial value for uncontrolled usage.
+ * @param {string} props.value - Controlled value; when provided the field is controlled.
+ * @param {Function} props.onChange - Called with the new value string on edit.
+ * @param {Function} props.onKeyDown - Keydown handler bound to the field.
+ * @param {string} props.validationState - "invalid"/"valid" to toggle validation styling.
+ * @param {boolean} props.required - Whether the field is required.
+ * @param {boolean} props.disabled - Whether the field is disabled.
+ * @param {boolean} props.readOnly - Whether the field is read-only.
+ * @param {string} props.class - Class string applied to the field element.
+ * @param {*} props.label - Optional label content (sr-only when hideLabel).
+ * @param {boolean} props.hideLabel - Visually hide the label (keep it for screen readers).
+ * @param {*} props.description - Optional description content.
+ * @param {*} props.error - Optional error message content.
+ * @param {string} props.variant - Visual variant (default "normal").
+ * @param {boolean} props.copyable - When true, render a copy button and copy on group click.
+ * @param {string} props.copyKind - "link" to use link-flavored copy labels/icon.
+ * @param {boolean} props.multiline - When true, render a textarea instead of an input.
+ * @returns {HTMLElement} The text-field root element.
+ */
 export function TextField(props) {
   const i18n = useI18n();
   const [local, others] = splitProps(props, ["name", "defaultValue", "value", "onChange", "onKeyDown", "validationState", "required", "disabled", "readOnly", "class", "label", "hideLabel", "description", "error", "variant", "copyable", "copyKind", "multiline"]);
@@ -95,6 +140,10 @@ export function TextField(props) {
     if (local.copyKind === "link") return "link";
     return "copy";
   };
+  /**
+   * Copy the field's current value to the clipboard and flash the copied state for 2 seconds.
+   * @returns {Promise<void>} Resolves once the value has been written to the clipboard.
+   */
   async function handleCopy() {
     // Controlled value wins over defaultValue; read live at click time.
     const value = local.value ?? local.defaultValue ?? readValue() ?? "";
@@ -104,6 +153,11 @@ export function TextField(props) {
   }
 
   // Build the input or textarea element with all reactive wiring.
+  /**
+   * Build the input (or textarea when multiline) element with all reactive wiring: rest props, class,
+   * validation/disabled/read-only data attributes, value sync/clamp, input handling and auto-sizing.
+   * @returns {HTMLElement} The configured input/textarea element.
+   */
   function buildField() {
     const multiline = !!local.multiline;
     const el = document.createElement(multiline ? "textarea" : "input");
@@ -165,6 +219,10 @@ export function TextField(props) {
   }
 
   // Wrapper holding the input/textarea plus the optional copy affordance.
+  /**
+   * Build the wrapper element containing the field and, when copyable, a tooltip-wrapped copy button.
+   * @returns {HTMLElement} The wrapper element.
+   */
   function buildWrapper() {
     const wrapper = document.createElement("div");
     wrapper.setAttribute("data-slot", "input-wrapper");

@@ -1,7 +1,16 @@
+/** @file Link component: an anchor that opens its href through the platform layer instead of in-app navigation. */
 import { createRenderEffect, splitProps } from "../lib/reactivity.js";
 import { insert } from "../lib/reactivity.js";
 import { usePlatform } from "@/context/platform.js";
 
+/**
+ * Assign one forwarded (rest) prop onto the anchor, mirroring Solid's spread semantics for the prop shapes Link callers use.
+ * @param {HTMLElement} el - The anchor element to mutate.
+ * @param {string} key - Prop name (style, classList, on* handler, class/className, or a plain attribute name).
+ * @param {*} value - The new value for the prop.
+ * @param {*} prev - The previous value, used to remove stale event listeners.
+ * @returns {void}
+ */
 // Assign one forwarded (rest) prop onto the anchor, mirroring Solid's spread
 // semantics for the prop shapes Link callers use: style objects, classList
 // maps, on* event handlers, class/className, and plain attributes (tabIndex
@@ -37,6 +46,11 @@ function assignProp(el, key, value, prev) {
   else el.setAttribute(key, value === true ? "" : value);
 }
 
+/**
+ * Anchor component whose clicks are routed through the platform layer (e.g. opening in the system browser).
+ * @param {Object} props - Component props: `href` (string), `children` (label, typically a reactive getter), `class` (extra classes), an optional `ref` and any other anchor attributes/handlers to spread.
+ * @returns {HTMLElement} The configured anchor element.
+ */
 export function Link(props) {
   const platform = usePlatform();
   const [local, rest] = splitProps(props, ["href", "children", "class"]);

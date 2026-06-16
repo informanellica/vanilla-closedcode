@@ -1,3 +1,4 @@
+/** @file Bosnian (bs) translation dictionary: maps i18n message keys to their localized strings; {{placeholders}} are runtime interpolation tokens. */
 export const dict = {
   "command.category.suggested": "Predloženo",
   "command.category.view": "Prikaz",

@@ -1,3 +1,4 @@
+/** @file Notification sound catalog and playback helpers: maps sound ids to bundled .aac assets and plays them. */
 let files;
 let loads;
 // Build-less replacement for the former Vite `import.meta.glob(...)`.
@@ -19,6 +20,12 @@ const AUDIO_FILES = [
   "staplebops-05", "staplebops-06", "staplebops-07",
   "yup-01", "yup-02", "yup-03", "yup-04", "yup-05", "yup-06",
 ];
+/**
+ * Build (and memoize) the glob-shaped map of audio asset URLs to lazy loaders.
+ * Mirrors Vite's `import.meta.glob(..., { import: "default" })` shape: keys are
+ * relative paths, values are functions returning a Promise of the URL string.
+ * @returns {Object} Map of "<path>" to a function returning Promise<string>.
+ */
 function getFiles() {
   if (files) return files;
   files = Object.fromEntries(
@@ -29,6 +36,10 @@ function getFiles() {
   );
   return files;
 }
+/**
+ * Selectable notification sounds, each with a stable `id` and an i18n `label` key.
+ * @type {Array<Object>}
+ */
 export const SOUND_OPTIONS = [{
   id: "alert-01",
   label: "sound.option.alert01"
@@ -165,6 +176,11 @@ export const SOUND_OPTIONS = [{
   id: "yup-06",
   label: "sound.option.yup06"
 }];
+/**
+ * Build (and memoize) a map keyed by sound id (basename without extension) to its
+ * lazy URL loader, derived from getFiles().
+ * @returns {Object} Map of "<sound-id>" to a function returning Promise<string>.
+ */
 function getLoads() {
   if (loads) return loads;
   loads = Object.fromEntries(Object.entries(getFiles()).flatMap(([path, load]) => {
@@ -175,6 +191,11 @@ function getLoads() {
   return loads;
 }
 const cache = new Map();
+/**
+ * Resolve a sound id to its asset URL, caching the resolved promise per id.
+ * @param {string} id - A sound id from SOUND_OPTIONS.
+ * @returns {Promise<string>} Resolves to the asset URL, or undefined if the id is unknown or loading fails.
+ */
 export function soundSrc(id) {
   const loads = getLoads();
   if (!id || !(id in loads)) return Promise.resolve(undefined);
@@ -185,6 +206,11 @@ export function soundSrc(id) {
   cache.set(key, next);
   return next;
 }
+/**
+ * Play an audio source immediately.
+ * @param {string} src - The audio URL to play.
+ * @returns {Function} A stop function that pauses and rewinds the audio, or undefined if Audio is unavailable or src is falsy.
+ */
 export function playSound(src) {
   if (typeof Audio === "undefined") return;
   if (!src) return;
@@ -195,6 +221,11 @@ export function playSound(src) {
     audio.currentTime = 0;
   };
 }
+/**
+ * Resolve a sound id to its asset and play it.
+ * @param {string} id - A sound id from SOUND_OPTIONS.
+ * @returns {Promise<Function>} Resolves to the stop function from playSound (or undefined).
+ */
 export function playSoundById(id) {
   return soundSrc(id).then(src => playSound(src));
 }

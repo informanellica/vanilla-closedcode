@@ -1,8 +1,33 @@
+/** @file Session review tab: wraps SessionReview with scroll-position persistence/restoration across re-renders. */
 import { createComponent, createEffect, onCleanup } from "../../lib/reactivity.js";
 import { makeEventListener } from "../../lib/primitives/event-listener.js";
 import { SessionReview } from "@/vendor/ui/components/session-review.js";
 import { useLayout } from "@/context/layout.js";
 import { useSessionController } from "@/controllers/session.js";
+/**
+ * Renders the review (diff) tab and restores the saved scroll offset once the
+ * layout is ready, abandoning restoration as soon as the user interacts.
+ * @param {Object} props - Component props.
+ * @param {string} props.title - Review panel title.
+ * @param {*} props.empty - Empty-state content/flag forwarded to SessionReview.
+ * @param {Function} props.view - Accessor returning the per-session view (scroll/review state) store.
+ * @param {Function} props.diffs - Accessor returning the array of diffs to render.
+ * @param {*} props.diffStyle - Current diff display style.
+ * @param {Function} props.onDiffStyleChange - Callback when the diff style changes.
+ * @param {Function} props.onScrollRef - Optional callback receiving the scroll container element.
+ * @param {Function} props.onViewFile - Callback to open a file from the review.
+ * @param {*} props.focusedFile - Currently focused file in the review.
+ * @param {Function} props.onLineComment - Callback to create a line comment.
+ * @param {Function} props.onLineCommentUpdate - Callback to update a line comment.
+ * @param {Function} props.onLineCommentDelete - Callback to delete a line comment.
+ * @param {*} props.lineCommentActions - Action descriptors for line comments.
+ * @param {*} props.commentMentions - Mention data for line comments.
+ * @param {*} props.comments - Existing comments to display.
+ * @param {*} props.focusedComment - Currently focused comment.
+ * @param {Function} props.onFocusedCommentChange - Callback when the focused comment changes.
+ * @param {Object} props.classes - Optional class overrides for root/header/container.
+ * @returns {Node} The SessionReview component instance.
+ */
 export function SessionReviewTab(props) {
   let scroll;
   let restoreFrame;
@@ -11,6 +36,7 @@ export function SessionReviewTab(props) {
   const layout = useLayout();
   const controller = useSessionController();
   const readFile = path => controller.readFile(path);
+  /** Marks the user as having interacted, cancelling any pending scroll restore. */
   const handleInteraction = () => {
     userInteracted = true;
     if (restoreFrame !== undefined) {
@@ -18,6 +44,7 @@ export function SessionReviewTab(props) {
       restoreFrame = undefined;
     }
   };
+  /** Restores the saved review scroll offset onto the live element, clamped to its bounds. */
   const doRestore = () => {
     restoreFrame = undefined;
     const el = scroll;
@@ -37,10 +64,16 @@ export function SessionReviewTab(props) {
       y: el.scrollTop
     };
   };
+  /** Schedules a scroll restore on the next animation frame, unless already queued or interacted. */
   const queueRestore = () => {
     if (userInteracted || restoreFrame !== undefined) return;
     restoreFrame = requestAnimationFrame(doRestore);
   };
+  /**
+   * Persists the current scroll offset as the user scrolls, ignoring the programmatic
+   * restore scroll so it is not mistaken for user interaction.
+   * @param {Event} event - The scroll event whose currentTarget is the scroll container.
+   */
   const handleScroll = event => {
     const el = event.currentTarget;
     const prev = restored;

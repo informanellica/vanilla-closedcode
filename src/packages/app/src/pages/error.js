@@ -1,3 +1,4 @@
+/** @file Full-screen fatal-error page: formats an error (including init-error chains and nested causes) and offers restart, crash-report, and update actions. */
 import { TextField } from "@/bs/text-field.js";
 import * as Sentry from "@sentry/browser";
 import { Logo } from "@/vendor/ui/components/logo.js";
@@ -8,6 +9,11 @@ import { usePlatform } from "@/context/platform.js";
 import { useLanguage } from "@/context/language.js";
 import { Icon } from "@/bs/icon.js";
 const CHAIN_SEPARATOR = "\n" + "─".repeat(40) + "\n";
+/**
+ * Type guard for a config-validation issue object ({ message, path }).
+ * @param {*} value - Candidate value to test.
+ * @returns {boolean} True when value has a string message and a string-array path.
+ */
 function isIssue(value) {
   if (!value || typeof value !== "object") return false;
   if (!("message" in value) || !("path" in value)) return false;
@@ -17,9 +23,20 @@ function isIssue(value) {
   if (!Array.isArray(path)) return false;
   return path.every(part => typeof part === "string");
 }
+/**
+ * Type guard for a structured init error ({ name, data }) produced by the backend.
+ * @param {*} error - Candidate error value.
+ * @returns {boolean} True when error has a `name` and an object `data`.
+ */
 function isInitError(error) {
   return typeof error === "object" && error !== null && "name" in error && "data" in error && typeof error.data === "object";
 }
+/**
+ * JSON-stringify a value with circular-reference protection and BigInt support.
+ * @param {*} value - Value to serialize.
+ * @param {string} circular - Placeholder substituted for circular references.
+ * @returns {string} Pretty-printed JSON, or String(value) when serialization yields undefined.
+ */
 function safeJson(value, circular) {
   const seen = new WeakSet();
   const json = JSON.stringify(value, (_key, val) => {
@@ -32,6 +49,13 @@ function safeJson(value, circular) {
   }, 2);
   return json ?? String(value);
 }
+/**
+ * Format a single structured init error into a localized, human-readable message,
+ * branching on the error name (MCPFailed, APIError, ConfigInvalidError, etc.).
+ * @param {Object} error - The init error ({ name, data }).
+ * @param {Function} t - Localization function (key, params) returning a string.
+ * @returns {string} The localized message for this error.
+ */
 function formatInitError(error, t) {
   const data = error.data;
   const json = value => safeJson(value, t("error.page.circular"));
@@ -147,6 +171,16 @@ function formatInitError(error, t) {
       return json(data);
   }
 }
+/**
+ * Recursively format an error and its cause chain into a single text block,
+ * handling init errors, Error instances (with stacks), strings, and arbitrary
+ * values, with separators and "caused by" headers between chained causes.
+ * @param {*} error - The error to format (any shape).
+ * @param {Function} t - Localization function (key, params) returning a string.
+ * @param {number} depth - Current recursion depth (0 for the top-level error).
+ * @param {string} parentMessage - Message of the parent error, used to suppress duplicate cause text.
+ * @returns {string} The formatted error chain text.
+ */
 function formatErrorChain(error, t, depth = 0, parentMessage) {
   const json = value => safeJson(value, t("error.page.circular"));
   if (!error) return t("error.chain.unknown");
@@ -199,10 +233,21 @@ function formatErrorChain(error, t, depth = 0, parentMessage) {
   const indent = depth > 0 ? `\n${CHAIN_SEPARATOR}${t("error.chain.causedBy")}\n` : "";
   return indent + json(error);
 }
+/**
+ * Format an error (and its full cause chain) into displayable text.
+ * @param {*} error - The error to format.
+ * @param {Function} t - Localization function (key, params) returning a string.
+ * @returns {string} The formatted error text.
+ */
 function formatError(error, t) {
   return formatErrorChain(error, t, 0);
 }
 
+/**
+ * Build a detached element from a compact, static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element of the parsed markup.
+ */
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid template). Static markup only — error/translated
 // strings are always assigned via textContent, never interpolated.
@@ -212,6 +257,16 @@ function template(html) {
   return wrapper.firstElementChild;
 }
 
+/**
+ * Full-screen error page component. Renders the brand logo, a title/description,
+ * the formatted error details in a read-only copyable field, and action buttons
+ * (restart, report to Sentry when enabled, check/install update when supported),
+ * plus Discord/GitHub report links and the app version. All text stays live
+ * across locale changes via render effects.
+ * @param {Object} props - Component props.
+ * @param {*} props.error - The error to display and (optionally) report.
+ * @returns {Element} The error page root element.
+ */
 export const ErrorPage = props => {
   const platform = usePlatform();
   const language = useLanguage();
@@ -220,6 +275,10 @@ export const ErrorPage = props => {
     version: undefined,
     actionError: undefined
   });
+  /**
+   * Query the platform for an available update, recording the new version or any error in the store.
+   * @returns {Promise<void>}
+   */
   async function checkForUpdates() {
     if (!platform.checkUpdate) return;
     setStore("checking", true);
@@ -232,6 +291,10 @@ export const ErrorPage = props => {
       setStore("checking", false);
     });
   }
+  /**
+   * Install the pending update and restart the app, recording any error in the store.
+   * @returns {Promise<void>}
+   */
   async function installUpdate() {
     if (!platform.updateAndRestart) return;
     await platform.updateAndRestart().then(() => setStore("actionError", undefined)).catch(err => {

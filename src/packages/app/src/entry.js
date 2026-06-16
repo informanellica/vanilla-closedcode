@@ -1,5 +1,7 @@
 // @refresh reload
 
+/** @file Web renderer entry point: detects locale, wires the web platform adapter (notifications, navigation, default-server persistence), initializes Sentry, and mounts the app into the #root element. */
+
 import * as Sentry from "@sentry/browser";
 import { createComponent } from "./lib/reactivity.js";
 import { render } from "./lib/reactivity.js";
@@ -12,6 +14,12 @@ import { env } from "@/lib/env.js";
 import pkg from "../package.json" with { type: "json" };
 import { ServerConnection } from "./context/server.js";
 const DEFAULT_SERVER_URL_KEY = "closedcode.settings.dat:defaultServerUrl";
+/**
+ * Determine the active UI locale from the browser's preferred languages.
+ * Currently only distinguishes Chinese ("zh") from the English ("en") default.
+ *
+ * @returns {string} The locale code, either "zh" or "en".
+ */
 const getLocale = () => {
   if (typeof navigator !== "object") return "en";
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];

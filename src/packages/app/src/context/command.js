@@ -8,18 +8,38 @@ import { useSettings } from "@/context/settings.js";
 import { dict as en } from "@/i18n/en.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { env } from "@/lib/env.js";
+
+/** @file Command context: a registry of commands/keybinds powering the command palette and global keyboard shortcuts. */
+
 const IS_MAC = typeof navigator === "object" && /(Mac|iPod|iPhone|iPad)/.test(navigator.platform);
 const PALETTE_ID = "command.palette";
 const DEFAULT_PALETTE_KEYBIND = "mod+shift+p";
 const SUGGESTED_PREFIX = "suggested.";
 const EDITABLE_KEYBIND_IDS = new Set(["terminal.toggle", "terminal.new", "file.attach"]);
+/**
+ * Resolve a UI key label, via the translator when provided, otherwise the English dict.
+ * @param {string} key - The i18n key.
+ * @param {Function} t - Optional translator function.
+ * @returns {string} The localized text.
+ */
 function keyText(key, t) {
   return t ? t(key) : en[key];
 }
+/**
+ * Strip the "suggested." prefix from a command id to get its underlying action id.
+ * @param {string} id - The command id (possibly prefixed).
+ * @returns {string} The bare action id.
+ */
 function actionId(id) {
   if (!id.startsWith(SUGGESTED_PREFIX)) return id;
   return id.slice(SUGGESTED_PREFIX.length);
 }
+/**
+ * Normalize a keyboard key into the internal token form (lowercased, with named
+ * tokens for comma/plus/space).
+ * @param {string} key - The raw event key.
+ * @returns {string} The normalized key token.
+ */
 function normalizeKey(key) {
   if (key === ",") return "comma";
   if (key === "+") return "plus";

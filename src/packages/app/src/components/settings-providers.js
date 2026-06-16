@@ -15,6 +15,8 @@ import { headerRow, modelRow } from "./dialog-custom-provider-form.js";
 import { SettingsList } from "./settings-list.js";
 import { SettingsModels } from "./settings-models.js";
 
+/** @file Providers settings pane: lists connected LLM providers and hosts the inline add/edit (preset/URL) form. */
+
 const PROVIDER_NOTES = [];
 // Which preset a configured provider came from, shown as a small tag next to the
 // (free-form) profile name. The providerID root encodes the chosen preset
@@ -26,17 +28,33 @@ const PRESET_LABELS = {
   vllm: "vLLM",
   jan: "Jan"
 };
+/**
+ * Map a provider ID to its preset display label (Ollama / vLLM / ... or "カスタム").
+ * @param {string} providerID - The configured provider ID (the preset root plus an optional -N suffix).
+ * @returns {string} The preset label, or the custom fallback.
+ */
 const presetLabel = providerID => {
   const root = (providerID || "").replace(/-\d+$/, "");
   return PRESET_LABELS[root] || "カスタム";
 };
 
+/**
+ * Build a detached element from an HTML string (trimmed, first child returned).
+ * @param {string} html - Markup for a single root element.
+ * @returns {Element} The constructed element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Providers settings view. Renders the connected-provider list (icon, name, preset
+ * tag, server URL, edit/disconnect actions) and an "追加" button; opening the inline
+ * add/edit form swaps the list for DialogCustomProvider in place.
+ * @returns {Node} The pass-through (display:contents) container hosting the list or the editor.
+ */
 export const SettingsProviders = () => {
   const dialog = useDialog();
   const language = useLanguage();
@@ -50,12 +68,22 @@ export const SettingsProviders = () => {
   // Popular cloud providers are not shown (local-LLM focus); only the connected
   // list + the custom (preset/URL) add form remain.
   const popular = createMemo(() => []);
+  /**
+   * Read a provider item's recognized connection source.
+   * @param {Object} item - A provider record.
+   * @returns {string} One of "env" | "api" | "config" | "custom", or undefined when unset/unknown.
+   */
   const source = item => {
     if (!("source" in item)) return;
     const value = item.source;
     if (value === "env" || value === "api" || value === "config" || value === "custom") return value;
     return;
   };
+  /**
+   * Localized tag text describing how a provider was configured (environment / API key / config / custom).
+   * @param {Object} item - A provider record.
+   * @returns {string} The translated tag label.
+   */
   const type = item => {
     const current = source(item);
     if (current === "env") return language.t("settings.providers.tag.environment");
@@ -67,9 +95,20 @@ export const SettingsProviders = () => {
     if (current === "custom") return language.t("settings.providers.tag.custom");
     return language.t("settings.providers.tag.other");
   };
+  /**
+   * Whether a provider may be disconnected (environment-provided ones may not).
+   * @param {Object} item - A provider record.
+   * @returns {boolean} True when the provider can be removed by the user.
+   */
   const canDisconnect = item => source(item) !== "env";
   // Re-open the custom-provider dialog pre-filled, so a configured LLM server
   // (URL / models) can be edited later.
+  /**
+   * Open the inline editor pre-filled from a saved custom provider's config
+   * (name, base URL, models and headers).
+   * @param {string} providerID - The custom provider's ID.
+   * @returns {void}
+   */
   const editCustom = providerID => {
     const cfg = controller.getCustom(providerID);
     if (!cfg) return;
@@ -87,9 +126,25 @@ export const SettingsProviders = () => {
       }
     });
   };
+  /**
+   * Look up the i18n note key for a provider, if any preset note matches.
+   * @param {string} id - The provider ID.
+   * @returns {string} The translation key, or undefined.
+   */
   const note = id => PROVIDER_NOTES.find(item => item.match(id))?.key;
+  /**
+   * Whether a config-sourced provider is actually a user custom provider.
+   * @param {string} providerID - The provider ID.
+   * @returns {boolean} True when it is a config-defined custom provider.
+   */
   const isConfigCustom = providerID => controller.isConfigCustom(providerID);
   // Confirm via a toast (切断する / キャンセル) before disconnecting a provider.
+  /**
+   * Show a persistent confirmation toast before disconnecting a provider.
+   * @param {string} providerID - The provider to disconnect.
+   * @param {string} name - The provider's display name (shown in the prompt).
+   * @returns {void}
+   */
   const confirmDisconnect = (providerID, name) => {
     showToast({
       variant: "warning",
@@ -99,6 +154,12 @@ export const SettingsProviders = () => {
       actions: [{ label: "切断する", variant: "danger", onClick: () => void disconnect(providerID, name) }, { label: "キャンセル", variant: "secondary", onClick: () => {} }]
     });
   };
+  /**
+   * Remove a provider and surface a success/error toast.
+   * @param {string} providerID - The provider to remove.
+   * @param {string} name - The provider's display name (shown in the toast).
+   * @returns {Promise<void>} Resolves once removal and toast have run.
+   */
   const disconnect = async (providerID, name) => {
     try {
       await controller.removeProvider(providerID);
@@ -122,6 +183,12 @@ export const SettingsProviders = () => {
   };
 
   // One connected-provider card (icon, name, preset tag, server URL, actions).
+  /**
+   * Build one connected-provider card element (icon, name, preset tag, server URL,
+   * and edit/disconnect actions or an environment-managed note).
+   * @param {Object} item - A connected provider record.
+   * @returns {Element} The card element.
+   */
   const buildCard = item => {
     const card = template(`
       <div class="group d-flex flex-wrap align-items-center justify-content-between gap-4 min-h-16 py-3 px-4 bg-body-tertiary rounded-3">
@@ -177,6 +244,11 @@ export const SettingsProviders = () => {
     return card;
   };
 
+  /**
+   * Build the list view: title, the connected-providers section (cards or an empty
+   * state, kept live via effects) and the "追加" button that opens the inline form.
+   * @returns {Element} The list-view root element.
+   */
   const renderList = () => {
     const root = template(`
       <div class="d-flex flex-column h-full overflow-y-auto no-scrollbar px-4 pb-10 sm:px-10 sm:pb-10">

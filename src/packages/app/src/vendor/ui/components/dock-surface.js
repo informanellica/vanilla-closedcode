@@ -1,8 +1,13 @@
+/** @file Dock surface primitives (DockShell, DockShellForm, DockTray): minimal vanilla DOM components that resolve Solid-style children, classList, style, and rest props onto a tagged container element. */
 import { createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
-// Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
-// keep Nodes, stringify the rest. Called inside a render effect so reactive
-// children stay live.
+/**
+ * Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
+ * keep Nodes, stringify the rest. Called inside a render effect so reactive
+ * children stay live.
+ * @param {*} value - A child value: Node, array, zero-arg accessor function, text, or nullish.
+ * @returns {Array} Flat array of DOM Nodes (text nodes for primitives).
+ */
 function resolveNodes(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return resolveNodes(value());
@@ -11,10 +16,16 @@ function resolveNodes(value) {
   return [document.createTextNode(String(value))];
 }
 
-// Re-position `nodes` directly before `anchor`, removing previous nodes that
-// are no longer present. Nodes already in place are left untouched, mirroring
-// the compiled insert()'s array reconciliation (which kept stable nodes — e.g.
-// a focused editor — mounted across sibling updates).
+/**
+ * Re-position `nodes` directly before `anchor`, removing previous nodes that
+ * are no longer present. Nodes already in place are left untouched, mirroring
+ * the compiled insert()'s array reconciliation (which kept stable nodes — e.g.
+ * a focused editor — mounted across sibling updates).
+ * @param {Node} anchor - Comment/marker node the resolved nodes are kept before.
+ * @param {Array} current - Nodes inserted on the previous run.
+ * @param {Array} nodes - Nodes that should now be present, in order.
+ * @returns {void}
+ */
 function reconcileBefore(anchor, current, nodes) {
   const parent = anchor.parentNode;
   const stale = new Set(current);
@@ -30,9 +41,14 @@ function reconcileBefore(anchor, current, nodes) {
   }
 }
 
-// Append resolved children to `out`. A function item (memo / Show result)
-// gets its own comment-anchored live region with a nested render effect, so
-// an update to one slot never remounts sibling nodes.
+/**
+ * Append resolved children to `out`. A function item (memo / Show result)
+ * gets its own comment-anchored live region with a nested render effect, so
+ * an update to one slot never remounts sibling nodes.
+ * @param {Array} out - Accumulator array that receives DOM nodes.
+ * @param {*} value - A child value: Node, array, zero-arg accessor, text, or nullish.
+ * @returns {void}
+ */
 function appendResolved(out, value) {
   if (value == null || value === false || value === true) return;
   if (Array.isArray(value)) {

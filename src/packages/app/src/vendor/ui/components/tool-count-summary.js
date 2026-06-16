@@ -1,3 +1,4 @@
+/** @file Animated, reactive list of tool-usage counts ("3 files read, 2 edits…"), keyed by index with per-row count animations and transition-safe DOM diffing. */
 import {
   $TRACK,
   createComponent,
@@ -10,8 +11,13 @@ import {
 } from "../../../lib/reactivity.js";
 import { AnimatedCountLabel } from "./tool-count-label.js";
 
-// Normalize a component result into appendable DOM nodes (strings become text
-// nodes, null/boolean are dropped) — mirrors the settings-general convention.
+/**
+ * Normalize a component result into a flat array of appendable DOM nodes.
+ * Strings become text nodes; null and boolean values are dropped (mirrors the
+ * settings-general convention).
+ * @param {*} value - A node, string, or array of such values to normalize.
+ * @returns {Array} Array of DOM Nodes ready to append.
+ */
 function toNodes(value) {
   const list = Array.isArray(value) ? value : [value];
   return list
@@ -19,6 +25,17 @@ function toNodes(value) {
     .map(v => (v instanceof Node ? v : document.createTextNode(String(v))));
 }
 
+/**
+ * Render a horizontal, comma-separated list of animated count labels, one per
+ * item, where only items with a positive count are shown. Rows are keyed by
+ * index so surviving rows keep their DOM nodes and running count animations
+ * across updates; an empty-state fallback is shown when nothing is visible.
+ * @param {Object} props - Component props.
+ * @param {Array} props.items - Items to render; each has `{ one, other, count }` for an AnimatedCountLabel.
+ * @param {string} props.fallback - Text shown when no item has a positive count.
+ * @param {string} props.class - Optional CSS class applied to the root span.
+ * @returns {HTMLElement} The root `<span>` element for the count summary.
+ */
 export function AnimatedCountList(props) {
   const visible = createMemo(() => props.items.filter(item => item.count > 0));
   const fallback = createMemo(() => props.fallback ?? "");
@@ -58,6 +75,14 @@ export function AnimatedCountList(props) {
     rows.length = 0;
   });
 
+  /**
+   * Build a single keyed row: its `[prefix, item]` node pair lives inside its
+   * own reactive root and reads the item through a per-index signal that only
+   * fires when the value at that index changes (Solid's indexArray semantics).
+   * @param {number} index - Zero-based position of this row in the items array.
+   * @param {Object} initial - Initial item value `{ one, other, count }` for the row.
+   * @returns {Object} Row handle `{ prefixEl, itemEl, setItem, dispose }`.
+   */
   function buildRow(index, initial) {
     return createRoot(dispose => {
       const [item, setItem] = createSignal(initial);

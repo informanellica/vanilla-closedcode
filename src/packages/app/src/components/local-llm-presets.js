@@ -1,4 +1,10 @@
+/** @file Built-in connection presets for popular local LLM servers (Ollama, LM Studio, llama.cpp, vLLM, Jan). */
 import { headerRow, modelRow } from "./dialog-custom-provider-form.js";
+
+/**
+ * Predefined custom-provider configurations for common local LLM servers, each with default base URL and sample models.
+ * @type {Array}
+ */
 export const localPresets = [{
   id: "_preset_ollama",
   providerID: "ollama",
@@ -58,7 +64,17 @@ export const localPresets = [{
   description: "Local models via Jan (default port 1337)",
   docs: "https://jan.ai"
 }];
+/**
+ * Lookup of presets keyed by their `id`, for resolving a preset by its identifier.
+ * @type {Map}
+ */
 export const localPresetMap = new Map(localPresets.map(p => [p.id, p]));
+
+/**
+ * Convert a local LLM preset into the editable form state used by the custom-provider dialog.
+ * @param {Object} preset - A preset entry from `localPresets`.
+ * @returns {Object} Form state with `providerID`, `name`, `baseURL`, empty `apiKey`, mapped `models`, a single header row and empty `err`.
+ */
 export function presetToFormState(preset) {
   return {
     providerID: preset.providerID,

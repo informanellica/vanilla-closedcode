@@ -15,6 +15,8 @@ import { useProvidersController } from "@/controllers/providers.js";
 import { headerRow, modelRow, validateCustomProvider } from "./dialog-custom-provider-form.js";
 import { DialogSelectProvider } from "./dialog-select-provider.js";
 
+/** @file Custom/local-LLM provider editor dialog: pick an API type, set URL/key, manage models (list/pull/delete) and headers, then save the provider. */
+
 // Local-LLM presets (OpenAI-compatible). Inlined to avoid a new import; picking
 // one fills providerID / name / baseURL / models so the only thing left to do is
 // set the URL to your own server. "OpenAI互換（手動）" leaves the form blank.
@@ -50,12 +52,25 @@ const LLM_PRESETS = [{
   models: [{ id: "local-model", name: "Local Model" }]
 }];
 
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * For-equivalent keyed list rendering: render `readRows()` into `slot`, keyed by
+ * store-item identity, so editing a row's fields never recreates its DOM.
+ * @param {Node} slot - Container node the rows are inserted into.
+ * @param {Function} readRows - Reactive accessor returning the current array of row items.
+ * @param {Function} build - Builds the DOM node for a single row item.
+ * @returns {void}
+ */
 // For-equivalent keyed list rendering. Rows are keyed by store-item identity:
 // each row gets its own root so row-level effects/components survive sibling
 // add/remove and are disposed exactly when their row leaves the list. The
@@ -88,6 +103,18 @@ function renderKeyedList(slot, readRows, build) {
   });
 }
 
+/**
+ * Custom-provider editor component. Lets the user pick an API type (preset or
+ * manual OpenAI-compatible), enter URL/profile-name/API-key, manage model and
+ * header rows, optionally list/pull/delete models on the server, then save.
+ * @param {Object} props - Component props.
+ * @param {Object} props.initial - Initial form state when editing an existing provider.
+ * @param {boolean} props.inline - When true, render inline (settings panel) instead of inside a Dialog.
+ * @param {string} props.back - Back-navigation mode ("close" closes the dialog; otherwise returns to the provider list).
+ * @param {Function} props.onClose - Inline-mode callback invoked to dismiss the form.
+ * @param {Function} props.onDone - Inline-mode callback invoked with the saved result.
+ * @returns {Node} The dialog or inline form element.
+ */
 export function DialogCustomProvider(props) {
   const dialog = useDialog();
   const globalSync = useGlobalSync();
@@ -133,6 +160,12 @@ export function DialogCustomProvider(props) {
       rows.splice(index, 1);
     }));
   };
+  /**
+   * Delete a model row: confirm via a toast, then delete it from the server
+   * (ollama rm) and drop the row. Empty rows are removed without confirmation.
+   * @param {number} index - Index of the model row to delete.
+   * @returns {void}
+   */
   // Trash on a model row: confirm via a toast (削除する / キャンセル), then delete
   // from the Ollama server (ollama rm) and drop the row. Empty rows just drop.
   const deleteModel = index => {
@@ -218,6 +251,10 @@ export function DialogCustomProvider(props) {
     }
     api.llmCanPull(k).then(v => setCanPull(!!v)).catch(() => setCanPull(false));
   });
+  /**
+   * Ping the configured server and replace the model rows with the installed list.
+   * @returns {Promise<void>}
+   */
   // "接続を確認してモデルを取得": ping the server and pull the installed list.
   const checkAndListModels = async () => {
     const api = llmApi();
@@ -232,6 +269,11 @@ export function DialogCustomProvider(props) {
       setConn({ busy: false, status: "接続失敗: " + (e?.message ?? e), percent: null });
     }
   };
+  /**
+   * Pull a model (ollama pull) reporting shared progress through the `conn` signal.
+   * @param {string} modelName - Name/id of the model to pull.
+   * @returns {Promise<boolean>} True on success, false on error or when prerequisites are missing.
+   */
   // Pull a model (ollama pull) with shared progress in `conn`. Returns success.
   const pullModel = async modelName => {
     const api = llmApi();
@@ -262,6 +304,11 @@ export function DialogCustomProvider(props) {
   const pullModelNow = async () => {
     if (await pullModel(pullName())) void checkAndListModels();
   };
+  /**
+   * Row "+" action: pull a brand-new model, then mark the row as synced on success.
+   * @param {number} index - Index of the model row whose id to pull.
+   * @returns {Promise<void>}
+   */
   // Row "＋": pull a brand-new model, then mark the row as synced on success.
   const addRow = async index => {
     const id = (form.models[index]?.id || "").trim();
@@ -275,6 +322,12 @@ export function DialogCustomProvider(props) {
       });
     }
   };
+  /**
+   * Row "apply" action: apply edits to a model row. If the id changed, pull the
+   * new id and remove the old one; a name-only change just updates the config.
+   * @param {number} index - Index of the model row to apply.
+   * @returns {Promise<void>}
+   */
   // Row "⟳": apply edits. Id changed → pull the new id and rm the old one; a
   // name-only change just updates the config. Marks the row as synced.
   const applyRow = async index => {
@@ -312,6 +365,13 @@ export function DialogCustomProvider(props) {
       setForm("headers", index, "err", key, undefined);
     });
   };
+  /**
+   * Create a TextField whose value/error stay reactive (the vanilla TextField
+   * reads its props once), mirroring live store changes back into the input.
+   * @param {Object} options - Props passed to the TextField component.
+   * @param {Object} live - Live accessors: `value` returns the current value, `error` returns the current error text.
+   * @returns {Node} The TextField element.
+   */
   // The vanilla TextField reads its props once at creation, so mirror the live
   // parts externally (same approach as dialog-connect-provider.js): programmatic
   // store writes (presets, auto-fill) flow back into the input, and validation
@@ -418,6 +478,11 @@ export function DialogCustomProvider(props) {
     if (!result) return;
     saveMutation.mutate(result);
   };
+  /**
+   * Build the API-type picker (a select box). Choosing a preset auto-fills the
+   * URL/models; the blank option leaves the form for manual entry.
+   * @returns {Element} The picker block element.
+   */
   // API-type picker: a select box. Picking a kind auto-fills the URL/models;
   // "OpenAI互換（手動で入力）" leaves the form for manual entry.
   const buildPresetPicker = () => {
@@ -460,6 +525,11 @@ export function DialogCustomProvider(props) {
     });
     return block;
   };
+  /**
+   * Build the model-pull box (only for providers that support it, e.g. Ollama),
+   * wiring its input/button/progress bar to the pull flow.
+   * @returns {Element} The pull-box block element.
+   */
   // Model pull box (only for providers that support it — e.g. Ollama). Works
   // against the configured host, local or remote. Built fresh on every
   // canPull() false→true flip, matching the original Show remount behavior.
@@ -490,6 +560,12 @@ export function DialogCustomProvider(props) {
     });
     return block;
   };
+  /**
+   * Build one model row: id/name fields plus state-dependent actions (pull a new
+   * model, apply edits when id/name changed, delete/remove the row).
+   * @param {Object} m - The model store item this row renders.
+   * @returns {Element} The row element.
+   */
   // One model row: id / name fields plus state-dependent actions (＋ pull a new
   // model, ⟳ apply edits when id/name changed, 🗑 delete (rm) / remove row).
   const buildModelRow = m => {
@@ -593,6 +669,11 @@ export function DialogCustomProvider(props) {
     }));
     return row;
   };
+  /**
+   * Build one header row: key/value fields plus a remove button.
+   * @param {Object} h - The header store item this row renders.
+   * @returns {Element} The row element.
+   */
   // One header row: key / value fields plus a remove button.
   const buildHeaderRowEl = h => {
     const idx = () => form.headers.indexOf(h);
@@ -650,6 +731,11 @@ export function DialogCustomProvider(props) {
     }));
     return row;
   };
+  /**
+   * Build the full form content: title, fields (preset picker, name, URL, key),
+   * a collapsible models/headers section, and the sticky cancel/save footer.
+   * @returns {Element} The form content root element.
+   */
   const buildContent = () => {
     // Static skeleton. The optional sections (models / headers) live inside a
     // collapsible <details> so the essential fields (種類・名前・URL) stay short;

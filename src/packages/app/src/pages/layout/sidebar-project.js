@@ -20,8 +20,16 @@ import { useNotification } from "@/context/notification.js";
 import { ProjectIcon, SessionItem } from "./sidebar-items.js";
 import { displayName, sortedRootSessions } from "./helpers.js";
 
+/** @file Sidebar project rail tiles: a draggable/sortable project tile with a context menu and a hover-card preview panel of recent sessions and workspaces. */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -30,6 +38,14 @@ function template(html) {
 
 // Reactive text binding: mirrors insert(el, accessor) for text-only slots
 // (renders nothing for null/undefined, like insert does).
+/**
+ * Binds an element's textContent to a reactive accessor, rendering empty
+ * text for null/undefined values.
+ *
+ * @param {Node} el - Element whose textContent is updated.
+ * @param {Function} accessor - Reactive accessor returning the text value.
+ * @returns {void}
+ */
 function bindText(el, accessor) {
   createRenderEffect(() => {
     const value = accessor();
@@ -37,6 +53,15 @@ function bindText(el, accessor) {
   });
 }
 
+/**
+ * Floating drag preview showing the icon of the project currently being
+ * dragged in the sidebar rail.
+ *
+ * @param {Object} props - Component props.
+ * @param {Function} props.projects - Accessor for the project list.
+ * @param {Function} props.activeProject - Accessor for the dragged project's worktree.
+ * @returns {Node} The drag overlay component.
+ */
 export const ProjectDragOverlay = props => {
   const project = createMemo(() => props.projects().find(p => p.worktree === props.activeProject()));
   return createComponent(Show, {
@@ -54,6 +79,34 @@ export const ProjectDragOverlay = props => {
     }
   });
 };
+/**
+ * Project rail button with a right-click context menu (edit, toggle
+ * workspaces, clear notifications, close). Hosts the ProjectIcon and drives
+ * hover/preview and selection behavior.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - Project descriptor (worktree, name, vcs, id).
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.selected - Accessor: true when this project is the current one.
+ * @param {Function} props.active - Accessor: true when the tile is highlighted (hover/menu).
+ * @param {Function} props.overlay - Accessor: true when in rail-overlay (collapsed sidebar) mode.
+ * @param {Function} props.suppressHover - Accessor: true while hover behavior is suppressed.
+ * @param {Function} props.dirs - Accessor for the project's workspace directories.
+ * @param {Function} props.sidebarHovering - Accessor: true while the sidebar is hovered.
+ * @param {Function} props.setMenu - Setter for the menu-open flag.
+ * @param {Function} props.setOpen - Setter for the hover-card open flag.
+ * @param {Function} props.setSuppressHover - Setter for the suppress-hover flag.
+ * @param {Function} props.onProjectMouseEnter - Hover-enter handler (worktree, event).
+ * @param {Function} props.onProjectMouseLeave - Hover-leave handler (worktree).
+ * @param {Function} props.onProjectFocus - Focus handler (worktree).
+ * @param {Function} props.navigateToProject - Navigates to the given project worktree.
+ * @param {Function} props.showEditProjectDialog - Opens the edit-project dialog.
+ * @param {Function} props.toggleProjectWorkspaces - Enables/disables workspaces for the project.
+ * @param {Function} props.workspacesEnabled - Predicate: whether workspaces are enabled for a project.
+ * @param {Function} props.closeProject - Closes the project by worktree.
+ * @param {Object} props.language - Language context for translations.
+ * @returns {Node} The project tile component.
+ */
 const ProjectTile = props => {
   const notification = useNotification();
   const layout = useLayout();
@@ -197,6 +250,23 @@ const ProjectTile = props => {
     }
   });
 };
+/**
+ * Hover-card preview panel for a project: header, recent-sessions list (or
+ * per-workspace lists when workspaces are enabled), and a "view all" footer.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - Project descriptor (worktree, id).
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.selected - Accessor: true when this project is current.
+ * @param {Function} props.workspaceEnabled - Accessor: true when workspaces are enabled.
+ * @param {Function} props.workspaces - Accessor for the workspace directories to preview.
+ * @param {Function} props.label - Builds a display label for a workspace directory.
+ * @param {Function} props.projectSessions - Accessor for the project's root sessions.
+ * @param {Function} props.workspaceSessions - Returns the sessions for a workspace directory.
+ * @param {Object} props.ctx - Shared sidebar context (sessionProps, navigation, sidebar control).
+ * @param {Object} props.language - Language context for translations.
+ * @returns {HTMLElement} The preview panel root element.
+ */
 const ProjectPreviewPanel = props => {
   // Static skeleton mirroring _tmpl$2: header (project name), "recent
   // sessions" label, session list slot, footer ("view all" button).
@@ -291,6 +361,18 @@ const ProjectPreviewPanel = props => {
   }));
   return root;
 };
+/**
+ * Sortable (drag-and-drop) wrapper for a project rail entry. Renders a plain
+ * ProjectTile when collapsed, or a HoverCard-wrapped tile with the preview
+ * panel when the sidebar is expanded.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - Project descriptor (worktree, id).
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.sortNow - Accessor for the current sort timestamp.
+ * @param {Object} props.ctx - Shared sidebar context (current project, workspace helpers, hover/navigation callbacks).
+ * @returns {HTMLElement} The sortable project root element.
+ */
 export const SortableProject = props => {
   const globalSync = useGlobalSync();
   const language = useLanguage();
@@ -308,6 +390,12 @@ export const SortableProject = props => {
   const overlay = createMemo(() => !props.mobile && !props.ctx.sidebarOpened());
   const active = createMemo(() => state.menu || (preview() ? isHoverProject() : overlay() && isHoverProject()));
   const hoverOpen = () => isHoverProject() && preview() && !selected() && !state.menu;
+  /**
+   * Builds a "kind : name" label for a workspace directory.
+   *
+   * @param {string} directory - The workspace directory path.
+   * @returns {string} The combined workspace-type and name label.
+   */
   const label = directory => {
     const [data] = globalSync.child(directory, {
       bootstrap: false
@@ -320,6 +408,12 @@ export const SortableProject = props => {
     bootstrap: false
   })[0]);
   const projectSessions = createMemo(() => sortedRootSessions(projectStore(), props.sortNow()));
+  /**
+   * Returns the sorted root sessions for a workspace directory.
+   *
+   * @param {string} directory - The workspace directory path.
+   * @returns {Array} The sorted root sessions for that directory.
+   */
   const workspaceSessions = directory => {
     const [data] = globalSync.child(directory, {
       bootstrap: false

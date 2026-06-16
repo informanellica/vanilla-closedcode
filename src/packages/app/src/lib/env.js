@@ -1,3 +1,4 @@
+/** @file Build-less runtime env shim: reads former `import.meta.env.*` values from `window.__APP_ENV__` (set by an inline script before modules load). */
 // Build-less runtime env shim.
 //
 // The renderer no longer goes through Vite/esbuild, so `import.meta.env.*`
@@ -24,6 +25,10 @@ const FALLBACK = {
   VITE_CLOSEDCODE_SERVER_PORT: undefined,
 };
 
+/**
+ * The active env object: `window.__APP_ENV__` when present, otherwise FALLBACK.
+ * @returns {Object} The env source object.
+ */
 function source() {
   const g = typeof globalThis !== "undefined" ? globalThis : {};
   return g.__APP_ENV__ ?? FALLBACK;
@@ -44,4 +49,8 @@ export function envAll() {
   return { ...FALLBACK, ...source() };
 }
 
+/**
+ * Whether the app is running in development mode.
+ * @returns {boolean} True when the DEV env value is true (boolean or "true").
+ */
 export const isDev = () => env("DEV") === true || env("DEV") === "true";

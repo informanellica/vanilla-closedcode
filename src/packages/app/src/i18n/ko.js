@@ -1,3 +1,10 @@
+/** @file Korean (ko) translation dictionary for the desktop app renderer UI. */
+
+/**
+ * Korean translation table mapping i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "command.category.suggested": "추천",
   "command.category.view": "보기",

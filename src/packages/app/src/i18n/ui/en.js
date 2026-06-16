@@ -1,3 +1,10 @@
+/** @file English (en) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their English strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Session changes",
   "ui.sessionReview.title.git": "Git changes",

@@ -1,3 +1,10 @@
+/** @file Time formatting helper: renders a localized "time ago" label from a date. */
+/**
+ * Format a date as a localized relative-time string (just now / minutes / hours / days ago).
+ * @param {string} dateString - A date string parseable by the Date constructor.
+ * @param {Function} t - Translation function called as t(key, params) returning a localized string.
+ * @returns {string} The localized relative-time label.
+ */
 export function getRelativeTime(dateString, t) {
   const date = new Date(dateString);
   const now = new Date();

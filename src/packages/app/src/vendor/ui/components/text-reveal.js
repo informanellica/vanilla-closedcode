@@ -1,19 +1,54 @@
+/** @file TextReveal component: animates a width-tracking text swap, revealing the new text and wiping out the old. */
 import { createEffect, createRenderEffect, on, onCleanup, onMount } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
+/**
+ * Coerce a value to a CSS pixel length string, with a numeric fallback.
+ * @param {*} value - A number (treated as px), a string (passed through), or nullish.
+ * @param {number} fallback - The fallback pixel count when value is not number/string.
+ * @returns {string} A CSS length string.
+ */
 const px = (value, fallback) => {
   if (typeof value === "number") return `${value}px`;
   if (typeof value === "string") return value;
   return `${fallback}px`;
 };
+/**
+ * Coerce a value to a CSS millisecond duration string, with a numeric fallback.
+ * @param {*} value - A number (treated as ms), a string (passed through), or nullish.
+ * @param {number} fallback - The fallback millisecond count when value is not number/string.
+ * @returns {string} A CSS time string.
+ */
 const ms = (value, fallback) => {
   if (typeof value === "number") return `${value}ms`;
   if (typeof value === "string") return value;
   return `${fallback}ms`;
 };
+/**
+ * Format a value as a CSS percentage string, using a fallback when nullish.
+ * @param {*} value - The value (or nullish to use the fallback).
+ * @param {number} fallback - The fallback percentage.
+ * @returns {string} A CSS percentage string.
+ */
 const pct = (value, fallback) => {
   const v = value ?? fallback;
   return `${v}%`;
 };
+/**
+ * Animated text-swap component: when props.text changes, reveals the new text (growing the track
+ * width to fit, append-only changes widen in place) and animates the previous text out. Measures
+ * after fonts load and exposes data-ready/data-swapping/data-truncate and CSS custom properties for styling.
+ * @param {Object} props - Component props.
+ * @param {string} props.text - The text to display (also used as the aria-label).
+ * @param {boolean} props.truncate - When true, the track is fixed at 100% width and truncated.
+ * @param {boolean} props.growOnly - When true (default), the width only ever grows.
+ * @param {string} props.class - Class string applied to the root element.
+ * @param {*} props.duration - Swap animation duration (number ms or CSS string; default 450).
+ * @param {*} props.edge - Edge fade extent as a percentage (default 17).
+ * @param {*} props.travel - Vertical travel distance (number px or CSS string; default 0).
+ * @param {string} props.spring - CSS timing function for the primary spring.
+ * @param {string} props.springSoft - CSS timing function for the soft spring.
+ * @returns {HTMLElement} The text-reveal root element.
+ */
 export function TextReveal(props) {
   const [state, setState] = createStore({
     cur: props.text,
@@ -33,6 +68,12 @@ export function TextReveal(props) {
   let frame;
   const win = () => inRef?.scrollWidth ?? 0;
   const wout = () => outRef?.scrollWidth ?? 0;
+  /**
+   * Set the track width to the next pixel value, honoring grow-only mode (never shrinking below the
+   * current width when growOnly is set).
+   * @param {number} next - The candidate width in pixels.
+   * @returns {void}
+   */
   const widen = next => {
     if (next <= 0) return;
     if (props.growOnly ?? true) {

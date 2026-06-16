@@ -1,3 +1,4 @@
+/** @file Session "Context" tab: stats grid, token breakdown bar, system prompt, and a raw-message accordion, built as vanilla DOM over the reactivity shim. */
 import { insert } from "../../lib/reactivity.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, For } from "../../lib/reactivity.js";
 import { useSync } from "@/context/sync.js";
@@ -26,6 +27,11 @@ const BREAKDOWN_COLOR = {
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Parse a compact HTML string into a single detached root element.
+ * @param {string} html - Markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -34,6 +40,11 @@ function template(html) {
 
 // Mirror solid-js/web insert() semantics for primitive values: nothing for
 // null/undefined/booleans, text otherwise.
+/**
+ * Coerce a primitive into the text it should render as, matching insert() semantics.
+ * @param {*} value - Any primitive value.
+ * @returns {string} Empty string for null/undefined/boolean, otherwise the stringified value.
+ */
 function textValue(value) {
   return value == null || typeof value === "boolean" ? "" : String(value);
 }
@@ -42,6 +53,11 @@ function textValue(value) {
 // keep Nodes, stringify the rest. Used (inside a render effect) to mount
 // the original component results — which resolve through context providers and
 // Dynamic to memo accessors — into plain DOM.
+/**
+ * Recursively resolve a Solid-style child value into a flat array of DOM nodes.
+ * @param {*} value - A node, accessor, array, primitive, or nullish/boolean value.
+ * @returns {Array} Flat array of DOM Nodes (empty for nullish/boolean values).
+ */
 function resolveNodes(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return resolveNodes(value());
@@ -49,6 +65,14 @@ function resolveNodes(value) {
   if (value instanceof Node) return [value];
   return [document.createTextNode(String(value))];
 }
+/**
+ * A single stacked stat cell: a secondary label over an emphasized value, both
+ * bound in render effects so they track live language and stat changes.
+ * @param {Object} props - Component props.
+ * @param {*} props.label - Reactive label text for the stat.
+ * @param {*} props.value - Reactive value text for the stat.
+ * @returns {HTMLElement} The stat cell root element.
+ */
 function Stat(props) {
   // Compiled _tmpl$: label over value. Both bound in render effects so the
   // label follows live language switches and the value follows the stat memos.
@@ -63,6 +87,15 @@ function Stat(props) {
   });
   return root;
 }
+/**
+ * Renders one raw message (message + its parts) as a pretty-printed JSON file
+ * viewer for the accordion body.
+ * @param {Object} props - Component props.
+ * @param {Object} props.message - The message to serialize, providing id and role.
+ * @param {Function} props.getParts - Returns the parts array for a given message id.
+ * @param {Function} props.onRendered - Callback invoked after the file viewer renders.
+ * @returns {*} The File viewer component instance.
+ */
 function RawMessageContent(props) {
   const file = createMemo(() => {
     const parts = props.getParts(props.message.id);
@@ -86,6 +119,16 @@ function RawMessageContent(props) {
     onRendered: () => requestAnimationFrame(props.onRendered)
   });
 }
+/**
+ * One collapsible accordion item for a raw message: a sticky header showing
+ * role, id, and creation time, with the JSON content lazily mounted on expand.
+ * @param {Object} props - Component props.
+ * @param {Object} props.message - The message, providing id, role, and time.created.
+ * @param {Function} props.getParts - Returns the parts array for a given message id.
+ * @param {Function} props.onRendered - Callback invoked after the content renders.
+ * @param {Function} props.time - Formats a millisecond timestamp into a locale string.
+ * @returns {*} The Accordion.Item component instance.
+ */
 function RawMessage(props) {
   return createComponent(Accordion.Item, {
     get value() {
@@ -153,6 +196,13 @@ function RawMessage(props) {
 }
 const emptyMessages = [];
 const emptyUserMessages = [];
+/**
+ * The session "Context" tab. Renders a stats grid (provider/model, token
+ * counts, cost, usage), an optional token-usage breakdown bar, the latest
+ * system prompt, and an accordion of raw messages, with scroll position
+ * persisted through the session layout view.
+ * @returns {*} The ScrollView component instance hosting the tab.
+ */
 export function SessionContextTab() {
   const sync = useSync();
   const language = useLanguage();

@@ -1,6 +1,17 @@
+/** @file Derives context usage metrics (token totals, cost, context window usage) from a session's messages. */
+/**
+ * Sum every token bucket (input, output, reasoning, cache read/write) for a message.
+ * @param {Object} msg - A session message carrying a tokens breakdown.
+ * @returns {number} Total token count across all buckets.
+ */
 const tokenTotal = msg => {
   return msg.tokens.input + msg.tokens.output + msg.tokens.reasoning + msg.tokens.cache.read + msg.tokens.cache.write;
 };
+/**
+ * Find the most recent assistant message that actually consumed tokens.
+ * @param {Array} messages - Session messages in chronological order.
+ * @returns {Object} The last token-bearing assistant message, or undefined if none.
+ */
 const lastAssistantWithTokens = messages => {
   for (let i = messages.length - 1; i >= 0; i--) {
     const msg = messages[i];
@@ -9,6 +20,14 @@ const lastAssistantWithTokens = messages => {
     return msg;
   }
 };
+/**
+ * Compute total session cost and the context snapshot for the latest token-bearing
+ * assistant message (provider/model labels, per-bucket token counts, context limit,
+ * and usage percentage).
+ * @param {Array} messages - Session messages to aggregate.
+ * @param {Array} providers - Available providers, each with id and a models map, used to resolve labels and limits.
+ * @returns {Object} Object with totalCost and an optional context record describing the latest assistant turn.
+ */
 const build = (messages = [], providers = []) => {
   const totalCost = messages.reduce((sum, msg) => sum + (msg.role === "assistant" ? msg.cost : 0), 0);
   const message = lastAssistantWithTokens(messages);
@@ -39,6 +58,12 @@ const build = (messages = [], providers = []) => {
     }
   };
 };
+/**
+ * Public entry point: derive context usage metrics for a session.
+ * @param {Array} messages - Session messages to aggregate.
+ * @param {Array} providers - Available providers used to resolve labels and context limits.
+ * @returns {Object} Object with totalCost and an optional context snapshot (see build).
+ */
 export function getSessionContextMetrics(messages = [], providers = []) {
   return build(messages, providers);
 }

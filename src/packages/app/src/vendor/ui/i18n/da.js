@@ -1,3 +1,9 @@
+/** @file Danish (da) translation dictionary mapping UI message keys to localized strings. */
+/**
+ * Danish translation table: maps dotted UI message keys to their localized strings.
+ * Placeholders in `{{name}}` form are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Sessionsændringer",
   "ui.sessionReview.title.lastTurn": "Ændringer fra sidste tur",

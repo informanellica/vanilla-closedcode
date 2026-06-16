@@ -4,16 +4,41 @@ import { DockPrompt } from "@/vendor/ui/components/dock-prompt.js";
 import { Icon } from "@/bs/icon.js";
 import { useLanguage } from "@/context/language.js";
 
+/** @file Session permission dock: a DockPrompt presenting a pending tool-permission request (title, description, matched patterns) with deny / allow-always / allow-once actions. */
+
 // Build a detached element from static markup. Only static skeletons go
 // through here; translated/user strings are assigned via textContent.
+/**
+ * Builds a detached DOM element from a static HTML string.
+ *
+ * @param {string} html - Static skeleton markup.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Permission request dock. Renders the request's title, optional tool
+ * description, and matched patterns, plus deny / allow-always / allow-once
+ * action buttons.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.request - The permission request (permission tool name, patterns).
+ * @param {*} props.responding - Truthy while a decision is being submitted (disables the buttons).
+ * @param {Function} props.onDecide - Called with the chosen decision ("reject", "always", or "once").
+ * @returns {Node} The permission dock component.
+ */
 export function SessionPermissionDock(props) {
   const language = useLanguage();
+  /**
+   * Resolves the localized description for the requested tool, or an empty
+   * string when no translation exists for it.
+   *
+   * @returns {string} The tool description, or "" when untranslated.
+   */
   const toolDescription = () => {
     const key = `settings.permissions.tool.${props.request.permission}.description`;
     const value = language.t(key);
@@ -66,6 +91,14 @@ export function SessionPermissionDock(props) {
     else if (patterns.length === 0 && mounted) patternsRow.remove();
   });
 
+  /**
+   * Builds a decision button that submits the given permission decision.
+   *
+   * @param {string} variant - The Button visual variant (e.g. "ghost", "primary").
+   * @param {string} decision - The decision passed to onDecide ("reject", "always", "once").
+   * @param {string} label - The translation key for the button label.
+   * @returns {Node} The decision button component.
+   */
   const decideButton = (variant, decision, label) => createComponent(Button, {
     variant: variant,
     size: "normal",

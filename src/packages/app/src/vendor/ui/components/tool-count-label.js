@@ -1,7 +1,13 @@
+/** @file Animated, count-aware tool label that switches singular/plural text and rolls the count digits. */
 import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
 import { insert } from "../../../lib/reactivity.js";
 import { AnimatedNumber } from "./animated-number.js";
 
+/**
+ * Split a template string around the `{{count}}` placeholder.
+ * @param {string} text - Label template that may contain a `{{ count }}` token.
+ * @returns {Object} Object with `before` and `after` strings around the placeholder; if no placeholder is found `before` is empty and `after` is the whole text.
+ */
 function split(text) {
   const match = /{{\s*count\s*}}/.exec(text);
   if (!match || match.index === undefined) return { before: "", after: text };
@@ -11,6 +17,12 @@ function split(text) {
   };
 }
 
+/**
+ * Compute the shared leading prefix (stem) of two strings and the divergent tails.
+ * @param {string} one - First string (e.g. the singular suffix).
+ * @param {string} other - Second string (e.g. the plural suffix).
+ * @returns {Object} Object with `stem` (common prefix), `one` (remainder of first), and `other` (remainder of second).
+ */
 function common(one, other) {
   const a = Array.from(one);
   const b = Array.from(other);
@@ -23,6 +35,18 @@ function common(one, other) {
   };
 }
 
+/**
+ * Inline label that renders a live, animated count alongside singular/plural text.
+ * The count is rendered by an AnimatedNumber digit roller so it keeps animating as
+ * `props.count` grows; surrounding label text follows the singular/plural form derived
+ * from `props.one` / `props.other` and the current count.
+ * @param {Object} props - Component props.
+ * @param {number} props.count - The current count (signal-backed getter); drives the digit roller and singular/plural selection.
+ * @param {string} props.one - Singular label template containing a `{{count}}` placeholder.
+ * @param {string} props.other - Plural label template containing a `{{count}}` placeholder.
+ * @param {string} props.class - CSS class applied to the root element.
+ * @returns {HTMLElement} The root `<span>` element containing the label and animated count.
+ */
 export function AnimatedCountLabel(props) {
   const root = document.createElement("span");
   root.setAttribute("data-component", "tool-count-label");

@@ -1,3 +1,4 @@
+/** @file Application titlebar: window drag/maximize regions, OS-specific controls, sidebar/new-session toggles, back/forward history nav, the open-folder label, and the dev/beta channel badge. */
 import { createComponent, createEffect, createMemo, createRenderEffect, untrack } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
 import { useLocation, useNavigate, useParams } from "../lib/router/index.js";
@@ -20,6 +21,11 @@ const currentThemeWindow = () => tauriApi()?.webviewWindow?.getCurrentWebviewWin
 
 // Build a detached element from static HTML (no user/translated strings are
 // ever interpolated into these literals).
+/**
+ * Build a detached DOM element from a static HTML string.
+ * @param {string} html - The HTML markup (no untrusted interpolation).
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -32,6 +38,12 @@ function template(html) {
 // The effect is owned by whichever scope evaluates the surrounding children
 // getter (the component owner or a slot render effect), so it is disposed
 // together with the button it decorates.
+/**
+ * Wrap an Icon in a contents holder that rebuilds the icon whenever the reactive name accessor changes,
+ * working around bs Icon/Button reading the icon name only once at creation.
+ * @param {Function} name - A zero-argument accessor returning the current icon name.
+ * @returns {HTMLElement} A display:contents span that re-renders the icon reactively.
+ */
 function reactiveIcon(name) {
   const holder = document.createElement("span");
   holder.style.display = "contents";
@@ -44,6 +56,13 @@ function reactiveIcon(name) {
 // Toggle whitespace-separated class groups. Falsy groups are removed before
 // truthy ones are added, matching solid's classList semantics for groups that
 // share tokens (e.g. "duration-180 ease-out" vs "duration-180 ease-in").
+/**
+ * Toggle whitespace-separated class-token groups on an element. Falsy groups are removed first, then
+ * truthy groups are added, so groups sharing tokens resolve correctly.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Array} groups - An array of [tokens, on] pairs where tokens is a space-separated class string and on is a boolean.
+ * @returns {void}
+ */
 function toggleClasses(el, groups) {
   for (const [tokens, on] of groups) {
     if (on) continue;
@@ -55,6 +74,13 @@ function toggleClasses(el, groups) {
   }
 }
 
+/**
+ * Application titlebar component. Renders the drag region and maximize-on-doubleclick behavior, OS-specific
+ * window controls (macOS traffic-light spacer, Windows decorum controls), the sidebar/new-session toggles,
+ * back/forward history navigation, the centered open-folder label, and the dev/beta channel badge. Also
+ * registers the goBack/goForward commands and keeps the native window theme in sync.
+ * @returns {HTMLElement} The titlebar header element.
+ */
 export function Titlebar() {
   const layout = useLayout();
   const platform = usePlatform();
@@ -98,12 +124,20 @@ export function Titlebar() {
   // content rebuilds only when the condition flips, not on every dir change.
   const hasDir = createMemo(() => !!params.dir);
   const showHistoryNav = createMemo(() => !!(hasProjects() && nav()));
+  /**
+   * Navigate one step back through the internal history stack.
+   * @returns {void}
+   */
   const back = () => {
     const next = backPath(history);
     if (!next) return;
     setHistory(next.state);
     navigate(next.to);
   };
+  /**
+   * Navigate one step forward through the internal history stack.
+   * @returns {void}
+   */
   const forward = () => {
     const next = forwardPath(history);
     if (!next) return;
@@ -123,6 +157,10 @@ export function Titlebar() {
     keybind: "mod+]",
     onSelect: forward
   }]);
+  /**
+   * Get the current Tauri desktop window, or undefined when not running on desktop.
+   * @returns {Object} The desktop window handle, or undefined.
+   */
   const getWin = () => {
     if (platform.platform !== "desktop") return;
     return currentDesktopWindow();
@@ -135,11 +173,21 @@ export function Titlebar() {
     if (!win?.setTheme) return;
     void win.setTheme(value).catch(() => undefined);
   });
+  /**
+   * Whether an event target is an interactive control (so drag/maximize should be suppressed on it).
+   * @param {EventTarget} target - The event target to test.
+   * @returns {boolean} True when the target is or is inside an interactive element.
+   */
   const interactive = target => {
     if (!(target instanceof Element)) return false;
     const selector = "button, a, input, textarea, select, option, [role='button'], [role='menuitem'], [contenteditable='true'], [contenteditable='']";
     return !!target.closest(selector);
   };
+  /**
+   * Start native window dragging on a primary-button mousedown over a non-interactive titlebar region.
+   * @param {MouseEvent} e - The mousedown event.
+   * @returns {void}
+   */
   const drag = e => {
     if (platform.platform !== "desktop") return;
     if (e.buttons !== 1) return;
@@ -149,6 +197,11 @@ export function Titlebar() {
     e.preventDefault();
     void win.startDragging().catch(() => undefined);
   };
+  /**
+   * Toggle window maximize on double-click over a non-interactive titlebar region.
+   * @param {MouseEvent} e - The dblclick event.
+   * @returns {void}
+   */
   const maximize = e => {
     if (platform.platform !== "desktop") return;
     if (interactive(e.target)) return;
@@ -160,6 +213,10 @@ export function Titlebar() {
   };
 
   // The hamburger button rendered on both the mac and non-mac sides.
+  /**
+   * Build the mobile hamburger menu button that toggles the mobile sidebar.
+   * @returns {Node} The IconButton component instance.
+   */
   const mobileMenuButton = () => createComponent(IconButton, {
     icon: "menu",
     variant: "ghost",
@@ -177,6 +234,11 @@ export function Titlebar() {
 
   // New-session button, shown only while a project dir is open. The wrapper
   // fades out (and goes inert) while the sidebar is open.
+  /**
+   * Build the new-session button (with tooltip + keybind) that navigates to a new session for the open dir.
+   * The wrapper fades out and goes inert while the sidebar is open.
+   * @returns {HTMLElement} The new-session wrapper element.
+   */
   const buildNewSession = () => {
     const wrap = template(`<div class="d-flex align-items-center shrink-0 w-8 mr-1"><div class="transition-opacity"></div></div>`);
     const fade = wrap.firstElementChild;
@@ -227,6 +289,10 @@ export function Titlebar() {
   };
 
   // Back/forward history buttons, shown once at least one project exists.
+  /**
+   * Build the back/forward history navigation buttons (each with a tooltip, disabled when unavailable).
+   * @returns {HTMLElement} The history-nav wrapper element.
+   */
   const buildHistoryNav = () => {
     const wrap = template(`<div class="d-flex align-items-center gap-0 transition-transform"></div>`);
     wrap.appendChild(createComponent(Tooltip, {

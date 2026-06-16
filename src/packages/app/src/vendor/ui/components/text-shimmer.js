@@ -1,5 +1,18 @@
+/** @file TextShimmer component: text with an animated shimmer sweep overlay that runs while active. */
 import { createRenderEffect, onCleanup } from "../../../lib/reactivity.js";
 
+/**
+ * Text with a shimmer-sweep effect: stacks an aria-hidden base and shimmer layer (same text) in one
+ * grid cell and runs the sweep animation while active, keeping it running one extra swap period after
+ * deactivation so the fade-out is not cut short.
+ * @param {Object} props - Component props.
+ * @param {string} props.as - Tag name for the outer element (default "span").
+ * @param {string} props.text - The text to render (also set as the aria-label).
+ * @param {string} props.class - Class string applied to the outer element.
+ * @param {number} props.offset - Animation index offset (sets the --text-shimmer-index custom property).
+ * @param {boolean} props.active - Whether the shimmer sweep is running (default true).
+ * @returns {HTMLElement} The outer shimmer element.
+ */
 export const TextShimmer = props => {
   const swap = 220;
   const outer = document.createElement(props.as || "span");

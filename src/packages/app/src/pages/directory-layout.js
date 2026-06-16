@@ -1,3 +1,4 @@
+/** @file Directory-scoped route layout: decodes the base64 directory slug from the URL and wraps children in the SDK/Sync/Data provider tree for that directory. */
 import { DataProvider } from "@/lib/context.js";
 import { showToast } from "@/lib/toast.js";
 import { base64Encode } from "core/util/encode";
@@ -8,6 +9,15 @@ import { LocalProvider } from "@/context/local.js";
 import { SDKProvider } from "@/context/sdk.js";
 import { SyncProvider, useSync } from "@/context/sync.js";
 import { decode64 } from "@/utils/base64.js";
+/**
+ * Provider component that exposes the synced data for a directory to descendants.
+ * Keeps the URL in sync with the canonical directory path, loads the active
+ * session resource, and wraps children in DataProvider and LocalProvider.
+ * @param {Object} props - Component props.
+ * @param {string} props.directory - Absolute directory path this layout is scoped to.
+ * @param {*} props.children - Child nodes rendered inside the provider tree.
+ * @returns {*} The provider component tree.
+ */
 function DirectoryDataProvider(props) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,6 +51,15 @@ function DirectoryDataProvider(props) {
     }
   });
 }
+/**
+ * Route layout that resolves the `:dir` slug to a directory path. Decodes the
+ * base64 slug; on an invalid URL it toasts an error and redirects to home.
+ * When a directory resolves, it mounts the SDK/Sync/Data provider tree around
+ * the route children, remounting that tree when the resolved directory changes.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Route children to render within the directory scope.
+ * @returns {*} A reactive accessor yielding the provider tree, or nothing while unresolved.
+ */
 export default function Layout(props) {
   const params = useParams();
   const language = useLanguage();

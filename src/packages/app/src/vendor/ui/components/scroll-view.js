@@ -1,8 +1,14 @@
+/** @file Vanilla ScrollView component: a scrollable viewport with a custom draggable scrollbar thumb, keyboard scroll navigation, and forwarded scroll/touch/pointer events. */
 import { onMount, splitProps, mergeProps, createRenderEffect, createRoot, onCleanup } from "../../../lib/reactivity.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { createStore } from "../../../lib/store.js";
 import { useI18n } from "../context/i18n.js";
 
+/**
+ * Map a keyboard event to a scroll intent, ignoring events with modifier keys.
+ * @param {KeyboardEvent} event - The keydown event.
+ * @returns {string} One of "page-down", "page-up", "home", "end", "up", "down", or undefined if no match.
+ */
 export const scrollKey = event => {
   if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
   switch (event.key) {
@@ -23,6 +29,13 @@ export const scrollKey = event => {
 
 // Apply a Solid-style `style` prop (string or object) to an element, clearing
 // any previously applied value first. Mirrors solid's web-renderer style handling.
+/**
+ * Apply a Solid-style `style` prop (string or object) to an element, clearing
+ * any previously applied value first.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {(string|Object)} style - CSS text string, or a map of style properties (`--` custom props supported).
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (style == null) {
     el.removeAttribute("style");
@@ -41,6 +54,20 @@ function applyStyle(el, style) {
   }
 }
 
+/**
+ * Scrollable viewport component with a custom scrollbar thumb. Renders children
+ * inside a focusable viewport, computes and tracks a draggable thumb sized to
+ * the scroll ratio (shown on hover/drag), supports keyboard scroll navigation
+ * (Page/Home/End/Arrow), and forwards scroll/wheel/touch/pointer/click/keydown
+ * events plus passthrough class/style/attributes to the root.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Content rendered inside the scrollable viewport.
+ * @param {string} props.class - Additional CSS class names merged onto the root.
+ * @param {(string|Object)} props.style - Inline style applied to the root.
+ * @param {Function} props.viewportRef - Ref callback invoked with the viewport element on mount.
+ * @param {string} props.orientation - Scroll orientation (defaults to "vertical").
+ * @returns {HTMLElement} The scroll-view root element.
+ */
 export function ScrollView(props) {
   const i18n = useI18n();
   const merged = mergeProps({
@@ -348,11 +375,25 @@ export function ScrollView(props) {
 // Handles nodes, arrays, primitives and (reactive) function children. A
 // function child is wrapped in a render effect so nested reactivity keeps
 // working, mirroring solid's web-renderer insert().
+/**
+ * Replace a parent's content with a Solid-style children value.
+ * @param {Node} parent - The parent node to clear and re-populate.
+ * @param {*} value - The children value (Node, array, function, primitive, or nullish).
+ * @returns {void}
+ */
 function insertChildren(parent, value) {
   parent.replaceChildren();
   appendValue(parent, value);
 }
 
+/**
+ * Recursively append a Solid-style value to a parent: arrays are flattened,
+ * Nodes appended directly, function children wrapped in a render effect (so
+ * nested reactivity re-renders the inserted nodes), and other values stringified.
+ * @param {Node} parent - The parent node to append into.
+ * @param {*} value - The value to append (Node, array, function, primitive, or nullish).
+ * @returns {void}
+ */
 function appendValue(parent, value) {
   if (value == null || value === false || value === true) return;
   if (Array.isArray(value)) {

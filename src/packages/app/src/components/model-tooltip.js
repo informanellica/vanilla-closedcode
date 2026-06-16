@@ -1,12 +1,23 @@
+/** @file ModelTooltip component: tooltip body summarizing a model's provider, name, input modalities, reasoning support and context limit. */
 import { createRenderEffect } from "../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Tooltip content describing a model: title (provider + name + latest/free tags), allowed input modalities, reasoning support and context window.
+ * @param {Object} props - Component props: `model` (the model descriptor), `latest` (boolean tag) and `free` (boolean tag).
+ * @returns {Element} The tooltip body element with live, localized text bindings.
+ */
 export const ModelTooltip = props => {
   const language = useLanguage();
   const sourceName = model => {

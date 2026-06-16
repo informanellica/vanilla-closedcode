@@ -1,3 +1,10 @@
+/** @file French (fr) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their French strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Modifications de la session",
   "ui.sessionReview.title.lastTurn": "Modifications du dernier tour",

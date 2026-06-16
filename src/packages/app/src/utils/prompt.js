@@ -1,3 +1,10 @@
+/** @file Reconstructs editable prompt content (text + file/agent mentions + images) from message parts, used by undo to restore the original user prompt. */
+
+/**
+ * Parse a line-range selection from a file:// URL's query string.
+ * @param {string} url - File URL possibly carrying `?start=&end=` query params.
+ * @returns {Object} A `{ startLine, endLine, startChar, endChar }` selection, or undefined when absent/invalid.
+ */
 function selectionFromFileUrl(url) {
   const queryIndex = url.indexOf("?");
   if (queryIndex === -1) return undefined;
@@ -12,6 +19,12 @@ function selectionFromFileUrl(url) {
     endChar: 0
   };
 }
+/**
+ * Pick the most representative text part: the longest non-synthetic,
+ * non-ignored text part.
+ * @param {Array} parts - Message parts to scan.
+ * @returns {Object} The chosen text part, or undefined when none qualify.
+ */
 function textPartValue(parts) {
   const candidates = parts.filter(part => part.type === "text").filter(part => !part.synthetic && !part.ignored);
   return candidates.reduce((best, part) => {
@@ -24,6 +37,14 @@ function textPartValue(parts) {
 /**
  * Extract prompt content from message parts for restoring into the prompt input.
  * This is used by undo to restore the original user prompt.
+ *
+ * Walks file/agent parts, converts absolute paths to project-relative, sorts
+ * inline mentions by their original positions, and rebuilds an ordered segment
+ * list of text/file/agent items interleaved with the surrounding text, plus any
+ * inline images appended at the end.
+ * @param {Array} parts - Message parts (text, file, agent, image-as-file) to reconstruct from.
+ * @param {Object} opts - Options: `directory` (project root for relativizing paths) and `attachmentName` (fallback image filename).
+ * @returns {Array} Ordered prompt segments (text/file/agent) followed by any image attachments; always contains at least one text segment.
  */
 export function extractPromptFromParts(parts, opts) {
   const textPart = textPartValue(parts);

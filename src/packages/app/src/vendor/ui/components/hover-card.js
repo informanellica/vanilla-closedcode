@@ -6,7 +6,16 @@ import { createComponent, createRenderEffect, createRoot, getOwner, onCleanup, r
 import { createStore } from "../../../lib/store.js";
 import { autoPosition } from "./floating.js";
 
+/** @file Vanilla HoverCard component: shows a positioned content card on trigger hover/focus, with open/close delays. Derivative of @kobalte/core. */
 // Apply a Solid-style classList ({ "a b": true, c: false }) onto an element.
+/**
+ * Apply a Solid-style classList ({ "a b": true, c: false }) onto an element,
+ * splitting space-separated multi-class keys into individual tokens.
+ *
+ * @param {Element} el - The target element.
+ * @param {Object} classList - Map of class-token strings to boolean enable flags.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -18,6 +27,29 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Render a hover card: a trigger element that opens a floating content card on
+ * pointer enter / focus (after openDelay) and closes it on leave / blur (after
+ * closeDelay). The content is mounted into a target on open and positioned
+ * relative to the trigger via autoPosition. Supports controlled (open prop) and
+ * uncontrolled (defaultOpen) modes.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.trigger - The trigger content (Node, string, or accessor).
+ * @param {Element} props.mount - Mount target for the content; defaults to document.body.
+ * @param {string} props.class - Class name(s) applied to the content element.
+ * @param {Object} props.classList - Solid-style classList map applied reactively to the content.
+ * @param {*} props.children - Content rendered inside the card body.
+ * @param {boolean} props.open - Controlled open state; when set the card is controlled.
+ * @param {boolean} props.defaultOpen - Initial open state in uncontrolled mode.
+ * @param {number} props.openDelay - Delay in ms before opening; defaults to 700.
+ * @param {number} props.closeDelay - Delay in ms before closing; defaults to 300.
+ * @param {string} props.placement - Preferred placement passed to autoPosition; defaults to "bottom".
+ * @param {number} props.gutter - Gap in px between trigger and content; defaults to 4.
+ * @param {*} props.shift - Shift option forwarded to autoPosition.
+ * @param {Function} props.onOpenChange - Called with the next open boolean when it changes.
+ * @returns {HTMLDivElement} The trigger element (content is portaled into the mount target).
+ */
 export function HoverCard(props) {
   const owner = getOwner();
   const [local, rest] = splitProps(props, [

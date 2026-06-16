@@ -1,8 +1,21 @@
+/** @file TextStrikethrough component: spring-animated line-through that sweeps across text as it activates. */
 import { createRenderEffect, onMount } from "../../../lib/reactivity.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
 import { createStore } from "../../../lib/store.js";
 import { useSpring } from "./motion-spring.js";
 
+/**
+ * Text with an animated line-through that sweeps from left to right as it activates: stacks the base
+ * text and an aria-hidden line-through overlay in one grid cell, then spring-animates complementary
+ * clip-paths so the strike progressively covers the revealed portion. Re-measures on resize.
+ * @param {Object} props - Component props.
+ * @param {*} props.text - The text to render (function/nullish/boolean values follow insert() semantics).
+ * @param {boolean} props.active - Whether the strikethrough is engaged (drives the spring to 1).
+ * @param {number} props.visualDuration - Spring visual duration in seconds (default 0.35).
+ * @param {string} props.class - Class string applied to the container.
+ * @param {Object} props.style - Style object applied to the container (key-diffed).
+ * @returns {HTMLElement} The strikethrough container element.
+ */
 export function TextStrikethrough(props) {
   const progress = useSpring(() => props.active ? 1 : 0, () => ({
     visualDuration: props.visualDuration ?? 0.35,

@@ -1,3 +1,4 @@
+/** @file Bootstrap-styled filterable/grouped List component with fuzzy search, keyboard navigation, and active/selected item tracking. */
 import { insert } from "../lib/reactivity.js";
 import fuzzysort from "fuzzysort";
 import { entries, flatMap, groupBy, map, pipe } from "remeda";
@@ -13,12 +14,23 @@ const FALLBACK_MESSAGES = {
   clearFilter: "Clear search"
 };
 
+/**
+ * Build a detached DOM element from a static HTML string.
+ * @param {string} html - The HTML markup (no untrusted interpolation).
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Append children to a parent, handling arrays, nodes, reactive accessors, and primitives.
+ * @param {Node} parent - The parent element to append into.
+ * @param {*} children - Children to append: null/false (ignored), Array (recursed), Node, Function (reactive accessor), or any value (stringified text node).
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -38,16 +50,32 @@ function appendChildren(parent, children) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Remove all child nodes from an element.
+ * @param {Node} node - The element to empty.
+ * @returns {void}
+ */
 function clearNode(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
 }
 
+/**
+ * Split a class string into an array of individual class tokens.
+ * @param {*} value - A space-separated class string (or falsy value).
+ * @returns {Array} The non-empty class tokens.
+ */
 function normalizeClassName(value) {
   return String(value || "")
     .split(/\s+/)
     .filter(Boolean);
 }
 
+/**
+ * Find a rendered list-item node by its data-key attribute.
+ * @param {HTMLElement} container - The scroll container holding the list items.
+ * @param {string} key - The item key to match.
+ * @returns {HTMLElement} The matching node, or null when none is found.
+ */
 function findByKey(container, key) {
   const nodes = container.querySelectorAll('[data-slot="list-item"][data-key]');
   for (const node of nodes) {
@@ -56,6 +84,13 @@ function findByKey(container, key) {
   return null;
 }
 
+/**
+ * Scroll a container so a child node is visible, clamped to the scroll range.
+ * @param {HTMLElement} container - The scrollable container.
+ * @param {HTMLElement} node - The child node to bring into view.
+ * @param {string} block - Alignment mode; "center" centers the node, otherwise it is scrolled to the nearest edge.
+ * @returns {void}
+ */
 function scrollIntoView(container, node, block) {
   const containerRect = container.getBoundingClientRect();
   const nodeRect = node.getBoundingClientRect();
@@ -75,11 +110,24 @@ function scrollIntoView(container, node, block) {
   container.scrollTop = Math.max(0, Math.min(target, max));
 }
 
+/**
+ * Resolve list-item children, calling render-prop functions with the item and index.
+ * @param {*} children - Static children or a render-prop function.
+ * @param {*} value - The current item passed to render-prop children.
+ * @param {number} index - The item index passed to render-prop children.
+ * @returns {*} The resolved children for the item.
+ */
 function resolveChildren(children, value, index) {
   if (typeof children === "function") return children(value, index);
   return children;
 }
 
+/**
+ * Create the internal state machine driving a filtered list: fetching, fuzzy filtering,
+ * grouping/sorting, active-item tracking, keyboard movement, and selection sync.
+ * @param {Object} props - List configuration: items (array or filter function), key, filterKeys, groupBy, sortBy, sortGroupsBy, current, noInitialSelection, and the onFilter/onMove/onSelect callbacks.
+ * @returns {Object} A controller exposing state plus compute/reset/setFilter/applyExternalFilter/onKeyDown/syncSelection and the scrollRef/active/render accessors.
+ */
 function createFilteredListState(props) {
   const state = {
     filter: "",
@@ -91,11 +139,21 @@ function createFilteredListState(props) {
   };
   let requestId = 0;
 
+  /**
+   * Fetch the source items for a filter value (resolving a function or promise source).
+   * @param {string} filter - The current filter string.
+   * @returns {Promise<Array>} The resolved item list (empty array when none).
+   */
   const getItems = async filter => {
     const source = typeof props.items === "function" ? props.items(filter) : props.items;
     return (await Promise.resolve(source)) || [];
   };
 
+  /**
+   * Re-fetch, fuzzy-filter, group, and sort the items, then recompute the active item and re-render.
+   * Stale requests (superseded by a newer compute) are discarded.
+   * @returns {Promise<void>}
+   */
   const compute = async () => {
     const currentRequest = ++requestId;
     state.loading = true;
@@ -139,6 +197,10 @@ function createFilteredListState(props) {
     render();
   };
 
+  /**
+   * Reset the active item to the first item (or clear it when noInitialSelection is set).
+   * @returns {void}
+   */
   const reset = () => {
     if (props.noInitialSelection) {
       state.active = "";
@@ -151,6 +213,11 @@ function createFilteredListState(props) {
     syncSelection();
   };
 
+  /**
+   * Move the active item by a wrapping offset through the flattened item list.
+   * @param {number} delta - Step to move (1 for next, -1 for previous); wraps around the ends.
+   * @returns {void}
+   */
   const moveActive = delta => {
     const all = state.flat;
     if (all.length === 0) return;
@@ -165,6 +232,11 @@ function createFilteredListState(props) {
     syncSelection();
   };
 
+  /**
+   * Keyboard handler for the list: Enter selects, Ctrl+n/Ctrl+p and arrows move the active item.
+   * @param {KeyboardEvent} event - The keydown event.
+   * @returns {void}
+   */
   const onKeyDown = event => {
     if (event.key === "Enter" && !event.isComposing) {
       event.preventDefault();
@@ -193,12 +265,22 @@ function createFilteredListState(props) {
     }
   };
 
+  /**
+   * Update the filter string, notify the onFilter callback, and recompute.
+   * @param {string} value - The new filter text.
+   * @returns {void}
+   */
   const setFilter = value => {
     state.filter = value;
     props.onFilter?.(value);
     void compute();
   };
 
+  /**
+   * Apply a filter value driven from outside the component, recomputing the list.
+   * @param {string} value - The externally supplied filter text.
+   * @returns {void}
+   */
   const applyExternalFilter = value => {
     if (value === state.filter) {
       void compute();
@@ -208,6 +290,10 @@ function createFilteredListState(props) {
     void compute();
   };
 
+  /**
+   * Sync each rendered item node's active/selected dataset and class, and scroll the active item into view.
+   * @returns {void}
+   */
   const syncSelection = () => {
     for (const entry of itemNodes.values()) {
       const isActive = entry.key === state.active;
@@ -253,6 +339,12 @@ function createFilteredListState(props) {
   };
 }
 
+/**
+ * Filterable, grouped list component with optional search box, fuzzy matching, keyboard navigation,
+ * a current/selected indicator, group headers, dividers, and an optional "add" affordance.
+ * @param {Object} props - List config. Key props: items (array or filter function), key (item identity), children (item renderer or render prop), search (boolean or object: placeholder/autofocus/hideIcon/action/class), add ({render, class}), current (selected item), filter (initial filter), key/groupBy/sortBy/sortGroupsBy, groupHeader, activeIcon, divider, itemWrapper, emptyMessage, loadingMessage, noInitialSelection, and onSelect/onFilter/onMove/onKeyEvent callbacks; ref receives a controller {onKeyDown, setScrollRef, setFilter}.
+ * @returns {HTMLElement} The root list element.
+ */
 export function List(props) {
   const list = createFilteredListState(props);
   let inputRef = null;
@@ -266,10 +358,22 @@ export function List(props) {
   const scrollEl = searchHost.nextElementSibling;
   const cleanup = [];
 
+  /**
+   * Invoke the onSelect callback for a chosen item.
+   * @param {*} item - The selected item.
+   * @param {number} index - The item's index in the flattened list.
+   * @returns {void}
+   */
   const handleSelect = (item, index) => {
     props.onSelect?.(item, index);
   };
 
+  /**
+   * Keydown handler bound to the search input and item nodes: forwards custom key events, handles
+   * Enter selection, and delegates navigation keys to the list state machine.
+   * @param {KeyboardEvent} event - The keydown event.
+   * @returns {void}
+   */
   const handleKey = event => {
     list.state.mouseActive = false;
     if (event.key === "Escape") return;
@@ -295,6 +399,12 @@ export function List(props) {
     list.onKeyDown(event);
   };
 
+  /**
+   * Set the search input value and propagate it to the list state, optionally recomputing on the next microtask.
+   * @param {string} value - The new filter text.
+   * @param {Object} options - Options; when options.ref is set the filter was driven via the external ref.
+   * @returns {void}
+   */
   const applyFilter = (value, options) => {
     const prev = internalFilter;
     internalFilter = value;
@@ -308,6 +418,10 @@ export function List(props) {
     queueMicrotask(() => list.compute());
   };
 
+  /**
+   * Render the optional "add" affordance node from the add prop's render function.
+   * @returns {HTMLElement} The add element, or null when no add prop is configured.
+   */
   const renderAdd = () => {
     const add = addProps();
     if (!add) return null;
@@ -317,6 +431,11 @@ export function List(props) {
     return addEl;
   };
 
+  /**
+   * Toggle a group header's data-stuck flag based on whether it is pinned at the top of the scroll area.
+   * @param {HTMLElement} header - The group header element.
+   * @returns {void}
+   */
   const updateHeaderStuck = header => {
     const scroll = list.getScrollRef();
     if (!scroll || !header) return;
@@ -325,6 +444,10 @@ export function List(props) {
     header.dataset.stuck = String(rect.top <= scrollRect.top + 1 && scroll.scrollTop > 0);
   };
 
+  /**
+   * Rebuild the search box, empty/loading state, and grouped item nodes from the current list state.
+   * @returns {void}
+   */
   const render = () => {
     clearNode(scrollEl);
     clearNode(searchHost);
@@ -493,6 +616,11 @@ export function List(props) {
 
   list.setRender(render);
 
+  /**
+   * Sync each rendered node's active/selected state and scroll the active item into view (List-level override
+   * that special-cases scrolling to the top for the first item).
+   * @returns {void}
+   */
   const syncSelection = () => {
     for (const entry of list.itemNodes.values()) {
       const isActive = entry.key === list.state.active;
@@ -515,6 +643,11 @@ export function List(props) {
 
   list.syncSelection = syncSelection;
 
+  /**
+   * Register the scroll container element with the list state.
+   * @param {HTMLElement} el - The scroll container.
+   * @returns {void}
+   */
   const attachScrollRef = el => {
     list.setScrollRef(el);
   };

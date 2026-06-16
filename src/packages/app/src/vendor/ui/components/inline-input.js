@@ -1,6 +1,16 @@
+/** @file InlineInput component: a reactively-bound <input> that merges a width override into its style and reflects live props. */
 import { createRenderEffect } from "../../../lib/reactivity.js";
 import { splitProps } from "../../../lib/reactivity.js";
 
+/**
+ * Apply a style value to an element, supporting null (remove), a CSS string
+ * (cssText), or an object whose entries are set as inline styles (custom
+ * properties via setProperty, others via the style object).
+ *
+ * @param {Element} el - The target element.
+ * @param {(string|Object|null)} style - The style to apply: null, a CSS string, or a property map.
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (style == null) {
     el.removeAttribute("style");
@@ -18,6 +28,20 @@ function applyStyle(el, style) {
   }
 }
 
+/**
+ * Render an <input data-component="inline-input"> with reactive class, style,
+ * value, and arbitrary attributes/event handlers.
+ *
+ * The width prop is merged into the resolved style. Event handlers (onX props)
+ * are attached once as listeners; all other props are re-applied reactively.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Class name(s) applied reactively to the input.
+ * @param {(string|number)} props.width - CSS width merged into the input's style.
+ * @param {(string|Object)} props.style - Base style (CSS string or property map).
+ * @param {Function} props.ref - Optional callback invoked with the input element.
+ * @returns {HTMLInputElement} The constructed input element.
+ */
 export function InlineInput(props) {
   const [local, others] = splitProps(props, ["class", "width", "style"]);
   const style = () => {

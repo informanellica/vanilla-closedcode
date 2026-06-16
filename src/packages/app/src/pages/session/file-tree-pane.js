@@ -11,6 +11,8 @@ import { useLayout } from "@/context/layout.js";
 import { usePlatform } from "@/context/platform.js";
 import { useSettings } from "@/context/settings.js";
 
+/** @file Left-pane file tree panel for the session view: a collapsible, resizable sidebar showing the project's files with git-change decorations. */
+
 // Width-transition classes, enabled while the user is NOT actively dragging
 // the resize handle. Toggled as a set (the compiled classList split the same
 // space-separated string into these tokens).
@@ -22,6 +24,11 @@ const TRANSITION_CLASSES = [
   "motion-reduce:transition-none"
 ];
 
+/**
+ * Build a detached element from a static HTML string (its first child).
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -40,6 +47,9 @@ function template(html) {
  *   onChangedFileClick(path)  — callback for clicking a file in the changes tab
  *   onFileClick(path)         — callback for clicking a file in the all tab
  *   size           — { active(), start(), touch() } from createSizing
+ *
+ * @param {Object} props - See the props list above (reactive accessors plus click/context-menu callbacks and the `size` controller).
+ * @returns {Node} The file tree panel element, gated behind a Show that mounts it only on desktop when enabled.
  */
 export function FileTreePane(props) {
   const layout = useLayout();
@@ -90,6 +100,11 @@ export function FileTreePane(props) {
 
   // Centered "no files" placeholder. msg is a plain translated string, set
   // via textContent (never interpolated into markup).
+  /**
+   * Build the centered "no files" placeholder element.
+   * @param {string} msg - Already-translated message text.
+   * @returns {Node} The placeholder element with the message set via textContent.
+   */
   const empty = msg => {
     const el = template(`
       <div class="h-100 d-flex flex-column">

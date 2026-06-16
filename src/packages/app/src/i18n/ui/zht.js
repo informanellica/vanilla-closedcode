@@ -1,3 +1,10 @@
+/** @file Traditional Chinese (zht) translation dictionary for UI component strings (session review, file media, line comments, session turns). */
+
+/**
+ * Mapping of UI string keys to their Traditional Chinese translations.
+ * Values may contain `{{name}}` placeholders interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "工作階段變更",
   "ui.sessionReview.title.lastTurn": "上一輪變更",

@@ -1,3 +1,4 @@
+/** @file SessionRetry component: an error card shown while a session turn is retrying, with a live countdown, attempt counter, and truncated/tooltip'd error message. */
 import { insert } from "../../../lib/reactivity.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, createSignal, on, onCleanup } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
@@ -7,12 +8,27 @@ import { Spinner } from "./spinner.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
+/**
+ * Build a detached element from a compact HTML string.
+ * @param {string} html - The HTML markup for a single root element.
+ * @returns {Element} The first element parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Session retry indicator component. While the turn status is "retry" it shows
+ * an error card with a Spinner, the (possibly truncated, tooltip-wrapped) error
+ * message, and a localized info line combining a live seconds countdown with the
+ * attempt number. Returns an accessor that mounts the card only while visible.
+ * @param {Object} props - Component props.
+ * @param {Object} props.status - The turn status object; rendered only when status.type is "retry".
+ * @param {boolean} props.show - Optional gate; the card mounts only when truthy (defaults to true).
+ * @returns {Function} An accessor returning the retry card element, or undefined when hidden.
+ */
 export function SessionRetry(props) {
   const i18n = useI18n();
   const retry = createMemo(() => {

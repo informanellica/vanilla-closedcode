@@ -16,9 +16,17 @@ import { sessionTitle } from "@/utils/session-title.js";
 import { sessionPermissionRequest } from "../session/composer/session-request-tree.js";
 import { childSessionOnPath, hasProjectPermissions } from "./helpers.js";
 
+/** @file Sidebar row/icon components: project avatars and session list items (with nested child sessions, archive affordances, and notification dots). */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Only static markup goes through here; user strings use textContent.
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -29,6 +37,14 @@ function template(html) {
 // [row element, child accessor]; the accessor (a memo) resolves to the nested
 // child-session wrapper element or undefined. A render effect keeps that
 // trailing region live, replacing solid-js/web insert() for the recursion.
+/**
+ * Mounts a SessionItem result into a parent element and keeps its nested
+ * child-session region live via a render effect.
+ *
+ * @param {Node} parent - Container the row and nested child region attach to.
+ * @param {Array} parts - The [row element, child accessor] pair returned by SessionItem.
+ * @returns {void}
+ */
 function mountSessionItem(parent, parts) {
   const [row, nested] = parts;
   parent.appendChild(row);
@@ -44,12 +60,30 @@ function mountSessionItem(parent, parts) {
   });
 }
 
+/**
+ * Resolves the image source to use for a project avatar, preferring an
+ * explicit override and skipping the URL when a solid color is configured.
+ *
+ * @param {string} id - The project id (unused for resolution; kept for the original signature).
+ * @param {Object} icon - The project's icon descriptor (may have override, color, url).
+ * @returns {string} The avatar image URL, or undefined when a color fallback should be used.
+ */
 export function getProjectAvatarSource(id, icon) {
   if (icon?.override) return icon?.override;
   if (icon?.color) return undefined;
   return icon?.url;
 }
 
+/**
+ * Project avatar tile for the sidebar rail, with a notification dot that
+ * reflects unseen activity, errors, and pending permission requests.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - Project descriptor (worktree, sandboxes, name, icon, id).
+ * @param {boolean} props.notify - When true, render the notification dot/badge for unseen activity or permissions.
+ * @param {string} props.class - Extra CSS classes appended to the root element.
+ * @returns {HTMLElement} The avatar root element.
+ */
 export const ProjectIcon = props => {
   const globalSync = useGlobalSync();
   const notification = useNotification();
@@ -119,6 +153,24 @@ export const ProjectIcon = props => {
   return root;
 };
 
+/**
+ * Anchor row rendering a single session's status indicator and title.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.session - Session record (id, title).
+ * @param {string} props.slug - Base64 directory slug used to build the link href.
+ * @param {boolean} props.dense - When true, use tighter vertical padding.
+ * @param {Function} props.tint - Accessor for the status color tint.
+ * @param {Function} props.isWorking - Accessor: true while the session is busy.
+ * @param {Function} props.hasPermissions - Accessor: true when a permission request is pending.
+ * @param {Function} props.hasError - Accessor: true when there is an unseen error.
+ * @param {Function} props.unseenCount - Accessor for the unseen notification count.
+ * @param {Function} props.sidebarOpened - Accessor: true when the sidebar panel is open.
+ * @param {Function} props.clearHoverProjectSoon - Callback to dismiss the hover-project preview.
+ * @param {Function} props.warmPress - Pointer-down prefetch warmer.
+ * @param {Function} props.warmFocus - Focus prefetch warmer.
+ * @returns {Node} The session anchor row component.
+ */
 const SessionRow = props => {
   const title = () => sessionTitle(props.session.title);
   return createComponent(A, {
@@ -187,6 +239,28 @@ const SessionRow = props => {
   });
 };
 
+/**
+ * Recursive sidebar session entry: a SessionRow optionally wrapped in a
+ * tooltip, with an archive button and a nested child-session subtree.
+ * Returns a [row element, child accessor] pair so callers can keep the nested
+ * region live (see mountSessionItem / the For-reconciled lists).
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.session - Session record (id, title, directory).
+ * @param {string} props.slug - Base64 directory slug for link hrefs.
+ * @param {number} props.level - Nesting depth (0 = root); drives indentation and hides archive.
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {boolean} props.dense - Use tighter row padding.
+ * @param {boolean} props.showChild - When true, render the active child session beneath this row.
+ * @param {boolean} props.showTooltip - Force the title tooltip on/off (defaults to mobile or collapsed sidebar).
+ * @param {Function} props.sidebarExpanded - Accessor: true when the sidebar is expanded.
+ * @param {Array} props.list - The sibling session list used for prefetch warming.
+ * @param {Function} props.navList - Accessor for the navigation list (preferred over list when it contains this session).
+ * @param {Function} props.prefetchSession - Prefetches a session with a given priority.
+ * @param {Function} props.archiveSession - Archives the given session.
+ * @param {Function} props.clearHoverProjectSoon - Dismisses the hover-project preview.
+ * @returns {Array} A [row element, childNode accessor] pair.
+ */
 export const SessionItem = props => {
   const params = useParams();
   const layout = useLayout();
@@ -214,6 +288,13 @@ export const SessionItem = props => {
     if (!props.showChild) return;
     return childSessionOnPath(sessionStore.session, props.session.id, params.id);
   });
+  /**
+   * Prefetches this session plus its neighbours within a span window.
+   *
+   * @param {number} span - How many neighbours on each side to warm.
+   * @param {string} priority - Prefetch priority for the outer neighbours.
+   * @returns {void}
+   */
   const warm = (span, priority) => {
     const nav = props.navList?.();
     const list = nav?.some(item => item.id === props.session.id && item.directory === props.session.directory) ? nav : props.list;
@@ -352,6 +433,18 @@ export const SessionItem = props => {
   return [row, childNode];
 };
 
+/**
+ * Sidebar row that links to the "new session" route for a workspace,
+ * optionally wrapped in a tooltip when the sidebar is collapsed or on mobile.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.slug - Base64 directory slug for the new-session href.
+ * @param {boolean} props.dense - Use tighter row padding.
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.sidebarExpanded - Accessor: true when the sidebar is expanded.
+ * @param {Function} props.clearHoverProjectSoon - Dismisses the hover-project preview.
+ * @returns {HTMLElement} The new-session row element.
+ */
 export const NewSessionItem = props => {
   const layout = useLayout();
   const language = useLanguage();
@@ -407,6 +500,13 @@ export const NewSessionItem = props => {
   return root;
 };
 
+/**
+ * Placeholder list of pulsing skeleton rows shown while sessions load.
+ *
+ * @param {Object} props - Component props.
+ * @param {number} props.count - Number of skeleton rows to render (defaults to 4).
+ * @returns {HTMLElement} The skeleton container element.
+ */
 export const SessionSkeleton = props => {
   const root = template(`<div class="d-flex flex-column gap-1"></div>`);
   // props.count was read once at setup in the original (static For source).

@@ -1,3 +1,10 @@
+/** @file Polish (pl) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their Polish strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Zmiany w sesji",
   "ui.sessionReview.title.lastTurn": "Zmiany z ostatniej tury",

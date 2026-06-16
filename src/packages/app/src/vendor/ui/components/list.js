@@ -1,3 +1,4 @@
+/** @file List component: a searchable, keyboard-navigable, grouped list (vanilla port of the compiled Solid List). */
 import { useFilteredList } from "../hooks/index.js";
 import { createComponent, createEffect, createMemo, createRenderEffect, on, untrack } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
@@ -17,6 +18,11 @@ import { TextField } from "./text-field.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Build a fresh detached element from a compact static HTML string.
+ * @param {string} html - The HTML markup (single root element).
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -26,6 +32,11 @@ function template(html) {
 // Resolve a possibly-reactive value the way solid-js/web's insert() does:
 // call accessors (components may return memos/thunks) until a concrete value
 // remains. Runs inside a render effect, so the reads stay tracked.
+/**
+ * Unwrap a possibly-reactive value by calling accessor functions until a concrete value remains.
+ * @param {*} value - A value or a chain of zero-arg accessors.
+ * @returns {*} The resolved concrete (non-function) value.
+ */
 function resolveValue(value) {
   while (typeof value === "function") value = value();
   return value;
@@ -33,6 +44,12 @@ function resolveValue(value) {
 
 // Flatten an insert()-shaped value (nothing / node / string / array, possibly
 // nested or holding accessors) into a list of concrete DOM nodes.
+/**
+ * Flatten an insert()-shaped value into concrete DOM nodes, appending them to `out`.
+ * @param {*} value - Nothing, a node, a string, a fragment, or an (possibly nested/accessor) array.
+ * @param {Array<Node>} out - The accumulator array that receives the resolved nodes.
+ * @returns {void}
+ */
 function flattenNodes(value, out) {
   if (value == null || typeof value === "boolean") return;
   if (Array.isArray(value)) {
@@ -55,6 +72,13 @@ function flattenNodes(value, out) {
 // position when omitted, preserving sibling order for CSS child selectors).
 // The effect is owned by the scope creating the region, so nested regions are
 // disposed when an enclosing region rebuilds.
+/**
+ * Create a reactive DOM region that keeps an accessor's rendered nodes anchored before a marker.
+ * @param {Node} parent - The parent element hosting the region.
+ * @param {Node} marker - The anchor comment/node to insert before; appended when null.
+ * @param {*} accessor - The (possibly reactive) value to resolve into the region's nodes.
+ * @returns {void}
+ */
 function renderRegion(parent, marker, accessor) {
   const anchor = marker ?? parent.appendChild(document.createComment(""));
   let current = [];
@@ -75,6 +99,12 @@ function renderRegion(parent, marker, accessor) {
 // Reactive single-class-string binding, mirroring the compiled classList
 // effect `{ [cls ?? ""]: !!cls }`: previous tokens are removed, next tokens
 // added, with falsy values toggling nothing.
+/**
+ * Reactively bind a single space-separated class string accessor onto an element, diffing tokens.
+ * @param {Element} el - The element whose classList is updated.
+ * @param {Function} accessor - Accessor returning the (possibly empty/falsy) class string.
+ * @returns {void}
+ */
 function bindClassList(el, accessor) {
   createRenderEffect(prev => {
     const value = accessor();
@@ -92,17 +122,58 @@ function bindClassList(el, accessor) {
 
 // Solid setAttribute semantics: nullish removes, anything else (including
 // booleans) is stringified.
+/**
+ * Set or remove an attribute with Solid semantics (nullish removes, else stringified).
+ * @param {Element} el - The target element.
+ * @param {string} name - The attribute name.
+ * @param {*} value - The value; nullish removes the attribute, otherwise it is stringified.
+ * @returns {void}
+ */
 function setAttr(el, name, value) {
   if (value == null) el.removeAttribute(name);
   else el.setAttribute(name, value);
 }
 
+/**
+ * Find a rendered list item element by its data-key value.
+ * @param {Element} container - The container to search within.
+ * @param {string} key - The data-key value to match.
+ * @returns {Element} The matching list-item element, or undefined when not found.
+ */
 function findByKey(container, key) {
   const nodes = container.querySelectorAll('[data-slot="list-item"][data-key]');
   for (const node of nodes) {
     if (node.getAttribute("data-key") === key) return node;
   }
 }
+/**
+ * Searchable, keyboard-navigable, grouped list component.
+ * Renders an optional search bar, grouped item rows (with active/selected/divider state),
+ * an optional add affordance, and an empty/loading state. Tracks an active item driven by
+ * keyboard navigation (arrows, Enter, Ctrl-n/p) and mouse movement, auto-scrolls the active
+ * and current items into view, and exposes an imperative ref ({ onKeyDown, setScrollRef, setFilter }).
+ * @param {Object} props - Component props (delegates filtering to useFilteredList).
+ * @param {Array<Object>} props.groups - The grouped data source (consumed via useFilteredList).
+ * @param {Function} props.key - Maps an item to its stable key string.
+ * @param {Function} props.children - Renders the body content for a given item.
+ * @param {Object} props.current - The currently-selected item (gets the selected icon/state).
+ * @param {*} props.search - Truthy to show the search bar; an object configures it (placeholder, action, hideIcon, autofocus, class).
+ * @param {*} props.add - Optional add affordance descriptor (`{ render, class }`).
+ * @param {boolean} props.divider - When true, render dividers between items.
+ * @param {string} props.activeIcon - Optional icon name shown on the active row.
+ * @param {string} props.filter - Optional controlled filter string.
+ * @param {Function} props.onFilter - Called with the filter string when it changes.
+ * @param {Function} props.onSelect - Called with (item, index) when an item is chosen.
+ * @param {Function} props.onMove - Called with the item as the active row changes.
+ * @param {Function} props.onKeyEvent - Called with (event, selectedItem) on key events before default handling.
+ * @param {Function} props.groupHeader - Optional renderer for a group's header content.
+ * @param {Function} props.itemWrapper - Optional wrapper applied around each rendered item node.
+ * @param {string} props.emptyMessage - Optional override for the empty-state message.
+ * @param {string} props.loadingMessage - Optional override for the loading message.
+ * @param {string} props.class - Class string applied to the root.
+ * @param {Function} props.ref - Receives the imperative list controller object.
+ * @returns {HTMLElement} The list root element.
+ */
 export function List(props) {
   const i18n = useI18n();
   let inputRef;

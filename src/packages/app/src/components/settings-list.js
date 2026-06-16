@@ -1,9 +1,15 @@
+/** @file Simple vertical settings list container that reactively renders its (Solid-style) children into a flex column. */
 import { createEffect, createMemo } from "../lib/reactivity.js";
 
 // Resolve Solid-style children: call zero-argument function children until
 // they yield values and flatten nested arrays (same contract as the compiled
 // insert() from solid-js/web). Functions that take arguments are render
 // props and must be passed through untouched.
+/**
+ * Recursively resolve Solid-style children: invoke zero-argument function children and flatten arrays.
+ * @param {*} value - A child value: a zero-arg function (called), an array (flattened), or any node/value.
+ * @returns {*} The resolved value or a flattened array of resolved values.
+ */
 const resolveChildren = value => {
   if (typeof value === "function" && !value.length) return resolveChildren(value());
   if (Array.isArray(value)) {
@@ -18,6 +24,12 @@ const resolveChildren = value => {
   return value;
 };
 
+/**
+ * Settings list container component. Reactively resolves and renders its children into a vertical
+ * flex column, filtering out null/boolean entries.
+ * @param {Object} props - Component props; props.children holds the (possibly reactive/nested) child nodes.
+ * @returns {HTMLElement} The list container element.
+ */
 export const SettingsList = props => {
   const el = document.createElement("div");
   el.className = "d-flex flex-column gap-3";

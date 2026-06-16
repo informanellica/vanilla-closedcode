@@ -1,3 +1,4 @@
+/** @file Bootstrap routines and TanStack-Query option factories that load global and per-directory state (config, providers, paths, projects, agents, sessions, permissions, etc.) into the sync stores. */
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
 import { retry } from "core/util/retry";
@@ -7,6 +8,11 @@ import { cmp, normalizeAgentList, normalizeProviderList } from "./utils.js";
 import { formatServerError } from "@/utils/server-errors.js";
 import { queryOptions, skipToken } from "../../lib/query/index.js";
 import { loadMcpQuery } from "../global-sync.js";
+/**
+ * Resolve after the next paint (rAF + macrotask), or after a 50ms fallback timeout if rAF is unavailable.
+ * Used to yield to the renderer before kicking off heavy bootstrap work.
+ * @returns {Promise} Resolves once a frame has painted or the fallback fires.
+ */
 function waitForPaint() {
   return new Promise(resolve => {
     let done = false;
@@ -25,16 +31,36 @@ function waitForPaint() {
     });
   });
 }
+/**
+ * Extract the rejection reasons from an array of `Promise.allSettled` results.
+ * @param {Array} list - Settled results from `Promise.allSettled`.
+ * @returns {Array} The reasons of the rejected entries.
+ */
 function errors(list) {
   return list.filter(item => item.status === "rejected").map(item => item.reason);
 }
 const providerRev = new Map();
+/**
+ * Drop the provider-revision counter for a directory (used to discard stale provider loads).
+ * @param {string} directory - Workspace directory key.
+ * @returns {void}
+ */
 export function clearProviderRev(directory) {
   providerRev.delete(directory);
 }
+/**
+ * Invoke each thunk in a list and await all of them, never rejecting.
+ * @param {Array} list - Array of zero-arg functions returning promises.
+ * @returns {Promise<Array>} Resolves to the `Promise.allSettled` results.
+ */
 function runAll(list) {
   return Promise.allSettled(list.map(item => item()));
 }
+/**
+ * Show an error toast summarizing the first error and an optional "+N more" count, if any errors are present.
+ * @param {Object} input - `{errors, title, translate, formatMoreCount}`.
+ * @returns {void}
+ */
 function showErrors(input) {
   if (input.errors.length === 0) return;
   const message = formatServerError(input.errors[0], input.translate);
@@ -45,6 +71,12 @@ function showErrors(input) {
     description: message + more
   });
 }
+/**
+ * Query options that fetch the global config (with retry), optionally applying a transform side-effect.
+ * @param {Object} sdk - Global SDK client, or falsy to skip.
+ * @param {Function} transform - Optional callback invoked with the raw response.
+ * @returns {Object} Query options resolving to the config data.
+ */
 export const loadGlobalConfigQuery = (sdk, transform) => queryOptions({
   queryKey: ["config"],
   queryFn: sdk ? () => retry(() => sdk.global.config.get().then(x => {
@@ -52,12 +84,23 @@ export const loadGlobalConfigQuery = (sdk, transform) => queryOptions({
     return x.data;
   })) : skipToken
 });
+/**
+ * Query options that fetch the project list (with retry), filtering out test worktrees and sorting by id.
+ * @param {Object} sdk - Global SDK client, or falsy to skip.
+ * @param {Function} transform - Optional callback applied to the filtered/sorted project list.
+ * @returns {Object} Query options resolving to the project list.
+ */
 export const loadProjectsQuery = (sdk, transform) => queryOptions({
   queryKey: ["project"],
   queryFn: sdk ? () => retry(() => sdk.project.list().then(x => {
     return (x.data ?? []).filter(p => !!p?.id).filter(p => !!p.worktree && !p.worktree.includes("closedcode-test")).slice().sort((a, b) => cmp(a.id, b.id));
   }).then(transform)) : skipToken
 });
+/**
+ * Bootstrap global-level state: fetch global config, providers, path and project list in parallel.
+ * @param {Object} input - `{globalSDK, queryClient, setGlobalStore, requestFailedTitle, translate, formatMoreCount}`.
+ * @returns {Promise} Resolves once all global queries have settled.
+ */
 export async function bootstrapGlobal(input) {
   const slow = [() => input.queryClient.fetchQuery(loadGlobalConfigQuery(input.globalSDK)), () => input.queryClient.fetchQuery(loadProvidersQuery(null, input.globalSDK)), () => input.queryClient.fetchQuery(loadPathQuery(null, input.globalSDK)), () => input.queryClient.fetchQuery(loadProjectsQuery(input.globalSDK, data => input.setGlobalStore("project", data ?? [])))];
   await runAll(slow);
@@ -68,6 +111,11 @@ export async function bootstrapGlobal(input) {
   //   formatMoreCount: input.formatMoreCount,
   // })
 }
+/**
+ * Group items (permissions/questions) into a map keyed by their `sessionID`.
+ * @param {Array} input - Items each with `id` and `sessionID`.
+ * @returns {Object} Map of sessionID to its array of items.
+ */
 function groupBySession(input) {
   return input.reduce((acc, item) => {
     if (!item?.id || !item.sessionID) return acc;
@@ -77,9 +125,21 @@ function groupBySession(input) {
     return acc;
   }, {});
 }
+/**
+ * Find the project id whose worktree (or one of its sandboxes) matches a directory.
+ * @param {string} directory - Workspace directory.
+ * @param {Array} projects - Project records to search.
+ * @returns {string} The matching project id, or undefined.
+ */
 function projectID(directory, projects) {
   return projects.find(project => project.worktree === directory || project.sandboxes?.includes(directory))?.id;
 }
+/**
+ * Insert or replace a session in the store's sorted session array, preserving id order.
+ * @param {Function} setStore - Child store setter.
+ * @param {Object} session - Session record to merge.
+ * @returns {void}
+ */
 function mergeSession(setStore, session) {
   setStore("session", list => {
     const next = list.slice();
@@ -93,6 +153,11 @@ function mergeSession(setStore, session) {
     return next;
   });
 }
+/**
+ * Fetch and merge any sessions referenced by ids that are not already present in the store.
+ * @param {Object} input - `{ids, store, setStore, sdk}`.
+ * @returns {Promise} Resolves once all missing sessions have been fetched and merged.
+ */
 function warmSessions(input) {
   const known = new Set(input.store.session.map(item => item.id));
   const ids = [...new Set(input.ids)].filter(id => !!id && !known.has(id));
@@ -105,10 +170,23 @@ function warmSessions(input) {
     mergeSession(input.setStore, session);
   }))).then(() => undefined);
 }
+/**
+ * Query options that fetch and normalize the provider list for a directory (with retry).
+ * @param {string} directory - Workspace directory key (null for global scope).
+ * @param {Object} sdk - SDK client, or falsy to skip.
+ * @returns {Object} Query options resolving to the normalized provider list.
+ */
 export const loadProvidersQuery = (directory, sdk) => queryOptions({
   queryKey: [directory, "providers"],
   queryFn: sdk ? () => retry(() => sdk.provider.list().then(x => normalizeProviderList(x.data))) : skipToken
 });
+/**
+ * Query options that fetch the agent list for a directory (with retry), optionally applying a transform side-effect.
+ * @param {string} directory - Workspace directory key.
+ * @param {Object} sdk - SDK client, or falsy to skip.
+ * @param {Function} transform - Optional callback invoked with the raw response.
+ * @returns {Object} Query options resolving to the agent data.
+ */
 export const loadAgentsQuery = (directory, sdk, transform) => queryOptions({
   queryKey: [directory, "agents"],
   queryFn: sdk ? () => retry(() => sdk.app.agents().then(x => {
@@ -116,6 +194,13 @@ export const loadAgentsQuery = (directory, sdk, transform) => queryOptions({
     return x.data;
   })) : skipToken
 });
+/**
+ * Query options that fetch resolved path info for a directory (with retry), optionally applying a transform side-effect.
+ * @param {string} directory - Workspace directory key (null for global scope).
+ * @param {Object} sdk - SDK client, or falsy to skip.
+ * @param {Function} transform - Optional callback invoked with the raw response.
+ * @returns {Object} Query options resolving to the path data.
+ */
 export const loadPathQuery = (directory, sdk, transform) => queryOptions({
   queryKey: [directory, "path"],
   queryFn: sdk ? () => retry(() => sdk.path.get().then(async x => {
@@ -123,6 +208,12 @@ export const loadPathQuery = (directory, sdk, transform) => queryOptions({
     return x.data;
   })) : skipToken
 });
+/**
+ * Bootstrap a single directory's child store: seed from global state, then load config, agents, sessions, vcs,
+ * commands, permissions, questions, MCP and providers in parallel, surfacing errors via toast.
+ * @param {Object} input - `{directory, global, sdk, store, setStore, vcsCache, loadSessions, translate, queryClient}`.
+ * @returns {Promise} Resolves once the synchronous seeding finishes; the slow loads run in a detached async block.
+ */
 export async function bootstrapDirectory(input) {
   const loading = input.store.status !== "complete";
   const seededProject = projectID(input.directory, input.global.project);

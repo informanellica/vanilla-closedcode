@@ -1,6 +1,18 @@
+/** @file Typewriter component that reveals text character-by-character with a randomized cadence and a blinking cursor. */
 import { createEffect, createRenderEffect, onCleanup } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 
+/**
+ * Renders text with an animated typewriter effect: characters appear one at a time
+ * with randomized per-character delays, followed by a cursor that stops blinking and
+ * fades out shortly after typing completes. Re-running when `props.text` changes restarts
+ * the animation and cleans up pending timeouts.
+ * @param {Object} props - Component props.
+ * @param {string} props.text - The full text to type out.
+ * @param {string} props.as - Tag name for the wrapper element (defaults to `"p"`); treated as static.
+ * @param {string} props.class - CSS class applied to the wrapper element; `null`/`undefined` removes the attribute.
+ * @returns {HTMLElement} The wrapper element containing the typed text node and cursor span.
+ */
 export const Typewriter = props => {
   const [store, setStore] = createStore({
     typing: false,

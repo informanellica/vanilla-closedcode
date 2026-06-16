@@ -1,3 +1,11 @@
+/** @file Norwegian (no) UI translation strings for the desktop renderer i18n layer. */
+
+/**
+ * Norwegian translation dictionary mapping UI message keys to localized strings.
+ * Keys are dotted identifiers (e.g. "ui.common.cancel") and values may contain
+ * `{{placeholder}}` tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Sesjonsendringer",
   "ui.sessionReview.title.lastTurn": "Endringer i siste tur",

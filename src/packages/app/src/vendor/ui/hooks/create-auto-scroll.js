@@ -1,7 +1,19 @@
+/** @file Reactive primitive that keeps a scroll container pinned to the bottom while content streams, yielding control once the user scrolls away. */
 import { createEffect, on, onCleanup } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 import { createEventListener } from "../../../lib/primitives/event-listener.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
+/**
+ * Creates an auto-scroll controller that follows growing content to the bottom of a scroll
+ * container until the user scrolls up, then releases the lock. Wires up resize/scroll/wheel
+ * handling and overflow-anchor management internally.
+ * @param {Object} options - Configuration.
+ * @param {Function} options.working - Accessor returning a boolean for whether content is actively streaming.
+ * @param {number} options.bottomThreshold - Pixel distance from the bottom still considered "at bottom" (default 10).
+ * @param {string} options.overflowAnchor - Overflow anchoring mode: "none", "auto", or "dynamic" (default).
+ * @param {Function} options.onUserInteracted - Optional callback invoked when the user scrolls away from the bottom.
+ * @returns {Object} Controller with ref setters (scrollRef, contentRef), event handlers (handleScroll, handleInteraction), and control methods (pause, resume, scrollToBottom, forceScrollToBottom, userScrolled).
+ */
 export function createAutoScroll(options) {
   let settling = false;
   let settleTimer;

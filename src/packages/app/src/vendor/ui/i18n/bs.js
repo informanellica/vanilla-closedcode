@@ -1,3 +1,9 @@
+/** @file Bosnian (bs) translation dictionary mapping UI message keys to localized strings. */
+/**
+ * Bosnian translation table: maps dotted UI message keys to their localized strings.
+ * Placeholders in `{{name}}` form are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Promjene sesije",
   "ui.sessionReview.title.lastTurn": "Promjene u posljednjem potezu",

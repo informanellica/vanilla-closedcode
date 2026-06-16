@@ -1,3 +1,11 @@
+/** @file Batched terminal writer: coalesces incoming data into scheduled writes and exposes a flush with completion callbacks. */
+/**
+ * Create a batched writer that buffers data chunks and flushes them through `write`
+ * on a scheduled tick, serializing writes so only one is in flight at a time.
+ * @param {Function} write - Sink called as write(joinedChunks, doneCallback); must invoke doneCallback when the write completes.
+ * @param {Function} schedule - Scheduler used to defer the flush (defaults to queueMicrotask); called as schedule(run).
+ * @returns {Object} An object with `push(data)` to enqueue a chunk and `flush(done)` to force a write and run `done` once drained.
+ */
 export function terminalWriter(write, schedule = queueMicrotask) {
   let chunks;
   let waits;

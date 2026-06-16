@@ -1,3 +1,4 @@
+/** @file Shared viewport-aware floating-position math and placement helpers for the overlay components (Tooltip, Popover, HoverCard). */
 // Shared floating-position math for the vanilla overlay components (Tooltip,
 // Popover, HoverCard). This mirrors the proven viewport-aware technique in
 // src/bs/dropdown-menu.js positionContent(): position:fixed content, measured
@@ -13,6 +14,11 @@
 
 // Parse a standard placement string ("bottom-end", "top", "right-start", …) into
 // a side + alignment pair.
+/**
+ * Parse a placement string into its side and alignment components, with safe defaults.
+ * @param {string} placement - A placement like "bottom-end", "top", "right-start"; defaults to "bottom".
+ * @returns {Object} An object with side ("top"/"bottom"/"left"/"right") and align ("start"/"center"/"end").
+ */
 function parsePlacement(placement) {
   const raw = placement || "bottom";
   const [side, align] = raw.split("-");
@@ -22,6 +28,11 @@ function parsePlacement(placement) {
   };
 }
 
+/**
+ * Whether a side lies on the vertical (top/bottom) axis.
+ * @param {string} side - The side ("top"/"bottom"/"left"/"right").
+ * @returns {boolean} True for "top" or "bottom".
+ */
 const isVertical = (side) => side === "top" || side === "bottom";
 
 // Compute the top/left (viewport coordinates, for position:fixed) of the
@@ -34,6 +45,15 @@ const isVertical = (side) => side === "top" || side === "bottom";
 //   overlap   : when true, the content overlaps the reference on the main axis
 //               (the `overlap` option — used by the compact message-nav tooltip)
 //   padding   : min distance kept from the viewport edge (default 8)
+/**
+ * Compute the viewport-coordinate top/left for the content box (for position:fixed) given the
+ * reference and content rects, applying main-axis flip when the requested side does not fit and
+ * clamping to the viewport so the panel stays fully visible.
+ * @param {DOMRect} referenceRect - The reference element's bounding rect.
+ * @param {DOMRect} contentRect - The content element's bounding rect (its size).
+ * @param {Object} options - Positioning options: placement, gutter, shift, overlap, padding.
+ * @returns {Object} An object with top, left (pixels) and the resolved side.
+ */
 export function computePosition(referenceRect, contentRect, options = {}) {
   const { side, align } = parsePlacement(options.placement);
   const gutter = Number(options.gutter ?? 0);
@@ -98,6 +118,13 @@ export function computePosition(referenceRect, contentRect, options = {}) {
 // Position `contentEl` (must be position:fixed) relative to `referenceEl`.
 // Returns the resolved side, or null when either node is detached. Writes the
 // resolved side onto data-placement so styling/arrows can react to a flip.
+/**
+ * Position a fixed content element against a reference element and record the resolved side.
+ * @param {HTMLElement} referenceEl - The anchor element to position against.
+ * @param {HTMLElement} contentEl - The content element to position (must be position:fixed).
+ * @param {Object} options - Positioning options forwarded to computePosition.
+ * @returns {string} The resolved side, or null when either node is missing/detached.
+ */
 export function positionFloating(referenceEl, contentEl, options = {}) {
   if (!referenceEl || !contentEl) return null;
   if (!referenceEl.isConnected || !contentEl.isConnected) return null;
@@ -113,6 +140,14 @@ export function positionFloating(referenceEl, contentEl, options = {}) {
 // Keep `contentEl` positioned against `referenceEl` while it is open: an
 // initial rAF-deferred placement (so the content has been measured), plus
 // scroll/resize listeners that re-run the placement. Returns a teardown fn.
+/**
+ * Keep a content element positioned against a reference element while open: schedules an initial
+ * rAF-deferred placement and re-runs it on capture-phase scroll/resize events.
+ * @param {HTMLElement} referenceEl - The anchor element to position against.
+ * @param {HTMLElement} contentEl - The content element to keep positioned (must be position:fixed).
+ * @param {Object} options - Positioning options forwarded to positionFloating.
+ * @returns {Function} A teardown function that cancels the pending frame and removes the listeners.
+ */
 export function autoPosition(referenceEl, contentEl, options = {}) {
   let frame = 0;
   const update = () => positionFloating(referenceEl, contentEl, options);

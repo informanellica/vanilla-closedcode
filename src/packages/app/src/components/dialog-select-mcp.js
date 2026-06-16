@@ -6,6 +6,8 @@ import { Switch } from "@/bs/switch.js";
 import { useLanguage } from "@/context/language.js";
 import { useMcpController } from "@/controllers/mcp.js";
 
+/** @file MCP-server dialog: lists configured MCP servers with their connection status and a toggle to enable/disable each. */
+
 const statusLabels = {
   connected: "mcp.status.connected",
   failed: "mcp.status.failed",
@@ -13,12 +15,22 @@ const statusLabels = {
   disabled: "mcp.status.disabled"
 };
 
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * MCP-server dialog component. Shows a searchable list of configured MCP
+ * servers with live status/error text and a switch to enable or disable each.
+ * @returns {Node} The Dialog element wrapping the server list.
+ */
 export const DialogSelectMcp = () => {
   const sync = useSync();
   const language = useLanguage();
@@ -30,6 +42,12 @@ export const DialogSelectMcp = () => {
   const enabledCount = createMemo(() => items().filter(i => i.status === "connected").length);
   const totalCount = createMemo(() => items().length);
 
+  /**
+   * Render one MCP server row: name, live status/loading/error text and the
+   * enable/disable switch.
+   * @param {Object} i - The server snapshot (name, status).
+   * @returns {Element} The row element.
+   */
   // One list row. `i` is a plain snapshot object from the items memo, so the
   // name is static; the status/loading/error pieces read the live sync store
   // (and the locale) through render effects, mirroring the original Show +

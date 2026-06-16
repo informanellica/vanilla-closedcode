@@ -1,3 +1,4 @@
+/** @file Project controller (MVC): orchestrates project-metadata persistence and SDK-backed directory browse/search for the project-edit and directory-picker Views, plus pure path-string helpers. */
 import { createMemo, createResource } from "../lib/reactivity.js";
 import fuzzysort from "fuzzysort";
 import { getFilename } from "core/util/path";
@@ -33,23 +34,45 @@ export const AVATAR_COLOR_KEYS = ["pink", "mint", "orange", "purple", "cyan", "l
 // traversal logic and the View for display formatting.
 // ---------------------------------------------------------------------------
 
+/**
+ * Sanitize a raw input string into a single clean line: keep only the first
+ * line and strip control characters, then trim.
+ * @param {string} value - The raw input value.
+ * @returns {string} The cleaned single-line string.
+ */
 export function cleanInput(value) {
   const first = (value ?? "").split(/\r?\n/)[0] ?? "";
   return first.replace(/[\u0000-\u001F\u007F]/g, "").trim();
 }
 
+/**
+ * Normalize path separators to "/" and collapse repeated slashes, preserving a
+ * leading "//" (UNC-style) prefix.
+ * @param {string} input - The path to normalize.
+ * @returns {string} The normalized path.
+ */
 function normalizePath(input) {
   const v = input.replaceAll("\\", "/");
   if (v.startsWith("//") && !v.startsWith("///")) return "//" + v.slice(2).replace(/\/+/g, "/");
   return v.replace(/\/+/g, "/");
 }
 
+/**
+ * Normalize a path and append a trailing slash to a bare Windows drive (e.g. "C:" to "C:/").
+ * @param {string} input - The path to normalize.
+ * @returns {string} The normalized path with drive root made explicit.
+ */
 function normalizeDriveRoot(input) {
   const v = normalizePath(input);
   if (/^[A-Za-z]:$/.test(v)) return v + "/";
   return v;
 }
 
+/**
+ * Strip trailing slashes from a path, but keep root forms ("/", "//", "C:/") intact.
+ * @param {string} input - The path to trim.
+ * @returns {string} The path without a trailing slash (unless it is a root).
+ */
 function trimTrailing(input) {
   const v = normalizeDriveRoot(input);
   if (v === "/") return v;
@@ -58,6 +81,12 @@ function trimTrailing(input) {
   return v.replace(/\/+$/, "");
 }
 
+/**
+ * Join a base path and a relative path with a single "/" separator.
+ * @param {string} base - The base path.
+ * @param {string} rel - The relative path to append.
+ * @returns {string} The joined path.
+ */
 function joinPath(base, rel) {
   const b = trimTrailing(base ?? "");
   const r = trimTrailing(rel).replace(/^\/+/, "");
@@ -67,6 +96,12 @@ function joinPath(base, rel) {
   return b + "/" + r;
 }
 
+/**
+ * Determine the filesystem root prefix of a path ("//", "/", a drive root like
+ * "C:/", or "" for relative paths).
+ * @param {string} input - The path to inspect.
+ * @returns {string} The root prefix, or "" if the path is relative.
+ */
 function rootOf(input) {
   const v = normalizeDriveRoot(input);
   if (v.startsWith("//")) return "//";
@@ -75,6 +110,11 @@ function rootOf(input) {
   return "";
 }
 
+/**
+ * Compute the parent directory of a path, stopping at root forms.
+ * @param {string} input - The path whose parent is wanted.
+ * @returns {string} The parent path (or the root if already at root).
+ */
 function parentOf(input) {
   const v = trimTrailing(input);
   if (v === "/") return v;
@@ -86,6 +126,11 @@ function parentOf(input) {
   return v.slice(0, i);
 }
 
+/**
+ * Classify how a user-typed path should be interpreted.
+ * @param {string} input - The raw path input.
+ * @returns {string} "tilde" (home-relative), "absolute", or "relative".
+ */
 function modeOf(input) {
   const raw = normalizeDriveRoot(input.trim());
   if (!raw) return "relative";
@@ -94,6 +139,13 @@ function modeOf(input) {
   return "relative";
 }
 
+/**
+ * Express an absolute path relative to the home directory using "~", when it is
+ * inside home; otherwise return "".
+ * @param {string} absolute - The absolute path.
+ * @param {string} home - The home directory.
+ * @returns {string} The "~"-prefixed path, or "" when not under home.
+ */
 function tildeOf(absolute, home) {
   const full = trimTrailing(absolute);
   if (!home) return "";
@@ -105,12 +157,28 @@ function tildeOf(absolute, home) {
   return "";
 }
 
+/**
+ * Choose how to display a resolved path to the user: full absolute when the user
+ * typed an absolute path, otherwise prefer the "~"-relative form.
+ * @param {string} path - The resolved absolute path.
+ * @param {string} input - The raw user input (drives mode detection).
+ * @param {string} home - The home directory.
+ * @returns {string} The display string.
+ */
 export function displayPath(path, input, home) {
   const full = trimTrailing(path);
   if (modeOf(input) === "absolute") return full;
   return tildeOf(full, home) || full;
 }
 
+/**
+ * Build a directory list row with a newline-joined searchable string (covering
+ * the absolute path, its "~" form, slash variants and the filename).
+ * @param {string} absolute - The absolute directory path.
+ * @param {string} home - The home directory (for the "~" form).
+ * @param {string} group - The row's group/category label.
+ * @returns {Object} A row with `absolute`, `search`, and `group`.
+ */
 function toRow(absolute, home, group) {
   const full = trimTrailing(absolute);
   const tilde = tildeOf(full, home);
@@ -127,6 +195,11 @@ function toRow(absolute, home, group) {
   };
 }
 
+/**
+ * De-duplicate directory rows by their absolute path, preserving first occurrence.
+ * @param {Array} rows - The rows to filter (each with an `absolute`).
+ * @returns {Array} The unique rows.
+ */
 function uniqueRows(rows) {
   const seen = new Set();
   return rows.filter(row => {
@@ -136,8 +209,15 @@ function uniqueRows(rows) {
   });
 }
 
-// SDK-backed directory traversal/search. `args.sdk` is the global SDK; `home`
-// and `start` are accessors resolving the active home / base directory.
+/**
+ * SDK-backed directory traversal/search. `args.sdk` is the global SDK; `home`
+ * and `start` are accessors resolving the active home / base directory. Returns
+ * an async search function that takes a filter string and resolves to a list of
+ * absolute directory paths (capped at 50), de-duplicated; stale calls (a newer
+ * search started) resolve to an empty list.
+ * @param {Object} args - Has `sdk` (global SDK) and `home`/`start` accessor functions.
+ * @returns {Function} An async `(filter)` function resolving to matched directory paths.
+ */
 function createDirectorySearch(args) {
   const cache = new Map();
   let current = 0;
@@ -264,6 +344,13 @@ export const useProjectController = (options = {}) => {
   // Action: persist edited project metadata. `input` carries the trimmed/derived
   // form values from the View. Returns a promise (the View drives pending state
   // via its own mutation wrapper).
+  /**
+   * Persist edited project metadata. Updates a real project via the SDK (and
+   * syncs its icon), or writes meta locally for the unsaved/global project. Calls
+   * `options.onSaved` afterwards.
+   * @param {Object} input - The form values: `name`, `startup`, `color`, `iconOverride`.
+   * @returns {Promise} Resolves once the save completes.
+   */
   const saveProject = async input => {
     const project = options.project;
     const name = input.name;
@@ -325,6 +412,11 @@ export const useProjectController = (options = {}) => {
   });
 
   // Derived Model state: up-to-5 most-recently-active projects as list rows.
+  /**
+   * Memo: the up-to-5 most-recently-active projects as directory list rows,
+   * ranked by their most recent non-archived session update time.
+   * @returns {Array} The recent-project rows (each from toRow, with name appended to search).
+   */
   const recentProjects = createMemo(() => {
     const projects = layout.projects.list();
     const byProject = new Map();
@@ -359,6 +451,12 @@ export const useProjectController = (options = {}) => {
 
   // Action: produce list rows (recent projects + matched directories) for a
   // given filter value. Used as the List `items` loader by the View.
+  /**
+   * Produce list rows (recent projects + matched directories) for a given filter
+   * value, de-duplicated. Used as the List `items` loader by the View.
+   * @param {string} value - The filter/search string.
+   * @returns {Promise<Array>} The combined, de-duplicated directory rows.
+   */
   const searchDirectories = async value => {
     const results = await directories(value);
     const directoryRows = results.map(absolute => toRow(absolute, home(), "folders"));

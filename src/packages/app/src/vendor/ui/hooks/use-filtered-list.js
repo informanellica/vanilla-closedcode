@@ -1,8 +1,24 @@
+/** @file Hook providing a fuzzy-filterable, groupable, keyboard-navigable list with active-item selection. */
 import fuzzysort from "fuzzysort";
 import { entries, flatMap, groupBy, map, pipe } from "remeda";
 import { createEffect, createMemo, createResource, on } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 import { createList } from "../../../lib/primitives/solid-list.js";
+/**
+ * Creates a reactive filtered list: applies fuzzy search over the items, groups and sorts the
+ * results, and wires up keyboard navigation (arrows, Ctrl+n/p, Enter to select).
+ * @param {Object} props - Configuration.
+ * @param {Array|Function} props.items - The source items, or a function of the filter string returning items (possibly a Promise).
+ * @param {Array} props.filterKeys - Keys to fuzzy-match against for object items; omit for plain string arrays.
+ * @param {Function} props.groupBy - Optional function mapping an item to its group/category key.
+ * @param {Function} props.sortBy - Optional comparator for sorting items within a group.
+ * @param {Function} props.sortGroupsBy - Optional comparator for sorting the groups.
+ * @param {Function} props.key - Function returning a unique string key for an item.
+ * @param {*} props.current - Optional currently-selected item used to seed the initial active key.
+ * @param {boolean} props.noInitialSelection - When true, no item is active initially.
+ * @param {Function} props.onSelect - Callback invoked with (item, index) when an item is chosen via Enter.
+ * @returns {Object} List API: grouped/flat accessors, filter accessor, reset, refetch, clear, onKeyDown, onInput, active, and setActive.
+ */
 export function useFilteredList(props) {
   const [store, setStore] = createStore({
     filter: ""
@@ -39,6 +55,10 @@ export function useFilteredList(props) {
   const flat = createMemo(() => {
     return pipe(grouped.latest || [], flatMap(x => x.items));
   });
+  /**
+   * Computes the key of the item that should be active when the list first renders.
+   * @returns {string} The initial active key, or "" when there is no initial selection.
+   */
   function initialActive() {
     if (props.noInitialSelection) return "";
     if (props.current) return props.key(props.current);

@@ -1,3 +1,4 @@
+/** @file Session composer question dock: a multi-question wizard letting the user answer the agent's questions (single/multi select plus a custom free-text answer), with keyboard navigation and per-request draft caching. */
 import { createComponent, createMemo, createRenderEffect, onCleanup, onMount } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 import { useMutation } from "../../../lib/query/index.js";
@@ -15,11 +16,25 @@ const cache = new Map();
 // matching the compiled Solid templates). Static markup only — translated and
 // user-provided strings are always assigned via textContent, never
 // interpolated into the markup.
+/**
+ * Build a detached element from a compact, static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
+/**
+ * The selection marker for an option: a checkbox/check icon in multi-select
+ * mode, or a radio dot in single-select mode, reflecting the picked state.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.multi - Whether the question allows multiple answers (checkbox vs radio).
+ * @param {boolean} props.picked - Whether this option is currently selected.
+ * @param {Function} props.onClick - Optional click handler (used on the custom row).
+ * @returns {Element} The marker element.
+ */
 function Mark(props) {
   const root = template(`<span data-slot="question-option-check" aria-hidden="true"><span data-slot="question-option-box"></span></span>`);
   const box = root.firstChild;
@@ -46,6 +61,20 @@ function Mark(props) {
   });
   return root;
 }
+/**
+ * A single selectable answer option row: a marker, a label, and an optional
+ * description, with role/aria-checked/disabled reflecting the question mode.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.multi - Whether the question allows multiple answers (checkbox vs radio role).
+ * @param {boolean} props.picked - Whether this option is currently selected.
+ * @param {string} props.label - The option label text.
+ * @param {string} props.description - Optional supporting description text.
+ * @param {boolean} props.disabled - Whether the option is disabled (e.g. while submitting).
+ * @param {Function} props.ref - Ref callback (or assignment target) receiving the root element.
+ * @param {Function} props.onFocus - Focus handler.
+ * @param {Function} props.onClick - Click handler.
+ * @returns {Element} The option button element.
+ */
 function Option(props) {
   const root = template(`<button type="button" data-slot="question-option"><span data-slot="question-option-main"><span data-slot="option-label"></span></span></button>`);
   const main = root.firstChild;
@@ -100,6 +129,17 @@ function Option(props) {
   });
   return root;
 }
+/**
+ * Question dock component: presents the agent's question request as a paged
+ * wizard. Each page shows a question with single- or multi-select options plus
+ * a custom free-text answer; supports keyboard navigation (arrows, Home/End,
+ * mod+Enter to advance/submit, Escape to dismiss), progress segments, draft
+ * caching per request, and reply/reject mutations.
+ * @param {Object} props - Component props.
+ * @param {Object} props.request - The question request ({ id, questions }).
+ * @param {Function} props.onSubmit - Called when a reply or reject mutation is initiated.
+ * @returns {Element} The DockPrompt element hosting the question wizard.
+ */
 export const SessionQuestionDock = props => {
   const composer = useComposerController();
   const language = useLanguage();

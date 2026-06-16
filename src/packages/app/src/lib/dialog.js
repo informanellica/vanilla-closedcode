@@ -1,3 +1,4 @@
+/** @file Self-contained dialog-stack context (DialogProvider/useDialog): a from-scratch port of ui/context/dialog that renders the active dialog element directly, owns the backdrop/Escape handling, and avoids importing the upstream ui Portal/Overlay primitives. */
 import { createComponent, createContext, createEffect, createMemo, createRenderEffect, createRoot, createSignal, getOwner, onCleanup, runWithOwner, useContext } from "./reactivity.js";
 
 // Self-contained replacement for ui/context/dialog.
@@ -16,6 +17,14 @@ import { createComponent, createContext, createEffect, createMemo, createRenderE
 //
 //   * `@solid-primitives/event-listener` (`makeEventListener`): inlined below
 //     as a tiny addEventListener + onCleanup helper.
+/**
+ * Attach an event listener that is removed automatically on owner cleanup.
+ * @param {EventTarget} target - The target to attach the listener to.
+ * @param {string} type - The event type string.
+ * @param {Function} handler - The event handler.
+ * @param {Object} options - addEventListener options.
+ * @returns {Function} A function that removes the listener.
+ */
 function makeEventListener(target, type, handler, options) {
   target.addEventListener(type, handler, options);
   const remove = () => target.removeEventListener(type, handler, options);
@@ -26,6 +35,12 @@ function makeEventListener(target, type, handler, options) {
 // Resolve a possibly-reactive value the way solid-js/web's insert() does:
 // call accessors (here, the active dialog's memo) until a concrete value
 // remains. Runs inside a render effect, so the reads stay tracked.
+/**
+ * Unwrap a possibly-reactive value by invoking accessor functions until a
+ * non-function value remains.
+ * @param {*} value - A concrete value or a (possibly nested) accessor function.
+ * @returns {*} The resolved concrete value.
+ */
 function resolveValue(value) {
   while (typeof value === "function") value = value();
   return value;

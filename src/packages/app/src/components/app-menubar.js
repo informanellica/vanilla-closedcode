@@ -1,17 +1,32 @@
+/** @file Top application menu bar: File/Edit/View/Server/Help dropdown menus. */
+
 import { createComponent } from "../lib/reactivity.js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";
 import { Icon } from "@/bs/icon.js";
 
-// Build a detached element from compact HTML (no inter-element whitespace,
-// matching the compiled Solid templates).
+/**
+ * Builds a detached element from compact HTML (no inter-element whitespace,
+ * matching the compiled Solid templates).
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
-// Build the static menu definition. Each item's `action` resolves a prop
-// callback lazily at click-time so optional callbacks can be guarded with ?.().
+/**
+ * Builds the static menu definition. Each item's `action` resolves a prop
+ * callback lazily at click-time so optional callbacks can be guarded with
+ * `?.()`.
+ * @param {Object} props - The AppMenubar props supplying the menu action
+ *   callbacks: `onNewSession`, `onOpenProject`, `onOpenSettings`, `onUndo`,
+ *   `onRedo`, `onCut`, `onCopy`, `onPaste`, `onToggleSidebar`, `onOpenServer`,
+ *   and `onHelp`.
+ * @returns {Array} An array of menu definitions, each `{id, label, icon,
+ *   items}` where each item is `{id, label, icon, action}`.
+ */
 function buildMenus(props) {
   return [
     {
@@ -63,6 +78,13 @@ function buildMenus(props) {
   ];
 }
 
+/**
+ * Renders a single top-level menu as a DropdownMenu: an icon trigger plus a
+ * content list of selectable items built from the menu definition.
+ * @param {Object} props - Component props: `menu` is one menu definition
+ *   (`{id, label, icon, items}`) as produced by {@link buildMenus}.
+ * @returns {*} The DropdownMenu component instance for this menu.
+ */
 function Menu(props) {
   // props.menu is a static definition built once in AppMenubar — the trigger
   // label/icon and the item list never change after creation, so everything
@@ -115,6 +137,13 @@ function Menu(props) {
   });
 }
 
+/**
+ * The application menu bar: a `<nav>` containing one dropdown menu per
+ * top-level entry (File/Edit/View/Server/Help).
+ * @param {Object} props - Component props supplying the menu action callbacks
+ *   (see {@link buildMenus}).
+ * @returns {HTMLElement} The menu bar `<nav>` element.
+ */
 export function AppMenubar(props) {
   const menus = buildMenus(props);
   const bar = template(`<nav data-component="app-menubar" class="d-flex align-items-center"><ul data-slot="menus" class="navbar-nav flex-row mb-0"></ul></nav>`);

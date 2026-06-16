@@ -1,4 +1,10 @@
+/** @file Reactive file-tree store: lazily lists/expands/collapses directories and tracks node and directory state. */
 import { createStore, produce, reconcile } from "../../lib/store.js";
+/**
+ * Create a reactive file-tree store backed by a Solid store.
+ * @param {Object} options - Dependencies: `normalizeDir`, `scope` (current root getter), `list` (async dir lister returning nodes), and `onError` callback.
+ * @returns {Object} Tree API `{listDir, expandDir, collapseDir, dirState, children, node, isLoaded, reset}`.
+ */
 export function createFileTreeStore(options) {
   const [tree, setTree] = createStore({
     node: {},
@@ -9,6 +15,10 @@ export function createFileTreeStore(options) {
     }
   });
   const inflight = new Map();
+  /**
+   * Reset the tree to its initial state: clear nodes, directories and in-flight loads, and re-expand the root.
+   * @returns {void}
+   */
   const reset = () => {
     inflight.clear();
     setTree("node", reconcile({}));
@@ -17,12 +27,24 @@ export function createFileTreeStore(options) {
       expanded: true
     });
   };
+  /**
+   * Ensure a directory entry exists in the tree state, creating a collapsed placeholder if missing.
+   * @param {string} path - Normalized directory path.
+   * @returns {void}
+   */
   const ensureDir = path => {
     if (tree.dir[path]) return;
     setTree("dir", path, {
       expanded: false
     });
   };
+  /**
+   * Load (list) a directory's children via `options.list`, reconciling node/dir state and deduplicating concurrent loads.
+   * Skips the load if already loaded unless `opts.force` is set; ignores results from a stale scope.
+   * @param {string} input - Directory path or file URL.
+   * @param {Object} opts - Options; `force` re-lists even when already loaded.
+   * @returns {Promise} Resolves when the listing completes (or immediately if cached).
+   */
   const listDir = (input, opts) => {
     const dir = options.normalizeDir(input);
     ensureDir(dir);
@@ -80,21 +102,41 @@ export function createFileTreeStore(options) {
     inflight.set(dir, promise);
     return promise;
   };
+  /**
+   * Mark a directory expanded and trigger a lazy listing of its children.
+   * @param {string} input - Directory path or file URL.
+   * @returns {void}
+   */
   const expandDir = input => {
     const dir = options.normalizeDir(input);
     ensureDir(dir);
     setTree("dir", dir, "expanded", true);
     void listDir(dir);
   };
+  /**
+   * Mark a directory collapsed.
+   * @param {string} input - Directory path or file URL.
+   * @returns {void}
+   */
   const collapseDir = input => {
     const dir = options.normalizeDir(input);
     ensureDir(dir);
     setTree("dir", dir, "expanded", false);
   };
+  /**
+   * Get the reactive state record for a directory (expanded/loaded/loading/error/children).
+   * @param {string} input - Directory path or file URL.
+   * @returns {Object} The directory state, or undefined if unknown.
+   */
   const dirState = input => {
     const dir = options.normalizeDir(input);
     return tree.dir[dir];
   };
+  /**
+   * Get the resolved child node records of a directory in listing order.
+   * @param {string} input - Directory path or file URL.
+   * @returns {Array} Array of node objects (empty if the directory is unloaded).
+   */
   const children = input => {
     const dir = options.normalizeDir(input);
     const ids = tree.dir[dir]?.children;

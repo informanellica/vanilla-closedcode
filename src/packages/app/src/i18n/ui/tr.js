@@ -1,3 +1,10 @@
+/** @file Turkish (tr) UI translation dictionary: maps `ui.*` string keys to localized text for the desktop app renderer. */
+
+/**
+ * Turkish translation table keyed by dotted UI string id. Values may contain
+ * `{{name}}` placeholders that the i18n layer interpolates at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Oturum değişiklikleri",
   "ui.sessionReview.title.lastTurn": "Son tur değişiklikleri",

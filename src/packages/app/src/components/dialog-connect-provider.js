@@ -1,3 +1,5 @@
+/** @file Dialog for connecting an AI provider: chooses an auth method (API key or OAuth) and drives the connect flow. */
+
 import { Button } from "@/bs/button.js";
 import { useDialog } from "@/lib/dialog.js";
 import { Dialog } from "@/bs/dialog.js";
@@ -15,14 +17,24 @@ import { useLanguage } from "@/context/language.js";
 import { useProviders } from "@/hooks/use-providers.js";
 import { useProvidersController } from "@/controllers/providers.js";
 
+/**
+ * Parses a trimmed HTML string into its first root element.
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
-// Row used by the method/option lists: a small "key" pictogram, a label and an
-// optional hint span. Templates are single-line to avoid whitespace text nodes.
+/**
+ * Builds a row used by the method/option lists: a small "key" pictogram, a
+ * label, and an optional hint span. Templates are single-line to avoid
+ * whitespace text nodes.
+ * @param {boolean} withHint - Whether to include a trailing hint span.
+ * @returns {Element} The row element.
+ */
 function listRow(withHint) {
   const row = template(`<div class="w-100 d-flex align-items-center gap-x-2"><div class="w-4 h-2 rounded-[1px] bg-input-base shadow-xs-border-base d-flex align-items-center justify-content-center"><div class="w-2.5 h-0.5 ml-0 bg-icon-strong-base d-none" data-slot="list-item-extra-icon"></div></div><span data-slot="label"></span></div>`);
   if (withHint) {
@@ -34,6 +46,15 @@ function listRow(withHint) {
   return row;
 }
 
+/**
+ * Provider-connect dialog. Loads the available authentication methods for the
+ * given provider, lets the user pick one, and runs the corresponding flow
+ * (API-key entry, OAuth prompts, OAuth code entry, or automatic OAuth),
+ * showing progress/error states and a success toast on completion.
+ * @param {Object} props - Component props: `provider` (the provider id to
+ *   connect).
+ * @returns {HTMLElement} The dialog element.
+ */
 export function DialogConnectProvider(props) {
   const dialog = useDialog();
   const language = useLanguage();
@@ -73,6 +94,15 @@ export function DialogConnectProvider(props) {
     state: "pending",
     error: undefined
   });
+  /**
+   * Reducer-style updater for the connect-flow store: applies a method/auth
+   * state transition described by `action`.
+   * @param {Object} action - The action: `{type}` is one of "method.select"
+   *   (with `index`), "method.reset", "auth.prompt", "auth.pending",
+   *   "auth.complete" (with `authorization`), or any other type treated as an
+   *   error (with `error`).
+   * @returns {void}
+   */
   function dispatch(action) {
     setStore(produce(draft => {
       if (action.type === "method.select") {
@@ -115,6 +145,13 @@ export function DialogConnectProvider(props) {
     if (value.type === "api") return language.t("provider.connect.method.apiKey");
     return value.label ?? "";
   };
+  /**
+   * Extracts a human-readable message from a variety of error shapes (nested
+   * `data.message`, `error`, `message`, Error instances, or plain strings).
+   * @param {*} value - The error value to inspect.
+   * @param {string} fallback - Message returned when nothing usable is found.
+   * @returns {string} The resolved error message, or `fallback`.
+   */
   function formatError(value, fallback) {
     if (value && typeof value === "object" && "data" in value) {
       const data = value.data;
@@ -132,6 +169,14 @@ export function DialogConnectProvider(props) {
     if (typeof value === "string" && value) return value;
     return fallback;
   }
+  /**
+   * Selects an auth method by index and drives its flow. For OAuth methods,
+   * either shows the prompt step or starts authorization (debounced to a
+   * minimum visible delay), dispatching pending/complete/error transitions.
+   * @param {number} index - Index of the method within `methods()`.
+   * @param {*} inputs - Optional collected OAuth prompt inputs.
+   * @returns {Promise} Resolves once the flow step has been initiated.
+   */
   async function selectMethod(index, inputs) {
     if (timer.current !== undefined) {
       clearTimeout(timer.current);
@@ -182,6 +227,12 @@ export function DialogConnectProvider(props) {
       });
     }
   }
+  /**
+   * View that walks the user through an OAuth method's `prompts` (currently
+   * rendering select prompts), advancing through conditional `when` rules and
+   * finally re-invoking {@link selectMethod} with the collected values.
+   * @returns {HTMLElement} The prompts form element.
+   */
   function OAuthPromptsView() {
     const [formStore, setFormStore] = createStore({
       value: {},
@@ -213,6 +264,13 @@ export function DialogConnectProvider(props) {
       const value = formStore.value[item.prompt.key] ?? "";
       return value.trim().length > 0;
     });
+    /**
+     * Advances to the next applicable prompt after `index`, or submits the
+     * collected values to {@link selectMethod} when none remain.
+     * @param {number} index - Index of the prompt just answered.
+     * @param {Object} value - The accumulated prompt values.
+     * @returns {Promise} Resolves once navigation/submission completes.
+     */
     async function next(index, value) {
       if (store.methodIndex === undefined) return;
       const next = prompts().findIndex((prompt, i) => i > index && matches(prompt, value));
@@ -222,6 +280,11 @@ export function DialogConnectProvider(props) {
       }
       await selectMethod(store.methodIndex, value);
     }
+    /**
+     * Form submit handler for the current text prompt: validates and advances.
+     * @param {Event} e - The submit event.
+     * @returns {Promise} Resolves once the prompt has been advanced.
+     */
     async function handleSubmit(e) {
       e.preventDefault();
       const item = current();
@@ -291,6 +354,12 @@ export function DialogConnectProvider(props) {
     return form;
   }
   let listRef;
+  /**
+   * Body-level keydown handler that forwards navigation keys to the method
+   * List (ignoring Enter inside inputs and Escape).
+   * @param {KeyboardEvent} e - The keydown event.
+   * @returns {void}
+   */
   function handleKey(e) {
     if (e.key === "Enter" && e.target instanceof HTMLInputElement) {
       return;
@@ -307,6 +376,10 @@ export function DialogConnectProvider(props) {
       void selectMethod(0);
     }
   });
+  /**
+   * Closes the dialog and shows a success toast for the connected provider.
+   * @returns {void}
+   */
   function complete() {
     dialog.close();
     showToast({
@@ -320,6 +393,11 @@ export function DialogConnectProvider(props) {
       })
     });
   }
+  /**
+   * Back-button handler: returns to method selection, or to the
+   * provider-picker dialog when there is nothing to step back to.
+   * @returns {void}
+   */
   function goBack() {
     if (methods().length === 1) {
       all();
@@ -339,6 +417,11 @@ export function DialogConnectProvider(props) {
     }
     all();
   }
+  /**
+   * View listing the available auth methods for selection (heading + List).
+   * Rebuilds the List when the method set changes.
+   * @returns {Array} A two-element array `[heading, listHost]` of elements.
+   */
   function MethodSelection() {
     const heading = template(`<div class="text-body"></div>`);
     createEffect(() => {
@@ -380,11 +463,21 @@ export function DialogConnectProvider(props) {
     });
     return [heading, listHost];
   }
+  /**
+   * View for API-key authentication: a description, a text field for the key,
+   * and a submit button that connects the provider and completes on success.
+   * @returns {HTMLElement} The API-auth view root element.
+   */
   function ApiAuthView() {
     const [formStore, setFormStore] = createStore({
       value: "",
       error: undefined
     });
+    /**
+     * Validates and submits the entered API key, then completes the dialog.
+     * @param {Event} e - The form submit event.
+     * @returns {Promise} Resolves once the connect attempt finishes.
+     */
     async function handleSubmit(e) {
       e.preventDefault();
       const form = e.currentTarget;
@@ -458,11 +551,21 @@ export function DialogConnectProvider(props) {
     }));
     return root;
   }
+  /**
+   * View for OAuth "code" flow: shows the authorization link plus a field to
+   * paste back the returned code, completing the OAuth exchange on submit.
+   * @returns {HTMLElement} The OAuth-code view root element.
+   */
   function OAuthCodeView() {
     const [formStore, setFormStore] = createStore({
       value: "",
       error: undefined
     });
+    /**
+     * Validates and submits the pasted OAuth code, completing on success.
+     * @param {Event} e - The form submit event.
+     * @returns {Promise} Resolves once the exchange finishes.
+     */
     async function handleSubmit(e) {
       e.preventDefault();
       const form = e.currentTarget;
@@ -552,6 +655,11 @@ export function DialogConnectProvider(props) {
     }));
     return root;
   }
+  /**
+   * View for automatic OAuth: shows the authorization link and confirmation
+   * code, then polls for completion on mount, completing or surfacing an error.
+   * @returns {HTMLElement} The automatic-OAuth view root element.
+   */
   function OAuthAutoView() {
     const code = createMemo(() => {
       const instructions = store.authorization?.instructions;
@@ -616,7 +724,11 @@ export function DialogConnectProvider(props) {
     });
     return root;
   }
-  // Spinner + "in progress" line (used by both the loading and pending states).
+  /**
+   * Builds a spinner + "in progress" line (used by both the loading and
+   * pending states).
+   * @returns {HTMLElement} The progress indicator element.
+   */
   function buildProgress() {
     const root = template(`<div class="text-body"><div class="d-flex align-items-center gap-x-2"><span data-slot="text"></span></div></div>`);
     const inner = root.firstElementChild;
@@ -627,6 +739,10 @@ export function DialogConnectProvider(props) {
     });
     return root;
   }
+  /**
+   * Builds an error line: a "ban" icon plus the localized failure message.
+   * @returns {HTMLElement} The error indicator element.
+   */
   function buildError() {
     const root = template(`<div class="text-body"><div class="d-flex align-items-center gap-x-2"><span data-slot="text"></span></div></div>`);
     const inner = root.firstElementChild;

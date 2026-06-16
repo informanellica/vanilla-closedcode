@@ -1,3 +1,4 @@
+/** @file Layout context: persisted UI layout state (sidebar/terminal/review/file-tree/chat panel sizes and open state), project list enrichment with avatar colors, per-session tabs/scroll/view state with LRU pruning, and the shared file-editor toggle. */
 import { createStore, produce } from "../lib/store.js";
 import { batch, createEffect, createMemo, onCleanup, onMount } from "../lib/reactivity.js";
 import { createSimpleContext } from "@/lib/context.js";
@@ -17,6 +18,11 @@ const DEFAULT_FILE_TREE_WIDTH = 200;
 const DEFAULT_SESSION_WIDTH = 300;
 const DEFAULT_TERMINAL_HEIGHT = 280;
 const DEFAULT_CHAT_HEIGHT = 300;
+/**
+ * Resolve the background/foreground CSS variables for an avatar color key, falling back to the info surface.
+ * @param {string} key - The avatar color key (one of AVATAR_COLOR_KEYS) or falsy.
+ * @returns {Object} An object {background, foreground} of CSS variable references.
+ */
 export function getAvatarColors(key) {
   if (key && AVATAR_COLOR_KEYS.includes(key)) {
     return {
@@ -29,11 +35,24 @@ export function getAvatarColors(key) {
     foreground: "var(--text-base)"
   };
 }
+/**
+ * Mark a session key as used and seed its dependent state, returning the key.
+ * @param {string} key - The session key.
+ * @param {Function} touch - Marks the key as recently used (drives LRU pruning).
+ * @param {Function} seed - Seeds dependent state (e.g. scroll persistence) for the key.
+ * @returns {string} The same session key.
+ */
 export function ensureSessionKey(key, touch, seed) {
   touch(key);
   seed(key);
   return key;
 }
+/**
+ * Build a reader that resolves a session key (from a value or accessor) and ensures it is registered on read.
+ * @param {*} sessionKey - The session key, or a zero-argument accessor returning it.
+ * @param {Function} ensure - Called with the resolved key to register/seed it before returning.
+ * @returns {Function} A reader returning the ensured session key.
+ */
 export function createSessionKeyReader(sessionKey, ensure) {
   const key = typeof sessionKey === "function" ? sessionKey : () => sessionKey;
   return () => {
@@ -42,6 +61,12 @@ export function createSessionKeyReader(sessionKey, ensure) {
     return value;
   };
 }
+/**
+ * Determine which session keys to drop when the tracked-session count exceeds the limit, keeping the
+ * most recently used and never dropping the protected `keep` key.
+ * @param {Object} input - {keep (protected key), max (limit), used (key->timestamp Map), view (Array of keys), tabs (Array of keys)}.
+ * @returns {Array} The session keys to drop (least-recently-used beyond the limit).
+ */
 export function pruneSessionKeys(input) {
   if (!input.keep) return [];
   const keys = new Set([...input.view, ...input.tabs]);
@@ -52,6 +77,13 @@ export function pruneSessionKeys(input) {
   };
   return Array.from(keys).sort((a, b) => score(b) - score(a)).slice(input.max);
 }
+/**
+ * Compute the next session-tabs state when opening a tab: "review" is removed and activated, "context"
+ * is moved to the front, other tabs are appended if absent; the opened tab becomes active.
+ * @param {Object} current - The current {all, active} tabs state (may be undefined).
+ * @param {string} tab - The tab being opened.
+ * @returns {Object} The next {all, active} tabs state.
+ */
 function nextSessionTabsForOpen(current, tab) {
   const all = current?.all ?? [];
   if (tab === "review") return {
@@ -71,6 +103,11 @@ function nextSessionTabsForOpen(current, tab) {
     active: tab
   };
 }
+/**
+ * Build the path helpers for the directory encoded in a session key, or undefined when undecodable.
+ * @param {string} key - The session key ("<base64dir>/<id>" style).
+ * @returns {Object} The path helpers for the session's root directory, or undefined.
+ */
 const sessionPath = key => {
   const dir = key.split("/")[0];
   if (!dir) return;
@@ -78,11 +115,23 @@ const sessionPath = key => {
   if (!root) return;
   return createPathHelpers(() => root);
 };
+/**
+ * Normalize a single session tab id, canonicalizing file:// tabs via the session's path helpers.
+ * @param {Object} path - The session path helpers (or undefined to skip normalization).
+ * @param {string} tab - The tab id.
+ * @returns {string} The normalized tab id.
+ */
 const normalizeSessionTab = (path, tab) => {
   if (!tab.startsWith("file://")) return tab;
   if (!path) return tab;
   return path.tab(tab);
 };
+/**
+ * Normalize a list of session tab ids and drop duplicates, preserving order.
+ * @param {Object} path - The session path helpers.
+ * @param {Array} all - The tab ids to normalize.
+ * @returns {Array} The de-duplicated, normalized tab ids.
+ */
 const normalizeSessionTabList = (path, all) => {
   const seen = new Set();
   return all.flatMap(tab => {
@@ -92,6 +141,12 @@ const normalizeSessionTabList = (path, all) => {
     return [value];
   });
 };
+/**
+ * Normalize a stored session-tabs record (all list + active tab) for a given session key.
+ * @param {string} key - The session key (used to resolve the directory's path helpers).
+ * @param {Object} tabs - The stored {all, active} record.
+ * @returns {Object} The normalized {all, active} record.
+ */
 const normalizeStoredSessionTabs = (key, tabs) => {
   const path = sessionPath(key);
   return {
@@ -99,6 +154,13 @@ const normalizeStoredSessionTabs = (key, tabs) => {
     active: tabs.active ? normalizeSessionTab(path, tabs.active) : tabs.active
   };
 };
+/**
+ * Layout context. Provides `useLayout` (consumer) and `LayoutProvider`. Manages persisted UI layout
+ * state (sidebar, terminal, review panel, file tree, chat panel — sizes and open/closed state) with
+ * version migration, the enriched project list (avatar colors and icon overrides), per-session tabs,
+ * scroll, view state, and pending-message tracking with LRU pruning, plus a shared file-editor
+ * controller for the global toolbar.
+ */
 export const {
   use: useLayout,
   provider: LayoutProvider
@@ -109,7 +171,18 @@ export const {
     const globalSync = useGlobalSync();
     const server = useServer();
     const platform = usePlatform();
+    /**
+     * Whether a value is a plain (non-array) object record.
+     * @param {*} value - The value to test.
+     * @returns {boolean} True for non-null, non-array objects.
+     */
     const isRecord = value => typeof value === "object" && value !== null && !Array.isArray(value);
+    /**
+     * Migrate a persisted layout value across schema versions (sidebar workspaces, review panel, file tree,
+     * session tabs normalization, review-panel width, and chat panel), returning the original when unchanged.
+     * @param {*} value - The previously persisted layout value.
+     * @returns {*} The migrated layout value (or the original when no migration applied).
+     */
     const migrate = value => {
       if (!isRecord(value)) return value;
       const sidebar = value.sidebar;
@@ -252,6 +325,11 @@ export const {
       legacy: "file",
       version: "v1"
     }];
+    /**
+     * Remove all persisted per-session/workspace state (prompt, terminal, file-view, and legacy keys) for the given keys.
+     * @param {Array} keys - The session keys ("<dir>/<session>" or "<dir>") to drop state for.
+     * @returns {void}
+     */
     const dropSessionState = keys => {
       for (const key of keys) {
         const parts = key.split("/");
@@ -268,6 +346,11 @@ export const {
         }
       }
     };
+    /**
+     * Drop least-recently-used session view/tab state beyond the max, keeping the protected key resident.
+     * @param {string} keep - The session key that must be retained.
+     * @returns {void}
+     */
     function prune(keep) {
       const drop = pruneSessionKeys({
         keep,
@@ -289,6 +372,11 @@ export const {
         usage.used.delete(key);
       }
     }
+    /**
+     * Record a session key as the active/most-recently-used one, triggering a one-time prune once ready.
+     * @param {string} sessionKey - The session key being touched.
+     * @returns {void}
+     */
     function touch(sessionKey) {
       usage.active = sessionKey;
       usage.used.set(sessionKey, Date.now());
@@ -317,6 +405,11 @@ export const {
         prune(keep);
       }
     });
+    /**
+     * Ensure a session key is touched and its scroll state seeded.
+     * @param {string} key - The session key.
+     * @returns {string} The same session key.
+     */
     const ensureKey = key => ensureSessionKey(key, touch, sessionKey => scroll.seed(sessionKey));
     createEffect(() => {
       if (!ready()) return;
@@ -340,11 +433,21 @@ export const {
     });
     const [colors, setColors] = createStore({});
     const colorRequested = new Map();
+    /**
+     * Pick an avatar color key not already in use, or a random one when all are taken.
+     * @param {Set} used - Set of color keys currently in use.
+     * @returns {string} An available (or random fallback) avatar color key.
+     */
     function pickAvailableColor(used) {
       const available = AVATAR_COLOR_KEYS.filter(c => !used.has(c));
       if (available.length === 0) return AVATAR_COLOR_KEYS[Math.floor(Math.random() * AVATAR_COLOR_KEYS.length)];
       return available[Math.floor(Math.random() * available.length)];
     }
+    /**
+     * Enrich a project with its synced metadata and any per-workspace local icon override.
+     * @param {Object} project - The project (with at least a worktree).
+     * @returns {Object} The project merged with metadata and a local icon override when present.
+     */
     function enrich(project) {
       const [childStore] = globalSync.child(project.worktree, {
         bootstrap: false
@@ -380,6 +483,11 @@ export const {
       }
       return map;
     });
+    /**
+     * Resolve a directory to its top-level project root by walking the sandbox->worktree chain (cycle-safe).
+     * @param {string} directory - The directory to resolve.
+     * @returns {string} The resolved root directory (the input itself when no mapping or on a cycle).
+     */
     const rootFor = directory => {
       const map = roots();
       if (map.size === 0) return directory;

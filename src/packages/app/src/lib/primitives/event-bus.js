@@ -1,3 +1,4 @@
+/** @file First-party reimplementation of `@solid-primitives/event-bus`'s `createGlobalEmitter` (named + global event emitter with auto-cleanup). */
 // First-party reimplementation of the subset of `@solid-primitives/event-bus`
 // used by this app: `createGlobalEmitter`.
 //
@@ -12,11 +13,22 @@
 
 import { getOwner, onCleanup } from "../reactivity.js";
 
-// Inlined `tryOnCleanup` (Solid's `onCleanup` without the dev-only out-of-owner warning).
+/**
+ * Inlined `tryOnCleanup` (Solid's `onCleanup` without the dev-only out-of-owner warning).
+ *
+ * @param {Function} fn - Cleanup callback to register when inside an owner scope.
+ * @returns {Function} The cleanup callback (registered with onCleanup when an owner exists).
+ */
 const tryOnCleanup = fn => (getOwner() ? onCleanup(fn) : fn);
 
 // A bus of listeners; `emit` calls each listener with the payload.
 class EventBusCore extends Set {
+  /**
+   * Call every subscribed listener with the given payload.
+   *
+   * @param {*} payload - Value passed to each listener.
+   * @returns {void}
+   */
   emit(payload) {
     for (const cb of this) cb(payload);
   }

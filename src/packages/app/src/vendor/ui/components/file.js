@@ -1,3 +1,4 @@
+/** @file Client-side code and diff viewer (File): text/diff rendering on top of @pierre/diffs, with line selection, virtualization, find-in-file and commented-line marking. */
 // insert() is the established exception for reactive/component-valued
 // children: the presence-gated search bar (Show + Portal-backed FileSearchBar)
 // must stay reconciled by Solid instead of being frozen at mount.
@@ -22,6 +23,11 @@ import { FileSearchBar } from "./file-search.js";
 // Build a detached element from compact, fully static HTML (no inter-element
 // whitespace, matching the compiled Solid template). Translated or
 // user-provided strings are never interpolated here.
+/**
+ * Build a detached element from a compact, fully static HTML string.
+ * @param {string} html - The markup (single root element).
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -31,12 +37,26 @@ function template(html) {
 // Faithful port of solid-js/web classList(): each key may hold multiple
 // space-separated class names; keys that turned falsy are removed, truthy
 // keys are added, and `prev` carries the applied state between runs.
+/**
+ * Toggle all space-separated class names in a classList key on/off.
+ * @param {Element} node - The target element.
+ * @param {string} key - A space-separated group of class names.
+ * @param {boolean} value - Whether to add (true) or remove (false) the classes.
+ * @returns {void}
+ */
 function toggleClassKey(node, key, value) {
   const classNames = key.trim().split(/\s+/);
   for (let i = 0, nameLen = classNames.length; i < nameLen; i++) {
     node.classList.toggle(classNames[i], value);
   }
 }
+/**
+ * Apply a Solid classList object to an element, diffing against the previous map.
+ * @param {Element} node - The target element.
+ * @param {Object} value - Map of class-token-group strings to truthy/falsy flags.
+ * @param {Object} prev - The previously applied map, mutated in place to track state.
+ * @returns {Object} The updated prev map.
+ */
 function applyClassList(node, value, prev) {
   const classKeys = Object.keys(value || {});
   const prevKeys = Object.keys(prev);
@@ -70,6 +90,14 @@ const diffKeys = ["fileDiff", "before", "after", ...sharedKeys];
 // Shared viewer hook
 // ---------------------------------------------------------------------------
 
+/**
+ * Shared viewer state and behavior used by both the text and diff viewers: holds the
+ * wrapper/container/overlay refs, drives mouse-based line selection (drag, click, and the
+ * line-number selection bridge), schedules rAF selection/drag updates, runs the shared scheme
+ * observation, commented-line marking and selected-line effects, and exposes the find handle.
+ * @param {Object} config - Mode-specific callbacks (enableLineSelection, selectedLines, commentedLines, updateSelection, buildDragSelection, buildClickSelection, setSelectedLines, lineFromMouseEvent, onLineSelectionEnd, onDragStart/Move/Reset, markCommented).
+ * @returns {Object} A viewer handle with wrapper/container/overlay/dragStart/dragEnd/lastSelection accessors plus ready, bridge, rendered, setRendered, getRoot, getHost, find and scheduleSelectionUpdate.
+ */
 function useFileViewer(config) {
   let wrapper;
   let container;
@@ -259,6 +287,13 @@ function useFileViewer(config) {
     scheduleSelectionUpdate
   };
 }
+/**
+ * Build a useFileViewer with the mode-agnostic config (selection/commented/end callbacks)
+ * merged with a mode-specific adapter (mouse hit-testing, selection building, drag handlers).
+ * @param {Object} config - Common config: enableLineSelection, selectedLines, commentedLines, onLineSelectionEnd.
+ * @param {Object} adapter - Mode-specific viewer callbacks merged into the config.
+ * @returns {Object} The viewer handle from useFileViewer.
+ */
 function useModeViewer(config, adapter) {
   return useFileViewer({
     enableLineSelection: config.enableLineSelection,
@@ -268,6 +303,14 @@ function useModeViewer(config, adapter) {
     ...adapter
   });
 }
+/**
+ * Register a focus handle with the external search controller while a search prop is present,
+ * so the search UI can refocus this viewer's find input. Cleans up registration on change/unmount.
+ * @param {Object} opts - Options.
+ * @param {Function} opts.search - Accessor returning the search controller (with register), or falsy.
+ * @param {Object} opts.find - The viewer's find handle (provides focus()).
+ * @returns {void}
+ */
 function useSearchHandle(opts) {
   createEffect(() => {
     const search = opts.search();
@@ -279,6 +322,13 @@ function useSearchHandle(opts) {
     onCleanup(() => search.register(null));
   });
 }
+/**
+ * Build the onLineSelected / onLineSelectionEnd callbacks passed to the underlying diff/file
+ * engine: they normalize the range, record it as the viewer's lastSelection, forward to the
+ * caller's handlers, and route line-number selections through the bridge on selection end.
+ * @param {Object} opts - Options: viewer, normalize (optional range normalizer), onLineSelected, onLineSelectionEnd, onLineNumberSelectionEnd.
+ * @returns {Object} An object with onLineSelected and onLineSelectionEnd handlers.
+ */
 function createLineCallbacks(opts) {
   const select = range => {
     if (!opts.normalize) return range;
@@ -301,6 +351,12 @@ function createLineCallbacks(opts) {
     }
   };
 }
+/**
+ * Re-apply line annotations and re-render the current engine instance whenever the annotations
+ * (or render generation) change, then refresh the find index after the next frame.
+ * @param {Object} opts - Options: viewer, current (accessor for the active engine instance), annotations (accessor).
+ * @returns {void}
+ */
 function useAnnotationRerender(opts) {
   createEffect(() => {
     opts.viewer.rendered();
@@ -313,6 +369,12 @@ function useAnnotationRerender(opts) {
     }));
   });
 }
+/**
+ * Wait until the viewer's shadow content is ready (per isReady, after optional settle frames),
+ * then invoke onReady. Thin wrapper over notifyShadowReady bound to the viewer's ready state.
+ * @param {Object} opts - Options: viewer, isReady (predicate on the shadow root), settleFrames, onReady.
+ * @returns {void}
+ */
 function notifyRendered(opts) {
   notifyShadowReady({
     state: opts.viewer.ready,
@@ -323,6 +385,13 @@ function notifyRendered(opts) {
     onReady: opts.onReady
   });
 }
+/**
+ * Tear down the current engine instance and render a fresh one into the viewer container:
+ * clears the ready watcher, creates and assigns the new instance, empties the container,
+ * draws into it, applies the viewer color scheme, bumps the render generation and signals ready.
+ * @param {Object} opts - Options: viewer, current (the previous instance, if any), create (factory), assign (store the new instance), draw (render into the container), onReady.
+ * @returns {void}
+ */
 function renderViewer(opts) {
   clearReadyWatcher(opts.viewer.ready);
   opts.current?.cleanUp();
@@ -334,6 +403,13 @@ function renderViewer(opts) {
   opts.viewer.setRendered(value => value + 1);
   opts.onReady();
 }
+/**
+ * Capture the viewer's current rendered height and scroll position before a re-render to avoid
+ * layout jump: pins a min-height on the container and returns a restore function that releases it
+ * and compensates the scroll container for any height delta. No-op if there is no scroll parent or height.
+ * @param {Object} viewer - The viewer handle (provides wrapper and container).
+ * @returns {Function} A teardown function that restores the min-height and adjusts scrollTop.
+ */
 function preserve(viewer) {
   const root = scrollParent(viewer.wrapper);
   if (!root) return () => {};
@@ -352,6 +428,11 @@ function preserve(viewer) {
     if (delta) root.scrollTop += delta;
   };
 }
+/**
+ * Find the nearest ancestor that is a vertical scroll container (overflowY auto/scroll).
+ * @param {Element} el - The starting element.
+ * @returns {Element} The nearest scrollable ancestor, or undefined if none.
+ */
 function scrollParent(el) {
   let parent = el.parentElement;
   while (parent) {
@@ -360,6 +441,13 @@ function scrollParent(el) {
     parent = parent.parentElement;
   }
 }
+/**
+ * Virtualizer strategy that owns a per-viewer Virtualizer scoped to the host's scroll parent,
+ * created lazily and only while enabled. Recreates when the scroll root changes; releases otherwise.
+ * @param {Function} host - Accessor returning the host (wrapper) element.
+ * @param {Function} enabled - Accessor returning whether virtualization is active.
+ * @returns {Object} Strategy with get() (returns the Virtualizer or undefined) and cleanup().
+ */
 function createLocalVirtualStrategy(host, enabled) {
   let virtualizer;
   let root;
@@ -388,6 +476,12 @@ function createLocalVirtualStrategy(host, enabled) {
     cleanup: release
   };
 }
+/**
+ * Virtualizer strategy that borrows a process-shared virtualizer (via acquireVirtualizer) for the
+ * host container, releasing it on cleanup.
+ * @param {Function} host - Accessor returning the host (container) element.
+ * @returns {Object} Strategy with get() (returns the shared Virtualizer or undefined) and cleanup().
+ */
 function createSharedVirtualStrategy(host) {
   let shared;
   const release = () => {
@@ -407,12 +501,25 @@ function createSharedVirtualStrategy(host) {
     cleanup: release
   };
 }
+/**
+ * Read the 1-based line number from a node's data-line attribute.
+ * @param {HTMLElement} node - The candidate line element.
+ * @returns {number} The parsed line number, or undefined when absent/invalid.
+ */
 function parseLine(node) {
   if (!node.dataset.line) return;
   const value = parseInt(node.dataset.line, 10);
   if (Number.isNaN(value)) return;
   return value;
 }
+/**
+ * Resolve a mouse/pointer event to a hit: walks the composed path to find the line number,
+ * whether the pointer is over the line-number column, and (for diffs) the diff side.
+ * @param {Event} event - The mouse/pointer event.
+ * @param {Function} line - Function mapping an element to its line number (or undefined).
+ * @param {Function} side - Optional function mapping an element to its diff side.
+ * @returns {Object} An object with line (number), numberColumn (boolean), and side.
+ */
 function mouseHit(event, line, side) {
   const path = event.composedPath();
   let numberColumn = false;
@@ -431,6 +538,12 @@ function mouseHit(event, line, side) {
     side: branch
   };
 }
+/**
+ * Determine which diff side ("additions"/"deletions") a node belongs to, from its line type or
+ * code-cell deletion marker.
+ * @param {HTMLElement} node - The candidate diff line/cell element.
+ * @returns {string} "deletions" or "additions", or undefined when not a code cell.
+ */
 function diffMouseSide(node) {
   const type = node.dataset.lineType;
   if (type === "change-deletion") return "deletions";
@@ -438,6 +551,11 @@ function diffMouseSide(node) {
   if (node.dataset.code == null) return;
   return node.hasAttribute("data-deletions") ? "deletions" : "additions";
 }
+/**
+ * Determine the diff side for a selection node by resolving it to an element and delegating to findDiffSide.
+ * @param {Node} node - The selection anchor/focus node.
+ * @returns {string} The resolved diff side, or undefined.
+ */
 function diffSelectionSide(node) {
   const el = findElement(node);
   if (!el) return;
@@ -448,6 +566,18 @@ function diffSelectionSide(node) {
 // Shared JSX shell
 // ---------------------------------------------------------------------------
 
+/**
+ * The shared DOM shell for both viewers: a focusable wrapper holding the engine container and an
+ * absolutely-positioned overlay, with the presence-gated find bar (Show + FileSearchBar) inserted
+ * before the container. Wires the viewer's focus/pointerdown find handlers, applies the style
+ * variables, and reactively maintains data-mode and the classList.
+ * @param {Object} props - Component props.
+ * @param {Object} props.viewer - The viewer handle (provides find, and receives wrapper/container/overlay refs).
+ * @param {string} props.mode - The data-mode value ("text"/"diff").
+ * @param {string} props.class - Class string applied to the wrapper.
+ * @param {Object} props.classList - Solid-style classList map applied to the wrapper.
+ * @returns {HTMLElement} The wrapper element.
+ */
 function ViewerShell(props) {
   const el = template(`<div data-component="file" class="relative outline-none" tabindex="0"><div></div><div class="pointer-events-none absolute inset-0 z-0"></div></div>`);
   const container = el.firstChild;
@@ -531,6 +661,25 @@ function ViewerShell(props) {
 // TextViewer
 // ---------------------------------------------------------------------------
 
+/**
+ * Single-file syntax-highlighted text viewer: renders file contents via @pierre/diffs File (or
+ * VirtualizedFile for large files), supporting line selection, commented-line marking, annotations
+ * and find-in-file. Picks virtualization automatically based on content byte size.
+ * @param {Object} props - Component props.
+ * @param {Object} props.file - The file ({ name, contents }) to render.
+ * @param {boolean} props.enableLineSelection - When true, enables mouse line selection.
+ * @param {Object} props.selectedLines - Currently selected line range.
+ * @param {Array} props.commentedLines - Line ranges to mark as commented.
+ * @param {Array} props.annotations - Line annotations to render.
+ * @param {Object} props.search - External search controller registered via the find handle.
+ * @param {Function} props.onLineSelected - Callback for an in-progress line selection.
+ * @param {Function} props.onLineSelectionEnd - Callback when a line selection ends.
+ * @param {Function} props.onLineNumberSelectionEnd - Callback when a line-number selection ends.
+ * @param {Function} props.onRendered - Callback fired once content has rendered.
+ * @param {string} props.class - Class string applied to the viewer shell.
+ * @param {Object} props.classList - Solid-style classList map applied to the viewer shell.
+ * @returns {Node} The ViewerShell component output.
+ */
 function TextViewer(props) {
   let instance;
   let viewer;
@@ -738,6 +887,28 @@ function TextViewer(props) {
 // DiffViewer
 // ---------------------------------------------------------------------------
 
+/**
+ * Two-file diff viewer: renders a precomputed fileDiff or a before/after pair via @pierre/diffs
+ * FileDiff (or VirtualizedFileDiff), with side-aware line selection, large-file performance fallbacks,
+ * mobile line-number suppression, commented-line marking, annotations and find-in-file.
+ * @param {Object} props - Component props.
+ * @param {Object} props.fileDiff - A precomputed file diff to render, when provided.
+ * @param {Object} props.before - The old file ({ name, contents }) when fileDiff is absent.
+ * @param {Object} props.after - The new file ({ name, contents }) when fileDiff is absent.
+ * @param {string} props.diffStyle - Diff style key (e.g. "unified"/"split") for default options and worker pool.
+ * @param {boolean} props.enableLineSelection - When true, enables mouse line selection.
+ * @param {Object} props.selectedLines - Currently selected line range.
+ * @param {Array} props.commentedLines - Line ranges to mark as commented.
+ * @param {Array} props.annotations - Line annotations to render.
+ * @param {Object} props.search - External search controller registered via the find handle.
+ * @param {Function} props.onLineSelected - Callback for an in-progress line selection.
+ * @param {Function} props.onLineSelectionEnd - Callback when a line selection ends.
+ * @param {Function} props.onLineNumberSelectionEnd - Callback when a line-number selection ends.
+ * @param {Function} props.onRendered - Callback fired once content has rendered.
+ * @param {string} props.class - Class string applied to the viewer shell.
+ * @param {Object} props.classList - Solid-style classList map applied to the viewer shell.
+ * @returns {Node} The ViewerShell component output.
+ */
 function DiffViewer(props) {
   let instance;
   let dragSide;
@@ -957,6 +1128,14 @@ function DiffViewer(props) {
 // Public API
 // ---------------------------------------------------------------------------
 
+/**
+ * Public file viewer entry point: renders the TextViewer ("text" mode) or DiffViewer (any other
+ * mode), each wrapped in FileMedia so binary/image media is previewed instead of code.
+ * @param {Object} props - Component props (see TextViewer / DiffViewer).
+ * @param {string} props.mode - "text" for the text viewer; otherwise the diff viewer.
+ * @param {*} props.media - Media descriptor passed to FileMedia for non-code previews.
+ * @returns {Node} The FileMedia component output wrapping the chosen viewer.
+ */
 export function File(props) {
   if (props.mode === "text") {
     return createComponent(FileMedia, {

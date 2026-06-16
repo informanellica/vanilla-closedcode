@@ -1,3 +1,8 @@
+/**
+ * @file Vanilla reimplementation of @kobalte/core's Toast behavior (no external
+ * UI dependency): exposes the `toaster` singleton, the `Toast` component
+ * namespace, and the `showToast`/`showPromiseToast` helpers.
+ */
 // Vanilla reimplementation of @kobalte/core's Toast behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -48,6 +53,14 @@ import { IconButton } from "./icon-button.js";
 // against the previous snapshot. Children are forwarded separately through
 // insert(), matching skipChildren = false in the compiled output.
 // ---------------------------------------------------------------------------
+/**
+ * Reactively reconcile a classList record against the previous snapshot,
+ * toggling only the classes whose truthiness changed.
+ * @param {HTMLElement} el - Element whose classList is mutated.
+ * @param {Object} value - Next classList record (class name to boolean).
+ * @param {Object} prev - Previous classList record snapshot.
+ * @returns {Object} A shallow copy of `value` to use as the next snapshot.
+ */
 function applyClassList(el, value, prev) {
   const prevObj = prev || {};
   const nextObj = value || {};
@@ -66,6 +79,14 @@ function applyClassList(el, value, prev) {
   }
   return { ...nextObj };
 }
+/**
+ * Apply an inline style value (string cssText or a property record) to an
+ * element, diffing against the previous value to set/remove only what changed.
+ * @param {HTMLElement} el - Element whose style is mutated.
+ * @param {(string|Object)} value - Next cssText string or style property record.
+ * @param {(string|Object)} prev - Previous style value snapshot.
+ * @returns {(string|Object)} The value to use as the next snapshot.
+ */
 function applyStyle(el, value, prev) {
   if (typeof value === "string") {
     if (value !== prev) el.style.cssText = value;

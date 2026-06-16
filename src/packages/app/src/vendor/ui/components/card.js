@@ -1,6 +1,13 @@
+/** @file Card component family: Card container plus CardTitle, CardDescription, and CardActions slots. */
 import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
+/**
+ * Splits a props object into the requested keys and the remaining keys.
+ * @param {Object} props - Source props object.
+ * @param {Array} keys - Property names to extract into the first bucket.
+ * @returns {Array} A two-element array: [picked props, rest props].
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -11,6 +18,12 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Applies a Solid-style classList map to an element, toggling each class token.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} classList - Map of (possibly space-separated) class keys to truthy/falsy values.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -24,6 +37,13 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Applies remaining props to an element: binds on* handlers, sets known DOM
+ * properties, and falls back to attributes (removing on null/false).
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - Remaining props excluding class/classList/children.
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -46,6 +66,12 @@ function applyRestProps(el, rest) {
   }
 }
 
+/**
+ * Appends Solid-style children (nodes, arrays, reactive accessors, or primitives) to a parent.
+ * @param {Node} parent - Parent element to receive the children.
+ * @param {*} children - Child value: a Node, array, function accessor, or primitive.
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -65,6 +91,11 @@ function appendChildren(parent, children) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Maps a card variant to its default title icon name.
+ * @param {string} variant - Card variant ("error", "warning", "success", "info").
+ * @returns {string} The icon name for the variant, or undefined for others.
+ */
 function pick(variant) {
   if (variant === "error") return "circle-ban-sign";
   if (variant === "warning") return "warning";
@@ -72,6 +103,11 @@ function pick(variant) {
   if (variant === "info") return "help";
 }
 
+/**
+ * Maps a card variant to its CSS accent color custom property value.
+ * @param {string} variant - Card variant ("error", "warning", "success", "info").
+ * @returns {string} A CSS var() expression for the accent color, or undefined for others.
+ */
 function accentFor(variant) {
   if (variant === "error") return "var(--icon-critical-base)";
   if (variant === "warning") return "var(--icon-warning-active)";
@@ -79,6 +115,17 @@ function accentFor(variant) {
   if (variant === "info") return "var(--icon-info-active)";
 }
 
+/**
+ * Card component. Renders a `<div>` container with a variant data attribute and
+ * a derived accent color (--card-accent), accepting a string or object style.
+ * @param {Object} props - Component props.
+ * @param {string} props.variant - Card variant (data-variant); defaults to "normal".
+ * @param {*} props.style - Inline style as a string or object.
+ * @param {*} props.class - Class string(s) to add to the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Card content.
+ * @returns {HTMLElement} The card `<div>` element.
+ */
 export function Card(props) {
   const [split, rest] = splitProps(props, ["variant", "style", "class", "classList"]);
   const el = document.createElement("div");
@@ -103,6 +150,17 @@ export function Card(props) {
   return el;
 }
 
+/**
+ * CardTitle component. Renders the card title slot with an optional leading icon
+ * (explicit name, or a default derived from the variant; pass false/null to omit).
+ * @param {Object} props - Component props.
+ * @param {string} props.variant - Variant used to choose the default icon; defaults to "normal".
+ * @param {*} props.icon - Icon name, or false/null to suppress the icon.
+ * @param {*} props.class - Class string(s) to add to the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Title content.
+ * @returns {HTMLElement} The card-title `<div>` element.
+ */
 export function CardTitle(props) {
   const [split, rest] = splitProps(props, ["variant", "icon", "class", "classList", "children"]);
   const el = document.createElement("div");
@@ -122,6 +180,14 @@ export function CardTitle(props) {
   return el;
 }
 
+/**
+ * CardDescription component. Renders the card description slot.
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) to add to the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Description content.
+ * @returns {HTMLElement} The card-description `<div>` element.
+ */
 export function CardDescription(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = document.createElement("div");
@@ -133,6 +199,14 @@ export function CardDescription(props) {
   return el;
 }
 
+/**
+ * CardActions component. Renders the card actions slot (e.g. a row of buttons).
+ * @param {Object} props - Component props.
+ * @param {*} props.class - Class string(s) to add to the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {*} props.children - Action content.
+ * @returns {HTMLElement} The card-actions `<div>` element.
+ */
 export function CardActions(props) {
   const [split, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = document.createElement("div");

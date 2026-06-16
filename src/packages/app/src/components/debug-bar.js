@@ -1,35 +1,95 @@
+/** @file Floating performance debug overlay showing live runtime metrics (FPS, jank, long tasks, INP, CLS, heap, navigation timing). */
+
 import { useIsRouting, useLocation } from "../lib/router/index.js";
 import { batch, createComponent, createEffect, onCleanup, onMount } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { Tooltip } from "@/bs/tooltip.js";
 import { useLanguage } from "@/context/language.js";
+
+/**
+ * Rolling time window (in milliseconds) over which performance samples (FPS,
+ * long tasks, interactions) are aggregated.
+ * @type {number}
+ */
 const span = 5000;
+
+/**
+ * Formats a millisecond value with a unit suffix.
+ * @param {number} n - The value in milliseconds.
+ * @param {number} d - Number of decimal places (default 0).
+ * @returns {string} The formatted string like "12ms", or undefined when `n` is
+ *   undefined/NaN.
+ */
 const ms = (n, d = 0) => {
   if (n === undefined || Number.isNaN(n)) return;
   return `${n.toFixed(d)}ms`;
 };
+
+/**
+ * Formats a number as a rounded-integer string (no unit).
+ * @param {number} n - The value to round.
+ * @returns {string} The rounded value as a string, or undefined when `n` is
+ *   undefined/NaN.
+ */
 const time = n => {
   if (n === undefined || Number.isNaN(n)) return;
   return `${Math.round(n)}`;
 };
+
+/**
+ * Formats a byte count as megabytes with a "MB" suffix.
+ * @param {number} n - The value in bytes.
+ * @returns {string} The formatted string like "12.3MB", or undefined when `n`
+ *   is undefined/NaN.
+ */
 const mb = n => {
   if (n === undefined || Number.isNaN(n)) return;
   const v = n / 1024 / 1024;
   return `${v >= 1024 ? v.toFixed(0) : v.toFixed(1)}MB`;
 };
+
+/**
+ * Tests whether a metric value crosses a threshold into the "bad" range.
+ * @param {number} n - The value to test.
+ * @param {number} limit - The threshold.
+ * @param {boolean} low - When true, "bad" means below the limit; otherwise
+ *   above it (default false).
+ * @returns {boolean} True when the value is in the bad range; false when
+ *   undefined/NaN or within bounds.
+ */
 const bad = (n, limit, low = false) => {
   if (n === undefined || Number.isNaN(n)) return false;
   return low ? n < limit : n > limit;
 };
+
+/**
+ * Whether a route path belongs to a session view.
+ * @param {string} path - The pathname to test.
+ * @returns {boolean} True when the path includes "/session".
+ */
 const session = path => path.includes("/session");
 
+/**
+ * Parses a trimmed HTML string into its first root element.
+ * @param {string} html - The HTML markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * A single metric cell in the debug grid: an uppercase label over a value,
+ * wrapped in a tooltip. Classes reflect "bad"/"dim"/"wide" state reactively.
+ * @param {Object} props - Component props: `label` (reactive label text),
+ *   `value` (reactive value text), `tip` (reactive tooltip content), `bad`
+ *   (reactive boolean; highlights the value red), `dim` (reactive boolean;
+ *   dims the value), and `wide` (reactive boolean; spans two grid columns).
+ * @returns {*} The Tooltip-wrapped cell component.
+ */
 function Cell(props) {
   // Static skeleton; conditional classes and text are wired below.
   const root = template(
@@ -61,6 +121,14 @@ function Cell(props) {
     children: root,
   });
 }
+/**
+ * Floating performance debug overlay. Renders a fixed grid of metric cells
+ * (navigation timing, FPS, frame gap, jank, long tasks, input delay, INP, CLS,
+ * and JS heap usage) sampled live via PerformanceObserver, requestAnimationFrame,
+ * and a polling interval. Observation pauses while the document is hidden and is
+ * fully torn down on cleanup.
+ * @returns {HTMLElement} The debug overlay `<aside>` element.
+ */
 export function DebugBar() {
   const language = useLanguage();
   const location = useLocation();

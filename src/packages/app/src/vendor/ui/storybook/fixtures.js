@@ -1,3 +1,5 @@
+/** @file Sample data fixtures (diff, code, markdown, change counts) used by Storybook stories. */
+/** Before/after file snapshot fixture used to demo diff rendering. */
 export const diff = {
   before: {
     name: "src/greet.ts",
@@ -15,6 +17,7 @@ export const diff = {
 `
   }
 };
+/** Single source-file fixture used to demo standalone code rendering. */
 export const code = {
   name: "src/calc.ts",
   contents: `export function sum(values: number[]) {
@@ -27,7 +30,9 @@ export function average(values: number[]) {
 }
 `
 };
+/** Multi-line Markdown sample string used to demo Markdown rendering. */
 export const markdown = ["# Markdown", "", "Use **Markdown** for rich text.", "", "## Highlights", "- Headings, lists, and code blocks", "- Inline `code` and links", "", "```ts", "export const value = 42", "```", "", "More at https://example.com/docs"].join("\n");
+/** Aggregate addition/deletion counts fixture used to demo change summaries. */
 export const changes = {
   additions: 18,
   deletions: 6

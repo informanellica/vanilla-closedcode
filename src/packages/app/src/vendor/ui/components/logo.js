@@ -1,3 +1,4 @@
+/** @file Brand mark / logo components rendering the c-square SVG (Mark, Splash, Logo). */
 import { createRenderEffect, untrack } from "../../../lib/reactivity.js";
 
 // Brand mark: Bootstrap `c-square` icon as an inline SVG. Rendered as SVG (not
@@ -9,6 +10,10 @@ const C_SQUARE_MARKUP = `<svg viewBox="0 0 16 16" fill="currentColor" xmlns="htt
 let _cSquareTemplate;
 // Returns a fresh c-square <svg> node. The markup is fully static and carries
 // no event listeners, so cloning a shared parsed template is safe.
+/**
+ * Build a fresh c-square brand SVG node by cloning a lazily-parsed shared template.
+ * @returns {Node} A new <svg> element containing the c-square mark.
+ */
 function cSquare() {
   if (!_cSquareTemplate) {
     _cSquareTemplate = document.createElement("template");
@@ -20,6 +25,12 @@ function cSquare() {
 // SVG elements expose className as a read-only SVGAnimatedString, so the class
 // must go through (set|remove)Attribute. props.class is read inside a render
 // effect so a signal-backed class keeps updating live.
+/**
+ * Reactively bind `props.class` onto an SVG element via setAttribute/removeAttribute.
+ * @param {Element} el - The SVG element to apply the class to.
+ * @param {Object} props - Props bag whose `class` field (possibly signal-backed) is the class string.
+ * @returns {void}
+ */
 function bindClass(el, props) {
   createRenderEffect(() => {
     const cls = props.class;
@@ -28,12 +39,25 @@ function bindClass(el, props) {
   });
 }
 
+/**
+ * The brand mark: a c-square SVG sized by the caller's width class.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Class string applied to the SVG (controls sizing/color).
+ * @returns {Node} The c-square SVG element.
+ */
 export const Mark = props => {
   const el = cSquare();
   bindClass(el, props);
   return el;
 };
 
+/**
+ * Splash brand mark: a c-square SVG that also forwards a `ref` to the created element.
+ * @param {Object} props - Component props.
+ * @param {Function} props.ref - Ref callback (or ref slot) receiving the SVG element.
+ * @param {string} props.class - Class string applied to the SVG.
+ * @returns {Node} The c-square SVG element.
+ */
 export const Splash = props => {
   const el = cSquare();
   const ref = props.ref;
@@ -45,6 +69,12 @@ export const Splash = props => {
 
 // Logo (the large faint home watermark / error-page brand) now renders the
 // same c-square mark, scaled by the caller's width class.
+/**
+ * The large logo watermark (home/error-page brand), rendered as the c-square mark.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Class string applied to the SVG (controls sizing/color).
+ * @returns {Node} The c-square SVG element.
+ */
 export const Logo = props => {
   const el = cSquare();
   bindClass(el, props);

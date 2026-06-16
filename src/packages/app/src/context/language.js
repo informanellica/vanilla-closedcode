@@ -1,3 +1,4 @@
+/** @file Language context: locale detection/persistence, lazy dictionary loading, and a reactive translator exposed to the app. */
 import * as i18n from "../lib/primitives/i18n.js";
 import { createEffect, createMemo, createResource } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
@@ -5,6 +6,11 @@ import { createSimpleContext } from "@/vendor/ui/context/index.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { dict as en } from "@/i18n/en.js";
 import { dict as uiEn } from "@/i18n/ui/en.js";
+/**
+ * Build the Set-Cookie value persisting the chosen locale for a year.
+ * @param {string} locale - Locale code to store.
+ * @returns {string} A `vcc_locale` cookie string.
+ */
 function cookie(locale) {
   return `vcc_locale=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax`;
 }
@@ -52,6 +58,12 @@ const base = i18n.flatten({
   ...uiEn
 });
 const dicts = new Map([["en", base]]);
+/**
+ * Merge an app dictionary and a UI dictionary (both dynamically imported) on top of the base English dictionary.
+ * @param {Promise} app - Promise resolving to a module with a `dict` export.
+ * @param {Promise} ui - Promise resolving to a UI module with a `dict` export.
+ * @returns {Promise<Object>} A flattened merged dictionary.
+ */
 const merge = (app, ui) => Promise.all([app, ui]).then(([a, b]) => ({
   ...base,
   ...i18n.flatten({
@@ -77,6 +89,11 @@ const loaders = {
   bs: () => merge(import("@/i18n/bs.js"), import("@/i18n/ui/bs.js")),
   tr: () => merge(import("@/i18n/tr.js"), import("@/i18n/ui/tr.js"))
 };
+/**
+ * Resolve the dictionary for a locale, returning the cached copy or lazily loading and caching it.
+ * @param {string} locale - Locale code to load.
+ * @returns {Promise<Object>} Promise resolving to the locale's flattened dictionary.
+ */
 function loadDict(locale) {
   const hit = dicts.get(locale);
   if (hit) return Promise.resolve(hit);
@@ -87,6 +104,11 @@ function loadDict(locale) {
     return next;
   });
 }
+/**
+ * Preload a locale's dictionary into the cache without returning it (fire-and-forget warming).
+ * @param {string} locale - Locale code to preload.
+ * @returns {Promise<void>} Resolves once the dictionary is cached.
+ */
 export function loadLocaleDict(locale) {
   return loadDict(locale).then(() => undefined);
 }
@@ -142,6 +164,10 @@ const localeMatchers = [{
   locale: "tr",
   match: language => language.startsWith("tr")
 }];
+/**
+ * Detect the best-matching supported locale from the browser's language preferences.
+ * @returns {string} A supported locale code, defaulting to "en".
+ */
 function detectLocale() {
   if (typeof navigator !== "object") return "en";
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
@@ -153,9 +179,18 @@ function detectLocale() {
   }
   return "en";
 }
+/**
+ * Clamp an arbitrary value to a supported locale, falling back to "en".
+ * @param {string} value - Candidate locale code.
+ * @returns {string} A supported locale code.
+ */
 export function normalizeLocale(value) {
   return LOCALES.includes(value) ? value : "en";
 }
+/**
+ * Read and normalize the persisted locale from localStorage, if any.
+ * @returns {string} The stored supported locale, or undefined when unset/unreadable.
+ */
 function readStoredLocale() {
   if (typeof localStorage !== "object") return;
   try {
@@ -170,6 +205,14 @@ function readStoredLocale() {
 }
 const warm = readStoredLocale() ?? detectLocale();
 if (warm !== "en") void loadDict(warm);
+/**
+ * Language context exposing the active locale, translator, and locale switching.
+ * `useLanguage` reads the context; `LanguageProvider` installs it.
+ * The context value provides: {ready, locale(), intl() (Intl locale tag), locales (supported codes),
+ * label(code) (localized language name), t (translator function), setLocale(next)}.
+ * The `init` factory persists the locale, reactively loads its dictionary, and keeps `<html lang>` and the locale cookie in sync.
+ * @param {Object} props - Provider props; `props.locale` optionally forces the initial locale.
+ */
 export const {
   use: useLanguage,
   provider: LanguageProvider

@@ -1,3 +1,10 @@
+/** @file Japanese (ja) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their Japanese strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "セッションの変更",
   "ui.sessionReview.title.lastTurn": "前回ターンの変更",

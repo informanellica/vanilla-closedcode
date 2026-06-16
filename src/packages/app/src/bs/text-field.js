@@ -1,3 +1,19 @@
+/** @file Bootstrap labelled text input field with optional error message (vanilla reimplementation). */
+
+/**
+ * Renders a labelled single-line text input wrapped in a container, with
+ * optional label and inline error message.
+ * @param {Object} props - Component props. Recognized keys: `onChange` (called
+ *   with the input's current value string on every input event), `variant`
+ *   (data-variant attribute; default "normal"), `validationState` ("invalid"
+ *   adds the Bootstrap `is-invalid` class), `class` (extra classes on the
+ *   input), `type` (input type; default "text"), `placeholder`, `value`,
+ *   `name`, `disabled`, `readOnly`, `required`, `spellcheck`, `autocomplete`,
+ *   `autocorrect`, `autocapitalize`, `label` (label text), `hideLabel`
+ *   (boolean; suppresses the label), and `error` (inline error message text).
+ * @returns {HTMLElement} The wrapper `<div>` containing the label, input, and
+ *   optional error element.
+ */
 export function TextField(props) {
   const handleInput = e => {
     props.onChange?.(e.currentTarget.value);

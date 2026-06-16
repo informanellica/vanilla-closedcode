@@ -1,3 +1,10 @@
+/** @file Russian (ru) UI translation strings for the desktop app renderer. */
+
+/**
+ * Translation dictionary mapping UI message keys to their Russian strings.
+ * Values may contain `{{name}}` interpolation placeholders that are filled in at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Изменения сессии",
   "ui.sessionReview.title.lastTurn": "Изменения последнего хода",

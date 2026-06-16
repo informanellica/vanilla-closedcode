@@ -1,3 +1,4 @@
+/** @file Manager for per-directory child stores: lazily creates persisted reactive stores per workspace, with reference pinning, LRU/TTL eviction, and project metadata/icon updates. */
 import { createRoot, getOwner, onCleanup, runWithOwner } from "../../lib/reactivity.js";
 import { createStore } from "../../lib/store.js";
 import { Persist, persisted } from "@/utils/persist.js";
@@ -7,6 +8,11 @@ import { useQueries } from "../../lib/query/index.js";
 import { loadPathQuery, loadProvidersQuery } from "./bootstrap.js";
 import { loadLspQuery, loadMcpQuery } from "../global-sync.js";
 import { directoryKey } from "./utils.js";
+/**
+ * Create a manager for per-directory child stores.
+ * @param {Object} input - Dependencies: `owner` (root reactive owner), `isBooting`, `isLoadingSessions`, `onBootstrap`, `onDispose`, `translate`, `getSdk`, and `global` (shared provider state).
+ * @returns {Object} Manager API `{children, ensureChild, child, peek, projectMeta, projectIcon, mark, pin, unpin, pinned, disposeDirectory, runEviction, vcsCache, metaCache, iconCache}`.
+ */
 export function createChildStoreManager(input) {
   const children = {};
   const vcsCache = new Map();
@@ -16,6 +22,11 @@ export function createChildStoreManager(input) {
   const pins = new Map();
   const ownerPins = new WeakMap();
   const disposers = new Map();
+  /**
+   * Record a key's last-access time and run eviction (skipping the just-touched key).
+   * @param {string} key - Directory key; falsy is ignored.
+   * @returns {void}
+   */
   const markKey = key => {
     if (!key) return;
     lifecycle.set(key, {
@@ -23,16 +34,31 @@ export function createChildStoreManager(input) {
     });
     runEviction(key);
   };
+  /**
+   * Mark a directory as recently accessed.
+   * @param {string} directory - Workspace directory.
+   * @returns {void}
+   */
   const mark = directory => {
     const key = directoryKey(directory);
     markKey(key);
   };
+  /**
+   * Increment a directory's pin count (protecting it from eviction) and mark it accessed.
+   * @param {string} directory - Workspace directory.
+   * @returns {void}
+   */
   const pin = directory => {
     const key = directoryKey(directory);
     if (!key) return;
     pins.set(key, (pins.get(key) ?? 0) + 1);
     markKey(key);
   };
+  /**
+   * Decrement a directory's pin count; when it reaches zero, drop the pin and run eviction.
+   * @param {string} directory - Workspace directory.
+   * @returns {void}
+   */
   const unpin = directory => {
     const key = directoryKey(directory);
     if (!key) return;
@@ -44,7 +70,18 @@ export function createChildStoreManager(input) {
     pins.delete(key);
     runEviction();
   };
+  /**
+   * Whether a directory currently has at least one pin.
+   * @param {string} directory - Workspace directory.
+   * @returns {boolean} True if pinned.
+   */
   const pinned = directory => (pins.get(directoryKey(directory)) ?? 0) > 0;
+  /**
+   * Pin a directory for the lifetime of the current reactive owner, auto-unpinning on cleanup.
+   * Deduplicates so each owner pins a given directory at most once.
+   * @param {string} directory - Workspace directory.
+   * @returns {void}
+   */
   const pinForOwner = directory => {
     const current = getOwner();
     if (!current) return;
@@ -64,6 +101,11 @@ export function createChildStoreManager(input) {
       unpin(directory);
     });
   };
+  /**
+   * Dispose a directory's child store and caches if it is safe to (not pinned/booting/loading).
+   * @param {string} directory - Directory key to dispose.
+   * @returns {boolean} True if the directory was disposed; false if it could not be.
+   */
   function disposeDirectory(directory) {
     const key = directory;
     if (!canDisposeDirectory({
@@ -88,6 +130,11 @@ export function createChildStoreManager(input) {
     input.onDispose(key);
     return true;
   }
+  /**
+   * Evict directories selected by the LRU/TTL/max-count policy, except an optionally skipped key.
+   * @param {string} skip - Directory key to exclude from eviction this pass.
+   * @returns {void}
+   */
   function runEviction(skip) {
     const stores = Object.keys(children);
     if (stores.length === 0) return;
@@ -104,6 +151,12 @@ export function createChildStoreManager(input) {
       if (!disposeDirectory(directoryKey(directory))) continue;
     }
   }
+  /**
+   * Get the child store tuple for a directory, lazily creating its persisted vcs/meta/icon caches and
+   * reactive store (with path/MCP/LSP/provider queries) on first access. Marks the directory accessed.
+   * @param {string} directory - Workspace directory.
+   * @returns {Array} The `[store, setStore]` tuple for the directory.
+   */
   function ensureChild(directory) {
     const key = directoryKey(directory);
     if (!key) console.error("No directory provided");
@@ -200,6 +253,12 @@ export function createChildStoreManager(input) {
         });
         children[key] = child;
         disposers.set(key, dispose);
+        /**
+         * Run a callback once a persisted store's async hydration completes, if the child store is still current.
+         * @param {*} init - The persisted store's init result; only awaited when it is a Promise.
+         * @param {Function} run - Callback to run after hydration.
+         * @returns {void}
+         */
         const onPersistedInit = (init, run) => {
           if (!(init instanceof Promise)) return;
           void init.then(() => {
@@ -228,6 +287,12 @@ export function createChildStoreManager(input) {
     if (!childStore) throw new Error(input.translate("error.childStore.storeCreateFailed"));
     return childStore;
   }
+  /**
+   * Resolve a directory's child store, pin it to the calling owner, and bootstrap it if still loading.
+   * @param {string} directory - Workspace directory.
+   * @param {Object} options - `bootstrap` (default true) controls whether to trigger bootstrap.
+   * @returns {Array} The `[store, setStore]` tuple for the directory.
+   */
   function child(directory, options = {}) {
     const key = directoryKey(directory);
     const childStore = ensureChild(directory);
@@ -238,6 +303,12 @@ export function createChildStoreManager(input) {
     }
     return childStore;
   }
+  /**
+   * Like `child` but without pinning to the calling owner; bootstraps if still loading.
+   * @param {string} directory - Workspace directory.
+   * @param {Object} options - `bootstrap` (default true) controls whether to trigger bootstrap.
+   * @returns {Array} The `[store, setStore]` tuple for the directory.
+   */
   function peek(directory, options = {}) {
     const key = directoryKey(directory);
     const childStore = ensureChild(directory);
@@ -247,6 +318,12 @@ export function createChildStoreManager(input) {
     }
     return childStore;
   }
+  /**
+   * Merge a patch into a directory's project metadata (deep-merging `icon` and `commands`) and persist it.
+   * @param {string} directory - Workspace directory.
+   * @param {Object} patch - Partial project-metadata patch.
+   * @returns {void}
+   */
   function projectMeta(directory, patch) {
     const key = directoryKey(directory);
     const [store, setStore] = ensureChild(directory);
@@ -270,6 +347,12 @@ export function createChildStoreManager(input) {
     cached.setStore("value", next);
     setStore("projectMeta", next);
   }
+  /**
+   * Set and persist a directory's project icon (no-op if unchanged).
+   * @param {string} directory - Workspace directory.
+   * @param {*} value - Icon value to store.
+   * @returns {void}
+   */
   function projectIcon(directory, value) {
     const key = directoryKey(directory);
     const [store, setStore] = ensureChild(directory);

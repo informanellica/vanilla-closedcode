@@ -11,11 +11,25 @@ import { showToast } from "@/lib/toast.js";
 import { extractPromptFromParts } from "@/utils/prompt.js";
 import { base64Encode } from "core/util/encode";
 import { useLanguage } from "@/context/language.js";
+
+/** @file Session-fork dialog: lists the user messages in the current session and forks a new session from the selected message. */
+
+/**
+ * Format a date as a short local time string.
+ * @param {Date} date - The date to format.
+ * @returns {string} The localized short time string.
+ */
 function formatTime(date) {
   return date.toLocaleTimeString(undefined, {
     timeStyle: "short"
   });
 }
+/**
+ * Session-fork dialog component. Shows a searchable list of the current
+ * session's user messages; selecting one forks the session at that message,
+ * restores the prompt and navigates to the new session.
+ * @returns {Node} The Dialog element wrapping the message list.
+ */
 export const DialogFork = () => {
   const params = useParams();
   const navigate = useNavigate();
@@ -43,6 +57,12 @@ export const DialogFork = () => {
     }
     return result.reverse();
   });
+  /**
+   * Fork the current session at the selected message, restore its prompt and
+   * navigate to the new session.
+   * @param {Object} item - The selected message item (has at least an `id`).
+   * @returns {void}
+   */
   const handleSelect = item => {
     if (!item) return;
     const sessionID = params.id;
@@ -75,6 +95,11 @@ export const DialogFork = () => {
     });
   };
 
+  /**
+   * Render one list row: the message text and its created-time label.
+   * @param {Object} item - The message snapshot (text, time).
+   * @returns {Element} The row element.
+   */
   // Row renderer for List items. Items are static snapshots built by the
   // messages memo (List re-renders rows itself), so plain DOM construction is
   // enough; user message text goes through textContent, never into markup.

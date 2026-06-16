@@ -1,5 +1,30 @@
+/** @file Validation and row-factory helpers for the custom (OpenAI-compatible) provider form. */
+
+/**
+ * Regular expression for a valid custom provider id (lowercase alphanumeric
+ * start, then alphanumerics, hyphens, or underscores).
+ * @type {RegExp}
+ */
 const PROVIDER_ID = /^[a-z0-9][a-z0-9-_]*$/;
+
+/**
+ * The npm package id used as the AI SDK adapter for custom providers.
+ * @type {string}
+ */
 const OPENAI_COMPATIBLE = "@ai-sdk/openai-compatible";
+
+/**
+ * Validates a custom provider form and, when valid, produces the provider
+ * config to persist. Computes per-field errors (id format/required/exists,
+ * name, base URL) and per-row errors for models and headers; empty placeholder
+ * rows are ignored.
+ * @param {Object} input - The validation input: `form` (`{providerID, name,
+ *   baseURL, apiKey, models, headers}`), `t` (translation function used for
+ *   error messages), `disabledProviders` (array of ids treated as
+ *   non-conflicting), and `existingProviderIDs` (Set of already-used ids).
+ * @returns {Object} A result `{err, models, headers}` always, plus a `result`
+ *   object (the provider id/name/key and config) when validation passes.
+ */
 export function validateCustomProvider(input) {
   const providerID = input.form.providerID.trim();
   const name = input.form.name.trim();
@@ -90,7 +115,17 @@ export function validateCustomProvider(input) {
   };
 }
 let row = 0;
+
+/**
+ * Generates a unique, stable key for a form row.
+ * @returns {string} A unique row id like "row-0".
+ */
 const nextRow = () => `row-${row++}`;
+
+/**
+ * Factory for a blank model row in the custom provider form.
+ * @returns {Object} A new model row `{row, id, name, origId, origName, err}`.
+ */
 export const modelRow = () => ({
   row: nextRow(),
   id: "",
@@ -102,6 +137,10 @@ export const modelRow = () => ({
   origName: "",
   err: {}
 });
+/**
+ * Factory for a blank custom-header row in the custom provider form.
+ * @returns {Object} A new header row `{row, key, value, err}`.
+ */
 export const headerRow = () => ({
   row: nextRow(),
   key: "",

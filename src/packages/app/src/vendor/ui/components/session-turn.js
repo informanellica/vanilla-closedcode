@@ -1,3 +1,4 @@
+/** @file SessionTurn component: renders one user message plus its assistant reply (parts, thinking shimmer, retry banner, file-diff accordion, error card) with auto-scroll. */
 // Dynamic is a runtime component, not a compiled template helper (it is only
 // exported from solid-js/web). insert() is the established exception for
 // reactive/component-valued children (presence-gated Accordion
@@ -26,14 +27,31 @@ import { normalize } from "./session-diff.js";
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated or
 // user-provided strings are always assigned via textContent/text nodes.
+/**
+ * Build a detached DOM element from a compact static HTML string.
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
+/**
+ * Test whether a value is a plain (non-array) object record.
+ * @param {*} value - Value to test.
+ * @returns {boolean} True when value is a non-null object and not an array.
+ */
 function record(value) {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
+/**
+ * Extract a human-readable message from a (possibly JSON-encoded) error string.
+ * Strips a leading "Error:" prefix, parses embedded JSON, and prefers
+ * error.type/error.message/error.code/message/error fields when present.
+ * @param {string} message - Raw error text, optionally containing JSON.
+ * @returns {string} The unwrapped message, or the original input if no JSON was found.
+ */
 function unwrap(message) {
   const text = message.replace(/^Error:\s*/, "").trim();
   const parse = value => {
@@ -73,16 +91,34 @@ function unwrap(message) {
   if (reason) return reason;
   return message;
 }
+/**
+ * Shallow array-equality check (used as a createMemo equals comparator).
+ * @param {Array} a - First array.
+ * @param {Array} b - Second array.
+ * @returns {boolean} True when both arrays have the same length and elements.
+ */
 function same(a, b) {
   if (a === b) return true;
   if (a.length !== b.length) return false;
   return a.every((x, i) => x === b[i]);
 }
+/**
+ * Return value if it is an array, otherwise the fallback.
+ * @param {*} value - Candidate value.
+ * @param {Array} fallback - Array returned when value is not an array.
+ * @returns {Array} value when it is an array, else fallback.
+ */
 function list(value, fallback) {
   if (Array.isArray(value)) return value;
   return fallback;
 }
 const hidden = new Set(["todowrite"]);
+/**
+ * Decide whether a message part should be visible in the turn.
+ * @param {Object} part - A message part (tool/text/reasoning/other).
+ * @param {boolean} showReasoningSummaries - Whether reasoning summaries are shown.
+ * @returns {string} The string "visible" when the part should render, otherwise undefined.
+ */
 function partState(part, showReasoningSummaries) {
   if (part.type === "tool") {
     if (hidden.has(part.tool)) return;
@@ -97,9 +133,20 @@ function partState(part, showReasoningSummaries) {
   if (PART_MAPPING[part.type]) return "visible";
   return;
 }
+/**
+ * Strip inline markdown (code spans, links, emphasis markers) from a string.
+ * @param {string} value - Text possibly containing inline markdown.
+ * @returns {string} Trimmed plain text with markdown markers removed.
+ */
 function clean(value) {
   return value.replace(/`([^`]+)`/g, "$1").replace(/\[([^\]]+)\]\([^)]+\)/g, "$1").replace(/[*_~]+/g, "").trim();
 }
+/**
+ * Extract the first heading-like line from markdown/HTML text (HTML headings,
+ * ATX, setext, or a standalone bold line), cleaned of inline markup.
+ * @param {string} text - Source markdown or HTML text.
+ * @returns {string} The first heading text found, or undefined if none.
+ */
 function heading(text) {
   const markdown = text.replace(/\r\n?/g, "\n");
   const html = markdown.match(/<h[1-6][^>]*>([\s\S]*?)<\/h[1-6]>/i);
@@ -123,6 +170,25 @@ function heading(text) {
     if (value) return value;
   }
 }
+/**
+ * Render a single conversation turn: one user message and its assistant
+ * response (visible parts, compaction/interruption divider, thinking shimmer,
+ * retry banner, per-file diff accordion, and error card), with auto-scroll.
+ * @param {Object} props - Component props.
+ * @param {string} props.sessionID - ID of the session this turn belongs to.
+ * @param {string} props.messageID - ID of the user message that anchors the turn.
+ * @param {Array} props.messages - Optional explicit messages list (defaults to the store).
+ * @param {boolean} props.active - Optional override for whether the turn is the active/pending one.
+ * @param {Object} props.status - Optional session status override.
+ * @param {boolean} props.showReasoningSummaries - Whether to show reasoning summaries (default true).
+ * @param {Object} props.actions - Action handlers forwarded to the user Message.
+ * @param {boolean} props.shellToolDefaultOpen - Whether shell tool parts start expanded.
+ * @param {boolean} props.editToolDefaultOpen - Whether edit tool parts start expanded.
+ * @param {Function} props.onUserInteracted - Callback invoked when the user interacts with the scroll area.
+ * @param {Object} props.classes - Optional class overrides (root/content/container).
+ * @param {*} props.children - Extra children appended below the turn body.
+ * @returns {HTMLElement} The session-turn root element.
+ */
 export function SessionTurn(props) {
   const data = useData();
   const i18n = useI18n();
@@ -305,6 +371,12 @@ export function SessionTurn(props) {
     overflowAnchor: "dynamic"
   });
   // One accordion row per file diff (For children, _tmpl$0/_tmpl$9/_tmpl$1).
+  /**
+   * Build one accordion row for a file diff: sticky header with path/filename
+   * and change counts, plus presence-gated diff content.
+   * @param {Object} diff - A file diff descriptor (file path and changes).
+   * @returns {*} The Accordion.Item component for this diff.
+   */
   const buildDiffRow = diff => {
     const view = normalize(diff);
     const rowActive = createMemo(() => expanded().includes(diff.file));
@@ -383,6 +455,12 @@ export function SessionTurn(props) {
   };
 
   // Diffs summary group (_tmpl$6).
+  /**
+   * Build the diffs summary group: a header with the changed-file count and
+   * aggregate +/- counts, a show-all/show-less toggle, the per-file accordion,
+   * and a "+N more" hint while collapsed.
+   * @returns {HTMLElement} The diffs group element.
+   */
   const buildDiffs = () => {
     const group = template(`<div data-slot="session-turn-diffs" data-component="session-turn-diffs-group"><div data-slot="session-turn-diffs-header"><span data-slot="session-turn-diffs-label"></span></div><div data-component="session-turn-diffs-content"></div></div>`);
     const header = group.firstChild;
@@ -469,6 +547,12 @@ export function SessionTurn(props) {
   };
 
   // ----- Turn body (children of Show(message()), _tmpl$7) -----
+  /**
+   * Build the turn body: the user message, an optional compaction/interruption
+   * divider, the assistant parts, the thinking shimmer, the retry banner, the
+   * diffs summary, and the error card.
+   * @returns {HTMLElement} The message container element for this turn.
+   */
   const buildTurn = () => {
     const container = template(`<div data-slot="session-turn-message-container"><div data-slot="session-turn-message-content" aria-live="off"></div></div>`);
     const messageHost = container.firstChild;

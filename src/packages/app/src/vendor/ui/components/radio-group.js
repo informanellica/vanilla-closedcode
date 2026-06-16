@@ -1,3 +1,4 @@
+/** @file Vanilla RadioGroup component: a segmented single-select control built on native radio inputs with a sliding indicator, reimplementing @kobalte/core's RadioGroup a11y behavior. */
 // Vanilla reimplementation of @kobalte/core's RadioGroup behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -24,6 +25,13 @@ import { createRenderEffect, createSignal, createUniqueId, onCleanup, splitProps
 
 // Resolve a possibly-reactive label value to DOM nodes (zero-arg accessors are
 // unwrapped, arrays flattened, Nodes kept, the rest stringified).
+/**
+ * Resolve a possibly-reactive value into an array of DOM nodes: zero-arg
+ * accessors are unwrapped, arrays flattened, Nodes kept, and other values
+ * stringified into text nodes.
+ * @param {*} value - The value to resolve (accessor function, array, Node, or primitive).
+ * @returns {Array} The flattened array of resolved DOM nodes.
+ */
 function resolveNodes(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return resolveNodes(value());
@@ -32,12 +40,39 @@ function resolveNodes(value) {
   return [document.createTextNode(String(value))];
 }
 
+/**
+ * Reactively render the result of an accessor into a parent, replacing its
+ * children whenever the accessor's value changes.
+ * @param {Node} parent - The parent node whose children are replaced.
+ * @param {Function} read - Accessor returning the value to render.
+ * @returns {void}
+ */
 function renderInto(parent, read) {
   createRenderEffect(() => {
     parent.replaceChildren(...resolveNodes(read()));
   });
 }
 
+/**
+ * Segmented single-select radio group component. Builds one native
+ * `<input type="radio">` per option (sharing a name for native roving focus and
+ * arrow-key navigation), role="radiogroup" semantics, and a sliding indicator
+ * that follows the selected item (repositioned on selection change and resize).
+ * Supports both controlled (`current`) and uncontrolled (`defaultValue`) modes.
+ * @param {Object} props - Component props.
+ * @param {Array} props.options - The selectable option items.
+ * @param {*} props.current - Controlled selected item; when provided, selection is controlled.
+ * @param {*} props.defaultValue - Initial selected item for uncontrolled mode.
+ * @param {Function} props.value - Maps an option item to its string value (defaults to String).
+ * @param {Function} props.label - Maps an option item to its label content (defaults to String).
+ * @param {Function} props.onSelect - Called with the chosen option item when selection changes.
+ * @param {string} props.size - Size variant written to the data-size attribute.
+ * @param {boolean} props.fill - When true, sets the data-fill attribute on the root.
+ * @param {string} props.pad - Padding variant written to the data-pad attribute.
+ * @param {string} props.class - Additional CSS class names for the root.
+ * @param {Object} props.classList - Solid-style class toggle map for the root.
+ * @returns {HTMLElement} The radiogroup root element.
+ */
 export function RadioGroup(props) {
   const [local, others] = splitProps(props, ["class", "classList", "options", "current", "defaultValue", "value", "label", "onSelect", "size", "fill", "pad"]);
 

@@ -1,3 +1,4 @@
+/** @file Models settings pane: a searchable list of provider models grouped by provider, each with a visibility toggle. */
 import { useFilteredList } from "@/lib/hooks.js";
 import { ProviderIcon } from "@/vendor/ui/components/provider-icon.js";
 import { Switch } from "@/bs/switch.js";
@@ -10,12 +11,22 @@ import { useModels } from "@/context/models.js";
 import { popularProviders } from "@/hooks/use-providers.js";
 import { SettingsList } from "./settings-list.js";
 
+/**
+ * Build a detached DOM element from a static HTML string.
+ * @param {string} html - The HTML markup (no untrusted interpolation).
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Build a centered status box with a single label (used for loading/empty states).
+ * @param {string} text - The label text.
+ * @returns {HTMLElement} The status box element.
+ */
 const listStateBox = text => {
   const el = template(`
     <div class="d-flex flex-column align-items-center justify-content-center py-12 text-center">
@@ -25,8 +36,18 @@ const listStateBox = text => {
   return el;
 };
 
+/**
+ * Loading placeholder shown while the model list is fetching.
+ * @param {Object} props - Props; props.label is the loading message.
+ * @returns {HTMLElement} The loading status box.
+ */
 const ListLoadingState = ({ label }) => listStateBox(label);
 
+/**
+ * Empty-state placeholder shown when no models match; echoes the active filter if present.
+ * @param {Object} props - Props; props.message is the empty message and props.filter is the current search text.
+ * @returns {HTMLElement} The empty status box.
+ */
 const ListEmptyState = ({ message, filter }) => {
   const el = listStateBox(message);
   if (filter) {
@@ -38,6 +59,13 @@ const ListEmptyState = ({ message, filter }) => {
   return el;
 };
 
+/**
+ * Models settings pane. Renders a search field and a list of models grouped by provider (providers
+ * sorted by popularity then name), each row exposing a visibility toggle. When props.providerId is set,
+ * only that provider's models are shown (used inside a provider's edit form).
+ * @param {Object} props - Component props; optional props.providerId scopes the list to one provider.
+ * @returns {HTMLElement} The settings pane root element.
+ */
 export const SettingsModels = props => {
   const language = useLanguage();
   const models = useModels();
@@ -111,6 +139,12 @@ export const SettingsModels = props => {
     }
   });
 
+  /**
+   * Build a provider group section: a header (icon + provider name) and a SettingsList of model rows,
+   * each row showing the model name and a visibility Switch bound to the models context.
+   * @param {Object} group - A group {category (provider id), items (Array of model records)}.
+   * @returns {HTMLElement} The group section element.
+   */
   const buildGroup = group => {
     const section = template(`
       <div class="d-flex flex-column gap-1">

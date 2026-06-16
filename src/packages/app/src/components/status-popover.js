@@ -6,6 +6,13 @@ import { useLanguage } from "@/context/language.js";
 import { useServer } from "@/context/server.js";
 import { useSync } from "@/context/sync.js";
 
+/** @file Titlebar status popover: a health-badged trigger that lazily loads and shows the status body. */
+
+/**
+ * Build a detached element from an HTML string (trimmed, first child returned).
+ * @param {string} html - Markup for a single root element.
+ * @returns {Element} The constructed element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -17,6 +24,10 @@ function template(html) {
 // exactly like the lazy() registry did.
 let loadedBody;
 let bodyLoad;
+/**
+ * Lazily import the status popover body chunk once and cache the resolved component.
+ * @returns {Promise} Resolves to the StatusPopoverBody component.
+ */
 function loadBody() {
   bodyLoad ??= import("./status-popover-body.js").then(x => {
     loadedBody = x.StatusPopoverBody;
@@ -25,6 +36,12 @@ function loadBody() {
   return bodyLoad;
 }
 
+/**
+ * Status popover component. Renders a ghost-button trigger showing a status icon with
+ * a colored health badge (success/danger/secondary derived from server + MCP health);
+ * opening it lazily loads and mounts StatusPopoverBody (with a skeleton while loading).
+ * @returns {Node} The Popover element.
+ */
 export function StatusPopover() {
   const language = useLanguage();
   const server = useServer();

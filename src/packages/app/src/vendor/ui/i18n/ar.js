@@ -1,3 +1,9 @@
+/** @file Arabic (ar) translation dictionary mapping UI message keys to localized strings. */
+/**
+ * Arabic translation table: maps dotted UI message keys to their localized strings.
+ * Placeholders in `{{name}}` form are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "تغييرات الجلسة",
   "ui.sessionReview.title.lastTurn": "تغييرات آخر دور",

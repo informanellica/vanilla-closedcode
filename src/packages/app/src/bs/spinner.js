@@ -1,3 +1,14 @@
+/** @file Bootstrap-styled loading spinner component (vanilla reimplementation). */
+
+/**
+ * Renders an inline loading spinner as a `<span>` with `role="status"` and the
+ * Bootstrap `spinner-border` class.
+ * @param {Object} props - Component props. Recognized keys: `class` (string of
+ *   extra CSS classes), `classList` (object mapping class names to booleans),
+ *   `on*` handlers (e.g. `onClick`), and any other key is applied as an
+ *   attribute on the element.
+ * @returns {HTMLElement} The spinner `<span>` element.
+ */
 export function Spinner(props) {
   const el = document.createElement("span");
   el.setAttribute("role", "status");

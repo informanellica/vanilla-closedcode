@@ -7,6 +7,13 @@ import { useGlobalSync } from "./global-sync.js";
 import { useParams } from "../lib/router/index.js";
 import { decode64 } from "@/utils/base64.js";
 import { acceptKey, directoryAcceptKey, isDirectoryAutoAccepting, autoRespondsPermission } from "./permission-auto-respond.js";
+/** @file Permission context: manages the persisted auto-accept store, auto-responds to permission requests for auto-accepting sessions/directories, and exposes toggles plus config-derived state. */
+/**
+ * Whether a permission rule resolves to something other than "allow" (so it would prompt).
+ * Accepts a string action or a record of per-action strings.
+ * @param {*} rule - A rule value (string, record of actions, or other).
+ * @returns {boolean} True when the rule is not a pure "allow".
+ */
 function isNonAllowRule(rule) {
   if (!rule) return false;
   if (typeof rule === "string") return rule !== "allow";
@@ -17,6 +24,11 @@ function isNonAllowRule(rule) {
   }
   return false;
 }
+/**
+ * Whether a config's permission setting would ever produce a prompt (i.e. has a non-allow rule).
+ * @param {*} permission - The config permission value (string, record of rules, or other).
+ * @returns {boolean} True when at least one rule is not "allow".
+ */
 function hasPermissionPromptRules(permission) {
   if (!permission) return false;
   if (typeof permission === "string") return permission !== "allow";
@@ -25,6 +37,14 @@ function hasPermissionPromptRules(permission) {
   const config = permission;
   return Object.values(config).some(isNonAllowRule);
 }
+/**
+ * Permission context. Persists per-session and per-directory auto-accept flags, listens for
+ * `permission.asked` events and auto-responds ("once") when the session/directory is auto-accepting,
+ * and reconciles directory config (`permission: "allow"`) into the auto-accept store.
+ * Exposes: `ready`, `respond(input)`, `autoResponds(permission, directory)`, `isAutoAccepting`,
+ * `isAutoAcceptingDirectory`, toggles/setters (`toggleAutoAccept`, `toggleAutoAcceptDirectory`,
+ * `enableAutoAccept`, `disableAutoAccept`), `permissionsEnabled`, and `isPermissionAllowAll`.
+ */
 export const {
   use: usePermission,
   provider: PermissionProvider
@@ -75,6 +95,10 @@ export const {
     const RESPONDED_TTL_MS = 60 * 60 * 1000;
     const responded = new Map();
     const enableVersion = new Map();
+    /**
+     * Evicts expired and overflow entries from the responded-permissions map.
+     * @param {number} now - The current timestamp (ms).
+     */
     function pruneResponded(now) {
       for (const [id, ts] of responded) {
         if (now - ts < RESPONDED_TTL_MS) break;
@@ -85,11 +109,17 @@ export const {
         responded.delete(id);
       }
     }
+    // Send a permission response via the SDK, clearing the responded marker on failure so it can be retried.
     const respond = input => {
       globalSDK.client.permission.respond(input).catch(() => {
         responded.delete(input.permissionID);
       });
     };
+    /**
+     * Responds "once" to a permission, de-duplicating so the same permission is answered at most once.
+     * @param {Object} permission - The permission request ({id, sessionID}).
+     * @param {string} directory - The directory the permission belongs to (optional).
+     */
     function respondOnce(permission, directory) {
       const now = Date.now();
       const hit = responded.has(permission.id);
@@ -104,6 +134,12 @@ export const {
         directory
       });
     }
+    /**
+     * Whether a session (considering its lineage) is currently auto-accepting permissions.
+     * @param {string} sessionID - The session id.
+     * @param {string} directory - The directory the session belongs to (optional).
+     * @returns {boolean} True when the session auto-accepts.
+     */
     function isAutoAccepting(sessionID, directory) {
       const session = directory ? globalSync.child(directory, {
         bootstrap: false
@@ -112,15 +148,32 @@ export const {
         sessionID
       }, directory);
     }
+    /**
+     * Whether a directory is currently auto-accepting all of its sessions' permissions.
+     * @param {string} directory - The directory.
+     * @returns {boolean} True when directory-wide auto-accept is enabled.
+     */
     function isAutoAcceptingDirectory(directory) {
       return isDirectoryAutoAccepting(store.autoAccept, directory);
     }
+    /**
+     * Whether a specific permission request should be auto-responded to (per session lineage and directory rules).
+     * @param {Object} permission - The permission request ({sessionID, ...}).
+     * @param {string} directory - The directory the permission belongs to (optional).
+     * @returns {boolean} True when the request should be auto-accepted.
+     */
     function shouldAutoRespond(permission, directory) {
       const session = directory ? globalSync.child(directory, {
         bootstrap: false
       })[0].session : [];
       return autoRespondsPermission(store.autoAccept, session, permission, directory);
     }
+    /**
+     * Increments and returns a per-key version used to discard stale async enable/disable results.
+     * @param {string} sessionID - The session id.
+     * @param {string} directory - The directory the session belongs to (optional).
+     * @returns {number} The new version number for the key.
+     */
     function bumpEnableVersion(sessionID, directory) {
       const key = acceptKey(sessionID, directory);
       const next = (enableVersion.get(key) ?? 0) + 1;
@@ -135,6 +188,10 @@ export const {
       respondOnce(perm, e.name);
     });
     onCleanup(unsubscribe);
+    /**
+     * Enables directory-wide auto-accept and auto-responds to any already-pending permissions in that directory.
+     * @param {string} directory - The directory.
+     */
     function enableDirectory(directory) {
       const key = directoryAcceptKey(directory);
       setStore(produce(draft => {
@@ -151,12 +208,22 @@ export const {
         }
       }).catch(() => undefined);
     }
+    /**
+     * Disables directory-wide auto-accept.
+     * @param {string} directory - The directory.
+     */
     function disableDirectory(directory) {
       const key = directoryAcceptKey(directory);
       setStore(produce(draft => {
         draft.autoAccept[key] = false;
       }));
     }
+    /**
+     * Enables auto-accept for a session and auto-responds to that session's already-pending permissions.
+     * Uses the enable-version to ignore the async result if the toggle changed meanwhile.
+     * @param {string} sessionID - The session id.
+     * @param {string} directory - The directory the session belongs to (optional).
+     */
     function enable(sessionID, directory) {
       const key = acceptKey(sessionID, directory);
       const version = bumpEnableVersion(sessionID, directory);
@@ -176,6 +243,11 @@ export const {
         }
       }).catch(() => undefined);
     }
+    /**
+     * Disables auto-accept for a session (and invalidates any in-flight enable).
+     * @param {string} sessionID - The session id.
+     * @param {string} directory - The directory the session belongs to (optional).
+     */
     function disable(sessionID, directory) {
       bumpEnableVersion(sessionID, directory);
       const key = directory ? acceptKey(sessionID, directory) : sessionID;

@@ -1,3 +1,4 @@
+/** @file Session message timeline: header (title editing, share, archive/delete), staged turn rendering, comment cards, and scroll/jump gesture handling, rebuilt from compiled Solid templates as hand-written DOM. */
 // Compiled solid-js/web template helpers are replaced with hand-written DOM
 // construction. insert() is the established exception for reactive and
 // component-valued children (presence-gated Popover/Dropdown content,
@@ -38,10 +39,14 @@ import { sessionTitle } from "@/utils/session-title.js";
 import { parseCommentNote, readCommentMetadata } from "@/utils/comment-note.js";
 import { makeTimer } from "../../lib/primitives/timer.js";
 
-// Build a detached element from compact HTML (no inter-element whitespace,
-// matching the compiled Solid templates). Static markup only — translated and
-// user-provided strings are always assigned via textContent or insert(), never
-// interpolated into the markup.
+/**
+ * Builds a detached element from compact HTML (no inter-element whitespace,
+ * matching the compiled Solid templates). Static markup only — translated and
+ * user-provided strings are always assigned via textContent or insert(), never
+ * interpolated into the markup.
+ * @param {string} html - The HTML markup for a single root element.
+ * @returns {HTMLElement} The parsed first element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -51,6 +56,11 @@ const emptyMessages = [];
 const idle = {
   type: "idle"
 };
+/**
+ * Extracts inline review comments from a message's synthetic text parts.
+ * @param {Array} parts - The message parts to scan.
+ * @returns {Array} Comment descriptors with `path`, `comment`, and optional `selection`.
+ */
 const messageComments = parts => parts.flatMap(part => {
   if (part.type !== "text" || !part.synthetic) return [];
   const next = readCommentMetadata(part.metadata) ?? parseCommentNote(part.text);
@@ -64,6 +74,12 @@ const messageComments = parts => parts.flatMap(part => {
     } : undefined
   }];
 });
+/**
+ * Returns the task description for a tool part that spawned the given child session.
+ * @param {Object} part - The message part to inspect.
+ * @param {string} sessionID - The child session id to match against the part's metadata.
+ * @returns {string} The task description, or undefined when the part is not a matching task.
+ */
 const taskDescription = (part, sessionID) => {
   if (part.type !== "tool" || part.tool !== "task") return;
   const metadata = "metadata" in part.state ? part.state.metadata : undefined;
@@ -71,7 +87,19 @@ const taskDescription = (part, sessionID) => {
   const value = part.state.input?.description;
   if (typeof value === "string" && value) return value;
 };
+/**
+ * Maps a header width to the progress-bar animation duration (clamped 1200–3200ms).
+ * @param {number} width - The header's pixel width.
+ * @returns {number} The animation duration in milliseconds.
+ */
 const pace = width => Math.round(Math.max(1200, Math.min(3200, Math.max(width, 360) * 2000 / 900)));
+/**
+ * Resolves the actual scrollable element for a gesture: the nearest nested
+ * `[data-scrollable]` ancestor of the target, or the root viewport.
+ * @param {HTMLElement} root - The scroll viewport root.
+ * @param {*} target - The event target the gesture originated from.
+ * @returns {HTMLElement} The element whose scroll boundary should be tested.
+ */
 const boundaryTarget = (root, target) => {
   const current = target instanceof Element ? target : undefined;
   const nested = current?.closest("[data-scrollable]");
@@ -79,6 +107,12 @@ const boundaryTarget = (root, target) => {
   if (!(nested instanceof HTMLElement)) return root;
   return nested;
 };
+/**
+ * Marks a scroll gesture on the root viewport when the wheel/touch delta reaches
+ * the boundary of the resolved scroll target.
+ * @param {Object} input - Descriptor with `root`, `target`, signed `delta`, and `onMarkScrollGesture`.
+ * @returns {void}
+ */
 const markBoundaryGesture = input => {
   const target = boundaryTarget(input.root, input.target);
   if (target === input.root) {
@@ -100,6 +134,13 @@ const markBoundaryGesture = input => {
  *
  * Once staging completes for a session it never re-stages — backfill and
  * new messages render immediately.
+ *
+ * @param {Object} input - Staging inputs.
+ * @param {Function} input.sessionKey - Accessor for the current session key.
+ * @param {Function} input.turnStart - Accessor for the windowed turn start (>0 when windowed).
+ * @param {Function} input.messages - Accessor for the full user-message list.
+ * @param {Object} input.config - Staging config with `init` (initial count) and `batch` (per-frame increment).
+ * @returns {Object} An object with `messages` (memo of staged messages) and `isStaging` (memo boolean).
  */
 function createTimelineStaging(input) {
   const [state, setState] = createStore({
@@ -173,6 +214,35 @@ function createTimelineStaging(input) {
     isStaging
   };
 }
+/**
+ * Renders the session message timeline: a sticky header (editable title, share
+ * popover, archive/delete menu, working spinner/progress bar), a scrollable list
+ * of progressively-staged turns with inline comment cards, a "load earlier"
+ * control, and a jump-to-bottom button with wheel/touch boundary gesture handling.
+ * @param {Object} props - Component props.
+ * @param {Array} props.renderedUserMessages - The user messages (with ids) to render as turns.
+ * @param {number} props.turnStart - Windowed turn start index (>0 enables staging/load-earlier).
+ * @param {boolean} props.centered - Whether the timeline content is centered/constrained.
+ * @param {*} props.actions - Per-turn action descriptors forwarded to SessionTurn.
+ * @param {Function} props.anchor - Maps a message id to its anchor id (for deep-linking).
+ * @param {boolean} props.mobileChanges - When true, render the mobile fallback instead of the timeline.
+ * @param {*} props.mobileFallback - The fallback content shown on mobile.
+ * @param {boolean} props.historyMore - Whether more history is available to load.
+ * @param {boolean} props.historyLoading - Whether earlier history is currently loading.
+ * @param {Function} props.onLoadEarlier - Handler for the load-earlier button.
+ * @param {Function} props.setContentRef - Ref setter (or target) for the scroll content element.
+ * @param {Function} props.setScrollRef - Ref setter for the scroll viewport.
+ * @param {Object} props.scroll - Scroll state with `overflow` and `jump` flags.
+ * @param {Function} props.onResumeScroll - Handler for the jump-to-bottom button.
+ * @param {Function} props.onMarkScrollGesture - Marks a user scroll gesture on the viewport.
+ * @param {Function} props.onScheduleScrollState - Schedules a scroll-state recompute on scroll.
+ * @param {Function} props.onTurnBackfillScroll - Triggers turn backfill on scroll.
+ * @param {Function} props.hasScrollGesture - Accessor for whether a scroll gesture is active.
+ * @param {Function} props.onUserScroll - Handler invoked on a user-driven scroll.
+ * @param {Function} props.onAutoScrollHandleScroll - Auto-scroll controller's scroll handler.
+ * @param {Function} props.onAutoScrollInteraction - Auto-scroll controller's interaction handler.
+ * @returns {Node} The timeline (or mobile fallback) component.
+ */
 export function MessageTimeline(props) {
   let touchGesture;
   const navigate = useNavigate();
@@ -380,6 +450,14 @@ export function MessageTimeline(props) {
       title: next
     });
   };
+  /**
+   * Navigates away from a removed session to its parent, the next sibling, or the
+   * session index, only when the removed session is the one currently viewed.
+   * @param {string} sessionID - The removed session id.
+   * @param {string} parentID - The removed session's parent id, if any.
+   * @param {string} nextSessionID - A fallback sibling session id, if any.
+   * @returns {void}
+   */
   const navigateAfterSessionRemoval = (sessionID, parentID, nextSessionID) => {
     if (params.id !== sessionID) return;
     if (parentID) {
@@ -392,6 +470,12 @@ export function MessageTimeline(props) {
     }
     navigate(`/${params.dir}/session`);
   };
+  /**
+   * Archives a session, optimistically removes it from the synced list, and
+   * navigates away if it was the active session; shows a toast on failure.
+   * @param {string} sessionID - The session id to archive.
+   * @returns {Promise} Resolves when the archive flow completes.
+   */
   const archiveSession = async sessionID => {
     const session = sync.session.get(sessionID);
     if (!session) return;
@@ -411,6 +495,12 @@ export function MessageTimeline(props) {
       });
     });
   };
+  /**
+   * Deletes a session and its descendant child sessions, optimistically prunes
+   * them from the synced list, and navigates away if the active session was removed.
+   * @param {string} sessionID - The session id to delete.
+   * @returns {Promise<boolean>} Resolves true on success, false on failure.
+   */
   const deleteSession = async sessionID => {
     const session = sync.session.get(sessionID);
     if (!session) return false;
@@ -460,6 +550,12 @@ export function MessageTimeline(props) {
     if (!id) return;
     navigate(`/${params.dir}/session/${id}`);
   };
+  /**
+   * Confirmation dialog for deleting a session.
+   * @param {Object} props - Component props.
+   * @param {string} props.sessionID - The session id being deleted.
+   * @returns {Node} The Dialog component instance.
+   */
   function DialogDeleteSession(props) {
     const name = createMemo(() => sessionTitle(sync.session.get(props.sessionID)?.title) ?? language.t("command.session.new"));
     const handleDelete = async () => {
@@ -501,6 +597,11 @@ export function MessageTimeline(props) {
       }
     });
   }
+  /**
+   * Builds the working-progress strip, reactively driving its state attribute,
+   * accent color, and animation duration.
+   * @returns {HTMLElement} The progress strip element.
+   */
   // ----- Progress strip (Show children, _tmpl$2) -----
   const buildProgressBar = () => {
     const barEl = template(`<div data-component="session-progress" aria-hidden="true"><div data-component="session-progress-bar"></div></div>`);
@@ -519,6 +620,12 @@ export function MessageTimeline(props) {
     return barEl;
   };
 
+  /**
+   * Builds the header action cluster: context-usage indicator plus the more-options
+   * dropdown (rename/share/archive/delete) and the share popover.
+   * @param {string} id - The current session id the actions operate on.
+   * @returns {HTMLElement} The header actions element.
+   */
   // ----- Header actions (keyed Show(sessionID()) children, _tmpl$12) -----
   const buildHeaderActions = id => {
     const actionsEl = template(`<div class="shrink-0 d-flex align-items-center gap-3"></div>`);
@@ -749,6 +856,11 @@ export function MessageTimeline(props) {
     return actionsEl;
   };
 
+  /**
+   * Builds the sticky session header: progress strip, parent crumb, working spinner,
+   * the title (static heading or inline editor), and the header actions.
+   * @returns {HTMLElement} The header element.
+   */
   // ----- Session header (Show(showHeader()) children, _tmpl$6) -----
   const buildHeader = () => {
     const headerEl = template(`<div data-session-title><div class="h-12 w-100 d-flex align-items-center justify-content-between gap-2"><div class="d-flex align-items-center gap-1 min-w-0 flex-1 pr-3"><div class="d-flex align-items-center min-w-0 grow-1"><div class="shrink-0 d-flex align-items-center justify-content-center overflow-hidden transition-[width,margin] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]" aria-hidden="true"></div></div></div></div></div>`);
@@ -884,6 +996,12 @@ export function MessageTimeline(props) {
     });
     return headerEl;
   };
+  /**
+   * Builds a single inline comment card showing the file icon, name, optional line
+   * range, and the comment body.
+   * @param {Function} c - Accessor returning the comment descriptor (`path`, `comment`, `selection`).
+   * @returns {HTMLElement} The comment card element.
+   */
   // ----- Comment card (Show(comment()) children, _tmpl$15/_tmpl$16) -----
   // c is the derived accessor handed out by the non-keyed Show callback.
   const buildCommentCard = c => {
@@ -922,6 +1040,13 @@ export function MessageTimeline(props) {
     return card;
   };
 
+  /**
+   * Builds a single timeline row for one user message: its comment strip (when any)
+   * and the SessionTurn, with change-guarded anchor id, centering, and
+   * content-visibility for off-screen rows.
+   * @param {string} messageID - The user message id this row renders.
+   * @returns {HTMLElement} The row element.
+   */
   // ----- Timeline row (For children, _tmpl$14/_tmpl$13) -----
   const buildTimelineRow = messageID => {
     const active = createMemo(() => activeMessageID() === messageID);
@@ -1027,6 +1152,11 @@ export function MessageTimeline(props) {
     return row;
   };
 
+  /**
+   * Builds the scroll content: the header, the load-earlier control, and the keyed
+   * list of timeline rows, with change-guarded centering of the turn list.
+   * @returns {HTMLElement} The scroll content element.
+   */
   // ----- Scroll content (ScrollView children, _tmpl$8) -----
   const buildTimelineContent = () => {
     const contentEl = template(`<div class="min-w-0 w-100"><div role="log" data-slot="session-turn-list" class="d-flex flex-column align-items-start justify-content-start pb-16 transition-[margin]"></div></div>`);
@@ -1090,6 +1220,12 @@ export function MessageTimeline(props) {
     return contentEl;
   };
 
+  /**
+   * Builds the timeline root: the ScrollView wrapping the content plus the
+   * jump-to-bottom button, wiring wheel/touch/pointer/scroll gesture handlers and
+   * change-guarded jump-button visibility.
+   * @returns {HTMLElement} The timeline root element.
+   */
   // ----- Timeline root (Show children, _tmpl$9) -----
   const buildTimeline = () => {
     const rootEl = template(`<div class="relative w-full h-full min-w-0"><div class="absolute left-1/2 -translate-x-1/2 bottom-6 z-[60] pointer-events-none transition-all duration-200 ease-out"><button class="pointer-events-auto d-flex align-items-center justify-content-center w-10 h-8 bg-transparent border-none cursor-pointer p-0 group"><div class="d-flex align-items-center justify-content-center w-8 h-6 rounded-[6px] border bg-[color-mix(in_srgb,var(--surface-raised-stronger-non-alpha)_80%,transparent)] backdrop-blur-[0.75px] transition-colors group-hover:border-[var(--border-weak-base)] group-hover:[--icon-base:var(--icon-hover)]" style="box-shadow:0 51px 60px 0 rgba(0,0,0,0.10), 0 15px 18px 0 rgba(0,0,0,0.12), 0 6.386px 7.513px 0 rgba(0,0,0,0.12), 0 2.31px 2.717px 0 rgba(0,0,0,0.20)"></div></button></div></div>`);

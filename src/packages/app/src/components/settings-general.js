@@ -1,3 +1,4 @@
+/** @file General settings tab: language, shell, feed/appearance toggles, toolbar customization, notifications, sounds, updates, and the Linux display backend. */
 import { Button } from "@/bs/button.js";
 import { Icon } from "@/bs/icon.js";
 import { Select } from "@/bs/select.js";
@@ -27,6 +28,10 @@ let demoSoundState = {
 };
 // To prevent audio from overlapping/playing very quickly when navigating the settings menus,
 // delay the playback by 100ms during quick selection changes and pause existing sounds.
+/**
+ * Cancel any pending demo sound and stop the currently playing one.
+ * @returns {void}
+ */
 const stopDemoSound = () => {
   demoSoundState.run += 1;
   if (demoSoundState.cleanup) {
@@ -35,6 +40,11 @@ const stopDemoSound = () => {
   clearTimeout(demoSoundState.timeout);
   demoSoundState.cleanup = undefined;
 };
+/**
+ * Play a demo sound by id after a short debounce, replacing any previous demo.
+ * @param {string} id - The sound option id, or falsy to just stop the current sound.
+ * @returns {void}
+ */
 const playDemoSound = id => {
   stopDemoSound();
   if (!id) return;
@@ -50,12 +60,24 @@ const playDemoSound = id => {
   }, 100);
 };
 
+/**
+ * Parse a trimmed HTML string into a single detached root element.
+ * @param {string} html - Markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * The General settings tab. Renders the language/shell/feed controls, the
+ * appearance (color scheme, fonts) section, the toolbar customization pane,
+ * notifications, sounds, updates, and — on desktop Linux / beta — the display
+ * backend and advanced sections, persisting changes through the settings store.
+ * @returns {HTMLElement} The settings-tab root element.
+ */
 export const SettingsGeneral = () => {
   const theme = useTheme();
   const language = useLanguage();
@@ -202,6 +224,15 @@ export const SettingsGeneral = () => {
   const mono = () => monoInput(settings.appearance.font());
   const sans = () => sansInput(settings.appearance.uiFont());
   const terminal = () => terminalInput(settings.appearance.terminalFont());
+  /**
+   * Build the props for a sound-picker Select: options list, current value,
+   * preview-on-highlight, and select handling that toggles enabled/none.
+   * @param {Function} enabled - Accessor returning whether this sound is enabled.
+   * @param {Function} current - Accessor returning the current sound id.
+   * @param {Function} setEnabled - Setter for the enabled flag.
+   * @param {Function} set - Setter for the selected sound id.
+   * @returns {Object} Props object for the Select component.
+   */
   const soundSelectProps = (enabled, current, setEnabled, set) => ({
     options: soundOptions,
     current: enabled() ? soundOptions.find(o => o.id === current()) ?? noneSound : noneSound,
@@ -231,6 +262,11 @@ export const SettingsGeneral = () => {
 
   // A pass-through wrapper used as a stable insertion point for nodes that
   // need to be rebuilt by an effect.
+  /**
+   * Create a display:contents wrapper used as a stable, layout-neutral mount
+   * point for nodes rebuilt by an effect.
+   * @returns {HTMLElement} The wrapper element.
+   */
   const contentsSlot = () => {
     const el = document.createElement("div");
     el.style.display = "contents";
@@ -238,6 +274,11 @@ export const SettingsGeneral = () => {
   };
 
   // Section box with a translated (locale-live) heading.
+  /**
+   * Build a settings section container with a translated, locale-reactive heading.
+   * @param {string} headingKey - i18n key for the section heading.
+   * @returns {HTMLElement} The section root element.
+   */
   const section = headingKey => {
     const el = template(`
       <div class="d-flex flex-column gap-1">
@@ -251,6 +292,13 @@ export const SettingsGeneral = () => {
   };
 
   // Standard row whose title/description come from i18n keys.
+  /**
+   * Build a settings row with translated title/description and a control.
+   * @param {string} titleKey - i18n key for the row title.
+   * @param {string} descriptionKey - i18n key for the row description.
+   * @param {*} control - The control node(s) rendered on the right of the row.
+   * @returns {*} A SettingsRow component instance.
+   */
   const row = (titleKey, descriptionKey, control) => createComponent(SettingsRow, {
     get title() {
       return language.t(titleKey);
@@ -266,6 +314,12 @@ export const SettingsGeneral = () => {
   // (called with the bubbled change Event). Accept only the boolean call so a
   // toggle never runs the handler twice (a doubled toggleAccept would undo
   // itself; a doubled setter would store the Event object).
+  /**
+   * Wrap a boolean change handler so it ignores the duplicate Event-typed call
+   * the vanilla Switch emits, running only on the boolean call.
+   * @param {Function} handler - Handler invoked with the new boolean value.
+   * @returns {Function} An onChange handler that filters out non-boolean values.
+   */
   const onSwitchToggle = handler => value => {
     if (typeof value === "boolean") handler(value);
   };
@@ -274,6 +328,13 @@ export const SettingsGeneral = () => {
   // once, so keep the native checkbox in sync with the controlled value in an
   // effect — external changes (e.g. auto-accept toggled via a command) must
   // update the visual state like the original reactive Switch did.
+  /**
+   * Build a data-action-tagged box wrapping a Switch kept in sync with a
+   * controlled checked/disabled state via an effect.
+   * @param {string} action - The data-action attribute value (used by selectors/tests).
+   * @param {Object} props - Switch props with reactive checked, optional disabled, and onChange.
+   * @returns {HTMLElement} The wrapper box element.
+   */
   const switchBox = (action, props) => {
     const box = document.createElement("div");
     box.setAttribute("data-action", action);
@@ -298,6 +359,12 @@ export const SettingsGeneral = () => {
   // The vanilla Select builds its options/selection once, so rebuild it
   // whenever anything it renders (options, current, locale) changes. build()
   // is called inside the effect so its signal reads are tracked.
+  /**
+   * Build a slot that re-creates a Select whenever its rendered inputs change.
+   * @param {string} action - The data-action attribute value applied to the Select.
+   * @param {Function} build - Returns the Select props; called inside the effect to track its reads.
+   * @returns {HTMLElement} The display:contents slot hosting the Select.
+   */
   const selectSlot = (action, build) => {
     const slot = contentsSlot();
     createEffect(() => {
@@ -312,11 +379,28 @@ export const SettingsGeneral = () => {
     return slot;
   };
 
+  /**
+   * Build a sound-picker select slot bound to the given enabled/value accessors and setters.
+   * @param {string} action - The data-action attribute value applied to the Select.
+   * @param {Function} enabled - Accessor returning whether this sound is enabled.
+   * @param {Function} current - Accessor returning the current sound id.
+   * @param {Function} setEnabled - Setter for the enabled flag.
+   * @param {Function} set - Setter for the selected sound id.
+   * @returns {HTMLElement} The display:contents slot hosting the Select.
+   */
   const soundSelect = (action, enabled, current, setEnabled, set) => selectSlot(action, () => soundSelectProps(enabled, current, setEnabled, set));
 
   // Font input in its fixed-width box. Built once so typing never loses
   // focus; the live font preview is applied on the field root (it cascades
   // into the input) because the vanilla TextField ignores the style prop.
+  /**
+   * Build a fixed-width font-name text field that previews the font on its own
+   * root and pushes external value changes into the input without losing focus.
+   * @param {string} action - The data-action attribute value applied to the field.
+   * @param {string} labelKey - i18n key for the (hidden) field label.
+   * @param {Object} opts - Field options: value() accessor, onChange, placeholder, and family() accessor for the preview font.
+   * @returns {HTMLElement} The field box element.
+   */
   const fontField = (action, labelKey, opts) => {
     const box = template(`<div style="width:220px;max-width:100%"></div>`);
     const field = createComponent(TextField, {
@@ -355,6 +439,11 @@ export const SettingsGeneral = () => {
 
   // ---- sections ----
 
+  /**
+   * Build the top "General" section: language, auto-accept, shell, feed display
+   * toggles, session progress bar, and Ollama stats.
+   * @returns {HTMLElement} The section element.
+   */
   const GeneralSection = () => {
     const el = template(`<div class="d-flex flex-column gap-1"></div>`);
     el.appendChild(createComponent(SettingsList, {
@@ -424,6 +513,11 @@ export const SettingsGeneral = () => {
     return el;
   };
 
+  /**
+   * Build the "Advanced" section (desktop beta only): toggles for the file
+   * tree, navigation, search, terminal, and status UI.
+   * @returns {HTMLElement} The section element.
+   */
   const AdvancedSection = () => {
     const el = section("settings.general.section.advanced");
     el.appendChild(createComponent(SettingsList, {
@@ -457,6 +551,11 @@ export const SettingsGeneral = () => {
     return el;
   };
 
+  /**
+   * Build the "Appearance" section: color scheme picker and UI/code/terminal
+   * font fields.
+   * @returns {HTMLElement} The section element.
+   */
   const AppearanceSection = () => {
     const el = section("settings.general.section.appearance");
     el.appendChild(createComponent(SettingsList, {
@@ -501,6 +600,11 @@ export const SettingsGeneral = () => {
   // two-pane add/remove + reorder UI. Left pane = available (hidden) commands,
   // right pane = commands shown in the toolbar (in order). Writes to
   // settings.appearance.toolbarOrder / toolbarHidden (consumed by AppToolbar).
+  /**
+   * Build the toolbar customization pane: a two-pane add/remove + reorder UI
+   * (available vs shown commands) that writes toolbarOrder and toolbarHidden.
+   * @returns {HTMLElement} The section element.
+   */
   const ToolbarSection = () => {
     const el = template(`
       <div class="d-flex flex-column gap-1">
@@ -536,6 +640,11 @@ export const SettingsGeneral = () => {
     const downBtn = el.querySelector('[data-slot="down"]');
     const resetBtn = el.querySelector('[data-slot="reset"]');
 
+    /**
+     * Resolve a toolbar item's display label, falling back to its id.
+     * @param {string} id - The toolbar item id.
+     * @returns {string} The item's label or the id.
+     */
     const labelOf = id => TOOLBAR_ITEMS.find(it => it.id === id)?.label ?? id;
     // Selected id per pane, kept by id (not DOM) so it survives the rebuild.
     const [sel, setSel] = createStore({ avail: null, shown: null });
@@ -543,6 +652,11 @@ export const SettingsGeneral = () => {
     // Effective FULL order = saved ids (deduped, known only) then any default
     // ids not yet placed, so new toolbar items appear without a forced re-save.
     // Hidden items remain in this order; the panes are derived by filtering.
+    /**
+     * Compute the full deduped toolbar order: saved known ids first, then any
+     * default ids not yet placed.
+     * @returns {Array} Ordered array of toolbar item ids (both shown and hidden).
+     */
     const effectiveOrder = () => {
       const saved = settings.appearance.toolbarOrder() ?? [];
       const known = new Set(DEFAULT_TOOLBAR_ORDER);
@@ -552,6 +666,10 @@ export const SettingsGeneral = () => {
       for (const id of DEFAULT_TOOLBAR_ORDER) if (!seen.has(id)) { order.push(id); seen.add(id); }
       return order;
     };
+    /**
+     * Get a fresh copy of the hidden toolbar item ids.
+     * @returns {Array} Array of hidden item ids.
+     */
     const hiddenList = () => (settings.appearance.toolbarHidden() ?? []).slice();
 
     // Swap two ids wherever they sit in the full order (both visible, so hidden
@@ -563,6 +681,12 @@ export const SettingsGeneral = () => {
     // (appended by effectiveOrder). A sparse delta was considered and rejected:
     // filtering to only user-touched ids drops reorders between two default
     // items entirely.
+    /**
+     * Swap two ids in the full order and persist the materialized order.
+     * @param {string} a - First item id.
+     * @param {string} b - Second item id.
+     * @returns {void}
+     */
     const swapInOrder = (a, b) => {
       const order = effectiveOrder();
       const ia = order.indexOf(a);
@@ -576,6 +700,12 @@ export const SettingsGeneral = () => {
     // the currently selected shown item, or at the bottom of the list. All store
     // writes (order, hidden, selection) are batched so the effects re-run once
     // with the final, consistent state (no stale-selection intermediate render).
+    /**
+     * Un-hide an item, inserting it after the selected shown item (or at the
+     * end), and select it in the shown pane.
+     * @param {string} id - The toolbar item id to show.
+     * @returns {void}
+     */
     const addToShown = id => {
       if (!id) return;
       batch(() => {
@@ -590,6 +720,11 @@ export const SettingsGeneral = () => {
         setSel("shown", id);
       });
     };
+    /**
+     * Hide a shown item and select it in the available pane.
+     * @param {string} id - The toolbar item id to hide.
+     * @returns {void}
+     */
     const removeFromShown = id => {
       if (!id) return;
       batch(() => {
@@ -600,6 +735,11 @@ export const SettingsGeneral = () => {
         setSel("avail", id);
       });
     };
+    /**
+     * Move the selected shown item up or down among the visible items.
+     * @param {number} dir - Offset direction: -1 to move up, +1 to move down.
+     * @returns {void}
+     */
     const moveShown = dir => {
       const id = sel.shown;
       if (!id) return;
@@ -625,6 +765,12 @@ export const SettingsGeneral = () => {
       });
     });
 
+    /**
+     * Build a selectable list row for a toolbar item in one of the two panes.
+     * @param {string} id - The toolbar item id.
+     * @param {string} pane - The owning pane, "avail" or "shown".
+     * @returns {HTMLElement} The row button element.
+     */
     const makeRow = (id, pane) => {
       const r = document.createElement("button");
       r.type = "button";
@@ -641,6 +787,11 @@ export const SettingsGeneral = () => {
       r.addEventListener("dblclick", () => pane === "avail" ? addToShown(id) : removeFromShown(id));
       return r;
     };
+    /**
+     * Build an italic placeholder row shown when a pane is empty.
+     * @param {string} text - The hint text.
+     * @returns {HTMLElement} The hint element.
+     */
     const emptyHint = text => {
       const d = document.createElement("div");
       d.className = "small text-secondary px-2 py-1 fst-italic";
@@ -664,6 +815,12 @@ export const SettingsGeneral = () => {
 
     // Highlight + button-state effect: runs on selection OR structure change and
     // updates the existing rows in place (no rebuild), plus the disabled states.
+    /**
+     * Apply selection highlighting to the rows of a pane in place.
+     * @param {HTMLElement} box - The pane container whose row children are updated.
+     * @param {string} selId - The currently selected item id in this pane (or null).
+     * @returns {void}
+     */
     const applyHighlight = (box, selId) => {
       for (const r of box.children) {
         const id = r.dataset?.id;
@@ -702,6 +859,10 @@ export const SettingsGeneral = () => {
     return el;
   };
 
+  /**
+   * Build the "Notifications" section: agent, permissions, and errors toggles.
+   * @returns {HTMLElement} The section element.
+   */
   const NotificationsSection = () => {
     const el = section("settings.general.section.notifications");
     el.appendChild(createComponent(SettingsList, {

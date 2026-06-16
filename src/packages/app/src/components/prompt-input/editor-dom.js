@@ -1,4 +1,16 @@
+/** @file DOM helpers for the contenteditable prompt editor: text-to-fragment conversion and caret-position math that treats pills/BRs as single units and ignores zero-width spaces. */
+
+/**
+ * Cap on newline-to-BR conversions before falling back to a single trailing break, guarding against pathological input.
+ * @type {number}
+ */
 const MAX_BREAKS = 200;
+
+/**
+ * Convert a plain-text string into a document fragment, turning newlines into BR elements.
+ * @param {string} content - The text to convert.
+ * @returns {DocumentFragment} A fragment of text nodes and BR elements.
+ */
 export function createTextFragment(content) {
   const fragment = document.createDocumentFragment();
   let breaks = 0;
@@ -24,10 +36,21 @@ export function createTextFragment(content) {
   });
   return fragment;
 }
+/**
+ * Compute the caret length of a single node: 1 for a BR, otherwise its text length excluding zero-width spaces.
+ * @param {Node} node - The node to measure (text node, BR, or pill element).
+ * @returns {number} The caret length contributed by the node.
+ */
 export function getNodeLength(node) {
   if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") return 1;
   return (node.textContent ?? "").replace(/\u200B/g, "").length;
 }
+
+/**
+ * Recursively compute the caret length of a node and all its descendants (BRs count as 1, zero-width spaces ignored).
+ * @param {Node} node - The root node to measure.
+ * @returns {number} The total caret length.
+ */
 export function getTextLength(node) {
   if (node.nodeType === Node.TEXT_NODE) return (node.textContent ?? "").replace(/\u200B/g, "").length;
   if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") return 1;
@@ -37,6 +60,11 @@ export function getTextLength(node) {
   }
   return length;
 }
+/**
+ * Get the current caret offset within an editor element, measured in caret length from the start.
+ * @param {Node} parent - The editor element containing the selection.
+ * @returns {number} The caret position, or 0 when there is no selection inside the parent.
+ */
 export function getCursorPosition(parent) {
   const selection = window.getSelection();
   if (!selection || selection.rangeCount === 0) return 0;
@@ -47,6 +75,12 @@ export function getCursorPosition(parent) {
   preCaretRange.setEnd(range.startContainer, range.startOffset);
   return getTextLength(preCaretRange.cloneContents());
 }
+/**
+ * Place the caret at a given offset within an editor element, walking nodes while accounting for pills and BRs, with a sensible fallback at the end.
+ * @param {Node} parent - The editor element to set the selection in.
+ * @param {number} position - The target caret offset.
+ * @returns {void}
+ */
 export function setCursorPosition(parent, position) {
   let remaining = position;
   let node = parent.firstChild;
@@ -104,6 +138,14 @@ export function setCursorPosition(parent, position) {
   fallbackSelection?.removeAllRanges();
   fallbackSelection?.addRange(fallbackRange);
 }
+/**
+ * Move one edge (start or end) of a Range to a given caret offset within an editor element, treating pills/BRs as atomic units.
+ * @param {Node} parent - The editor element whose children are walked.
+ * @param {Range} range - The range whose edge is adjusted.
+ * @param {string} edge - Which edge to move: "start" or "end".
+ * @param {number} offset - The target caret offset for the edge.
+ * @returns {void}
+ */
 export function setRangeEdge(parent, range, edge, offset) {
   let remaining = offset;
   const nodes = Array.from(parent.childNodes);

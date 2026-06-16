@@ -1,9 +1,27 @@
+/** @file Color math utilities: hex/RGB/OKLCH conversions, gamut fitting, scale generation, and blending used by the theme system. */
+/**
+ * Clamp a number into an inclusive range.
+ * @param {number} v - The value.
+ * @param {number} min - Lower bound.
+ * @param {number} max - Upper bound.
+ * @returns {number} The clamped value.
+ */
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v));
 }
+/**
+ * Normalize an angle into the [0, 360) range.
+ * @param {number} v - The angle in degrees.
+ * @returns {number} The wrapped hue angle.
+ */
 function hue(v) {
   return (v % 360 + 360) % 360;
 }
+/**
+ * Parse a hex color (3/4/6/8 digit, with or without leading `#`) into normalized RGB.
+ * @param {string} hex - The hex color string.
+ * @returns {Object} Object with `r`, `g`, `b` in the 0..1 range.
+ */
 export function hexToRgb(hex) {
   const h = hex.replace("#", "");
   const full = h.length === 3 || h.length === 4 ? h.split("").map(c => c + c).join("") : h;
@@ -15,6 +33,13 @@ export function hexToRgb(hex) {
     b: (num & 255) / 255
   };
 }
+/**
+ * Convert normalized RGB channels to a 6-digit hex color string.
+ * @param {number} r - Red channel, 0..1.
+ * @param {number} g - Green channel, 0..1.
+ * @param {number} b - Blue channel, 0..1.
+ * @returns {string} The `#rrggbb` hex color.
+ */
 export function rgbToHex(r, g, b) {
   const toHex = v => {
     const clamped = clamp(v, 0, 1);
@@ -23,14 +48,31 @@ export function rgbToHex(r, g, b) {
   };
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
+/**
+ * Apply the sRGB transfer function to convert a linear channel value to sRGB.
+ * @param {number} c - Linear channel value.
+ * @returns {number} The sRGB-encoded channel value.
+ */
 function linearToSrgb(c) {
   if (c <= 0.0031308) return c * 12.92;
   return 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
 }
+/**
+ * Apply the inverse sRGB transfer function to convert an sRGB channel value to linear.
+ * @param {number} c - sRGB-encoded channel value.
+ * @returns {number} The linear channel value.
+ */
 function srgbToLinear(c) {
   if (c <= 0.04045) return c / 12.92;
   return Math.pow((c + 0.055) / 1.055, 2.4);
 }
+/**
+ * Convert normalized sRGB to OKLCH (lightness, chroma, hue).
+ * @param {number} r - Red channel, 0..1.
+ * @param {number} g - Green channel, 0..1.
+ * @param {number} b - Blue channel, 0..1.
+ * @returns {Object} Object with `l`, `c`, and `h` (hue in degrees).
+ */
 export function rgbToOklch(r, g, b) {
   const lr = srgbToLinear(r);
   const lg = srgbToLinear(g);
@@ -53,6 +95,11 @@ export function rgbToOklch(r, g, b) {
     h: H
   };
 }
+/**
+ * Convert an OKLCH color to normalized sRGB (channels may fall outside 0..1 if out of gamut).
+ * @param {Object} oklch - Object with `l`, `c`, and `h` (hue in degrees).
+ * @returns {Object} Object with `r`, `g`, `b` in the 0..1 range.
+ */
 export function oklchToRgb(oklch) {
   const {
     l: L,
@@ -76,6 +123,11 @@ export function oklchToRgb(oklch) {
     b: linearToSrgb(lb)
   };
 }
+/**
+ * Convert a hex color string to OKLCH.
+ * @param {string} hex - The hex color string.
+ * @returns {Object} Object with `l`, `c`, and `h` (hue in degrees).
+ */
 export function hexToOklch(hex) {
   const {
     r,
@@ -84,6 +136,12 @@ export function hexToOklch(hex) {
   } = hexToRgb(hex);
   return rgbToOklch(r, g, b);
 }
+/**
+ * Fit an OKLCH color into the sRGB gamut by clamping lightness/chroma/hue and, if still
+ * out of gamut, progressively reducing chroma until it converts to valid sRGB.
+ * @param {Object} oklch - Object with `l`, `c`, and `h` (hue in degrees).
+ * @returns {Object} An in-gamut OKLCH color.
+ */
 export function fitOklch(oklch) {
   const base = {
     l: clamp(oklch.l, 0, 1),
@@ -111,6 +169,11 @@ export function fitOklch(oklch) {
     c: 0
   };
 }
+/**
+ * Convert an OKLCH color to a hex string, fitting it into the sRGB gamut first.
+ * @param {Object} oklch - Object with `l`, `c`, and `h` (hue in degrees).
+ * @returns {string} The `#rrggbb` hex color.
+ */
 export function oklchToHex(oklch) {
   const {
     r,
@@ -119,6 +182,12 @@ export function oklchToHex(oklch) {
   } = oklchToRgb(fitOklch(oklch));
   return rgbToHex(r, g, b);
 }
+/**
+ * Generate a 12-step chromatic color scale from a seed color, tuned for light or dark mode.
+ * @param {string} seed - The seed hex color.
+ * @param {boolean} isDark - Whether to generate the dark-mode scale.
+ * @returns {Array} Array of 12 hex color strings, lightest-to-darkest ordering per mode.
+ */
 export function generateScale(seed, isDark) {
   const base = hexToOklch(seed);
   const scale = [];
@@ -133,6 +202,14 @@ export function generateScale(seed, isDark) {
   }
   return scale;
 }
+/**
+ * Generate a 12-step neutral (low-chroma) color scale from a seed, tuned for light or dark mode.
+ * When `ink` is provided, the scale is produced by mixing a derived background toward the ink color.
+ * @param {string} seed - The seed hex color.
+ * @param {boolean} isDark - Whether to generate the dark-mode scale.
+ * @param {string} ink - Optional ink hex color; when set, uses a background-to-ink mix strategy.
+ * @returns {Array} Array of 12 hex color strings.
+ */
 export function generateNeutralScale(seed, isDark, ink) {
   if (ink) {
     const base = hexToOklch(seed);
@@ -163,6 +240,13 @@ export function generateNeutralScale(seed, isDark, ink) {
   }
   return scale;
 }
+/**
+ * Flatten a color scale onto a solid background using per-step alpha values, producing
+ * opaque hex equivalents of translucent overlays.
+ * @param {Array} scale - Array of 12 hex color strings.
+ * @param {boolean} isDark - Whether to use dark-mode alphas and a black (vs white) backdrop.
+ * @returns {Array} Array of 12 opaque hex color strings.
+ */
 export function generateAlphaScale(scale, isDark) {
   const alphas = isDark ? [0.02, 0.04, 0.08, 0.12, 0.16, 0.2, 0.26, 0.36, 0.44, 0.52, 0.76, 0.96] : [0.01, 0.03, 0.06, 0.09, 0.12, 0.15, 0.2, 0.28, 0.48, 0.56, 0.64, 0.88];
   return scale.map((hex, i) => {
@@ -179,6 +263,13 @@ export function generateAlphaScale(scale, isDark) {
     return rgbToHex(blendedR, blendedG, blendedB);
   });
 }
+/**
+ * Interpolate between two hex colors in OKLCH space, taking the shortest hue path.
+ * @param {string} color1 - Start hex color (amount 0).
+ * @param {string} color2 - End hex color (amount 1).
+ * @param {number} amount - Interpolation factor in 0..1.
+ * @returns {string} The mixed hex color.
+ */
 export function mixColors(color1, color2, amount) {
   const c1 = hexToOklch(color1);
   const c2 = hexToOklch(color2);
@@ -189,6 +280,12 @@ export function mixColors(color1, color2, amount) {
     h: c1.h + delta * amount
   });
 }
+/**
+ * Shift a hex color in OKLCH space by adding to lightness/hue and multiplying chroma.
+ * @param {string} color - The base hex color.
+ * @param {Object} value - Adjustment record: `l` (lightness delta), `c` (chroma factor), `h` (hue delta).
+ * @returns {string} The shifted hex color.
+ */
 export function shift(color, value) {
   const base = hexToOklch(color);
   return oklchToHex({
@@ -197,11 +294,24 @@ export function shift(color, value) {
     h: base.h + (value.h ?? 0)
   });
 }
+/**
+ * Alpha-composite a foreground hex color over a background hex color in linear-free RGB.
+ * @param {string} color - Foreground hex color.
+ * @param {string} background - Background hex color.
+ * @param {number} alpha - Foreground opacity in 0..1.
+ * @returns {string} The blended hex color.
+ */
 export function blend(color, background, alpha) {
   const fg = hexToRgb(color);
   const bg = hexToRgb(background);
   return rgbToHex(fg.r * alpha + bg.r * (1 - alpha), fg.g * alpha + bg.g * (1 - alpha), fg.b * alpha + bg.b * (1 - alpha));
 }
+/**
+ * Increase the OKLCH lightness of a hex color by a given amount.
+ * @param {string} color - The base hex color.
+ * @param {number} amount - Lightness increase in 0..1.
+ * @returns {string} The lightened hex color.
+ */
 export function lighten(color, amount) {
   const oklch = hexToOklch(color);
   return oklchToHex({
@@ -209,6 +319,12 @@ export function lighten(color, amount) {
     l: clamp(oklch.l + amount, 0, 1)
   });
 }
+/**
+ * Decrease the OKLCH lightness of a hex color by a given amount.
+ * @param {string} color - The base hex color.
+ * @param {number} amount - Lightness decrease in 0..1.
+ * @returns {string} The darkened hex color.
+ */
 export function darken(color, amount) {
   const oklch = hexToOklch(color);
   return oklchToHex({
@@ -216,6 +332,12 @@ export function darken(color, amount) {
     l: clamp(oklch.l - amount, 0, 1)
   });
 }
+/**
+ * Convert a hex color and alpha into an `rgba(...)` CSS color string.
+ * @param {string} color - The hex color.
+ * @param {number} alpha - Opacity in 0..1.
+ * @returns {string} An `rgba(r, g, b, a)` string.
+ */
 export function withAlpha(color, alpha) {
   const {
     r,

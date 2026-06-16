@@ -1,3 +1,4 @@
+/** @file Tabs: a vanilla reimplementation of @kobalte/core's tabs compound component (roving-focus tablist, single selection, aria wiring, panels hidden while unselected). */
 // Vanilla reimplementation of @kobalte/core's Tabs behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -25,18 +26,36 @@ import { insert } from "../../../lib/reactivity.js";
 // trigger's inner button carries [data-selected] so tabs.css's
 // `:has([data-selected])` rules style the wrapper, exactly like the original.
 
+/**
+ * Build a detached DOM element from a static HTML string.
+ * @param {string} html - Static markup (trimmed before parsing).
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Toggle each whitespace-separated class token in a key on/off.
+ * @param {HTMLElement} el - Target element.
+ * @param {string} key - One or more space-separated class names.
+ * @param {boolean} value - True to add the classes, false to remove them.
+ * @returns {void}
+ */
 function toggleClassKey(el, key, value) {
   for (const name of key.trim().split(/\s+/)) {
     if (name) el.classList.toggle(name, value);
   }
 }
 
+/**
+ * Create a function that diffs a classList map against the previously applied
+ * one, adding newly-enabled classes and removing dropped/disabled ones.
+ * @param {HTMLElement} el - Target element whose classes are managed.
+ * @returns {Function} A function that takes the next classList map and applies the diff.
+ */
 function makeClassListApplier(el) {
   const prev = {};
   return next => {
@@ -55,6 +74,13 @@ function makeClassListApplier(el) {
   };
 }
 
+/**
+ * Reactively apply class/className/classList props onto an element via a render
+ * effect.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} local - Local props containing class/className/classList.
+ * @returns {void}
+ */
 function applyClassProp(el, local) {
   const applyClasses = makeClassListApplier(el);
   createRenderEffect(() => {
@@ -63,6 +89,13 @@ function applyClassProp(el, local) {
   });
 }
 
+/**
+ * Append children to a parent node, handling arrays, DOM nodes, reactive
+ * accessor functions (tracked via insert()), and primitive text values.
+ * @param {Node} parent - Parent element to append into.
+ * @param {*} children - Child value(s): node, array, function accessor, or primitive.
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false || children === true) return;
   if (Array.isArray(children)) {
@@ -82,6 +115,15 @@ function appendChildren(parent, children) {
 
 const CONTROL_KEYS = new Set(["as", "ref", "class", "className", "classList", "children", "value", "variant", "orientation"]);
 
+/**
+ * Forward rest props onto an element: on* handlers added via addEventListener,
+ * ref invoked with the element, and remaining attributes reapplied in a render
+ * effect (removed when null/false). Keys in `handled` are skipped.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - Props to forward.
+ * @param {Set} handled - Set of prop keys to skip.
+ * @returns {void}
+ */
 function applyRest(el, rest, handled) {
   for (const key in rest) {
     if (handled.has(key)) continue;
@@ -100,6 +142,24 @@ function applyRest(el, rest, handled) {
   });
 }
 
+/**
+ * Tabs root: owns single-selection state (controlled via `value` or
+ * uncontrolled via `defaultValue`), delegated click/keydown handlers (roving
+ * focus with automatic activation), and a DOM-walking sync that sets aria/data
+ * attributes on every owned trigger and content panel.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Optional class name(s) for the root.
+ * @param {string} props.className - Optional alias for class.
+ * @param {Object} props.classList - Optional class-name map for the root.
+ * @param {string} props.variant - Visual variant ("normal" by default).
+ * @param {string} props.orientation - "horizontal" (default) or "vertical".
+ * @param {string} props.value - Controlled selected tab value.
+ * @param {string} props.defaultValue - Initial selected value when uncontrolled.
+ * @param {Function} props.onChange - Called with the new selected value (as a string).
+ * @param {*} props.children - Tabs list, triggers, and content panels.
+ * @param {Function} props.ref - Ref callback invoked with the root element.
+ * @returns {HTMLElement} The tabs root element.
+ */
 function TabsRoot(props) {
   const [local, others] = splitProps(props, [
     "class",
@@ -135,6 +195,12 @@ function TabsRoot(props) {
   const ownedTriggers = () =>
     [...root.querySelectorAll('[data-slot="tabs-trigger"]')].filter(ownedBy);
 
+  /**
+   * Select a tab value: updates uncontrolled state and highlight, and fires
+   * onChange when the selection actually changed.
+   * @param {string} next - The value to select.
+   * @returns {void}
+   */
   const select = next => {
     if (next == null) return;
     const changed = next !== untrack(selectedValue);
@@ -144,6 +210,13 @@ function TabsRoot(props) {
   };
 
   // DOM-walking sync: apply the selection to every owned trigger + content.
+  /**
+   * Walk every owned trigger and content panel and set their aria/data
+   * attributes (selected/highlighted/disabled/orientation, hidden panels) from
+   * the current selection, falling back to the first enabled trigger when the
+   * selected value matches none.
+   * @returns {void}
+   */
   const sync = () => {
     const value = selectedValue();
     const o = orientation();
@@ -270,6 +343,17 @@ function TabsRoot(props) {
   return root;
 }
 
+/**
+ * Tabs list: the role="tablist" container that holds the triggers; its
+ * orientation attributes are kept in sync by the root.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Optional class name(s).
+ * @param {string} props.className - Optional alias for class.
+ * @param {Object} props.classList - Optional class-name map.
+ * @param {*} props.children - Tab triggers.
+ * @param {Function} props.ref - Ref callback invoked with the list element.
+ * @returns {HTMLElement} The tablist element.
+ */
 function TabsList(props) {
   const [local, others] = splitProps(props, ["class", "className", "classList", "children", "ref"]);
   const el = template(`<div data-slot="tabs-list"></div>`);
@@ -287,6 +371,25 @@ function TabsList(props) {
   return el;
 }
 
+/**
+ * Tabs trigger: an outer wrapper (carrying data-value and an optional close
+ * button) around the inner role="tab" button that carries [data-selected].
+ * Supports middle-click "close tab" and an optional close-button slot.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Optional class name(s), folded onto the wrapper.
+ * @param {string} props.className - Optional alias for class.
+ * @param {Object} props.classList - Optional class-name map for the wrapper.
+ * @param {Object} props.classes - Optional slot classes (e.g. classes.button for the inner button).
+ * @param {*} props.children - Trigger label content.
+ * @param {string} props.value - This tab's value.
+ * @param {boolean} props.disabled - Disables the trigger.
+ * @param {*} props.closeButton - Optional close-button content (renders a close slot).
+ * @param {boolean} props.hideCloseButton - Hides the close button when true.
+ * @param {Function} props.onMiddleClick - Called on middle-click (close-tab gesture).
+ * @param {Function} props.onClick - Called when the inner button is clicked.
+ * @param {Function} props.ref - Ref callback invoked with the inner button.
+ * @returns {HTMLElement} The trigger wrapper element.
+ */
 function TabsTrigger(props) {
   const [local, others] = splitProps(props, [
     "class",
@@ -362,6 +465,20 @@ function TabsTrigger(props) {
   return wrapper;
 }
 
+/**
+ * Tabs content: a role="tabpanel" element associated with a trigger value;
+ * hidden by the root while unselected unless forceMount is set.
+ * @param {Object} props - Component props.
+ * @param {string} props.class - Optional class name(s).
+ * @param {string} props.className - Optional alias for class.
+ * @param {Object} props.classList - Optional class-name map.
+ * @param {*} props.children - Panel content.
+ * @param {string} props.value - The trigger value this panel belongs to.
+ * @param {boolean} props.forceMount - Keeps the panel mounted (not hidden) when unselected.
+ * @param {string} props.id - Optional explicit element id.
+ * @param {Function} props.ref - Ref callback invoked with the panel element.
+ * @returns {HTMLElement} The tabpanel element.
+ */
 function TabsContent(props) {
   const [local, others] = splitProps(props, ["class", "className", "classList", "children", "value", "forceMount", "id", "ref"]);
   const value = local.value;
@@ -379,6 +496,12 @@ function TabsContent(props) {
   return el;
 }
 
+/**
+ * Tabs section title: a non-interactive label slot placed within the tablist.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Title content (may be reactive).
+ * @returns {HTMLElement} The section-title element.
+ */
 const TabsSectionTitle = props => {
   const el = template(`<div data-slot="tabs-section-title"></div>`);
   // Children may be reactive (components, accessors), so keep them live.
@@ -386,6 +509,10 @@ const TabsSectionTitle = props => {
   return el;
 };
 
+/**
+ * The Tabs compound component: TabsRoot with List, Trigger, Content, and
+ * SectionTitle attached as static members.
+ */
 export const Tabs = Object.assign(TabsRoot, {
   List: TabsList,
   Trigger: TabsTrigger,

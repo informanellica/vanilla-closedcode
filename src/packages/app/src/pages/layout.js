@@ -1,3 +1,4 @@
+/** @file Top-level app shell layout: sidebar (projects, workspaces, sessions), drag-and-drop reordering, deep-link handling, update/notification polling, command palette registration, and the resizable main panel. */
 // insert() from solid-js/web is the established exception for reactive /
 // component-valued children (Show branches, forwarded router children,
 // portal-backed components): Solid keeps reconciling the accessors instead of
@@ -53,6 +54,11 @@ import { SidebarContent } from "./layout/sidebar-shell.js";
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Static markup only — translated or user-provided strings are always
 // assigned via textContent/text nodes, never interpolated into the markup.
+/**
+ * Build a detached element from a compact, static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -62,10 +68,25 @@ function template(html) {
 // Mirror solid-js/web classList(): change-guarded class toggling against the
 // previous map; a key may hold several space-separated class names and empty
 // keys are skipped.
+/**
+ * Toggle every space-separated class name in a classList key on a node.
+ * @param {Element} node - Target element.
+ * @param {string} key - One or more space-separated class names.
+ * @param {boolean} value - Whether the classes should be present.
+ * @returns {void}
+ */
 function toggleClassKey(node, key, value) {
   const names = key.trim().split(/\s+/);
   for (let i = 0; i < names.length; i++) node.classList.toggle(names[i], value);
 }
+/**
+ * Apply a classList-style map to a node, diffing against the previous map so
+ * only changed classes are toggled (mirrors solid-js/web classList()).
+ * @param {Element} node - Target element.
+ * @param {Object} value - Map of class key to boolean (truthy adds the classes).
+ * @param {Object} prev - Previously applied map, mutated and returned for the next diff.
+ * @returns {Object} The updated previous-state map.
+ */
 function applyClassList(node, value, prev = {}) {
   const classKeys = Object.keys(value || {});
   const prevKeys = Object.keys(prev);
@@ -84,6 +105,18 @@ function applyClassList(node, value, prev = {}) {
   }
   return prev;
 }
+/**
+ * Root application layout component. Owns the persisted layout page state and
+ * renders the full app shell: the projects/workspaces/sessions sidebar with
+ * drag-and-drop reordering and inline rename, the resizable main content panel,
+ * the toolbar, and the debug/status bar. It also registers the layout command
+ * palette entries, polls for updates, surfaces SDK question/permission
+ * notifications, handles `closedcode://` deep links, and manages session and
+ * project navigation (including auto-selecting a project on first load).
+ * @param {Object} props - Component props.
+ * @param {*} props.children - The routed page content rendered inside the main panel.
+ * @returns {Element} The layout shell root element.
+ */
 export default function Layout(props) {
   const [store, setStore,, ready] = persisted(Persist.global("layout.page", ["layout.page.v1"]), createStore({
     lastProjectSession: {},

@@ -1,15 +1,36 @@
+/** @file Server list row component: renders a connection's name, optional version/badge slot, optional credentials, and a children slot, with truncation-aware tooltips; plus a small server health indicator dot. */
 import { Tooltip } from "@/bs/tooltip.js";
 import { createResizeObserver } from "../../lib/primitives/resize-observer.js";
 import { children, createComponent, createEffect, createMemo, createRenderEffect, createSignal, onMount } from "../../lib/reactivity.js";
 import { useLanguage } from "@/context/language.js";
 import { serverName } from "@/context/server.js";
 
+/**
+ * Row showing a server connection: its (possibly truncated) name, a badge or version slot, optional HTTP
+ * credentials, and arbitrary children. Wraps in a tooltip showing the full name/version when the text is
+ * truncated or a custom display name is set.
+ * @param {Object} props - Component props.
+ * @param {Object} props.conn - The connection (with `type`, `http`, `displayName`).
+ * @param {Object} props.status - Optional connection status (with `version`).
+ * @param {*} props.badge - Optional badge node rendered in place of the version.
+ * @param {boolean} props.showCredentials - Whether to show HTTP username/password (for http connections).
+ * @param {boolean} props.dimmed - Whether to dim the row.
+ * @param {string} props.class - Class applied to the root element.
+ * @param {string} props.nameClass - Class applied to the name span.
+ * @param {string} props.versionClass - Class applied to the version span.
+ * @param {*} props.children - Extra content appended after the column.
+ * @returns {*} The tooltip-wrapped row node.
+ */
 export function ServerRow(props) {
   const language = useLanguage();
   const [truncated, setTruncated] = createSignal(false);
   let nameRef;
   let versionRef;
   const name = createMemo(() => serverName(props.conn));
+  /**
+   * Measure whether the name and/or version text overflow their containers and update the truncated signal.
+   * @returns {void}
+   */
   const check = () => {
     const nameTruncated = nameRef ? nameRef.scrollWidth > nameRef.clientWidth : false;
     const versionTruncated = versionRef ? versionRef.scrollWidth > versionRef.clientWidth : false;
@@ -30,6 +51,10 @@ export function ServerRow(props) {
   // Tooltip content: full server name + optional version. Rebuilt on each call
   // (the Tooltip reads `value` lazily when it opens and clones the node), so
   // here we just snapshot the current signal values into a fresh subtree.
+  /**
+   * Build a fresh tooltip subtree snapshotting the full server name and, when present, its version.
+   * @returns {HTMLElement} The tooltip content element.
+   */
   const tooltipValue = () => {
     const root = document.createElement("span");
     root.className = "d-flex align-items-center gap-2";
@@ -281,6 +306,12 @@ export function ServerRow(props) {
 // Replace the node currently rendered at `slot` with `node` (or nothing).
 // `slot` is a marker text node that stays in the DOM; the rendered node is
 // tracked on slot._node.
+/**
+ * Replace the node currently rendered at a marker slot with a new node (or remove it).
+ * @param {Node} slot - A marker text node that persists in the DOM; the rendered node is tracked on `slot._node`.
+ * @param {Node} node - The node to render, or null/false to render nothing.
+ * @returns {void}
+ */
 function replaceSlot(slot, node) {
   const parent = slot.parentNode;
   if (slot._node && slot._node.parentNode === parent) slot._node.remove();
@@ -292,6 +323,15 @@ function replaceSlot(slot, node) {
 
 // Insert/replace a (possibly array) children value before `marker`, returning
 // the new node list so the next run can clean up exactly what it inserted.
+/**
+ * Insert a children value (node, array, primitive, or nesting thereof) before a marker, removing the
+ * previously inserted nodes first.
+ * @param {Node} parent - The container to insert into.
+ * @param {Node} marker - The marker node before which children are inserted.
+ * @param {Array} prev - The nodes inserted by the previous run, to be removed.
+ * @param {*} value - The children value to render.
+ * @returns {Array} The list of nodes inserted this run.
+ */
 function insertChildren(parent, marker, prev, value) {
   for (const node of prev) {
     if (node.parentNode === parent) node.remove();
@@ -316,6 +356,12 @@ function insertChildren(parent, marker, prev, value) {
   return next;
 }
 
+/**
+ * Small colored dot indicating a server's health: green when healthy, red when unhealthy, grey when unknown.
+ * @param {Object} props - Component props.
+ * @param {Object} props.health - Optional health info (with `healthy`); undefined renders the unknown state.
+ * @returns {HTMLElement} The indicator dot element.
+ */
 export function ServerHealthIndicator(props) {
   // <div> whose classList toggles a health-colored dot. Mirrors the compiled
   // the compiled classList: base class always on, color depends on health.

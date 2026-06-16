@@ -1,3 +1,4 @@
+/** @file Conversation message rendering: user/assistant messages, the part type registry (text, reasoning, compaction), and the built-in tool renderers (read, bash, edit, write, apply_patch, task, etc.). */
 // Dynamic is a runtime component, not a compiled template helper (it is only
 // exported from solid-js/web). insert() is the established exception for
 // reactive/component-valued children (presence-gated Collapsible and
@@ -38,6 +39,11 @@ import { attached, inline, kind } from "./message-file.js";
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated or
 // user-provided strings are always assigned via textContent/text nodes.
+/**
+ * Build a detached element from a compact, static HTML string.
+ * @param {string} html - The markup (single root element).
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -45,6 +51,13 @@ function template(html) {
 }
 
 // Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
+/**
+ * Set an attribute, removing it when the value is nullish (solid-js/web setAttribute semantics).
+ * @param {Element} el - The target element.
+ * @param {string} name - The attribute name.
+ * @param {*} value - The attribute value; null/undefined removes the attribute.
+ * @returns {void}
+ */
 function setAttr(el, name, value) {
   if (value == null) el.removeAttribute(name);
   else el.setAttribute(name, value);
@@ -52,6 +65,13 @@ function setAttr(el, name, value) {
 
 // Mirror solid-js/web style(): diff an object/string style value against the
 // previous one, removing dropped keys and applying changed ones.
+/**
+ * Apply a style value (string cssText or property object) to an element, diffing against the previous.
+ * @param {HTMLElement} el - The target element.
+ * @param {*} value - A cssText string, a property object, or nullish to clear.
+ * @param {*} prev - The previously applied style value, used to remove dropped keys.
+ * @returns {*} The applied value, to carry as the next prev.
+ */
 function applyStyle(el, value, prev) {
   if (!value) {
     if (prev) el.removeAttribute("style");
@@ -80,6 +100,14 @@ function applyStyle(el, value, prev) {
   }
   return prev;
 }
+/**
+ * Inline label for a shell command's description that animates its width and value into view
+ * (spring width grow + opacity/blur fade) when first revealed.
+ * @param {Object} props - Component props.
+ * @param {string} props.text - The submessage text to display.
+ * @param {boolean} props.animate - When true, run the reveal animations on mount.
+ * @returns {Node} The submessage span element.
+ */
 function ShellSubmessage(props) {
   let widthRef;
   let valueRef;
@@ -141,11 +169,23 @@ function ShellSubmessage(props) {
   });
   return root;
 }
+/**
+ * Select up to three error-severity diagnostics for a given file path.
+ * @param {Object} diagnosticsByFile - Map of file path to an array of diagnostics.
+ * @param {string} filePath - The file path to look up.
+ * @returns {Array} Up to three diagnostics with severity 1 (errors).
+ */
 function getDiagnostics(diagnosticsByFile, filePath) {
   if (!diagnosticsByFile || !filePath) return [];
   const diagnostics = diagnosticsByFile[filePath] ?? [];
   return diagnostics.filter(d => d.severity === 1).slice(0, 3);
 }
+/**
+ * Render a list of error diagnostics (label, "[line:character]" location, and message) for an edit/write tool.
+ * @param {Object} props - Component props.
+ * @param {Array} props.diagnostics - The diagnostics to display; nothing renders when empty.
+ * @returns {Node} A Show component wrapping the diagnostics list.
+ */
 function DiagnosticsDisplay(props) {
   const i18n = useI18n();
   return createComponent(Show, {
@@ -187,15 +227,28 @@ function DiagnosticsDisplay(props) {
     }
   });
 }
+/** Registry mapping a message-part type ("text", "tool", "reasoning", ...) to its renderer component. */
 export const PART_MAPPING = {};
 const TEXT_RENDER_PACE_MS = 24;
 const TEXT_RENDER_SNAP = /[\s.,!?;:)\]]/;
+/**
+ * Compute how many characters to advance per paced-reveal tick, scaling with remaining length.
+ * @param {number} size - The number of characters remaining to reveal.
+ * @returns {number} The step size (characters to advance this tick).
+ */
 function step(size) {
   if (size <= 12) return 2;
   if (size <= 48) return 4;
   if (size <= 96) return 8;
   return Math.min(24, Math.ceil(size / 8));
 }
+/**
+ * Compute the next reveal boundary from a start offset, snapping forward to the end of a word/punctuation
+ * within a small look-ahead window so reveals land on natural breaks.
+ * @param {string} text - The full text being revealed.
+ * @param {number} start - The current revealed length (offset to advance from).
+ * @returns {number} The next reveal end offset.
+ */
 function next(text, start) {
   const end = Math.min(text.length, start + step(text.length - start));
   const max = Math.min(text.length, end + 8);
@@ -204,6 +257,13 @@ function next(text, start) {
   }
   return end;
 }
+/**
+ * Create a derived signal that reveals an append-only string gradually while "live" (streaming),
+ * and snaps to the full value immediately otherwise (or when the text changes non-append-only).
+ * @param {Function} getValue - Accessor returning the current full text.
+ * @param {Function} live - Accessor returning whether to pace the reveal (e.g. streaming).
+ * @returns {Function} An accessor returning the currently revealed text.
+ */
 function createPacedValue(getValue, live) {
   const [value, setValue] = createSignal(getValue());
   let shown = getValue();
@@ -252,6 +312,14 @@ function createPacedValue(getValue, live) {
   });
   return value;
 }
+/**
+ * Markdown renderer whose text is revealed gradually while streaming (via createPacedValue).
+ * @param {Object} props - Component props.
+ * @param {string} props.text - The full markdown text.
+ * @param {string} props.cacheKey - Cache key forwarded to the Markdown renderer.
+ * @param {boolean} props.streaming - Whether the text is still streaming (enables paced reveal).
+ * @returns {Node} A Show component wrapping the Markdown renderer.
+ */
 function PacedMarkdown(props) {
   const value = createPacedValue(() => props.text, () => props.streaming);
   return createComponent(Show, {
@@ -273,6 +341,13 @@ function PacedMarkdown(props) {
     }
   });
 }
+/**
+ * Make a path relative to the project directory (handling both / and \ separators); returns the
+ * original path when it lies outside the directory, and "" when it equals the directory.
+ * @param {string} path - The absolute path to relativize.
+ * @param {string} directory - The project directory prefix.
+ * @returns {string} The path relative to directory, or the original path.
+ */
 function relativizeProjectPath(path, directory) {
   if (!path) return "";
   if (!directory) return path;
@@ -284,10 +359,21 @@ function relativizeProjectPath(path, directory) {
   if (!path.startsWith(prefix)) return path;
   return path.slice(directory.length);
 }
+/**
+ * Get the directory portion of a path, relativized to the current project directory (reads useData).
+ * @param {string} path - The file path.
+ * @returns {string} The directory of the path, relative to the project directory.
+ */
 function getDirectory(path) {
   const data = useData();
   return relativizeProjectPath(_getDirectory(path), data.directory);
 }
+/**
+ * Localized title for a task/agent tool, with a generic default when no type is given.
+ * @param {Object} i18n - The i18n context (provides t()).
+ * @param {string} type - The agent type label, or falsy for the default title.
+ * @returns {string} The localized agent title.
+ */
 function agentTitle(i18n, type) {
   if (!type) return i18n.t("ui.tool.agent.default");
   return i18n.t("ui.tool.agent", {
@@ -301,11 +387,23 @@ const agentTones = {
   plan: "var(--icon-agent-plan-base)"
 };
 const agentPalette = ["var(--icon-agent-ask-base)", "var(--icon-agent-build-base)", "var(--icon-agent-docs-base)", "var(--icon-agent-plan-base)", "var(--syntax-info)", "var(--syntax-success)", "var(--syntax-warning)", "var(--syntax-property)", "var(--syntax-constant)", "var(--text-diff-add-base)", "var(--text-diff-delete-base)", "var(--icon-warning-base)"];
+/**
+ * Deterministically pick a palette color for an agent name by hashing the name.
+ * @param {string} name - The agent name/key.
+ * @returns {string} A CSS color value from agentPalette.
+ */
 function tone(name) {
   let hash = 0;
   for (const char of name) hash = hash * 31 + char.charCodeAt(0) >>> 0;
   return agentPalette[hash % agentPalette.length];
 }
+/**
+ * Resolve an agent's display name and color from a raw type string, preferring a matching entry in
+ * the provided agent list and otherwise capitalizing the raw value and deriving a tone color.
+ * @param {string} raw - The raw subagent type string.
+ * @param {Array} list - Known agents (each with name and optional color).
+ * @returns {Object} An object with name and color (empty object when raw is empty).
+ */
 function taskAgent(raw, list) {
   if (typeof raw !== "string" || !raw) return {};
   const key = raw.toLowerCase();
@@ -315,6 +413,12 @@ function taskAgent(raw, list) {
     color: item?.color ?? agentTones[key] ?? tone(key)
   };
 }
+/**
+ * Resolve the display info (icon, localized title, optional subtitle) for a tool given its input.
+ * @param {string} tool - The tool name (e.g. "read", "bash", "grep", "task").
+ * @param {Object} input - The tool's input arguments (used to derive the subtitle).
+ * @returns {Object} An object with icon, title and optional subtitle.
+ */
 export function getToolInfo(tool, input = {}) {
   const i18n = useI18n();
   switch (tool) {
@@ -409,6 +513,11 @@ export function getToolInfo(tool, input = {}) {
       };
   }
 }
+/**
+ * Extract unique http(s) URLs from text, trimming trailing punctuation.
+ * @param {string} text - The text to scan.
+ * @returns {Array} The de-duplicated list of URLs in order of first appearance.
+ */
 function urls(text) {
   if (!text) return [];
   const seen = new Set();
@@ -418,6 +527,14 @@ function urls(text) {
     return true;
   });
 }
+/**
+ * Build a link to a (sub)session, preferring an explicit href resolver and otherwise deriving the
+ * URL from the current path's "/session" segment.
+ * @param {string} id - The target session id.
+ * @param {string} path - The current route pathname.
+ * @param {Function} href - Optional resolver mapping a session id to a URL.
+ * @returns {string} The session URL, or undefined when it cannot be built.
+ */
 function sessionLink(id, path, href) {
   if (!id) return;
   const direct = href?.(id);
@@ -426,9 +543,23 @@ function sessionLink(id, path, href) {
   if (idx === -1) return;
   return `${path.slice(0, idx)}/session/${id}`;
 }
+/**
+ * Extract the current session id from a route pathname.
+ * @param {string} path - The route pathname.
+ * @returns {string} The session id, or undefined when not in a session route.
+ */
 function currentSession(path) {
   return path.match(/\/session\/([^/?#]+)/)?.[1];
 }
+/**
+ * Find the most recent child session spawned by a task tool under the current session, matching by
+ * description prefix and "@agent" mention.
+ * @param {Object} input - The task tool input (description, subagent_type).
+ * @param {string} path - The current route pathname (to find the parent session).
+ * @param {Array} sessions - Known sessions to search.
+ * @param {Array} agents - Known agents (to resolve the agent name).
+ * @returns {string} The matching child session id, or undefined.
+ */
 function taskSession(input, path, sessions, agents) {
   const parentID = currentSession(path);
   if (!parentID) return;
@@ -438,19 +569,43 @@ function taskSession(input, path, sessions, agents) {
 }
 const CONTEXT_GROUP_TOOLS = new Set(["read", "glob", "grep", "list"]);
 const HIDDEN_TOOLS = new Set(["todowrite"]);
+/**
+ * Return the value if it is an array, otherwise a fallback.
+ * @param {*} value - The candidate value.
+ * @param {Array} fallback - The fallback array.
+ * @returns {Array} The array value or the fallback.
+ */
 function list(value, fallback) {
   if (Array.isArray(value)) return value;
   return fallback;
 }
+/**
+ * Shallow per-element equality for two arrays.
+ * @param {Array} a - First array.
+ * @param {Array} b - Second array.
+ * @returns {boolean} True when both arrays have the same length and identical elements by reference.
+ */
 function same(a, b) {
   if (a === b) return true;
   if (!a || !b) return false;
   if (a.length !== b.length) return false;
   return a.every((x, i) => x === b[i]);
 }
+/**
+ * Whether two part references point at the same message/part.
+ * @param {Object} a - First reference ({ messageID, partID }).
+ * @param {Object} b - Second reference.
+ * @returns {boolean} True when messageID and partID both match.
+ */
 function sameRef(a, b) {
   return a.messageID === b.messageID && a.partID === b.partID;
 }
+/**
+ * Whether two render groups are equivalent (same key/type and same underlying part refs).
+ * @param {Object} a - First group ("part" or "context").
+ * @param {Object} b - Second group.
+ * @returns {boolean} True when the groups are equivalent.
+ */
 function sameGroup(a, b) {
   if (a === b) return true;
   if (a.key !== b.key) return false;
@@ -463,12 +618,24 @@ function sameGroup(a, b) {
   if (a.refs.length !== b.refs.length) return false;
   return a.refs.every((ref, i) => sameRef(ref, b.refs[i]));
 }
+/**
+ * Per-element equality for two arrays of render groups (used as a memo equality function).
+ * @param {Array} a - First group list.
+ * @param {Array} b - Second group list.
+ * @returns {boolean} True when the lists are element-wise equivalent.
+ */
 function sameGroups(a, b) {
   if (a === b) return true;
   if (!a || !b) return false;
   if (a.length !== b.length) return false;
   return a.every((item, i) => sameGroup(item, b[i]));
 }
+/**
+ * Group a flat list of parts into render entries, coalescing runs of context-gathering tools
+ * (read/glob/grep/list) into a single "context" group and emitting other parts as "part" groups.
+ * @param {Array} parts - Items of the form { messageID, part }.
+ * @returns {Array} The ordered list of render groups.
+ */
 function groupParts(parts) {
   const result = [];
   let start = -1;
@@ -508,9 +675,21 @@ function groupParts(parts) {
   flush(parts.length - 1);
   return result;
 }
+/**
+ * Index items by their id into a Map.
+ * @param {Array} items - Items each having an id.
+ * @returns {Map} A Map from id to item.
+ */
 function index(items) {
   return new Map(items.map(item => [item.id, item]));
 }
+/**
+ * Decide whether a message part should be rendered (hidden tools, pending/running questions, empty
+ * text/reasoning, and unmapped part types are excluded).
+ * @param {Object} part - The message part.
+ * @param {boolean} showReasoningSummaries - Whether reasoning parts are shown.
+ * @returns {boolean} True when the part should render.
+ */
 function renderable(part, showReasoningSummaries = true) {
   if (part.type === "tool") {
     if (HIDDEN_TOOLS.has(part.tool)) return false;
@@ -521,14 +700,41 @@ function renderable(part, showReasoningSummaries = true) {
   if (part.type === "reasoning") return showReasoningSummaries && !!part.text?.trim();
   return !!PART_MAPPING[part.type];
 }
+/**
+ * Decide whether a tool's accordion should default to open, given the per-category defaults.
+ * @param {string} tool - The tool name.
+ * @param {boolean} shell - Default-open for shell (bash) tools.
+ * @param {boolean} edit - Default-open for edit/write/apply_patch tools.
+ * @returns {boolean} The default-open flag, or undefined for tools with no rule.
+ */
 function toolDefaultOpen(tool, shell = false, edit = false) {
   if (tool === "bash") return shell;
   if (tool === "edit" || tool === "write" || tool === "apply_patch") return edit;
 }
+/**
+ * Default-open flag for a part, delegating to toolDefaultOpen for tool parts.
+ * @param {Object} part - The message part.
+ * @param {boolean} shell - Default-open for shell tools.
+ * @param {boolean} edit - Default-open for edit/write/apply_patch tools.
+ * @returns {boolean} The default-open flag, or undefined for non-tool parts.
+ */
 function partDefaultOpen(part, shell = false, edit = false) {
   if (part.type !== "tool") return;
   return toolDefaultOpen(part.tool, shell, edit);
 }
+/**
+ * Render an assistant message's parts as a reactive list of grouped entries (context tool groups and
+ * individual parts), pulling live parts from the data store.
+ * @param {Object} props - Component props.
+ * @param {Array} props.messages - The assistant messages whose parts are rendered.
+ * @param {boolean} props.showReasoningSummaries - Whether reasoning parts are shown.
+ * @param {boolean} props.working - Whether the turn is still in progress (drives the busy indicator).
+ * @param {*} props.showAssistantCopyPartID - Controls which text part shows the copy affordance.
+ * @param {number} props.turnDurationMs - Turn duration in ms, forwarded to parts.
+ * @param {boolean} props.shellToolDefaultOpen - Default-open for shell tools.
+ * @param {boolean} props.editToolDefaultOpen - Default-open for edit/write/apply_patch tools.
+ * @returns {Node} An Index component rendering the grouped parts.
+ */
 export function AssistantParts(props) {
   const data = useData();
   const emptyParts = [];
@@ -632,9 +838,19 @@ export function AssistantParts(props) {
     }
   });
 }
+/**
+ * Whether a part is a context-gathering tool (read/glob/grep/list) eligible for grouping.
+ * @param {Object} part - The message part.
+ * @returns {boolean} True for context-group tools.
+ */
 function isContextGroupTool(part) {
   return part.type === "tool" && CONTEXT_GROUP_TOOLS.has(part.tool);
 }
+/**
+ * Derive a concise detail/subtitle string for a context tool from its info, error, title, or input.
+ * @param {Object} part - The tool part.
+ * @returns {string} The detail string, or undefined.
+ */
 function contextToolDetail(part) {
   const info = getToolInfo(part.tool, part.state.input ?? {});
   if (info.subtitle) return info.subtitle;
@@ -644,6 +860,13 @@ function contextToolDetail(part) {
   if (typeof description === "string") return description;
   return undefined;
 }
+/**
+ * Build the trigger display (title, subtitle, args) for a context tool row, with per-tool formatting
+ * of read/list/glob/grep arguments.
+ * @param {Object} part - The tool part.
+ * @param {Object} i18n - The i18n context (provides t()).
+ * @returns {Object} An object with title, subtitle and optional args.
+ */
 function contextToolTrigger(part, i18n) {
   const input = part.state.input ?? {};
   const path = typeof input.path === "string" ? input.path : "/";
@@ -697,6 +920,11 @@ function contextToolTrigger(part, i18n) {
       }
   }
 }
+/**
+ * Count context tools by category (read, search = glob+grep, list) for the group summary.
+ * @param {Array} parts - The context tool parts.
+ * @returns {Object} An object with read, search and list counts.
+ */
 function contextToolSummary(parts) {
   const read = parts.filter(part => part.tool === "read").length;
   const search = parts.filter(part => part.tool === "glob" || part.tool === "grep").length;
@@ -707,6 +935,12 @@ function contextToolSummary(parts) {
     list
   };
 }
+/**
+ * Render the unique links found in a web-search tool's output as a list of external anchors.
+ * @param {Object} props - Component props.
+ * @param {string} props.output - The tool output text to scan for URLs.
+ * @returns {Node} A Show component wrapping the links list (nothing when no links).
+ */
 function ExaOutput(props) {
   const links = createMemo(() => urls(props.output));
   return createComponent(Show, {
@@ -734,9 +968,25 @@ function ExaOutput(props) {
     }
   });
 }
+/**
+ * Register a renderer component for a given message-part type in PART_MAPPING.
+ * @param {string} type - The message-part type key.
+ * @param {Function} component - The component used to render parts of that type.
+ * @returns {void}
+ */
 export function registerPartComponent(type, component) {
   PART_MAPPING[type] = component;
 }
+/**
+ * Render a single message, dispatching to the user or assistant message display by role.
+ * @param {Object} props - Component props.
+ * @param {Object} props.message - The message (with role "user" or "assistant").
+ * @param {Array} props.parts - The message's parts.
+ * @param {Object} props.actions - Available message actions (e.g. revert).
+ * @param {*} props.showAssistantCopyPartID - Controls which assistant text part shows the copy affordance.
+ * @param {boolean} props.showReasoningSummaries - Whether reasoning parts are shown.
+ * @returns {Array} The user and assistant display branches (one renders).
+ */
 export function Message(props) {
   return [createComponent(Show, {
     get when() {
@@ -777,6 +1027,16 @@ export function Message(props) {
     }
   })];
 }
+/**
+ * Render an assistant message's parts (from a provided parts array) as grouped context tool groups
+ * and individual parts.
+ * @param {Object} props - Component props.
+ * @param {Object} props.message - The assistant message.
+ * @param {Array} props.parts - The message's parts.
+ * @param {*} props.showAssistantCopyPartID - Controls which text part shows the copy affordance.
+ * @param {boolean} props.showReasoningSummaries - Whether reasoning parts are shown.
+ * @returns {Node} An Index component rendering the grouped parts.
+ */
 export function AssistantMessageDisplay(props) {
   const emptyTools = [];
   const part = createMemo(() => index(props.parts));
@@ -858,6 +1118,14 @@ export function AssistantMessageDisplay(props) {
     }
   });
 }
+/**
+ * Collapsible group summarizing a run of context-gathering tool calls (read/search/list), with an
+ * animated status title, count summary, and an expandable list of the individual tool triggers.
+ * @param {Object} props - Component props.
+ * @param {Array} props.parts - The context tool parts in the group.
+ * @param {boolean} props.busy - Whether the group is still active (forces the pending state).
+ * @returns {Node} A Collapsible component for the group.
+ */
 function ContextToolGroup(props) {
   const i18n = useI18n();
   const [open, setOpen] = createSignal(false);
@@ -974,6 +1242,15 @@ function ContextToolGroup(props) {
     }
   });
 }
+/**
+ * Render a user message: file attachments, the message body (with inline file/agent highlights),
+ * metadata (agent/model/timestamp), and copy/revert affordances.
+ * @param {Object} props - Component props.
+ * @param {Object} props.message - The user message (model, time, sessionID, id).
+ * @param {Array} props.parts - The message parts (text, file, agent).
+ * @param {Object} props.actions - Available actions; actions.revert enables the revert button.
+ * @returns {HTMLElement} The user-message root element.
+ */
 export function UserMessageDisplay(props) {
   const data = useData();
   const dialog = useDialog();
@@ -1204,6 +1481,15 @@ export function UserMessageDisplay(props) {
   }), null);
   return root;
 }
+/**
+ * Render text with inline highlight spans for file references and agent mentions, splitting the text
+ * at the reference/mention source ranges.
+ * @param {Object} props - Component props.
+ * @param {string} props.text - The raw message text.
+ * @param {Array} props.references - File references with source.text start/end offsets.
+ * @param {Array} props.agents - Agent mentions with source start/end offsets.
+ * @returns {Node} A For component rendering the text segments.
+ */
 function HighlightedText(props) {
   const segments = createMemo(() => {
     const text = props.text ?? ""
@@ -1254,6 +1540,17 @@ function HighlightedText(props) {
     }
   });
 }
+/**
+ * Render a single message part by dispatching to the renderer registered for its type in PART_MAPPING.
+ * @param {Object} props - Component props.
+ * @param {Object} props.part - The message part (its type selects the renderer).
+ * @param {Object} props.message - The owning message.
+ * @param {boolean} props.hideDetails - Whether to render in a condensed form.
+ * @param {boolean} props.defaultOpen - Default-open flag for collapsible tool parts.
+ * @param {*} props.showAssistantCopyPartID - Controls the copy affordance for text parts.
+ * @param {number} props.turnDurationMs - Turn duration in ms, forwarded to the renderer.
+ * @returns {Node} A Show component wrapping the dispatched renderer.
+ */
 export function Part(props) {
   const component = createMemo(() => PART_MAPPING[props.part.type]);
   return createComponent(Show, {
@@ -1288,17 +1585,37 @@ export function Part(props) {
   });
 }
 const state = {};
+/**
+ * Register a tool renderer in the tool registry, keyed by its name.
+ * @param {Object} input - The registration ({ name, render }).
+ * @returns {Object} The same registration object.
+ */
 export function registerTool(input) {
   state[input.name] = input;
   return input;
 }
+/**
+ * Look up a tool's renderer by name.
+ * @param {string} name - The tool name.
+ * @returns {Function} The renderer component, or undefined.
+ */
 export function getTool(name) {
   return state[name]?.render;
 }
+/** Public tool registry facade exposing register and render. */
 export const ToolRegistry = {
   register: registerTool,
   render: getTool
 };
+/**
+ * Accordion wrapper showing a file's name, directory, icon and per-file actions, with the file
+ * content (diff/text) as the expandable body. Used by edit/write/apply_patch tool renderers.
+ * @param {Object} props - Component props.
+ * @param {string} props.path - The file path shown in the header.
+ * @param {*} props.actions - Action content rendered in the trigger row.
+ * @param {*} props.children - The expandable content (the file view).
+ * @returns {Node} An Accordion component for the file.
+ */
 function ToolFileAccordion(props) {
   const value = createMemo(() => props.path || "tool-file");
   return createComponent(Accordion, {
@@ -1367,6 +1684,15 @@ function ToolFileAccordion(props) {
     }
   });
 }
+/**
+ * Renderer for "tool" parts: dispatches to the registered tool renderer (or GenericTool), shows the
+ * error card on failure, and special-cases pending/running questions and dismissed-question errors.
+ * @param {Object} props - Component props.
+ * @param {Object} props.part - The tool part (tool, state).
+ * @param {boolean} props.hideDetails - Whether to render in a condensed form.
+ * @param {boolean} props.defaultOpen - Default-open flag for the tool's content.
+ * @returns {Node} The rendered tool part, or null for hidden tools.
+ */
 PART_MAPPING["tool"] = function ToolPartDisplay(props) {
   const data = useData();
   const i18n = useI18n();
@@ -1470,6 +1796,12 @@ PART_MAPPING["tool"] = function ToolPartDisplay(props) {
     }
   });
 };
+/**
+ * Horizontal divider with a centered label, used to mark events like context compaction.
+ * @param {Object} props - Component props.
+ * @param {string} props.label - The label text shown in the divider.
+ * @returns {HTMLElement} The divider root element.
+ */
 export function MessageDivider(props) {
   const root = template(`<div data-component="compaction-part"><div data-slot="compaction-part-divider"><span data-slot="compaction-part-line"></span><span data-slot="compaction-part-label" class="small fw-normal text-secondary"></span><span data-slot="compaction-part-line"></span></div></div>`);
   const divider = root.firstChild;
@@ -1479,6 +1811,10 @@ export function MessageDivider(props) {
   });
   return root;
 }
+/**
+ * Renderer for "compaction" parts: a labeled divider marking where the conversation was compacted.
+ * @returns {Node} A MessageDivider with the compaction label.
+ */
 PART_MAPPING["compaction"] = function CompactionPartDisplay() {
   const i18n = useI18n();
   return createComponent(MessageDivider, {
@@ -1487,6 +1823,16 @@ PART_MAPPING["compaction"] = function CompactionPartDisplay() {
     }
   });
 };
+/**
+ * Renderer for "text" parts: shows the message text as (paced while streaming) Markdown, plus a copy
+ * button and assistant metadata (agent/model/duration/interrupted) on the last/selected text part.
+ * @param {Object} props - Component props.
+ * @param {Object} props.part - The text part (text, id).
+ * @param {Object} props.message - The owning message (role, model, time, error).
+ * @param {*} props.showAssistantCopyPartID - Controls which text part shows the copy affordance.
+ * @param {number} props.turnDurationMs - Turn duration in ms used to compute the displayed duration.
+ * @returns {Node} A Show component wrapping the text body.
+ */
 PART_MAPPING["text"] = function TextPartDisplay(props) {
   const data = useData();
   const i18n = useI18n();
@@ -1626,6 +1972,13 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     }
   });
 };
+/**
+ * Renderer for "reasoning" parts: shows the reasoning text as Markdown, paced while the message streams.
+ * @param {Object} props - Component props.
+ * @param {Object} props.part - The reasoning part (text, id).
+ * @param {Object} props.message - The owning message (role, time).
+ * @returns {Node} A Show component wrapping the reasoning body.
+ */
 PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
   const part = () => props.part;
   const streaming = createMemo(() => props.message?.role === "assistant" && typeof props.message?.time.completed !== "number");
@@ -1669,6 +2022,12 @@ PART_MAPPING["reasoning"] = function ReasoningPartDisplay(props) {
     }
   });
 };
+/**
+ * Tool renderer for "read": shows a basic tool row (with offset/limit args) plus the list of files
+ * that were loaded by the read.
+ * @param {Object} props - Tool render props (input, metadata, status, output, ...).
+ * @returns {Array} The BasicTool and the loaded-files list.
+ */
 ToolRegistry.register({
   name: "read",
   render(props) {
@@ -1721,6 +2080,11 @@ ToolRegistry.register({
     })];
   }
 });
+/**
+ * Tool renderer for "list": shows a basic tool row for a directory listing with the output as Markdown.
+ * @param {Object} props - Tool render props (input, output, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "list",
   render(props) {
@@ -1752,6 +2116,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "glob": shows a basic tool row for a glob search (with the pattern arg) and the
+ * matched paths as Markdown.
+ * @param {Object} props - Tool render props (input, output, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "glob",
   render(props) {
@@ -1784,6 +2154,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "grep": shows a basic tool row for a content search (with pattern/include args)
+ * and the matches as Markdown.
+ * @param {Object} props - Tool render props (input, output, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "grep",
   render(props) {
@@ -1819,6 +2195,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "webfetch": shows a shimmering title while pending and, once done, the fetched
+ * URL as an external link with an open-in-new-tab action.
+ * @param {Object} props - Tool render props (input.url, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "webfetch",
   render(props) {
@@ -1876,6 +2258,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "websearch": shows a basic tool row with the query as subtitle and the result
+ * links via ExaOutput.
+ * @param {Object} props - Tool render props (input.query, output, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "websearch",
   render(props) {
@@ -1904,6 +2292,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "task" (subagent): shows a clickable card with the agent name/color, a spinner
+ * while running, a description subtitle, and navigation to the spawned child session.
+ * @param {Object} props - Tool render props (input.subagent_type, input.description, metadata.sessionId, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "task",
   render(props) {
@@ -2012,6 +2406,12 @@ ToolRegistry.register({
     });
   }
 });
+/**
+ * Tool renderer for "bash" (shell): shows a shimmering title with the command description, and an
+ * expandable, copyable, scrollable output block ("$ command\n\noutput", ANSI-stripped).
+ * @param {Object} props - Tool render props (input.command, input.description, output, metadata, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "bash",
   render(props) {
@@ -2095,6 +2495,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "edit": shows the file name/directory, the diff-change summary, an expandable
+ * before/after diff view (via the host file component) and any error diagnostics.
+ * @param {Object} props - Tool render props (input.filePath, input.oldString, input.newString, metadata.filediff, metadata.diagnostics, status, ...).
+ * @returns {HTMLElement} The edit-tool root element.
+ */
 ToolRegistry.register({
   name: "edit",
   render(props) {
@@ -2217,6 +2623,12 @@ ToolRegistry.register({
     return root;
   }
 });
+/**
+ * Tool renderer for "write": shows the file name/directory, an expandable text view of the written
+ * content (via the host file component) and any error diagnostics.
+ * @param {Object} props - Tool render props (input.filePath, input.content, metadata.diagnostics, status, ...).
+ * @returns {HTMLElement} The write-tool root element.
+ */
 ToolRegistry.register({
   name: "write",
   render(props) {
@@ -2308,6 +2720,12 @@ ToolRegistry.register({
     return root;
   }
 });
+/**
+ * Tool renderer for "apply_patch": renders a single patched file as an edit-style trigger + diff, or
+ * multiple files as an accordion of per-file diffs with created/deleted/moved/changed badges.
+ * @param {Object} props - Tool render props (metadata.files, status, ...).
+ * @returns {Node} A Show component choosing the single-file or multi-file layout.
+ */
 ToolRegistry.register({
   name: "apply_patch",
   render(props) {
@@ -2635,6 +3053,12 @@ ToolRegistry.register({
     });
   }
 });
+/**
+ * Tool renderer for "todowrite": shows a completed/total subtitle and a list of todos as read-only
+ * checkboxes reflecting their completion status.
+ * @param {Object} props - Tool render props (metadata.todos, input.todos, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "todowrite",
   render(props) {
@@ -2693,6 +3117,12 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "question": once answered, shows each question paired with its joined answers
+ * (or a "no answer" fallback); the subtitle reflects the count/answered state.
+ * @param {Object} props - Tool render props (input.questions, metadata.answers, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "question",
   render(props) {
@@ -2751,6 +3181,11 @@ ToolRegistry.register({
     }));
   }
 });
+/**
+ * Tool renderer for "skill": shows a shimmering, capitalized skill-name title (active while running).
+ * @param {Object} props - Tool render props (input.name, status, ...).
+ * @returns {Node} A BasicTool component.
+ */
 ToolRegistry.register({
   name: "skill",
   render(props) {

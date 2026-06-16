@@ -15,6 +15,8 @@
 // The function-signal branch and the `sync` plumbing are still ported for faithful
 // parity with the signature/return shape.
 
+/** @file First-party reimplementation of @solid-primitives/storage's makePersisted (persist a signal/store to a storage backend). */
+
 import { createUniqueId, untrack } from "../reactivity.js";
 import { reconcile } from "../store.js";
 

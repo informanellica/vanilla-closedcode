@@ -1,3 +1,4 @@
+/** @file Right-side session panel (desktop): a resizable review/context tab column rebuilt from compiled Solid templates as hand-written DOM. */
 import { Show, createComponent, createEffect, createMemo, createRenderEffect } from "../../lib/reactivity.js";
 import { createMediaQuery } from "../../lib/primitives/media.js";
 import { Tabs } from "@/bs/tabs.js";
@@ -13,8 +14,12 @@ import { createSessionTabs } from "@/pages/session/helpers.js";
 import { setSessionHandoff } from "@/pages/session/handoff.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
 
-// Build a detached element from compact HTML (no inter-element whitespace,
-// matching the compiled Solid templates).
+/**
+ * Builds a detached element from compact HTML (no inter-element whitespace,
+ * matching the compiled Solid templates).
+ * @param {string} html - The HTML markup for a single root element.
+ * @returns {HTMLElement} The parsed first element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -25,6 +30,17 @@ function template(html) {
 // classList key in the compiled output.
 const TRANSITION_CLASSES = ["transition-[width]", "duration-[240ms]", "ease-[cubic-bezier(0.22,1,0.36,1)]", "will-change-[width]", "motion-reduce:transition-none"];
 
+/**
+ * Renders the desktop right-side panel hosting the review and context tabs, with a
+ * resizable fixed-width column, animated open/close, and inert/aria handling when hidden.
+ * @param {Object} props - Component props.
+ * @param {Function} props.canReview - Accessor returning whether the review tab is available.
+ * @param {Function} props.reviewCount - Accessor returning the number of changes for the review tab label.
+ * @param {Function} props.reviewPanel - Accessor/factory returning the review panel content.
+ * @param {Object} props.size - Resize state with an `active()` accessor used to gate animation.
+ * @param {boolean} props.reviewSnap - When true, suppresses width animation (snap to size).
+ * @returns {Node} The side panel (rendered only on desktop via Show).
+ */
 export function SessionSidePanel(props) {
   const layout = useLayout();
   const file = useFile();

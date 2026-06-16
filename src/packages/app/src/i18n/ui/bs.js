@@ -1,3 +1,10 @@
+/** @file Bosnian (bs) UI-component translation dictionary for the desktop app renderer (ui.* keys). */
+
+/**
+ * Bosnian translation table mapping ui.* component i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Promjene sesije",
   "ui.sessionReview.title.lastTurn": "Promjene u posljednjem potezu",

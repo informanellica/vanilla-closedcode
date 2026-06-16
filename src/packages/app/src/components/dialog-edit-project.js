@@ -13,6 +13,13 @@ import { useLanguage } from "@/context/language.js";
 import { getProjectAvatarSource } from "@/pages/layout/sidebar-items.js";
 import { useProjectController, AVATAR_COLOR_KEYS } from "@/controllers/project.js";
 
+/** @file Project-edit dialog: rename a project, set/clear its icon (color swatch, image upload or drop) and configure a startup command. */
+
+/**
+ * Build a detached element from an HTML string.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 // Build a detached element from an HTML string.
 function template(html) {
   const wrapper = document.createElement("div");
@@ -23,6 +30,13 @@ function template(html) {
 const SWATCH_BASE_CLASS =
   "d-flex align-items-center justify-content-center size-10 p-0.5 rounded-3 overflow-hidden transition-colors cursor-default";
 
+/**
+ * Project-edit dialog component. Renders a form to change a project's display
+ * name, icon (color swatch, uploaded/dropped image, or none) and startup command.
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - The project being edited (id, name, worktree, icon, commands).
+ * @returns {Node} The Dialog element wrapping the edit form.
+ */
 export function DialogEditProject(props) {
   const dialog = useDialog();
   const language = useLanguage();
@@ -43,6 +57,11 @@ export function DialogEditProject(props) {
     iconHover: false
   });
   let iconInput;
+  /**
+   * Read an image file as a data URL and set it as the project icon override.
+   * @param {File} file - The selected image file (non-image files are ignored).
+   * @returns {void}
+   */
   function handleFileSelect(file) {
     if (!file.type.startsWith("image/")) return;
     const reader = new FileReader();
@@ -52,24 +71,47 @@ export function DialogEditProject(props) {
     };
     reader.readAsDataURL(file);
   }
+  /**
+   * Handle a file drop on the icon area: use the first dropped file as the icon.
+   * @param {DragEvent} e - The drop event.
+   * @returns {void}
+   */
   function handleDrop(e) {
     e.preventDefault();
     setStore("dragOver", false);
     const file = e.dataTransfer?.files[0];
     if (file) handleFileSelect(file);
   }
+  /**
+   * Mark the icon drop zone as drag-over.
+   * @param {DragEvent} e - The dragover event.
+   * @returns {void}
+   */
   function handleDragOver(e) {
     e.preventDefault();
     setStore("dragOver", true);
   }
+  /**
+   * Clear the drag-over state when a drag leaves the drop zone.
+   * @returns {void}
+   */
   function handleDragLeave() {
     setStore("dragOver", false);
   }
+  /**
+   * Handle the file input change: use the chosen file as the icon.
+   * @param {Event} e - The input change event.
+   * @returns {void}
+   */
   function handleInputChange(e) {
     const input = e.target;
     const file = input.files?.[0];
     if (file) handleFileSelect(file);
   }
+  /**
+   * Remove the current icon override.
+   * @returns {void}
+   */
   function clearIcon() {
     setStore("iconOverride", "");
   }
@@ -85,6 +127,11 @@ export function DialogEditProject(props) {
       });
     }
   }));
+  /**
+   * Submit the form: save the project unless a save is already in flight.
+   * @param {Event} e - The submit event.
+   * @returns {void}
+   */
   function handleSubmit(e) {
     e.preventDefault();
     if (saveMutation.isPending) return;
@@ -105,6 +152,11 @@ export function DialogEditProject(props) {
   // Show(!store.iconOverride) for the color swatch section.
   const showColorSection = createMemo(() => !store.iconOverride);
 
+  /**
+   * Build the dialog body: name field, icon area (preview, upload/drop, color
+   * swatches), startup-command field and the cancel/submit footer.
+   * @returns {Element} The form element.
+   */
   function buildBody() {
     const form = template(`
       <form class="d-flex flex-column gap-6 p-6 pt-0">

@@ -10,7 +10,16 @@ import { useLanguage } from "@/context/language.js";
 import { useGlobalSync } from "@/context/global-sync.js";
 import { DialogCustomProvider } from "./dialog-custom-provider.js";
 import { localPresetMap, localPresets, presetToFormState } from "./local-llm-presets.js";
+
+/** @file Provider-selection dialog: a searchable, grouped list of connectable providers (custom, local presets and the provider catalog) routing to the matching connect/custom dialog on selection. */
+
 const CUSTOM_ID = "_custom";
+/**
+ * Provider-selection dialog component. Lists the custom entry, unconfigured
+ * local presets and the provider catalog; selecting one opens the custom or
+ * connect dialog as appropriate.
+ * @returns {Node} The Dialog element wrapping the provider list.
+ */
 export const DialogSelectProvider = () => {
   const dialog = useDialog();
   const providers = useProviders();
@@ -31,6 +40,12 @@ export const DialogSelectProvider = () => {
     name: p.name
   }));
 
+  /**
+   * Render one provider row: icon, name, optional preset description, and
+   * custom/local tags.
+   * @param {Object} i - The provider/preset/custom snapshot (id, name).
+   * @returns {Element} The row element.
+   */
   // Row renderer for List items. Items are static snapshots (List re-renders
   // rows itself), so plain DOM construction is enough; user/provider strings
   // go through textContent, never into markup.

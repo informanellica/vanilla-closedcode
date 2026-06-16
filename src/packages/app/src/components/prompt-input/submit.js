@@ -16,9 +16,27 @@ import { Worktree as WorktreeState } from "@/utils/worktree.js";
 import { buildRequestParts } from "./build-request-parts.js";
 import { setCursorPosition } from "./editor-dom.js";
 import { formatServerError } from "@/utils/server-errors.js";
+/** @file Prompt submission logic: sends a prompt/command/shell draft to a session (with optimistic UI and worktree handling) and exposes the submit/abort handlers used by the prompt input. */
 const pending = new Map();
+/**
+ * Concatenate the text content of a prompt's parts into a single string.
+ * @param {Array} prompt - The prompt parts.
+ * @returns {string} The combined text content.
+ */
 const draftText = prompt => prompt.map(part => "content" in part ? part.content : "").join("");
+/**
+ * Select only the image parts from a prompt.
+ * @param {Array} prompt - The prompt parts.
+ * @returns {Array} The image parts.
+ */
 const draftImages = prompt => prompt.filter(part => part.type === "image");
+/**
+ * Send a prompt draft to a session, dispatching to a custom command when the text begins with a known
+ * "/command", otherwise sending a prompt message with optimistic insertion and optional busy-status updates.
+ * Awaits an optional `before` hook and can cancel before sending.
+ * @param {Object} input - Send inputs: {client, sync, globalSync, draft, messageID, optimisticBusy, before}, where `draft` carries the sessionID, sessionDirectory, prompt, context, agent, model, and variant.
+ * @returns {Promise<boolean>} Resolves true if the request was sent, false if cancelled by the `before` hook.
+ */
 export async function sendFollowupDraft(input) {
   const text = draftText(input.draft.prompt);
   const images = draftImages(input.draft.prompt);
@@ -136,6 +154,13 @@ export async function sendFollowupDraft(input) {
     throw err;
   }
 }
+/**
+ * Build the prompt submit/abort handlers, wiring together routing, SDK, sync, layout, permission, and prompt
+ * context. Handles new-session creation (including worktree selection), shell/command/prompt dispatch,
+ * optimistic message insertion, queueing, and error recovery.
+ * @param {Object} input - Handler inputs and accessors: callbacks (onAbort, onSubmit, onQueue, onNewSessionWorktreeReset), state accessors (imageAttachments, mode, commentCount, working, info, autoAccept, newSessionWorktree, shouldQueue, editor), and helpers (addToHistory, resetHistoryNavigation, setMode, setPopover, promptLength, queueScroll).
+ * @returns {Object} An object with `abort` (cancel the in-flight prompt) and `handleSubmit` (form submit handler).
+ */
 export function createPromptSubmit(input) {
   const navigate = useNavigate();
   const sdk = useSDK();
@@ -147,6 +172,11 @@ export function createPromptSubmit(input) {
   const layout = useLayout();
   const language = useLanguage();
   const params = useParams();
+  /**
+   * Extract a human-readable message from an error/response, falling back to a localized generic message.
+   * @param {*} err - The thrown error or error-shaped response.
+   * @returns {string} A message string suitable for a toast.
+   */
   const errorMessage = err => {
     if (err && typeof err === "object" && "data" in err) {
       const data = err.data;
@@ -155,6 +185,11 @@ export function createPromptSubmit(input) {
     if (err instanceof Error) return err.message;
     return language.t("common.requestFailed");
   };
+  /**
+   * Abort the current session's in-flight work: clear its todo list, cancel a queued (pending worktree)
+   * send if present, otherwise ask the server to abort.
+   * @returns {Promise<void>} Resolves once the abort has been issued.
+   */
   const abort = async () => {
     const sessionID = params.id;
     if (!sessionID) return Promise.resolve();
@@ -173,6 +208,11 @@ export function createPromptSubmit(input) {
       sessionID
     }).catch(() => {});
   };
+  /**
+   * Re-add review-comment context items to the prompt (used to restore state after a failed send).
+   * @param {Array} items - The comment context items to restore.
+   * @returns {void}
+   */
   const restoreCommentItems = items => {
     for (const item of items) {
       prompt.context.add({
@@ -186,16 +226,31 @@ export function createPromptSubmit(input) {
       });
     }
   };
+  /**
+   * Remove the given comment context items from the prompt by key.
+   * @param {Array} items - The comment context items to remove.
+   * @returns {void}
+   */
   const removeCommentItems = items => {
     for (const item of items) {
       prompt.context.remove(item.key);
     }
   };
+  /**
+   * Remove all items currently in the prompt context.
+   * @returns {void}
+   */
   const clearContext = () => {
     for (const item of prompt.context.items()) {
       prompt.context.remove(item.key);
     }
   };
+  /**
+   * Insert or update a newly created session in the directory's sync store, keeping the list sorted by id.
+   * @param {string} dir - The session directory whose store is updated.
+   * @param {Object} info - The session info to seed.
+   * @returns {void}
+   */
   const seed = (dir, info) => {
     const [, setStore] = globalSync.child(dir);
     setStore("session", list => {
@@ -209,6 +264,13 @@ export function createPromptSubmit(input) {
       return next;
     });
   };
+  /**
+   * Form submit handler for the prompt input. Validates the prompt, records history, resolves the target
+   * session (creating one and an optional worktree for new sessions), then dispatches the input as a shell
+   * command, custom slash command, queued draft, or prompt message with optimistic UI and error recovery.
+   * @param {Event} event - The submit event.
+   * @returns {Promise<void>} Resolves once the submission flow completes (or short-circuits).
+   */
   const handleSubmit = async event => {
     event.preventDefault();
     const currentPrompt = prompt.current();
@@ -310,11 +372,20 @@ export function createPromptSubmit(input) {
       model,
       variant
     };
+    /**
+     * Reset the prompt editor to an empty normal-mode state with no popover.
+     * @returns {void}
+     */
     const clearInput = () => {
       prompt.reset();
       input.setMode("normal");
       input.setPopover(null);
     };
+    /**
+     * Restore the editor to the just-submitted prompt and mode (used after a failed send), refocusing and
+     * placing the caret at the end on the next frame.
+     * @returns {void}
+     */
     const restoreInput = () => {
       prompt.set(currentPrompt, input.promptLength(currentPrompt));
       input.setMode(mode);
@@ -382,6 +453,10 @@ export function createPromptSubmit(input) {
     }
     const commentItems = context.filter(item => item.type === "file" && !!item.comment?.trim());
     const messageID = Identifier.ascending("message");
+    /**
+     * Remove the optimistic user message previously inserted for this submission.
+     * @returns {void}
+     */
     const removeOptimisticMessage = () => {
       sync.session.optimistic.remove({
         directory: sessionDirectory,
@@ -391,6 +466,11 @@ export function createPromptSubmit(input) {
     };
     removeCommentItems(commentItems);
     clearInput();
+    /**
+     * Block until a pending worktree for the session directory is ready, racing against abort and a 5-minute
+     * timeout. Registers a cancellable pending entry and, on failure/cancel, restores the input and context.
+     * @returns {Promise<boolean>} Resolves true when the worktree is ready, false if the wait was aborted; throws on failure/timeout.
+     */
     const waitForWorktree = async () => {
       const worktree = WorktreeState.get(sessionDirectory);
       if (!worktree || worktree.status !== "pending") return true;

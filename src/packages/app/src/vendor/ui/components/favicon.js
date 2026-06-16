@@ -1,4 +1,16 @@
+/** @file Favicon component producing the document head link/meta tags for app icons. */
+
+/**
+ * Build the favicon-related <link>/<meta> head elements for the app.
+ * @returns {Array} An array of HTMLElement head nodes (icon links, manifest, apple-touch icon, web-app title).
+ */
 export const Favicon = () => {
+  /**
+   * Create an element of the given tag with the supplied attributes set.
+   * @param {string} tag - The element tag name (e.g. "link" or "meta").
+   * @param {Object} attrs - A map of attribute names to values.
+   * @returns {HTMLElement} The created element.
+   */
   const icon = (tag, attrs) => {
     const el = document.createElement(tag);
     for (const [key, value] of Object.entries(attrs)) {

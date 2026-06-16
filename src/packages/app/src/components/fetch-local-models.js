@@ -1,3 +1,11 @@
+/** @file Discovers the model list exposed by a local LLM server (Ollama / LM Studio / OpenAI-compatible). */
+
+/**
+ * Fetch a URL, preferring the Electron main-process bridge when available so the request can bypass renderer CORS.
+ * @param {string} url - The endpoint to request.
+ * @param {Object} headers - Request headers as a plain key/value map.
+ * @returns {Promise<Object>} Resolves to a response shape with `ok`, `status`, `statusText` and `body` (raw text).
+ */
 async function doFetch(url, headers) {
   const bridge = typeof window !== "undefined" ? window.api?.fetchLocalLLM : undefined;
   if (bridge) return bridge(url, headers);
@@ -12,6 +20,12 @@ async function doFetch(url, headers) {
     body
   };
 }
+/**
+ * Discover available model IDs from a local LLM server by probing the OpenAI `/models` endpoint and the Ollama `/api/tags` endpoint.
+ * @param {Object} args - Request arguments: `baseURL` (string), `headers` (Array of {key, value}) and `apiKey` (string).
+ * @returns {Promise<Array>} Resolves to a sorted, de-duplicated array of model id strings.
+ * @throws {Error} When the base URL is invalid or no endpoint yields any models.
+ */
 export async function fetchLocalModels(args) {
   const baseURL = args.baseURL.trim().replace(/\/+$/, "");
   if (!baseURL || !/^https?:\/\//.test(baseURL)) {

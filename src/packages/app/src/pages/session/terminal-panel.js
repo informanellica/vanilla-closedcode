@@ -1,3 +1,4 @@
+/** @file Bottom terminal panel: resizable host with a draggable tab strip, active-pty body, auto-create/auto-focus behavior, and a handoff-driven loading fallback. */
 import { insert } from "../../lib/reactivity.js";
 import { For, Show, createComponent, createEffect, createMemo, createRenderEffect, on, onCleanup, onMount } from "../../lib/reactivity.js";
 import { createStore } from "../../lib/store.js";
@@ -19,13 +20,23 @@ import { createSizing, focusTerminalById } from "@/pages/session/helpers.js";
 import { getTerminalHandoff, setTerminalHandoff } from "@/pages/session/handoff.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
 
-// Build a detached element from compact HTML (no inter-element whitespace,
-// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Builds a detached element from compact HTML (no inter-element whitespace,
+ * matching the compiled Solid templates). Built fresh per call: no cloneNode.
+ * @param {string} html - The HTML markup for a single root element.
+ * @returns {HTMLElement} The parsed first element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
+/**
+ * Renders the resizable bottom terminal panel: a drag-sortable tab strip, the
+ * active terminal body, auto-creation of a first terminal when opened, focus
+ * management, viewport-aware max height, and a handoff-based loading fallback.
+ * @returns {HTMLElement} The terminal panel root element.
+ */
 export function TerminalPanel() {
   const delays = [120, 240];
   const layout = useLayout();
@@ -70,6 +81,12 @@ export function TerminalPanel() {
     if (!opened()) return;
     close();
   }));
+  /**
+   * Focuses a terminal now and re-focuses it on the next frame and after staggered
+   * delays, to win races with mount/layout, while the panel stays open and active.
+   * @param {string} id - The terminal id to focus.
+   * @returns {Function} A cleanup function cancelling the pending frame and timers.
+   */
   const focus = id => {
     focusTerminalById(id);
     const frame = requestAnimationFrame(() => {
@@ -117,11 +134,19 @@ export function TerminalPanel() {
   });
   const all = terminal.all;
   const ids = createMemo(() => all().map(pty => pty.id));
+  /**
+   * Records the dragged tab id at the start of a terminal-tab drag.
+   * @param {Object} event - The drag start event from the dnd provider.
+   */
   const handleTerminalDragStart = event => {
     const id = getDraggableId(event);
     if (!id) return;
     setStore("activeDraggable", id);
   };
+  /**
+   * Reorders terminals as a dragged tab passes over a drop target.
+   * @param {Object} event - The drag-over event exposing `draggable` and `droppable`.
+   */
   const handleTerminalDragOver = event => {
     const {
       draggable,
@@ -135,6 +160,7 @@ export function TerminalPanel() {
       terminal.move(draggable.id.toString(), toIndex);
     }
   };
+  /** Clears the drag state and restores focus to the active terminal after a tab drag ends. */
   const handleTerminalDragEnd = () => {
     setStore("activeDraggable", undefined);
     const activeId = terminal.active();
@@ -145,6 +171,11 @@ export function TerminalPanel() {
     });
   };
 
+  /**
+   * Builds the loading fallback: a ghost tab bar from the previous visit's handoff
+   * labels plus a localized loading message, shown until the terminal context is ready.
+   * @returns {HTMLElement} The fallback element.
+   */
   // Loading fallback (_tmpl$4): ghost tab bar from the previous visit's
   // handoff labels plus the localized loading message. Built lazily by the
   // Show fallback getter, so the effects below live under that branch and
@@ -177,6 +208,11 @@ export function TerminalPanel() {
     return fb;
   };
 
+  /**
+   * Builds the "new terminal" tab-bar cell: a tooltip-wrapped icon button that
+   * creates a terminal on click.
+   * @returns {HTMLElement} The tab-bar cell element.
+   */
   // "New terminal" tab-bar cell (_tmpl$).
   const buildNewTabButton = () => {
     const cell = template(`<div class="h-full d-flex align-items-center justify-content-center"></div>`);
@@ -205,6 +241,11 @@ export function TerminalPanel() {
     return cell;
   };
 
+  /**
+   * Builds the terminal area: the sortable tab strip with a new-tab button above
+   * the active terminal body, remounting the Terminal per active id.
+   * @returns {HTMLElement} The terminal area element.
+   */
   // Tab strip + active terminal body (_tmpl$2).
   const buildTerminalArea = () => {
     const area = template(`<div class="d-flex flex-column h-full"><div class="flex-1 min-h-0 position-relative"></div></div>`);
@@ -282,6 +323,11 @@ export function TerminalPanel() {
     return area;
   };
 
+  /**
+   * Builds the ready branch: solid-dnd providers wrapping the terminal area plus a
+   * drag overlay showing a floating copy of the dragged tab's label.
+   * @returns {Node} The drag-drop provider tree.
+   */
   // Ready branch: solid-dnd providers wrapping the terminal area and the
   // drag overlay (a floating copy of the dragged tab's label, _tmpl$7).
   const buildReady = () => createComponent(DragDropProvider, {

@@ -1,3 +1,15 @@
+/** @file Bootstrap pill-badge "tag" component (vanilla reimplementation). */
+
+/**
+ * Renders a rounded-pill Bootstrap badge.
+ * @param {Object} props - Component props. Recognized keys: `variant`
+ *   (Bootstrap color variant such as "secondary", "primary"; default
+ *   "secondary"), `size` ("small" applies a compact badge class), `children`
+ *   (badge content; Node, function, array, or primitive), `class` (extra CSS
+ *   classes), `classList` (object mapping class names to booleans), plus any
+ *   `on*` handler or attribute applied to the element.
+ * @returns {HTMLElement} The badge `<span>` element.
+ */
 export function Tag(props) {
   const el = document.createElement("span");
   el.setAttribute("data-component", "tag");

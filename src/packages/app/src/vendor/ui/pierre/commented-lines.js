@@ -1,4 +1,10 @@
+/** @file Marks diff and file rows (and their annotations) as commented by toggling the `data-comment-selected` attribute for the given line ranges. */
 import { diffLineIndex, diffRowIndex } from "./diff-selection.js";
+/**
+ * Extracts the line number stored in a node's `data-line-annotation` attribute.
+ * @param {HTMLElement} node - Element carrying a `data-line-annotation` dataset value of the form "x,line".
+ * @returns {number} The parsed line number, or undefined when missing or not numeric.
+ */
 function annotationIndex(node) {
   const value = node.dataset.lineAnnotation?.split(",")[1];
   if (!value) return;
@@ -6,6 +12,11 @@ function annotationIndex(node) {
   if (Number.isNaN(line)) return;
   return line;
 }
+/**
+ * Removes the `data-comment-selected` attribute from every marked element under root.
+ * @param {HTMLElement} root - Subtree to clear of comment-selection markers.
+ * @returns {void}
+ */
 function clear(root) {
   const marked = Array.from(root.querySelectorAll("[data-comment-selected]"));
   for (const node of marked) {
@@ -13,6 +24,13 @@ function clear(root) {
     node.removeAttribute("data-comment-selected");
   }
 }
+/**
+ * Highlights commented lines within a diff view by marking matching rows and annotations.
+ * Resolves each range's side-aware start/end to row indices and marks every row in between.
+ * @param {HTMLElement} root - Root element containing the `[data-diff]` viewer.
+ * @param {Array} ranges - Comment ranges; each has start, end, optional side and endSide.
+ * @returns {void}
+ */
 export function markCommentedDiffLines(root, ranges) {
   clear(root);
   const diffs = root.querySelector("[data-diff]");
@@ -44,6 +62,13 @@ export function markCommentedDiffLines(root, ranges) {
     }
   }
 }
+/**
+ * Highlights commented lines within a single-file (non-diff) view.
+ * Marks each line element and number cell within the inclusive line ranges, plus matching annotations.
+ * @param {HTMLElement} root - Root element containing the file's line markup.
+ * @param {Array} ranges - Comment ranges; each has numeric start and end line numbers.
+ * @returns {void}
+ */
 export function markCommentedFileLines(root, ranges) {
   clear(root);
   const annotations = Array.from(root.querySelectorAll("[data-line-annotation]")).filter(node => node instanceof HTMLElement);

@@ -1,3 +1,4 @@
+/** @file Re-exports the i18n context (I18nProvider/useI18n) from the app's consolidated context module so vendor UI shares the app's live locale/translation bridge instead of a fallback dictionary. */
 // The app consolidated the vendor contexts into @/lib/context.js and mounts the
 // I18nProvider from there (app.js UiI18nBridge wraps the language context).
 // Re-export the i18n context from that single source so vendor UI components

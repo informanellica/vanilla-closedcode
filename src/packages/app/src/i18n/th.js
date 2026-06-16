@@ -1,3 +1,10 @@
+/** @file Thai (th) translation dictionary for the desktop app renderer UI. */
+
+/**
+ * Thai translation table mapping i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "command.category.suggested": "แนะนำ",
   "command.category.view": "มุมมอง",

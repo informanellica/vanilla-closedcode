@@ -1,3 +1,4 @@
+/** @file Bridges the vanilla CodeMirror editor island's dirty state into a reactive store so file tabs can show an unsaved indicator. */
 // editor-dirty.js — bridges the vanilla CodeMirror editor island's dirty state
 // (packages/app/public/vanilla-ide.js) into a Solid-reactive store so the center
 // file tab (session-sortable-tab.js) can show an unsaved indicator.
@@ -29,6 +30,11 @@ if (typeof window !== "undefined") {
   });
 }
 
+/**
+ * Reactive accessor for the editor dirty-state store.
+ * @returns {Object} An object with `isDirty(path)` returning whether the given
+ *   project-relative path has unsaved edits.
+ */
 export function useEditorDirty() {
   return {
     isDirty: path => (typeof path === "string" ? !!dirty[path] : false)

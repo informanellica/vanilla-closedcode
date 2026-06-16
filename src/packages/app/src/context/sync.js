@@ -1,3 +1,4 @@
+/** @file Sync context: directory-scoped view over the global sync store, handling per-session message/diff/todo fetch, paging, optimistic message writes, and cache eviction. */
 import { batch, createMemo } from "../lib/reactivity.js";
 import { createStore, produce, reconcile } from "../lib/store.js";
 import { Binary } from "core/util/binary";
@@ -9,9 +10,22 @@ import { useSDK } from "./sdk.js";
 import { SESSION_CACHE_LIMIT, dropSessionCaches, pickSessionCacheEvictions } from "./global-sync/session-cache.js";
 import { diffs as list, message as clean } from "@/utils/diffs.js";
 const SKIP_PARTS = new Set(["patch", "step-start", "step-finish"]);
+/**
+ * Drop id-less parts and sort the remainder by id ascending.
+ * @param {Array} parts - The message parts to normalize.
+ * @returns {Array} The filtered, id-sorted parts.
+ */
 function sortParts(parts) {
   return parts.filter(part => !!part?.id).sort((a, b) => cmp(a.id, b.id));
 }
+/**
+ * Deduplicate concurrent async work by key: returns any in-flight promise for
+ * the key, otherwise runs the task and tracks it until it settles.
+ * @param {Map} map - The in-flight promise registry keyed by string.
+ * @param {string} key - The dedupe key.
+ * @param {Function} task - Zero-arg function returning a promise to run when not already in flight.
+ * @returns {Promise} The shared promise for that key.
+ */
 function runInflight(map, key, task) {
   const pending = map.get(key);
   if (pending) return pending;
@@ -21,17 +35,47 @@ function runInflight(map, key, task) {
   map.set(key, promise);
   return promise;
 }
+/**
+ * Build a composite cache key from a directory and id.
+ * @param {string} directory - The workspace directory.
+ * @param {string} id - The session (or message) id.
+ * @returns {string} The newline-joined key.
+ */
 const keyFor = (directory, id) => `${directory}\n${id}`;
+/**
+ * Three-way string comparator for ascending sorts.
+ * @param {string} a - Left value.
+ * @param {string} b - Right value.
+ * @returns {number} -1, 0, or 1.
+ */
 const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+/**
+ * Merge two id-keyed lists, with the second list overriding, sorted by id.
+ * @param {Array} a - The base list.
+ * @param {Array} b - The list whose items override on id collision.
+ * @returns {Array} The merged, id-sorted list.
+ */
 function merge(a, b) {
   const map = new Map(a.map(item => [item.id, item]));
   for (const item of b) map.set(item.id, item);
   return [...map.values()].sort((x, y) => cmp(x.id, y.id));
 }
+/**
+ * Test whether an id-sorted parts list already contains all wanted parts.
+ * @param {Array} parts - The existing id-sorted parts (or undefined).
+ * @param {Array} want - The parts whose ids must all be present.
+ * @returns {boolean} True if every wanted part id is present.
+ */
 const hasParts = (parts, want) => {
   if (!parts) return want.length === 0;
   return want.every(part => Binary.search(parts, part.id, item => item.id).found);
 };
+/**
+ * Insert any missing wanted parts into an id-sorted parts list, preserving order.
+ * @param {Array} parts - The existing id-sorted parts (or undefined).
+ * @param {Array} want - The parts to merge in by id.
+ * @returns {Array} The merged id-sorted parts, or the original reference if unchanged.
+ */
 const mergeParts = (parts, want) => {
   if (!parts) return sortParts(want);
   const next = [...parts];
@@ -45,6 +89,13 @@ const mergeParts = (parts, want) => {
   if (!changed) return parts;
   return next;
 };
+/**
+ * Merge optimistic (locally-added) messages/parts into a freshly fetched
+ * message page, reporting which optimistic items the server has now confirmed.
+ * @param {Object} page - A fetched page: {cursor, complete, session, part}.
+ * @param {Array} items - Optimistic items, each {message, parts}.
+ * @returns {Object} A page {cursor, complete, session, part, confirmed} where confirmed lists the message ids now backed by the server.
+ */
 export function mergeOptimisticPage(page, items) {
   if (items.length === 0) return {
     ...page,
@@ -75,6 +126,12 @@ export function mergeOptimisticPage(page, items) {
     confirmed
   };
 }
+/**
+ * Mutate a sync-store draft to insert an optimistic message and its parts in id order.
+ * @param {Object} draft - The mutable store draft ({message, part}).
+ * @param {Object} input - {sessionID, message, parts} for the optimistic add.
+ * @returns {void}
+ */
 export function applyOptimisticAdd(draft, input) {
   const messages = draft.message[input.sessionID];
   if (messages) {
@@ -85,6 +142,12 @@ export function applyOptimisticAdd(draft, input) {
   }
   draft.part[input.message.id] = sortParts(input.parts);
 }
+/**
+ * Mutate a sync-store draft to remove an optimistic message and its parts.
+ * @param {Object} draft - The mutable store draft ({message, part}).
+ * @param {Object} input - {sessionID, messageID} identifying the message to remove.
+ * @returns {void}
+ */
 export function applyOptimisticRemove(draft, input) {
   const messages = draft.message[input.sessionID];
   if (messages) {
@@ -93,6 +156,12 @@ export function applyOptimisticRemove(draft, input) {
   }
   delete draft.part[input.messageID];
 }
+/**
+ * Add an optimistic message and parts to the store via the store setter (non-draft path).
+ * @param {Function} setStore - The reactive store setter.
+ * @param {Object} input - {sessionID, message, parts} for the optimistic add.
+ * @returns {void}
+ */
 function setOptimisticAdd(setStore, input) {
   setStore("message", input.sessionID, messages => {
     if (!messages) return [input.message];
@@ -103,6 +172,12 @@ function setOptimisticAdd(setStore, input) {
   });
   setStore("part", input.message.id, sortParts(input.parts));
 }
+/**
+ * Remove an optimistic message and its parts via the store setter (non-draft path).
+ * @param {Function} setStore - The reactive store setter.
+ * @param {Object} input - {sessionID, messageID} identifying the message to remove.
+ * @returns {void}
+ */
 function setOptimisticRemove(setStore, input) {
   setStore("message", input.sessionID, messages => {
     if (!messages) return messages;
@@ -121,6 +196,13 @@ function setOptimisticRemove(setStore, input) {
     return next;
   });
 }
+/**
+ * Sync context scoped to the active SDK directory. `useSync` returns reactive
+ * accessors (data/status/ready/project/directory) plus a `session` API for
+ * fetching, paging, diffing, todos, optimistic writes, eviction and archiving;
+ * `SyncProvider` provides it. It layers per-directory message/diff/todo caches
+ * and an LRU eviction policy on top of the global sync store.
+ */
 export const {
   use: useSync,
   provider: SyncProvider

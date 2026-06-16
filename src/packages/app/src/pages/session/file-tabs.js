@@ -21,14 +21,28 @@ import { getSessionHandoff } from "@/pages/session/handoff.js";
 import { useSessionLayout } from "@/pages/session/session-layout.js";
 import { createSessionTabs } from "@/pages/session/helpers.js";
 
+/** @file Per-tab file viewer/editor for the session view: hosts the CodeMirror-backed editor or a read-only diff/preview, wires the toolbar (toggle/save/undo/redo/clipboard), syncs scroll position, and manages line-range comments and the floating reply button. */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Static markup only — translated/user strings are assigned via textContent.
+/**
+ * Build a detached element from a compact static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
+/**
+ * Per-comment "more" dropdown menu (edit / delete) rendered in the line-comment
+ * annotation UI. Stops click/mousedown from reaching the surrounding selection
+ * handlers.
+ * @param {Object} props - `{ moreLabel, editLabel, deleteLabel, onEdit, onDelete }`: localized labels and the edit/delete select handlers.
+ * @returns {Node} The menu wrapper element.
+ */
 function FileCommentMenu(props) {
   const root = template(`<div></div>`);
   // Keep menu clicks from reaching the annotation/selection handlers around it
@@ -84,6 +98,15 @@ function FileCommentMenu(props) {
   }));
   return root;
 }
+/**
+ * Create a scroll-position synchronizer for a file tab: persists the viewport's
+ * scroll offset (per tab) to the view store on scroll, and restores it when the
+ * file (re)mounts. Handles the diff renderer's shadow-DOM `[data-code]` columns
+ * as well as the plain scroll container, batching saves/restores to animation
+ * frames and cleaning them up on disposal.
+ * @param {Object} input - `{ tab, view }`: an accessor for the current tab id and the view store exposing `scroll(tab)` / `setScroll(tab, pos)`.
+ * @returns {Object} `{ handleScroll, queueRestore, setViewport }` to wire onto the scroll viewport.
+ */
 function createScrollSync(input) {
   let scroll;
   let scrollFrame;
@@ -172,6 +195,17 @@ function createScrollSync(input) {
     setViewport
   };
 }
+/**
+ * Content pane for a single file tab. In edit mode it mounts the global
+ * VanillaIDE CodeMirror editor into a host element; otherwise it renders a
+ * read-only file/diff preview with line selection and comment annotations.
+ * Publishes editing state and binds save/undo/redo/cut/copy/paste to the shared
+ * layout toolbar, mirrors the editor's dirty/cursor status to the status bar,
+ * synchronizes scroll position, and manages a floating "reply" button that turns
+ * a text selection into a chat-context comment.
+ * @param {Object} props - `{ tab }`: the tab id this pane renders (a "file://" tab or path).
+ * @returns {Node} The Tabs.Content element for this tab.
+ */
 export function FileTabContent(props) {
   const file = useFile();
   const comments = useComments();
@@ -377,17 +411,35 @@ export function FileTabContent(props) {
     tab: () => props.tab,
     view
   });
+  /**
+   * Produce a preview of the selected line range from source text.
+   * @param {string} source - Full file text.
+   * @param {Object} selection - Selection with `startLine`/`endLine`.
+   * @returns {*} The previewed selected lines.
+   */
   const selectionPreview = (source, selection) => {
     return previewSelectedLines(source, {
       start: selection.startLine,
       end: selection.endLine
     });
   };
+  /**
+   * Build a code preview snippet for a selection within a file (using the live
+   * buffer for the current file, or the cached content for others).
+   * @param {string} filePath - Project path of the file.
+   * @param {Object} selection - Selection with `startLine`/`endLine`.
+   * @returns {*} The preview snippet, or undefined when source is unavailable.
+   */
   const buildPreview = (filePath, selection) => {
     const source = filePath === path() ? contents() : file.get(filePath)?.content?.content;
     if (!source) return undefined;
     return selectionPreview(source, selection);
   };
+  /**
+   * Persist a new line-range comment and attach it to the chat prompt context.
+   * @param {Object} input - `{ file, selection, comment, origin, preview }`.
+   * @returns {void}
+   */
   const addCommentToContext = input => {
     const selection = selectionFromLines(input.selection);
     const preview = input.preview ?? buildPreview(input.file, selection);
@@ -406,6 +458,12 @@ export function FileTabContent(props) {
       preview
     });
   };
+  /**
+   * Update an existing comment's text in both the comment store and the prompt
+   * context (refreshing its preview when it belongs to the current file).
+   * @param {Object} input - `{ file, id, comment, selection }`.
+   * @returns {void}
+   */
   const updateCommentInContext = input => {
     comments.update(input.file, input.id, input.comment);
     const preview = input.file === path() ? buildPreview(input.file, selectionFromLines(input.selection)) : undefined;
@@ -416,6 +474,11 @@ export function FileTabContent(props) {
       } : {})
     });
   };
+  /**
+   * Remove a comment from both the comment store and the prompt context.
+   * @param {Object} input - `{ file, id }`.
+   * @returns {void}
+   */
   const removeCommentFromContext = input => {
     comments.remove(input.file, input.id);
     prompt.context.removeComment(input.file, input.id);
@@ -520,7 +583,14 @@ export function FileTabContent(props) {
     left: 0,
     range: null
   });
+  /** Hide the floating reply button and clear its pending range. @returns {void} */
   const hideReply = () => setReplyBtn({ open: false, range: null });
+  /**
+   * Position and show the floating reply button next to the current text
+   * selection (hides it when there is no usable selection rectangle).
+   * @param {Object} range - The selected line range to attach a reply to.
+   * @returns {void}
+   */
   const showReplyAtSelection = range => {
     if (!range) return hideReply();
     let rect = null;
@@ -586,6 +656,13 @@ export function FileTabContent(props) {
     if (!restore) return;
     scrollSync.queueRestore();
   });
+  /**
+   * Render the read-only file/diff preview: mounts the context-provided file
+   * component with line selection, comment annotations, the media handler, and
+   * scroll restoration wired in.
+   * @param {string} source - The file's text content to render.
+   * @returns {Node} The wrapper element containing the rendered file component.
+   */
   const renderFile = source => {
     const el = template(`<div class="relative overflow-hidden pb-40"></div>`);
     // fileComponent is the context-provided file component. The provider

@@ -1,3 +1,4 @@
+/** @file Vanilla (dependency-free) reimplementation of @kobalte/core's Tooltip: a hover/focus-triggered tooltip that portals its content to <body> and keeps it positioned against the trigger. */
 // Vanilla reimplementation of @kobalte/core's Tooltip behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -6,14 +7,28 @@ import { createComponent, createRenderEffect, createRoot, createUniqueId, getOwn
 import { createStore } from "../../../lib/store.js";
 import { autoPosition } from "./floating.js";
 
-// Build a detached element from compact HTML (no inter-element whitespace,
-// matching the compiled Solid templates). Built fresh per call: no cloneNode.
+/**
+ * Build a detached element from a compact HTML string (no inter-element
+ * whitespace, matching the compiled Solid templates). A fresh element is built
+ * per call; no cloneNode is used.
+ * @param {string} html - HTML markup whose first element is returned.
+ * @returns {Element} The first element parsed from the HTML.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Tooltip whose content is a title paired with a keyboard-shortcut chip; a thin
+ * wrapper over Tooltip that renders the title/keybind reactively into the
+ * tooltip body.
+ * @param {Object} props - Component props (extra props pass through to Tooltip).
+ * @param {*} props.title - The tooltip title content (string, Node, or accessor).
+ * @param {*} props.keybind - The keybinding content rendered as a chip.
+ * @returns {HTMLElement} The Tooltip trigger element.
+ */
 export function TooltipKeybind(props) {
   const [local, others] = splitProps(props, ["title", "keybind"]);
   return createComponent(Tooltip, mergeProps(others, {
@@ -33,6 +48,29 @@ export function TooltipKeybind(props) {
   }));
 }
 
+/**
+ * Hover/focus-triggered tooltip. Wraps `children` in a trigger element and, while
+ * open, portals a positioned content node (its `value`) to `<body>`. Handles open
+ * and close delays, suppression while an inner control is expanded, scroll-close,
+ * and disconnect cleanup so portaled content never orphans. When `inactive` is set,
+ * the children are returned verbatim with no tooltip machinery.
+ * @param {Object} props - Component props (unlisted props pass through).
+ * @param {*} props.children - The trigger content (string, Node, or accessor).
+ * @param {string} props.class - CSS class applied to the trigger wrapper.
+ * @param {string} props.contentClass - CSS class(es) applied to the floating content node.
+ * @param {*} props.contentStyle - Inline style (string or object) applied to the content node.
+ * @param {boolean} props.inactive - When true, render children with no tooltip behavior.
+ * @param {boolean} props.forceOpen - Keep the tooltip permanently open (ignores hover/scroll close).
+ * @param {boolean} props.ignoreSafeArea - Forwarded positioning flag.
+ * @param {*} props.value - The tooltip content (string, Node, or reactive accessor).
+ * @param {string} props.placement - Preferred placement (e.g. "top") for autoPosition.
+ * @param {number} props.gutter - Gap in pixels between trigger and content (default 4).
+ * @param {*} props.shift - Shift option forwarded to autoPosition.
+ * @param {*} props.overlap - Overlap option forwarded to autoPosition.
+ * @param {number} props.openDelay - Delay in ms before opening on hover/focus (default 700).
+ * @param {number} props.closeDelay - Close delay (forced to 0 to match the original wrapper).
+ * @returns {*} The trigger element, or the raw children when `inactive`.
+ */
 export function Tooltip(props) {
   // The previously-rendered trigger element (the original wrapped the children in a
   // <div data-component="tooltip-trigger">). Captured for hover/focus + the
@@ -77,6 +115,12 @@ export function Tooltip(props) {
   // The trigger may itself wrap an expandable control (e.g. a popover trigger):
   // while that child is expanded we suppress the tooltip so it doesn't sit on
   // top of the opened panel.
+  /**
+   * Release the tooltip's "blocked" state, unless the trigger is still hovered,
+   * focused within, or wraps an expanded control.
+   * @param {boolean} expand - Whether an inner control is currently expanded (defaults to the tracked expand state).
+   * @returns {void}
+   */
   const drop = (expand = state.expand) => {
     if (expand) return;
     if (triggerEl?.matches(":hover")) return;
@@ -99,6 +143,11 @@ export function Tooltip(props) {
   };
 
   // Show with the open delay (original default 700ms unless overridden).
+  /**
+   * Schedule the tooltip to open after the configured open delay, unless it is
+   * blocked or forced open. A zero/negative delay opens immediately.
+   * @returns {void}
+   */
   const requestOpen = () => {
     if (local.forceOpen) return;
     if (state.block) return;
@@ -170,6 +219,12 @@ export function Tooltip(props) {
   sync();
 
   // Build the floating tooltip content node (portaled to <body>).
+  /**
+   * Build the floating tooltip content node (fixed-positioned, portaled to
+   * `<body>`), applying placement, optional content class/style, and inserting
+   * the reactive `value` so it stays live.
+   * @returns {HTMLElement} The tooltip content `<div>` element.
+   */
   const renderContent = () => {
     const popEl = document.createElement("div");
     popEl.setAttribute("data-component", "tooltip");
@@ -218,6 +273,12 @@ export function Tooltip(props) {
   const disconnectObs = new MutationObserver(() => {
     if (!triggerEl.isConnected) unmountContent();
   });
+  /**
+   * Mount the content node into `<body>` inside its own reactive root, start
+   * positioning it against the trigger, and arm the scroll-close and trigger
+   * disconnect observers. No-op if already mounted.
+   * @returns {void}
+   */
   const mountContent = () => {
     if (contentEl) return;
     const build = () => createRoot((dispose) => {

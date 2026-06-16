@@ -1,3 +1,4 @@
+/** @file Vanilla (Solid-free) Collapsible compound component: a controllable open/closed disclosure with an animation-aware trigger, content, and arrow. */
 // Vanilla reimplementation of @kobalte/core's Collapsible behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.

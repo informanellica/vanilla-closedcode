@@ -1,3 +1,4 @@
+/** @file Spinner component: an animated 4x4 grid of pulsing SVG squares used as a loading indicator. */
 const outerIndices = new Set([1, 2, 4, 7, 8, 11, 13, 14]);
 const cornerIndices = new Set([0, 3, 12, 15]);
 const squares = Array.from({ length: 16 }, (_, i) => ({

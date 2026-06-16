@@ -19,6 +19,13 @@ import { createSessionTabs } from "@/pages/session/helpers.js";
 import { decode64 } from "@/utils/base64.js";
 import { getRelativeTime } from "@/utils/time.js";
 
+/** @file Command-palette / file-picker dialog: a unified searchable list of commands, recent/searched files and matching sessions, opening files or running commands on selection. */
+
+/**
+ * Build a detached element from a static HTML skeleton.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 // Build a detached element from a static HTML skeleton. The markup is kept
 // whitespace-free between tags so the DOM matches the compiled template
 // output exactly.
@@ -41,6 +48,11 @@ const FILE_ROW_HTML = `<div class="w-100 d-flex align-items-center justify-conte
 
 const ENTRY_LIMIT = 5;
 const COMMON_COMMAND_IDS = ["session.new", "workspace.new", "session.previous", "session.next", "terminal.toggle", "review.toggle"];
+/**
+ * De-duplicate entries by their `id`, preserving first-seen order.
+ * @param {Array} items - Entries that each have an `id`.
+ * @returns {Array} The unique entries.
+ */
 const uniqueEntries = items => {
   const seen = new Set();
   const out = [];
@@ -51,6 +63,12 @@ const uniqueEntries = items => {
   }
   return out;
 };
+/**
+ * Build a command list entry from a command option.
+ * @param {Object} option - The command option (id, title, description, keybind).
+ * @param {string} category - The group/category label.
+ * @returns {Object} The command entry.
+ */
 const createCommandEntry = (option, category) => ({
   id: "command:" + option.id,
   type: "command",
@@ -60,6 +78,12 @@ const createCommandEntry = (option, category) => ({
   category,
   option
 });
+/**
+ * Build a file list entry from a path.
+ * @param {string} path - The file path.
+ * @param {string} category - The group/category label.
+ * @returns {Object} The file entry.
+ */
 const createFileEntry = (path, category) => ({
   id: "file:" + path,
   type: "file",
@@ -67,6 +91,12 @@ const createFileEntry = (path, category) => ({
   category,
   path
 });
+/**
+ * Build a session list entry from a session descriptor.
+ * @param {Object} input - The session descriptor (id, title, description, directory, archived, updated).
+ * @param {string} category - The group/category label.
+ * @returns {Object} The session entry.
+ */
 const createSessionEntry = (input, category) => ({
   id: `session:${input.directory}:${input.id}`,
   type: "session",
@@ -78,6 +108,12 @@ const createSessionEntry = (input, category) => ({
   archived: input.archived,
   updated: input.updated
 });
+/**
+ * Build memoized command-entry collections (all allowed commands, the full
+ * list, and a small set of common "picks") from the command context.
+ * @param {Object} props - Inputs: `filesOnly` accessor, `command` context, `language` context.
+ * @returns {Object} An object with `allowed`, `list` and `picks` memos.
+ */
 function createCommandEntries(props) {
   const allowed = createMemo(() => {
     if (props.filesOnly()) return [];
@@ -102,6 +138,12 @@ function createCommandEntries(props) {
     picks
   };
 }
+/**
+ * Build memoized file-entry collections (recently opened tabs and root-level
+ * files) from the file context.
+ * @param {Object} props - Inputs: `file` context, `tabs` accessor, `language` context.
+ * @returns {Object} An object with `recent` and `root` memos.
+ */
 function createFileEntries(props) {
   const tabState = createSessionTabs({
     tabs: props.tabs,
@@ -135,12 +177,23 @@ function createFileEntries(props) {
     root
   };
 }
+/**
+ * Build a debounced session-search helper that lists sessions across the
+ * given workspaces, de-duplicates them and caches the latest result.
+ * @param {Object} props - Inputs: `workspaces` accessor, `label` fn, `listSessions` fn, `language` context.
+ * @returns {Object} An object with a `sessions` function taking a query string.
+ */
 function createSessionEntries(props) {
   const state = {
     token: 0,
     inflight: undefined,
     cached: undefined
   };
+  /**
+   * Search sessions for the given query across all workspaces.
+   * @param {string} text - The raw search text.
+   * @returns {Array|Promise<Array>} Cached entries, or a promise of session entries.
+   */
   const sessions = text => {
     const query = text.trim();
     if (!query) {
@@ -185,6 +238,15 @@ function createSessionEntries(props) {
     sessions
   };
 }
+/**
+ * Command-palette / file-picker dialog component. Presents a unified searchable
+ * list of commands, recent/searched files and matching sessions; selecting an
+ * item runs the command, opens the file or navigates to the session.
+ * @param {Object} props - Component props.
+ * @param {string} props.mode - "files" restricts the palette to files only.
+ * @param {Function} props.onOpenFile - Optional callback invoked with the path when a file is opened.
+ * @returns {Node} The Dialog element wrapping the list.
+ */
 export function DialogSelectFile(props) {
   const command = useCommand();
   const language = useLanguage();
@@ -251,6 +313,12 @@ export function DialogSelectFile(props) {
     listSessions: controller.listSessions,
     language
   });
+  /**
+   * Compute the list items for a search query: empty-query defaults (files or
+   * common commands + recent files) or the searched files/sessions/commands.
+   * @param {string} text - The current search text.
+   * @returns {Promise<Array>} The entries to display.
+   */
   const items = async text => {
     const query = text.trim();
     setGrouped(query.length > 0);
@@ -276,12 +344,23 @@ export function DialogSelectFile(props) {
     const entries = files.map(path => createFileEntry(path, category));
     return [...commandEntries.list(), ...nextSessions, ...entries];
   };
+  /**
+   * Highlight handler: run a command's onHighlight side-effect (and clean up
+   * the previously highlighted one).
+   * @param {Object} item - The newly highlighted entry, or undefined.
+   * @returns {void}
+   */
   const handleMove = item => {
     state.cleanup?.();
     if (!item) return;
     if (item.type !== "command") return;
     state.cleanup = item.option?.onHighlight?.();
   };
+  /**
+   * Open a file: add/activate its tab, load it, ensure the review panel is open.
+   * @param {string} path - The file path to open.
+   * @returns {void}
+   */
   const open = path => {
     const value = file.tab(path);
     void tabs().open(value);
@@ -291,6 +370,12 @@ export function DialogSelectFile(props) {
     props.onOpenFile?.(path);
     tabs().setActive(value);
   };
+  /**
+   * Selection handler: close the dialog and act on the chosen entry (run a
+   * command, navigate to a session, or open a file).
+   * @param {Object} item - The selected entry, or undefined.
+   * @returns {void}
+   */
   const handleSelect = item => {
     if (!item) return;
     state.committed = true;
@@ -324,6 +409,11 @@ export function DialogSelectFile(props) {
   // Capture the dialog's owner here and re-attach row effects to it so they
   // are cleaned up when the dialog closes.
   const owner = getOwner();
+  /**
+   * Build a command row: title, optional description and keybind badge.
+   * @param {Object} item - The command entry.
+   * @returns {Element} The row element.
+   */
   const buildCommandRow = item => {
     const row = template(COMMAND_ROW_HTML);
     const main = row.firstElementChild;
@@ -346,6 +436,11 @@ export function DialogSelectFile(props) {
     }
     return row;
   };
+  /**
+   * Build a session row: icon, title, optional description and relative-time label.
+   * @param {Object} item - The session entry.
+   * @returns {Element} The row element.
+   */
   const buildSessionRow = item => {
     const row = template(SESSION_ROW_HTML);
     const left = row.firstElementChild;
@@ -373,6 +468,11 @@ export function DialogSelectFile(props) {
     }
     return row;
   };
+  /**
+   * Build a file row: file icon, truncated parent directory and basename.
+   * @param {Object} item - The file entry.
+   * @returns {Element} The row element.
+   */
   const buildFileRow = item => {
     const row = template(FILE_ROW_HTML);
     const left = row.firstElementChild;
@@ -392,6 +492,11 @@ export function DialogSelectFile(props) {
     nameEl.textContent = getFilename(item.path ?? "");
     return row;
   };
+  /**
+   * Dispatch to the row builder matching the entry type.
+   * @param {Object} item - The list entry (command, session or file).
+   * @returns {Element} The row element.
+   */
   const buildRow = item => {
     if (item.type === "command") return buildCommandRow(item);
     if (item.type === "session") return buildSessionRow(item);

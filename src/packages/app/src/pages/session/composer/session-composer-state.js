@@ -5,6 +5,18 @@ import { useGlobalSync } from "@/context/global-sync.js";
 import { useSync } from "@/context/sync.js";
 import { useComposerController } from "@/controllers/session-composer.js";
 import { sessionPermissionRequest, sessionQuestionRequest } from "./session-request-tree.js";
+
+/** @file Session composer state factory: derives the blocked/question/permission/todo state for a session and drives the todo dock open/close lifecycle (with a delayed close and stale-todo clearing). */
+
+/**
+ * Computes the todo dock transition for the current todo snapshot.
+ *
+ * @param {Object} input - State inputs.
+ * @param {number} input.count - Number of todos.
+ * @param {boolean} input.live - Whether the session is busy or blocked.
+ * @param {boolean} input.done - Whether all todos are completed/cancelled.
+ * @returns {string} One of "hide", "clear", "open", or "close".
+ */
 export const todoState = input => {
   if (input.count === 0) return "hide";
   if (!input.live) return "clear";
@@ -14,6 +26,15 @@ export const todoState = input => {
 const idle = {
   type: "idle"
 };
+/**
+ * Creates the reactive state for a session's composer dock: derived blocked /
+ * question / permission / todo signals plus the dock open/close lifecycle and
+ * a permission-response decider.
+ *
+ * @param {Object} options - Optional configuration.
+ * @param {*} options.closeMs - Dock close delay in ms (number or accessor; defaults to 400).
+ * @returns {Object} The composer state API (blocked, questionRequest, permissionRequest, permissionResponding, decide, todos, dock, closing, opening).
+ */
 export function createSessionComposerState(options) {
   const params = useParams();
   const sync = useSync();
@@ -56,6 +77,12 @@ export function createSessionComposerState(options) {
     if (!perm) return false;
     return store.responding === perm.id;
   });
+  /**
+   * Responds to the active permission request with the given decision.
+   *
+   * @param {string} response - The permission decision (e.g. "once", "always", "reject").
+   * @returns {void}
+   */
   const decide = response => {
     const perm = permissionRequest();
     if (!perm) return;
@@ -75,6 +102,11 @@ export function createSessionComposerState(options) {
     if (typeof value === "number") return Math.max(0, value);
     return 400;
   };
+  /**
+   * Schedules the dock to fully close after the configured close delay.
+   *
+   * @returns {void}
+   */
   const scheduleClose = () => {
     if (timer) window.clearTimeout(timer);
     timer = window.setTimeout(() => {
@@ -87,6 +119,11 @@ export function createSessionComposerState(options) {
   };
 
   // Keep stale turn todos from reopening if the model never clears them.
+  /**
+   * Clears the current session's todos in both the global and session stores.
+   *
+   * @returns {void}
+   */
   const clear = () => {
     const id = params.id;
     if (!id) return;

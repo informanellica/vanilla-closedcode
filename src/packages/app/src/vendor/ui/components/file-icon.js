@@ -1,5 +1,12 @@
+/** @file FileIcon component that picks and renders an SVG sprite icon for a file or folder node. */
 const sprite = new URL("./file-icons/sprite.svg", import.meta.url).href;
 let fileIconId = 0;
+/**
+ * Split props into the named keys and the remaining rest props (value copies).
+ * @param {Object} props - The source props object.
+ * @param {Array} keys - Property names to route into the first result object.
+ * @returns {Array} A two-element array [local, rest].
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -12,6 +19,12 @@ function splitProps(props, keys) {
   }
   return [split, rest];
 }
+/**
+ * Toggle classes on an element from a Solid-style classList record.
+ * @param {Element} el - The target element (may be an SVG element).
+ * @param {Object} classList - Map of (possibly space-separated) class keys to booleans.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -24,6 +37,12 @@ function applyClassList(el, classList) {
     else el.classList.remove(...tokens);
   }
 }
+/**
+ * Apply leftover props to an element as event handlers, properties, or attributes.
+ * @param {Element} el - The target element (may be an SVG element).
+ * @param {Object} rest - The remaining props (excludes class/classList).
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList") continue;
@@ -48,9 +67,19 @@ function applyRestProps(el, rest) {
     }
   }
 }
+/**
+ * Create an SVG-namespaced element.
+ * @param {string} tag - The SVG tag name (e.g. "svg", "use", "mask").
+ * @returns {Element} The created SVG element.
+ */
 function createSvg(tag) {
   return document.createElementNS("http://www.w3.org/2000/svg", tag);
 }
+/**
+ * Build a small <svg> wrapping a <use> reference to a sprite symbol.
+ * @param {string} href - The sprite symbol reference (sprite URL plus #id).
+ * @returns {Element} The svg element containing the use reference.
+ */
 function appendUse(href) {
   const svg = createSvg("svg");
   const use = createSvg("use");
@@ -58,6 +87,11 @@ function appendUse(href) {
   svg.appendChild(use);
   return svg;
 }
+/**
+ * Render an SVG icon for a file/folder node, optionally as a monochrome (masked) glyph.
+ * @param {Object} props - Props: node (with path and type), class, classList, expanded (folder open state), mono (render as currentColor mask), plus pass-through attributes.
+ * @returns {Element} The root <svg> icon element.
+ */
 export const FileIcon = props => {
   const [local, rest] = splitProps(props, ["node", "class", "classList", "expanded", "mono"]);
   const name = chooseIconName(local.node.path, local.node.type, local.expanded || false);
@@ -544,17 +578,37 @@ const ICON_MAPS = {
     folderOpen: "FolderOpen"
   }
 };
+/**
+ * Map a folder icon name to its expanded ("Open") variant.
+ * @param {string} icon - The base folder icon name.
+ * @returns {string} The open-variant icon name, or the input unchanged for non-folder icons.
+ */
 const toOpenVariant = icon => {
   if (!icon.startsWith("Folder")) return icon;
   if (icon.endsWith("_light")) return icon.replace("_light", "Open_light");
   if (!icon.endsWith("Open")) return icon + "Open";
   return icon;
 };
+/**
+ * Extract the final path segment (file or folder name) from a path string.
+ * @param {string} p - The file system path (Windows or POSIX separators).
+ * @returns {string} The last non-empty path segment, or "" when none.
+ */
 const basenameOf = p => p.split("\\").join("/").split("/").filter(Boolean).pop() ?? "";
+/**
+ * Produce common folder-name spellings to match against the folder icon map.
+ * @param {string} name - The lowercased folder name.
+ * @returns {Array} Candidate variants: plain, dot-prefixed, underscore-prefixed, and dunder-wrapped.
+ */
 const folderNameVariants = name => {
   const n = name.toLowerCase();
   return [n, `.${n}`, `_${n}`, `__${n}__`];
 };
+/**
+ * Compute candidate dotted suffixes of a file name, longest first.
+ * @param {string} name - The file name.
+ * @returns {Array} Suffix candidates (including the whole name) sorted longest to shortest.
+ */
 const dottedSuffixesDesc = name => {
   const n = name.toLowerCase();
   const idxs = [];
@@ -564,6 +618,13 @@ const dottedSuffixesDesc = name => {
   for (const i of idxs) if (i + 1 < n.length) out.add(n.slice(i + 1));
   return Array.from(out).sort((a, b) => b.length - a.length); // longest first
 };
+/**
+ * Choose the sprite icon name for a path, matching folder names, file names, then extensions.
+ * @param {string} path - The file or directory path.
+ * @param {string} type - The node type; "directory" selects folder icons, otherwise file icons.
+ * @param {boolean} expanded - For directories, whether to use the open-folder variant.
+ * @returns {string} The resolved sprite icon name, falling back to the default file/folder icon.
+ */
 export function chooseIconName(path, type, expanded) {
   const base = basenameOf(path);
   const baseLower = base.toLowerCase();

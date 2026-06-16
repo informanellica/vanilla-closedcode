@@ -1,3 +1,4 @@
+/** @file First-party reimplementation of the used subset of @thisbeyond/solid-dnd: pointer-driven sortable drag-and-drop primitives (context, sensors, draggable/droppable/sortable, overlay) for tabs and sidebar reordering. */
 // First-party reimplementation of the used subset of @thisbeyond/solid-dnd
 // (v0.7.5). Behavior is reproduced faithfully for the features this app relies
 // on: a pointer-driven sortable drag-and-drop (session tabs, terminal tabs,
@@ -29,7 +30,14 @@ import { createStore } from "../store.js";
 // Layout geometry (src/layout.ts)
 // ---------------------------------------------------------------------------
 
+/**
+ * Floored rectangle geometry with derived edge/center/corner accessors. Mirrors
+ * upstream solid-dnd's Layout.
+ */
 class Layout {
+  /**
+   * @param {Object} rect - A rect-like with `x`, `y`, `width`, `height`.
+   */
   constructor(rect) {
     this.x = Math.floor(rect.x);
     this.y = Math.floor(rect.y);
@@ -67,8 +75,12 @@ class Layout {
   }
 }
 
-// Measure an element, then strip any CSS translate so the recorded layout is
-// the untransformed (resting) position. Mirrors elementLayout/stripTransform.
+/**
+ * Measure an element, then strip any CSS translate so the recorded layout is
+ * the untransformed (resting) position. Mirrors elementLayout/stripTransform.
+ * @param {HTMLElement} element - The element to measure.
+ * @returns {Layout} The element's untransformed layout.
+ */
 const elementLayout = (element) => {
   let layout = new Layout(element.getBoundingClientRect());
   const { transform } = getComputedStyle(element);
@@ -78,6 +90,12 @@ const elementLayout = (element) => {
   return layout;
 };
 
+/**
+ * Subtract a CSS transform's translate component from a layout's position.
+ * @param {Layout} layout - The measured layout.
+ * @param {string} transform - The computed CSS `transform` value.
+ * @returns {Layout} A new layout offset back to its untransformed position.
+ */
 const stripTransformFromLayout = (layout, transform) => {
   let translateX, translateY;
   if (transform.startsWith("matrix3d(")) {
@@ -99,8 +117,18 @@ const stripTransformFromLayout = (layout, transform) => {
   });
 };
 
+/**
+ * The identity transform.
+ * @returns {Object} `{ x: 0, y: 0 }`.
+ */
 const noopTransform = () => ({ x: 0, y: 0 });
 
+/**
+ * Whether two transforms have the same x/y.
+ * @param {Object} firstTransform - A transform with `x` and `y`.
+ * @param {Object} secondTransform - A transform with `x` and `y`.
+ * @returns {boolean} True when both components are equal.
+ */
 const transformsAreEqual = (firstTransform, secondTransform) => {
   return (
     firstTransform.x === secondTransform.x &&
@@ -108,6 +136,12 @@ const transformsAreEqual = (firstTransform, secondTransform) => {
   );
 };
 
+/**
+ * Apply a transform's translate to a layout's position.
+ * @param {Layout} layout - The base layout.
+ * @param {Object} transform - A transform with `x` and `y`.
+ * @returns {Layout} A new translated layout.
+ */
 const transformLayout = (layout, transform) => {
   return new Layout({
     ...layout,
@@ -116,6 +150,12 @@ const transformLayout = (layout, transform) => {
   });
 };
 
+/**
+ * Euclidean distance between two points.
+ * @param {Object} firstPoint - A point with `x` and `y`.
+ * @param {Object} secondPoint - A point with `x` and `y`.
+ * @returns {number} The distance.
+ */
 const distanceBetweenPoints = (firstPoint, secondPoint) => {
   return Math.sqrt(
     Math.pow(firstPoint.x - secondPoint.x, 2) +
@@ -123,6 +163,12 @@ const distanceBetweenPoints = (firstPoint, secondPoint) => {
   );
 };
 
+/**
+ * Whether two layouts have identical position and size.
+ * @param {Layout} firstLayout - A layout.
+ * @param {Layout} secondLayout - A layout.
+ * @returns {boolean} True when x/y/width/height all match.
+ */
 const layoutsAreEqual = (firstLayout, secondLayout) => {
   return (
     firstLayout.x === secondLayout.x &&
@@ -136,6 +182,14 @@ const layoutsAreEqual = (firstLayout, secondLayout) => {
 // Collision detection (src/collision.ts) — only closestCenter is consumed.
 // ---------------------------------------------------------------------------
 
+/**
+ * Collision detector: pick the droppable whose center is closest to the
+ * draggable's transformed center (ties favour the currently active droppable).
+ * @param {Object} draggable - The active draggable (provides `transformed.center`).
+ * @param {Array} droppables - The candidate droppables.
+ * @param {Object} context - Has `activeDroppableId` for tie-breaking.
+ * @returns {Object} The closest droppable, or null.
+ */
 const closestCenter = (draggable, droppables, context) => {
   const point1 = draggable.transformed.center;
   const collision = { distance: Infinity, droppable: null };
@@ -154,7 +208,15 @@ const closestCenter = (draggable, droppables, context) => {
   return collision.droppable;
 };
 
-// Default detector used when a provider does not pass collisionDetector.
+/**
+ * Collision detector (default when a provider passes none): pick the droppable
+ * with the greatest intersection-over-union with the draggable (ties favour the
+ * currently active droppable).
+ * @param {Object} draggable - The active draggable (provides `transformed`).
+ * @param {Array} droppables - The candidate droppables.
+ * @param {Object} context - Has `activeDroppableId` for tie-breaking.
+ * @returns {Object} The most-intersecting droppable, or null.
+ */
 const mostIntersecting = (draggable, droppables, context) => {
   const intersectionRatioOfLayouts = (firstLayout, secondLayout) => {
     const top = Math.max(firstLayout.top, secondLayout.top);
@@ -193,6 +255,11 @@ const mostIntersecting = (draggable, droppables, context) => {
 // Style helpers (src/style.ts)
 // ---------------------------------------------------------------------------
 
+/**
+ * Build a CSS style object applying a transform as a `translate3d`.
+ * @param {Object} transform - A transform with `x` and `y`.
+ * @returns {Object} A style object with a `transform` property.
+ */
 const transformStyle = (transform) => {
   return { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` };
 };
@@ -203,6 +270,14 @@ const transformStyle = (transform) => {
 
 const Context = createContext();
 
+/**
+ * Provider component owning all drag-drop state (draggables, droppables, sensors,
+ * the active drag, and the optional overlay) plus the action functions that
+ * mutate it. Wires the `onDragStart`/`onDragMove`/`onDragOver`/`onDragEnd`
+ * lifecycle callbacks and runs collision detection on move.
+ * @param {Object} passedProps - Component props: `collisionDetector` (defaults to mostIntersecting), the `onDrag*` lifecycle callbacks, and `children`.
+ * @returns {*} The Context provider wrapping `children`.
+ */
 const DragDropProvider = (passedProps) => {
   const props = mergeProps(
     { collisionDetector: mostIntersecting },
@@ -235,6 +310,12 @@ const DragDropProvider = (passedProps) => {
     }
   });
 
+  /**
+   * Register a transform contributor on a draggable/droppable (no-op if absent).
+   * @param {string} type - "draggables" or "droppables".
+   * @param {*} id - The item id.
+   * @param {Object} transformer - Has `id`, `order`, and a `callback` transform-mapping function.
+   */
   const addTransformer = (type, id, transformer) => {
     if (!untrack(() => state[type][id])) {
       return;
@@ -242,6 +323,12 @@ const DragDropProvider = (passedProps) => {
     setState(type, id, "transformers", transformer.id, transformer);
   };
 
+  /**
+   * Remove a previously registered transformer (no-op if absent).
+   * @param {string} type - "draggables" or "droppables".
+   * @param {*} id - The item id.
+   * @param {string} transformerId - The transformer's id.
+   */
   const removeTransformer = (type, id, transformerId) => {
     if (!untrack(() => state[type][id])) {
       return;
@@ -252,6 +339,12 @@ const DragDropProvider = (passedProps) => {
     setState(type, id, "transformers", transformerId, void 0);
   };
 
+  /**
+   * Register (or re-register) a draggable, defining its reactive `transform` /
+   * `transformed` accessors. A mid-drag re-registration is pinned in place via a
+   * one-shot offset transformer.
+   * @param {Object} descriptor - Has `id`, `node`, `layout`, and `data`.
+   */
   const addDraggable = ({ id, node, layout, data }) => {
     const existingDraggable = state.draggables[id];
     const draggable = {
@@ -332,6 +425,11 @@ const DragDropProvider = (passedProps) => {
     }
   };
 
+  /**
+   * Mark a draggable for deferred cleanup (so a re-register in the same tick can
+   * cancel it).
+   * @param {*} id - The draggable id.
+   */
   const removeDraggable = (id) => {
     if (!untrack(() => state.draggables[id])) {
       return;
@@ -340,6 +438,11 @@ const DragDropProvider = (passedProps) => {
     queueMicrotask(() => cleanupDraggable(id));
   };
 
+  /**
+   * Actually delete a draggable if it is still pending cleanup, clearing the
+   * active drag when it was the active one.
+   * @param {*} id - The draggable id.
+   */
   const cleanupDraggable = (id) => {
     if (state.draggables[id]?.pendingCleanup) {
       const cleanupActive = state.active.draggableId === id;
@@ -352,6 +455,11 @@ const DragDropProvider = (passedProps) => {
     }
   };
 
+  /**
+   * Register (or update) a droppable, defining its reactive `transform` /
+   * `transformed` accessors on first registration.
+   * @param {Object} descriptor - Has `id`, `node`, `layout`, and `data`.
+   */
   const addDroppable = ({ id, node, layout, data }) => {
     const existingDroppable = state.droppables[id];
     const droppable = {
@@ -400,6 +508,10 @@ const DragDropProvider = (passedProps) => {
     }
   };
 
+  /**
+   * Mark a droppable for deferred cleanup.
+   * @param {*} id - The droppable id.
+   */
   const removeDroppable = (id) => {
     if (!untrack(() => state.droppables[id])) {
       return;
@@ -408,6 +520,11 @@ const DragDropProvider = (passedProps) => {
     queueMicrotask(() => cleanupDroppable(id));
   };
 
+  /**
+   * Actually delete a droppable if still pending cleanup, clearing the active
+   * droppable when it was the active one.
+   * @param {*} id - The droppable id.
+   */
   const cleanupDroppable = (id) => {
     if (state.droppables[id]?.pendingCleanup) {
       const cleanupActive = state.active.droppableId === id;
@@ -420,6 +537,11 @@ const DragDropProvider = (passedProps) => {
     }
   };
 
+  /**
+   * Register a sensor with its activator handlers and reactive coordinate
+   * tracking (origin/current/delta).
+   * @param {Object} descriptor - Has `id` and `activators` (event-type to handler map).
+   */
   const addSensor = ({ id, activators }) => {
     setState("sensors", id, {
       id,
@@ -441,6 +563,10 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Remove a sensor, clearing the active sensor when it was the active one.
+   * @param {*} id - The sensor id.
+   */
   const removeSensor = (id) => {
     if (!untrack(() => state.sensors[id])) {
       return;
@@ -454,6 +580,11 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Set (or update) the drag overlay element + layout, defining reactive
+   * accessors that mirror the active draggable's id/data/transformers.
+   * @param {Object} descriptor - Has `node` and `layout`.
+   */
   const setOverlay = ({ node, layout }) => {
     const existing = state.active.overlay;
     const overlay = {
@@ -514,8 +645,14 @@ const DragDropProvider = (passedProps) => {
     setState("active", "overlay", overlay);
   };
 
+  /** Clear the active drag overlay. */
   const clearOverlay = () => setState("active", "overlay", null);
 
+  /**
+   * Begin tracking a sensor: seed its origin/current coordinates and mark it active.
+   * @param {*} id - The sensor id.
+   * @param {Object} coordinates - The initial pointer coordinates (`x`, `y`).
+   */
   const sensorStart = (id, coordinates) => {
     batch(() => {
       setState("sensors", id, "coordinates", {
@@ -526,6 +663,10 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Update the active sensor's current coordinates (drives the drag transform).
+   * @param {Object} coordinates - The new pointer coordinates (`x`, `y`).
+   */
   const sensorMove = (coordinates) => {
     const sensorId = state.active.sensorId;
     if (!sensorId) {
@@ -536,8 +677,16 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /** Clear the active sensor. */
   const sensorEnd = () => setState("active", "sensorId", null);
 
+  /**
+   * Build the event listeners that fan a draggable's activation events out to
+   * every registered sensor's activators.
+   * @param {*} draggableId - The draggable id the listeners belong to.
+   * @param {boolean} asHandlers - When true, key listeners as `onEvent` props instead of raw event names.
+   * @returns {Object} A map of event name (or `onEvent`) to listener.
+   */
   const draggableActivators = (draggableId, asHandlers) => {
     const eventMap = {};
     for (const sensor of Object.values(state.sensors)) {
@@ -569,6 +718,11 @@ const DragDropProvider = (passedProps) => {
     return listeners;
   };
 
+  /**
+   * Re-measure every draggable/droppable/overlay node and write back any changed
+   * layouts (sharing measurements per node via a cache).
+   * @returns {boolean} True when any layout changed.
+   */
   const recomputeLayouts = () => {
     let anyLayoutChanged = false;
     const draggables = Object.values(state.draggables);
@@ -612,6 +766,10 @@ const DragDropProvider = (passedProps) => {
     return anyLayoutChanged;
   };
 
+  /**
+   * Run the configured collision detector against the active draggable/overlay
+   * and update the active droppable id when it changes.
+   */
   const detectCollisions = () => {
     const draggable = state.active.overlay ?? state.active.draggable;
     if (draggable) {
@@ -629,6 +787,11 @@ const DragDropProvider = (passedProps) => {
     }
   };
 
+  /**
+   * Start a drag: re-measure layouts, mark the draggable active, attach the
+   * sensor-move transformer, and run initial collision detection.
+   * @param {*} draggableId - The id of the draggable being dragged.
+   */
   const dragStart = (draggableId) => {
     const transformer = {
       id: "sensorMove",
@@ -651,6 +814,10 @@ const DragDropProvider = (passedProps) => {
     detectCollisions();
   };
 
+  /**
+   * End a drag: detach the sensor-move transformer, clear the active
+   * draggable/droppable, and re-measure layouts.
+   */
   const dragEnd = () => {
     const draggableId = untrack(() => state.active.draggableId);
     batch(() => {
@@ -662,6 +829,10 @@ const DragDropProvider = (passedProps) => {
     recomputeLayouts();
   };
 
+  /**
+   * Register a handler invoked (untracked) whenever a drag begins.
+   * @param {Function} handler - Receives `{ draggable }`.
+   */
   const onDragStart = (handler) => {
     createEffect(() => {
       const draggable = state.active.draggable;
@@ -671,6 +842,10 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Register a handler invoked on every move of the active drag.
+   * @param {Function} handler - Receives `{ draggable, overlay }`.
+   */
   const onDragMove = (handler) => {
     createEffect(() => {
       const draggable = state.active.draggable;
@@ -683,6 +858,10 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Register a handler invoked when the active draggable's droppable changes.
+   * @param {Function} handler - Receives `{ draggable, droppable, overlay }`.
+   */
   const onDragOver = (handler) => {
     createEffect(() => {
       const draggable = state.active.draggable;
@@ -695,6 +874,11 @@ const DragDropProvider = (passedProps) => {
     });
   };
 
+  /**
+   * Register a handler invoked once when a drag finishes, with the just-ended
+   * drag's draggable/droppable/overlay (tracked via the effect's previous value).
+   * @param {Function} handler - Receives `{ draggable, droppable, overlay }`.
+   */
   const onDragEnd = (handler) => {
     createEffect(
       ({ previousDraggable, previousDroppable, previousOverlay }) => {
@@ -763,6 +947,10 @@ const DragDropProvider = (passedProps) => {
   });
 };
 
+/**
+ * Access the drag-drop context `[state, actions]` tuple.
+ * @returns {Array} The `[state, actions]` tuple, or null when outside a provider.
+ */
 const useDragDropContext = () => {
   return useContext(Context) || null;
 };
@@ -771,6 +959,13 @@ const useDragDropContext = () => {
 // Pointer sensor (src/create-pointer-sensor.ts)
 // ---------------------------------------------------------------------------
 
+/**
+ * Register a pointer-driven sensor that activates a drag after a short hold
+ * (250ms) or once the pointer moves past a threshold (10px), then tracks
+ * pointer moves and ends the drag on pointer up. Suppresses text selection
+ * while dragging.
+ * @param {string} id - The sensor id (default "pointer-sensor").
+ */
 const createPointerSensor = (id = "pointer-sensor") => {
   const [
     state,
@@ -796,6 +991,12 @@ const createPointerSensor = (id = "pointer-sensor") => {
   const initialCoordinates = { x: 0, y: 0 };
   let activationDelayTimeoutId = null;
   let activationDraggableId = null;
+  /**
+   * Pointerdown activator: arm the activation hold timer and start listening for
+   * move/up (left button only).
+   * @param {PointerEvent} event - The pointerdown event.
+   * @param {*} draggableId - The draggable id under the pointer.
+   */
   const attach = (event, draggableId) => {
     if (event.button !== 0) return;
     document.addEventListener("pointermove", onPointerMove);
@@ -805,6 +1006,7 @@ const createPointerSensor = (id = "pointer-sensor") => {
     initialCoordinates.y = event.clientY;
     activationDelayTimeoutId = window.setTimeout(onActivate, activationDelay);
   };
+  /** Tear down the activation timer and all document listeners. */
   const detach = () => {
     if (activationDelayTimeoutId) {
       clearTimeout(activationDelayTimeoutId);
@@ -814,6 +1016,7 @@ const createPointerSensor = (id = "pointer-sensor") => {
     document.removeEventListener("pointerup", onPointerUp);
     document.removeEventListener("selectionchange", clearSelection);
   };
+  /** Promote the armed pointer into an active drag (or detach if another sensor won). */
   const onActivate = () => {
     if (!state.active.sensor) {
       sensorStart(id, initialCoordinates);
@@ -824,6 +1027,11 @@ const createPointerSensor = (id = "pointer-sensor") => {
       detach();
     }
   };
+  /**
+   * Pointermove handler: activate the drag once past the distance threshold,
+   * then forward coordinates while this sensor is active.
+   * @param {PointerEvent} event - The pointermove event.
+   */
   const onPointerMove = (event) => {
     const coordinates = { x: event.clientX, y: event.clientY };
     if (!state.active.sensor) {
@@ -840,6 +1048,10 @@ const createPointerSensor = (id = "pointer-sensor") => {
       sensorMove(coordinates);
     }
   };
+  /**
+   * Pointerup handler: detach listeners and finish the drag if this sensor was active.
+   * @param {PointerEvent} event - The pointerup event.
+   */
   const onPointerUp = (event) => {
     detach();
     if (isActiveSensor()) {
@@ -853,6 +1065,11 @@ const createPointerSensor = (id = "pointer-sensor") => {
   };
 };
 
+/**
+ * Component that registers the default pointer sensor for its subtree.
+ * @param {Object} props - Component props (renders `children`).
+ * @returns {*} The component's `children`.
+ */
 const DragDropSensors = (props) => {
   createPointerSensor();
   return props.children;
@@ -862,6 +1079,15 @@ const DragDropSensors = (props) => {
 // Draggable / droppable primitives (src/create-draggable.ts, create-droppable.ts)
 // ---------------------------------------------------------------------------
 
+/**
+ * Create a draggable primitive: a directive function (usable as `ref`) that
+ * registers the element, wires its activation listeners, and applies the live
+ * drag transform. Exposes `ref`, `isActiveDraggable`, `dragActivators`, and
+ * `transform` accessors.
+ * @param {*} id - The draggable id.
+ * @param {Object} data - Arbitrary data attached to the draggable (default {}).
+ * @returns {Function} The draggable directive (with attached accessor properties).
+ */
 const createDraggable = (id, data = {}) => {
   const [state, { addDraggable, removeDraggable, draggableActivators }] =
     useDragDropContext();
@@ -938,6 +1164,14 @@ const createDraggable = (id, data = {}) => {
   return draggable;
 };
 
+/**
+ * Create a droppable primitive: a directive function (usable as `ref`) that
+ * registers the element and applies its transform. Exposes `ref`,
+ * `isActiveDroppable`, and `transform` accessors.
+ * @param {*} id - The droppable id.
+ * @param {Object} data - Arbitrary data attached to the droppable (default {}).
+ * @returns {Function} The droppable directive (with attached accessor properties).
+ */
 const createDroppable = (id, data = {}) => {
   const [state, { addDroppable, removeDroppable }] = useDragDropContext();
   const [node, setNode] = createSignal(null);
@@ -999,6 +1233,14 @@ const createDroppable = (id, data = {}) => {
 // on cleanup — equivalent for a single element and avoids "solid-js/web".
 // ---------------------------------------------------------------------------
 
+/**
+ * Drag overlay component. Mounts a host element on document.body for its
+ * lifetime (equivalent to a Portal), reactively styles it to follow the active
+ * drag, and renders `children` (a node or a render function receiving the active
+ * draggable) into it only while a drag is active. Renders null in-flow.
+ * @param {Object} props - Component props: `class`, `style`, and `children` (node or render function).
+ * @returns {null} Always null (the overlay lives on document.body).
+ */
 const DragOverlay = (props) => {
   const [state, { onDragStart, onDragEnd, setOverlay, clearOverlay }] =
     useDragDropContext();
@@ -1085,8 +1327,12 @@ const DragOverlay = (props) => {
   return null;
 };
 
-// Append resolved value(s) into a parent. Mirrors how solid insert() flattens
-// arrays/accessors of nodes and primitives.
+/**
+ * Append resolved value(s) into a parent. Mirrors how solid insert() flattens
+ * arrays/accessors of nodes and primitives (ignoring null/booleans).
+ * @param {Node} parent - The parent element to append into.
+ * @param {*} value - A node, primitive, array, or accessor function of values.
+ */
 const appendValue = (parent, value) => {
   if (value == null || value === false || value === true) return;
   if (Array.isArray(value)) {
@@ -1108,6 +1354,13 @@ const appendValue = (parent, value) => {
 // Sortable context (src/sortable-context.tsx)
 // ---------------------------------------------------------------------------
 
+/**
+ * Return a copy of an array with one item moved to a new index.
+ * @param {Array} array - The source array.
+ * @param {number} fromIndex - The item's current index.
+ * @param {number} toIndex - The target index.
+ * @returns {Array} A new reordered array.
+ */
 const moveArrayItem = (array, fromIndex, toIndex) => {
   const newArray = array.slice();
   newArray.splice(toIndex, 0, ...newArray.splice(fromIndex, 1));
@@ -1116,6 +1369,13 @@ const moveArrayItem = (array, fromIndex, toIndex) => {
 
 const SortableContext = createContext();
 
+/**
+ * Provider that maintains a sortable ordering for a list of ids, deriving a
+ * live `sortedIds` order from the active drag (moving the dragged id toward the
+ * hovered droppable's slot) and resetting to `props.ids` otherwise.
+ * @param {Object} props - Component props: `ids` (the ordered id list) and `children`.
+ * @returns {*} The SortableContext provider wrapping `children`.
+ */
 const SortableProvider = (props) => {
   const [dndState] = useDragDropContext();
   const [state, setState] = createStore({
@@ -1155,6 +1415,10 @@ const SortableProvider = (props) => {
   });
 };
 
+/**
+ * Access the sortable context `[state, actions]` tuple.
+ * @returns {Array} The `[state, actions]` tuple, or null when outside a SortableProvider.
+ */
 const useSortableContext = () => {
   return useContext(SortableContext) || null;
 };
@@ -1163,6 +1427,12 @@ const useSortableContext = () => {
 // createSortable (src/create-sortable.ts + combine-refs.ts)
 // ---------------------------------------------------------------------------
 
+/**
+ * Combine two ref setters into one that forwards the element to both.
+ * @param {Function} setRefA - The first ref setter.
+ * @param {Function} setRefB - The second ref setter.
+ * @returns {Function} A single ref setter calling both.
+ */
 const combineRefs = (setRefA, setRefB) => {
   return (ref) => {
     setRefA(ref);
@@ -1170,6 +1440,16 @@ const combineRefs = (setRefA, setRefB) => {
   };
 };
 
+/**
+ * Create a sortable primitive combining a draggable + droppable on one element.
+ * Within a SortableProvider it animates non-active items toward their sorted
+ * slot (layout-delta offset) while the active item follows the sensor. Returns a
+ * directive (usable as `ref`) exposing `ref`, `transform`, `isActiveDraggable`,
+ * `dragActivators`, and `isActiveDroppable`.
+ * @param {*} id - The sortable item id.
+ * @param {Object} data - Arbitrary data attached to the item (default {}).
+ * @returns {Function} The sortable directive (with attached accessor properties).
+ */
 const createSortable = (id, data = {}) => {
   const [dndState, { addTransformer, removeTransformer }] =
     useDragDropContext();

@@ -9,7 +9,14 @@ import { normalizeServerUrl, ServerConnection, useServer } from "@/context/serve
 import { useCheckServerHealth } from "@/utils/server-health.js";
 import { ServerHealthIndicator, ServerRow } from "@/components/server/server-row.js";
 
+/** @file Server settings pane: lists configured servers with live health, and an inline add/edit form. */
+
+/** Interval in milliseconds between server-health refresh polls. */
 const HEALTH_POLL_INTERVAL_MS = 10_000;
+/**
+ * Build the initial add/edit form state.
+ * @returns {Object} A blank form ({open, mode, id, url, name, error, busy}).
+ */
 const emptyForm = () => ({
   open: false,
   mode: "add",
@@ -20,12 +27,23 @@ const emptyForm = () => ({
   busy: false
 });
 
+/**
+ * Build a detached element from an HTML string (trimmed, first child returned).
+ * @param {string} html - Markup for a single root element.
+ * @returns {Element} The constructed element.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Server settings view. Renders the list of configured server connections with live
+ * health indicators (active server selectable, http servers editable/removable) and
+ * an inline add/edit form that validates the URL via a health check before saving.
+ * @returns {Node} The settings pane root element.
+ */
 export const SettingsServer = () => {
   const language = useLanguage();
   const server = useServer();
@@ -34,6 +52,10 @@ export const SettingsServer = () => {
     status: {},
     form: emptyForm()
   });
+  /**
+   * Re-check health for every http connection and write the results into state.status.
+   * @returns {Promise<void>} Resolves once all health checks complete and state is updated.
+   */
   async function refreshHealth() {
     const list = server.list;
     const results = {};
@@ -49,17 +71,31 @@ export const SettingsServer = () => {
     const id = setInterval(() => void refreshHealth(), HEALTH_POLL_INTERVAL_MS);
     onCleanup(() => clearInterval(id));
   });
+  /**
+   * Make a connection the active server, unless it is already active or unhealthy.
+   * @param {Object} conn - A server connection.
+   * @returns {void}
+   */
   const switchTo = conn => {
     const key = ServerConnection.key(conn);
     if (key === server.key) return;
     if (state.status[key]?.healthy === false) return;
     server.setActive(key);
   };
+  /**
+   * Open the form in "add" mode with blank fields.
+   * @returns {void}
+   */
   const openAdd = () => setState("form", {
     ...emptyForm(),
     open: true,
     mode: "add"
   });
+  /**
+   * Open the form in "edit" mode pre-filled from an http connection.
+   * @param {Object} conn - The http server connection to edit.
+   * @returns {void}
+   */
   const openEdit = conn => {
     if (conn.type !== "http") return;
     setState("form", {
@@ -72,11 +108,25 @@ export const SettingsServer = () => {
       busy: false
     });
   };
+  /**
+   * Close and reset the add/edit form.
+   * @returns {void}
+   */
   const cancelForm = () => setState("form", emptyForm());
+  /**
+   * Remove a server connection and refresh health.
+   * @param {Object} conn - The server connection to remove.
+   * @returns {void}
+   */
   const removeServer = conn => {
     server.remove(ServerConnection.key(conn));
     void refreshHealth();
   };
+  /**
+   * Validate and submit the add/edit form: normalize the URL, health-check it, then
+   * add (or, in edit mode, replace the original while preserving the active selection).
+   * @returns {Promise<void>} Resolves once the form is submitted or an error is shown.
+   */
   async function submitForm() {
     if (state.form.busy) return;
     const normalized = normalizeServerUrl(state.form.url);
@@ -141,6 +191,12 @@ export const SettingsServer = () => {
   createEffect(() => { titleEl.textContent = language.t("settings.server.title"); });
   createEffect(() => { descEl.textContent = language.t("dialog.server.description"); });
 
+  /**
+   * Build one server-list row (health dot, ServerRow, active check, and edit/delete
+   * controls for http servers); clicking the row switches the active server.
+   * @param {Object} conn - The server connection to render.
+   * @returns {Element} The row element.
+   */
   const buildRow = conn => {
     const key = ServerConnection.key(conn);
     const row = template(`<div class="group d-flex align-items-center gap-3 py-2.5 px-3 rounded-2 cursor-pointer"></div>`);

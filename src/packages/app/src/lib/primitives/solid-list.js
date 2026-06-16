@@ -17,10 +17,18 @@
 //
 // Port/derivative of solid-list and @corvu/utils (both MIT License,
 // Copyright (c) 2023-2024 Jasmin Noetzli). See THIRD-PARTY-NOTICES.md.
+/** @file First-party port of solid-list's createList (keyboard-navigable active-item list helper). */
+
 import { createSignal, mergeProps, untrack } from "../reactivity.js";
 
 // Inlined from `@corvu/utils/reactivity` (`access`): unwrap a value that may be
 // either a static value or a zero-arg accessor function.
+/**
+ * Unwrap a value that may be a static value or a zero-arg accessor function.
+ *
+ * @param {*} v - Accessor function or static value.
+ * @returns {*} The resolved value.
+ */
 const access = (v) => (typeof v === "function" ? v() : v);
 
 // Inlined from `@corvu/utils/create/controllableSignal`.
@@ -32,6 +40,18 @@ const access = (v) => (typeof v === "function" ? v() : v);
 // `props.initialValue`. `props.onChange` fires whenever the value actually
 // changes (compared with `Object.is`). All mutation happens inside `untrack`
 // so reading the current value while setting does not create dependencies.
+/**
+ * Create a `[value, setValue]` pair that mirrors `createSignal` but can be
+ * externally controlled: when `props.value` returns a defined value the signal
+ * reflects it, otherwise it falls back to internal state seeded by
+ * `props.initialValue`. `props.onChange` fires when the value actually changes.
+ *
+ * @param {Object} props - Controllable-signal options.
+ * @param {*} props.initialValue - Seed value for the uncontrolled internal state.
+ * @param {Function} props.value - Accessor returning the controlled value (or undefined to stay uncontrolled).
+ * @param {Function} props.onChange - Called with the new value when it changes.
+ * @returns {Array} A `[value, setValue]` accessor/setter pair.
+ */
 const createControllableSignal = (props) => {
   const [uncontrolledSignal, setUncontrolledSignal] = createSignal(
     props.initialValue,
@@ -62,6 +82,23 @@ const createControllableSignal = (props) => {
 // navigable list driven by an `active` item. `props.items` is an accessor (or
 // static value) of the list of item keys; navigation keys move `active`
 // through them, optionally looping at the ends.
+/**
+ * Create an accessible, keyboard-navigable list driven by an `active` item.
+ * Arrow/Home/End (and optionally Tab/vim) keys move the active item through
+ * `props.items`, optionally looping at the ends.
+ *
+ * @param {Object} props - List options.
+ * @param {*} props.items - Accessor or static value of the list of item keys.
+ * @param {*} props.initialActive - Initial active item key (default null).
+ * @param {*} props.orientation - "vertical" or "horizontal" navigation axis.
+ * @param {*} props.loop - Whether navigation wraps at the ends (default true).
+ * @param {*} props.textDirection - "ltr" or "rtl" for horizontal navigation.
+ * @param {*} props.handleTab - Whether Tab/Shift+Tab also move the active item.
+ * @param {*} props.vimMode - Whether vim keys (h/j/k/l) navigate as well.
+ * @param {Object} props.vimKeys - Custom vim key bindings `{ up, down, left, right }`.
+ * @param {Function} props.onActiveChange - Called when the active item changes.
+ * @returns {Object} `{ active, setActive, onKeyDown }` accessor, setter, and key handler.
+ */
 const createList = (props) => {
   const defaultedProps = mergeProps(
     {

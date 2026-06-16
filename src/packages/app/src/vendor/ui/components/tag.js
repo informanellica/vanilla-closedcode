@@ -1,4 +1,11 @@
+/** @file Tag: a small inline pill/label span with a size variant and forwarded class/attribute props. */
 import { insert } from "../../../lib/reactivity.js";
+/**
+ * Split props into a [picked, rest] pair based on a list of keys.
+ * @param {Object} props - Source props object.
+ * @param {Array} keys - Keys to pick into the first result object.
+ * @returns {Array} A two-element array: [picked props, remaining props].
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -12,6 +19,13 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Apply a Solid-style classList map to an element, supporting space-separated
+ * multi-class keys (added when truthy, removed when falsy).
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} classList - Map of class-name keys to boolean enabled flags.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {

@@ -1,3 +1,4 @@
+/** @file Defines the FileComponent context (provider + hook) exposing the file-rendering component supplied via props. */
 import { createSimpleContext } from "./helper.js";
 const ctx = createSimpleContext({
   name: "FileComponent",

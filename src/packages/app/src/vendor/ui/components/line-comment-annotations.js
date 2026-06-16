@@ -10,8 +10,31 @@ import { useI18n } from "../context/i18n.js";
 import { createHoverCommentUtility } from "../pierre/comment-hover.js";
 import { cloneSelectedLineRange, formatSelectedLineLabel, lineInSelectedRange } from "../pierre/selection-bridge.js";
 import { LineComment, LineCommentEditor } from "./line-comment.js";
+/** @file Line-comment annotation orchestration: per-annotation reactive renderer, comment/draft state machine, and the controller wiring them to a diff/code view. */
+
+/**
+ * Create a renderer that mounts each line-comment/draft annotation into its own
+ * detached reactive root host element, keyed by annotation metadata.
+ *
+ * Each annotation flips between a rendered comment (LineComment) and its inline
+ * editor (LineCommentEditor) via a Show, or renders a draft editor. Hosts are
+ * reused across renders by key, reconciled against the live set, and disposed on
+ * cleanup.
+ *
+ * @param {Object} props - Renderer props.
+ * @param {Function} props.renderComment - Maps a comment to its view model (id, open, comment, selection, actions, editor, handlers).
+ * @param {Function} props.renderDraft - Maps a draft range to its editor view model.
+ * @returns {Object} Renderer with render(annotation), reconcile(annotations), and cleanup() methods.
+ */
 export function createLineCommentAnnotationRenderer(props) {
   const nodes = new Map();
+  /**
+   * Mount a new annotation node: build a reactive root in a detached host that
+   * renders the comment/editor or draft editor for the given metadata.
+   *
+   * @param {Object} meta - Annotation metadata (kind "comment" or "draft", key, and comment/range).
+   * @returns {Object} The created node { host, dispose, setMeta }, or undefined when no document.
+   */
   const mount = meta => {
     if (typeof document === "undefined") return;
     const host = document.createElement("div");
@@ -144,6 +167,13 @@ export function createLineCommentAnnotationRenderer(props) {
     nodes.set(meta.key, node);
     return node;
   };
+  /**
+   * Render (or update) the host element for one annotation, reusing the existing
+   * keyed node or mounting a new one.
+   *
+   * @param {Object} annotation - Annotation with a metadata key and payload.
+   * @returns {(HTMLElement|undefined)} The host element, or undefined when no document.
+   */
   const render = annotation => {
     const meta = annotation.metadata;
     const node = nodes.get(meta.key) ?? mount(meta);
@@ -151,6 +181,13 @@ export function createLineCommentAnnotationRenderer(props) {
     node.setMeta(meta);
     return node.host;
   };
+  /**
+   * Dispose and remove any mounted annotation nodes whose keys are no longer in
+   * the provided list.
+   *
+   * @param {Array} annotations - The current set of annotations to keep.
+   * @returns {void}
+   */
   const reconcile = annotations => {
     const next = new Set(annotations.map(annotation => annotation.metadata.key));
     for (const [key, node] of nodes) {
@@ -159,6 +196,11 @@ export function createLineCommentAnnotationRenderer(props) {
       nodes.delete(key);
     }
   };
+  /**
+   * Dispose every mounted annotation node and clear the registry.
+   *
+   * @returns {void}
+   */
   const cleanup = () => {
     for (const [, node] of nodes) node.dispose();
     nodes.clear();
@@ -169,6 +211,24 @@ export function createLineCommentAnnotationRenderer(props) {
     cleanup
   };
 }
+/**
+ * Create the line-comment interaction state machine: tracks the draft text and
+ * the comment currently being edited, and exposes actions to open/close/toggle
+ * comments, start drafts and editors, handle hover/selection, and reset. Opened,
+ * selected, and commenting ranges are delegated to the provided host accessors
+ * and setters.
+ *
+ * @param {Object} props - Host bindings.
+ * @param {Function} props.opened - Accessor for the currently opened comment id.
+ * @param {Function} props.selected - Accessor for the currently selected line range.
+ * @param {Function} props.commenting - Accessor for the active draft range.
+ * @param {Function} props.setOpened - Setter for the opened comment id.
+ * @param {Function} props.setSelected - Setter for the selected range.
+ * @param {Function} props.setCommenting - Setter for the draft range.
+ * @param {Function} props.syncSelected - Optional secondary sync for the selected range.
+ * @param {Function} props.hoverSelected - Optional override for hover selection handling.
+ * @returns {Object} The state API (draft, editing, opened, selected, commenting, isOpen, isEditing, and action methods).
+ */
 export function createLineCommentState(props) {
   const [state, setState] = createStore({
     draft: "",
@@ -266,6 +326,33 @@ export function createLineCommentState(props) {
     reset
   };
 }
+/**
+ * Create the high-level line-comment controller that ties the state machine, the
+ * annotations memo, the managed annotation renderer, and the hover utility
+ * together, exposing the line-selection callbacks a diff/code view drives.
+ *
+ * Builds view models for each comment (with edit/remove actions and an inline
+ * editor) and for the active draft, wiring submit/update/delete callbacks. When
+ * props.getSide is present the annotations are split-diff aware.
+ *
+ * @param {Object} props - Controller configuration.
+ * @param {Object} props.state - Host bindings forwarded to createLineCommentState.
+ * @param {Function} props.comments - Accessor returning the list of comments.
+ * @param {Function} props.draftKey - Accessor returning a stable key for the current draft.
+ * @param {Function} props.getSide - Optional accessor mapping a range to a diff side (split-diff mode).
+ * @param {Function} props.onSubmit - Called with { comment, selection } when a draft is submitted.
+ * @param {Function} props.onUpdate - Called with { id, comment, selection } when an edit is saved.
+ * @param {Function} props.onDelete - Called with the comment when it is removed.
+ * @param {Function} props.renderCommentActions - Builds the action UI for a comment given { edit, remove }.
+ * @param {Function} props.getHoverSelectedRange - Optional accessor for the hover-selected range.
+ * @param {Object} props.mention - Mention configuration passed to editors.
+ * @param {string} props.label - Hover utility label.
+ * @param {string} props.editSubmitLabel - Submit label for the edit editor.
+ * @param {boolean} props.cancelDraftOnCommentToggle - Whether toggling a comment cancels an open draft.
+ * @param {boolean} props.clearSelectionOnSelectionEndNull - Whether a null selection-end clears the selection.
+ * @param {Function} props.onDraftPopoverFocusOut - Focus-out handler for the draft popover.
+ * @returns {Object} Controller with note, annotations, renderAnnotation, renderHoverUtility, and line-selection callbacks.
+ */
 export function createLineCommentController(props) {
   const i18n = useI18n();
   const note = createLineCommentState(props.state);
@@ -391,6 +478,21 @@ export function createLineCommentController(props) {
     onLineNumberSelectionEnd
   };
 }
+/**
+ * Build a memo producing the annotation list from the comments plus any active
+ * draft range. Each entry carries a line number and metadata (kind, key,
+ * comment/range); when props.getSide is present, entries also include a diff
+ * side for split-diff rendering.
+ *
+ * @param {Object} props - Annotation source bindings.
+ * @param {Function} props.comments - Accessor returning the list of comments.
+ * @param {Function} props.getCommentId - Maps a comment to its id.
+ * @param {Function} props.getCommentSelection - Maps a comment to its line range.
+ * @param {Function} props.draftRange - Accessor returning the active draft range or null.
+ * @param {Function} props.draftKey - Accessor returning a stable key for the draft.
+ * @param {Function} props.getSide - Optional accessor mapping a range to a diff side.
+ * @returns {Function} A memo accessor returning the array of annotation entries.
+ */
 export function createLineCommentAnnotations(props) {
   const line = range => Math.max(range.start, range.end);
   if ("getSide" in props) {
@@ -446,6 +548,17 @@ export function createLineCommentAnnotations(props) {
     return [...list, draft];
   });
 }
+/**
+ * Wrap a line-comment annotation renderer with reactive lifecycle management:
+ * reconciles the renderer against the annotations memo on every change and
+ * disposes everything on cleanup.
+ *
+ * @param {Object} props - Configuration.
+ * @param {Function} props.annotations - Accessor returning the current annotation list.
+ * @param {Function} props.renderComment - Comment view-model factory (forwarded to the renderer).
+ * @param {Function} props.renderDraft - Draft view-model factory (forwarded to the renderer).
+ * @returns {Object} An object with renderAnnotation, the renderer's render function.
+ */
 export function createManagedLineCommentAnnotationRenderer(props) {
   const renderer = createLineCommentAnnotationRenderer({
     renderComment: props.renderComment,
@@ -461,6 +574,18 @@ export function createManagedLineCommentAnnotationRenderer(props) {
     renderAnnotation: renderer.render
   };
 }
+/**
+ * Create a factory for the hover-comment utility: given a hovered-line accessor,
+ * builds a utility that, on select, either opens a draft for the existing
+ * selected range (when the hovered line falls inside it) or opens a fresh
+ * single-line draft.
+ *
+ * @param {Object} props - Configuration.
+ * @param {string} props.label - Label shown by the hover utility.
+ * @param {Function} props.getSelectedRange - Accessor returning the current selected range or null.
+ * @param {Function} props.onOpenDraft - Called with the range to open a draft for.
+ * @returns {Function} A function taking a hovered-line accessor and returning the hover utility.
+ */
 export function createLineCommentHoverRenderer(props) {
   return getHoveredLine => createHoverCommentUtility({
     label: props.label,

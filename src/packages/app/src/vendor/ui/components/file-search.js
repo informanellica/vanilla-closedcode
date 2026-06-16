@@ -1,3 +1,4 @@
+/** @file In-file search bar component for the code/diff viewer (FileSearchBar), portaled to document.body. */
 import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
 import { Portal } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
@@ -7,12 +8,33 @@ import { Icon } from "./icon.js";
 // only ever appear inside tags so the resulting DOM has no whitespace text
 // nodes, matching the compiled template exactly. All dynamic text goes in
 // via textContent / setAttribute, never into the markup string.
+/**
+ * Build a detached element from a fully static, trusted HTML string.
+ * @param {string} html - The markup (single root element); trimmed before parsing.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Floating find-in-file bar: a search input, a match counter, prev/next navigation
+ * and a close button, mounted into document.body via a Portal and positioned via props.pos().
+ * @param {Object} props - Component props.
+ * @param {Function} props.onKeyDown - Keydown handler for the input (receives the event).
+ * @param {Function} props.onInput - Called with the input's current value on each input event.
+ * @param {Function} props.setInput - Ref callback invoked with the input element (or a property set to it).
+ * @param {Function} props.onPrev - Click handler for the previous-match button (receives the event).
+ * @param {Function} props.onNext - Click handler for the next-match button (receives the event).
+ * @param {Function} props.onClose - Click handler for the close button (receives the event).
+ * @param {Function} props.pos - Accessor returning the bar position as an object with top and right (pixels).
+ * @param {Function} props.count - Accessor returning the total number of matches.
+ * @param {Function} props.index - Accessor returning the zero-based index of the current match.
+ * @param {Function} props.query - Accessor returning the current search query string.
+ * @returns {Node} The Portal component wrapping the search bar element.
+ */
 export function FileSearchBar(props) {
   const i18n = useI18n();
   // Solid's Portal is kept on purpose: it mounts the bar in a plain <div>

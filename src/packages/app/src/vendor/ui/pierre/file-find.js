@@ -1,3 +1,4 @@
+/** @file In-file find ("Cmd/Ctrl+F") engine for the diff/file viewer: scans rendered code for matches, highlights them via CSS Custom Highlights (with an absolutely-positioned overlay fallback), and wires global keyboard shortcuts across registered viewer hosts. */
 import { createEffect, createSignal, onCleanup, onMount } from "../../../lib/reactivity.js";
 import { makeEventListener } from "../../../lib/primitives/event-listener.js";
 import { createResizeObserver } from "../../../lib/primitives/resize-observer.js";
@@ -6,12 +7,22 @@ const hosts = new Set();
 let target;
 let current;
 let installed = false;
+/**
+ * Test whether a node is an editable/focusable element where find shortcuts should be suppressed.
+ * @param {Node} node - The DOM node to test (typically an event target).
+ * @returns {boolean} `true` if the node is content-editable, a form control, or marked with `data-prevent-autofocus`.
+ */
 function isEditable(node) {
   if (!(node instanceof HTMLElement)) return false;
   if (node.closest("[data-prevent-autofocus]")) return true;
   if (node.isContentEditable) return true;
   return /^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(node.tagName);
 }
+/**
+ * Find the registered find-host whose connected element contains the given node.
+ * @param {Node} node - A DOM node to locate within a registered host.
+ * @returns {Object} The owning host, or `undefined` if none contains the node.
+ */
 function hostForNode(node) {
   if (!(node instanceof Node)) return;
   for (const host of hosts) {
@@ -19,6 +30,11 @@ function hostForNode(node) {
     if (el && el.isConnected && el.contains(node)) return host;
   }
 }
+/**
+ * Install the global capture-phase keydown listener for find shortcuts (once per window).
+ * Cmd/Ctrl+F opens/focuses find on the relevant host; Cmd/Ctrl+G cycles to the next/previous match.
+ * @returns {void}
+ */
 function installShortcuts() {
   if (installed) return;
   if (typeof window === "undefined") return;
@@ -54,16 +70,29 @@ function installShortcuts() {
     capture: true
   });
 }
+/**
+ * Remove the find highlights from the CSS Custom Highlight registry.
+ * @returns {void}
+ */
 function clearHighlightFind() {
   const api = globalThis.CSS?.highlights;
   if (!api) return;
   api.delete("closedcode-find");
   api.delete("closedcode-find-current");
 }
+/**
+ * Detect whether the CSS Custom Highlight API is available in this environment.
+ * @returns {boolean} `true` if `Highlight` and `CSS.highlights` are supported.
+ */
 function supportsHighlights() {
   const g = globalThis;
   return typeof g.Highlight === "function" && g.CSS?.highlights != null;
 }
+/**
+ * Walk up the DOM to find the nearest vertically scrollable ancestor.
+ * @param {HTMLElement} el - The element to start searching from.
+ * @returns {HTMLElement} The nearest scrollable ancestor, or `undefined` if none found.
+ */
 function scrollParent(el) {
   let parent = el.parentElement;
   while (parent) {
@@ -72,6 +101,17 @@ function scrollParent(el) {
     parent = parent.parentElement;
   }
 }
+/**
+ * Create an in-file find controller bound to a viewer's DOM.
+ * Manages reactive open/query/index/count state, scans the rendered code for matches,
+ * highlights them (CSS highlights or an overlay fallback), scrolls the active match into view,
+ * registers itself as a global find host, and exposes input/keyboard event handlers.
+ * @param {Object} opts - Wiring callbacks for the host viewer.
+ * @param {Function} opts.wrapper - Returns the wrapper element used for positioning/focus and as the host element.
+ * @param {Function} opts.overlay - Returns the overlay element used to draw highlight rectangles in fallback mode.
+ * @param {Function} opts.getRoot - Returns the root element (e.g. shadow root) to scan and highlight within.
+ * @returns {Object} A find controller exposing reactive accessors (`open`, `query`, `count`, `index`, `pos`) and methods (`setInput`, `setQuery`, `focus`, `close`, `next`, `refresh`, `onPointerDown`, `onFocus`, `onInputKeyDown`).
+ */
 export function createFileFind(opts) {
   let input;
   let overlayFrame;
@@ -105,6 +145,11 @@ export function createFileFind(opts) {
     }
     el.innerHTML = "";
   };
+  /**
+   * Draw highlight rectangles for every match into the overlay element (fallback mode),
+   * positioning each rect relative to the wrapper and emphasizing the active match.
+   * @returns {void}
+   */
   const renderOverlay = () => {
     if (mode !== "overlay") {
       clearOverlay();
@@ -177,6 +222,13 @@ export function createFileFind(opts) {
       right: Math.round(window.innerWidth - rect.right) + 8
     });
   };
+  /**
+   * Scan the rendered code columns for case-insensitive matches of a search string,
+   * building a DOM Range for each occurrence (walking text nodes to map character offsets).
+   * @param {HTMLElement} root - The viewer root to scan.
+   * @param {string} value - The search string to match.
+   * @returns {Array} An array of Range objects, one per match.
+   */
   const scan = (root, value) => {
     const needle = value.toLowerCase();
     const ranges = [];
@@ -234,6 +286,12 @@ export function createFileFind(opts) {
       inline: "center"
     });
   };
+  /**
+   * Register match ranges with the CSS Custom Highlight registry, styling the active match separately.
+   * @param {Array} ranges - All match ranges.
+   * @param {number} currentIndex - Index of the active match within `ranges`.
+   * @returns {boolean} `true` if highlights were applied, `false` if the API is unavailable.
+   */
   const setHighlights = (ranges, currentIndex) => {
     const api = globalThis.CSS?.highlights;
     const Highlight = globalThis.Highlight;
@@ -246,6 +304,14 @@ export function createFileFind(opts) {
     if (rest.length > 0) api.set("closedcode-find", new Highlight(...rest));
     return true;
   };
+  /**
+   * Re-run the search for the current query, update match count/index, and render highlights.
+   * Chooses CSS-highlight or overlay mode based on capability and falls back gracefully.
+   * @param {Object} args - Options controlling this pass.
+   * @param {boolean} args.reset - When truthy, reset the active match index to 0.
+   * @param {boolean} args.scroll - When truthy, scroll the active match into view.
+   * @returns {void}
+   */
   const apply = args => {
     if (!open()) return;
     const value = query().trim();
@@ -287,6 +353,10 @@ export function createFileFind(opts) {
     clearFind();
     if (current === host) current = undefined;
   };
+  /**
+   * Open and focus this find host (closing any other open host) and run an initial search.
+   * @returns {void}
+   */
   const focus = () => {
     if (current && current !== host) current.close();
     current = host;
@@ -300,6 +370,11 @@ export function createFileFind(opts) {
       input?.select();
     });
   };
+  /**
+   * Advance the active match by a direction, wrapping around, and scroll/highlight it.
+   * @param {number} dir - Step direction: `1` for next, `-1` for previous.
+   * @returns {void}
+   */
   const next = dir => {
     if (!open()) return;
     const total = count();

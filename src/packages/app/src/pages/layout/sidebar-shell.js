@@ -5,6 +5,34 @@ import { ConstrainDragXAxis } from "@/utils/solid-dnd.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { Tooltip, TooltipKeybind } from "@/bs/tooltip.js";
 
+/** @file Sidebar shell: the rail + collapsible panel layout that hosts the drag-and-drop project list, the add-project button, and the settings/help rail footer. */
+
+/**
+ * Top-level sidebar layout: a fixed rail (project list + footer buttons) beside
+ * a collapsible panel. Wires up drag-and-drop for the project list and renders
+ * the settings/help affordances.
+ *
+ * @param {Object} props - Component props.
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout (forces expanded).
+ * @param {Function} props.opened - Accessor: true when the panel is open.
+ * @param {Function} props.projects - Accessor for the ordered project list.
+ * @param {Function} props.renderProject - Renders a single project rail entry.
+ * @param {Function} props.renderProjectOverlay - Renders the drag overlay for the active project.
+ * @param {Function} props.renderPanel - Renders the panel content.
+ * @param {Function} props.aimMove - Rail mousemove handler used for hover-aim tracking.
+ * @param {Function} props.handleDragStart - Drag-start handler for the project list.
+ * @param {Function} props.handleDragEnd - Drag-end handler for the project list.
+ * @param {Function} props.handleDragOver - Drag-over handler for the project list.
+ * @param {Function} props.onOpenProject - Click handler for the add-project button.
+ * @param {string} props.openProjectLabel - Label/tooltip text for the add-project button.
+ * @param {Function} props.openProjectKeybind - Accessor for the add-project keybind hint.
+ * @param {Function} props.settingsLabel - Accessor for the settings button label.
+ * @param {Function} props.settingsKeybind - Accessor for the settings keybind hint.
+ * @param {Function} props.onOpenSettings - Click handler for the settings button.
+ * @param {Function} props.helpLabel - Accessor for the help button label.
+ * @param {Function} props.onOpenHelp - Click handler for the help button.
+ * @returns {HTMLElement} The sidebar root element.
+ */
 export const SidebarContent = props => {
   const expanded = createMemo(() => !!props.mobile || props.opened());
   const placement = () => props.mobile ? "bottom" : "right";

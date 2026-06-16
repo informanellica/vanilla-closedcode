@@ -1,6 +1,14 @@
+/** @file Tool status title component that animates between an in-progress and a completed label, sharing a common prefix where possible and shimmering the changing portion. */
 import { createRenderEffect } from "../../../lib/reactivity.js";
 import { TextShimmer } from "./text-shimmer.js";
 
+/**
+ * Compute the longest common leading run of two strings (character-wise) and the
+ * differing tails of each.
+ * @param {string} active - The active/in-progress text.
+ * @param {string} done - The completed text.
+ * @returns {Object} `{ prefix, active, done }` where `prefix` is the shared head and the others are the remaining tails.
+ */
 function common(active, done) {
   const a = Array.from(active ?? "");
   const b = Array.from(done ?? "");
@@ -13,6 +21,15 @@ function common(active, done) {
   };
 }
 
+/**
+ * Create a `<span>` with the given data-slot containing a TextShimmer for the
+ * supplied text.
+ * @param {string} slot - The `data-slot` attribute value for the span.
+ * @param {string} text - The text to render inside the shimmer.
+ * @param {*} active - Boolean or zero-arg accessor controlling whether the shimmer animates.
+ * @param {number} offset - Character offset passed to the shimmer for staggered animation.
+ * @returns {HTMLElement} The created `<span>` element.
+ */
 function createTextSpan(slot, text, active, offset) {
   const el = document.createElement("span");
   el.setAttribute("data-slot", slot);
@@ -24,6 +41,20 @@ function createTextSpan(slot, text, active, offset) {
   return el;
 }
 
+/**
+ * Render a tool status title that transitions between an active (in-progress)
+ * and a done label. When the labels share a leading prefix it renders in
+ * "suffix" mode (static prefix + animated tail); otherwise it cross-fades the
+ * two labels in "swap" mode. The mode is reflected via `data-mode`/`data-active`
+ * for CSS, and `aria-label` tracks the current state.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.active - Whether the tool is still running (selects the active label/animation).
+ * @param {string} props.activeText - Label shown while the tool is running.
+ * @param {string} props.doneText - Label shown once the tool has finished.
+ * @param {boolean} props.split - When false, forces swap mode instead of the shared-prefix suffix mode (defaults to true).
+ * @param {string} props.class - Optional CSS classes added to the root span.
+ * @returns {HTMLElement} The root `<span>` element.
+ */
 export function ToolStatusTitle(props) {
   const root = document.createElement("span");
   root.setAttribute("data-component", "tool-status-title");

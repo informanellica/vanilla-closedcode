@@ -1,3 +1,5 @@
+/** @file Right-click context menu and named file operations for the file explorer (create/rename/delete/duplicate/copy/cut/paste), driven via the window.api fs-* IPC bridge. */
+
 // Lightweight right-click context menu for the file explorer. Bootstrap-styled
 // (.dropdown-menu) positioned at the cursor, kept inside the viewport. File
 // operations go through the window.api fs-* IPC bridge (see preload). A
@@ -7,8 +9,13 @@ let menuEl = null;
 let clipboard = null; // { op: "copy" | "cut", path }
 let lastXY = { x: 120, y: 120 };
 
-// Inline editable name frame (replaces window.prompt): a small floating input
-// at the menu location. Resolves to the trimmed value, or null on Escape/empty.
+/**
+ * Inline editable name frame (replaces window.prompt): a small floating input
+ * at the menu location. Resolves to the trimmed value, or null on Escape/empty.
+ * @param {string} initial - Initial input value (the file/folder name); its extension is left unselected.
+ * @param {string} label - Optional label text shown above the input.
+ * @returns {Promise<string>} The trimmed entered name, or null when cancelled/blurred/empty.
+ */
 function promptInline(initial, label) {
   return new Promise(resolve => {
     const wrap = document.createElement("div");
@@ -44,25 +51,54 @@ function promptInline(initial, label) {
   });
 }
 
+/** Access the preload `window.api` IPC bridge (undefined outside a window). @returns {Object} The api object, or undefined. */
 const api = () => (typeof window !== "undefined" ? window.api : undefined);
+/** Directory portion of a path (handles "/" and "\\"). @param {string} p - Path. @returns {string} The parent directory, or "" when none. */
 const dirname = p => { const i = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\")); return i < 0 ? "" : p.slice(0, i); };
+/** Final path segment (handles "/" and "\\"). @param {string} p - Path. @returns {string} The base name. */
 const basename = p => { const i = Math.max(p.lastIndexOf("/"), p.lastIndexOf("\\")); return i < 0 ? p : p.slice(i + 1); };
+/** Join a directory and a name with a forward slash. @param {string} dir - Directory (may be empty). @param {string} name - Leaf name. @returns {string} The joined path. */
 const join = (dir, name) => (dir ? dir.replace(/[\\/]+$/, "") + "/" : "") + name;
+/** Test whether a path is absolute (drive-letter or leading slash). @param {string} p - Path. @returns {boolean} True when absolute. */
 const isAbs = p => /^([a-zA-Z]:[\\/]|[\\/])/.test(p);
 // The tree uses project-relative paths; the fs-* IPC needs absolute ones.
 // Resolve defensively (already-absolute paths pass through).
+/**
+ * Resolve a (possibly project-relative) path to an absolute one for the fs-* IPC.
+ * @param {Object} ctx - Context carrying `directory` (the project root).
+ * @param {string} p - Path to resolve.
+ * @returns {string} An absolute path.
+ */
 const toAbs = (ctx, p) => (isAbs(p) ? p : join(ctx.directory || "", p));
 
+/**
+ * Tear down the open context menu and its document-level listeners.
+ * @returns {void}
+ */
 function hide() {
   if (menuEl) { menuEl.remove(); menuEl = null; }
   document.removeEventListener("pointerdown", onDoc, true);
   document.removeEventListener("keydown", onKey, true);
 }
+/** Hide the menu on a pointerdown outside it. @param {PointerEvent} e - Pointer event. @returns {void} */
 function onDoc(e) { if (menuEl && !menuEl.contains(e.target)) hide(); }
+/** Hide the menu on Escape. @param {KeyboardEvent} e - Keyboard event. @returns {void} */
 function onKey(e) { if (e.key === "Escape") hide(); }
 
+/**
+ * Refresh the tree under a directory via the context, logging any failure.
+ * @param {Object} ctx - Context carrying an optional `refresh(dir)`.
+ * @param {string} dir - Directory to refresh.
+ * @returns {Promise<void>}
+ */
 async function refresh(ctx, dir) { try { await ctx.refresh?.(dir); } catch (e) { console.error("[file-op] refresh", e); } }
 
+/**
+ * Prompt for a name, create a new file in the directory, refresh, and open it.
+ * @param {string} dir - Target directory (project-relative).
+ * @param {Object} ctx - Context `{ directory, refresh, openFile }`.
+ * @returns {Promise<void>}
+ */
 async function newFile(dir, ctx) {
   const name = await promptInline("untitled.txt", "新規ファイル名");
   if (!name) return;
@@ -71,12 +107,24 @@ async function newFile(dir, ctx) {
   await refresh(ctx, dir);
   ctx.openFile?.(rel);
 }
+/**
+ * Prompt for a name and create a new folder in the directory, then refresh.
+ * @param {string} dir - Target directory (project-relative).
+ * @param {Object} ctx - Context `{ directory, refresh }`.
+ * @returns {Promise<void>}
+ */
 async function newFolder(dir, ctx) {
   const name = await promptInline("new-folder", "新規フォルダ名");
   if (!name) return;
   await api()?.fsMkdir?.(toAbs(ctx, join(dir, name)));
   await refresh(ctx, dir);
 }
+/**
+ * Prompt for a new name and rename the node within its directory, then refresh.
+ * @param {Object} node - File tree node `{ path, type }`.
+ * @param {Object} ctx - Context `{ directory, refresh }`.
+ * @returns {Promise<void>}
+ */
 async function rename(node, ctx) {
   const cur = basename(node.path);
   const name = await promptInline(cur, "名前を変更");
@@ -84,6 +132,12 @@ async function rename(node, ctx) {
   await api()?.fsRename?.(toAbs(ctx, node.path), toAbs(ctx, join(dirname(node.path), name)));
   await refresh(ctx, dirname(node.path));
 }
+/**
+ * Confirm and delete the node, then refresh its parent directory.
+ * @param {Object} node - File tree node `{ path, type }`.
+ * @param {Object} ctx - Context `{ directory, refresh }`.
+ * @returns {Promise<void>}
+ */
 async function del(node, ctx) {
   const choice = await confirmModal({
     title: "削除しますか？",
@@ -97,6 +151,13 @@ async function del(node, ctx) {
   await api()?.fsDelete?.(toAbs(ctx, node.path));
   await refresh(ctx, dirname(node.path));
 }
+/**
+ * Copy the node to a non-colliding " copy" name in the same directory, then
+ * refresh.
+ * @param {Object} node - File tree node `{ path, type }`.
+ * @param {Object} ctx - Context `{ directory, refresh }`.
+ * @returns {Promise<void>}
+ */
 async function duplicate(node, ctx) {
   const dir = dirname(node.path), bn = basename(node.path);
   const dot = bn.lastIndexOf("."), stem = dot > 0 ? bn.slice(0, dot) : bn, ext = dot > 0 ? bn.slice(dot) : "";
@@ -105,6 +166,13 @@ async function duplicate(node, ctx) {
   await api()?.fsCopy?.(toAbs(ctx, node.path), toAbs(ctx, rel));
   await refresh(ctx, dir);
 }
+/**
+ * Paste the module clipboard entry into the directory: move for "cut" (clearing
+ * the clipboard), copy for "copy"; renames on collision. Then refresh.
+ * @param {string} dir - Target directory (project-relative).
+ * @param {Object} ctx - Context `{ directory, refresh }`.
+ * @returns {Promise<void>}
+ */
 async function paste(dir, ctx) {
   if (!clipboard) return;
   const name = basename(clipboard.path);
@@ -115,6 +183,16 @@ async function paste(dir, ctx) {
   await refresh(ctx, dir);
 }
 
+/**
+ * Open the right-click context menu for a file tree node at the event location,
+ * building the appropriate items (open/new/rename/duplicate/delete/copy/cut/
+ * paste/copy-path/reveal), clamping it inside the viewport, and wiring
+ * dismissal on outside-click or Escape.
+ * @param {Object} node - File tree node `{ path, type }` the menu targets.
+ * @param {MouseEvent} event - The contextmenu event (provides the cursor position).
+ * @param {Object} ctx - Context `{ directory, refresh, openFile }` for the operations.
+ * @returns {void}
+ */
 export function showFileContextMenu(node, event, ctx) {
   event.preventDefault();
   event.stopPropagation();
@@ -172,6 +250,14 @@ export function showFileContextMenu(node, event, ctx) {
 // (null when no file is open — only the project-relative newFile/newFolder run
 // then, targeting the project root). ctx is the same shape the menu receives:
 // { directory, refresh, openFile }.
+/**
+ * Run a named file operation programmatically (used by toolbar buttons), reusing
+ * the same handlers as the context menu.
+ * @param {string} op - Operation name: "newFile", "newFolder", "rename", "duplicate", "delete", "copyPath", or "openLocation".
+ * @param {Object} node - The target node `{ path, type }`, or null (only newFile/newFolder run then, targeting the project root).
+ * @param {Object} ctx - Context `{ directory, refresh, openFile }`.
+ * @returns {*} The handler's result (often a Promise), or undefined when the op does not apply.
+ */
 export function runFileOp(op, node, ctx) {
   const isDir = node?.type === "directory";
   const baseDir = node ? (isDir ? node.path : dirname(node.path)) : "";

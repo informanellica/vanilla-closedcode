@@ -1,6 +1,13 @@
+/** @file DockPrompt component: a dock-surface prompt frame with header, content, and footer slots wrapped in a DockShell/DockTray. */
 import { createComponent, createRenderEffect } from "../../../lib/reactivity.js";
 import { DockShell, DockTray } from "./dock-surface.js";
 
+/**
+ * Resolves a Solid-style child value into a flat array of DOM nodes: unwraps
+ * zero-arg accessors, flattens arrays, keeps Nodes, and stringifies the rest.
+ * @param {*} value - Child value to resolve.
+ * @returns {Array} The resolved DOM nodes (empty for nullish/boolean values).
+ */
 // Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
 // keep Nodes, stringify the rest. Re-run inside a render effect so reactive
 // children stay live.
@@ -11,12 +18,32 @@ function resolveNodes(value) {
   if (value instanceof Node) return [value];
   return [document.createTextNode(String(value))];
 }
+/**
+ * Reactively renders a child accessor's resolved nodes into a parent, replacing
+ * its content whenever the accessor changes.
+ * @param {Node} parent - Parent element whose children are replaced.
+ * @param {Function} read - Accessor returning the child value to render.
+ * @returns {void}
+ */
 function renderInto(parent, read) {
   createRenderEffect(() => {
     parent.replaceChildren(...resolveNodes(read()));
   });
 }
 
+/**
+ * DockPrompt component. Builds a prompt frame whose header/content/footer slots
+ * are named from `kind`, forwards keydown (capture phase) to onKeyDown, and lays
+ * the header and content inside a DockShell with the footer in a DockTray.
+ * @param {Object} props - Component props.
+ * @param {string} props.kind - Prefix used to name the data-slot attributes and data-kind.
+ * @param {Function} props.onKeyDown - Capture-phase keydown handler for the prompt and its descendants.
+ * @param {Function} props.ref - Ref callback (or assignable ref) receiving the root element.
+ * @param {*} props.header - Header slot content.
+ * @param {*} props.children - Main content slot.
+ * @param {*} props.footer - Footer slot content.
+ * @returns {HTMLElement} The dock-prompt root element.
+ */
 export function DockPrompt(props) {
   const slot = name => `${props.kind}-${name}`;
   const el = document.createElement("div");

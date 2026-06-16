@@ -1,3 +1,4 @@
+/** @file PromptInput component: the main session composer (contenteditable editor with @mention/slash popovers, shell mode, image attachments, prompt history, and the model/agent/variant tray). */
 // insert() is the established exception for reactive/component-valued
 // children: PromptPopover and Show return memo accessors that must keep being
 // reconciled (the popover-backed model selector lives under one of them), so
@@ -43,6 +44,11 @@ import { PromptDragOverlay } from "./prompt-input/drag-overlay.js";
 import { promptPlaceholder } from "./prompt-input/placeholder.js";
 import { ImagePreview } from "@/vendor/ui/components/image-preview.js";
 
+/**
+ * Build a detached element from a compact, static HTML string (no interpolation; dynamic text is always set via textContent).
+ * @param {string} html - The static markup to parse.
+ * @returns {Element} The first element child of the parsed markup.
+ */
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Static markup only — translated and
 // user-provided strings are always assigned via textContent, never
@@ -53,7 +59,17 @@ function template(html) {
   return wrapper.firstElementChild;
 }
 const EXAMPLES = ["prompt.example.1", "prompt.example.2", "prompt.example.3", "prompt.example.4", "prompt.example.5", "prompt.example.6", "prompt.example.7", "prompt.example.8", "prompt.example.9", "prompt.example.10", "prompt.example.11", "prompt.example.12", "prompt.example.13", "prompt.example.14", "prompt.example.15", "prompt.example.16", "prompt.example.17", "prompt.example.18", "prompt.example.19", "prompt.example.20", "prompt.example.21", "prompt.example.22", "prompt.example.23", "prompt.example.24", "prompt.example.25"];
+/**
+ * Matches any character that is neither whitespace nor a zero-width space, used to detect non-empty editor content.
+ * @type {RegExp}
+ */
 const NON_EMPTY_TEXT = /[^\s\u200B]/;
+
+/**
+ * The session prompt composer: a contenteditable editor supporting @mentions, slash commands, shell mode, image attachments and prompt history, with a bottom tray for model/agent/variant selection and submit/attach controls.
+ * @param {Object} props - Component props: `class` (extra classes), `ref` (Function receiving the editor element), `edit`/`onEditLoaded` (load an existing message for editing), `newSessionWorktree`/`onNewSessionWorktreeReset` (new-session worktree state), and submission callbacks `shouldQueue`, `onQueue`, `onAbort`, `onSubmit`.
+ * @returns {HTMLElement} The root prompt-input element.
+ */
 export const PromptInput = props => {
   const sync = useSync();
   const local = useLocal();
@@ -80,6 +96,10 @@ export const PromptInput = props => {
   };
   const inset = 56;
   const space = `${inset}px`;
+  /**
+   * Scroll the editor's scroll container so the caret stays visible above the bottom inset.
+   * @returns {void}
+   */
   const scrollCursorIntoView = () => {
     const container = scrollRef;
     const selection = window.getSelection();
@@ -106,6 +126,11 @@ export const PromptInput = props => {
       container.scrollTop = bottom - container.clientHeight + inset;
     }
   };
+  /**
+   * Schedule cursor-into-view scrolling across several animation frames so it lands after layout settles.
+   * @param {number} count - Number of frames to retry over.
+   * @returns {void}
+   */
   const queueScroll = (count = 2) => {
     requestAnimationFrame(() => {
       scrollCursorIntoView();
@@ -124,6 +149,11 @@ export const PromptInput = props => {
     if (!diffs) return false;
     return diffs.some(diff => diff.file === path);
   };
+  /**
+   * Open the file/review location for a context item's comment, switching the relevant panel/tab and focusing the comment.
+   * @param {Object} item - A context item with `commentID`, `path` and `commentOrigin`.
+   * @returns {void}
+   */
   const openComment = item => {
     if (!item.commentID) return;
     const focus = {
@@ -242,6 +272,10 @@ export const PromptInput = props => {
     return text.trim().length === 0 && imageAttachments().length === 0 && commentCount() === 0;
   });
   const stopping = createMemo(() => working() && blank());
+  /**
+   * Build the submit-button tooltip body, showing "Stop (Esc)" while a stoppable run is in progress or "Send" with an enter icon otherwise.
+   * @returns {Element} The tooltip body element.
+   */
   // Tooltip body. Built fresh on every read (the vanilla Tooltip re-reads
   // `value` per open and clones the node), so the localized labels are
   // snapshotted via textContent — no live effects here; tip() is typically
@@ -288,6 +322,10 @@ export const PromptInput = props => {
     suggest: suggest(),
     t: (key, params) => language.t(key, params)
   }));
+  /**
+   * Snapshot the current comment-bearing context items into history-entry comment records (resolving live selection/time where available).
+   * @returns {Array} The history comment records.
+   */
   const historyComments = () => {
     const byID = new Map(comments.all().map(item => [`${item.file}\n${item.id}`, item]));
     return prompt.context.items().flatMap(item => {
@@ -313,6 +351,11 @@ export const PromptInput = props => {
       }];
     });
   };
+  /**
+   * Replace the live comments and prompt context with a set of history comment records (used when recalling a history entry).
+   * @param {Array} items - History comment records to apply.
+   * @returns {void}
+   */
   const applyHistoryComments = items => {
     comments.replace(items.map(item => ({
       id: item.id,
@@ -333,6 +376,12 @@ export const PromptInput = props => {
       preview: item.preview
     })));
   };
+  /**
+   * Load a history entry's prompt and comments into the editor, then place the caret at the start or end.
+   * @param {Object} entry - The history entry with `prompt` and `comments`.
+   * @param {string} position - Where to place the caret: "start" or "end".
+   * @returns {void}
+   */
   const applyHistoryPrompt = (entry, position) => {
     const p = entry.prompt;
     const length = position === "start" ? 0 : promptLength(p);
@@ -346,6 +395,10 @@ export const PromptInput = props => {
       queueScroll();
     });
   };
+  /**
+   * Read the current caret state relative to the editor for history/shell-mode key handling.
+   * @returns {Object} An object with `collapsed` (boolean), `cursorPosition` (number) and `textLength` (number).
+   */
   const getCaretState = () => {
     const selection = window.getSelection();
     const textLength = promptLength(prompt.current());
@@ -370,8 +423,23 @@ export const PromptInput = props => {
       textLength
     };
   };
+  /**
+   * Whether pressing Escape with nothing else to handle should blur the editor (desktop macOS only).
+   * @returns {boolean} True when Escape should blur.
+   */
   const escBlur = () => platform.platform === "desktop" && platform.os === "macos";
+
+  /**
+   * Open the native file picker for attaching files.
+   * @returns {void}
+   */
   const pick = () => fileInputRef?.click();
+
+  /**
+   * Switch the composer mode (normal/shell), close any popover and refocus the editor.
+   * @param {string} mode - The target mode ("normal" or "shell").
+   * @returns {void}
+   */
   const setMode = mode => {
     setStore("mode", mode);
     setStore("popover", null);
@@ -401,19 +469,44 @@ export const PromptInput = props => {
     disabled: store.mode === "normal",
     onSelect: () => setMode("normal")
   }]);
+  /**
+   * Close any open @mention/slash popover.
+   * @returns {void}
+   */
   const closePopover = () => setStore("popover", null);
+
+  /**
+   * Reset prompt-history navigation state, optionally forcing it even mid-application.
+   * @param {boolean} force - When true, reset regardless of the current navigation state.
+   * @returns {void}
+   */
   const resetHistoryNavigation = (force = false) => {
     if (!force && (store.historyIndex < 0 || store.applyingHistory)) return;
     setStore("historyIndex", -1);
     setStore("savedPrompt", null);
   };
+  /**
+   * Remove all content from the editor element.
+   * @returns {void}
+   */
   const clearEditor = () => {
     editorRef.innerHTML = "";
   };
+
+  /**
+   * Replace the editor content with a plain-text string.
+   * @param {string} text - The text to set.
+   * @returns {void}
+   */
   const setEditorText = text => {
     clearEditor();
     editorRef.textContent = text;
   };
+
+  /**
+   * Focus the editor and place the caret at the very end of its content.
+   * @returns {void}
+   */
   const focusEditorEnd = () => {
     requestAnimationFrame(() => {
       editorRef.focus();
@@ -425,11 +518,20 @@ export const PromptInput = props => {
       selection?.addRange(range);
     });
   };
+  /**
+   * Get the caret offset within the editor, or null when the selection is outside it.
+   * @returns {number} The caret offset, or null.
+   */
   const currentCursor = () => {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0 || !editorRef.contains(selection.anchorNode)) return null;
     return getCursorPosition(editorRef);
   };
+
+  /**
+   * Refocus the editor and restore the caret to the saved prompt cursor (or the end), then scroll it into view.
+   * @returns {void}
+   */
   const restoreFocus = () => {
     requestAnimationFrame(() => {
       const cursor = prompt.cursor() ?? promptLength(prompt.current());
@@ -438,6 +540,11 @@ export const PromptInput = props => {
       queueScroll();
     });
   };
+  /**
+   * Re-render the editor from prompt parts while preserving the current caret offset.
+   * @param {Array} parts - The prompt parts to render.
+   * @returns {void}
+   */
   const renderEditorWithCursor = parts => {
     const cursor = currentCursor();
     renderEditor(parts);
@@ -453,14 +560,35 @@ export const PromptInput = props => {
     onCleanup(() => clearInterval(interval));
   });
   const [composing, setComposing] = createSignal(false);
+
+  /**
+   * Whether a key event is part of an in-progress IME composition.
+   * @param {KeyboardEvent} event - The keyboard event.
+   * @returns {boolean} True when the event should be treated as IME composition.
+   */
   const isImeComposing = event => event.isComposing || composing() || event.keyCode === 229;
+
+  /**
+   * Blur handler: closes the popover and clears the composing flag.
+   * @returns {void}
+   */
   const handleBlur = () => {
     closePopover();
     setComposing(false);
   };
+
+  /**
+   * Composition-start handler: marks IME composition as active.
+   * @returns {void}
+   */
   const handleCompositionStart = () => {
     setComposing(true);
   };
+
+  /**
+   * Composition-end handler: clears the composing flag and reconciles the editor with the current prompt on the next frame.
+   * @returns {void}
+   */
   const handleCompositionEnd = () => {
     setComposing(false);
     requestAnimationFrame(() => {
@@ -474,6 +602,11 @@ export const PromptInput = props => {
     display: agent.name
   })));
   const agentNames = createMemo(() => local.agent.list().map(agent => agent.name));
+  /**
+   * Insert the selected @mention (agent or file) as a pill at the cursor.
+   * @param {Object} option - The chosen option (`type` "agent" with `name`, or "file" with `path`).
+   * @returns {void}
+   */
   const handleAtSelect = option => {
     if (!option) return;
     if (option.type === "agent") {
@@ -494,6 +627,11 @@ export const PromptInput = props => {
       });
     }
   };
+  /**
+   * Compute a stable key for an @mention option (agent or file) used by the filtered list.
+   * @param {Object} x - The option (agent with `name` or file with `path`).
+   * @returns {string} The key string, or an empty string for a missing option.
+   */
   const atKey = x => {
     if (!x) return "";
     return x.type === "agent" ? `agent:${x.name}` : `file:${x.path}`;

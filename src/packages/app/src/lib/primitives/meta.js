@@ -8,6 +8,17 @@
 //
 // Derivative of @solidjs/meta (MIT License, Copyright (c) Ryan Carniato).
 // See THIRD-PARTY-NOTICES.md.
+
+/** @file First-party pass-through stand-in for @solidjs/meta's MetaProvider (no head-tag management needed in this app). */
+
+/**
+ * Pass-through replacement for @solidjs/meta's MetaProvider. Since the app never
+ * uses Title/Meta/Link/Style children, it simply renders its children unchanged.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Child nodes rendered as-is.
+ * @returns {*} The provider's children.
+ */
 export function MetaProvider(props) {
   return props.children;
 }

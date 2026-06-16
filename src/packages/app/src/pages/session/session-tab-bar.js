@@ -1,3 +1,4 @@
+/** @file Bottom-pane chat header bar: view tabs on the left and session switch/new/close controls on the right. */
 // Bottom-pane header (top of the chat pane). Left: view tabs — currently just
 // "チャット", with Output / Terminal / Debug to be added here later. Right:
 // session controls — a select box to switch sessions, "+" to start a new one,
@@ -21,6 +22,17 @@ const BAR_HTML = `
   </div>
 `;
 
+/**
+ * Renders the chat pane's tab bar with view tabs and a reactive session selector
+ * plus new/close buttons.
+ * @param {Object} props - Component props.
+ * @param {Function} props.sessions - Accessor returning the list of selectable sessions.
+ * @param {Function} props.currentId - Accessor returning the active session id.
+ * @param {Function} props.onSelect - Called with the chosen session when the selector changes.
+ * @param {Function} props.onNew - Called when the new-session button is clicked.
+ * @param {Function} props.onClose - Called when the close (hide chat pane) button is clicked.
+ * @returns {HTMLElement} The tab bar root element.
+ */
 export function SessionTabBar(props) {
   const tpl = document.createElement("template");
   tpl.innerHTML = BAR_HTML;

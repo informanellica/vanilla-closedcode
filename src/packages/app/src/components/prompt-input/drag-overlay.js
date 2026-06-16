@@ -1,11 +1,21 @@
+/** @file PromptDragOverlay component: full-bleed drop-zone overlay shown over the prompt input while dragging files or @mentions. */
 import { createComponent, createMemo, createRenderEffect, untrack } from "../../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
+/**
+ * Maps a drag kind to the icon name shown in the overlay.
+ * @type {Object}
+ */
 const kindToIcon = {
   image: "photo",
   "@mention": "link"
 };
 
+/**
+ * Overlay shown over the prompt input during a drag operation, displaying an icon and label appropriate to the dragged content.
+ * @param {Object} props - Component props: `type` (drag kind: "image", "@mention", or null when hidden) and `label` (localized prompt text).
+ * @returns {HTMLElement} A `display: contents` container that mounts/unmounts the overlay as `type` toggles.
+ */
 export const PromptDragOverlay = props => {
   // Pass-through wrapper: the original Show inserted the overlay element
   // directly into the parent, so this must not introduce a layout box of its

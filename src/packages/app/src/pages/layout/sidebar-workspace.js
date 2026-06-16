@@ -27,15 +27,33 @@ import { NewSessionItem, SessionItem, SessionSkeleton } from "./sidebar-items.js
 import { sortedRootSessions } from "./helpers.js";
 import { useQuery } from "../../lib/query/index.js";
 
+/** @file Sidebar workspace rows: per-workspace headers (status, kind, branch/inline-rename), action menus, the session list, and the sortable/collapsible workspace containers (sandbox and local). */
+
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Only static markup goes through here; user strings use textContent.
+/**
+ * Builds a detached DOM element from a compact HTML string.
+ *
+ * @param {string} html - Static markup with no inter-element whitespace.
+ * @returns {Element} The first element child parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Floating drag preview showing the "kind : name" label of the workspace
+ * currently being dragged.
+ *
+ * @param {Object} props - Component props.
+ * @param {Function} props.sidebarProject - Accessor for the active sidebar project.
+ * @param {Function} props.activeWorkspace - Accessor for the dragged workspace directory.
+ * @param {Function} props.workspaceLabel - Builds a workspace name from (directory, branch, projectId).
+ * @returns {Node} The drag overlay component.
+ */
 export const WorkspaceDragOverlay = props => {
   const globalSync = useGlobalSync();
   const language = useLanguage();
@@ -70,6 +88,26 @@ export const WorkspaceDragOverlay = props => {
     }
   });
 };
+/**
+ * Workspace row header: a status box (spinner when busy, branch icon
+ * otherwise), the workspace kind label, the name (read-only branch span for
+ * local, inline editor for sandboxes), and an expand/collapse chevron.
+ *
+ * @param {Object} props - Component props.
+ * @param {Function} props.local - Accessor: true for the project's local worktree.
+ * @param {Function} props.busy - Accessor: true while the workspace is busy.
+ * @param {Function} props.open - Accessor: true when the workspace is expanded.
+ * @param {string} props.directory - The workspace directory path.
+ * @param {Function} props.branch - Accessor for the VCS branch name.
+ * @param {Function} props.workspaceValue - Accessor for the editable workspace name value.
+ * @param {Function} props.workspaceEditActive - Accessor: true while the inline editor is editing.
+ * @param {Function} props.InlineEditor - Inline editor component for renaming.
+ * @param {Function} props.renameWorkspace - Persists a workspace rename.
+ * @param {Function} props.setEditor - Updates inline-editor state.
+ * @param {string} props.projectId - Owning project id.
+ * @param {Object} props.language - Language context for translations.
+ * @returns {HTMLElement} The workspace header element.
+ */
 const WorkspaceHeader = props => {
   // Static skeleton (_tmpl$2): status box + "<kind> :" span + chevron box; the
   // name (editor or branch span) is inserted between the span and the chevron.
@@ -103,6 +141,13 @@ const WorkspaceHeader = props => {
   // Name region (Show when !local, fallback = read-only branch span): managed
   // before the chevron box so membership flips keep the original DOM order.
   let nameCurrent = null;
+  /**
+   * Swaps the workspace name node (branch span or inline editor) before the
+   * chevron box, preserving document order across membership flips.
+   *
+   * @param {Node} node - The new name node, or null to clear it.
+   * @returns {void}
+   */
   const mountName = node => {
     if (node === nameCurrent) return;
     if (nameCurrent) nameCurrent.remove();
@@ -165,6 +210,30 @@ const WorkspaceHeader = props => {
   }));
   return root;
 };
+/**
+ * Hover/focus-revealed action cluster for a workspace row: a "more options"
+ * dropdown (rename, reset, delete) and a quick "new session" button.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.directory - The workspace directory path.
+ * @param {string} props.root - The owning project's worktree (root) path.
+ * @param {Function} props.local - Accessor: true for the project's local worktree.
+ * @param {Function} props.busy - Accessor: true while the workspace is busy.
+ * @param {Function} props.menuOpen - Accessor: true when the dropdown is open.
+ * @param {Function} props.pendingRename - Accessor: true when a rename is queued on menu close.
+ * @param {Function} props.setMenuOpen - Setter for the dropdown open flag.
+ * @param {Function} props.setPendingRename - Setter for the pending-rename flag.
+ * @param {Function} props.sidebarHovering - Accessor: true while the sidebar is hovered.
+ * @param {Function} props.touch - Accessor: true on touch (hover:none) devices.
+ * @param {Function} props.workspaceValue - Accessor for the editable workspace name.
+ * @param {Function} props.openEditor - Opens the inline editor for an id.
+ * @param {Function} props.showResetWorkspaceDialog - Opens the reset-workspace dialog.
+ * @param {Function} props.showDeleteWorkspaceDialog - Opens the delete-workspace dialog.
+ * @param {Function} props.clearHoverProjectSoon - Dismisses the hover-project preview.
+ * @param {Function} props.navigateToNewSession - Navigates to a new session in this workspace.
+ * @param {Object} props.language - Language context for translations.
+ * @returns {HTMLElement} The actions cluster element.
+ */
 const WorkspaceActions = props => {
   const root = template(`<div class="absolute right-1 top-1/2 -translate-y-1/2 d-flex align-items-center gap-0.5 transition-opacity"></div>`);
   // Static keys of the compiled classList effect (always true).
@@ -307,6 +376,23 @@ const WorkspaceActions = props => {
   });
   return root;
 };
+/**
+ * Session list for a workspace: an optional "new session" row, a loading
+ * skeleton, the For-reconciled SessionItem rows, and a "load more" row, all
+ * kept in document order via placeholder anchors.
+ *
+ * @param {Object} props - Component props.
+ * @param {Function} props.slug - Accessor for the base64 directory slug.
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.showNew - Accessor: true to show the new-session row.
+ * @param {Function} props.loading - Accessor: true to show the loading skeleton.
+ * @param {Function} props.sessions - Accessor for the session list.
+ * @param {Function} props.hasMore - Accessor: true when more sessions can be loaded.
+ * @param {Function} props.loadMore - Loads the next page of sessions.
+ * @param {Object} props.ctx - Shared sidebar context (prefetch, archive, expansion, hover helpers).
+ * @param {Object} props.language - Language context for translations.
+ * @returns {HTMLElement} The session list nav element.
+ */
 const WorkspaceSessionList = props => {
   const nav = template(`<nav class="d-flex flex-column gap-1"></nav>`);
   // Empty text nodes keep the four dynamic regions in document order (the
@@ -427,6 +513,19 @@ const WorkspaceSessionList = props => {
   });
   return nav;
 };
+/**
+ * Sortable, collapsible workspace container (used for sandbox/non-local
+ * workspaces): a header row with actions and the collapsible session list.
+ * Bootstraps the workspace's data store when expanded or active.
+ *
+ * @param {Object} props - Component props.
+ * @param {string} props.directory - The workspace directory path.
+ * @param {Object} props.project - Owning project descriptor (worktree, id).
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.sortNow - Accessor for the current sort timestamp.
+ * @param {Object} props.ctx - Shared sidebar context (expansion state, editors, dialogs, navigation, prefetch).
+ * @returns {HTMLElement} The sortable workspace root element.
+ */
 export const SortableWorkspace = props => {
   const navigate = useNavigate();
   const params = useParams();
@@ -460,6 +559,11 @@ export const SortableWorkspace = props => {
   const loading = () => query.isLoading && count() === 0;
   const touch = createMediaQuery("(hover: none)");
   const showNew = createMemo(() => !loading() && (touch() || count() === 0 || active() && !params.id));
+  /**
+   * Raises this workspace's session limit and fetches the next page.
+   *
+   * @returns {Promise} Resolves once the additional sessions are loaded.
+   */
   const loadMore = async () => {
     setWorkspaceStore("limit", limit => (limit ?? 0) + 5);
     await globalSync.project.loadSessions(props.directory);
@@ -489,6 +593,13 @@ export const SortableWorkspace = props => {
       return props.project.id;
     }
   });
+  /**
+   * Persists the workspace expanded/collapsed state, closing any open inline
+   * editor when the workspace collapses.
+   *
+   * @param {boolean} value - True to expand, false to collapse.
+   * @returns {void}
+   */
   const openWrapper = value => {
     props.ctx.setWorkspaceExpanded(props.directory, value);
     if (value) return;
@@ -622,6 +733,18 @@ export const SortableWorkspace = props => {
   });
   return root;
 };
+/**
+ * Scrollable session list for a project's local worktree (no collapsible
+ * header). Registers the scroll container ref and renders a WorkspaceSessionList
+ * with paging.
+ *
+ * @param {Object} props - Component props.
+ * @param {Object} props.project - The project descriptor (worktree, id).
+ * @param {boolean} props.mobile - Whether rendering on a mobile layout.
+ * @param {Function} props.sortNow - Accessor for the current sort timestamp.
+ * @param {Object} props.ctx - Shared sidebar context (scroll container ref, prefetch, navigation).
+ * @returns {HTMLElement} The local workspace root element.
+ */
 export const LocalWorkspace = props => {
   const globalSync = useGlobalSync();
   const language = useLanguage();

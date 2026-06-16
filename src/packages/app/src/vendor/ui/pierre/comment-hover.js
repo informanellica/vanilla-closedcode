@@ -1,3 +1,15 @@
+/** @file Builds the floating "+" hover button that lets a user start a comment on the diff line currently under the pointer. */
+
+/**
+ * Creates the floating add-comment button shown on hover over a diff line.
+ * The button tracks the hovered line via requestAnimationFrame and pointer events,
+ * and invokes the supplied callback with that line when clicked.
+ * @param {Object} props - Configuration for the button.
+ * @param {string} props.label - Accessible aria-label text for the button.
+ * @param {Function} props.getHoveredLine - Returns the currently hovered line descriptor, or a falsy value when none.
+ * @param {Function} props.onSelect - Called with the chosen line when the button is activated.
+ * @returns {HTMLButtonElement} The constructed button element, or undefined when there is no DOM (SSR).
+ */
 export function createHoverCommentUtility(props) {
   if (typeof document === "undefined") return;
   const button = document.createElement("button");

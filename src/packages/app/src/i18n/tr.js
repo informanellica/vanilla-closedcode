@@ -1,3 +1,10 @@
+/** @file Turkish (tr) translation dictionary for the desktop app renderer UI. */
+
+/**
+ * Turkish translation table mapping i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "command.category.suggested": "Önerilen",
   "command.category.view": "Görünüm",

@@ -1,3 +1,4 @@
+/** @file Comments context: per-directory/session review-comment store keyed by file, with focus/active selection state and persistence. */
 import { batch, createMemo, createRoot, onCleanup } from "../lib/reactivity.js";
 import { createStore, reconcile } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
@@ -7,9 +8,20 @@ import { createScopedCache } from "@/utils/scoped-cache.js";
 import { uuid } from "@/utils/uuid.js";
 const WORKSPACE_KEY = "__workspace__";
 const MAX_COMMENT_SESSIONS = 20;
+/**
+ * Builds the cache key identifying a comment session by directory and (optional) session id.
+ * @param {string} dir - The workspace directory.
+ * @param {string} id - The session id; falls back to the workspace-level key when absent.
+ * @returns {string} The newline-joined `dir\nid` key.
+ */
 function sessionKey(dir, id) {
   return `${dir}\n${id ?? WORKSPACE_KEY}`;
 }
+/**
+ * Splits a session cache key back into its directory and session id parts.
+ * @param {string} key - A key produced by sessionKey.
+ * @returns {Object} An object with `dir` and `id` (id is the workspace key when none was encoded).
+ */
 function decodeSessionKey(key) {
   const split = key.lastIndexOf("\n");
   if (split < 0) return {
@@ -21,9 +33,19 @@ function decodeSessionKey(key) {
     id: key.slice(split + 1)
   };
 }
+/**
+ * Flattens the per-file comment map into a single time-sorted list.
+ * @param {Object} comments - Map of file path to an array of comments.
+ * @returns {Array} All comments across files, sorted ascending by `time`.
+ */
 function aggregate(comments) {
   return Object.keys(comments).flatMap(file => comments[file] ?? []).slice().sort((a, b) => a.time - b.time);
 }
+/**
+ * Shallow-copies a selection range, preserving optional side markers.
+ * @param {Object} selection - A selection with `start`/`end` and optional `side`/`endSide`.
+ * @returns {Object} A fresh selection object.
+ */
 function cloneSelection(selection) {
   const next = {
     start: selection.start,
@@ -33,12 +55,22 @@ function cloneSelection(selection) {
   if (selection.endSide) next.endSide = selection.endSide;
   return next;
 }
+/**
+ * Clones a comment, deep-copying its nested selection so stores never share references.
+ * @param {Object} comment - The comment to clone.
+ * @returns {Object} A fresh comment with a cloned selection.
+ */
 function cloneComment(comment) {
   return {
     ...comment,
     selection: cloneSelection(comment.selection)
   };
 }
+/**
+ * Groups a flat comment list into a map keyed by file path (cloning each comment).
+ * @param {Array} comments - The flat list of comments.
+ * @returns {Object} Map of file path to an array of cloned comments.
+ */
 function group(comments) {
   return comments.reduce((acc, comment) => {
     const list = acc[comment.file];

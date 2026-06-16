@@ -1,3 +1,4 @@
+/** @file GlobalSync context: orchestrates global + per-directory reactive stores, the bootstrap query, session loading, and routing of streamed SSE events (with per-frame delta coalescing) into those stores. */
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
 import { batch, createComponent, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "../lib/reactivity.js";
@@ -15,18 +16,40 @@ import { formatServerError } from "@/utils/server-errors.js";
 import { queryOptions, skipToken, useMutation, useQueries, useQuery, useQueryClient } from "../lib/query/index.js";
 import { createRefreshQueue } from "./global-sync/queue.js";
 import { directoryKey } from "./global-sync/utils.js";
+/**
+ * Query options for a directory's session list (filled imperatively via `fetchQuery`; defaults to a skip token).
+ * @param {string} directory - Workspace directory key.
+ * @returns {Object} Query options object.
+ */
 export const loadSessionsQuery = directory => queryOptions({
   queryKey: [directory, "loadSessions"],
   queryFn: skipToken
 });
+/**
+ * Query options that fetch MCP server status for a directory.
+ * @param {string} directory - Workspace directory key.
+ * @param {Object} sdk - Directory-scoped SDK client, or falsy to skip.
+ * @returns {Object} Query options object resolving to the MCP status map.
+ */
 export const loadMcpQuery = (directory, sdk) => queryOptions({
   queryKey: [directory, "mcp"],
   queryFn: sdk ? () => sdk.mcp.status().then(r => r.data ?? {}) : skipToken
 });
+/**
+ * Query options that fetch LSP server status for a directory.
+ * @param {string} directory - Workspace directory key.
+ * @param {Object} sdk - Directory-scoped SDK client, or falsy to skip.
+ * @returns {Object} Query options object resolving to the LSP status array.
+ */
 export const loadLspQuery = (directory, sdk) => queryOptions({
   queryKey: [directory, "lsp"],
   queryFn: sdk ? () => sdk.lsp.status().then(r => r.data ?? []) : skipToken
 });
+/**
+ * Build the GlobalSync context value: global store, per-directory child stores, bootstrap query,
+ * session loading, config mutation, and the SSE event subscription that fans events into stores.
+ * @returns {Object} GlobalSync API `{data, set, ready, error, child, peek, updateConfig, project, todo}`.
+ */
 function createGlobalSync() {
   const globalSDK = useGlobalSDK();
   const language = useLanguage();
@@ -83,9 +106,19 @@ function createGlobalSync() {
     if (eventFrame !== undefined) cancelAnimationFrame(eventFrame);
     if (eventTimer !== undefined) clearTimeout(eventTimer);
   });
+  /**
+   * Replace the global project list in the store.
+   * @param {Array} next - Next project list (or updater accepted by the store setter).
+   * @returns {void}
+   */
   const setProjects = next => {
     setGlobalStore("project", next);
   };
+  /**
+   * Store setter used during bootstrap that special-cases replacing the project array.
+   * @param {...*} input - Store path/value arguments (first may be "project" with an array).
+   * @returns {*} The applied value or the result of the underlying store setter.
+   */
   const setBootStore = (...input) => {
     if (input[0] === "project" && Array.isArray(input[1])) {
       setProjects(input[1]);
@@ -110,6 +143,11 @@ function createGlobalSync() {
       return bootedAt;
     }
   }));
+  /**
+   * Public global-store setter that special-cases replacing/updating the project array.
+   * @param {...*} input - Store path/value arguments (first may be "project").
+   * @returns {*} The applied value or the result of the underlying store setter.
+   */
   const set = (...input) => {
     if (input[0] === "project" && (Array.isArray(input[1]) || typeof input[1] === "function")) {
       setProjects(input[1]);
@@ -117,6 +155,12 @@ function createGlobalSync() {
     }
     return setGlobalStore(...input);
   };
+  /**
+   * Set or clear the cached todo list for a session in the global store.
+   * @param {string} sessionID - Session id; falsy is ignored.
+   * @param {Array} todos - Todo items, or falsy to delete the session's todos.
+   * @returns {void}
+   */
   const setSessionTodo = (sessionID, todos) => {
     if (!sessionID) return;
     if (!todos) {
@@ -129,6 +173,10 @@ function createGlobalSync() {
       key: "id"
     }));
   };
+  /**
+   * Whether background refresh should be paused (true while a config reload/update is pending).
+   * @returns {boolean} True if refreshes should be held off.
+   */
   const paused = () => untrack(() => globalStore.reload) !== undefined;
   const queue = createRefreshQueue({
     paused,
@@ -138,6 +186,11 @@ function createGlobalSync() {
     }),
     bootstrapInstance
   });
+  /**
+   * Get (creating and caching on first use) a directory-scoped SDK client.
+   * @param {string} directory - Workspace directory.
+   * @returns {Object} A throw-on-error SDK client bound to the directory.
+   */
   const sdkFor = directory => {
     const key = directoryKey(directory);
     const cached = sdkCache.get(key);
@@ -170,6 +223,12 @@ function createGlobalSync() {
       provider: globalStore.provider
     }
   });
+  /**
+   * Load (or top up) a directory's recent root sessions, trimming to the store limit and cleaning up dropped caches.
+   * Deduplicates concurrent loads and pins the directory for the duration.
+   * @param {string} directory - Workspace directory.
+   * @returns {Promise} Resolves when the load completes (or immediately if already satisfied by metadata).
+   */
   async function loadSessions(directory) {
     const key = directoryKey(directory);
     const pending = sessionLoads.get(key);
@@ -241,6 +300,11 @@ function createGlobalSync() {
     });
     return promise;
   }
+  /**
+   * Bootstrap a directory's child store (config, sessions, agents, vcs, permissions, etc.), deduplicating concurrent calls.
+   * @param {string} directory - Workspace directory.
+   * @returns {Promise} Resolves when bootstrap kicks off/completes (no-op for falsy keys).
+   */
   async function bootstrapInstance(directory) {
     const key = directoryKey(directory);
     if (!key) return;
@@ -284,6 +348,10 @@ function createGlobalSync() {
   // per animation frame so the renderer collapses N tokens into one update.
   const deltaPending = new Map();
   let deltaFlushScheduled = false;
+  /**
+   * Apply all coalesced message-part deltas accumulated this frame to their directory stores, then clear the buffer.
+   * @returns {void}
+   */
   const flushDeltas = () => {
     deltaFlushScheduled = false;
     if (deltaPending.size === 0) return;
@@ -305,6 +373,10 @@ function createGlobalSync() {
       });
     }
   };
+  /**
+   * Schedule a delta flush on the next animation frame (at most one pending flush at a time).
+   * @returns {void}
+   */
   const scheduleDeltaFlush = () => {
     if (deltaFlushScheduled) return;
     deltaFlushScheduled = true;
@@ -427,6 +499,11 @@ function createGlobalSync() {
   };
 }
 const GlobalSyncContext = createContext();
+/**
+ * Provider component that constructs the GlobalSync value and exposes it to descendants.
+ * @param {Object} props - Component props; `children` are rendered within the provider.
+ * @returns {*} The provider component wrapping `props.children`.
+ */
 export function GlobalSyncProvider(props) {
   const value = createGlobalSync();
   return createComponent(GlobalSyncContext.Provider, {
@@ -436,6 +513,10 @@ export function GlobalSyncProvider(props) {
     }
   });
 }
+/**
+ * Access the GlobalSync context value; throws if used outside a `GlobalSyncProvider`.
+ * @returns {Object} The GlobalSync API.
+ */
 export function useGlobalSync() {
   const context = useContext(GlobalSyncContext);
   if (!context) throw new Error("useGlobalSync must be used within GlobalSyncProvider");

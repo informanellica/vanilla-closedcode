@@ -1,3 +1,4 @@
+/** @file Vanilla Select component: wraps a native `<select>` (with optgroup support) to provide listbox behavior, reimplementing @kobalte/core's Select API while preserving its compound prop surface. */
 // Vanilla reimplementation of @kobalte/core's Select behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -13,6 +14,13 @@ import { pipe, groupBy, entries, map } from "remeda";
 // <optgroup>. The exported compound API (options/current/value/label/groupBy/
 // onSelect/onHighlight/onOpenChange/placeholder/trigger*) is preserved exactly.
 
+/**
+ * Add classes from a Solid-style classList map to an element (truthy entries
+ * only). Space-separated multi-class keys are split into individual tokens.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Object} classList - Map of class name (or space-separated names) to truthy/falsy.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -22,6 +30,12 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Apply a Solid-style `style` prop (string or object) to an element.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {(string|Object)} style - CSS text string, or a map of style properties (`--` custom props supported).
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (style == null) return;
   if (typeof style === "string") {
@@ -37,6 +51,14 @@ function applyStyle(el, style) {
 
 // Forward arbitrary rest/trigger props onto the select element (handlers bound
 // directly, attributes set; mirrors bs/select's spread()).
+/**
+ * Forward arbitrary props onto an element: style/classList handled specially,
+ * "on*" handlers bound as event listeners, and the remainder set as DOM
+ * properties or attributes (falling back to setAttribute when a property assignment throws).
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {Object} props - The props to apply.
+ * @returns {void}
+ */
 function applyProps(el, props) {
   if (!props) return;
   for (const key in props) {
@@ -63,6 +85,15 @@ function applyProps(el, props) {
   }
 }
 
+/**
+ * Build an `<option>` element for an item, wiring its value, label text, and a
+ * pointerenter handler that highlights the item.
+ * @param {*} item - The source option item.
+ * @param {Function} keyFor - Maps an item to its option value/key.
+ * @param {Function} labelFor - Maps an item to its display label text.
+ * @param {Function} move - Highlight callback invoked with the item on pointerenter.
+ * @returns {HTMLOptionElement} The constructed option element.
+ */
 function createOptionElement(item, keyFor, labelFor, move) {
   const opt = document.createElement("option");
   opt.setAttribute("data-slot", "select-select-item");
@@ -73,6 +104,34 @@ function createOptionElement(item, keyFor, labelFor, move) {
   return opt;
 }
 
+/**
+ * Native-backed select component. Renders a `<select>` (with `<optgroup>`
+ * grouping when groupBy is supplied and an optional disabled placeholder
+ * option), keeps the selected index in sync with the controlled `current`
+ * value, and emits onSelect/onOpenChange/onHighlight as the user navigates and
+ * chooses. Highlight tracking supports an onHighlight cleanup callback.
+ * @param {Object} props - Component props.
+ * @param {Array} props.options - The selectable items.
+ * @param {*} props.current - The controlled selected item.
+ * @param {Function} props.value - Maps an item to its option value/key.
+ * @param {Function} props.label - Maps an item to its label text (used when children is absent).
+ * @param {Function} props.children - Maps an item to its label text (takes precedence over label).
+ * @param {Function} props.groupBy - Maps an item to a group category for optgroup grouping.
+ * @param {string} props.placeholder - Placeholder text shown as a disabled option when nothing is selected.
+ * @param {Function} props.onSelect - Called with the chosen item on change.
+ * @param {Function} props.onHighlight - Called with the highlighted item; may return a cleanup function.
+ * @param {Function} props.onOpenChange - Called with true/false on focus/blur of the select.
+ * @param {boolean} props.disabled - Whether the select is disabled (reactive).
+ * @param {string} props.size - Size variant written to the data-size attribute.
+ * @param {string} props.variant - Style variant written to the data-variant attribute.
+ * @param {string} props.triggerVariant - Trigger style variant written to data-trigger-style.
+ * @param {(string|Object)} props.triggerStyle - Inline style applied to the select.
+ * @param {Object} props.triggerProps - Extra props merged onto the select.
+ * @param {string} props.class - Additional CSS class names for the select.
+ * @param {string} props.valueClass - Additional CSS class names applied alongside class.
+ * @param {Object} props.classList - Solid-style class toggle map for the select.
+ * @returns {HTMLSelectElement} The select element.
+ */
 export function Select(props) {
   const [local, others] = splitProps(props, ["class", "classList", "placeholder", "options", "current", "value", "label", "groupBy", "valueClass", "onSelect", "onHighlight", "onOpenChange", "children", "triggerStyle", "triggerVariant", "triggerProps", "size", "variant", "disabled"]);
 

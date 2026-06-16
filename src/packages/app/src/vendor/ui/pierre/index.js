@@ -1,4 +1,10 @@
+/** @file Theme defaults, CSS custom-property variables, and the diff/file viewer stylesheet for the Pierre diff renderer. */
 import { lineCommentStyles } from "../components/line-comment-styles.js";
+/**
+ * Inline stylesheet injected into the diff/file viewer's shadow root: defines diff color tokens (additions, deletions,
+ * selection highlights), color-scheme overrides, and layout rules, appended with the shared line-comment styles.
+ * @type {string}
+ */
 const unsafeCSS = `
 [data-diff],
 [data-file] {
@@ -143,6 +149,11 @@ const unsafeCSS = `
 ${lineCommentStyles}
 
 `;
+/**
+ * Build the default option set for the Pierre diff/file viewer, wiring in the ClosedCode theme and inline stylesheet.
+ * @param {string} style - The diff style; "split" enables word-level alternating line diffs, otherwise unified layout is used.
+ * @returns {Object} The viewer options object (theme, layout, line-diff, and unsafeCSS settings).
+ */
 export function createDefaultOptions(style) {
   return {
     theme: "ClosedCode",
@@ -162,6 +173,10 @@ export function createDefaultOptions(style) {
     unsafeCSS
   };
 }
+/**
+ * CSS custom-property values applied to the diff/file viewer (font family, size, line height, tab size, and column widths).
+ * @type {Object}
+ */
 export const styleVariables = {
   "--diffs-font-family": "var(--font-family-mono)",
   "--diffs-font-size": "var(--font-size-small)",

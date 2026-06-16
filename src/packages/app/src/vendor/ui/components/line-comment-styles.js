@@ -1,3 +1,10 @@
+/** @file CSS for the line-comment components and a one-time installer that injects it into the document head. */
+
+/**
+ * CSS text for the line-comment anchor, popover, editor, and mention list.
+ *
+ * @type {string}
+ */
 export const lineCommentStyles = `
 [data-annotation-slot] {
   padding: 12px;
@@ -272,6 +279,14 @@ export const lineCommentStyles = `
 }
 `;
 let installed = false;
+/**
+ * Inject the line-comment stylesheet into the document head exactly once.
+ *
+ * Idempotent: no-ops if already installed, if the style element already exists,
+ * or when there is no document (non-DOM environment).
+ *
+ * @returns {void}
+ */
 export function installLineCommentStyles() {
   if (installed) return;
   if (typeof document === "undefined") return;

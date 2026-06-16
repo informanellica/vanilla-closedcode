@@ -1,12 +1,28 @@
+/** @file Normalizes raw apply-patch payloads into structured per-file diff entries for rendering. */
 import { normalize } from "./session-diff.js";
+/**
+ * Narrows an arbitrary value to a known patch operation kind.
+ * @param {*} value - Candidate operation type.
+ * @returns {string} The value when it is "add", "update", "delete", or "move"; otherwise undefined.
+ */
 function kind(value) {
   if (value === "add" || value === "update" || value === "delete" || value === "move") return value;
 }
+/**
+ * Maps a patch operation type to a diff status string.
+ * @param {string} type - Operation type ("add", "delete", or other).
+ * @returns {string} "added", "deleted", or "modified".
+ */
 function status(type) {
   if (type === "add") return "added";
   if (type === "delete") return "deleted";
   return "modified";
 }
+/**
+ * Validates and normalizes a single raw patch payload into a structured file entry.
+ * @param {Object} raw - Raw patch object with fields such as type, filePath, patch/diff, before, after, additions, deletions, movePath.
+ * @returns {Object} A normalized entry with filePath, relativePath, type, additions, deletions, movePath, and a normalized diff view; or undefined when the input is invalid or carries no content.
+ */
 export function patchFile(raw) {
   if (!raw || typeof raw !== "object") return;
   const value = raw;
@@ -39,6 +55,11 @@ export function patchFile(raw) {
     })
   };
 }
+/**
+ * Normalizes an array of raw patch payloads, dropping any invalid entries.
+ * @param {Array} raw - Array of raw patch objects.
+ * @returns {Array} Array of normalized file entries produced by patchFile.
+ */
 export function patchFiles(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.map(patchFile).filter(file => !!file);

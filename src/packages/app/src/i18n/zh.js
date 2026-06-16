@@ -1,3 +1,10 @@
+/** @file Simplified Chinese (zh) translation dictionary for application strings (command palette categories, themes, sessions, settings). */
+
+/**
+ * Mapping of application string keys to their Simplified Chinese translations.
+ * Values may contain `{{name}}` placeholders interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "command.category.suggested": "建议",
   "command.category.view": "视图",

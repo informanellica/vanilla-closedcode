@@ -1,3 +1,4 @@
+/** @file Session composer revert dock: a collapsible tray summarizing reverted messages, with a per-item list and a Restore button for each. */
 import { createComponent, createEffect, createMemo, createRenderEffect, createRoot, onCleanup } from "../../../lib/reactivity.js";
 import { createStore } from "../../../lib/store.js";
 import { Button } from "@/bs/button.js";
@@ -7,12 +8,29 @@ import { useLanguage } from "@/context/language.js";
 
 // Build a detached element from static markup. Only static skeletons go
 // through here; translated/user strings are assigned via textContent.
+/**
+ * Build a detached element from a compact, static HTML string.
+ * @param {string} html - Static markup (no dynamic interpolation).
+ * @returns {Element} The first element of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
   return wrapper.firstElementChild;
 }
 
+/**
+ * Revert dock component: a collapsible tray that summarizes the reverted
+ * messages. Collapsed, it shows a count and a one-line preview of the first
+ * item; expanded, it lists each item with a Restore button. Re-collapses
+ * whenever the item set changes.
+ * @param {Object} props - Component props.
+ * @param {Array} props.items - The reverted items, each with `id` and `text`.
+ * @param {boolean} props.disabled - Whether Restore buttons are disabled.
+ * @param {boolean} props.restoring - Whether a restore is in progress (also disables Restore).
+ * @param {Function} props.onRestore - Called with an item id when its Restore button is clicked.
+ * @returns {Element} The DockTray element hosting the revert dock.
+ */
 export function SessionRevertDock(props) {
   const language = useLanguage();
   const [store, setStore] = createStore({
@@ -91,6 +109,11 @@ export function SessionRevertDock(props) {
   // One expanded-list row. Created untracked inside a per-item root (For
   // equivalent), so the row's reactive bindings (item text, Button disabled)
   // survive list reconciliations and are disposed when the item is dropped.
+  /**
+   * Build one expanded-list row for a reverted item: its text plus a Restore button.
+   * @param {Object} item - The reverted item ({ id, text }).
+   * @returns {Element} The row element.
+   */
   const buildRow = item => {
     const row = template(`<div class="d-flex align-items-center gap-2 min-w-0 py-1"><span class="min-w-0 flex-1 truncate fw-normal text-body-emphasis"></span></div>`);
     const textEl = row.firstChild;
@@ -116,6 +139,11 @@ export function SessionRevertDock(props) {
   // like the compiled Show — so scroll position resets on re-expand. Rows are
   // keyed by item reference in a nested effect, so the scroll container stays
   // mounted across item updates while expanded.
+  /**
+   * Build the scrollable expanded list, keyed by item reference, reconciling
+   * rows on item updates and disposing each row's reactive root when dropped.
+   * @returns {Element} The list container element.
+   */
   const buildList = () => {
     const box = template(`<div class="px-3 pb-7 d-flex flex-column gap-1.5 max-h-42 overflow-y-auto no-scrollbar"></div>`);
     let cache = new Map();

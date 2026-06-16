@@ -1,3 +1,10 @@
+/** @file Simplified Chinese (zh) translation dictionary for the diff/review UI strings. */
+
+/**
+ * Simplified Chinese translations keyed by UI string id.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "会话变更",
   "ui.sessionReview.title.lastTurn": "上一轮变更",

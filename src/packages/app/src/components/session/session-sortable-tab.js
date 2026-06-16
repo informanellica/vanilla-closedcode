@@ -1,3 +1,4 @@
+/** @file Draggable file-editor tab: file icon, filename, unsaved-changes dot, and a close button, wired to the drag-and-drop sortable directive. */
 import { createComponent, createMemo, createRenderEffect } from "../../lib/reactivity.js";
 import { createSortable } from "../../lib/dnd/index.js";
 import { FileIcon } from "@/vendor/ui/components/file-icon.js";
@@ -12,12 +13,25 @@ import { useEditorDirty } from "@/lib/editor-dirty.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
+/**
+ * Parse a compact HTML string into a single detached root element.
+ * @param {string} html - Markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * Visual contents of a file tab: a (color/mono swappable) file icon, the live
+ * filename, and a warning dot when the editor has unsaved changes.
+ * @param {Object} props - Component props.
+ * @param {string} props.path - Absolute or workspace-relative file path for the tab.
+ * @param {boolean} props.active - Whether this tab is the active one (controls icon styling).
+ * @returns {HTMLElement} The file-visual root element.
+ */
 export function FileVisual(props) {
   const editorDirty = useEditorDirty();
   const root = template(`<div class="d-flex align-items-center gap-x-1.5 min-w-0"><span class="fw-medium truncate"></span></div>`);
@@ -86,6 +100,14 @@ export function FileVisual(props) {
   return root;
 }
 
+/**
+ * A draggable file-editor tab trigger wired to the sortable drag-and-drop
+ * directive, rendering FileVisual as its label and a close button.
+ * @param {Object} props - Component props.
+ * @param {*} props.tab - The tab identifier used for the sortable item and the Tabs.Trigger value.
+ * @param {Function} props.onTabClose - Called with the tab id when the close button or middle-click closes the tab.
+ * @returns {HTMLElement} The sortable tab root element.
+ */
 export function SortableTab(props) {
   const file = useFile();
   const language = useLanguage();

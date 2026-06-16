@@ -10,22 +10,57 @@
 // `useWindowSize`, `getElementSize`, and `createElementSize`; none are used here and
 // are intentionally omitted.
 
+/** @file First-party reimplementation of @solid-primitives/resize-observer (createResizeObserver / makeResizeObserver). */
+
 import { createEffect, onCleanup } from "../reactivity.js";
 
 // Upstream `noop`.
+/**
+ * No-op function.
+ *
+ * @returns {void}
+ */
 const noop = () => undefined;
 
 // Upstream `access`: call zero-arg functions, otherwise return the value as-is.
+/**
+ * Unwrap a value that may be a zero-arg accessor function or a static value.
+ *
+ * @param {*} v - Accessor function or static value.
+ * @returns {*} The resolved value.
+ */
 const access = v => (typeof v === "function" && !v.length ? v() : v);
 
 // Upstream `asArray`: wrap a single value in an array, keep arrays, drop nullish.
+/**
+ * Normalize a value into an array: keep arrays, wrap a single value, drop nullish.
+ *
+ * @param {*} value - Value, array of values, or nullish.
+ * @returns {Array} An array of values (possibly empty).
+ */
 const asArray = value => (Array.isArray(value) ? value : value ? [value] : []);
 
 // Upstream `filterNonNullable`.
+/**
+ * Filter out null and undefined entries from an array.
+ *
+ * @param {Array} arr - Source array.
+ * @returns {Array} A new array without nullish entries.
+ */
 const filterNonNullable = arr => arr.filter(i => i != null);
 
 // Upstream `handleDiffArray`: diff two arrays by reference, invoking add/remove
 // callbacks for the changed items only.
+/**
+ * Diff two arrays by reference, invoking the add/remove callbacks only for the
+ * items that were added or removed between `prev` and `current`.
+ *
+ * @param {Array} current - Current array of items.
+ * @param {Array} prev - Previous array of items.
+ * @param {Function} handleAdded - Called with each newly added item.
+ * @param {Function} handleRemoved - Called with each removed item.
+ * @returns {void}
+ */
 function handleDiffArray(current, prev, handleAdded, handleRemoved) {
   const currLength = current.length;
   const prevLength = prev.length;

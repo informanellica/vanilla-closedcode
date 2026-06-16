@@ -1,7 +1,15 @@
+/** @file Checkbox component: a label-wrapped checkbox with control indicator, label, description, and error slots. */
 import { createRenderEffect } from "../../../lib/reactivity.js";
 import { insert } from "../../../lib/reactivity.js";
 import { Icon } from "./icon.js";
 
+/**
+ * Getter-preserving props split: copies property descriptors so signal-backed
+ * getters stay live (avoids the frozen-props pitfall of copying values once).
+ * @param {Object} props - Source props object.
+ * @param {Array} keys - Property names to extract into the first bucket.
+ * @returns {Array} A two-element array: [picked props, rest props].
+ */
 // Getter-preserving split (Solid's splitProps semantics): copying values
 // would evaluate signal-backed getters once and freeze them (the documented
 // frozen-props pitfall).
@@ -16,6 +24,12 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Appends Solid-style children (nodes, arrays, reactive accessors, or primitives) to a parent.
+ * @param {Node} parent - Parent element to receive the children.
+ * @param {*} children - Child value: a Node, array, function accessor, or primitive.
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -35,6 +49,12 @@ function appendChildren(parent, children) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Applies a Solid-style classList map to an element, toggling each class token.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} classList - Map of (possibly space-separated) class keys to truthy/falsy values.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -48,6 +68,13 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Applies a style prop to an element: clears on nullish, sets cssText for a
+ * string, or assigns each property (supporting custom --vars) for an object.
+ * @param {HTMLElement} el - Target element.
+ * @param {*} style - Style value: null/undefined, a CSS string, or a property map.
+ * @returns {void}
+ */
 // Object styles applied per property (compiled style() semantics); a plain
 // setAttribute would stringify the object to "[object Object]" and clear the
 // inline style instead.
@@ -68,6 +95,14 @@ function applyStyle(el, style) {
   }
 }
 
+/**
+ * Binds on* handlers once, then re-applies the remaining (often signal-backed)
+ * attribute/property props inside a render effect, change-guarded against the
+ * previous values and removing them when they turn null/undefined/false.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - Remaining props excluding class/classList/children.
+ * @returns {void}
+ */
 // Handlers are bound once; attribute props (data-state, style, aria-*, …)
 // are often signal-backed getters and are re-applied inside a render effect,
 // removed when they turn null/undefined/false.
@@ -105,6 +140,24 @@ function applyRestProps(el, rest) {
   });
 }
 
+/**
+ * Checkbox component. Renders a `<label>` wrapping a native checkbox input, a
+ * control indicator (custom or default check icon), and content slots for the
+ * label, description, and error. State props are tracked reactively and mapped
+ * to data-checked / data-indeterminate / data-disabled / data-readonly.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Label content (rendered in the label slot).
+ * @param {*} props.class - Class string(s) to add to the root.
+ * @param {Object} props.classList - Solid-style class toggle map.
+ * @param {boolean} props.hideLabel - Visually hide the label (sr-only) while keeping it accessible.
+ * @param {*} props.description - Optional description content shown under the label.
+ * @param {*} props.icon - Custom indicator content; defaults to a check icon.
+ * @param {boolean} props.checked - Whether the checkbox is checked.
+ * @param {boolean} props.indeterminate - Whether the checkbox is in an indeterminate state.
+ * @param {boolean} props.disabled - Whether the checkbox is disabled.
+ * @param {boolean} props.readOnly - Whether the checkbox is read-only.
+ * @returns {HTMLElement} The checkbox `<label>` root element.
+ */
 export function Checkbox(props) {
   const [local, others] = splitProps(props, ["children", "class", "classList", "label", "hideLabel", "description", "icon", "checked", "indeterminate", "disabled", "readOnly"]);
   const root = document.createElement("label");

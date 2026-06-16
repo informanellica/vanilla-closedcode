@@ -1,6 +1,15 @@
+/** @file Bootstrap-styled IconButton component: a button (or custom element) with an optional leading icon and reactive attribute/style props. */
 import { createRenderEffect } from "../lib/reactivity.js";
 import { Icon } from "@/bs/icon.js";
 
+/**
+ * Build a space-joined className from a base classList plus variant/size/extra classes.
+ * @param {Object} classList - Base record of className to boolean toggles.
+ * @param {string} variantClass - Bootstrap variant class to enable (e.g. "btn-outline-secondary").
+ * @param {string} sizeClass - Bootstrap size class to enable (e.g. "btn-sm").
+ * @param {string} extraClass - Optional additional class to enable.
+ * @returns {string} The space-joined list of enabled class names.
+ */
 function getClassList(classList, variantClass, sizeClass, extraClass) {
   const classes = { ...classList };
   classes.btn = true;
@@ -13,9 +22,16 @@ function getClassList(classList, variantClass, sizeClass, extraClass) {
   return Object.keys(classes).filter(k => !!classes[k]).join(" ");
 }
 
-// Object styles applied per property (compiled style() semantics); a plain
-// setAttribute would stringify the object to "[object Object]" and clear the
-// inline style (e.g. the dock chevron's rotate transform) instead.
+/**
+ * Apply a style value to an element, supporting null (remove), a CSS string, or
+ * a per-property object (including custom properties).
+ *
+ * Object styles applied per property (compiled style() semantics); a plain
+ * setAttribute would stringify the object to "[object Object]" and clear the
+ * inline style (e.g. the dock chevron's rotate transform) instead.
+ * @param {HTMLElement} el - Element whose style to set.
+ * @param {*} style - null/undefined to clear, a CSS text string, or a record of style properties.
+ */
 function applyStyle(el, style) {
   if (style == null) {
     el.removeAttribute("style");
@@ -33,6 +49,12 @@ function applyStyle(el, style) {
   }
 }
 
+/**
+ * Append a child value to a target node, recursively resolving functions and
+ * arrays and coercing primitives to text nodes (skips null/booleans).
+ * @param {Node} target - Parent node to append into.
+ * @param {*} value - Child value: function, array, Node, primitive, or null/boolean.
+ */
 function appendChildValue(target, value) {
   if (typeof value === "function") {
     appendChildValue(target, value());
@@ -50,6 +72,23 @@ function appendChildValue(target, value) {
   target.appendChild(document.createTextNode(String(value)));
 }
 
+/**
+ * Bootstrap-styled icon button. Renders a button (or a custom element/component
+ * via `as`) with an optional leading icon. Icon name and attribute props (e.g.
+ * disabled, aria-label) may be reactive getters and are re-applied in effects;
+ * `on*` props are bound as event listeners and `ref` is forwarded.
+ * @param {Object} props - Component props.
+ * @param {string} props.as - Tag name or a component function to render as the element (default "button").
+ * @param {string} props.icon - Icon name to render (may be a reactive getter).
+ * @param {string} props.variant - Visual variant ("ghost", or a Bootstrap color used as btn-outline-*).
+ * @param {string} props.size - "large" or "normal"/other; controls button and icon sizing.
+ * @param {string} props.iconSize - Explicit icon size override.
+ * @param {string} props.class - Extra class to add.
+ * @param {Object} props.classList - Base className-to-boolean record.
+ * @param {*} props.children - Child content appended after the icon.
+ * @param {Function} props.ref - Ref callback or property to receive the created element.
+ * @returns {HTMLElement} The constructed button element.
+ */
 export function IconButton(props) {
   const as = props.as || "button";
 

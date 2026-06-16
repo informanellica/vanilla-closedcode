@@ -12,14 +12,25 @@ import { base64Encode } from "core/util/encode";
 import { decode64 } from "@/utils/base64.js";
 import { Persist, persisted } from "@/utils/persist.js";
 import { playSoundById } from "@/utils/sound.js";
+/** @file Notification context: collects session idle/error events into a persisted notification list, maintains per-session and per-project unseen indexes, and fires sounds and OS notifications. */
 const MAX_NOTIFICATIONS = 500;
 const NOTIFICATION_TTL_MS = 1000 * 60 * 60 * 24 * 30;
+/**
+ * Drops expired notifications (older than the TTL) and caps the list at MAX_NOTIFICATIONS, keeping the newest.
+ * @param {Array} list - The notification list (each has a `time` timestamp).
+ * @returns {Array} The pruned list.
+ */
 function pruneNotifications(list) {
   const cutoff = Date.now() - NOTIFICATION_TTL_MS;
   const pruned = list.filter(n => n.time >= cutoff);
   if (pruned.length <= MAX_NOTIFICATIONS) return pruned;
   return pruned.slice(pruned.length - MAX_NOTIFICATIONS);
 }
+/**
+ * Creates an empty notification index keyed by session and by project (directory), each tracking
+ * all notifications, unseen ones, an unseen count, and whether any unseen one is an error.
+ * @returns {Object} The empty index ({session, project} each with {all, unseen, unseenCount, unseenHasError}).
+ */
 function createNotificationIndex() {
   return {
     session: {
@@ -36,6 +47,11 @@ function createNotificationIndex() {
     }
   };
 }
+/**
+ * Builds a full notification index from a flat list, grouping each notification under its session and directory.
+ * @param {Array} list - The notification list.
+ * @returns {Object} The populated index (see createNotificationIndex).
+ */
 function buildNotificationIndex(list) {
   const index = createNotificationIndex();
   list.forEach(notification => {
@@ -62,6 +78,13 @@ function buildNotificationIndex(list) {
   });
   return index;
 }
+/**
+ * Notification context. Listens for `session.idle` and `session.error` events on the global SDK,
+ * appends notifications to a persisted, pruned list, maintains reactive per-session and
+ * per-project unseen indexes, and plays sounds / posts OS notifications per user settings.
+ * Exposes: `ready`, and `session` / `project` namespaces each with `all(key)`, `unseen(key)`,
+ * `unseenCount(key)`, `unseenHasError(key)`, and `markViewed(key)`.
+ */
 export const {
   use: useNotification,
   provider: NotificationProvider
@@ -87,11 +110,13 @@ export const {
       pruned: false,
       disposed: false
     };
+    // Replace the unseen list for a scope/key and recompute its count and has-error flag.
     const updateUnseen = (scope, key, unseen) => {
       setIndex(scope, "unseen", key, unseen);
       setIndex(scope, "unseenCount", key, unseen.length);
       setIndex(scope, "unseenHasError", key, unseen.some(notification => notification.type === "error"));
     };
+    // Incrementally add a notification to the session and project indexes.
     const appendToIndex = notification => {
       if (notification.session) {
         setIndex("session", "all", notification.session, (all = []) => [...all, notification]);
@@ -110,6 +135,7 @@ export const {
         }
       }
     };
+    // Incrementally remove a (pruned) notification from the session and project indexes.
     const removeFromIndex = notification => {
       if (notification.session) {
         setIndex("session", "all", notification.session, (all = []) => all.filter(n => n !== notification));
@@ -138,6 +164,7 @@ export const {
         }));
       });
     });
+    // Append a notification: prune the persisted list, then sync the indexes for added/removed items.
     const append = notification => {
       const list = pruneNotifications([...store.list, notification]);
       const keep = new Set(list);
@@ -148,6 +175,12 @@ export const {
         setStore("list", list);
       });
     };
+    /**
+     * Resolves a session record for a directory/session, preferring the local synced store and falling back to the SDK.
+     * @param {string} directory - The directory.
+     * @param {string} sessionID - The session id.
+     * @returns {Promise<Object>} The session record, or undefined when not found.
+     */
     const lookup = async (directory, sessionID) => {
       if (!sessionID) return undefined;
       const [syncStore] = globalSync.child(directory, {
@@ -160,6 +193,8 @@ export const {
         sessionID
       }).then(x => x.data).catch(() => undefined);
     };
+    // Whether the given directory/session is the one currently being viewed (so the notification
+    // can be marked already-seen on arrival).
     const viewedInCurrentSession = (directory, sessionID) => {
       const activeDirectory = currentDirectory();
       const activeSession = currentSession();
@@ -169,6 +204,13 @@ export const {
       if (directory !== activeDirectory) return false;
       return sessionID === activeSession;
     };
+    /**
+     * Handles a `session.idle` event for a top-level session: plays the agent sound, records a
+     * "turn-complete" notification, and posts an OS notification when enabled.
+     * @param {string} directory - The directory the event came from.
+     * @param {Object} event - The session.idle event (properties include `sessionID`).
+     * @param {number} time - The event timestamp (ms).
+     */
     const handleSessionIdle = (directory, event, time) => {
       const sessionID = event.properties.sessionID;
       void lookup(directory, sessionID).then(session => {
@@ -191,6 +233,13 @@ export const {
         }
       });
     };
+    /**
+     * Handles a `session.error` event for a top-level session: plays the error sound, records an
+     * "error" notification, and posts an OS notification when enabled.
+     * @param {string} directory - The directory the event came from.
+     * @param {Object} event - The session.error event (properties may include `sessionID` and `error`).
+     * @param {number} time - The event timestamp (ms).
+     */
     const handleSessionError = (directory, event, time) => {
       const sessionID = event.properties.sessionID;
       void lookup(directory, sessionID).then(session => {

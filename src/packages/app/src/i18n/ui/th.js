@@ -1,3 +1,10 @@
+/** @file Thai (th) UI translation dictionary: maps `ui.*` string keys to localized text for the desktop app renderer. */
+
+/**
+ * Thai translation table keyed by dotted UI string id. Values may contain
+ * `{{name}}` placeholders that the i18n layer interpolates at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "การเปลี่ยนแปลงเซสชัน",
   "ui.sessionReview.title.lastTurn": "การเปลี่ยนแปลงของเทิร์นล่าสุด",

@@ -1,3 +1,10 @@
+/** @file Brazilian Portuguese (br) UI-component translation dictionary for the desktop app renderer (ui.* keys). */
+
+/**
+ * Brazilian Portuguese translation table mapping ui.* component i18n keys to their localized strings.
+ * Values may contain {{placeholder}} tokens that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "ui.sessionReview.title": "Alterações da sessão",
   "ui.sessionReview.title.lastTurn": "Alterações do último turno",

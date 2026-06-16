@@ -12,6 +12,13 @@ import { useLanguage } from "@/context/language.js";
 import { ServerConnection } from "@/context/server.js";
 import { useServerController } from "@/controllers/server.js";
 
+/** @file Server-selection dialog: list connected servers with live health, switch the active server, and add/edit/remove HTTP servers (URL, name, credentials) with a default-server option. */
+
+/**
+ * Build a detached element from compact HTML.
+ * @param {string} html - HTML markup whose first element becomes the returned node.
+ * @returns {Element} The first element of the parsed markup.
+ */
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 function template(html) {
@@ -20,6 +27,12 @@ function template(html) {
   return wrapper.firstElementChild;
 }
 const DEFAULT_USERNAME = "closedcode";
+/**
+ * Hook exposing the default-server key, whether a default can be set, and a
+ * setter that persists the choice through the controller.
+ * @param {Object} controller - The server controller (getDefault/setDefault/canDefault).
+ * @returns {Object} An object with `defaultKey`, `canDefault` and `setDefault`.
+ */
 function useDefaultServer(controller) {
   const [defaultKey, defaultUrlActions] = createResource(async () => {
     const key = await controller.getDefault();
@@ -41,8 +54,32 @@ function useDefaultServer(controller) {
     setDefault
   };
 }
+/**
+ * Add/edit server form: URL, name and username/password fields wired to the
+ * caller's change handlers, with Enter to submit and Escape to go back.
+ * @param {Object} props - Component props.
+ * @param {string} props.value - The URL field value.
+ * @param {string} props.placeholder - The URL field placeholder.
+ * @param {string} props.name - The display-name field value.
+ * @param {string} props.username - The username field value.
+ * @param {string} props.password - The password field value.
+ * @param {boolean} props.busy - When true, disables the inputs.
+ * @param {string} props.error - URL validation error text.
+ * @param {Function} props.onChange - URL change handler.
+ * @param {Function} props.onNameChange - Name change handler.
+ * @param {Function} props.onUsernameChange - Username change handler.
+ * @param {Function} props.onPasswordChange - Password change handler.
+ * @param {Function} props.onSubmit - Submit handler (Enter).
+ * @param {Function} props.onBack - Back handler (Escape).
+ * @returns {Element} The form root element.
+ */
 function ServerForm(props) {
   const language = useLanguage();
+  /**
+   * Field keydown handler: Escape goes back, Enter submits.
+   * @param {KeyboardEvent} event - The keydown event.
+   * @returns {void}
+   */
   const keyDown = event => {
     event.stopPropagation();
     if (event.key === "Escape") {
@@ -145,6 +182,12 @@ function ServerForm(props) {
   }));
   return root;
 }
+/**
+ * Server-selection dialog component. In list mode it shows the connected
+ * servers with live health and lets the user switch the active one; in
+ * add/edit mode it renders ServerForm to create or update an HTTP server.
+ * @returns {Node} The Dialog element.
+ */
 export function DialogSelectServer() {
   const language = useLanguage();
   const controller = useServerController();
@@ -156,6 +199,15 @@ export function DialogSelectServer() {
   } = useDefaultServer(controller);
   const addMutation = controller.addMutation;
   const editMutation = controller.editMutation;
+  /**
+   * Preview a server's reachability for the given credentials, reporting the
+   * result through the supplied setter.
+   * @param {string} value - The server URL.
+   * @param {string} username - The username.
+   * @param {string} password - The password.
+   * @param {Function} setStatus - Receives the resolved status.
+   * @returns {void}
+   */
   const previewStatus = (value, username, password, setStatus) => {
     setStatus(undefined);
     void controller.previewStatus(value, username, password).then(status => setStatus(status));
@@ -229,6 +281,10 @@ export function DialogSelectServer() {
       return (order.get(a) ?? 0) - (order.get(b) ?? 0);
     });
   });
+  /**
+   * Check the health of every listed server and update the status store.
+   * @returns {Promise<void>}
+   */
   async function refreshHealth() {
     const results = {};
     await Promise.all(items().map(async conn => {
@@ -242,6 +298,12 @@ export function DialogSelectServer() {
     const interval = setInterval(refreshHealth, 10_000);
     onCleanup(() => clearInterval(interval));
   });
+  /**
+   * Switch to the given server connection.
+   * @param {Object} conn - The server connection to select.
+   * @param {boolean} persist - Whether to persist this as the active server.
+   * @returns {Promise<void>}
+   */
   async function select(conn, persist) {
     const knownHealthy = store.status[ServerConnection.key(conn)]?.healthy;
     await controller.select(conn, persist, knownHealthy);
@@ -345,6 +407,11 @@ export function DialogSelectServer() {
       status: undefined
     });
   };
+  /**
+   * Enter edit mode pre-filled from the given server connection.
+   * @param {Object} conn - The HTTP server connection to edit.
+   * @returns {void}
+   */
   const startEdit = conn => {
     resetAdd();
     setStore("editServer", {
@@ -357,6 +424,10 @@ export function DialogSelectServer() {
       status: store.status[ServerConnection.key(conn)]?.healthy
     });
   };
+  /**
+   * Submit the add or edit form, surfacing any error back into the form state.
+   * @returns {void}
+   */
   const submitForm = () => {
     if (mode() === "add") {
       if (addMutation.isPending) return;

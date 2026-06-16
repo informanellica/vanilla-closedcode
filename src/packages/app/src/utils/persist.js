@@ -3,6 +3,15 @@ import { makePersisted } from "../lib/primitives/storage.js";
 import { checksum } from "core/util/encode";
 import { createResource } from "../lib/reactivity.js";
 import { pathKey } from "@/utils/path-key.js";
+
+/**
+ * @file Persistence layer for app state. Provides global/workspace/session
+ * storage targets, legacy-key migration, an in-memory LRU cache, quota-aware
+ * localStorage writes with eviction, and `persisted()` which backs a reactive
+ * store with the right storage adapter (desktop async API vs. browser
+ * localStorage).
+ */
+
 const LEGACY_STORAGE = "default.dat";
 const GLOBAL_STORAGE = "closedcode.global.dat";
 const LOCAL_PREFIX = "closedcode.";
@@ -13,12 +22,22 @@ const cache = new Map();
 const cacheTotal = {
   bytes: 0
 };
+/**
+ * Remove a cache entry and decrement the tracked byte total.
+ * @param {string} key - Cache key to delete.
+ * @returns {void}
+ */
 function cacheDelete(key) {
   const entry = cache.get(key);
   if (!entry) return;
   cacheTotal.bytes -= entry.bytes;
   cache.delete(key);
 }
+/**
+ * Evict the oldest entries until the cache is within the entry-count and
+ * byte-size limits (LRU order is maintained by re-insertion on access).
+ * @returns {void}
+ */
 function cachePrune() {
   for (;;) {
     if (cache.size <= CACHE_MAX_ENTRIES && cacheTotal.bytes <= CACHE_MAX_BYTES) return;
@@ -27,6 +46,13 @@ function cachePrune() {
     cacheDelete(oldest);
   }
 }
+/**
+ * Insert or refresh a cache entry (most-recently-used), then prune to limits.
+ * Values larger than the byte cap are dropped instead of cached.
+ * @param {string} key - Cache key.
+ * @param {string} value - String value to cache.
+ * @returns {void}
+ */
 function cacheSet(key, value) {
   const bytes = value.length * 2;
   if (bytes > CACHE_MAX_BYTES) {
@@ -43,6 +69,11 @@ function cacheSet(key, value) {
   cacheTotal.bytes += bytes;
   cachePrune();
 }
+/**
+ * Read a cached value, marking it most-recently-used on hit.
+ * @param {string} key - Cache key.
+ * @returns {string} The cached value, or undefined on miss.
+ */
 function cacheGet(key) {
   const entry = cache.get(key);
   if (!entry) return;
@@ -50,12 +81,32 @@ function cacheGet(key) {
   cache.set(key, entry);
   return entry.value;
 }
+
+/**
+ * Whether a storage scope has fallen back to the in-memory cache (localStorage
+ * unavailable/failed for that scope).
+ * @param {string} scope - Storage scope identifier.
+ * @returns {boolean} True when the scope is in fallback (cache-only) mode.
+ */
 function fallbackDisabled(scope) {
   return fallback.get(scope) === true;
 }
+
+/**
+ * Mark a storage scope as fallen back to the in-memory cache.
+ * @param {string} scope - Storage scope identifier.
+ * @returns {void}
+ */
 function fallbackSet(scope) {
   fallback.set(scope, true);
 }
+
+/**
+ * Classify an error as a storage quota-exceeded condition across browser
+ * variants (DOMException names/codes plus message heuristics).
+ * @param {*} error - The thrown error.
+ * @returns {boolean} True when the error indicates the storage quota was exceeded.
+ */
 function quota(error) {
   if (error instanceof DOMException) {
     if (error.name === "QuotaExceededError") return true;
@@ -75,6 +126,14 @@ function quota(error) {
   if (/quota/i.test(message)) return true;
   return false;
 }
+/**
+ * Free room for a write by removing other prefixed entries (largest first)
+ * until `keep` can be stored.
+ * @param {Object} storage - A Storage-like object (e.g. localStorage).
+ * @param {string} keep - The key being written that must be preserved.
+ * @param {string} value - The value to store under `keep`.
+ * @returns {boolean} True if the value was successfully stored after eviction.
+ */
 function evict(storage, keep, value) {
   const total = storage.length;
   const indexes = Array.from({
@@ -106,6 +165,14 @@ function evict(storage, keep, value) {
   }
   return false;
 }
+/**
+ * Quota-aware write: try a direct set, then a remove-and-retry, then eviction.
+ * Re-throws non-quota errors. Keeps the in-memory cache in sync.
+ * @param {Object} storage - A Storage-like object (e.g. localStorage).
+ * @param {string} key - Storage key.
+ * @param {string} value - Value to store.
+ * @returns {boolean} True when the write ultimately succeeded.
+ */
 function write(storage, key, value) {
   try {
     storage.setItem(key, value);
@@ -126,12 +193,32 @@ function write(storage, key, value) {
   const ok = evict(storage, key, value);
   return ok;
 }
+/**
+ * Deep-clone a JSON-serializable value via round-trip serialization.
+ * @param {*} value - JSON-serializable value.
+ * @returns {*} A structurally independent clone.
+ */
 function snapshot(value) {
   return JSON.parse(JSON.stringify(value));
 }
+
+/**
+ * Test whether a value is a plain (non-array) object.
+ * @param {*} value - Value to test.
+ * @returns {boolean} True for non-null, non-array objects.
+ */
 function isRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+
+/**
+ * Recursively merge a stored value onto defaults: arrays replace wholesale,
+ * records merge key-by-key (recursing on known keys, passing through unknown
+ * ones), and scalars/null override. Missing (undefined) values keep defaults.
+ * @param {*} defaults - Default shape/value.
+ * @param {*} value - Stored value to merge in.
+ * @returns {*} The merged value.
+ */
 function merge(defaults, value) {
   if (value === undefined) return defaults;
   if (value === null) return value;
@@ -155,6 +242,11 @@ function merge(defaults, value) {
   }
   return value;
 }
+/**
+ * Safe JSON parse that returns undefined instead of throwing on invalid input.
+ * @param {string} value - Raw JSON string.
+ * @returns {*} The parsed value, or undefined when parsing fails.
+ */
 function parse(value) {
   try {
     return JSON.parse(value);
@@ -162,6 +254,15 @@ function parse(value) {
     return undefined;
   }
 }
+
+/**
+ * Parse, optionally migrate, and merge a raw stored string against defaults,
+ * returning a canonical serialized form.
+ * @param {*} defaults - Default value to merge onto.
+ * @param {string} raw - Raw stored JSON string.
+ * @param {Function} migrate - Optional migration function applied to the parsed value.
+ * @returns {string} Canonical JSON string, or undefined when `raw` could not be parsed.
+ */
 function normalize(defaults, raw, migrate) {
   const parsed = parse(raw);
   if (parsed === undefined) return;
@@ -169,6 +270,12 @@ function normalize(defaults, raw, migrate) {
   const merged = merge(defaults, migrated);
   return JSON.stringify(merged);
 }
+/**
+ * Read and normalize the current value (sync storage), rewriting it back when
+ * normalization changed it and clearing corrupt entries.
+ * @param {Object} input - `{ storage, key, defaults, migrate }`.
+ * @returns {string} Normalized JSON string, undefined when absent, or null when the entry was corrupt and removed.
+ */
 function readCurrent(input) {
   const raw = input.storage.getItem(input.key);
   if (raw === null) return;
@@ -180,6 +287,13 @@ function readCurrent(input) {
   if (raw !== next) input.storage.setItem(input.key, next);
   return next;
 }
+/**
+ * Migrate a value from legacy stores/keys (sync) into the current storage:
+ * scans alternate workspace stores, then the legacy store's old key names,
+ * moving the first match to the current key and removing the source.
+ * @param {Object} input - `{ current, legacyStore, stores, keys, key, defaults, migrate }`.
+ * @returns {string} The migrated JSON string, or null when nothing to migrate.
+ */
 function migrateLegacy(input) {
   for (const store of input.stores) {
     const raw = store.getItem(input.key);
@@ -208,6 +322,11 @@ function migrateLegacy(input) {
   }
   return null;
 }
+/**
+ * Async counterpart of {@link readCurrent} for the desktop async storage API.
+ * @param {Object} input - `{ storage, key, defaults, migrate }`.
+ * @returns {Promise<string>} Resolves to the normalized JSON string, undefined when absent, or null when corrupt and removed.
+ */
 async function readCurrentAsync(input) {
   const raw = await input.storage.getItem(input.key);
   if (raw === null) return;
@@ -219,11 +338,23 @@ async function readCurrentAsync(input) {
   if (raw !== next) await input.storage.setItem(input.key, next);
   return next;
 }
+/**
+ * Best-effort async remove that swallows errors.
+ * @param {Object} storage - Async storage-like object.
+ * @param {string} key - Key to remove.
+ * @returns {Promise<void>}
+ */
 async function removeAsync(storage, key) {
   try {
     await storage.removeItem(key);
   } catch {}
 }
+
+/**
+ * Async counterpart of {@link migrateLegacy} for the desktop async storage API.
+ * @param {Object} input - `{ current, legacyStore, stores, keys, key, defaults, migrate }`.
+ * @returns {Promise<string>} Resolves to the migrated JSON string, or null when nothing to migrate.
+ */
 async function migrateLegacyAsync(input) {
   for (const store of input.stores) {
     const raw = await store.getItem(input.key);
@@ -252,6 +383,12 @@ async function migrateLegacyAsync(input) {
   }
   return null;
 }
+/**
+ * Build the storage file name for a workspace directory: a sanitized head of
+ * the path plus a checksum, scoped under the `closedcode.workspace.` prefix.
+ * @param {string} dir - Workspace directory path (may be falsy).
+ * @returns {string} The workspace storage file name.
+ */
 function workspaceStorage(dir) {
   // Defensive: a route-param-driven workspace may be requested with no directory
   // during navigation to the no-project home before its owner is disposed.
@@ -260,6 +397,13 @@ function workspaceStorage(dir) {
   const sum = checksum(safe) ?? "0";
   return `closedcode.workspace.${head}.${sum}.dat`;
 }
+/**
+ * Compute the set of older workspace storage names a value may have been saved
+ * under (raw path before normalization, and the backslash form of drive paths),
+ * so migration can find pre-pathKey data.
+ * @param {string} dir - Workspace directory path.
+ * @returns {Array} Distinct legacy storage names, or undefined when none differ from the canonical one.
+ */
 function legacyWorkspaceStorage(dir) {
   const storage = workspaceStorage(pathKey(dir));
   const result = new Set();
@@ -274,6 +418,13 @@ function legacyWorkspaceStorage(dir) {
   if (result.size === 0) return;
   return [...result];
 }
+/**
+ * Build a Storage-like adapter over `localStorage` that namespaces every key
+ * with a prefix, backed by the in-memory cache and a per-scope fallback when
+ * localStorage is unavailable.
+ * @param {string} prefix - Key namespace prefix.
+ * @returns {Object} An object with `getItem`, `setItem`, and `removeItem`.
+ */
 function localStorageWithPrefix(prefix) {
   const base = `${prefix}:`;
   const scope = `prefix:${prefix}`;
@@ -318,6 +469,12 @@ function localStorageWithPrefix(prefix) {
     }
   };
 }
+/**
+ * Build a Storage-like adapter over `localStorage` using keys verbatim (no
+ * prefix), backed by the in-memory cache and a fallback when localStorage is
+ * unavailable.
+ * @returns {Object} An object with `getItem`, `setItem`, and `removeItem`.
+ */
 function localStorageDirect() {
   const scope = "direct";
   return {
@@ -357,6 +514,10 @@ function localStorageDirect() {
     }
   };
 }
+/**
+ * Internal helpers exposed for unit tests only.
+ * @type {Object}
+ */
 export const PersistTesting = {
   localStorageDirect,
   localStorageWithPrefix,
@@ -364,7 +525,20 @@ export const PersistTesting = {
   normalize,
   workspaceStorage
 };
+
+/**
+ * Factory of persistence "targets" describing where a value is stored (storage
+ * name, key, and any legacy keys/names to migrate from) at global, workspace,
+ * session, or auto-scoped granularity.
+ * @type {Object}
+ */
 export const Persist = {
+  /**
+   * Build a global-scoped target stored in the shared global storage file.
+   * @param {string} key - Storage key.
+   * @param {Array} legacy - Legacy key names to migrate from.
+   * @returns {Object} A persistence target `{ storage, key, legacy }`.
+   */
   global(key, legacy) {
     return {
       storage: GLOBAL_STORAGE,
@@ -372,6 +546,13 @@ export const Persist = {
       legacy
     };
   },
+  /**
+   * Build a workspace-scoped target keyed by directory.
+   * @param {string} dir - Workspace directory (coerced to a placeholder when absent).
+   * @param {string} key - Storage key (namespaced under `workspace:`).
+   * @param {Array} legacy - Legacy key names to migrate from.
+   * @returns {Object} A persistence target with `storage`, `legacyStorageNames`, `key`, and `legacy`.
+   */
   workspace(dir, key, legacy) {
     // Coerce an absent directory to a stable placeholder so the whole workspace
     // persist chain (workspaceStorage / pathKey / legacyWorkspaceStorage) stays
@@ -387,6 +568,15 @@ export const Persist = {
       legacy
     };
   },
+  /**
+   * Build a session-scoped target (stored in the workspace file, keyed by
+   * session id).
+   * @param {string} dir - Workspace directory (coerced to a placeholder when absent).
+   * @param {string} session - Session id.
+   * @param {string} key - Storage key (namespaced under `session:<session>:`).
+   * @param {Array} legacy - Legacy key names to migrate from.
+   * @returns {Object} A persistence target with `storage`, `legacyStorageNames`, `key`, and `legacy`.
+   */
   session(dir, session, key, legacy) {
     const safeDir = dir || "_no_workspace_";
     const storage = workspaceStorage(pathKey(safeDir));
@@ -397,11 +587,28 @@ export const Persist = {
       legacy
     };
   },
+  /**
+   * Build a session-scoped target when a session id is given, otherwise a
+   * workspace-scoped one.
+   * @param {string} dir - Workspace directory.
+   * @param {string} session - Session id (falsy selects workspace scope).
+   * @param {string} key - Storage key.
+   * @param {Array} legacy - Legacy key names to migrate from.
+   * @returns {Object} The resolved persistence target.
+   */
   scoped(dir, session, key, legacy) {
     if (session) return Persist.session(dir, session, key, legacy);
     return Persist.workspace(dir, key, legacy);
   }
 };
+
+/**
+ * Delete a persisted value (and any legacy copies) for a target, using the
+ * desktop async storage when available or localStorage otherwise.
+ * @param {Object} target - Persistence target from {@link Persist}.
+ * @param {Object} platform - Platform context providing `platform` and optional `storage(name)`.
+ * @returns {void}
+ */
 export function removePersisted(target, platform) {
   const isDesktop = platform?.platform === "desktop" && !!platform.storage;
   if (isDesktop) {
@@ -420,6 +627,14 @@ export function removePersisted(target, platform) {
     localStorageWithPrefix(storage).removeItem(target.key);
   }
 }
+/**
+ * Back a reactive store with persistent storage. Selects the right adapter
+ * (desktop async API vs. browser localStorage, prefixed or direct), wires
+ * legacy migration into reads, and tracks load readiness.
+ * @param {Object} target - A persistence target from {@link Persist}, or a plain key string.
+ * @param {Array} store - A `[state, setState]` reactive store tuple to persist.
+ * @returns {Array} `[state, setState, init, ready]` where `init` is the (possibly async) load and `ready` is a readiness accessor carrying a `.promise`.
+ */
 export function persisted(target, store) {
   const platform = usePlatform();
   const config = typeof target === "string" ? {

@@ -22,6 +22,13 @@
 // Faithful port of solid-js/store (MIT License,
 // Copyright (c) 2016-2025 Ryan Carniato). See THIRD-PARTY-NOTICES.md.
 
+/**
+ * @file Solid-free reactive store layer: a faithful port of solid-js/store
+ * (createStore / produce / reconcile / unwrap, plus createMutable /
+ * modifyMutable) built on lib/reactivity.js, with nested tracking proxies and
+ * path-based setters.
+ */
+
 import { batch, createSignal, getListener, $PROXY, $TRACK } from "./reactivity.js";
 
 const $RAW = Symbol("store-raw"),
@@ -32,6 +39,12 @@ const $RAW = Symbol("store-raw"),
 // from reactivity.js so they are the SAME symbols first-party consumers import
 // from "./reactivity.js" — e.g. `items[$TRACK]` must hit this module's proxy traps.
 
+/**
+ * Wrap a raw object/array in a tracking Proxy (cached on the value via $PROXY).
+ * For plain objects, rebinds own getters to the proxy so they read tracked.
+ * @param {Object} value - The raw object or array to wrap.
+ * @returns {Proxy} The cached tracking proxy for the value.
+ */
 function wrap(value) {
   let proxy = value[$PROXY];
   if (!proxy) {
@@ -55,6 +68,12 @@ function wrap(value) {
   return proxy;
 }
 
+/**
+ * Whether a value is eligible to be wrapped in a store proxy: a non-null plain
+ * object or array (or an already-proxied value).
+ * @param {*} obj - The value to test.
+ * @returns {boolean} True when the value can be wrapped.
+ */
 function isWrappable(obj) {
   let proto;
   return (
@@ -67,6 +86,13 @@ function isWrappable(obj) {
   );
 }
 
+/**
+ * Return the raw, proxy-free object graph behind a store value, replacing any
+ * nested proxies in place. Cycles are guarded with a visited set.
+ * @param {*} item - The (possibly proxied) value to unwrap.
+ * @param {Set} set - Internal set of already-visited objects (recursion guard).
+ * @returns {*} The raw value with no store proxies.
+ */
 export function unwrap(item, set = new Set()) {
   let result, unwrapped, v, prop;
   if ((result = item != null && item[$RAW])) return result;
@@ -93,6 +119,13 @@ export function unwrap(item, set = new Set()) {
   return item;
 }
 
+/**
+ * Lazily create (and cache on the target under `symbol`) the per-property
+ * tracking-signal map for a store node.
+ * @param {Object} target - The raw store object the nodes belong to.
+ * @param {symbol} symbol - The marker symbol ($NODE or $HAS) keying the map.
+ * @returns {Object} The null-prototype map of property name to signal.
+ */
 function getNodes(target, symbol) {
   let nodes = target[symbol];
   if (!nodes)
@@ -102,6 +135,15 @@ function getNodes(target, symbol) {
   return nodes;
 }
 
+/**
+ * Get or lazily create the tracking signal accessor for one property. The
+ * signal uses equals:false (every write notifies; the store decides changes),
+ * and its setter is attached as `.$` on the accessor.
+ * @param {Object} nodes - The per-property signal map (from getNodes).
+ * @param {string|number|symbol} property - The property key.
+ * @param {*} value - The initial value for a newly created signal.
+ * @returns {Function} The signal accessor (with `.$` setter attached).
+ */
 function getNode(nodes, property, value) {
   if (nodes[property]) return nodes[property];
   // equals:false -> every write notifies; the store decides "changed" itself.
@@ -110,6 +152,13 @@ function getNode(nodes, property, value) {
   return (nodes[property] = s);
 }
 
+/**
+ * getOwnPropertyDescriptor trap helper: rewrite a data descriptor into a getter
+ * that routes through the proxy so enumeration/Object.keys stay tracked.
+ * @param {Object} target - The raw store object.
+ * @param {string|symbol} property - The property key being described.
+ * @returns {Object} The (possibly rewritten) property descriptor.
+ */
 function proxyDescriptor(target, property) {
   const desc = Reflect.getOwnPropertyDescriptor(target, property);
   if (
@@ -126,15 +175,31 @@ function proxyDescriptor(target, property) {
   return desc;
 }
 
+/**
+ * Subscribe the current reactive listener to the node's whole-object ($SELF)
+ * signal, so key additions/removals trigger re-computation.
+ * @param {Object} target - The raw store object to track.
+ * @returns {void}
+ */
 function trackSelf(target) {
   getListener() && getNode(getNodes(target, $NODE), $SELF)();
 }
 
+/**
+ * ownKeys trap: track the whole object then return its own keys.
+ * @param {Object} target - The raw store object.
+ * @returns {Array} The own property keys of the target.
+ */
 function ownKeys(target) {
   trackSelf(target);
   return Reflect.ownKeys(target);
 }
 
+/**
+ * Proxy trap table for read-only store proxies (createStore): per-property
+ * tracking on get/has, no-op writes (writes go through the setStore path), and
+ * key tracking via ownKeys/getOwnPropertyDescriptor.
+ */
 const proxyTraps = {
   get(target, property, receiver) {
     if (property === $RAW) return target;
@@ -182,6 +247,15 @@ const proxyTraps = {
   getOwnPropertyDescriptor: proxyDescriptor
 };
 
+/**
+ * Write one property on a raw store node and notify its tracking signals
+ * (value, $HAS presence, $SELF, and array length on resize). undefined deletes.
+ * @param {Object} state - The raw store node to mutate.
+ * @param {string|number} property - The property/index to set.
+ * @param {*} value - The new value (undefined removes the property).
+ * @param {boolean} deleting - True to force notify even on an equal value.
+ * @returns {void}
+ */
 function setProperty(state, property, value, deleting = false) {
   if (!deleting && state[property] === value) return;
   const prev = state[property],
@@ -205,6 +279,12 @@ function setProperty(state, property, value, deleting = false) {
   (node = nodes[$SELF]) && node.$();
 }
 
+/**
+ * Shallow-merge the own keys of `value` into a store node via setProperty.
+ * @param {Object} state - The raw store node to merge into.
+ * @param {Object} value - The source object whose keys are applied.
+ * @returns {void}
+ */
 function mergeStoreNode(state, value) {
   const keys = Object.keys(value);
   for (let i = 0; i < keys.length; i += 1) {
@@ -213,6 +293,14 @@ function mergeStoreNode(state, value) {
   }
 }
 
+/**
+ * Apply a whole-array update to a store array: replace per index then truncate
+ * length when `next` is an array, otherwise merge a plain-object update.
+ * @param {Array} current - The raw store array to update in place.
+ * @param {Array|Object|Function} next - The next array/object, or an updater
+ *   thunk receiving the current array.
+ * @returns {void}
+ */
 function updateArray(current, next) {
   if (typeof next === "function") next = next(current);
   next = unwrap(next);
@@ -228,6 +316,15 @@ function updateArray(current, next) {
   } else mergeStoreNode(current, next);
 }
 
+/**
+ * Recursively apply a path-based setter against a store node. Path parts may be
+ * keys, key arrays, array index ranges {from,to,by}, or filter predicates
+ * (item,i)=>bool; the final value may be a (prev,traversed)=>next updater.
+ * @param {Object|Array} current - The current raw store node at this path step.
+ * @param {Array} path - The remaining path segments, last entry the value/updater.
+ * @param {Array} traversed - Keys traversed so far (passed to value updaters).
+ * @returns {void}
+ */
 function updatePath(current, path, traversed = []) {
   let part,
     prev = current;
@@ -273,6 +370,13 @@ function updatePath(current, path, traversed = []) {
   } else setProperty(current, part, value);
 }
 
+/**
+ * Create a reactive store: a tracking proxy over the initial value plus a
+ * path-based setter that applies updates inside a batch.
+ * @param {Object|Array} store - The initial store value (defaults to {}).
+ * @param {Object} options - Reserved options (unused).
+ * @returns {Array} A [store, setStore] pair: the tracking proxy and the setter.
+ */
 export function createStore(...[store, options]) {
   const unwrappedStore = unwrap(store || {});
   const isArray = Array.isArray(unwrappedStore);
@@ -288,6 +392,13 @@ export function createStore(...[store, options]) {
 }
 
 // ---- createMutable (not used by app today, kept for API completeness) -------
+/**
+ * getOwnPropertyDescriptor trap helper for mutable proxies: rewrite a data
+ * descriptor into a get/set pair routed through the proxy.
+ * @param {Object} target - The raw store object.
+ * @param {string|symbol} property - The property key being described.
+ * @returns {Object} The (possibly rewritten) property descriptor.
+ */
 function proxyDescriptorMut(target, property) {
   const desc = Reflect.getOwnPropertyDescriptor(target, property);
   if (
@@ -305,6 +416,11 @@ function proxyDescriptorMut(target, property) {
   desc.set = v => (target[$PROXY][property] = v);
   return desc;
 }
+/**
+ * Proxy trap table for mutable store proxies (createMutable): tracking reads
+ * like proxyTraps, but writes/deletes go through setProperty in a batch and
+ * array-mutating methods are wrapped so their effects batch.
+ */
 const proxyTrapsMut = {
   get(target, property, receiver) {
     if (property === $RAW) return target;
@@ -358,6 +474,12 @@ const proxyTrapsMut = {
   ownKeys: ownKeys,
   getOwnPropertyDescriptor: proxyDescriptorMut
 };
+/**
+ * Wrap a raw object/array in a mutable tracking Proxy (cached via $PROXY),
+ * rebinding own getters/setters to the proxy so they read/write tracked.
+ * @param {Object} value - The raw object or array to wrap.
+ * @returns {Proxy} The cached mutable tracking proxy.
+ */
 function wrapMut(value) {
   let proxy = value[$PROXY];
   if (!proxy) {
@@ -381,16 +503,39 @@ function wrapMut(value) {
   }
   return proxy;
 }
+/**
+ * Create a directly-mutable reactive store: a tracking proxy whose property
+ * writes/deletes update reactively without a separate setter.
+ * @param {Object|Array} state - The initial state (defaults to {}).
+ * @returns {Proxy} The mutable tracking proxy.
+ */
 export function createMutable(state) {
   const unwrappedStore = unwrap(state || {});
   return wrapMut(unwrappedStore);
 }
+/**
+ * Run a modifier against the raw (unwrapped) mutable state inside a single
+ * batch, so multiple writes notify once.
+ * @param {Proxy} state - A createMutable store proxy.
+ * @param {Function} modifier - Callback receiving the raw state to mutate.
+ * @returns {void}
+ */
 export function modifyMutable(state, modifier) {
   batch(() => modifier(unwrap(state)));
 }
 
 // ---- reconcile -------------------------------------------------------------
 const $ROOT = Symbol("store-root");
+/**
+ * Recursively diff `target` into the existing store node at parent[property],
+ * mutating in place (keyed list diff for arrays) so only changed paths notify.
+ * @param {*} target - The desired next value for this slot.
+ * @param {Object} parent - The store node holding the slot under `property`.
+ * @param {string|number|symbol} property - The slot key within parent.
+ * @param {boolean} merge - When true, merge instead of replacing by identity.
+ * @param {string} key - Identity key used to match array items (e.g. "id").
+ * @returns {void}
+ */
 function applyState(target, parent, property, merge, key) {
   const previous = parent[property];
   if (target === previous) return;
@@ -494,6 +639,14 @@ function applyState(target, parent, property, merge, key) {
       setProperty(previous, previousKeys[i], undefined);
   }
 }
+/**
+ * Build a store setter that reconciles the current state toward `value` with a
+ * keyed in-place diff (see applyState), so unchanged paths keep their identity.
+ * @param {*} value - The desired next value.
+ * @param {Object} options - Reconcile options. `merge` merges objects instead
+ *   of replacing by identity; `key` is the array-item identity key (default "id").
+ * @returns {Function} A setter usable with setStore that returns the next state.
+ */
 export function reconcile(value, options = {}) {
   const { merge, key = "id" } = options,
     v = unwrap(value);
@@ -525,6 +678,12 @@ const setterTraps = {
     return true;
   }
 };
+/**
+ * Build a store setter that runs `fn` against a mutable draft proxy whose
+ * writes/deletes flow straight through setProperty, then returns the state.
+ * @param {Function} fn - Mutator receiving the draft proxy of the store node.
+ * @returns {Function} A setter usable with setStore.
+ */
 export function produce(fn) {
   return state => {
     if (isWrappable(state)) {

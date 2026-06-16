@@ -1,3 +1,4 @@
+/** @file Vanilla DropdownMenu component family (Root/Trigger/Content/Items) reimplementing @kobalte/core behavior without an external UI dependency. */
 // Vanilla reimplementation of @kobalte/core's DropdownMenu behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -13,6 +14,11 @@ import { Icon } from "./icon.js";
 // CSS-driven state attributes (data-expanded/data-closed/data-highlighted/
 // data-disabled/data-checked) that ./dropdown-menu.css styles.
 
+/**
+ * Parse an HTML snippet and return its first element node.
+ * @param {string} html - The HTML markup to instantiate.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html.trim();
@@ -23,6 +29,12 @@ function template(html) {
 // createComponent props are signal-backed getters, and a value copy would
 // freeze every controlled prop (open/checked/disabled/value/placement/…) at
 // its creation-time value. Mirrors Solid's own splitProps semantics.
+/**
+ * Split props into the named keys and the rest, forwarding each as a live getter.
+ * @param {Object} props - The source props object (signal-backed getters).
+ * @param {Array} keys - Property names to route into the first result object.
+ * @returns {Array} A two-element array [local, rest] of getter-forwarding objects.
+ */
 function splitProps(props, keys) {
   const split = {};
   const rest = {};
@@ -37,6 +49,13 @@ function splitProps(props, keys) {
   return [split, rest];
 }
 
+/**
+ * Append children (nodes, arrays, text, or reactive accessors) to a parent element.
+ * @param {Node} parent - The element to append into.
+ * @param {*} children - The children value: Node, array, string, or function accessor.
+ * @param {Function} wrap - Optional wrapper re-establishing menu context around lazy children.
+ * @returns {void}
+ */
 function appendChildren(parent, children, wrap) {
   if (children == null || children === false) return;
   if (Array.isArray(children)) {
@@ -59,6 +78,12 @@ function appendChildren(parent, children, wrap) {
   parent.appendChild(document.createTextNode(String(children)));
 }
 
+/**
+ * Toggle classes on an element from a Solid-style classList record.
+ * @param {HTMLElement} el - The target element.
+ * @param {Object} classList - Map of (possibly space-separated) class keys to booleans.
+ * @returns {void}
+ */
 function applyClassList(el, classList) {
   if (!classList) return;
   for (const cls in classList) {
@@ -72,6 +97,12 @@ function applyClassList(el, classList) {
   }
 }
 
+/**
+ * Apply leftover props to an element as event handlers, properties, or attributes.
+ * @param {HTMLElement} el - The target element.
+ * @param {Object} rest - The remaining props (excludes class/classList/children).
+ * @returns {void}
+ */
 function applyRestProps(el, rest) {
   for (const key in rest) {
     if (key === "class" || key === "classList" || key === "children") continue;
@@ -97,6 +128,12 @@ function applyRestProps(el, rest) {
   }
 }
 
+/**
+ * Add the space-separated classes from a `class` prop to an element.
+ * @param {HTMLElement} el - The target element.
+ * @param {string} value - The class string to apply.
+ * @returns {void}
+ */
 function applyClassProp(el, value) {
   if (value) el.classList.add(...String(value).split(/\s+/).filter(Boolean));
 }
@@ -105,16 +142,29 @@ let DropdownContext = null;
 let RadioContext = null;
 let nextId = 0;
 
+/**
+ * Read the current DropdownMenu context shared by the compound parts.
+ * @returns {Object} The active dropdown state, or null when outside a menu.
+ */
 function useDropdown() {
   return DropdownContext;
 }
 
+/**
+ * Read the current radio-group context shared by radio items and indicators.
+ * @returns {Object} The active radio state, or null when outside a radio group.
+ */
 function useRadio() {
   return RadioContext;
 }
 
 // Roving-focus / keyboard helpers shared by Content. Items are the focusable
 // menu controls (buttons) rendered inside the content panel.
+/**
+ * Collect the focusable, non-disabled menu controls inside a content panel.
+ * @param {HTMLElement} contentEl - The dropdown content element to query.
+ * @returns {Array} The enabled item elements in document order.
+ */
 function menuItems(contentEl) {
   if (!contentEl) return [];
   return Array.from(
@@ -124,6 +174,12 @@ function menuItems(contentEl) {
   ).filter(el => el.getAttribute("data-disabled") == null && !el.disabled);
 }
 
+/**
+ * Mark one item as highlighted (clearing the others) and move focus to it.
+ * @param {Array} items - The candidate item elements.
+ * @param {HTMLElement} target - The item to highlight and focus.
+ * @returns {void}
+ */
 function highlight(items, target) {
   for (const el of items) {
     if (el === target) el.setAttribute("data-highlighted", "");
@@ -132,6 +188,13 @@ function highlight(items, target) {
   if (target) target.focus();
 }
 
+/**
+ * Create the shared open/position state controlling a dropdown menu instance.
+ * Supports controlled and uncontrolled open state, fixed-position placement under
+ * the trigger, and registration of the root/trigger/content/portal elements.
+ * @param {Object} local - The menu's local props (open, defaultOpen, onOpenChange, placement, gutter).
+ * @returns {Object} The dropdown state API used by the compound parts.
+ */
 function createDropdownState(local) {
   let uncontrolled = !!local.defaultOpen;
   let rootEl = null;
@@ -150,6 +213,10 @@ function createDropdownState(local) {
   const toggle = () => setOpen(!isOpen());
   const close = () => setOpen(false);
 
+  /**
+   * Position the open content panel relative to the trigger, clamped to the viewport.
+   * @returns {void}
+   */
   const positionContent = () => {
     if (!contentEl || !triggerEl || !isOpen()) return;
     requestAnimationFrame(() => {
@@ -176,6 +243,10 @@ function createDropdownState(local) {
     });
   };
 
+  /**
+   * Reflect the current open state onto the trigger and content (aria + data attributes + display).
+   * @returns {void}
+   */
   const sync = () => {
     const open = isOpen();
     if (triggerEl) {
@@ -230,10 +301,21 @@ function createDropdownState(local) {
   };
 }
 
+/**
+ * Create the shared selection state for a dropdown radio group.
+ * Tracks registered radio items and their indicators and keeps their checked
+ * state in sync with the controlled group value.
+ * @param {Object} local - The radio group's local props (value, onChange).
+ * @returns {Object} The radio state API used by RadioGroup, RadioItem, and ItemIndicator.
+ */
 function createRadioState(local) {
   const items = new Set();
   const indicators = new Set();
   const readValue = () => local.value;
+  /**
+   * Re-apply checked/visible state to all registered items and indicators.
+   * @returns {void}
+   */
   const sync = () => {
     const selected = readValue();
     for (const item of items) {
@@ -266,6 +348,13 @@ function createRadioState(local) {
   };
 }
 
+/**
+ * Root of the dropdown menu: owns the menu state and wires document-level dismissal.
+ * Establishes the menu context for its descendants, attaches outside-pointerdown and
+ * Escape handlers, and re-syncs on controlled prop changes.
+ * @param {Object} props - Menu props: open, defaultOpen, onOpenChange, gutter, placement, class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The root menu container element.
+ */
 function DropdownMenuRoot(props) {
   const [local, rest] = splitProps(props, ["open", "defaultOpen", "onOpenChange", "gutter", "placement", "class", "classList", "children"]);
   const previousContext = DropdownContext;
@@ -346,6 +435,11 @@ function DropdownMenuRoot(props) {
   return rootEl;
 }
 
+/**
+ * Trigger control that toggles the menu and provides keyboard open/focus behavior.
+ * @param {Object} props - Trigger props: as (tag name or component), class, classList, onClick, onKeyDown, children, ref, plus pass-through attributes.
+ * @returns {HTMLElement} The trigger element (a button by default, or the element produced by `as`).
+ */
 function DropdownMenuTrigger(props) {
   const ctx = useDropdown();
   const [local, rest] = splitProps(props, ["as", "class", "classList", "onClick", "onKeyDown", "children", "ref"]);
@@ -410,6 +504,11 @@ function DropdownMenuTrigger(props) {
   return triggerEl;
 }
 
+/**
+ * Inline icon slot rendered inside the trigger.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The icon span element.
+ */
 function DropdownMenuIcon(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=dropdown-menu-icon>`);
@@ -420,6 +519,12 @@ function DropdownMenuIcon(props) {
   return el;
 }
 
+/**
+ * Portal that mounts its children under document.body and registers them with the menu.
+ * Returns a comment placeholder for the original tree; the portal node is removed on cleanup.
+ * @param {Object} props - Props: children to mount in the portal.
+ * @returns {Node} A comment node standing in for the portal in the source tree.
+ */
 function DropdownMenuPortal(props) {
   const ctx = useDropdown();
   const portal = document.createElement("div");
@@ -434,6 +539,13 @@ function DropdownMenuPortal(props) {
   return document.createComment("dropdown-menu-portal");
 }
 
+/**
+ * Floating menu panel holding the items, with roving-focus, typeahead, and hover highlight.
+ * Positioned fixed and shown/hidden by the menu state; arrow/Home/End/typeahead keys move the
+ * highlight, and pointer movement highlights the hovered item.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The content panel element.
+ */
 function DropdownMenuContent(props) {
   const ctx = useDropdown();
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
@@ -494,10 +606,19 @@ function DropdownMenuContent(props) {
   return el;
 }
 
+/**
+ * Arrow part kept for API compatibility; this implementation renders nothing.
+ * @returns {null} Always null.
+ */
 function DropdownMenuArrow() {
   return null;
 }
 
+/**
+ * Horizontal separator between groups of menu items.
+ * @param {Object} props - Props: class, classList, plus pass-through attributes.
+ * @returns {HTMLElement} The separator element.
+ */
 function DropdownMenuSeparator(props) {
   const [local, rest] = splitProps(props, ["class", "classList"]);
   const el = template(`<div data-slot=dropdown-menu-separator role=separator>`);
@@ -507,6 +628,11 @@ function DropdownMenuSeparator(props) {
   return el;
 }
 
+/**
+ * Semantic grouping wrapper for related menu items.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The group container element.
+ */
 function DropdownMenuGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<div data-slot=dropdown-menu-group role=group>`);
@@ -517,6 +643,11 @@ function DropdownMenuGroup(props) {
   return el;
 }
 
+/**
+ * Label heading for a menu group.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The group label element.
+ */
 function DropdownMenuGroupLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<div data-slot=dropdown-menu-group-label>`);
@@ -527,6 +658,11 @@ function DropdownMenuGroupLabel(props) {
   return el;
 }
 
+/**
+ * Selectable menu item that fires onSelect and closes the menu (unless closeOnSelect is false).
+ * @param {Object} props - Props: class, classList, children, onSelect, disabled (reactive), closeOnSelect, plus pass-through attributes.
+ * @returns {HTMLElement} The item button element.
+ */
 function DropdownMenuItem(props) {
   const ctx = useDropdown();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "onSelect", "disabled", "closeOnSelect"]);
@@ -556,6 +692,11 @@ function DropdownMenuItem(props) {
   return el;
 }
 
+/**
+ * Primary text label inside a menu item.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The item label element.
+ */
 function DropdownMenuItemLabel(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=dropdown-menu-item-label>`);
@@ -566,6 +707,11 @@ function DropdownMenuItemLabel(props) {
   return el;
 }
 
+/**
+ * Secondary description text inside a menu item.
+ * @param {Object} props - Props: class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The item description element.
+ */
 function DropdownMenuItemDescription(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children"]);
   const el = template(`<span data-slot=dropdown-menu-item-description>`);
@@ -576,6 +722,12 @@ function DropdownMenuItemDescription(props) {
   return el;
 }
 
+/**
+ * Check-mark indicator shown when the enclosing radio/checkbox item is selected.
+ * Visible when forceMount is set, when outside a radio context, or when the item is selected.
+ * @param {Object} props - Props: class, classList, children (defaults to a check icon), forceMount, plus pass-through attributes.
+ * @returns {HTMLElement} The indicator span element.
+ */
 function DropdownMenuItemIndicator(props) {
   const radio = useRadio();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "forceMount"]);
@@ -598,6 +750,11 @@ function DropdownMenuItemIndicator(props) {
   return el;
 }
 
+/**
+ * Radio group that establishes radio context so its items share a single selected value.
+ * @param {Object} props - Props: class, classList, children, value (controlled), onChange, plus pass-through attributes.
+ * @returns {HTMLElement} The radio group container element.
+ */
 function DropdownMenuRadioGroup(props) {
   const [local, rest] = splitProps(props, ["class", "classList", "children", "value", "onChange"]);
   const previous = RadioContext;
@@ -618,6 +775,11 @@ function DropdownMenuRadioGroup(props) {
   return el;
 }
 
+/**
+ * Single-select radio item that updates its group's value when chosen.
+ * @param {Object} props - Props: class, classList, children, value, onSelect, disabled (reactive), closeOnSelect, plus pass-through attributes.
+ * @returns {HTMLElement} The radio item button element.
+ */
 function DropdownMenuRadioItem(props) {
   const dropdown = useDropdown();
   const group = useRadio();
@@ -672,6 +834,11 @@ function DropdownMenuRadioItem(props) {
   return el;
 }
 
+/**
+ * Toggleable checkbox item that reports its new checked state via onChange.
+ * @param {Object} props - Props: class, classList, children, checked (reactive), onChange, onSelect, disabled (reactive), closeOnSelect, plus pass-through attributes.
+ * @returns {HTMLElement} The checkbox item button element.
+ */
 function DropdownMenuCheckboxItem(props) {
   const dropdown = useDropdown();
   const [local, rest] = splitProps(props, ["class", "classList", "children", "checked", "onChange", "onSelect", "disabled", "closeOnSelect"]);
@@ -724,10 +891,20 @@ function DropdownMenuCheckboxItem(props) {
   return el;
 }
 
+/**
+ * Submenu root; reuses the Root behavior to manage a nested menu.
+ * @param {Object} props - Same props as DropdownMenuRoot.
+ * @returns {HTMLElement} The submenu root element.
+ */
 function DropdownMenuSub(props) {
   return DropdownMenuRoot(props);
 }
 
+/**
+ * Trigger inside a parent menu panel that opens its submenu.
+ * @param {Object} props - Props: as (tag name or component), class, classList, children, plus pass-through attributes.
+ * @returns {HTMLElement} The sub-trigger element.
+ */
 function DropdownMenuSubTrigger(props) {
   // SubTrigger is rendered inside a menu panel; tag it with the sub-trigger slot
   // so the CSS targets it, then reuse the Trigger behavior.
@@ -748,6 +925,11 @@ function DropdownMenuSubTrigger(props) {
   return el;
 }
 
+/**
+ * Submenu content panel; the Content panel retagged so its CSS can target it distinctly.
+ * @param {Object} props - Same props as DropdownMenuContent.
+ * @returns {HTMLElement} The sub-content panel element.
+ */
 function DropdownMenuSubContent(props) {
   const el = DropdownMenuContent(props);
   // Same panel, distinct data-component so ./dropdown-menu.css can target it.
@@ -756,6 +938,10 @@ function DropdownMenuSubContent(props) {
   return el;
 }
 
+/**
+ * The DropdownMenu compound component: the Root callable with all parts attached
+ * (Trigger, Content, Item, RadioGroup/RadioItem, CheckboxItem, Sub/SubTrigger/SubContent, etc.).
+ */
 export const DropdownMenu = Object.assign(DropdownMenuRoot, {
   Trigger: DropdownMenuTrigger,
   Icon: DropdownMenuIcon,

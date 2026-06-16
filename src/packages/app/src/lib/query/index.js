@@ -19,6 +19,8 @@
 // using the names the self-written reactive core provides, so a later
 // import-map flip can swap the runtime without touching this code. No compiled
 // primitives from "../reactivity.js" are used.
+/** @module lib/query First-party reimplementation of the @tanstack/solid-query subset the app uses (queries, mutations, cache, client, Solid bindings). */
+
 import {
   batch,
   createComponent,
@@ -40,32 +42,83 @@ import { createStore } from "../store.js";
 // fetches (see defaultQueryOptions / isStale / shouldFetch*).
 export const skipToken = Symbol("skipToken");
 
+/**
+ * No-op function.
+ *
+ * @returns {void}
+ */
 function noop() {}
 
+/**
+ * Apply a functional updater (or return a non-function updater verbatim).
+ *
+ * @param {*} updater - A new value, or a function `(input) => value`.
+ * @param {*} input - Current value passed to a function updater.
+ * @returns {*} The updated value.
+ */
 function functionalUpdate(updater, input) {
   return typeof updater === "function" ? updater(input) : updater;
 }
 
+/**
+ * Test whether a value is a valid (finite, non-negative) timeout in ms.
+ *
+ * @param {*} value - Candidate timeout value.
+ * @returns {boolean} True when `value` is a non-negative finite number.
+ */
 function isValidTimeout(value) {
   return typeof value === "number" && value >= 0 && value !== Infinity;
 }
 
+/**
+ * Compute the remaining time (ms) until data updated at `updatedAt` goes stale.
+ *
+ * @param {number} updatedAt - Timestamp (ms) when the data was last updated.
+ * @param {number} staleTime - Stale duration in ms.
+ * @returns {number} Milliseconds until stale (0 if already stale).
+ */
 function timeUntilStale(updatedAt, staleTime) {
   return Math.max(updatedAt + (staleTime || 0) - Date.now(), 0);
 }
 
+/**
+ * Resolve a `staleTime` option that may be a static value or a function of the query.
+ *
+ * @param {*} staleTime - Static stale time or a function `(query) => number`.
+ * @param {Object} query - Query instance passed to a function `staleTime`.
+ * @returns {*} The resolved stale time.
+ */
 function resolveStaleTime(staleTime, query) {
   return typeof staleTime === "function" ? staleTime(query) : staleTime;
 }
 
+/**
+ * Resolve an `enabled` option that may be a static value or a function of the query.
+ *
+ * @param {*} enabled - Static flag or a function `(query) => boolean`.
+ * @param {Object} query - Query instance passed to a function `enabled`.
+ * @returns {*} The resolved enabled value.
+ */
 function resolveEnabled(enabled, query) {
   return typeof enabled === "function" ? enabled(query) : enabled;
 }
 
+/**
+ * Test whether the toString tag of a value is "[object Object]".
+ *
+ * @param {*} o - Candidate value.
+ * @returns {boolean} True for plain-object-tagged values.
+ */
 function hasObjectPrototype(o) {
   return Object.prototype.toString.call(o) === "[object Object]";
 }
 
+/**
+ * Strict plain-object check (rejects class instances, null prototypes, etc.).
+ *
+ * @param {*} o - Candidate value.
+ * @returns {boolean} True when `o` is a plain object literal.
+ */
 function isPlainObject(o) {
   if (!hasObjectPrototype(o)) return false;
   const ctor = o.constructor;
@@ -80,6 +133,12 @@ function isPlainObject(o) {
 // Deterministic, key-order-insensitive serialization of the query key. Sorting
 // plain-object keys makes [{ a, b }] and [{ b, a }] hash identically, exactly
 // like query-core. Arrays / primitives serialize positionally.
+/**
+ * Produce a deterministic, key-order-insensitive string hash of a query key.
+ *
+ * @param {*} queryKey - The query key (array / object / primitive).
+ * @returns {string} A stable JSON serialization usable as a cache key.
+ */
 function hashKey(queryKey) {
   return JSON.stringify(queryKey, (_, val) =>
     isPlainObject(val)
@@ -93,6 +152,13 @@ function hashKey(queryKey) {
   );
 }
 
+/**
+ * Hash a query key using the options' custom hash function or the default.
+ *
+ * @param {*} queryKey - The query key to hash.
+ * @param {Object} options - Query options possibly providing `queryKeyHashFn`.
+ * @returns {string} The hashed query key.
+ */
 function hashQueryKeyByOptions(queryKey, options) {
   const hashFn = options?.queryKeyHashFn || hashKey;
   return hashFn(queryKey);
@@ -100,6 +166,13 @@ function hashQueryKeyByOptions(queryKey, options) {
 
 // Partial structural match: every key present in `b` must (recursively) match
 // in `a`. Used by invalidate/refetch filters without `exact`.
+/**
+ * Recursive partial structural match: every key present in `b` must match in `a`.
+ *
+ * @param {*} a - The value being matched against (e.g. a query key).
+ * @param {*} b - The partial filter value.
+ * @returns {boolean} True when `a` partially matches `b`.
+ */
 function partialMatchKey(a, b) {
   if (a === b) return true;
   if (typeof a !== typeof b) return false;
@@ -109,6 +182,14 @@ function partialMatchKey(a, b) {
   return false;
 }
 
+/**
+ * Test whether a query matches a set of filters (type/exact/fetchStatus/stale/
+ * predicate/queryKey), mirroring query-core's filter semantics.
+ *
+ * @param {Object} filters - Filter criteria.
+ * @param {Object} query - Query instance to test.
+ * @returns {boolean} True when the query satisfies every filter.
+ */
 function matchQuery(filters, query) {
   const { type = "all", exact, fetchStatus, predicate, queryKey, stale } = filters;
   if (queryKey) {
@@ -131,6 +212,13 @@ function matchQuery(filters, query) {
   return true;
 }
 
+/**
+ * Resolve the query function for a query, returning a rejecting stub when none
+ * is configured or it is the disabling skipToken.
+ *
+ * @param {Object} options - Query options containing `queryFn`/`queryHash`.
+ * @returns {Function} The query function (or a rejecting placeholder).
+ */
 function ensureQueryFn(options) {
   if (!options.queryFn || options.queryFn === skipToken) {
     return () => Promise.reject(new Error(`Missing queryFn: '${options.queryHash}'`));
@@ -148,7 +236,14 @@ function ensureQueryFn(options) {
 // refetchOnReconnect/WindowFocus and runs online-only).
 // ---------------------------------------------------------------------------
 
+/**
+ * Error thrown when a retryer's in-flight fetch is cancelled. `revert` restores
+ * the prior state; `silent` suppresses error dispatch.
+ */
 class CancelledError extends Error {
+  /**
+   * @param {Object} options - `{ revert, silent }` cancellation flags.
+   */
   constructor(options) {
     super("CancelledError");
     this.revert = options?.revert;
@@ -156,14 +251,33 @@ class CancelledError extends Error {
   }
 }
 
+/**
+ * Default exponential backoff delay, capped at 30s.
+ *
+ * @param {number} failureCount - Number of failures so far.
+ * @returns {number} Delay in ms before the next retry.
+ */
 function defaultRetryDelay(failureCount) {
   return Math.min(1000 * 2 ** failureCount, 30000);
 }
 
+/**
+ * Promise that resolves after `timeout` ms.
+ *
+ * @param {number} timeout - Delay in ms.
+ * @returns {Promise} A promise resolved after the delay.
+ */
 function sleep(timeout) {
   return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
+/**
+ * Create a retryer that runs `config.fn`, retrying on failure per the retry/
+ * retryDelay policy, and exposes promise/cancel/start controls.
+ *
+ * @param {Object} config - `{ fn, retry, retryDelay, onCancel, onFail }`.
+ * @returns {Object} `{ promise, cancel, cancelRetry, start }` retryer handle.
+ */
 function createRetryer(config) {
   let isResolved = false;
   let isRetryCancelled = false;
@@ -246,10 +360,20 @@ function createRetryer(config) {
 // Subscribable
 // ---------------------------------------------------------------------------
 
+/**
+ * Minimal observable base class: maintains a listener set and notifies subclass
+ * hooks when the first/last listener subscribes/unsubscribes.
+ */
 class Subscribable {
   constructor() {
     this.listeners = new Set();
   }
+  /**
+   * Register a listener and return an unsubscribe function.
+   *
+   * @param {Function} listener - Callback invoked on notification.
+   * @returns {Function} Unsubscribe function.
+   */
   subscribe(listener) {
     this.listeners.add(listener);
     this.onSubscribe();
@@ -258,10 +382,23 @@ class Subscribable {
       this.onUnsubscribe();
     };
   }
+  /**
+   * @returns {boolean} True when there is at least one listener.
+   */
   hasListeners() {
     return this.listeners.size > 0;
   }
+  /**
+   * Hook called after a listener subscribes (override in subclasses).
+   *
+   * @returns {void}
+   */
   onSubscribe() {}
+  /**
+   * Hook called after a listener unsubscribes (override in subclasses).
+   *
+   * @returns {void}
+   */
   onUnsubscribe() {}
 }
 
@@ -274,6 +411,11 @@ class Subscribable {
 // only consumers that read a changed field re-run.
 // ---------------------------------------------------------------------------
 
+/**
+ * Build the initial (pending/idle) query state object.
+ *
+ * @returns {Object} A fresh default query state.
+ */
 function getDefaultQueryState() {
   return {
     data: undefined,
@@ -291,7 +433,15 @@ function getDefaultQueryState() {
   };
 }
 
+/**
+ * A single cached query: holds plain (non-reactive) state, in-flight fetch
+ * de-duplication, garbage-collection scheduling, and its set of observers.
+ * Reactivity is layered at the observer/result level, not on this state.
+ */
 class Query {
+  /**
+   * @param {Object} config - `{ cache, client, queryKey, queryHash, options, defaultOptions, state }`.
+   */
   constructor(config) {
     this.observers = [];
     this.cache = config.cache;
@@ -311,11 +461,22 @@ class Query {
     this.scheduleGc();
   }
 
+  /**
+   * Merge new options into the query and recompute its gc time.
+   *
+   * @param {Object} options - Options to merge in.
+   * @returns {void}
+   */
   setOptions(options) {
     this.options = { ...this.options, ...options };
     this.gcTime = Math.max(this.options.gcTime ?? this.gcTime, 0);
   }
 
+  /**
+   * (Re)schedule the garbage-collection timeout for this query.
+   *
+   * @returns {void}
+   */
   scheduleGc() {
     this.clearGcTimeout();
     if (isValidTimeout(this.gcTime)) {
@@ -336,6 +497,12 @@ class Query {
     }
   }
 
+  /**
+   * Attach an observer to this query (cancels pending gc).
+   *
+   * @param {Object} observer - The QueryObserver to attach.
+   * @returns {void}
+   */
   addObserver(observer) {
     if (!this.observers.includes(observer)) {
       this.observers.push(observer);
@@ -344,6 +511,12 @@ class Query {
     }
   }
 
+  /**
+   * Detach an observer; reschedules gc when the last one leaves.
+   *
+   * @param {Object} observer - The QueryObserver to detach.
+   * @returns {void}
+   */
   removeObserver(observer) {
     if (this.observers.includes(observer)) {
       this.observers = this.observers.filter((x) => x !== observer);
@@ -381,16 +554,34 @@ class Query {
     return this.state.data === undefined || this.state.isInvalidated;
   }
 
+  /**
+   * Whether the cached data is stale given a stale-time window.
+   *
+   * @param {number} staleTime - Stale duration in ms (default 0).
+   * @returns {boolean} True when no data, invalidated, or past the stale window.
+   */
   isStaleByTime(staleTime = 0) {
     if (this.state.data === undefined) return true;
     if (this.state.isInvalidated) return true;
     return !timeUntilStale(this.state.dataUpdatedAt, staleTime);
   }
 
+  /**
+   * Mark the query invalidated so the next fetch refetches.
+   *
+   * @returns {void}
+   */
   invalidate() {
     if (!this.state.isInvalidated) this.#dispatch({ type: "invalidate" });
   }
 
+  /**
+   * Write new data into the query state.
+   *
+   * @param {*} newData - The data to store.
+   * @param {Object} options - `{ updatedAt, manual }` write options.
+   * @returns {*} The data that was written.
+   */
   setData(newData, options) {
     this.#dispatch({
       data: newData,
@@ -407,6 +598,13 @@ class Query {
 
   // De-duplicated fetch: a second fetch while one is in flight reuses the
   // pending promise (stale-while-revalidate from the observers' perspective).
+  /**
+   * Fetch (or refetch) the query, de-duplicating concurrent in-flight requests.
+   *
+   * @param {Object} options - Query options to apply before fetching.
+   * @param {Object} fetchOptions - `{ meta, cancelRefetch }` per-fetch options.
+   * @returns {Promise} Promise resolving to the fetched data.
+   */
   fetch(options, fetchOptions) {
     if (this.state.fetchStatus !== "idle") {
       if (this.state.data !== undefined && fetchOptions?.cancelRefetch) {
@@ -480,6 +678,12 @@ class Query {
     return this.promise;
   }
 
+  /**
+   * Cancel the in-flight fetch (if any), resolving once it settles.
+   *
+   * @param {Object} options - `{ revert, silent }` cancellation flags.
+   * @returns {Promise} Promise resolved when cancellation completes.
+   */
   cancel(options) {
     const promise = this.promise;
     this.retryer?.cancel(options);
@@ -488,6 +692,12 @@ class Query {
 
   #revertState = undefined;
 
+  /**
+   * Reduce an action into the next query state and notify observers/cache in a batch.
+   *
+   * @param {Object} action - The state-transition action (typed by `action.type`).
+   * @returns {void}
+   */
   #dispatch(action) {
     const reduce = (state) => {
       switch (action.type) {
@@ -555,12 +765,24 @@ class Query {
 // QueryCache
 // ---------------------------------------------------------------------------
 
+/**
+ * Map of query-hash -> Query, with build/add/remove/find helpers and event
+ * notifications. The single source of cached query instances for a QueryClient.
+ */
 class QueryCache extends Subscribable {
   constructor() {
     super();
     this.queries = new Map();
   }
 
+  /**
+   * Get an existing query for the options' hash or create and register a new one.
+   *
+   * @param {Object} client - The owning QueryClient.
+   * @param {Object} options - Query options (must include queryKey).
+   * @param {Object} state - Optional initial state for a newly built query.
+   * @returns {Query} The existing or newly created query.
+   */
   build(client, options, state) {
     const queryKey = options.queryKey;
     const queryHash = options.queryHash ?? hashQueryKeyByOptions(queryKey, options);
@@ -596,14 +818,29 @@ class QueryCache extends Subscribable {
     }
   }
 
+  /**
+   * Look up a query by its hash.
+   *
+   * @param {string} queryHash - The query hash key.
+   * @returns {Query} The query, or undefined if absent.
+   */
   get(queryHash) {
     return this.queries.get(queryHash);
   }
 
+  /**
+   * @returns {Array} All cached queries.
+   */
   getAll() {
     return [...this.queries.values()];
   }
 
+  /**
+   * Find all queries matching the given filters.
+   *
+   * @param {Object} filters - Filter criteria (see matchQuery).
+   * @returns {Array} Matching queries (all queries when no filters).
+   */
   findAll(filters = {}) {
     const queries = this.getAll();
     return Object.keys(filters).length > 0
@@ -611,6 +848,12 @@ class QueryCache extends Subscribable {
       : queries;
   }
 
+  /**
+   * Broadcast a cache event to all subscribers.
+   *
+   * @param {Object} event - The cache event payload.
+   * @returns {void}
+   */
   notify(event) {
     this.listeners.forEach((listener) => listener(event));
   }
@@ -624,6 +867,13 @@ class QueryCache extends Subscribable {
 // a reactive object whose field reads track the query store.
 // ---------------------------------------------------------------------------
 
+/**
+ * Whether an enabled query is stale given its staleTime option.
+ *
+ * @param {Object} query - The query instance.
+ * @param {Object} options - Observer options (enabled/staleTime).
+ * @returns {boolean} True when enabled and stale.
+ */
 function isStale(query, options) {
   return (
     resolveEnabled(options.enabled, query) !== false &&
@@ -631,6 +881,13 @@ function isStale(query, options) {
   );
 }
 
+/**
+ * Whether the query should load on mount (no data yet, not a non-retrying error).
+ *
+ * @param {Object} query - The query instance.
+ * @param {Object} options - Observer options.
+ * @returns {boolean} True when an initial mount load is warranted.
+ */
 function shouldLoadOnMount(query, options) {
   return (
     resolveEnabled(options.enabled, query) !== false &&
@@ -639,6 +896,14 @@ function shouldLoadOnMount(query, options) {
   );
 }
 
+/**
+ * Resolve a refetch-on-<event> trigger (e.g. refetchOnMount) into whether to fetch.
+ *
+ * @param {Object} query - The query instance.
+ * @param {Object} options - Observer options.
+ * @param {*} field - The trigger value or a function of the query ("always"/boolean).
+ * @returns {boolean} True when a fetch should be triggered.
+ */
 function shouldFetchOn(query, options, field) {
   if (resolveEnabled(options.enabled, query) !== false) {
     const value = typeof field === "function" ? field(query) : field;
@@ -647,6 +912,13 @@ function shouldFetchOn(query, options, field) {
   return false;
 }
 
+/**
+ * Whether the observer should fetch when mounted.
+ *
+ * @param {Object} query - The query instance.
+ * @param {Object} options - Observer options.
+ * @returns {boolean} True when a mount-time fetch should occur.
+ */
 function shouldFetchOnMount(query, options) {
   return (
     shouldLoadOnMount(query, options) ||
@@ -654,6 +926,15 @@ function shouldFetchOnMount(query, options) {
   );
 }
 
+/**
+ * Whether an options/query change should trigger an optional refetch.
+ *
+ * @param {Object} query - The new query instance.
+ * @param {Object} prevQuery - The previous query instance.
+ * @param {Object} options - New observer options.
+ * @param {Object} prevOptions - Previous observer options.
+ * @returns {boolean} True when an optional fetch is warranted.
+ */
 function shouldFetchOptionally(query, prevQuery, options, prevOptions) {
   return (
     (query !== prevQuery || resolveEnabled(prevOptions.enabled, query) === false) &&
@@ -661,6 +942,13 @@ function shouldFetchOptionally(query, prevQuery, options, prevOptions) {
   );
 }
 
+/**
+ * Shallow equality of two objects (same keys and reference-equal values).
+ *
+ * @param {Object} a - First object.
+ * @param {Object} b - Second object.
+ * @returns {boolean} True when shallowly equal.
+ */
 function shallowEqualObjects(a, b) {
   if (a === b) return true;
   if (!a || !b || Object.keys(a).length !== Object.keys(b).length) return false;
@@ -670,7 +958,16 @@ function shallowEqualObjects(a, b) {
   return true;
 }
 
+/**
+ * Observes a single query: tracks the current query, computes a plain result
+ * snapshot via createResult, manages stale timeouts and fetches, and notifies
+ * listeners (the reactive wrappers) when its result changes.
+ */
 class QueryObserver extends Subscribable {
+  /**
+   * @param {Object} client - The owning QueryClient.
+   * @param {Object} options - Observer/query options.
+   */
   constructor(client, options) {
     super();
     this.client = client;
@@ -697,12 +994,24 @@ class QueryObserver extends Subscribable {
     if (!this.hasListeners()) this.destroy();
   }
 
+  /**
+   * Tear down the observer: clear listeners, stale timeout, and detach from its query.
+   *
+   * @returns {void}
+   */
   destroy() {
     this.listeners = new Set();
     this.#clearStaleTimeout();
     this.currentQuery.removeObserver(this);
   }
 
+  /**
+   * Apply new options, re-point to the matching query, optionally refetch, and
+   * refresh the result/stale timeout.
+   *
+   * @param {Object} options - New observer/query options.
+   * @returns {void}
+   */
   setOptions(options) {
     const prevOptions = this.options;
     const prevQuery = this.currentQuery;
@@ -729,6 +1038,13 @@ class QueryObserver extends Subscribable {
     }
   }
 
+  /**
+   * Compute an optimistic result for the given options (including any optimistic
+   * fetching state), caching it as the current result.
+   *
+   * @param {Object} options - Observer/query options.
+   * @returns {Object} The optimistic result snapshot.
+   */
   getOptimisticResult(options) {
     const query = this.client.getQueryCache().build(this.client, options);
     const result = this.createResult(query, options);
@@ -739,14 +1055,26 @@ class QueryObserver extends Subscribable {
     return result;
   }
 
+  /**
+   * @returns {Object} The latest computed result snapshot.
+   */
   getCurrentResult() {
     return this.currentResult;
   }
 
+  /**
+   * @returns {Query} The currently observed query.
+   */
   getCurrentQuery() {
     return this.currentQuery;
   }
 
+  /**
+   * Force a refetch of the observed query.
+   *
+   * @param {Object} options - Refetch options.
+   * @returns {Promise} Promise resolving to the updated result.
+   */
   refetch(options = {}) {
     return this.#fetch({ ...options });
   }
@@ -788,6 +1116,14 @@ class QueryObserver extends Subscribable {
   // Plain snapshot of the observed query's state -> result shape. Reads the
   // untracked query.state; the reactive wrapper re-runs createResult inside a
   // tracking scope so field reads subscribe.
+  /**
+   * Compute a plain result snapshot (status/data/error/isFetching/... plus a
+   * bound refetch) from a query's current state.
+   *
+   * @param {Query} query - The query to snapshot.
+   * @param {Object} options - Observer options influencing the result.
+   * @returns {Object} The computed result object.
+   */
   createResult(query, options) {
     const prevQuery = this.currentQuery;
     const queryInitialState = query !== prevQuery ? query.state : this.currentQueryInitialState;
@@ -847,6 +1183,11 @@ class QueryObserver extends Subscribable {
     };
   }
 
+  /**
+   * Recompute the result and notify listeners if it changed.
+   *
+   * @returns {void}
+   */
   updateResult() {
     const prevResult = this.currentResult;
     const nextResult = this.createResult(this.currentQuery, this.options);
@@ -868,6 +1209,11 @@ class QueryObserver extends Subscribable {
     }
   }
 
+  /**
+   * React to a query-state update: refresh the result and stale timeout.
+   *
+   * @returns {void}
+   */
   onQueryUpdate() {
     this.updateResult();
     if (this.hasListeners()) this.#updateStaleTimeout();
@@ -882,6 +1228,11 @@ class QueryObserver extends Subscribable {
 // Mutation / MutationObserver
 // ---------------------------------------------------------------------------
 
+/**
+ * Build the initial (idle) mutation state object.
+ *
+ * @returns {Object} A fresh default mutation state.
+ */
 function getDefaultMutationState() {
   return {
     context: undefined,
@@ -896,7 +1247,15 @@ function getDefaultMutationState() {
   };
 }
 
+/**
+ * Drives a single mutation's lifecycle (onMutate/onSuccess/onError/onSettled),
+ * tracks its state/result, and notifies listeners. Exposes bound mutate/reset.
+ */
 class MutationObserver extends Subscribable {
+  /**
+   * @param {Object} client - The owning QueryClient.
+   * @param {Object} options - Mutation options.
+   */
   constructor(client, options) {
     super();
     this.client = client;
@@ -909,20 +1268,41 @@ class MutationObserver extends Subscribable {
     this.#updateResult();
   }
 
+  /**
+   * Apply new mutation options (defaulted via the client).
+   *
+   * @param {Object} options - Mutation options to apply.
+   * @returns {void}
+   */
   setOptions(options) {
     this.options = this.client.defaultMutationOptions(options);
   }
 
+  /**
+   * @returns {Object} The latest mutation result snapshot.
+   */
   getCurrentResult() {
     return this.currentResult;
   }
 
+  /**
+   * Reset the mutation back to its idle state and notify listeners.
+   *
+   * @returns {void}
+   */
   reset() {
     this.state = getDefaultMutationState();
     this.#updateResult();
     this.#notify();
   }
 
+  /**
+   * Run the mutation lifecycle for a set of variables and return the result data.
+   *
+   * @param {*} variables - Input passed to the mutation function and callbacks.
+   * @param {Object} options - Per-call `{ onSuccess, onError, onSettled }` callbacks.
+   * @returns {Promise} Promise resolving to the mutation data (rejects on error).
+   */
   async mutate(variables, options) {
     this.mutateOptions = options;
     const mutationFnContext = {
@@ -990,6 +1370,13 @@ class MutationObserver extends Subscribable {
 
   // mutateOptions are the per-call onSuccess/onError/onSettled (mutateAsync's
   // 2nd arg). The app does not pass them, but keep the hook for parity.
+  /**
+   * Invoke the per-call success/error callbacks (and onSettled) if provided.
+   *
+   * @param {string} type - "success" or "error".
+   * @param {Object} action - `{ data }` or `{ error }` payload.
+   * @returns {void}
+   */
   #runCallback(type, action) {
     if (!this.mutateOptions) return;
     const variables = this.state.variables;
@@ -1019,6 +1406,12 @@ class MutationObserver extends Subscribable {
     }
   }
 
+  /**
+   * Reduce a mutation action into the next state, then refresh result and notify.
+   *
+   * @param {Object} action - The state-transition action (typed by `action.type`).
+   * @returns {void}
+   */
   #dispatch(action) {
     const reduce = (state) => {
       switch (action.type) {
@@ -1088,11 +1481,19 @@ class MutationObserver extends Subscribable {
 // QueryClient
 // ---------------------------------------------------------------------------
 
+/**
+ * The query client: owns the QueryCache and default options, and exposes the
+ * imperative cache API (get/set query data, fetch/prefetch/ensure, invalidate/
+ * refetch) used by the app outside of the reactive hooks.
+ */
 export class QueryClient {
   #queryCache;
   #defaultOptions;
   #mountCount;
 
+  /**
+   * @param {Object} config - `{ queryCache, defaultOptions }` client config.
+   */
   constructor(config = {}) {
     this.#queryCache = config.queryCache || new QueryCache();
     this.#defaultOptions = config.defaultOptions || {};
@@ -1102,22 +1503,44 @@ export class QueryClient {
   // Called by QueryClientProvider's render effect. No global focus/online
   // subscriptions to wire up (the app disables those refetch triggers), so
   // mount/unmount only track the lifecycle.
+  /**
+   * Track a provider mount.
+   *
+   * @returns {void}
+   */
   mount() {
     this.#mountCount++;
   }
 
+  /**
+   * Track a provider unmount.
+   *
+   * @returns {void}
+   */
   unmount() {
     this.#mountCount--;
   }
 
+  /**
+   * @returns {QueryCache} The underlying query cache.
+   */
   getQueryCache() {
     return this.#queryCache;
   }
 
+  /**
+   * @returns {Object} The configured default options.
+   */
   getDefaultOptions() {
     return this.#defaultOptions;
   }
 
+  /**
+   * Merge defaults into query options and ensure a queryHash/enabled state.
+   *
+   * @param {Object} options - Raw query options.
+   * @returns {Object} The defaulted options.
+   */
   defaultQueryOptions(options) {
     if (options?.defaultedOpts) return options;
     const defaulted = {
@@ -1134,21 +1557,47 @@ export class QueryClient {
     return defaulted;
   }
 
+  /**
+   * Merge defaults into mutation options.
+   *
+   * @param {Object} options - Raw mutation options.
+   * @returns {Object} The defaulted options.
+   */
   defaultMutationOptions(options) {
     if (options?.defaultedOpts) return options;
     return { ...this.#defaultOptions.mutations, ...options, defaultedOpts: true };
   }
 
+  /**
+   * Read the cached data for a query key.
+   *
+   * @param {*} queryKey - The query key.
+   * @returns {*} The cached data, or undefined.
+   */
   getQueryData(queryKey) {
     const options = this.defaultQueryOptions({ queryKey });
     return this.#queryCache.get(options.queryHash)?.state.data;
   }
 
+  /**
+   * Read the cached state for a query key.
+   *
+   * @param {*} queryKey - The query key.
+   * @returns {Object} The cached state, or undefined.
+   */
   getQueryState(queryKey) {
     const options = this.defaultQueryOptions({ queryKey });
     return this.#queryCache.get(options.queryHash)?.state;
   }
 
+  /**
+   * Write data for a query key (building the query if needed).
+   *
+   * @param {*} queryKey - The query key.
+   * @param {*} updater - New data or a function `(prev) => data`.
+   * @param {Object} options - `{ updatedAt }` write options.
+   * @returns {*} The written data, or undefined when the updater yields undefined.
+   */
   setQueryData(queryKey, updater, options) {
     const defaultedOptions = this.defaultQueryOptions({ queryKey });
     const query = this.#queryCache.get(defaultedOptions.queryHash);
@@ -1160,6 +1609,12 @@ export class QueryClient {
       .setData(data, { ...options, manual: true });
   }
 
+  /**
+   * Fetch a query (forcing retry=false), returning cached data when fresh.
+   *
+   * @param {Object} options - Query options.
+   * @returns {Promise} Promise resolving to the (cached or freshly fetched) data.
+   */
   fetchQuery(options) {
     const defaultedOptions = this.defaultQueryOptions(options);
     if (defaultedOptions.retry === undefined) defaultedOptions.retry = false;
@@ -1169,10 +1624,22 @@ export class QueryClient {
       : Promise.resolve(query.state.data);
   }
 
+  /**
+   * Fetch a query for its side effect only (errors swallowed).
+   *
+   * @param {Object} options - Query options.
+   * @returns {Promise} Promise resolved when the prefetch settles.
+   */
   prefetchQuery(options) {
     return this.fetchQuery(options).then(noop).catch(noop);
   }
 
+  /**
+   * Return cached data immediately, fetching it first only if absent.
+   *
+   * @param {Object} options - Query options (may include revalidateIfStale).
+   * @returns {Promise} Promise resolving to the query data.
+   */
   ensureQueryData(options) {
     const defaultedOptions = this.defaultQueryOptions(options);
     const query = this.#queryCache.build(this, defaultedOptions);
@@ -1187,6 +1654,13 @@ export class QueryClient {
     return Promise.resolve(cachedData);
   }
 
+  /**
+   * Invalidate matching queries and refetch them (per refetchType).
+   *
+   * @param {Object} filters - Query filters (plus optional refetchType).
+   * @param {Object} options - Refetch options.
+   * @returns {Promise} Promise resolved when refetching completes.
+   */
   invalidateQueries(filters = {}, options = {}) {
     this.#queryCache.findAll(filters).forEach((query) => query.invalidate());
     if (filters?.refetchType === "none") return Promise.resolve();
@@ -1196,6 +1670,13 @@ export class QueryClient {
     );
   }
 
+  /**
+   * Refetch all enabled queries matching the filters.
+   *
+   * @param {Object} filters - Query filters.
+   * @param {Object} options - Refetch options.
+   * @returns {Promise} Promise resolved when all refetches complete.
+   */
   refetchQueries(filters = {}, options = {}) {
     const fetchOptions = { ...options, cancelRefetch: options.cancelRefetch ?? true };
     const promises = this.#queryCache
@@ -1209,10 +1690,21 @@ export class QueryClient {
     return Promise.all(promises).then(noop);
   }
 
+  /**
+   * Count the queries currently fetching that match the filters.
+   *
+   * @param {Object} filters - Query filters.
+   * @returns {number} The number of in-flight matching queries.
+   */
   isFetching(filters) {
     return this.#queryCache.findAll({ ...filters, fetchStatus: "fetching" }).length;
   }
 
+  /**
+   * Remove every query from the cache.
+   *
+   * @returns {void}
+   */
   clear() {
     this.#queryCache.getAll().forEach((query) => this.#queryCache.remove(query));
   }
@@ -1224,6 +1716,12 @@ export class QueryClient {
 
 const QueryClientContext = createContext(undefined);
 
+/**
+ * Resolve the QueryClient: the explicit argument, else the context-provided one.
+ *
+ * @param {Object} queryClient - An explicit client, or undefined to use context.
+ * @returns {QueryClient} The resolved client.
+ */
 export function useQueryClient(queryClient) {
   if (queryClient) return queryClient;
   const client = useContext(QueryClientContext);
@@ -1236,10 +1734,25 @@ export function useQueryClient(queryClient) {
 // The optional per-hook queryClient arg is, in solid-query, an accessor
 // (`() => client`). Resolve it to a client (or undefined to fall back to
 // context). The app never passes it, but support it faithfully.
+/**
+ * Resolve an optional per-hook client argument (which may be an accessor) to a
+ * concrete client, falling back to context.
+ *
+ * @param {*} queryClient - A client, an accessor returning a client, or undefined.
+ * @returns {QueryClient} The resolved client.
+ */
 function resolveOptionalClient(queryClient) {
   return useQueryClient(typeof queryClient === "function" ? queryClient() : queryClient);
 }
 
+/**
+ * Provider that puts a QueryClient on context and tracks its mount lifecycle.
+ *
+ * @param {Object} props - Component props.
+ * @param {QueryClient} props.client - The client to provide.
+ * @param {*} props.children - Subtree that can read the client.
+ * @returns {*} The provider component output.
+ */
 export function QueryClientProvider(props) {
   createRenderEffect(() => {
     props.client.mount();
@@ -1255,6 +1768,12 @@ export function QueryClientProvider(props) {
 
 // Identity/typing helper. Upstream's queryOptions() just returns the object;
 // callers spread it into useQuery/fetchQuery/ensureQueryData.
+/**
+ * Identity/typing helper: returns the options object unchanged.
+ *
+ * @param {Object} options - Query options.
+ * @returns {Object} The same options object.
+ */
 export function queryOptions(options) {
   return options;
 }
@@ -1264,6 +1783,14 @@ export function queryOptions(options) {
 // notifications, plus a manual subscription that re-runs setOptions when the
 // options accessor changes, so the consuming component re-renders on cache
 // updates (faithful to solid-query's createStore-backed result).
+/**
+ * Create a reactive query result whose per-field reads track a store synced from
+ * a QueryObserver, re-applying options when the accessor changes.
+ *
+ * @param {Function} optionsAccessor - Accessor returning the query options.
+ * @param {Object} queryClient - Explicit client, or undefined to use context.
+ * @returns {Object} A reactive proxy result (status/data/error/refetch/...).
+ */
 function createBaseQuery(optionsAccessor, queryClient) {
   const owner = getOwner();
   const client = useQueryClient(queryClient);
@@ -1316,12 +1843,26 @@ function createBaseQuery(optionsAccessor, queryClient) {
   );
 }
 
+/**
+ * Reactive single-query hook: returns a result object tracking the query store.
+ *
+ * @param {Function} optionsAccessor - Accessor returning the query options.
+ * @param {*} queryClient - Optional client or accessor; defaults to context.
+ * @returns {Object} The reactive query result.
+ */
 export function useQuery(optionsAccessor, queryClient) {
   return createBaseQuery(() => optionsAccessor(), resolveOptionalClient(queryClient));
 }
 
 export const createQuery = useQuery;
 
+/**
+ * Reactive multi-query hook: returns an array of per-slot reactive results.
+ *
+ * @param {Function} queriesOptionsAccessor - Accessor returning `{ queries: [...] }`.
+ * @param {*} queryClient - Optional client or accessor; defaults to context.
+ * @returns {Array} Array of reactive query results, one per query slot.
+ */
 export function useQueries(queriesOptionsAccessor, queryClient) {
   const owner = getOwner();
   const client = resolveOptionalClient(queryClient);
@@ -1398,6 +1939,13 @@ export function useQueries(queriesOptionsAccessor, queryClient) {
 
 export const createQueries = useQueries;
 
+/**
+ * Reactive mutation hook: returns a reactive result with `mutate`/`mutateAsync`.
+ *
+ * @param {Function} optionsAccessor - Accessor returning the mutation options.
+ * @param {*} queryClient - Optional client or accessor; defaults to context.
+ * @returns {Object} The reactive mutation state/result.
+ */
 export function useMutation(optionsAccessor, queryClient) {
   const owner = getOwner();
   const client = resolveOptionalClient(queryClient);

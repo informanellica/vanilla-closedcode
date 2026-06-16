@@ -10,9 +10,16 @@ import { terminalFontFamily, useSettings } from "@/context/settings.js";
 import { useServerController } from "@/controllers/server.js";
 import { disposeIfDisposable, getHoveredLinkText, setOptionIfSupported } from "@/utils/runtime-adapters.js";
 import { terminalWriter } from "@/utils/terminal-writer.js";
+
+/** @file Terminal component: a ghostty/xterm-backed PTY view wired to a server WebSocket with reconnect, fit and buffer persistence. */
+
 const TOGGLE_TERMINAL_ID = "terminal.toggle";
 const DEFAULT_TOGGLE_TERMINAL_KEYBIND = "ctrl+`";
 let shared;
+/**
+ * Lazily import and load the ghostty-web module + WASM once, caching the result.
+ * @returns {Promise<Object>} Resolves to {mod, ghostty}; the cache is cleared on failure so it can retry.
+ */
 const loadGhostty = () => {
   if (shared) return shared;
   shared = import("ghostty-web").then(async mod => ({
@@ -80,16 +87,32 @@ const TERMINAL_PALETTES = {
     brightWhite: "#ffffff"
   }
 };
+/**
+ * Log terminal debug output, only in DEV builds.
+ * @param {...*} values - Values to log.
+ * @returns {void}
+ */
 const debugTerminal = (...values) => {
   if (!env("DEV")) return;
   console.debug("[terminal]", ...values);
 };
+/**
+ * Safely read an error's `name` property as a string.
+ * @param {*} err - The error-like value.
+ * @returns {string} The error name, or undefined when absent/non-string.
+ */
 const errorName = err => {
   if (!err || typeof err !== "object") return;
   if (!("name" in err)) return;
   const errorName = err.name;
   return typeof errorName === "string" ? errorName : undefined;
 };
+/**
+ * Wire up the terminal's UI event bindings (copy/paste, pointer focus, link clicks,
+ * textarea focus/blur cursor blink), registering matching removers on input.cleanups.
+ * @param {Object} input - Binding context ({term, container, cleanups, handlePointerDown, handleLinkClick}).
+ * @returns {void}
+ */
 const useTerminalUiBindings = input => {
   const handleCopy = event => {
     const selection = input.term.getSelection();
@@ -130,6 +153,12 @@ const useTerminalUiBindings = input => {
   input.cleanups.push(() => input.term.textarea?.removeEventListener("focus", handleTextareaFocus));
   input.cleanups.push(() => input.term.textarea?.removeEventListener("blur", handleTextareaBlur));
 };
+/**
+ * Serialize the terminal buffer and hand a restore snapshot (buffer, cursor, size,
+ * scroll position) to the supplied onCleanup callback for later restoration.
+ * @param {Object} input - Persist context ({addon, onCleanup, term, id, cursor}).
+ * @returns {void}
+ */
 const persistTerminal = input => {
   if (!input.addon || !input.onCleanup || !input.term) return;
   const buffer = (() => {
@@ -155,6 +184,14 @@ const persistTerminal = input => {
 // toggles each space-separated class token, style diffs object/string values
 // per property — both matching solid-js/web's assign() semantics. `children`
 // is skipped (Terminal is never given children; xterm owns the subtree).
+/**
+ * Diff a classList object against the previous snapshot, toggling each space-separated
+ * class token to match solid-js/web's assign() semantics.
+ * @param {Element} el - The element to update.
+ * @param {Object} value - The next classList map (class keys to booleans).
+ * @param {Object} prev - The previous classList map.
+ * @returns {Object} A shallow copy of the applied classList map.
+ */
 function applyClassList(el, value, prev) {
   const prevObj = prev || {};
   const nextObj = value || {};
@@ -173,6 +210,14 @@ function applyClassList(el, value, prev) {
   }
   return { ...nextObj };
 }
+/**
+ * Apply a style value (string cssText or per-property object) to an element, diffing
+ * against the previous value.
+ * @param {Element} el - The element to update.
+ * @param {string} value - The next style (cssText string or property map).
+ * @param {*} prev - The previously applied style value.
+ * @returns {*} The applied value (string or a shallow copy of the object).
+ */
 function applyStyle(el, value, prev) {
   if (typeof value === "string") {
     if (value !== prev) el.style.cssText = value;
@@ -192,10 +237,27 @@ function applyStyle(el, value, prev) {
   }
   return { ...nextObj };
 }
+/**
+ * Set or remove an attribute (removed when the value is null/undefined).
+ * @param {Element} el - The element to update.
+ * @param {string} name - The attribute name.
+ * @param {*} value - The attribute value, or null/undefined to remove it.
+ * @returns {void}
+ */
 function setAttr(el, name, value) {
   if (value == null) el.removeAttribute(name);
   else el.setAttribute(name, value);
 }
+/**
+ * Assign a single prop to an element by key (style, classList, ref, on* listeners,
+ * class/className, or a plain attribute), diffing against the previous value.
+ * @param {Element} el - The element to update.
+ * @param {string} key - The prop name.
+ * @param {*} value - The next value for the prop.
+ * @param {*} prev - The previously applied value.
+ * @param {Map} listeners - Map tracking attached event listeners by prop key.
+ * @returns {*} The value to store as the new previous for this key.
+ */
 function assignProp(el, key, value, prev, listeners) {
   if (key === "style") return applyStyle(el, value, prev);
   if (key === "classList") return applyClassList(el, value, prev);
@@ -227,6 +289,13 @@ function assignProp(el, key, value, prev, listeners) {
   setAttr(el, key, value);
   return value;
 }
+/**
+ * Reactively spread a props object onto an element, re-running on any prop change and
+ * diffing per key (children are skipped; removed keys are cleared).
+ * @param {Element} el - The element to apply props to.
+ * @param {Object} props - The reactive props object.
+ * @returns {void}
+ */
 function spreadProps(el, props) {
   const prev = {};
   const listeners = new Map();
@@ -242,6 +311,22 @@ function spreadProps(el, props) {
     }
   });
 }
+/**
+ * Terminal component. Renders a ghostty/xterm terminal into a div, connects it to a
+ * server PTY over a WebSocket (with exponential-backoff reconnect), keeps the terminal
+ * sized to its container, applies the theme palette/font reactively, and persists the
+ * buffer on unmount for later restoration.
+ * @param {Object} props - Component props.
+ * @param {Object} props.pty - PTY descriptor ({id, buffer, cursor, rows, cols, scrollY}) used to connect/restore.
+ * @param {string} props.class - Extra class string for the root element.
+ * @param {Object} props.classList - Extra classList map for the root element.
+ * @param {boolean} props.autoFocus - Whether to focus the terminal on mount (default true).
+ * @param {Function} props.onConnect - Called when the WebSocket connection opens.
+ * @param {Function} props.onConnectError - Called with the error when connection fails permanently.
+ * @param {Function} props.onSubmit - Called when Enter is pressed in the terminal.
+ * @param {Function} props.onCleanup - Receives the persisted buffer snapshot on unmount.
+ * @returns {Node} The terminal container element.
+ */
 export const Terminal = props => {
   const platform = usePlatform();
   const settings = useSettings();
@@ -283,6 +368,10 @@ export const Terminal = props => {
   let drop;
   let reconn;
   let tries = 0;
+  /**
+   * Run and clear all registered cleanup callbacks in reverse order.
+   * @returns {void}
+   */
   const cleanup = () => {
     if (!cleanups.length) return;
     const fns = cleanups.splice(0).reverse();
@@ -294,6 +383,12 @@ export const Terminal = props => {
       }
     }
   };
+  /**
+   * Send the current terminal size to the server PTY (errors are logged, not thrown).
+   * @param {number} cols - Column count.
+   * @param {number} rows - Row count.
+   * @returns {Promise} Resolves once the update request settles.
+   */
   const pushSize = (cols, rows) => {
     return client.pty.update({
       ptyID: id,
@@ -309,11 +404,19 @@ export const Terminal = props => {
   // theme.mode() inside the memo keeps the terminal colors reactive: when the
   // mode flips (light <-> dark, including live system changes), the memo
   // recomputes and the createEffect below re-applies the theme on the terminal.
+  /**
+   * Pick the xterm color palette for the resolved Bootstrap color mode (reactive).
+   * @returns {Object} The light or dark terminal palette.
+   */
   const getTerminalColors = () => {
     const mode = theme.mode() === "dark" ? "dark" : "light";
     return TERMINAL_PALETTES[mode];
   };
   const terminalColors = createMemo(getTerminalColors);
+  /**
+   * Schedule a single fit-addon resize on the next animation frame (coalesced).
+   * @returns {void}
+   */
   const scheduleFit = () => {
     if (disposed) return;
     if (!fitAddon) return;
@@ -324,6 +427,13 @@ export const Terminal = props => {
       fitAddon.fit();
     });
   };
+  /**
+   * Debounce-push a new terminal size to the server (immediate for the first size,
+   * then throttled), skipping unchanged sizes.
+   * @param {number} cols - Column count.
+   * @param {number} rows - Row count.
+   * @returns {void}
+   */
   const scheduleSize = (cols, rows) => {
     if (disposed) return;
     if (lastSize?.cols === cols && lastSize?.rows === rows) return;
@@ -367,6 +477,10 @@ export const Terminal = props => {
     zoom = next;
     scheduleFit();
   });
+  /**
+   * Focus the terminal and its hidden textarea (twice, to win focus races).
+   * @returns {void}
+   */
   const focusTerminal = () => {
     const t = term;
     if (!t) return;
@@ -374,6 +488,11 @@ export const Terminal = props => {
     t.textarea?.focus();
     setTimeout(() => t.textarea?.focus(), 0);
   };
+  /**
+   * On pointer-down inside the terminal, blur any outside focused element and focus
+   * the terminal.
+   * @returns {void}
+   */
   const handlePointerDown = () => {
     const activeElement = document.activeElement;
     if (activeElement instanceof HTMLElement && activeElement !== container && !container.contains(activeElement)) {
@@ -381,6 +500,11 @@ export const Terminal = props => {
     }
     focusTerminal();
   };
+  /**
+   * Open the hovered terminal link in the platform browser on a modified left-click.
+   * @param {MouseEvent} event - The click event.
+   * @returns {void}
+   */
   const handleLinkClick = event => {
     if (!event.shiftKey && !event.ctrlKey && !event.metaKey) return;
     if (event.altKey) return;

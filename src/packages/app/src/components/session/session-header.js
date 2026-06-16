@@ -1,3 +1,4 @@
+/** @file Session header: portals an "open in app" split button, copy-path fallback, search box, and panel toggles into the custom titlebar slots. */
 import { AppIcon } from "@/vendor/ui/components/app-icon.js";
 import { Button } from "@/bs/button.js";
 import { DropdownMenu } from "@/bs/dropdown-menu.js";
@@ -30,6 +31,11 @@ import { StatusPopover } from "../status-popover.js";
 // matching the compiled Solid templates). Static markup only — translated and
 // user-provided strings are always assigned via textContent, never
 // interpolated into the HTML.
+/**
+ * Parse a compact static HTML string into a single detached root element.
+ * @param {string} html - Static markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
@@ -41,6 +47,13 @@ function template(html) {
 // sibling regions keep their relative order, and the previous branch's nodes
 // are removed before the next branch is inserted (matching Show's swap
 // semantics).
+/**
+ * Create a single-region swap point inside a parent, anchored by a placeholder
+ * text node so sibling regions keep their order.
+ * @param {Node} parent - The element that hosts the region.
+ * @param {Node} anchor - Node before which the region's placeholder is inserted (or null for end).
+ * @returns {Function} Setter that replaces the region's current nodes with the given value (node, array, or nullish).
+ */
 function createRegion(parent, anchor) {
   const placeholder = document.createTextNode("");
   parent.insertBefore(placeholder, anchor);
@@ -161,6 +174,12 @@ const LINUX_APPS = [{
   icon: "sublime-text",
   openWith: "Sublime Text"
 }];
+/**
+ * Resolve the host operating system, preferring the desktop platform's reported
+ * OS and falling back to navigator sniffing in the browser.
+ * @param {Object} platform - Platform context with platform and os fields.
+ * @returns {string} One of "macos", "windows", "linux", or "unknown".
+ */
 const detectOS = platform => {
   if (platform.platform === "desktop" && platform.os) return platform.os;
   if (typeof navigator !== "object") return "unknown";
@@ -170,6 +189,13 @@ const detectOS = platform => {
   if (/Linux/i.test(value)) return "linux";
   return "unknown";
 };
+/**
+ * Show an error toast for a failed request, deriving the description from an
+ * Error message or string.
+ * @param {Object} language - Language context providing the t() translator.
+ * @param {*} err - The thrown error or value.
+ * @returns {void}
+ */
 const showRequestError = (language, err) => {
   showToast({
     variant: "error",
@@ -177,6 +203,14 @@ const showRequestError = (language, err) => {
     description: err instanceof Error ? err.message : String(err)
   });
 };
+/**
+ * The session header component. Renders nothing in place; instead it portals
+ * a file search box into the titlebar center slot and a control cluster
+ * (open-in-app split button or copy-path fallback, status popover, and
+ * terminal/review/file-tree toggles) into the titlebar right slot, gated on
+ * platform capabilities and per-session settings.
+ * @returns {null} Always null; all UI is mounted through titlebar portals.
+ */
 export function SessionHeader() {
   const layout = useLayout();
   const command = useCommand();
@@ -706,6 +740,13 @@ export function SessionHeader() {
   // and onCleanup detaches the container, matching the original Show + Portal
   // semantics. No child component relies on delegated events, so Portal's
   // host-retargeting property is not needed.
+  /**
+   * Mount built children into a reactive mount element via a wrapper container,
+   * rebuilding once per mount and detaching the container on cleanup.
+   * @param {Function} mountWhen - Accessor returning the mount element, or a falsy value to stay unmounted.
+   * @param {Function} build - Builds the children to mount; returns a node or array of nodes.
+   * @returns {void}
+   */
   const createPortal = (mountWhen, build) => {
     createRenderEffect(() => {
       const mount = mountWhen();

@@ -1,3 +1,4 @@
+/** @file FileMedia component: renders image/audio/SVG/binary previews for a file with loading and error states. */
 import { createEffect, createMemo, createRenderEffect, createResource, createRoot, createSignal, on, onCleanup, untrack } from "../../../lib/reactivity.js";
 import { useI18n } from "../context/i18n.js";
 import { dataUrlFromMediaValue, hasMediaValue, isBinaryContent, mediaKindFromPath, normalizeMimeType, svgTextFromValue } from "../pierre/media.js";
@@ -5,11 +6,19 @@ import { dataUrlFromMediaValue, hasMediaValue, isBinaryContent, mediaKindFromPat
 // Build the static skeletons that the compiled templates produced. Each helper
 // returns a fresh element tree (the compiled templates cloned a fresh node per
 // call), so callers never share DOM between branches.
+/**
+ * Build the empty state/message container skeleton.
+ * @returns {HTMLElement} A fresh centered text container element.
+ */
 function tmplState() {
   const root = document.createElement("div");
   root.className = "d-flex min-h-40 align-items-center justify-content-center px-6 py-4 text-center text-secondary";
   return root;
 }
+/**
+ * Build the image preview skeleton.
+ * @returns {Object} An object with root container and the inner img element.
+ */
 function tmplImage() {
   const root = document.createElement("div");
   root.className = "d-flex justify-content-center bg-body px-6 py-4";
@@ -18,6 +27,10 @@ function tmplImage() {
   root.appendChild(img);
   return { root, img };
 }
+/**
+ * Build the audio preview skeleton.
+ * @returns {Object} An object with root container, the audio element, and its source element.
+ */
 function tmplAudio() {
   const root = document.createElement("div");
   root.className = "d-flex justify-content-center bg-body px-6 py-4";
@@ -30,11 +43,19 @@ function tmplAudio() {
   root.appendChild(audio);
   return { root, audio, source };
 }
+/**
+ * Build the SVG branch column wrapper skeleton.
+ * @returns {HTMLElement} A fresh column wrapper element.
+ */
 function tmplSvgWrap() {
   const root = document.createElement("div");
   root.className = "d-flex flex-column gap-4 px-6 py-4";
   return root;
 }
+/**
+ * Build the SVG image preview skeleton.
+ * @returns {Object} An object with root container and the inner img element.
+ */
 function tmplSvgImage() {
   const root = document.createElement("div");
   root.className = "d-flex justify-content-center";
@@ -43,6 +64,10 @@ function tmplSvgImage() {
   root.appendChild(img);
   return { root, img };
 }
+/**
+ * Build the binary-file placeholder skeleton.
+ * @returns {Object} An object with root container plus title and desc text elements.
+ */
 function tmplBinary() {
   const root = document.createElement("div");
   root.className = "d-flex min-h-56 flex-column align-items-center justify-content-center gap-2 px-6 py-10 text-center";
@@ -55,12 +80,24 @@ function tmplBinary() {
   return { root, title, desc };
 }
 
+/**
+ * Set or remove an attribute, removing it when the value is nullish.
+ * @param {Element} el - The target element.
+ * @param {string} name - The attribute name.
+ * @param {*} value - The attribute value; null/undefined removes the attribute.
+ * @returns {void}
+ */
 // Mirror solid-js/web setAttribute semantics: nullish removes the attribute.
 function setAttr(el, name, value) {
   if (value == null) el.removeAttribute(name);
   else el.setAttribute(name, value);
 }
 
+/**
+ * Flatten a fallback/child value into an array of DOM nodes.
+ * @param {*} value - A Node, array, accessor function, text, or nullish value.
+ * @returns {Array} The resolved DOM nodes (empty for nullish/boolean values).
+ */
 // Resolve a fallback/child value into DOM nodes. props.fallback() may return a
 // Node, an array, an accessor, or text; flatten it like the compiled insert().
 function resolveNodes(value) {
@@ -71,6 +108,14 @@ function resolveNodes(value) {
   return [document.createTextNode(String(value))];
 }
 
+/**
+ * Reactively keep the nodes from `read()` mounted just before a marker.
+ * Re-resolves inside a render effect; unchanged results leave the DOM untouched.
+ * @param {Node} parent - The parent element to insert into.
+ * @param {Node} marker - The reference node to insert before (null inserts at the end).
+ * @param {Function} read - Accessor returning the value to resolve into nodes.
+ * @returns {void}
+ */
 // Mirror compiled insert(parent, value, marker): keep the resolved nodes placed
 // right before the marker, re-resolving inside a render effect so reactive
 // accessors stay live. Unchanged results leave the DOM untouched.
@@ -89,11 +134,24 @@ function renderBefore(parent, marker, read) {
   });
 }
 
+/**
+ * Pick the effective media value, preferring the current value, then after/before.
+ * @param {Object} cfg - The media config (current, after, before fields).
+ * @param {string} mode - The media kind (e.g. "image"); reserved for kind-specific selection.
+ * @returns {*} The selected media value.
+ */
 function mediaValue(cfg, mode) {
   if (cfg.current !== undefined) return cfg.current;
   if (mode === "image") return cfg.after ?? cfg.before;
   return cfg.after ?? cfg.before;
 }
+/**
+ * Render a file's media preview, choosing between image, audio, SVG, binary, and fallback branches.
+ * Loads remote media via the config's readFile, tracks loading/error/ready status, and reacts to
+ * the controlled `props.media` config and i18n changes.
+ * @param {Object} props - Props: media (the media config: path, mode, current/before/after, readFile, onLoad, onError, deleted) and fallback (accessor producing the fallback content).
+ * @returns {Function} An accessor returning the current branch's DOM node(s) for the caller to insert.
+ */
 export function FileMedia(props) {
   const i18n = useI18n();
   const cfg = () => props.media;
@@ -216,6 +274,10 @@ export function FileMedia(props) {
   }));
   const kindLabel = value => i18n.t(value === "image" ? "ui.fileMedia.kind.image" : "ui.fileMedia.kind.audio");
 
+  /**
+   * Build the image or audio element with live src/alt/type bindings.
+   * @returns {*} The media root element, or the fallback when the kind is neither image nor audio.
+   */
   // <Show when={src()}>{value => media}</Show> child: build the image or audio
   // template once and keep src/alt/type live, like the compiled effect().
   const buildMedia = () => {
@@ -247,6 +309,10 @@ export function FileMedia(props) {
     return root;
   };
 
+  /**
+   * Produce an accessor yielding the media node when a source is ready, else a state/fallback node.
+   * @returns {Function} An accessor (memo) resolving to the current image/audio node or a state message node.
+   */
   // <Show when={src()} fallback={...}>: yields the media node when src() is
   // truthy, otherwise the state/fallback node. Equal truthiness never rebuilds.
   // Returned as an accessor so the caller resolves it reactively, mirroring the
@@ -282,6 +348,10 @@ export function FileMedia(props) {
     });
   };
 
+  /**
+   * Build the SVG branch: a fallback region for invalid/text-only SVG plus a live image region.
+   * @returns {Node} The column wrapper element, or the fallback when there is no SVG text and no data URL.
+   */
   // SVG branch: if there is no inline text and no data URL, fall back; otherwise
   // a column wrapper holding two Shows inserted at the end of the wrapper, like
   // the compiled insert(wrap, Show, null).
@@ -326,6 +396,10 @@ export function FileMedia(props) {
     return wrap;
   };
 
+  /**
+   * Build the binary-file placeholder with a live file-name title and path-aware description.
+   * @returns {HTMLElement} The binary placeholder root element.
+   */
   // Binary branch: title = file name (last path segment), description = the
   // path-aware translated string. Both stay live via render effects.
   const buildBinary = () => {
@@ -344,6 +418,11 @@ export function FileMedia(props) {
     return root;
   };
 
+  /**
+   * Build the reactive content for a single Switch branch.
+   * @param {string} which - The branch to build: "media", "svg", "binary", or "fallback".
+   * @returns {Function} An accessor returning the branch's current node(s).
+   */
   // Build one branch's reactive content (and the inner Show accessor for the
   // media branch). Returns an accessor over the branch's current node(s).
   const buildBranch = which => {

@@ -1,3 +1,4 @@
+/** @file Vanilla (dependency-free) Accordion component: collapsible items with single/multiple expansion, a11y, and roving keyboard focus. */
 // Vanilla reimplementation of @kobalte/core's Accordion behavior (no external UI
 // dependency). Derivative of @kobalte/core (MIT License,
 // Copyright (c) 2024 jer3m01 <jer3m01@jer3m01.com>). See THIRD-PARTY-NOTICES.md.
@@ -27,12 +28,25 @@ import { insert } from "../../../lib/reactivity.js";
 // context would not survive. Content stays mounted and is shown/hidden via the
 // `hidden` attribute.
 
+/**
+ * Toggle every whitespace-separated token in `key` on the element's classList.
+ * @param {HTMLElement} el - Target element.
+ * @param {string} key - One or more space-separated class names.
+ * @param {boolean} value - True to add the classes, false to remove them.
+ * @returns {void}
+ */
 function toggleClassKey(el, key, value) {
   for (const name of key.trim().split(/\s+/)) {
     if (name) el.classList.toggle(name, value);
   }
 }
 
+/**
+ * Build a stateful applier that diffs a class-map against the previously applied one,
+ * toggling only changed classes on the element.
+ * @param {HTMLElement} el - Target element.
+ * @returns {Function} A function taking a class-map ({ className: boolean }) and applying the delta.
+ */
 function makeClassListApplier(el) {
   const prev = {};
   return next => {
@@ -51,6 +65,13 @@ function makeClassListApplier(el) {
   };
 }
 
+/**
+ * Reactively apply the consumer's `class`/`className`/`classList` props to an element
+ * inside a render effect.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} local - Split props bag carrying class, className, and classList.
+ * @returns {void}
+ */
 function applyClassProp(el, local) {
   const applyClasses = makeClassListApplier(el);
   createRenderEffect(() => {
@@ -59,6 +80,13 @@ function applyClassProp(el, local) {
   });
 }
 
+/**
+ * Append arbitrary children (nodes, arrays, reactive functions, or primitives) to a parent.
+ * Nullish/booleans are skipped; functions are inserted reactively; primitives become text.
+ * @param {Node} parent - The parent element to append into.
+ * @param {*} children - Children to render (Node, Array, Function, string/number, or nullish).
+ * @returns {void}
+ */
 function appendChildren(parent, children) {
   if (children == null || children === false || children === true) return;
   if (Array.isArray(children)) {
@@ -81,6 +109,13 @@ function appendChildren(parent, children) {
 // itself (e.g. the bridged collapsible height vars), while a string overwrites
 // cssText wholesale, matching the compiled output. Wrapped in a change-guarded
 // render effect by the caller via applyStyleProp.
+/**
+ * Apply a `style` prop (string cssText or an object of declarations) to an element.
+ * Object values are set individually (custom props via setProperty); a string replaces cssText.
+ * @param {HTMLElement} el - Target element.
+ * @param {(string|Object)} style - The style prop, as cssText string or a declarations object.
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (typeof style === "string") {
     el.style.cssText = style;
@@ -99,6 +134,13 @@ function applyStyle(el, style) {
 // change-guarded (identity compare) so unrelated reactive ticks do not re-write
 // the element's style — important because consumers (session-turn / message-part)
 // set CSS custom props like --sticky-accordion-offset here for sticky headers.
+/**
+ * Reactively forward the consumer's `style` prop onto an element via a change-guarded
+ * render effect (identity compare avoids re-writing on unrelated reactive ticks).
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} local - Split props bag carrying the `style` prop.
+ * @returns {void}
+ */
 function applyStyleProp(el, local) {
   let prev;
   createRenderEffect(() => {
@@ -112,6 +154,14 @@ function applyStyleProp(el, local) {
 
 const CONTROL_KEYS = new Set(["as", "ref", "class", "className", "classList", "children", "value", "disabled", "onClick", "onKeyDown", "id", "style"]);
 
+/**
+ * Apply leftover (unhandled) props to an element: attach `on*` event listeners,
+ * wire a function `ref`, and reflect remaining values as attributes in a render effect.
+ * @param {HTMLElement} el - Target element.
+ * @param {Object} rest - The rest-props bag (everything not in the component's local keys).
+ * @param {Set} handled - Set of prop names already handled elsewhere (skipped here).
+ * @returns {void}
+ */
 function applyRest(el, rest, handled) {
   for (const key in rest) {
     if (handled.has(key)) continue;
@@ -131,6 +181,11 @@ function applyRest(el, rest, handled) {
 }
 
 // Normalise an external value (single key or array) into a Set of expanded keys.
+/**
+ * Normalize an expanded-value prop (single key or array of keys) into a Set of strings.
+ * @param {*} value - A single key, an array of keys, or nullish.
+ * @returns {Set} The set of expanded keys (string-coerced).
+ */
 function toKeySet(value) {
   const set = new Set();
   if (value == null) return set;
@@ -142,6 +197,21 @@ function toKeySet(value) {
   return set;
 }
 
+/**
+ * Accordion root component: owns the expanded-keys state (controlled via `value` or
+ * uncontrolled via `defaultValue`), delegated click/keyboard handling, and the
+ * DOM-walking sync that mirrors state onto owned item/header/trigger/content parts.
+ * @param {Object} props - Component props.
+ * @param {(string|Array)} props.value - Controlled expanded key(s); presence makes the accordion controlled.
+ * @param {(string|Array)} props.defaultValue - Initial expanded key(s) when uncontrolled.
+ * @param {Function} props.onChange - Called with the new expanded keys array when selection changes.
+ * @param {boolean} props.multiple - Allow multiple items open at once.
+ * @param {boolean} props.collapsible - Allow collapsing the last open item (single mode).
+ * @param {*} props.children - Accordion items/headers/triggers/content.
+ * @param {(string|Object)} props.style - Style prop forwarded to the root element.
+ * @param {Function} props.ref - Ref callback receiving the root element.
+ * @returns {HTMLElement} The accordion root element.
+ */
 function AccordionRoot(props) {
   const [local, others] = splitProps(props, [
     "class",
@@ -326,6 +396,13 @@ function AccordionRoot(props) {
   return root;
 }
 
+/**
+ * Set the open/closed and disabled data-attributes on an accordion part.
+ * @param {HTMLElement} el - The item/header/trigger/content element.
+ * @param {boolean} open - Whether the owning item is expanded.
+ * @param {boolean} disabled - Whether the owning item is disabled.
+ * @returns {void}
+ */
 function setOpenAttrs(el, open, disabled) {
   if (open) {
     el.setAttribute("data-expanded", "");
@@ -338,6 +415,16 @@ function setOpenAttrs(el, open, disabled) {
   else el.removeAttribute("data-disabled");
 }
 
+/**
+ * Accordion item wrapper: carries the item's `value` (kept live for late-resolving
+ * values) and `disabled` flag via datasets the root's sync() reads.
+ * @param {Object} props - Component props.
+ * @param {*} props.value - The item's key (matched against the expanded set); may resolve reactively.
+ * @param {boolean} props.disabled - Whether the item is disabled.
+ * @param {*} props.children - Header/trigger/content for this item.
+ * @param {Function} props.ref - Ref callback receiving the item element.
+ * @returns {HTMLElement} The accordion item element.
+ */
 function AccordionItem(props) {
   const [local, others] = splitProps(props, ["value", "disabled", "class", "className", "classList", "children", "ref"]);
   const el = document.createElement("div");
@@ -372,6 +459,14 @@ function AccordionItem(props) {
   return el;
 }
 
+/**
+ * Accordion header: the heading element that wraps a trigger (defaults to an <h3>).
+ * @param {Object} props - Component props.
+ * @param {string} props.as - Tag name to render (default "h3").
+ * @param {*} props.children - Typically the trigger.
+ * @param {Function} props.ref - Ref callback receiving the header element.
+ * @returns {HTMLElement} The accordion header element.
+ */
 function AccordionHeader(props) {
   const [local, others] = splitProps(props, ["as", "class", "className", "classList", "children", "ref"]);
   const tag = local.as || "h3";
@@ -387,6 +482,15 @@ function AccordionHeader(props) {
   return el;
 }
 
+/**
+ * Accordion trigger: the button that toggles its item. Selection/keyboard is driven
+ * by the root's delegated handlers; the root's sync() copies its data-value.
+ * @param {Object} props - Component props.
+ * @param {string} props.id - Optional explicit id (otherwise auto-generated).
+ * @param {*} props.children - Trigger label/content.
+ * @param {Function} props.ref - Ref callback receiving the trigger element.
+ * @returns {HTMLElement} The accordion trigger button element.
+ */
 function AccordionTrigger(props) {
   const [local, others] = splitProps(props, ["class", "className", "classList", "children", "ref", "id"]);
   const el = document.createElement("button");
@@ -406,6 +510,16 @@ function AccordionTrigger(props) {
   return el;
 }
 
+/**
+ * Accordion content: the collapsible region (role="region") shown/hidden via the
+ * `hidden` attribute. Bridges collapsible height/width CSS vars to accordion vars.
+ * @param {Object} props - Component props.
+ * @param {string} props.id - Optional explicit id (otherwise auto-generated).
+ * @param {(string|Object)} props.style - Style prop forwarded to the content element.
+ * @param {*} props.children - Content body.
+ * @param {Function} props.ref - Ref callback receiving the content element.
+ * @returns {HTMLElement} The accordion content element.
+ */
 function AccordionContent(props) {
   const [local, others] = splitProps(props, ["class", "className", "classList", "children", "id", "style", "ref"]);
   const el = document.createElement("div");
@@ -426,6 +540,10 @@ function AccordionContent(props) {
   return el;
 }
 
+/**
+ * Compound Accordion component: the root callable with `.Item`, `.Header`, `.Trigger`,
+ * and `.Content` sub-components attached.
+ */
 export const Accordion = Object.assign(AccordionRoot, {
   Item: AccordionItem,
   Header: AccordionHeader,

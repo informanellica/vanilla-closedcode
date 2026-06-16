@@ -1,5 +1,13 @@
+/** @file Vanilla ResizeHandle component: a draggable divider that resizes an adjacent pane via mouse drag, with clamping and optional collapse-on-threshold. */
 import { createRenderEffect, splitProps } from "../../../lib/reactivity.js";
 
+/**
+ * Apply a Solid-style `style` prop (string or object) to an element, clearing
+ * any previously applied value first.
+ * @param {HTMLElement} el - The element to mutate.
+ * @param {(string|Object)} style - CSS text string, or a map of style properties (`--` custom props supported).
+ * @returns {void}
+ */
 function applyStyle(el, style) {
   if (style == null) {
     el.removeAttribute("style");
@@ -19,6 +27,13 @@ function applyStyle(el, style) {
 
 // Resolve Solid-style children: unwrap zero-arg accessors, flatten arrays,
 // keep Nodes, stringify the rest.
+/**
+ * Resolve a possibly-reactive value into an array of DOM nodes: zero-arg
+ * accessors are unwrapped, arrays flattened, Nodes kept, and other values
+ * stringified into text nodes.
+ * @param {*} value - The value to resolve (accessor function, array, Node, or primitive).
+ * @returns {Array} The flattened array of resolved DOM nodes.
+ */
 function resolveNodes(value) {
   if (value == null || value === false || value === true) return [];
   if (typeof value === "function" && !value.length) return resolveNodes(value());
@@ -27,6 +42,24 @@ function resolveNodes(value) {
   return [document.createTextNode(String(value))];
 }
 
+/**
+ * Draggable resize handle component. On mousedown it tracks pointer movement
+ * along the configured axis, computes a new clamped size, and emits it via
+ * onResize; on release it optionally collapses the pane when the final size
+ * falls below a threshold. Forwards passthrough props/attributes/listeners.
+ * @param {Object} props - Component props.
+ * @param {string} props.direction - Drag axis, "horizontal" or "vertical".
+ * @param {string} props.edge - Which edge resizes, "start" or "end" (defaults by direction).
+ * @param {number} props.size - The current pane size used as the drag baseline.
+ * @param {number} props.min - Minimum allowed size (clamp lower bound).
+ * @param {number} props.max - Maximum allowed size (clamp upper bound).
+ * @param {Function} props.onResize - Called with the new clamped size during dragging.
+ * @param {Function} props.onCollapse - Called when the pane is dragged below collapseThreshold.
+ * @param {number} props.collapseThreshold - Size below which onCollapse fires on release.
+ * @param {string} props.class - Additional CSS class names for the handle.
+ * @param {Object} props.classList - Solid-style class toggle map for the handle.
+ * @returns {HTMLElement} The resize-handle element.
+ */
 export function ResizeHandle(props) {
   const [local, rest] = splitProps(props, ["direction", "edge", "size", "min", "max", "onResize", "onCollapse", "collapseThreshold", "class", "classList"]);
   const handleMouseDown = e => {

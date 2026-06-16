@@ -1,3 +1,4 @@
+/** @file Draggable terminal tab: inline-renameable label, context menu (rename/close), close button, and sortable drag-and-drop wiring. */
 import { createComponent, createEffect, createMemo, createRenderEffect, onCleanup } from "../../lib/reactivity.js";
 import { createStore } from "../../lib/store.js";
 import { createSortable } from "../../lib/dnd/index.js";
@@ -12,12 +13,27 @@ import { focusTerminalById } from "@/pages/session/helpers.js";
 
 // Build a detached element from compact HTML (no inter-element whitespace,
 // matching the compiled Solid templates).
+/**
+ * Parse a compact HTML string into a single detached root element.
+ * @param {string} html - Markup whose first element child becomes the root.
+ * @returns {HTMLElement} The first element child of the parsed markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
 
+/**
+ * A draggable terminal tab. Shows the terminal's title (falling back to a
+ * numbered default), supports inline renaming (double-click or context-menu
+ * "rename") via an overlay input, a right-click context menu with rename/close,
+ * a close button, and sortable drag-and-drop reordering.
+ * @param {Object} props - Component props.
+ * @param {Object} props.terminal - The terminal descriptor (id, title, titleNumber).
+ * @param {Function} props.onClose - Optional callback invoked when the last terminal is closed.
+ * @returns {HTMLElement} The sortable terminal tab root element.
+ */
 export function SortableTerminalTab(props) {
   const terminal = useTerminal();
   const language = useLanguage();
@@ -35,11 +51,20 @@ export function SortableTerminalTab(props) {
   let input;
   let blurFrame;
   let editRequested = false;
+  /**
+   * Whether the terminal's current title is still the auto-generated default.
+   * @returns {boolean} True if the title matches the default for its title number.
+   */
   const isDefaultTitle = () => {
     const number = props.terminal.titleNumber;
     if (!Number.isFinite(number) || number <= 0) return false;
     return isDefaultTerminalTitle(props.terminal.title, number);
   };
+  /**
+   * The reactive display label for the tab (custom title, numbered default, or
+   * generic "terminal" fallback), tracking the active locale.
+   * @returns {string} The label text.
+   */
   const label = () => {
     language.locale();
     if (props.terminal.title && !isDefaultTitle()) return props.terminal.title;
@@ -50,6 +75,10 @@ export function SortableTerminalTab(props) {
     if (props.terminal.title) return props.terminal.title;
     return language.t("terminal.title");
   };
+  /**
+   * Close this terminal; if it was the last one, also invoke props.onClose.
+   * @returns {void}
+   */
   const close = () => {
     const count = terminal.all().length;
     void terminal.close(props.terminal.id);
@@ -57,11 +86,20 @@ export function SortableTerminalTab(props) {
       props.onClose?.();
     }
   };
+  /**
+   * Focus this terminal (no-op while renaming), blurring any active element first.
+   * @returns {void}
+   */
   const focus = () => {
     if (store.editing) return;
     if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
     focusTerminalById(props.terminal.id);
   };
+  /**
+   * Enter rename mode, seeding the edit buffer with the current title.
+   * @param {Event} e - Optional triggering event; if present, propagation/default are suppressed.
+   * @returns {void}
+   */
   const edit = e => {
     if (e) {
       e.stopPropagation();
@@ -71,6 +109,11 @@ export function SortableTerminalTab(props) {
     setStore("title", props.terminal.title);
     setStore("editing", true);
   };
+  /**
+   * Commit the edited title (if non-empty and changed) and leave rename mode.
+   * Guarded by blurEnabled so the initial focus does not auto-save.
+   * @returns {void}
+   */
   const save = () => {
     if (!store.blurEnabled) return;
     const value = store.title.trim();
@@ -82,6 +125,11 @@ export function SortableTerminalTab(props) {
     }
     setStore("editing", false);
   };
+  /**
+   * Keydown handler for the rename input: Enter saves, Escape cancels.
+   * @param {KeyboardEvent} e - The keyboard event.
+   * @returns {void}
+   */
   const keydown = e => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -93,6 +141,11 @@ export function SortableTerminalTab(props) {
       setStore("editing", false);
     }
   };
+  /**
+   * Open the context menu at the pointer position.
+   * @param {MouseEvent} e - The contextmenu event.
+   * @returns {void}
+   */
   const menu = e => {
     e.preventDefault();
     setStore("menuPosition", {

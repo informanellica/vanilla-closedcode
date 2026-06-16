@@ -1,3 +1,4 @@
+/** @file AnimatedNumber component: an odometer-style numeric display whose digits roll/spin between values. */
 import {
   createComponent,
   createEffect,
@@ -16,10 +17,23 @@ const TRACK = Array.from({
 }, (_, index) => index % 10);
 const DURATION = 600;
 
+/**
+ * Reduce an arbitrary integer to its single decimal digit (0-9), handling negatives.
+ * @param {number} value - Any integer.
+ * @returns {number} The value modulo 10 in the range 0-9.
+ */
 function normalize(value) {
   return (value % 10 + 10) % 10;
 }
 
+/**
+ * Compute the signed number of steps to roll a single digit from `from` to `to`,
+ * wrapping around 0-9 in the requested direction.
+ * @param {number} from - Current digit (0-9).
+ * @param {number} to - Target digit (0-9).
+ * @param {number} direction - Positive to roll upward, otherwise downward.
+ * @returns {number} Signed step delta (positive up, negative down, 0 if unchanged).
+ */
 function spin(from, to, direction) {
   if (from === to) return 0;
   if (direction > 0) return (to - from + 10) % 10;
@@ -28,6 +42,14 @@ function spin(from, to, direction) {
 
 // One odometer digit. props.value is a live getter (0-9); spinning state is
 // kept locally so an in-flight transition survives value updates.
+/**
+ * Single odometer digit: renders a vertical strip of cells and animates its offset
+ * to spin between digit values, keeping in-flight transitions across value updates.
+ * @param {Object} props - Component props.
+ * @param {number} props.value - The target digit (0-9), read reactively.
+ * @param {number} props.direction - Roll direction (positive up, negative down).
+ * @returns {HTMLElement} The digit's root span element.
+ */
 function Digit(props) {
   const [state, setState] = createStore({
     step: props.value + 10,
@@ -82,6 +104,15 @@ function Digit(props) {
   return root;
 }
 
+/**
+ * Odometer-style animated number display: rolls each digit independently between the
+ * previous and new value, preserving per-position Digit instances across updates and
+ * exposing the current value as an aria-label.
+ * @param {Object} props - Component props.
+ * @param {number} props.value - The numeric value to display (coerced to a non-negative rounded integer).
+ * @param {string} props.class - Optional class name applied to the root element.
+ * @returns {HTMLElement} The animated number root span element.
+ */
 export function AnimatedNumber(props) {
   const target = createMemo(() => {
     if (!Number.isFinite(props.value)) return 0;

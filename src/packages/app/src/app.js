@@ -1,3 +1,8 @@
+/**
+ * @file Application root: wires together every context provider, the router,
+ * the connection/health gate, and the top-level error boundaries that make up
+ * the desktop renderer's component tree.
+ */
 // insert() from solid-js/web is the established exception for reactive /
 // component-valued children (Suspense/Show branches, For-mapped rows): Solid
 // keeps reconciling the accessors instead of freezing a one-time snapshot.
@@ -41,18 +46,39 @@ import { useCheckServerHealth } from "./utils/server-health.js";
 // matching the compiled Solid templates). Built fresh per call: no cloneNode.
 // Static markup only — translated or user-provided strings are always
 // assigned via textContent/text nodes, never interpolated into the markup.
+/**
+ * Build a detached DOM element from a compact static HTML string.
+ * @param {string} html - Static markup (no interpolated dynamic strings).
+ * @returns {Element} The first element parsed from the markup.
+ */
 function template(html) {
   const wrapper = document.createElement("div");
   wrapper.innerHTML = html;
   return wrapper.firstElementChild;
 }
+/** Lazily-loaded home page route component. */
 const HomeRoute = lazy(() => import("@/pages/home.js"));
+/**
+ * Dynamically import the session page module (also used to warm the chunk).
+ * @returns {Promise<Object>} The imported session page module.
+ */
 const loadSession = () => import("@/pages/session.js");
+/** Lazily-loaded session page component. */
 const Session = lazy(loadSession);
+/**
+ * Empty full-size placeholder element used as a loading fallback.
+ * @returns {Element} A full-size empty div.
+ */
 const Loading = () => template(`<div class="size-full"></div>`);
 if (typeof location === "object" && /\/session(?:\/|$)/.test(location.pathname)) {
   void loadSession();
 }
+/**
+ * Session route: wraps the lazy Session view in the per-session providers and
+ * an error boundary that degrades to an inline message (the sidecar chat keeps
+ * working).
+ * @returns {*} The session route component tree.
+ */
 const SessionRoute = () => createComponent(SessionProviders, {
   get children() {
     return createComponent(ErrorBoundary, {
@@ -69,9 +95,20 @@ const SessionRoute = () => createComponent(SessionProviders, {
     });
   }
 });
+/**
+ * Index route under a directory that redirects to its `session` route.
+ * @returns {*} A Navigate component pointing at "session".
+ */
 const SessionIndexRoute = () => createComponent(Navigate, {
   href: "session"
 });
+/**
+ * Bridge component that feeds the app's language context (locale + translator)
+ * into the shared UI library's I18nProvider.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Children rendered inside the provider.
+ * @returns {*} The I18nProvider wrapping the children.
+ */
 function UiI18nBridge(props) {
   const language = useLanguage();
   return createComponent(I18nProvider, {
@@ -86,6 +123,13 @@ function UiI18nBridge(props) {
     }
   });
 }
+/**
+ * Provides a TanStack-style QueryClient (with refetch-on-* disabled) to its
+ * subtree.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Children rendered inside the query client provider.
+ * @returns {*} The QueryClientProvider wrapping the children.
+ */
 function QueryProvider(props) {
   const client = new QueryClient({
     defaultOptions: {
@@ -103,6 +147,14 @@ function QueryProvider(props) {
     }
   });
 }
+/**
+ * Nests the shell-level context providers (settings, permission, layout,
+ * notification, models, command, highlights) and the page Layout around the
+ * app shell's children.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Children rendered inside the shell.
+ * @returns {*} The nested provider tree.
+ */
 function AppShellProviders(props) {
   return createComponent(SettingsProvider, {
     get children() {
@@ -138,6 +190,13 @@ function AppShellProviders(props) {
     }
   });
 }
+/**
+ * Nests the per-session context providers (terminal, file, prompt, comments)
+ * around the session view's children.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Children rendered inside the session providers.
+ * @returns {*} The nested provider tree.
+ */
 function SessionProviders(props) {
   return createComponent(TerminalProvider, {
     get children() {
@@ -157,6 +216,14 @@ function SessionProviders(props) {
     }
   });
 }
+/**
+ * Root rendered inside the Router: wraps both the forwarded app children and
+ * the router-provided children in the app shell providers.
+ * @param {Object} props - Component props.
+ * @param {*} props.appChildren - App-level children forwarded from AppInterface.
+ * @param {*} props.children - Router-provided route children.
+ * @returns {*} The app shell wrapping both child sets.
+ */
 function RouterRoot(props) {
   return createComponent(AppShellProviders, {
     get children() {
@@ -165,6 +232,15 @@ function RouterRoot(props) {
     }
   });
 }
+/**
+ * Outermost provider stack shared by every entry point: meta, fonts, theme,
+ * language, the UI i18n bridge, a top-level error boundary (reported to
+ * Sentry), the query client, dialogs, markdown, and the file component.
+ * @param {Object} props - Component props.
+ * @param {string} props.locale - Initial locale for the language provider.
+ * @param {*} props.children - Children rendered inside the base providers.
+ * @returns {*} The nested base provider tree.
+ */
 export function AppBaseProviders(props) {
   return createComponent(MetaProvider, {
     get children() {
@@ -219,6 +295,16 @@ export function AppBaseProviders(props) {
     }
   });
 }
+/**
+ * Gates the app behind a server health check: shows a splash while probing,
+ * renders children once the server is reachable, and falls back to
+ * ConnectionError otherwise. Retries with a grace period for non-http
+ * connections; fails fast for http.
+ * @param {Object} props - Component props.
+ * @param {boolean} props.disableHealthCheck - When true, skip the health check and render children immediately.
+ * @param {*} props.children - Children rendered once the server is reachable.
+ * @returns {*} A Suspense boundary wrapping the gated children.
+ */
 function ConnectionGate(props) {
   const server = useServer();
   const checkServerHealth = useCheckServerHealth();
@@ -277,6 +363,15 @@ function ConnectionGate(props) {
     }
   });
 }
+/**
+ * Full-screen "server unreachable" view: shows the splash mark, the localized
+ * unreachable message with the server name, a periodic retry timer, and a list
+ * of other configured servers the user can switch to.
+ * @param {Object} props - Component props.
+ * @param {Function} props.onRetry - Called periodically to retry the connection.
+ * @param {Function} props.onServerSelected - Called with a server key when the user picks another server.
+ * @returns {Element} The connection-error root element.
+ */
 function ConnectionError(props) {
   const language = useLanguage();
   const server = useServer();
@@ -356,6 +451,13 @@ function ConnectionError(props) {
   }), null);
   return root;
 }
+/**
+ * Keyed gate that re-mounts its children whenever the active server key
+ * changes, so per-server subtrees are rebuilt rather than reused.
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Children rendered for the current server key.
+ * @returns {*} A keyed Show wrapping the children.
+ */
 function ServerKey(props) {
   const server = useServer();
   return createComponent(Show, {
@@ -368,6 +470,18 @@ function ServerKey(props) {
     }
   });
 }
+/**
+ * Top-level app interface: provides the server connection, the health gate,
+ * per-server SDK/sync providers, and the router with the home/directory/session
+ * routes wired up.
+ * @param {Object} props - Component props.
+ * @param {*} props.defaultServer - The server to connect to by default.
+ * @param {boolean} props.disableHealthCheck - When true, bypass the connection health check.
+ * @param {Array} props.servers - The list of configured servers.
+ * @param {*} props.router - Optional router component override (defaults to the built-in Router).
+ * @param {*} props.children - App-level children forwarded into the router root.
+ * @returns {*} The full app interface component tree.
+ */
 export function AppInterface(props) {
   return createComponent(ServerProvider, {
     get defaultServer() {

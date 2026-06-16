@@ -1,3 +1,4 @@
+/** @file Terminal context: workspace-scoped persisted store of PTY tabs (create/clone/move/close/trim) backed by the SDK pty API, surviving session switches within a directory. */
 import { createStore, produce } from "../lib/store.js";
 import { createSimpleContext } from "@/lib/context.js";
 import { batch, createEffect, createMemo, createRoot, on, onCleanup } from "../lib/reactivity.js";
@@ -7,18 +8,44 @@ import { defaultTitle, titleNumber } from "./terminal-title.js";
 import { Persist, persisted, removePersisted } from "@/utils/persist.js";
 const WORKSPACE_KEY = "__workspace__";
 const MAX_TERMINAL_SESSIONS = 20;
+/**
+ * Test whether a value is a plain (non-array) object.
+ * @param {*} value - The value to test.
+ * @returns {boolean} True if value is a non-null, non-array object.
+ */
 function record(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
+/**
+ * Coerce a value to a string, or undefined if not a string.
+ * @param {*} value - The value to coerce.
+ * @returns {string} The string, or undefined.
+ */
 function text(value) {
   return typeof value === "string" ? value : undefined;
 }
+/**
+ * Coerce a value to a finite number, or undefined otherwise.
+ * @param {*} value - The value to coerce.
+ * @returns {number} The finite number, or undefined.
+ */
 function num(value) {
   return typeof value === "number" && Number.isFinite(value) ? value : undefined;
 }
+/**
+ * Derive a default-title tab number from a title (bounded by the session cap).
+ * @param {string} title - The terminal title.
+ * @returns {number} The encoded tab number, or undefined.
+ */
 function numberFromTitle(title) {
   return titleNumber(title, MAX_TERMINAL_SESSIONS);
 }
+/**
+ * Validate and normalize a persisted PTY entry, dropping invalid records and
+ * filling a stable title number; optional dimension/buffer fields are included only when present.
+ * @param {*} value - The raw persisted PTY value.
+ * @returns {Object} A normalized PTY record {id, title, titleNumber, ...optional}, or undefined if invalid.
+ */
 function pty(value) {
   if (!record(value)) return;
   const id = text(value.id);
@@ -51,6 +78,12 @@ function pty(value) {
     } : {})
   };
 }
+/**
+ * Migrate a persisted terminal state blob into the current shape, deduping PTY
+ * ids and clamping the active id to a surviving tab.
+ * @param {*} value - The raw persisted state (possibly legacy).
+ * @returns {Object} A {active, all} state, or the original value when not a record.
+ */
 export function migrateTerminalState(value) {
   if (!record(value)) return value;
   const seen = new Set();
@@ -66,14 +99,30 @@ export function migrateTerminalState(value) {
     all
   };
 }
+/**
+ * Build the in-memory cache key for a directory's workspace terminal session.
+ * @param {string} dir - The workspace directory.
+ * @returns {string} The cache key.
+ */
 export function getWorkspaceTerminalCacheKey(dir) {
   return `${dir}:${WORKSPACE_KEY}`;
 }
+/**
+ * List the legacy persisted-storage keys that may hold pre-workspace terminal state.
+ * @param {string} dir - The workspace directory.
+ * @param {string} [legacySessionID] - A legacy per-session id, if any.
+ * @returns {Array} The candidate legacy storage keys (most specific first).
+ */
 export function getLegacyTerminalStorageKeys(dir, legacySessionID) {
   if (!legacySessionID) return [`${dir}/terminal.v1`];
   return [`${dir}/terminal/${legacySessionID}.v1`, `${dir}/terminal.v1`];
 }
 const caches = new Set();
+/**
+ * Strip the heavy buffer/cursor/scroll fields from a PTY record (for trimming).
+ * @param {Object} pty - The PTY record.
+ * @returns {Object} The record without buffer/cursor/scrollY, or the same reference if already trimmed.
+ */
 const trimTerminal = pty => {
   if (!pty.buffer && pty.cursor === undefined && pty.scrollY === undefined) return pty;
   return {

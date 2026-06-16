@@ -1,3 +1,4 @@
+/** @file Home page: project-less landing with a hero, quick-start/configuration sections, recent projects, and server status. */
 import { createMemo, createEffect, createComponent } from "../lib/reactivity.js";
 import { Button } from "@/bs/button.js";
 import { Logo } from "@/vendor/ui/components/logo.js";
@@ -40,6 +41,16 @@ const serverTmpl = `<div data-slot="server-row" class="d-flex align-items-center
 // A single clickable row inside a section: leading icon, reactive label and an
 // optional right-aligned reactive hint. label/hint are thunks so language
 // switches and relative-time updates keep rendering live.
+/**
+ * A clickable ghost-button row: leading icon, reactive label, and optional reactive hint.
+ * @param {Object} props - Component props.
+ * @param {Function} props.label - Accessor returning the row label text.
+ * @param {Function} props.hint - Optional accessor returning the right-aligned hint text.
+ * @param {string} props.icon - Leading icon name (defaults to "arrow-right").
+ * @param {Function} props.onClick - Click handler.
+ * @param {boolean} props.mono - When true, render the label in a monospace font.
+ * @returns {Element} The button row element.
+ */
 function Row(props) {
   const labelEl = document.createElement("span");
   labelEl.className = "truncate";
@@ -70,6 +81,14 @@ function Row(props) {
   });
 }
 
+/**
+ * A grid column section with a reactive title, an optional header action element, and a body.
+ * @param {Object} props - Component props.
+ * @param {Function} props.title - Accessor returning the section title text.
+ * @param {Element} props.action - Optional element placed in the section header (e.g. a button).
+ * @param {*} props.children - Body content (single node or array of nodes).
+ * @returns {Element} The section container element.
+ */
 function Section(props) {
   const el = document.createElement("div");
   el.innerHTML = sectionTmpl.trim();
@@ -94,6 +113,13 @@ function Section(props) {
   return container;
 }
 
+/**
+ * Home page component shown when no project is open. Renders the hero with an
+ * "open project" CTA, quick-start and configuration sections, the five most
+ * recent projects, and a live server-status row. Wires up project opening,
+ * provider connection, and settings dialogs.
+ * @returns {Element} The home page root element.
+ */
 export default function Home() {
   const sync = useGlobalSync();
   const layout = useLayout();
@@ -125,6 +151,11 @@ export default function Home() {
     return language.t("home.server.connecting");
   });
 
+  /**
+   * Open a project: register it in the layout, mark it touched on the server, and navigate to it.
+   * @param {string} directory - Absolute project directory path.
+   * @returns {void}
+   */
   function openProject(directory) {
     layout.projects.open(directory);
     server.projects.touch(directory);
@@ -136,6 +167,11 @@ export default function Home() {
   // a normal run.
   if (window.api?.remoteDebug) window.__closedcode_openProject = openProject;
 
+  /**
+   * Prompt the user to choose one or more project directories, then open them.
+   * Uses the native directory picker for local servers, otherwise a dialog.
+   * @returns {Promise<void>}
+   */
   async function chooseProject() {
     const resolve = (result) => {
       if (Array.isArray(result)) {
@@ -159,18 +195,31 @@ export default function Home() {
     }
   }
 
+  /**
+   * Lazy-load and open the provider-selection dialog.
+   * @returns {void}
+   */
   function connectProvider() {
     void import("@/components/dialog-select-provider.js").then((x) => {
       dialog.show(() => createComponent(x.DialogSelectProvider, {}));
     });
   }
 
+  /**
+   * Lazy-load and open the settings dialog on a given tab.
+   * @param {string} tab - The settings tab to open (e.g. "general", "connection").
+   * @returns {void}
+   */
   function openSettings(tab) {
     void import("@/components/dialog-settings.js").then((x) => {
       dialog.show(() => createComponent(x.DialogSettings, { tab }));
     });
   }
 
+  /**
+   * Open settings on the connection tab to manage servers.
+   * @returns {void}
+   */
   function manageServers() {
     openSettings("connection");
   }

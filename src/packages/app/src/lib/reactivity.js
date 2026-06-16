@@ -10,6 +10,8 @@
 // Derived in part from solid-js / dom-expressions (MIT License,
 // Copyright (c) 2016-2025 Ryan Carniato). See THIRD-PARTY-NOTICES.md.
 
+/** @module lib/reactivity API-compatible reimplementation of the solid-js subset the app uses: signals/effects/memos, owners, context, control-flow, and DOM helpers. */
+
 let Owner = null;     // current ownership scope (cleanups, child computations, context)
 let Listener = null;  // current computation collecting dependencies
 // Pending computations to (re-)run. Non-null while a flush is open — opened
@@ -22,7 +24,14 @@ let Listener = null;  // current computation collecting dependencies
 let PendingQueue = null; // Set<Computation> | null
 let Flushing = false;    // true while draining PendingQueue (re-entrancy guard)
 
+/**
+ * An ownership scope node: tracks child scopes, cleanups, and context, and
+ * disposes them recursively (children first, cleanups LIFO) on dispose.
+ */
 class OwnerNode {
+  /**
+   * @param {OwnerNode} parent - The parent scope (registers this as a child), or null.
+   */
   constructor(parent) {
     this.parent = parent;
     this.children = null;   // child OwnerNode[]
@@ -31,6 +40,11 @@ class OwnerNode {
     this.disposed = false;
     if (parent) (parent.children ??= []).push(this);
   }
+  /**
+   * Dispose this scope: dispose children, then run cleanups (LIFO). Idempotent.
+   *
+   * @returns {void}
+   */
   dispose() {
     if (this.disposed) return;
     this.disposed = true;
@@ -47,9 +61,19 @@ class OwnerNode {
   }
 }
 
+/**
+ * A reactive computation (render effect / effect / memo). Tracks the signals it
+ * reads, re-runs when they change, owns child scopes created during its run, and
+ * (for memos) caches its value and notifies its own observers when it changes.
+ */
 class Computation extends OwnerNode {
   // kind: "render" (sync at creation + sync updates) | "effect" (deferred
   // initial run) | "memo" (lazy-ish: runs at creation, caches, notifies)
+  /**
+   * @param {Function} fn - The computation body; receives the previous value.
+   * @param {string} kind - "render", "effect", or "memo".
+   * @param {Object} options - `{ value, equals }` initial value and equality check.
+   */
   constructor(fn, kind, options) {
     super(Owner);
     this.fn = fn;
@@ -60,16 +84,32 @@ class Computation extends OwnerNode {
     this.equals = options?.equals === undefined ? (a, b) => a === b : options.equals || (() => false);
     this.pendingValue = options?.value;
   }
+  /**
+   * Drop all dependency subscriptions (removes this from each source's observers).
+   *
+   * @returns {void}
+   */
   unsubscribe() {
     if (this.sources) {
       for (const s of this.sources) s.observers.delete(this);
       this.sources = null;
     }
   }
+  /**
+   * Dispose: unsubscribe from sources, then dispose the owned scope.
+   *
+   * @returns {void}
+   */
   dispose() {
     this.unsubscribe();
     super.dispose();
   }
+  /**
+   * Re-run the computation: tear down the previous run's deps/children/cleanups,
+   * collect new dependencies, store/notify the new value (memo) or just store it.
+   *
+   * @returns {void}
+   */
   run() {
     if (this.disposed) return;
     // re-collect dependencies + dispose nested computations/cleanups from the
@@ -106,6 +146,11 @@ class Computation extends OwnerNode {
     }
   }
   // memo read
+  /**
+   * Read the memo's cached value, subscribing the current listener to it.
+   *
+   * @returns {*} The memo's current value.
+   */
   read() {
     if (Listener) {
       (this.observers ??= new Set()).add(Listener);
@@ -121,6 +166,13 @@ Object.defineProperty(Computation.prototype, "observersDelete", { value: undefin
 // drive it to completion synchronously (preserving the previous "writes settle
 // before write() returns" behavior). `computations` is any iterable of
 // Computation (a memo's observer Set, or a one-off array).
+/**
+ * Enqueue computations into the active flush, opening and draining one if none
+ * is currently open.
+ *
+ * @param {Iterable} computations - Computations to (re-)run.
+ * @returns {void}
+ */
 function notify(computations) {
   if (PendingQueue) {
     for (const c of computations) PendingQueue.add(c);
@@ -137,6 +189,12 @@ function notify(computations) {
 // simply re-added and handled next wave — so genuine cycles still terminate per
 // run (no recursion blowup) and converge unless a computation unconditionally
 // re-dirties itself. Re-entrant notify() during draining just feeds the queue.
+/**
+ * Drain the pending queue in waves until it converges, running each enqueued
+ * computation once per wave (re-entrancy-safe and glitch-free).
+ *
+ * @returns {void}
+ */
 function flush() {
   if (Flushing) return; // a notify() during drain only enqueues; outer loop runs it
   Flushing = true;
@@ -161,12 +219,26 @@ function flush() {
   }
 }
 
+/**
+ * A reactive signal: a mutable value plus the set of computations observing it.
+ * Reads subscribe the current listener; writes notify observers when the value
+ * actually changes (per the `equals` check).
+ */
 class Signal {
+  /**
+   * @param {*} value - Initial value.
+   * @param {Object} options - `{ equals }` equality predicate (or false to always notify).
+   */
   constructor(value, options) {
     this.value = value;
     this.observers = new Set();
     this.equals = options?.equals === undefined ? (a, b) => a === b : options.equals || (() => false);
   }
+  /**
+   * Read the value, subscribing the current listener.
+   *
+   * @returns {*} The current value.
+   */
   read() {
     if (Listener) {
       this.observers.add(Listener);
@@ -174,6 +246,12 @@ class Signal {
     }
     return this.value;
   }
+  /**
+   * Write a new value (or apply a function updater), notifying observers on change.
+   *
+   * @param {*} next - The new value, or a function `(prev) => next`.
+   * @returns {*} The resulting value.
+   */
   write(next) {
     if (typeof next === "function") next = next(this.value);
     if (this.equals(this.value, next)) return this.value;
@@ -183,11 +261,25 @@ class Signal {
   }
 }
 
+/**
+ * Create a reactive signal.
+ *
+ * @param {*} value - Initial value.
+ * @param {Object} options - `{ equals }` equality predicate.
+ * @returns {Array} A `[getter, setter]` pair.
+ */
 export function createSignal(value, options) {
   const s = new Signal(value, options);
   return [() => s.read(), v => s.write(v)];
 }
 
+/**
+ * Create a render effect: runs synchronously at creation and on every update.
+ *
+ * @param {Function} fn - Effect body; receives the previous return value.
+ * @param {*} value - Initial previous value passed to `fn`.
+ * @returns {void}
+ */
 export function createRenderEffect(fn, value) {
   const c = new Computation(fn, "render", { value });
   c.value = value;
@@ -195,6 +287,13 @@ export function createRenderEffect(fn, value) {
   return undefined;
 }
 
+/**
+ * Create an effect whose initial run is deferred past the current sync phase.
+ *
+ * @param {Function} fn - Effect body; receives the previous return value.
+ * @param {*} value - Initial previous value passed to `fn`.
+ * @returns {void}
+ */
 export function createEffect(fn, value) {
   const c = new Computation(fn, "effect", { value });
   c.value = value;
@@ -203,6 +302,15 @@ export function createEffect(fn, value) {
   return undefined;
 }
 
+/**
+ * Create a memo: a cached derived value that re-runs when its deps change and
+ * notifies its own observers only when its value changes.
+ *
+ * @param {Function} fn - Derivation; receives the previous memo value.
+ * @param {*} value - Initial previous value passed to `fn`.
+ * @param {Object} options - `{ equals }` equality predicate.
+ * @returns {Function} An accessor returning the memo's current value.
+ */
 export function createMemo(fn, value, options) {
   const c = new Computation(fn, "memo", { ...options, value });
   c.value = value;
@@ -215,10 +323,26 @@ export function createMemo(fn, value, options) {
 // effect (sync create + sync update); the only solid nuance we don't reproduce
 // is its higher scheduling priority over render effects, which our fully
 // synchronous graph makes moot for the call sites that use it.
+/**
+ * Create a synchronous computation (modeled identically to a render effect).
+ *
+ * @param {Function} fn - Computation body; receives the previous value.
+ * @param {*} value - Initial previous value passed to `fn`.
+ * @returns {void}
+ */
 export function createComputed(fn, value) {
   return createRenderEffect(fn, value);
 }
 
+/**
+ * Run `fn` inside a fresh, independently-disposable ownership scope. Unless an
+ * explicit `detachedOwner` is passed, the root inherits the current owner for
+ * context resolution but is not registered as its child.
+ *
+ * @param {Function} fn - Receives a dispose callback for the new root.
+ * @param {OwnerNode} detachedOwner - Explicit parent owner (or null to fully detach).
+ * @returns {*} Whatever `fn` returns.
+ */
 export function createRoot(fn, detachedOwner) {
   // Match solid: when no explicit `detachedOwner` is passed, the root INHERITS the
   // current owner so descendants still resolve context (useContext walks the parent
@@ -240,20 +364,38 @@ export function createRoot(fn, detachedOwner) {
   }
 }
 
+/**
+ * Register a cleanup to run when the current owner scope disposes.
+ *
+ * @param {Function} fn - Cleanup callback.
+ * @returns {Function} The same cleanup function.
+ */
 export function onCleanup(fn) {
   if (Owner) (Owner.cleanups ??= []).push(fn);
   return fn;
 }
 
+/**
+ * Run `fn` once after the first render tick (mount).
+ *
+ * @param {Function} fn - Mount callback.
+ * @returns {void}
+ */
 export function onMount(fn) {
   // no SSR: mount == first render tick
   createEffect(() => untrack(fn));
 }
 
+/**
+ * @returns {OwnerNode} The current ownership scope, or null.
+ */
 export function getOwner() { return Owner; }
 
 // Current tracking computation, or null. solid-js/store uses this to decide
 // whether a property read should lazily create + subscribe a tracking signal.
+/**
+ * @returns {Computation} The current tracking computation, or null.
+ */
 export function getListener() { return Listener; }
 
 // Store interop markers, shared with lib/store.js (it imports them from here).
@@ -266,12 +408,25 @@ export function getListener() { return Listener; }
 export const $PROXY = Symbol("solid-proxy");
 export const $TRACK = Symbol("solid-track");
 
+/**
+ * Run `fn` with `owner` as the current scope (and no active listener).
+ *
+ * @param {OwnerNode} owner - Scope to run under.
+ * @param {Function} fn - Function to run.
+ * @returns {*} Whatever `fn` returns.
+ */
 export function runWithOwner(owner, fn) {
   const prevOwner = Owner, prevListener = Listener;
   Owner = owner; Listener = null;
   try { return fn(); } finally { Owner = prevOwner; Listener = prevListener; }
 }
 
+/**
+ * Run `fn` without tracking signal reads as dependencies.
+ *
+ * @param {Function} fn - Function to run untracked.
+ * @returns {*} Whatever `fn` returns.
+ */
 export function untrack(fn) {
   const prev = Listener;
   Listener = null;
@@ -281,6 +436,11 @@ export function untrack(fn) {
 let uniqueId = 0;
 // Stable per-call unique string id (solid uses this for SSR-stable ids; here it
 // only needs to be unique within the document).
+/**
+ * Generate a string id unique within the document.
+ *
+ * @returns {string} A unique id like `cl-1`.
+ */
 export function createUniqueId() {
   return `cl-${++uniqueId}`;
 }
@@ -290,11 +450,23 @@ export function createUniqueId() {
 // resolves once it (and any microtasks it queued) settle. Callers that only use
 // it to drive an "is transitioning" flag therefore observe an instantaneous
 // transition — acceptable for our single consumer (router useIsRouting).
+/**
+ * Run `fn` (synchronously, no concurrent scheduler) and resolve once it settles.
+ *
+ * @param {Function} fn - Work to run as a transition.
+ * @returns {Promise} A promise resolved after the work settles.
+ */
 export function startTransition(fn) {
   const r = fn ? fn() : undefined;
   return Promise.resolve(r);
 }
 
+/**
+ * Batch reactive writes so dependent computations flush once at the end.
+ *
+ * @param {Function} fn - Function performing the batched writes.
+ * @returns {*} Whatever `fn` returns.
+ */
 export function batch(fn) {
   // Already inside a flush (nested batch, or a write mid-propagation): just run;
   // writes enqueue into the existing PendingQueue and drain with it.
@@ -304,6 +476,15 @@ export function batch(fn) {
   finally { flush(); }
 }
 
+/**
+ * Build a computation body that tracks only `deps` and calls `fn` untracked with
+ * their current and previous values (solid's `on` helper, with optional defer).
+ *
+ * @param {*} deps - A dependency accessor or array of accessors to track.
+ * @param {Function} fn - Called as `(input, prevInput, prevValue)`.
+ * @param {Object} options - `{ defer }` to skip the initial run.
+ * @returns {Function} A computation body usable with createEffect/createMemo.
+ */
 export function on(deps, fn, options) {
   const isArray = Array.isArray(deps);
   const list = isArray ? deps : [deps];
@@ -327,11 +508,23 @@ export function on(deps, fn, options) {
 
 // ---- context ---------------------------------------------------------------
 let contextId = 0;
+/**
+ * Create a context object with a Provider that exposes a value to descendants.
+ *
+ * @param {*} defaultValue - Value returned by useContext when no Provider is found.
+ * @returns {Object} A context object `{ id, defaultValue, Provider }`.
+ */
 export function createContext(defaultValue) {
   const id = `ctx-${++contextId}`;
   const ctx = {
     id,
     defaultValue,
+    /**
+     * Provide `props.value` to descendants and render `props.children` once.
+     *
+     * @param {Object} props - `{ value, children }` provider props.
+     * @returns {*} The rendered children.
+     */
     Provider(props) {
       // Children are created ONCE under an owner node that carries the context
       // value, then returned as-is (a stable accessor/value). Reading props.children
@@ -349,6 +542,12 @@ export function createContext(defaultValue) {
   };
   return ctx;
 }
+/**
+ * Resolve a context value by walking the owner chain for a matching Provider.
+ *
+ * @param {Object} ctx - The context object from createContext.
+ * @returns {*} The nearest provided value, or the context default.
+ */
 export function useContext(ctx) {
   let o = Owner;
   while (o) {
@@ -359,14 +558,33 @@ export function useContext(ctx) {
 }
 
 // ---- component helpers -----------------------------------------------------
+/**
+ * Instantiate a component function with props, untracked (solid's createComponent).
+ *
+ * @param {Function} Comp - The component function.
+ * @param {Object} props - Props passed to the component.
+ * @returns {*} The component's output.
+ */
 export function createComponent(Comp, props) {
   return untrack(() => Comp(props || {}));
 }
 
+/**
+ * Wrap a children accessor in a memo that resolves nested functions/arrays.
+ *
+ * @param {Function} fn - Accessor returning the (possibly nested) children.
+ * @returns {Function} An accessor returning the resolved children.
+ */
 export function children(fn) {
   const memo = createMemo(() => resolveChildren(fn()));
   return () => memo();
 }
+/**
+ * Recursively resolve children: call zero-arg functions and flatten arrays.
+ *
+ * @param {*} value - A child value, accessor, or nested array.
+ * @returns {*} The resolved child value (or flattened array).
+ */
 function resolveChildren(value) {
   if (typeof value === "function" && !value.length) return resolveChildren(value());
   if (Array.isArray(value)) {
@@ -380,6 +598,13 @@ function resolveChildren(value) {
   return value;
 }
 
+/**
+ * Merge multiple props sources into one object, preserving getters so reactive
+ * values stay live and later sources override earlier ones.
+ *
+ * @param {...Object} sources - Props objects to merge (later wins).
+ * @returns {Object} The merged props object.
+ */
 export function mergeProps(...sources) {
   const target = {};
   for (const source of sources) {
@@ -397,6 +622,14 @@ export function mergeProps(...sources) {
   return target;
 }
 
+/**
+ * Split a props object into groups for each key list plus a rest object, keeping
+ * reactive getters intact.
+ *
+ * @param {Object} props - The props object to split.
+ * @param {...Array} keysList - One array of keys per output group.
+ * @returns {Array} `[...groups, rest]` matching the key lists, then the remainder.
+ */
 export function splitProps(props, ...keysList) {
   const out = keysList.map(() => ({}));
   const rest = {};
@@ -425,7 +658,21 @@ export const isServer = false;
 // index.js). memo wraps a reactive sub-expression in a memo; template builds a
 // cloneable DOM factory from an HTML string. Both reproduce the solid-js/web
 // (dom-expressions, MIT) runtime helpers of the same name.
+/**
+ * Wrap a reactive sub-expression in a memo (solid-js/web's compiled `memo`).
+ *
+ * @param {Function} fn - Reactive expression to memoize.
+ * @returns {Function} An accessor returning the memoized value.
+ */
 export const memo = fn => createMemo(() => fn());
+/**
+ * Build a cloneable DOM-node factory from an HTML string (solid-js/web `template`).
+ *
+ * @param {string} html - The HTML markup for the template.
+ * @param {boolean} isImportNode - Whether to importNode (vs cloneNode) on each call.
+ * @param {boolean} isSVG - Whether the template content is wrapped SVG.
+ * @returns {Function} A factory returning a fresh DOM node per call.
+ */
 export function template(html, isImportNode, isSVG) {
   let node;
   const create = () => {
@@ -452,6 +699,15 @@ export function template(html, isImportNode, isSVG) {
 // simplified to the value shapes this app produces (nullish/boolean, string/number,
 // Node, Array, accessor fn) with full-replace reconciliation; keyed lists go
 // through For/mapArray.
+/**
+ * Insert a reactive child into `parent`, bounded by a pair of comment markers so
+ * each dynamic child re-renders in isolation (solid-js/web's `insert`).
+ *
+ * @param {Node} parent - The container element.
+ * @param {*} accessor - A value, Node, array, or accessor function to render.
+ * @param {Node} marker - Optional node to insert before (else appended).
+ * @returns {void}
+ */
 export function insert(parent, accessor, marker) {
   const start = document.createComment("");
   const end = document.createComment("");
@@ -461,6 +717,13 @@ export function insert(parent, accessor, marker) {
 }
 
 // Remove every node strictly between the `start` and `end` markers.
+/**
+ * Remove every node strictly between the two marker comments.
+ *
+ * @param {Node} start - The start marker.
+ * @param {Node} end - The end marker.
+ * @returns {void}
+ */
 function clearBetween(start, end) {
   const region = end.parentNode;
   if (!region) return;
@@ -472,6 +735,17 @@ function clearBetween(start, end) {
 // function value is a dynamic boundary: it gets its own render effect (which
 // subscribes only to what THAT accessor reads), and the recursion gives every
 // nested dynamic its own effect too. Static values reconcile by full replace.
+/**
+ * Render a value into the region between [start, end). Function values become
+ * their own dynamic render-effect boundary; static values reconcile by full
+ * replace; arrays get a sub-region per element.
+ *
+ * @param {Node} parent - The container element.
+ * @param {*} value - Nullish/boolean, string/number, Node, array, or accessor.
+ * @param {Node} start - The region start marker.
+ * @param {Node} end - The region end marker.
+ * @returns {void}
+ */
 function insertExpression(parent, value, start, end) {
   if (typeof value === "function" && !value.length) {
     createRenderEffect(() => { insertExpression(parent, value(), start, end); });
@@ -496,6 +770,13 @@ function insertExpression(parent, value, start, end) {
   region.insertBefore(value instanceof Node ? value : document.createTextNode(String(value)), end);
 }
 
+/**
+ * Mount a root component into a DOM element, returning a dispose callback.
+ *
+ * @param {Function} code - Component factory; called once to build the tree.
+ * @param {HTMLElement} element - The mount target.
+ * @returns {Function} A dispose function tearing down the root.
+ */
 export function render(code, element) {
   return createRoot(dispose => {
     // Create the root component ONCE (code()), then insert its result. Passing
@@ -509,6 +790,13 @@ export function render(code, element) {
   });
 }
 
+/**
+ * Render a dynamic component or element chosen at runtime, forwarding props.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.component - A component function or an HTML tag name string.
+ * @returns {*} The rendered component, element, or null.
+ */
 export function Dynamic(props) {
   const [local, others] = splitProps(props, ["component"]);
   const comp = local.component;
@@ -519,6 +807,13 @@ export function Dynamic(props) {
     // createComponent, but the string branch used to drop them — so e.g. the SSR
     // diff's `ref` never fired and its `id` was missing). Handle ref, event
     // handlers, and attributes (reactive accessors stay live via a render effect).
+    /**
+     * Apply a single attribute/class/style value to the element.
+     *
+     * @param {string} key - Attribute name (or "class"/"style").
+     * @param {*} v - Value to apply (nullish/false removes the attribute).
+     * @returns {void}
+     */
     const applyAttr = (key, v) => {
       if (key === "class" || key === "className") el.setAttribute("class", v == null ? "" : String(v));
       else if (key === "style" && v && typeof v === "object") { for (const s in v) el.style[s] = v[s]; }
@@ -543,6 +838,15 @@ export function Dynamic(props) {
   return null;
 }
 
+/**
+ * Render children into a detached host element appended to `props.mount` (or
+ * document.body), removing the host on cleanup.
+ *
+ * @param {Object} props - Component props.
+ * @param {HTMLElement} props.mount - Mount target (defaults to document.body).
+ * @param {*} props.children - Children rendered into the host.
+ * @returns {Node} A placeholder comment node in the original tree.
+ */
 export function Portal(props) {
   const host = document.createElement("div");
   (props.mount ?? document.body).appendChild(host);
@@ -556,6 +860,11 @@ export function Portal(props) {
 // while a fetch is in flight so Suspense can show its fallback until they
 // settle. Looked up by walking the owner chain (same as useContext).
 const SUSPENSE_KEY = Symbol("suspense");
+/**
+ * Find the nearest enclosing Suspense handle by walking the owner chain.
+ *
+ * @returns {Object} The Suspense `{ inc, dec }` handle, or null.
+ */
 function currentSuspense() {
   let o = Owner;
   while (o) {
@@ -566,6 +875,17 @@ function currentSuspense() {
 }
 
 // ---- control flow (accessor-returning, consumed through insert()) ----------
+/**
+ * Conditionally render children when `props.when` is truthy, else `props.fallback`.
+ * Supports keyed mode and render-prop children. Children are captured once.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.when - Condition value (also the key in keyed mode).
+ * @param {boolean} props.keyed - Whether a changed `when` remounts the subtree.
+ * @param {*} props.children - Subtree or render-prop `(value) => node`.
+ * @param {*} props.fallback - Rendered when the condition is falsy.
+ * @returns {Function} An accessor consumed through insert().
+ */
 export function Show(props) {
   const condition = createMemo(() => props.when, undefined, { equals: props.keyed ? undefined : (a, b) => !!a === !!b });
   // Read props.children EXACTLY ONCE (lazily, on the first truthy run) and cache
@@ -610,6 +930,14 @@ export function Show(props) {
 // its mapped output (and the owner/effects created while mapping it) across
 // updates; removed items are disposed; the index passed to mapFn is a live
 // accessor that updates on reorder only when mapFn reads it (arity > 1).
+/**
+ * Keyed-by-reference list mapping: each surviving item keeps its mapped output
+ * (and owned effects) across updates; removed items are disposed.
+ *
+ * @param {Function} list - Accessor returning the input array.
+ * @param {Function} mapFn - Mapper `(item, index)`; reads `index` only if arity > 1.
+ * @returns {Function} A memo accessor returning the mapped outputs.
+ */
 export function mapArray(list, mapFn) {
   let items = [];           // previous input items (by reference)
   let mapped = [];          // mapped outputs, parallel to items
@@ -658,6 +986,14 @@ export function mapArray(list, mapFn) {
   });
 }
 
+/**
+ * Render a keyed-by-reference list (solid's <For>).
+ *
+ * @param {Object} props - Component props.
+ * @param {Array} props.each - The list to render.
+ * @param {Function} props.children - Render function `(item, indexAccessor)`.
+ * @returns {Function} An accessor returning the rendered items.
+ */
 export function For(props) {
   const mapped = mapArray(() => props.each, (item, index) => props.children(item, index));
   return () => mapped();
@@ -666,6 +1002,15 @@ export function For(props) {
 // solid's indexArray: keyed-by-INDEX (position). The slot is stable per index;
 // the item is a live signal so a value change at a position updates in place
 // rather than rebuilding. Trailing slots are disposed when the list shrinks.
+/**
+ * Render a keyed-by-index list (solid's <Index>): each slot is stable per
+ * position and its item is a live signal, so a value change updates in place.
+ *
+ * @param {Object} props - Component props.
+ * @param {Array} props.each - The list to render.
+ * @param {Function} props.children - Render function `(itemAccessor, index)`.
+ * @returns {Function} An accessor returning the rendered slots.
+ */
 export function Index(props) {
   let slots = [];           // { setItem, dispose, node } per index
   onCleanup(() => { for (const s of slots) s.dispose(); });
@@ -692,6 +1037,14 @@ export function Index(props) {
   });
 }
 
+/**
+ * Render the first <Match> child whose `when` is truthy, else `props.fallback`.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.children - One or more <Match> descriptors.
+ * @param {*} props.fallback - Rendered when no branch matches.
+ * @returns {Function} An accessor returning the matched branch's children.
+ */
 export function Switch(props) {
   return createMemo(() => {
     const branches = resolveChildren(props.children);
@@ -704,11 +1057,27 @@ export function Switch(props) {
     return props.fallback;
   });
 }
+/**
+ * Declare a Switch branch: a descriptor exposing reactive `when`/`children`.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.when - Branch condition.
+ * @param {*} props.children - Branch content.
+ * @returns {Object} A `{ when, children }` descriptor read by <Switch>.
+ */
 export function Match(props) {
   // Evaluated inside Switch's memo, so reads stay tracked there.
   return { get when() { return props.when; }, get children() { return props.children; } };
 }
 
+/**
+ * Catch errors thrown while rendering children and show a fallback instead.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Subtree to guard (captured once).
+ * @param {*} props.fallback - Value, or `(error, reset)` render function.
+ * @returns {Function} An accessor returning children or the fallback.
+ */
 export function ErrorBoundary(props) {
   const [error, setError] = createSignal();
   // Capture children ONCE. Reading props.children inside the memo would re-invoke
@@ -727,6 +1096,15 @@ export function ErrorBoundary(props) {
   });
 }
 
+/**
+ * Show `props.fallback` while any resource read beneath it is pending, then show
+ * the (once-captured) children. No transitions.
+ *
+ * @param {Object} props - Component props.
+ * @param {*} props.children - Subtree, captured once and tracked for pending resources.
+ * @param {*} props.fallback - Rendered while resources are pending.
+ * @returns {Function} An accessor returning the fallback or the children.
+ */
 export function Suspense(props) {
   // suspense-lite: no transitions. Capture children once (see ErrorBoundary) so a
   // descendant signal flicker doesn't re-create the subtree on every re-run, and
@@ -749,6 +1127,13 @@ export function Suspense(props) {
   return createMemo(() => (childrenOnce === undefined || pending() > 0) ? props.fallback : childrenOnce);
 }
 
+/**
+ * Create a lazily-loaded component: the loader runs on first render and the
+ * component renders once its module resolves.
+ *
+ * @param {Function} loader - Async loader returning `{ default: Component }`.
+ * @returns {Function} A component that renders the loaded component when ready.
+ */
 export function lazy(loader) {
   let comp;
   return props => {
@@ -758,6 +1143,17 @@ export function lazy(loader) {
   };
 }
 
+/**
+ * Create an async resource: a reactive accessor (`read.loading`/`.error`/
+ * `.latest`) backed by `fetcher`, with `{ refetch, mutate }` controls and
+ * Suspense integration. Supports both `createResource(fetcher, options?)` and
+ * `createResource(source, fetcher, options?)` forms.
+ *
+ * @param {*} sourceOrFetcher - A source accessor or the fetcher.
+ * @param {*} fetcherOrOptions - The fetcher (source form) or an options bag.
+ * @param {Object} optionsArg - Options bag for the source form (e.g. `{ initialValue }`).
+ * @returns {Array} `[read, { refetch, mutate }]` accessor and controls.
+ */
 export function createResource(sourceOrFetcher, fetcherOrOptions, optionsArg) {
   // Signatures (solid): createResource(fetcher, options?) |
   // createResource(source, fetcher, options?). A function in the 2nd slot means
