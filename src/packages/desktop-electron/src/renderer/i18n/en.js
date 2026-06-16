@@ -1,3 +1,11 @@
+/** @file English (en) translation strings for the desktop Electron shell (menu, dialogs, updater, CLI installer); also the base/fallback locale. */
+
+/**
+ * English translation dictionary keyed by dotted message id; values may contain
+ * `{{var}}` placeholders that are interpolated at render time. Serves as the base
+ * locale that other locales are merged on top of.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "Check for Updates...",
   "desktop.menu.installCli": "Install CLI...",

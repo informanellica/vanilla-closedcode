@@ -1,3 +1,4 @@
+/** @file Electron main-process entry point: app/single-instance setup, deep-link handling, sidecar server boot and SQLite migration, splash/main windowing, IPC wiring, and the auto-updater flow. */
 import { randomUUID } from "node:crypto";
 import { EventEmitter } from "node:events";
 import { existsSync } from "node:fs";
@@ -76,6 +77,11 @@ logger.log("app starting", {
   packaged: app.isPackaged
 });
 setupApp();
+/**
+ * Bootstrap the app: acquire the single-instance lock, register deep-link and
+ * lifecycle handlers, and run initialization once Electron is ready.
+ * @returns {void}
+ */
 function setupApp() {
   ensureLoopbackNoProxy();
   app.commandLine.appendSwitch("proxy-bypass-list", "<-loopback>");
@@ -129,6 +135,11 @@ function setupApp() {
     app.exit(1);
   });
 }
+/**
+ * Decide whether a hostname refers to a local/private/loopback LLM host.
+ * @param {string} hostname - The hostname (IPv4, bracketed IPv6, or name) to classify.
+ * @returns {boolean} True for loopback, private RFC1918, link-local, ULA IPv6, or *.local/.lan/.internal hosts.
+ */
 function isLocalLLMHost(hostname) {
   if (hostname.startsWith("[") && hostname.endsWith("]")) hostname = hostname.slice(1, -1);
   if (hostname === "localhost") return true;
@@ -145,6 +156,11 @@ function isLocalLLMHost(hostname) {
   if (hostname.endsWith(".local") || hostname.endsWith(".lan") || hostname.endsWith(".internal")) return true;
   return false;
 }
+/**
+ * Install a webRequest hook that rewrites CORS response headers to permissive
+ * values for local/private LLM hosts, leaving other responses untouched.
+ * @returns {void}
+ */
 function setupLocalLLMCors() {
   const {
     session
@@ -173,16 +189,30 @@ function setupLocalLLMCors() {
     });
   });
 }
+/**
+ * Queue deep-link URLs and forward them to the main window when one exists.
+ * @param {Array} urls - The deep-link URLs to emit.
+ * @returns {void}
+ */
 function emitDeepLinks(urls) {
   if (urls.length === 0) return;
   pendingDeepLinks.push(...urls);
   if (mainWindow) sendDeepLinks(mainWindow, urls);
 }
+/**
+ * Show and focus the main window if it exists.
+ * @returns {void}
+ */
 function focusMainWindow() {
   if (!mainWindow) return;
   mainWindow.show();
   mainWindow.focus();
 }
+/**
+ * Record the current initialization step and notify listeners via the init emitter.
+ * @param {Object} step - The init-step descriptor (e.g. {phase: "server_waiting"}).
+ * @returns {void}
+ */
 function setInitStep(step) {
   initStep = step;
   logger.log("init step", {
@@ -190,6 +220,12 @@ function setInitStep(step) {
   });
   initEmitter.emit("step", step);
 }
+/**
+ * Run the full startup sequence: show the splash, allocate a port, optionally run
+ * the first-run SQLite migration, spawn and health-check the sidecar server, then
+ * open the main window and close the splash.
+ * @returns {Promise<void>} Resolves once the main window has been created.
+ */
 async function initialize() {
   const needsMigration = !sqliteFileExists();
   const sqliteDone = needsMigration ? defer() : undefined;
@@ -274,6 +310,10 @@ async function initialize() {
   // Close the splash only once the main window has actually painted — no blank gap.
   mainWindow.once("ready-to-show", () => overlay?.close());
 }
+/**
+ * Build the application menu and bind its commands to the current main window.
+ * @returns {void}
+ */
 function wireMenu() {
   if (!mainWindow) return;
   createMenu({
@@ -326,11 +366,20 @@ registerIpcHandlers({
   installUpdate: async () => installUpdate(),
   setBackgroundColor: color => setBackgroundColor(color)
 });
+/**
+ * Stop the running sidecar server listener, if any, and clear the reference.
+ * @returns {void}
+ */
 function killSidecar() {
   if (!server) return;
   server.stop();
   server = null;
 }
+/**
+ * Ensure loopback hosts are present in the NO_PROXY / no_proxy environment
+ * variables so the sidecar connection bypasses any configured proxy.
+ * @returns {void}
+ */
 function ensureLoopbackNoProxy() {
   const loopback = ["127.0.0.1", "localhost", "::1"];
   const upsert = key => {
@@ -344,6 +393,12 @@ function ensureLoopbackNoProxy() {
   upsert("NO_PROXY");
   upsert("no_proxy");
 }
+/**
+ * Determine the port for the sidecar server: honor CLOSEDCODE_PORT, otherwise
+ * ask the OS for a free loopback port.
+ * @returns {Promise<number>} The chosen port number.
+ * @throws {Error} When a free port cannot be obtained.
+ */
 async function getSidecarPort() {
   const fromEnv = process.env.CLOSEDCODE_PORT;
   if (fromEnv) {
@@ -365,6 +420,10 @@ async function getSidecarPort() {
     });
   });
 }
+/**
+ * Check whether the canonical closedcode SQLite database already exists.
+ * @returns {boolean} True when the closedcode.db file is present under the data directory.
+ */
 function sqliteFileExists() {
   const xdg = process.env.XDG_DATA_HOME;
   const base = xdg && xdg.length > 0 ? xdg : join(homedir(), ".local", "share");
@@ -373,6 +432,11 @@ function sqliteFileExists() {
   if (existsSync(join(base, "closedcode", "closedcode.db"))) return true;
   return false;
 }
+/**
+ * Configure electron-updater's autoUpdater (channel, prerelease/downgrade
+ * policy, manual download) when the updater is enabled.
+ * @returns {void}
+ */
 function setupAutoUpdater() {
   if (!UPDATER_ENABLED) return;
   autoUpdater.logger = logger;
@@ -389,6 +453,10 @@ function setupAutoUpdater() {
   });
 }
 let downloadedUpdateVersion;
+/**
+ * Check for an available update and download it if newer, caching the version.
+ * @returns {Promise<Object>} A result object: {updateAvailable, version?, failed?}.
+ */
 async function checkUpdate() {
   if (!UPDATER_ENABLED) return {
     updateAvailable: false
@@ -446,6 +514,11 @@ async function checkUpdate() {
     };
   }
 }
+/**
+ * Install a previously downloaded update: stop the sidecar and quit-and-install.
+ * No-ops when no downloaded update is ready.
+ * @returns {Promise<void>}
+ */
 async function installUpdate() {
   if (!downloadedUpdateVersion) {
     logger.log("install update skipped", {
@@ -459,6 +532,12 @@ async function installUpdate() {
   killSidecar();
   autoUpdater.quitAndInstall();
 }
+/**
+ * User-facing update flow: check for an update and, when available, prompt to
+ * restart and install; optionally show a dialog on no-update/failure.
+ * @param {boolean} alertOnFail - When true, show an info/error dialog even if no update is available or the check failed.
+ * @returns {Promise<void>}
+ */
 async function checkForUpdates(alertOnFail) {
   if (!UPDATER_ENABLED) return;
   logger.log("checkForUpdates invoked", {
@@ -505,9 +584,18 @@ async function checkForUpdates(alertOnFail) {
     await installUpdate();
   }
 }
+/**
+ * Resolve after a delay.
+ * @param {number} ms - Milliseconds to wait.
+ * @returns {Promise<void>} Resolves once the timeout elapses.
+ */
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+/**
+ * Create a deferred: a promise with externally accessible resolve/reject.
+ * @returns {Object} An object with {promise, resolve, reject}.
+ */
 function defer() {
   let resolve;
   let reject;

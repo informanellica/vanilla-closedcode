@@ -1,8 +1,13 @@
+/** @file Packaging helpers: release-channel resolution and sidecar (opencode CLI) binary placement for builds. */
 import { $ } from "script/shell";
 // Default channel is "prod" so a plain `npm run package:mac` produces an
 // artefact without a "Dev" suffix — dev/beta exist only when someone
 // explicitly opts in (e.g. `CLOSEDCODE_CHANNEL=dev npm run package:mac`) to
 // install a side-by-side pre-release build alongside the production one.
+/**
+ * Resolve the release channel from CLOSEDCODE_CHANNEL, defaulting to "prod".
+ * @returns {string} One of "dev", "beta", or "prod".
+ */
 export function resolveChannel() {
   const raw = process.env.CLOSEDCODE_CHANNEL;
   if (raw === "dev" || raw === "beta" || raw === "prod") return raw;
@@ -34,6 +39,11 @@ export const SIDECAR_BINARIES = [{
   assetExt: "tar.gz"
 }];
 export const RUST_TARGET = process.env.RUST_TARGET;
+/**
+ * Determine the Rust target triple matching the current host platform/arch.
+ * @returns {string} The Rust target triple (e.g. "aarch64-apple-darwin").
+ * @throws {Error} When the host platform/arch combination is unsupported.
+ */
 function nativeTarget() {
   const {
     platform,
@@ -44,11 +54,22 @@ function nativeTarget() {
   if (platform === "linux") return arch === "arm64" ? "aarch64-unknown-linux-gnu" : "x86_64-unknown-linux-gnu";
   throw new Error(`Unsupported platform: ${platform}/${arch}`);
 }
+/**
+ * Look up the sidecar binary configuration for a given Rust target.
+ * @param {string} target - The Rust target triple; defaults to RUST_TARGET or the host's native target.
+ * @returns {Object} The matching SIDECAR_BINARIES entry (rustTarget, ocBinary, assetExt).
+ * @throws {Error} When no sidecar configuration exists for the target.
+ */
 export function getCurrentSidecar(target = RUST_TARGET ?? nativeTarget()) {
   const binaryConfig = SIDECAR_BINARIES.find(b => b.rustTarget === target);
   if (!binaryConfig) throw new Error(`Sidecar configuration not available for Rust target '${target}'`);
   return binaryConfig;
 }
+/**
+ * Copy a sidecar binary into the resources folder as opencode-cli, signing it on Windows CI and macOS.
+ * @param {string} source - Path to the source binary to copy.
+ * @returns {Promise<void>} Resolves once the binary is copied and (where applicable) code-signed.
+ */
 export async function copyBinaryToSidecarFolder(source) {
   const dir = `resources`;
   await $`mkdir -p ${dir}`;
@@ -60,6 +81,11 @@ export async function copyBinaryToSidecarFolder(source) {
   if (process.platform === "darwin") await $`codesign --force --sign - ${dest}`;
   console.log(`Copied ${source} to ${dest}`);
 }
+/**
+ * Append a ".exe" extension on Windows (unless one is already present).
+ * @param {string} path - The base file path.
+ * @returns {string} The path with ".exe" added on win32, otherwise unchanged.
+ */
 export function windowsify(path) {
   if (path.endsWith(".exe")) return path;
   return `${path}${process.platform === "win32" ? ".exe" : ""}`;

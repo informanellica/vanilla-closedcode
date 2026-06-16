@@ -1,3 +1,4 @@
+/** @file Renderer entry point for the Electron desktop wrapper: wires Sentry, i18n, deep links, the desktop platform adapter, persisted-locale loading, and mounts the shared AppInterface into the boot shell. */
 import { createComponent as _$createComponent } from "../../../app/src/lib/reactivity.js";
 // @refresh reload
 
@@ -31,6 +32,12 @@ if (env("VITE_SENTRY_DSN")) {
 }
 void initI18n();
 const deepLinkEvent = "closedcode:deep-link";
+/**
+ * Queue incoming deep-link URLs on the global ClosedCode bridge and dispatch a window event so listeners can react.
+ * No-op when the list is empty.
+ * @param {Array} urls - Deep-link URL strings received from the main process.
+ * @returns {void}
+ */
 const emitDeepLinks = urls => {
   if (urls.length === 0) return;
   window.__CLOSEDCODE__ ??= {};
@@ -42,10 +49,20 @@ const emitDeepLinks = urls => {
     }
   }));
 };
+/**
+ * Drain any deep links captured before the renderer was ready, then subscribe to future ones.
+ * @returns {Function} Unsubscribe callback returned by the deep-link listener registration.
+ */
 const listenForDeepLinks = () => {
   void window.api.consumeInitialDeepLinks().then(urls => emitDeepLinks(urls));
   return window.api.onDeepLink(urls => emitDeepLinks(urls));
 };
+/**
+ * Build the desktop platform adapter consumed by the shared app (PlatformProvider value).
+ * Bridges renderer features (OS detection, WSL path translation, file/folder pickers, persisted
+ * key/value storage, updater, notifications, clipboard, navigation) onto the preload `window.api`.
+ * @returns {Object} Platform implementation object exposing desktop capabilities to the shared app.
+ */
 const createPlatform = () => {
   const os = (() => {
     const ua = navigator.userAgent;
@@ -54,14 +71,27 @@ const createPlatform = () => {
     if (ua.includes("Linux")) return "linux";
     return undefined;
   })();
+  /**
+   * Resolve whether WSL path translation is enabled (only possible on Windows).
+   * @returns {Promise<boolean>} True when running on Windows with WSL config enabled.
+   */
   const isWslEnabled = async () => {
     if (os !== "windows") return false;
     return window.api.getWslConfig().then(config => config.enabled).catch(() => false);
   };
+  /**
+   * Resolve the Windows-side path of the WSL home directory, used as a picker default path.
+   * @returns {Promise<string>} The translated home path, or undefined when WSL is disabled or translation fails.
+   */
   const wslHome = async () => {
     if (!(await isWslEnabled())) return undefined;
     return window.api.wslPath("~", "windows").catch(() => undefined);
   };
+  /**
+   * Convert picker result path(s) from Windows form to Linux form when WSL is enabled.
+   * @param {*} result - Picker result: a single path string, an array of paths, or a falsy/cancelled value.
+   * @returns {Promise<*>} The path(s) translated to Linux form, or the original result unchanged.
+   */
   const handleWslPicker = async result => {
     if (!result || !(await isWslEnabled())) return result;
     if (Array.isArray(result)) {
@@ -69,8 +99,18 @@ const createPlatform = () => {
     }
     return window.api.wslPath(result, "linux").catch(() => result);
   };
+  /**
+   * Factory returning a cached named key/value store backed by the main-process store API.
+   * Each store name maps to a Web-Storage-like adapter; instances are memoized per name.
+   * @type {Function}
+   */
   const storage = (() => {
     const cache = new Map();
+    /**
+     * Create a Storage-like adapter for a single named store, delegating to the preload store API.
+     * @param {string} name - The store file name (namespace) to read/write.
+     * @returns {Object} An object with getItem, setItem, removeItem, clear, key, getLength and a length getter.
+     */
     const createStorage = name => {
       const api = {
         getItem: key => window.api.storeGet(name, key),
@@ -227,6 +267,12 @@ window.api.onMenuCommand(id => {
 listenForDeepLinks();
 
 // Resolve the persisted UI locale (plain async — no reactive resource).
+/**
+ * Read the user's persisted UI locale from desktop storage (with legacy opencode/v1 fallbacks),
+ * normalize it, and eagerly load its dictionary when it is not English.
+ * @param {Object} platform - The platform adapter providing a `storage(name)` accessor.
+ * @returns {Promise<string>} The normalized locale code, or undefined when none is persisted.
+ */
 async function loadLocale(platform) {
   const current = await platform.storage?.("closedcode.global.dat").getItem("language");
   const legacy = current ? undefined : (await platform.storage?.("opencode.global.dat").getItem("language")) ?? (await platform.storage?.().getItem("language.v1"));
@@ -239,6 +285,12 @@ async function loadLocale(platform) {
   return next;
 }
 
+/**
+ * Surface a fatal renderer-startup failure on the static boot shell so the window is never blank.
+ * Logs to the console and writes the error stack/message into the `#app-boot-msg` element.
+ * @param {*} error - The error thrown during boot (Error instance or any value).
+ * @returns {void}
+ */
 function showBootError(error) {
   console.error("[boot] renderer failed to start:", error);
   const msg = document.getElementById("app-boot-msg");
@@ -252,6 +304,12 @@ function showBootError(error) {
 // keep the static #app-boot shell visible meanwhile, then mount ONLY AppInterface
 // into #app-mount. No top-level <Show>/createResource gate — so the whole window is
 // never a blank #root, and a reactive-mount issue can't wipe the screen.
+/**
+ * Plain-async renderer startup: builds the platform, awaits window config, sidecar init, default
+ * server and persisted locale, wires external-link handling, mounts AppInterface into the boot
+ * shell, and reveals the app only once it has actually rendered DOM (with a no-DOM timeout guard).
+ * @returns {Promise<void>} Resolves once mounting and reveal/observation have been set up.
+ */
 async function boot() {
   const platform = createPlatform();
 
@@ -290,6 +348,11 @@ async function boot() {
     }
   });
 
+  /**
+   * Headless component mounted inside the provider tree: binds the menu-command trigger and syncs
+   * the OS window background color to the active theme's `--background-base` via an effect.
+   * @returns {null} Renders no DOM.
+   */
   function Inner() {
     const cmd = useCommand();
     menuTrigger = id => cmd.trigger(id);

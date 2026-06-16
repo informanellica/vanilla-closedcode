@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file vite-free build for desktop-electron: copies the closedcode-server sidecar and workspace source trees, emits renderer HTML, and copies public/audio assets for the build-less native-ESM packaged layout (with esbuild plugins for Vite-specific import patterns). */
 // vite-free build for desktop-electron.
 //
 //   1. tailwindcss CLI compiles the renderer stylesheet
@@ -15,6 +16,11 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { glob } from "glob"
 
+/**
+ * Resolve the build identifier: prefer the BUILD_ID env var, else the short
+ * (12-char) git HEAD commit, falling back to "unknown".
+ * @returns {string} The resolved build id.
+ */
 function resolveBuildId() {
   if (process.env.BUILD_ID) return process.env.BUILD_ID
   const out = spawnSync("git", ["rev-parse", "--short=12", "HEAD"], { encoding: "utf8" })
@@ -61,6 +67,11 @@ const define = {
 
 // CSS imports inside JS are picked up by tailwindcss-cli, not esbuild.
 // Replace them with empty modules so esbuild doesn't try to bundle CSS.
+/**
+ * esbuild plugin that resolves `.css` imports to an empty stub module so esbuild
+ * does not attempt to bundle stylesheets (those are handled by tailwindcss-cli).
+ * @type {Object}
+ */
 const stripCssImports = {
   name: "strip-css-imports",
   setup(b) {
@@ -71,6 +82,12 @@ const stripCssImports = {
 
 // Vite-specific `?worker&url` import → emit the target as a separate bundle
 // under out/renderer/workers/ and substitute its URL string.
+/**
+ * esbuild plugin handling Vite's `?worker&url` imports: bundles the target as a
+ * standalone IIFE under out/renderer/workers/ and replaces the import with the
+ * worker's relative URL string (cached per absolute path).
+ * @type {Object}
+ */
 const workerUrlPlugin = {
   name: "worker-url",
   setup(b) {
@@ -116,6 +133,13 @@ const workerUrlPlugin = {
 
 // `import.meta.glob(pattern, opts?)` → expand at build time into an object
 // literal mapping resolved relative paths to dynamic import functions.
+/**
+ * esbuild plugin that expands Vite's `import.meta.glob(pattern, opts)` calls at
+ * build time into an object literal mapping matched relative paths to (lazy or
+ * eager) dynamic imports, honoring the `eager`, `query`/`as`, and `import`
+ * options.
+ * @type {Object}
+ */
 const importMetaGlobPlugin = {
   name: "import-meta-glob",
   setup(b) {
@@ -162,6 +186,13 @@ const importMetaGlobPlugin = {
 }
 
 // `?url` and `?raw` import suffixes for arbitrary assets.
+/**
+ * esbuild plugin handling Vite's `?url`, `?raw`, and `?inline` asset import
+ * suffixes: `?url` emits the file to out/renderer/assets/ and yields its
+ * relative URL, `?raw` inlines the file text, and `?inline` yields a base64
+ * data URL.
+ * @type {Object}
+ */
 const assetSuffixPlugin = {
   name: "asset-suffix",
   setup(b) {
@@ -282,6 +313,15 @@ await fs.copyFile(path.join(dir, "src/renderer/styles.css"), "out/renderer/style
 // ---- HTML emit + public assets [5/5] ----------------------------------------
 console.log("[5/5] emit HTML + copy public assets...")
 
+/**
+ * Read a renderer HTML template, strip its inline index/loading script tag, and
+ * inject a native-ESM module script pointing at the entry's canonical /@fs/
+ * path, then write it to out/renderer/.
+ * @param {string} srcName - Source HTML filename under src/renderer/ (e.g. "index.html").
+ * @param {string} outName - Output HTML filename written under out/renderer/.
+ * @param {string} entry - Entry module base name (e.g. "index" or "loading") whose .js is referenced.
+ * @returns {Promise<void>} Resolves once the HTML file is written.
+ */
 async function emitHtml(srcName, outName, entry) {
   const html = await fs.readFile(path.join(dir, `src/renderer/${srcName}`), "utf8")
   const out = html
@@ -297,6 +337,12 @@ await emitHtml("loading.html", "loading.html", "loading")
 
 // ---- public assets ---------------------------------------------------------
 
+/**
+ * Recursively copy a directory tree, creating destination directories as needed.
+ * @param {string} src - Source directory path.
+ * @param {string} dst - Destination directory path.
+ * @returns {Promise<void>} Resolves once the entire tree has been copied.
+ */
 async function copyDir(src, dst) {
   await fs.mkdir(dst, { recursive: true })
   for (const entry of await fs.readdir(src, { withFileTypes: true })) {

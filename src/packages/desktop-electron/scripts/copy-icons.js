@@ -1,3 +1,4 @@
+/** @file Build script that copies the channel-specific icon set (from CLI arg or resolved channel) into resources/icons. */
 import { $ } from "script/shell";
 import { resolveChannel } from "./utils.js";
 const arg = process.argv[2];

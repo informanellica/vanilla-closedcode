@@ -1,3 +1,4 @@
+/** @file Main-process IPC registration: wires renderer-invokable channels (LLM model management, store, file IO, dialogs, clipboard, windowing, updater) and helpers to push messages to a window. */
 import { execFile } from "node:child_process";
 import { promises as fsp } from "node:fs";
 import path from "node:path";
@@ -9,6 +10,11 @@ const { BrowserWindow, Notification, app, clipboard, dialog, ipcMain, shell } = 
 import { getStore } from "./store.js";
 import { setTitlebar } from "./windows.js";
 import { getProvider, providerCanPull, modelSupportsVision, ollamaPs, ollamaDelete } from "./llm-providers.js";
+/**
+ * Build a file dialog filter array from a list of extensions.
+ * @param {Array} ext - Extension strings (without leading dot), or empty/undefined for no filter.
+ * @returns {Array} A single {name, extensions} filter entry, or undefined when no extensions are given.
+ */
 const pickerFilters = ext => {
   if (!ext || ext.length === 0) return undefined;
   return [{
@@ -16,6 +22,11 @@ const pickerFilters = ext => {
     extensions: ext
   }];
 };
+/**
+ * Register all main-process IPC handlers backed by the supplied dependency callbacks.
+ * @param {Object} deps - Callbacks the handlers delegate to (killSidecar, awaitInitialization, getWindowConfig, store/url/wsl/updater/etc. functions).
+ * @returns {void}
+ */
 export function registerIpcHandlers(deps) {
   // LLM model management (provider-agnostic; see main/llm-providers.js). Run in
   // main so it works for remote hosts (no CORS) and can stream pull progress.
@@ -97,6 +108,13 @@ export function registerIpcHandlers(deps) {
   });
   // Vanilla file-system operations for the explorer context menu (no SDK).
   // All paths must be absolute.
+  /**
+   * Assert that a value is an absolute filesystem path.
+   * @param {string} p - The path to validate.
+   * @param {string} who - The handler name, used in the error message.
+   * @returns {void}
+   * @throws {Error} When `p` is not a string or not an absolute path.
+   */
   const requireAbs = (p, who) => {
     if (typeof p !== "string" || !path.isAbsolute(p)) throw new Error(`${who}: absolute path required`);
   };
@@ -241,12 +259,30 @@ export function registerIpcHandlers(deps) {
     setTitlebar(win, theme);
   });
 }
+/**
+ * Push SQLite migration progress to a window's renderer.
+ * @param {Object} win - The target BrowserWindow.
+ * @param {Object} progress - The migration progress payload.
+ * @returns {void}
+ */
 export function sendSqliteMigrationProgress(win, progress) {
   win.webContents.send("sqlite-migration-progress", progress);
 }
+/**
+ * Send a menu command id to a window's renderer.
+ * @param {Object} win - The target BrowserWindow.
+ * @param {string} id - The menu command identifier.
+ * @returns {void}
+ */
 export function sendMenuCommand(win, id) {
   win.webContents.send("menu-command", id);
 }
+/**
+ * Deliver deep-link URLs to a window's renderer.
+ * @param {Object} win - The target BrowserWindow.
+ * @param {Array} urls - The deep-link URLs to deliver.
+ * @returns {void}
+ */
 export function sendDeepLinks(win, urls) {
   win.webContents.send("deep-link", urls);
 }

@@ -1,7 +1,12 @@
+/** @file Sandboxed Electron preload that exposes a typed `window.api` IPC bridge (LLM model management, storage, filesystem, windowing, clipboard, updater, etc.) to the renderer. */
 // Electron preload scripts run in a CommonJS context — sandboxed preloads
 // (webPreferences.sandbox: true, set in windows.js) do not support ESM `import`.
 // Use require() so this file loads directly from src with no esbuild bundling.
 const { contextBridge, ipcRenderer } = require("electron");
+/**
+ * The renderer-facing API surface exposed on window.api. Each method either invokes/sends an IPC channel to the main process or registers an event listener (returning an unsubscribe function).
+ * @type {Object}
+ */
 const api = {
   // LLM model management (provider-agnostic). pull streams progress via the
   // "llm-pull-progress" channel, correlated by requestId.

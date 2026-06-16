@@ -1,3 +1,10 @@
+/** @file Japanese (ja) translation strings for desktop-specific renderer UI (menus, dialogs, updater, CLI install). */
+
+/**
+ * Japanese translation table mapping desktop renderer message keys to their localized strings.
+ * Some values contain `{{...}}` placeholders that are interpolated at lookup time.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "アップデートを確認...",
   "desktop.menu.installCli": "CLI をインストール...",

@@ -1,3 +1,4 @@
+/** @file Renderer i18n entry point: detects the active locale, merges desktop + app translation dictionaries per locale, and exposes the `t()` translator plus `initI18n()` to hydrate the locale from persisted store settings. */
 import * as i18n from "@/lib/primitives/i18n.js";
 import { dict as desktopEn } from "./en.js";
 import { dict as desktopZh } from "./zh.js";
@@ -29,7 +30,17 @@ import { dict as appAr } from "@/i18n/ar.js";
 import { dict as appNo } from "@/i18n/no.js";
 import { dict as appBr } from "@/i18n/br.js";
 import { dict as appBs } from "@/i18n/bs.js";
+/**
+ * Set of locale codes the renderer supports. Used to validate stored/requested values.
+ * @type {Array<string>}
+ */
 const LOCALES = ["en", "zh", "zht", "ko", "de", "es", "fr", "da", "ja", "pl", "ru", "bs", "ar", "no", "br"];
+
+/**
+ * Detect the preferred locale from the browser's `navigator.languages`/`navigator.language`.
+ * Maps each candidate language tag to one of the supported locale codes, falling back to "en".
+ * @returns {string} A supported locale code (defaults to "en").
+ */
 function detectLocale() {
   if (typeof navigator !== "object") return "en";
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
@@ -55,17 +66,34 @@ function detectLocale() {
   }
   return "en";
 }
+/**
+ * Validate that a value is a string naming one of the supported locales.
+ * @param {*} value - Candidate locale value.
+ * @returns {string} The locale code if supported, otherwise null.
+ */
 function parseLocale(value) {
   if (!value) return null;
   if (typeof value !== "string") return null;
   if (LOCALES.includes(value)) return value;
   return null;
 }
+
+/**
+ * Coerce a value to a plain (non-array) object record, or null if it is not one.
+ * @param {*} value - Candidate value.
+ * @returns {Object} The object if it is a plain non-array object, otherwise null.
+ */
 function parseRecord(value) {
   if (!value || typeof value !== "object") return null;
   if (Array.isArray(value)) return null;
   return value;
 }
+/**
+ * Normalize a value read from the persisted store: if it is a JSON string, parse it;
+ * otherwise return it unchanged. Parse failures fall back to the raw string.
+ * @param {*} value - Raw stored value (often a string or JSON string).
+ * @returns {*} The parsed value, or the original value when not parseable JSON.
+ */
 function parseStored(value) {
   if (typeof value !== "string") return value;
   try {
@@ -74,6 +102,13 @@ function parseStored(value) {
     return value;
   }
 }
+
+/**
+ * Resolve a stored value to a supported locale code. Accepts either a direct locale
+ * string or a record containing a `locale` field.
+ * @param {*} value - A locale string or a record with a `locale` property.
+ * @returns {string} A supported locale code, or null if none can be resolved.
+ */
 function pickLocale(value) {
   const direct = parseLocale(value);
   if (direct) return direct;
@@ -81,10 +116,23 @@ function pickLocale(value) {
   if (!record) return null;
   return parseLocale(record.locale);
 }
+/**
+ * Flattened English dictionary (app + desktop strings merged) used as the base layer
+ * onto which non-English locale overrides are applied.
+ * @type {Object}
+ */
 const base = i18n.flatten({
   ...appEn,
   ...desktopEn
 });
+
+/**
+ * Build the flattened translation dictionary for a locale by layering that locale's
+ * app and desktop strings over the English `base`. Returns `base` for "en", and
+ * falls back to Korean for any unrecognized locale.
+ * @param {string} locale - A supported locale code.
+ * @returns {Object} The flattened key/value translation dictionary for the locale.
+ */
 function build(locale) {
   if (locale === "en") return base;
   if (locale === "zh") return {
@@ -158,16 +206,42 @@ function build(locale) {
     ...i18n.flatten(desktopKo)
   };
 }
+/**
+ * Mutable module-level i18n state.
+ * @type {Object}
+ * @property {string} locale - The currently active locale code.
+ * @property {Object} dict - The active flattened translation dictionary.
+ * @property {Promise} init - Cached promise from `initI18n()`, or undefined before first call.
+ */
 const state = {
   locale: detectLocale(),
   dict: base,
   init: undefined
 };
 state.dict = build(state.locale);
+
+/**
+ * Bound translator that resolves keys against the current `state.dict` and interpolates templates.
+ * @type {Function}
+ */
 const translate = i18n.translator(() => state.dict, i18n.resolveTemplate);
+
+/**
+ * Translate a message key against the active locale dictionary.
+ * @param {string} key - Dotted message id (e.g. "desktop.menu.restart").
+ * @param {Object} params - Optional values interpolated into `{{var}}` placeholders.
+ * @returns {string} The localized, interpolated string.
+ */
 export function t(key, params) {
   return translate(key, params);
 }
+
+/**
+ * Hydrate the active locale from the persisted store ("closedcode.global.dat" with a
+ * legacy "opencode.global.dat" fallback), rebuilding `state.dict` accordingly. The work
+ * is performed once and the resulting promise is cached/reused on subsequent calls.
+ * @returns {Promise<string>} Resolves to the locale code that was applied.
+ */
 export function initI18n() {
   const cached = state.init;
   if (cached) return cached;

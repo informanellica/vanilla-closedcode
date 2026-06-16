@@ -1,3 +1,4 @@
+/** @file Framework-free startup splash controller: updates the static loading screen's status text and progress fill from initialization/migration events, then signals completion via the preload bridge. */
 // Startup splash controller. Deliberately framework-free: it imports NOTHING
 // (no reactive runtime, no components, no CSS), so the splash that loading.html
 // renders statically keeps working — and updating — even if the import map,
@@ -16,9 +17,24 @@ let line = 0;
 let percent = 0;
 let completed = false;
 
+/**
+ * Set the splash status line text, if the status element exists.
+ * @param {string} text - The status message to display.
+ * @returns {void}
+ */
 const setStatus = text => { if (statusEl) statusEl.textContent = text; };
+/**
+ * Set the progress fill width, clamped to the 0-100 percent range, if the fill element exists.
+ * @param {number} value - Desired fill percentage (clamped to 0..100).
+ * @returns {void}
+ */
 const setFill = value => { if (fillEl) fillEl.style.width = Math.max(0, Math.min(100, value)) + "%"; };
 
+/**
+ * Repaint the splash from current state: show "All done"/100% when finished, otherwise the
+ * appropriate status line and a fill held at a visible minimum (25%) until real progress arrives.
+ * @returns {void}
+ */
 function render() {
   if (phase === "done") { setStatus("All done"); setFill(100); return; }
   setStatus(phase === "sqlite_waiting" ? (lines[line] ?? lines[0]) : "Just a moment...");
@@ -26,6 +42,11 @@ function render() {
   setFill(Math.max(25, percent));
 }
 
+/**
+ * Signal startup completion exactly once: after a short settle delay, notify the main process via
+ * the preload bridge so it can swap the splash for the main window. Idempotent.
+ * @returns {void}
+ */
 function complete() {
   if (completed) return;
   completed = true;
@@ -33,6 +54,11 @@ function complete() {
   setTimeout(() => window.api?.loadingWindowComplete?.(), 1000);
 }
 
+/**
+ * Update the current initialization phase, repaint the splash, and trigger completion when done.
+ * @param {string} next - The next phase identifier (e.g. "sqlite_waiting", "done"), or null/undefined to clear.
+ * @returns {void}
+ */
 function setPhase(next) {
   phase = next ?? null;
   render();

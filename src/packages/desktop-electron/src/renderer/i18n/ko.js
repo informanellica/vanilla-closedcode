@@ -1,3 +1,10 @@
+/** @file Korean (ko) translation strings for desktop-specific renderer UI (menus, dialogs, updater, CLI install). */
+
+/**
+ * Korean translation table mapping desktop renderer message keys to their localized strings.
+ * Some values contain `{{...}}` placeholders that are interpolated at lookup time.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "업데이트 확인...",
   "desktop.menu.installCli": "CLI 설치...",

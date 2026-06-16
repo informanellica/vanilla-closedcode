@@ -1,3 +1,4 @@
+/** @file Builds the macOS application menu and opens the bundled (locale-aware) documentation viewer. */
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +15,10 @@ const SUPPORTED_LANGS = new Set([
   "pt-br", "ru", "th", "tr", "zh-cn", "zh-tw",
 ]);
 
+/**
+ * Locate the bundled documentation root by probing the known dev and packaged locations.
+ * @returns {string} The absolute path to the docs root, or null if none was found.
+ */
 function resolveDocsRoot() {
   // In dev: packages/desktop-electron/resources/docs/
   // Packaged: app.asar.unpacked/resources/docs/ via electron-builder extraResources
@@ -28,6 +33,11 @@ function resolveDocsRoot() {
   return null;
 }
 
+/**
+ * Map an Electron locale string to one of the supported documentation language codes.
+ * @param {string} locale - The locale string (e.g. "ja", "zh-Hant", "pt-PT"); defaults to "en" when falsy.
+ * @returns {string} A supported language code, falling back to "en".
+ */
 function localeToLang(locale) {
   const l = (locale || "en").toLowerCase();
   if (SUPPORTED_LANGS.has(l)) return l;
@@ -41,6 +51,10 @@ function localeToLang(locale) {
   return "en";
 }
 
+/**
+ * Open the documentation: a locale-appropriate bundled page in a BrowserWindow, or the public docs site if the bundle is missing.
+ * @returns {void}
+ */
 function openDocs() {
   const root = resolveDocsRoot();
   if (!root) {
@@ -60,6 +74,11 @@ function openDocs() {
   win.loadURL(url);
 }
 
+/**
+ * Build and install the macOS application menu, wiring menu items to the provided callbacks. No-op on non-darwin platforms.
+ * @param {Object} deps - Callbacks invoked by menu items: checkForUpdates, reload, relaunch, and trigger(commandId).
+ * @returns {void}
+ */
 export function createMenu(deps) {
   if (process.platform !== "darwin") return;
   const template = [{

@@ -1,15 +1,33 @@
+/** @file Cross-platform external-application detection and path resolution (macOS .app lookup, Windows `where` resolution, WSL path translation). */
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
+/**
+ * Check whether a named external application is available on this machine.
+ * @param {string} appName - The application name to look for.
+ * @returns {boolean} True on Windows/Linux (always assumed available) or when the macOS app is found.
+ */
 export function checkAppExists(appName) {
   if (process.platform === "win32") return true;
   if (process.platform === "linux") return true;
   return checkMacosApp(appName);
 }
+/**
+ * Resolve a launchable executable path for the named application.
+ * @param {string} appName - The application name to resolve.
+ * @returns {string} On non-Windows the name unchanged; on Windows the resolved .exe path, or null when not found.
+ */
 export function resolveAppPath(appName) {
   if (process.platform !== "win32") return appName;
   return resolveWindowsAppPath(appName);
 }
+/**
+ * Translate a path between Windows and WSL (Unix) namespaces via `wslpath`.
+ * @param {string} path - The path to translate; a leading "~" is expanded to the WSL $HOME.
+ * @param {string} mode - "windows" to convert to a Windows path, otherwise to a Unix path.
+ * @returns {string} The translated path (or the input unchanged when not on win32).
+ * @throws {Error} When invoking wslpath fails.
+ */
 export function wslPath(path, mode) {
   if (process.platform !== "win32") return path;
   const flag = mode === "windows" ? "-w" : "-u";
@@ -28,6 +46,11 @@ export function wslPath(path, mode) {
     });
   }
 }
+/**
+ * Detect a macOS application by checking the standard Applications folders and PATH.
+ * @param {string} appName - The application name (without the .app suffix).
+ * @returns {boolean} True when the .app bundle exists or the name is on PATH.
+ */
 function checkMacosApp(appName) {
   const locations = [`/Applications/${appName}.app`, `/System/Applications/${appName}.app`];
   const home = process.env.HOME;
@@ -40,6 +63,12 @@ function checkMacosApp(appName) {
     return false;
   }
 }
+/**
+ * Resolve a Windows executable for an application name using `where`, falling back
+ * to parsing .cmd/.bat shims (for the %~dp0-relative .exe), then a fuzzy directory scan.
+ * @param {string} appName - The application name to resolve.
+ * @returns {string} The resolved .exe path, the first `where` candidate, or null when nothing is found.
+ */
 function resolveWindowsAppPath(appName) {
   let output;
   try {

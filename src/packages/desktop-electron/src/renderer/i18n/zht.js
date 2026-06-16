@@ -1,3 +1,10 @@
+/** @file Traditional Chinese (zht) translation strings for desktop-specific renderer UI (menus, dialogs, updater, CLI install). */
+
+/**
+ * Traditional Chinese translation table mapping desktop renderer message keys to their localized strings.
+ * Some values contain `{{...}}` placeholders that are interpolated at lookup time.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "檢查更新...",
   "desktop.menu.installCli": "安裝 CLI...",

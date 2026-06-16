@@ -1,9 +1,19 @@
+/** @file Loads the user's login/interactive shell environment by probing the shell, so spawned processes inherit a realistic PATH and variables. */
 import { spawnSync } from "node:child_process";
 import { basename } from "node:path";
 const TIMEOUT = 5_000;
+/**
+ * Determine the user's preferred shell from the SHELL environment variable.
+ * @returns {string} The shell path from process.env.SHELL, or "/bin/sh" as a fallback.
+ */
 export function getUserShell() {
   return process.env.SHELL || "/bin/sh";
 }
+/**
+ * Parse NUL-delimited `env -0` output into a plain key/value environment object.
+ * @param {Buffer} out - The raw stdout buffer of `env -0`.
+ * @returns {Object} A map of environment variable names to their string values.
+ */
 export function parseShellEnv(out) {
   const env = {};
   for (const line of out.toString("utf8").split("\0")) {
@@ -14,6 +24,12 @@ export function parseShellEnv(out) {
   }
   return env;
 }
+/**
+ * Spawn the shell in the given mode and capture its environment via `env -0`.
+ * @param {string} shell - The shell executable to invoke.
+ * @param {string} mode - The shell flag combination (e.g. "-il" or "-l").
+ * @returns {Object} A tagged result: {type:"Loaded", value} on success, or {type:"Timeout"} / {type:"Unavailable"} on failure.
+ */
 function probe(shell, mode) {
   const out = spawnSync(shell, [mode, "-c", "env -0"], {
     stdio: ["ignore", "pipe", "ignore"],
@@ -48,11 +64,21 @@ function probe(shell, mode) {
     value: env
   };
 }
+/**
+ * Detect whether the given shell path refers to Nushell, whose env cannot be probed with `env -0`.
+ * @param {string} shell - The shell path to inspect.
+ * @returns {boolean} True if the shell is Nushell.
+ */
 export function isNushell(shell) {
   const name = basename(shell).toLowerCase();
   const raw = shell.toLowerCase();
   return name === "nu" || name === "nu.exe" || raw.endsWith("\\nu.exe");
 }
+/**
+ * Load the shell's environment, preferring an interactive login probe and falling back to a plain login probe.
+ * @param {string} shell - The shell to load the environment from.
+ * @returns {Object} The parsed environment variable map, or null when probing is skipped, times out, or fails (caller falls back to the app env).
+ */
 export function loadShellEnv(shell) {
   if (isNushell(shell)) {
     console.log(`[server] Skipping shell env probe for nushell: ${shell}`);
@@ -75,6 +101,12 @@ export function loadShellEnv(shell) {
   console.warn(`[server] Falling back to app environment: ${shell}`);
   return null;
 }
+/**
+ * Merge two environment maps, with the second taking precedence over the first.
+ * @param {Object} shell - The base (shell) environment map.
+ * @param {Object} env - The overriding environment map applied on top.
+ * @returns {Object} A new merged environment object.
+ */
 export function mergeShellEnv(shell, env) {
   return {
     ...shell,

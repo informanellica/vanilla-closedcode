@@ -1,3 +1,4 @@
+/** @file Creates the main/loading BrowserWindows and registers the custom vcc:// renderer protocol, including the build-less import-rewriting module resolver. */
 import windowState from "electron-window-state";
 import { createRequire } from "node:module";
 import { dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
@@ -26,9 +27,18 @@ protocol.registerSchemesAsPrivileged([{
   }
 }]);
 let backgroundColor;
+/**
+ * Store the renderer-reported window background color for use when creating subsequent windows.
+ * @param {string} color - The CSS color string to use as the window background.
+ * @returns {void}
+ */
 export function setBackgroundColor(color) {
   backgroundColor = color;
 }
+/**
+ * Get the currently stored window background color.
+ * @returns {string} The stored background color, or undefined if none has been set.
+ */
 export function getBackgroundColor() {
   return backgroundColor;
 }
@@ -37,19 +47,41 @@ export function getBackgroundColor() {
 // created with an undefined backgroundColor and Electron paints them white first,
 // flashing white before the HTML paints. Values match loading.html / the
 // theme-color meta tags (#f8f7f7 light, #131010 dark).
+/**
+ * Compute the theme-appropriate default window background color used before the renderer reports its real color.
+ * @param {string} mode - The theme mode ("dark" or "light"); defaults to the current system tone when omitted.
+ * @returns {string} The hex background color for the given mode.
+ */
 function defaultBackgroundColor(mode) {
   return (mode ?? tone()) === "dark" ? "#131010" : "#f8f7f7";
 }
+/**
+ * Resolve the directory containing application icons for the current (packaged vs dev) layout.
+ * @returns {string} The absolute path to the icons directory.
+ */
 function iconsDir() {
   return app.isPackaged ? join(process.resourcesPath, "icons") : join(root, "../../resources/icons");
 }
+/**
+ * Resolve the platform-appropriate window icon file path (.ico on Windows, .png elsewhere).
+ * @returns {string} The absolute path to the window icon file.
+ */
 function iconPath() {
   const ext = process.platform === "win32" ? "ico" : "png";
   return join(iconsDir(), `icon.${ext}`);
 }
+/**
+ * Get the current system theme tone.
+ * @returns {string} "dark" when the system prefers dark colors, otherwise "light".
+ */
 function tone() {
   return nativeTheme.shouldUseDarkColors ? "dark" : "light";
 }
+/**
+ * Build the Windows title-bar overlay descriptor (transparent background, theme-appropriate symbol color).
+ * @param {Object} theme - Optional theme object with a `mode` field ("dark"/"light"); defaults to the current tone.
+ * @returns {Object} The title-bar overlay options (color, symbolColor, height).
+ */
 function overlay(theme = {}) {
   const mode = theme.mode ?? tone();
   return {
@@ -58,6 +90,12 @@ function overlay(theme = {}) {
     height: 40
   };
 }
+/**
+ * Apply the title-bar overlay (symbol color accent) to a window on Windows, swallowing errors when the window has no overlay. No-op off Windows.
+ * @param {BrowserWindow} win - The target browser window.
+ * @param {Object} theme - Optional theme object with a `mode` field controlling the symbol color.
+ * @returns {void}
+ */
 export function setTitlebar(win, theme = {}) {
   if (process.platform !== "win32") return;
   // setTitleBarOverlay throws ("Titlebar overlay is not enabled") when the window
@@ -66,11 +104,19 @@ export function setTitlebar(win, theme = {}) {
   // the error rather than surface it as an uncaught IPC rejection.
   try { win.setTitleBarOverlay(overlay(theme)); } catch {}
 }
+/**
+ * Set the macOS dock icon from the bundled dock.png. No-op on non-darwin platforms or when the image is empty.
+ * @returns {void}
+ */
 export function setDockIcon() {
   if (process.platform !== "darwin") return;
   const icon = nativeImage.createFromPath(join(iconsDir(), "dock.png"));
   if (!icon.isEmpty()) app.dock?.setIcon(icon);
 }
+/**
+ * Create the main application BrowserWindow with persisted window state, CORS header rewriting, fixed zoom, and deferred show until first paint.
+ * @returns {BrowserWindow} The newly created main window.
+ */
 export function createMainWindow() {
   const state = windowState({
     defaultWidth: 1280,
@@ -125,6 +171,10 @@ export function createMainWindow() {
   });
   return win;
 }
+/**
+ * Create the startup splash/loading BrowserWindow, shown only after first paint to avoid a blank white flash.
+ * @returns {BrowserWindow} The newly created loading window.
+ */
 export function createLoadingWindow() {
   const mode = tone();
   const win = new BrowserWindow({
@@ -206,6 +256,11 @@ const MIME = {
 // should resolve to their URL string (esbuild `file` loader equivalent) rather
 // than be parsed as JS. The same files fetched as <img>/font return their bytes.
 const ASSET_EXT = new Set([".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".woff", ".woff2", ".ttf", ".otf", ".aac", ".mp3", ".wav"]);
+/**
+ * Recursively resolve a package.json "exports" conditions value down to a concrete path, preferring the configured resolve conditions.
+ * @param {*} val - An exports value: a string target, an array of alternatives, or a conditions object.
+ * @returns {string} The first matching target path, or null if none matched.
+ */
 function pickCondition(val) {
   if (typeof val === "string") return val;
   if (Array.isArray(val)) { for (const v of val) { const r = pickCondition(v); if (r) return r; } return null; }
@@ -215,6 +270,12 @@ function pickCondition(val) {
   }
   return null;
 }
+/**
+ * Locate the on-disk directory of an installed package, walking up node_modules from a starting directory without escaping the asar when packaged.
+ * @param {string} pkg - The package name (supports scoped names like "@scope/name").
+ * @param {string} fromDir - The directory to begin the node_modules walk-up from.
+ * @returns {string} The resolved package directory, defaulting to the top-level node_modules path when not found.
+ */
 function findPkgDir(pkg, fromDir) {
   // Packaged: workspace stubs in out/node_modules/ are authoritative. Check them
   // FIRST so resolution can't escape the asar into the dev repo's node_modules —
@@ -237,6 +298,12 @@ function findPkgDir(pkg, fromDir) {
   }
   return join(NODE_MODULES, pkg);
 }
+/**
+ * Resolve a bare import specifier to an absolute on-disk file, honoring the package's "exports" map (including "*" patterns) or falling back to module/main/index.js.
+ * @param {string} spec - The bare specifier (e.g. "pkg" or "@scope/pkg/sub").
+ * @param {string} fromDir - The directory to resolve the package from.
+ * @returns {string} The absolute resolved path, or null when the package cannot be resolved.
+ */
 function resolveBare(spec, fromDir) {
   let pkg, sub;
   if (spec.startsWith("@")) { const p = spec.split("/"); pkg = p[0] + "/" + p[1]; sub = p.slice(2).join("/"); }
@@ -281,6 +348,10 @@ const FS_ROOT_FWD = FS_ROOT.replace(/\\/g, "/");
 // transitive specifiers, and module workers — import maps do not apply inside
 // workers). That resolver is the documented third-party interop wall.
 let importMapJson = null;
+/**
+ * Build (and cache) the JSON import map for first-party modules by scanning the app/renderer/core/sdk trees for bare specifiers and resolving each to a vcc:// route, including the solid-free reactivity remapping.
+ * @returns {Promise<string>} The cached JSON string of the import map ({imports: {...}}).
+ */
 async function buildImportMap() {
   if (importMapJson) return importMapJson;
   await lexerInit;
@@ -346,6 +417,11 @@ async function buildImportMap() {
 // packages/*); in the asar there are no symlinks.
 // Node-style file resolution: native ESM has no directory/extension inference,
 // but esbuild did. Resolve a path to a real file (as-is, +.js/.mjs, /index.js).
+/**
+ * Resolve a path to a real file using Node-style inference (as-is, then +.js/.mjs, then /index.js or /index.mjs).
+ * @param {string} p - The candidate path, possibly extensionless or a directory.
+ * @returns {string} The resolved file path, or the original path when nothing matched.
+ */
 function resolveFile(p) {
   try { if (statSync(p).isFile()) return p; } catch {}
   for (const cand of [p + ".js", p + ".mjs", join(p, "index.js"), join(p, "index.mjs")]) {
@@ -353,6 +429,11 @@ function resolveFile(p) {
   }
   return p;
 }
+/**
+ * Map an absolute disk path under the repo (dev) or asar (packaged) to a canonical /@fs/<repo-relative> URL, reverse-mapping asar paths to their repo equivalents.
+ * @param {string} abs - The absolute disk path to convert.
+ * @returns {string} The /@fs/ URL, or null when the path lies outside the FS root.
+ */
 function toOcPath(abs) {
   let real = abs;
   try { real = realpathSync(abs); } catch {}
@@ -373,6 +454,11 @@ function toOcPath(abs) {
 // route aliases (/src/, /renderer/) — the same form the HTML entry, relative
 // imports and the import map produce. Mixing them with /@fs/ double-
 // instantiates modules and breaks Solid context identity (white screen).
+/**
+ * Convert a file path to its canonical first-party route URL (/src/ or /renderer/), falling back to a /@fs/ URL for anything outside those trees.
+ * @param {string} file - The absolute file path to convert.
+ * @returns {string} The canonical route URL, or null when neither route nor /@fs/ mapping applies.
+ */
 function toRouteUrl(file) {
   let real = file;
   try { real = realpathSync(file); } catch {}
@@ -382,6 +468,12 @@ function toRouteUrl(file) {
   }
   return toOcPath(real);
 }
+/**
+ * Rewrite a served module's import specifiers to canonical vcc:// route URLs, wrapping non-ESM (CJS/UMD) files for default interop and tagging asset imports.
+ * @param {string} code - The raw module source code.
+ * @param {string} diskPath - The on-disk path of the module (used to resolve relative imports).
+ * @returns {Promise<string>} The rewritten module source, or the original code when it cannot be parsed.
+ */
 async function rewriteModule(code, diskPath) {
   await lexerInit;
   let imports, exports;
@@ -440,6 +532,11 @@ async function rewriteModule(code, diskPath) {
   out += code.slice(last);
   return out;
 }
+/**
+ * Map a requested vcc:// pathname to its on-disk file and the base directory used for path-traversal containment checks.
+ * @param {string} pathname - The decoded request pathname (e.g. "/@fs/...", "/src/...", "/node_modules/...").
+ * @returns {Object} An object with `disk` (the resolved absolute path) and `base` (the containing root for traversal checks).
+ */
 function routeDisk(pathname) {
   if (pathname.startsWith("/@fs/")) {
     let rel = pathname.slice("/@fs/".length);
@@ -457,6 +554,10 @@ function routeDisk(pathname) {
   if (pathname.startsWith("/renderer/")) return { disk: join(DT_RENDERER, pathname.slice("/renderer/".length)), base: DT_RENDERER };
   return { disk: resolve(rendererRoot, `.${pathname}`), base: rendererRoot };
 }
+/**
+ * Register the privileged vcc:// protocol handler that serves the renderer: static bundle in legacy mode, or the import-rewriting module resolver (with import-map injection) in build-less/packaged-from-src mode.
+ * @returns {void}
+ */
 export function registerRendererProtocol() {
   if (protocol.isProtocolHandled(rendererProtocol)) return;
   protocol.handle(rendererProtocol, async request => {
@@ -544,6 +645,12 @@ export function registerRendererProtocol() {
     }
   });
 }
+/**
+ * Load an HTML page into a window, using the dev server URL when ELECTRON_RENDERER_URL is set, otherwise the vcc:// renderer protocol.
+ * @param {BrowserWindow} win - The window to load the page into.
+ * @param {string} html - The HTML file name to load (e.g. "index.html", "loading.html").
+ * @returns {void}
+ */
 function loadWindow(win, html) {
   const devUrl = process.env.ELECTRON_RENDERER_URL;
   if (devUrl) {
@@ -553,12 +660,24 @@ function loadWindow(win, html) {
   }
   void win.loadURL(`${rendererProtocol}://${rendererHost}/${html}`);
 }
+/**
+ * Lock a window's zoom factor at 1, resetting it whenever the user attempts to change it.
+ * @param {BrowserWindow} win - The window whose zoom should be pinned.
+ * @returns {void}
+ */
 function wireZoom(win) {
   win.webContents.setZoomFactor(1);
   win.webContents.on("zoom-changed", () => {
     win.webContents.setZoomFactor(1);
   });
 }
+/**
+ * Set a header value on an object case-insensitively, reusing an existing key with differing case or appending a new one.
+ * @param {Object} obj - The headers object to mutate.
+ * @param {string} keyToChange - The header name to set (matched case-insensitively).
+ * @param {Array} value - The header value(s) to assign.
+ * @returns {void}
+ */
 function upsertKeyValue(obj, keyToChange, value) {
   const keyToChangeLower = keyToChange.toLowerCase();
   for (const key of Object.keys(obj)) {

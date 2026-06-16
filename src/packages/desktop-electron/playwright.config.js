@@ -1,3 +1,4 @@
+/** @file Playwright test config for the desktop e2e suite: serial single-worker runs with generous timeouts and retries tuned for the Electron cold-start flakiness, plus traces/screenshots into the repo artifacts/ dir. */
 import { defineConfig } from "@playwright/test";
 
 export default defineConfig({

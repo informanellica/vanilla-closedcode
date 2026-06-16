@@ -1,3 +1,4 @@
+/** @file Main-process constants: release channel, persisted store keys, and the updater-enabled flag. */
 import { createRequire } from "node:module";
 // Electron 41's ESM loader does not expose the runtime API via `import` from
 // "electron" (neither named nor default resolves to the real app object). Use a

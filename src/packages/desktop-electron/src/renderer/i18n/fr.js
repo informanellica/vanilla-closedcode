@@ -1,3 +1,10 @@
+/** @file French (fr) translation strings for the desktop Electron shell (menu, dialogs, updater, CLI installer). */
+
+/**
+ * French translation dictionary keyed by dotted message id; values may contain
+ * `{{var}}` placeholders that are interpolated at render time.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "Vérifier les mises à jour...",
   "desktop.menu.installCli": "Installer la CLI...",

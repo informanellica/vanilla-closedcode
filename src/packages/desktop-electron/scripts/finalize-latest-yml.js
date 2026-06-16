@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Release script that merges per-platform/per-arch electron-updater latest*.yml feed files (Windows/macOS arm64+x64 merged, Linux passthrough) and uploads the combined feeds to the GitHub release. */
 import { $ } from "script/shell";
 import path from "path";
 import { readFile, writeFile, access } from "node:fs/promises";
@@ -8,6 +9,13 @@ const repo = process.env.GH_REPO;
 if (!repo) throw new Error("GH_REPO is required");
 const version = process.env.CLOSEDCODE_VERSION;
 if (!version) throw new Error("CLOSEDCODE_VERSION is required");
+/**
+ * Parse an electron-updater latest.yml feed into a structured object, extracting
+ * the version, releaseDate, and the list of file entries (url/sha512/size and
+ * optional blockMapSize).
+ * @param {string} content - The raw YAML feed text.
+ * @returns {Object} An object with `version`, `files` (Array), and `releaseDate`.
+ */
 function parse(content) {
   const lines = content.split("\n");
   let version = "";
@@ -34,6 +42,11 @@ function parse(content) {
     releaseDate
   };
 }
+/**
+ * Serialize a parsed feed object back into electron-updater latest.yml text.
+ * @param {Object} data - Feed object with `version`, `files` (Array), and `releaseDate`.
+ * @returns {string} The YAML feed text (trailing newline included).
+ */
 function serialize(data) {
   const lines = [`version: ${data.version}`, "files:"];
   for (const file of data.files) {
@@ -45,6 +58,13 @@ function serialize(data) {
   lines.push(`releaseDate: '${data.releaseDate}'`);
   return lines.join("\n") + "\n";
 }
+/**
+ * Read and parse a latest.yml feed file from a per-target subdirectory, returning
+ * undefined if the file does not exist.
+ * @param {string} subdir - Subdirectory under LATEST_YML_DIR holding the feed file.
+ * @param {string} filename - The feed filename to read (e.g. "latest.yml").
+ * @returns {Promise<Object>} The parsed feed object, or undefined if the file is absent.
+ */
 async function read(subdir, filename) {
   const p = path.join(dir, subdir, filename);
   try {

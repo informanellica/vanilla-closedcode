@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Prepare step: runs prebuild and syncs package.json version to the shared Script.version. */
 import { readFile, writeFile } from "node:fs/promises"
 import { Script } from "script"
 await import("./prebuild.js")

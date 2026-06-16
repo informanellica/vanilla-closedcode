@@ -1,3 +1,4 @@
+/** @file Lazily creates and caches electron-store instances for persisted settings, with a one-time migration from the legacy opencode.settings file. */
 import Store from "electron-store";
 import { createRequire } from "node:module";
 import fs from "node:fs";
@@ -11,6 +12,11 @@ const cache = new Map();
 // module import hoisting causes this to run before app.setPath("userData", ...)
 // in index.ts has executed, which would result in files being written to the default directory
 // (e.g. bad: %APPDATA%\desktop-electron\closedcode.settings vs good: %APPDATA%\ai.closedcode.desktop.dev\closedcode.settings).
+/**
+ * Get (creating and caching on first use) the electron-store instance for the given store name, lazily so it runs after app.setPath("userData").
+ * @param {string} name - The store file name; defaults to SETTINGS_STORE. The settings store also triggers a one-time migration from the legacy opencode.settings file.
+ * @returns {Store} The cached electron-store instance for that name.
+ */
 export function getStore(name = SETTINGS_STORE) {
   const cached = cache.get(name);
   if (cached) return cached;

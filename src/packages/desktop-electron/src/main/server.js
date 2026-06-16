@@ -1,3 +1,4 @@
+/** @file Locates and launches the bundled closedcode server sidecar, manages its connection settings (server URL, WSL), and probes its health. */
 import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
@@ -20,6 +21,10 @@ import { getStore } from "./store.js";
 //   - build-less: running directly from src/main has no co-located sidecar, so
 //                 fall back to the separately-built dist at
 //                 packages/closedcode/dist/node (same dir build.js copies FROM).
+/**
+ * Resolve the closedcode server sidecar entry point to a file:// URL suitable for dynamic import, across packaged, built-dev, and build-less layouts.
+ * @returns {string} The file:// URL of the first existing sidecar candidate, or the first candidate's URL if none exist (so import throws a clear error).
+ */
 export function resolveSidecarUrl() {
   const mainDir = dirname(fileURLToPath(import.meta.url));
   // Co-located sidecar next to the main bundle (packaged / built layouts). When
@@ -47,10 +52,19 @@ export function resolveSidecarUrl() {
   // clear "module not found" rather than a silent undefined.
   return pathToFileURL(candidates[0]).href;
 }
+/**
+ * Read the persisted default server URL from the settings store.
+ * @returns {string} The stored server URL, or null if none is set.
+ */
 export function getDefaultServerUrl() {
   const value = getStore().get(DEFAULT_SERVER_URL_KEY);
   return typeof value === "string" ? value : null;
 }
+/**
+ * Persist (or clear) the default server URL in the settings store.
+ * @param {string} url - The server URL to store; when falsy the stored value is deleted.
+ * @returns {void}
+ */
 export function setDefaultServerUrl(url) {
   if (url) {
     getStore().set(DEFAULT_SERVER_URL_KEY, url);
@@ -58,15 +72,31 @@ export function setDefaultServerUrl(url) {
   }
   getStore().delete(DEFAULT_SERVER_URL_KEY);
 }
+/**
+ * Read the persisted WSL configuration from the settings store.
+ * @returns {Object} A config object with a boolean `enabled` flag (false when unset).
+ */
 export function getWslConfig() {
   const value = getStore().get(WSL_ENABLED_KEY);
   return {
     enabled: typeof value === "boolean" ? value : false
   };
 }
+/**
+ * Persist the WSL configuration to the settings store.
+ * @param {Object} config - The WSL config object whose `enabled` boolean is stored.
+ * @returns {void}
+ */
 export function setWslConfig(config) {
   getStore().set(WSL_ENABLED_KEY, config.enabled);
 }
+/**
+ * Start the local closedcode server sidecar in-process and wait until it reports healthy.
+ * @param {string} hostname - The hostname the server should bind to.
+ * @param {number} port - The TCP port the server should listen on.
+ * @param {string} password - The basic-auth password used for the server and health checks.
+ * @returns {Promise<Object>} An object with the server `listener` and a `health.wait` promise that resolves once the server responds to health checks.
+ */
 export async function spawnLocalServer(hostname, port, password) {
   prepareServerEnv(password);
   // ESM dynamic import can't reach into app.asar. The closedcode server lives
@@ -104,6 +134,11 @@ export async function spawnLocalServer(hostname, port, password) {
     }
   };
 }
+/**
+ * Build and apply the environment for the server sidecar, merging the user's login-shell env (non-Windows) and closedcode-specific variables into process.env.
+ * @param {string} password - The server password injected as CLOSEDCODE_SERVER_PASSWORD.
+ * @returns {void}
+ */
 function prepareServerEnv(password) {
   const shell = process.platform === "win32" ? null : getUserShell();
   const shellEnv = shell ? loadShellEnv(shell) ?? {} : {};
@@ -119,6 +154,12 @@ function prepareServerEnv(password) {
   };
   Object.assign(process.env, env);
 }
+/**
+ * Probe the server's /global/health endpoint with optional basic auth and a 3s timeout.
+ * @param {string} url - The base server URL to derive the health endpoint from.
+ * @param {string} password - The basic-auth password; when present an Authorization header is sent.
+ * @returns {Promise<boolean>} True if the health endpoint responded OK, false on any error or non-OK status.
+ */
 export async function checkHealth(url, password) {
   let healthUrl;
   try {

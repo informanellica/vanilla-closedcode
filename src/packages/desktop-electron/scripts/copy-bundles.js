@@ -1,3 +1,4 @@
+/** @file Build script that copies the contents of dist/ into dist/bundles/ for the resolved Rust target. */
 import { $ } from "script/shell";
 import * as path from "node:path";
 import { RUST_TARGET } from "./utils.js";

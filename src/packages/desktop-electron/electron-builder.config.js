@@ -1,3 +1,4 @@
+/** @file electron-builder configuration for the desktop app: resolves the release channel, builds the shared base config (files/asarUnpack/fuses/platform targets), and exports the channel-specific config. */
 // Code signing is intentionally NOT configured here: this config stays
 // certificate-free. Release signing is handled separately by the release
 // tooling, so no certificate thumbprint is ever stored in this repository.
@@ -12,6 +13,13 @@ const channel = (() => {
 const hasMacIdentity = process.platform === "darwin" && Boolean(
   process.env.CSC_LINK || process.env.CSC_NAME || process.env.APPLE_TEAM_ID,
 );
+/**
+ * Build the channel-independent electron-builder configuration shared by every
+ * channel: packaged files, asar-unpacked native/ESM externals, Electron fuses,
+ * extra resources (native bindings, docs, runtime icons), and per-platform
+ * (mac/win/nsis/linux) targets and signing behavior.
+ * @returns {Object} The base electron-builder config object.
+ */
 const getBase = () => ({
   artifactName: "vanilla-closedcode-${os}-${arch}.${ext}",
   directories: {
@@ -124,6 +132,12 @@ const getBase = () => ({
     target: ["AppImage", "deb", "rpm"]
   }
 });
+/**
+ * Compose the final electron-builder config by extending the base config with
+ * channel-specific identifiers (appId, productName, protocols, rpm packageName)
+ * for the resolved CLOSEDCODE_CHANNEL.
+ * @returns {Object} The fully resolved electron-builder config for the current channel.
+ */
 function getConfig() {
   const base = getBase();
   switch (channel) {

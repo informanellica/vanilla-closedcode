@@ -1,3 +1,10 @@
+/** @file Russian (ru) translation strings for desktop-specific renderer UI (menus, dialogs, updater, CLI install). */
+
+/**
+ * Russian translation table mapping desktop renderer message keys to their localized strings.
+ * Some values contain `{{...}}` placeholders that are interpolated at lookup time.
+ * @type {Object}
+ */
 export const dict = {
   "desktop.menu.checkForUpdates": "Проверить обновления...",
   "desktop.menu.installCli": "Установить CLI...",

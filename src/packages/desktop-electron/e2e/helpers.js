@@ -1,3 +1,4 @@
+/** @file Shared e2e helpers for desktop Playwright specs: launch the Electron app against an isolated temp profile, connect over CDP, resolve the renderer window, and clean up. */
 // Shared e2e helpers for desktop Playwright specs. Extracted from
 // provider-visibility.spec.js so new specs can reuse the launch/connect
 // plumbing; that spec still carries its own copy and can migrate later.
@@ -14,6 +15,13 @@ export const desktopRoot = path.join(repoRoot, "packages/desktop-electron");
 
 // Kill the spawned Electron app (and its in-process sidecar) and wait for the
 // OS process to fully exit so it releases its handles on the temp app-data dir.
+/**
+ * Terminate the spawned Electron child process and wait for it to fully exit,
+ * escalating to SIGKILL after 3s and capping the total wait at 10s. No-op if
+ * the process has already exited.
+ * @param {Object} child - The child process returned by spawn().
+ * @returns {Promise<void>} Resolves when the process has exited or the wait times out.
+ */
 export async function killAndWait(child) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
   const exited = new Promise((resolve) => {
@@ -38,6 +46,13 @@ export async function killAndWait(child) {
 
 // rm() can race with the OS releasing file handles on Windows, so retry on
 // EBUSY/EPERM/ENOTEMPTY with backoff and never let cleanup fail the test.
+/**
+ * Recursively remove a path, retrying up to 10 times with increasing backoff on
+ * transient Windows file-lock errors (EBUSY/EPERM/ENOTEMPTY). Cleanup never
+ * throws.
+ * @param {string} target - Absolute path of the file or directory to delete.
+ * @returns {Promise<void>} Resolves once removal succeeds or retries are exhausted.
+ */
 export async function rmWithRetry(target) {
   for (let attempt = 0; attempt < 10; attempt++) {
     try {
@@ -51,12 +66,23 @@ export async function rmWithRetry(target) {
 }
 
 // Drop a full-page screenshot directly into repo artifacts/ for visual review.
+/**
+ * Capture a full-page screenshot into the repo's artifacts/ directory.
+ * @param {Object} page - The Playwright page to screenshot.
+ * @param {string} name - Base filename (without extension); saved as <name>.png.
+ * @returns {Promise<void>} Resolves once the screenshot is written.
+ */
 export async function shot(page, name) {
   const dir = path.join(repoRoot, "artifacts");
   await mkdir(dir, { recursive: true });
   await page.screenshot({ path: path.join(dir, `${name}.png`), fullPage: true });
 }
 
+/**
+ * Allocate a free ephemeral TCP port on the loopback interface by opening and
+ * immediately closing a listening server.
+ * @returns {Promise<number>} The allocated port number.
+ */
 export async function freePort() {
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -73,6 +99,11 @@ export async function freePort() {
   });
 }
 
+/**
+ * Probe whether a TCP port on loopback is accepting connections.
+ * @param {number} port - The port to probe.
+ * @returns {Promise<boolean>} True if a connection succeeded, false otherwise.
+ */
 async function portOpen(port) {
   return await new Promise((resolve) => {
     const socket = net.createConnection({ host: "127.0.0.1", port });
@@ -84,6 +115,12 @@ async function portOpen(port) {
   });
 }
 
+/**
+ * Poll a loopback TCP port until it accepts connections, giving up after 30s.
+ * @param {number} port - The CDP port to wait for.
+ * @returns {Promise<void>} Resolves when the port is open.
+ * @throws {Error} If the port does not open within the timeout.
+ */
 export async function waitForPort(port) {
   const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
@@ -95,6 +132,14 @@ export async function waitForPort(port) {
 
 // Launch the desktop app against an isolated temp HOME/config/data tree with
 // the given closedcode.json config, and connect Playwright over CDP.
+/**
+ * Spawn the Electron desktop app pointed at a fresh temp HOME/config/data tree
+ * seeded with the given closedcode.json (merged over `formatter:false`,
+ * `lsp:false`), allocate a CDP debug port, wait for it to open, and connect
+ * Playwright over CDP.
+ * @param {Object} config - Extra closedcode.json config fields to merge into the seeded config.
+ * @returns {Promise<Object>} Handle with `browser` (CDP Browser), `child` (Electron process), `root` (temp dir), and `configDir`.
+ */
 export async function launchDesktopWithConfig(config) {
   const root = await mkdtemp(path.join(tmpdir(), "closedcode-playwright-"));
   const home = path.join(root, "home");
@@ -155,6 +200,14 @@ export async function launchDesktopWithConfig(config) {
 
 // Resolve the renderer window: wait for the vcc://renderer page to finish the
 // loading.html -> index.html navigation on the same page object.
+/**
+ * Find and return the renderer window, waiting (up to 150s for slow cold starts)
+ * for the vcc://renderer page to finish navigating from loading.html to
+ * index.html and reach domcontentloaded.
+ * @param {Object} browser - The connected CDP Browser instance.
+ * @returns {Promise<Object>} The Playwright page for the loaded renderer.
+ * @throws {Error} If no loaded renderer window appears within the timeout.
+ */
 export async function rendererPage(browser) {
   // 150s: cold starts (fresh temp profile = full DB migration + first-run
   // binary scan) intermittently exceed 90s when the machine is busy.
@@ -182,6 +235,12 @@ export async function rendererPage(browser) {
 }
 
 // URL-safe base64 matching core/util/encode base64Encode (route :dir param).
+/**
+ * Encode a string as URL-safe base64 (no padding) the same way core/util/encode
+ * does, for use as the route `:dir` parameter.
+ * @param {string} value - The string to encode.
+ * @returns {string} The URL-safe base64 encoding (`+`->`-`, `/`->`_`, `=` stripped).
+ */
 export function base64Dir(value) {
   return Buffer.from(value, "utf8").toString("base64").replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
 }
@@ -190,6 +249,15 @@ export function base64Dir(value) {
 // MEMORY integration on vcc:// (pushState/popstate are ignored), so this calls
 // the e2e hook home.js exposes (the real openProject flow: projects.open +
 // touch + navigate) instead of touching browser history.
+/**
+ * Open a project directory in the running SPA by invoking the renderer's
+ * `__closedcode_openProject` e2e hook (the real projects.open + touch + navigate
+ * flow), then wait for the route to change. Avoids browser history, which the
+ * MEMORY-backed router on vcc:// ignores.
+ * @param {Object} page - The renderer Playwright page.
+ * @param {string} directory - Absolute path of the project directory to open.
+ * @returns {Promise<void>} Resolves once navigation to the project route completes.
+ */
 export async function gotoProject(page, directory) {
   await page.waitForFunction(() => typeof window.__closedcode_openProject === "function", { timeout: 30_000 });
   await page.evaluate((dir) => window.__closedcode_openProject(dir), directory);

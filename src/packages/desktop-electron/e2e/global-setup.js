@@ -5,6 +5,13 @@
 // instance away so the cold cost is paid here instead of inside a test.
 import { killAndWait, launchDesktopWithConfig, rendererPage, rmWithRetry } from "./helpers.js";
 
+/**
+ * Playwright global setup: pay the cold-start cost of the freshly rebuilt
+ * sidecar bundle once before the suite by booting the desktop app, waiting for
+ * the renderer, then tearing the throwaway instance down. Failures are swallowed
+ * so a flaky warm-up never blocks the actual specs.
+ * @returns {Promise<void>} Resolves once the warm-up boot and cleanup complete.
+ */
 export default async function globalSetup() {
   let handle;
   try {
