@@ -1,4 +1,4 @@
-import { insert } from "../lib/reactivity.js";
+import { insert, onCleanup } from "../lib/reactivity.js";
 const placementStyle = (placement) => {
   switch (placement) {
     case "bottom":
@@ -43,14 +43,34 @@ export function Tooltip(props) {
       }
     }
   };
+  // pointerleave does NOT fire when the trigger scrolls out from under a
+  // stationary pointer (browser behavior), so inside a scrolling pane (e.g. the
+  // chat) a hover-opened tooltip would linger and float over the content. Close
+  // it on any scroll. Capture phase on window catches scrolls in any ancestor
+  // (scroll events don't bubble).
+  let scrollHandler = null;
+  const armScrollClose = () => {
+    if (scrollHandler || props.forceOpen) return;
+    scrollHandler = () => close();
+    window.addEventListener("scroll", scrollHandler, true);
+  };
+  const disarmScrollClose = () => {
+    if (!scrollHandler) return;
+    window.removeEventListener("scroll", scrollHandler, true);
+    scrollHandler = null;
+  };
   const open = () => {
     inert.open = true;
     syncPopover();
+    armScrollClose();
   };
   const close = () => {
     inert.open = false;
     syncPopover();
+    disarmScrollClose();
   };
+  // Detaching the trigger while open would otherwise leak the window listener.
+  onCleanup(disarmScrollClose);
 
   if (props.inactive) {
     return props.children;
