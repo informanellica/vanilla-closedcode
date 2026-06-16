@@ -39,6 +39,18 @@ function wireTimestamps(model) {
       instance.set("time_updated", now);
     }
   });
+  // Model.update(..., { where }) is a bulk update that bypasses the instance
+  // hooks above, so it would not bump time_updated (the old Drizzle $onUpdate
+  // did). Stamp it here unless the caller passed one explicitly.
+  model.beforeBulkUpdate(options => {
+    const attrs = (options.attributes ??= {});
+    if (attrs.time_updated == null) {
+      attrs.time_updated = Date.now();
+      if (Array.isArray(options.fields) && !options.fields.includes("time_updated")) {
+        options.fields.push("time_updated");
+      }
+    }
+  });
 }
 
 // JSON columns: drizzle's { mode: "json" } stores JSON.stringify-ed TEXT.

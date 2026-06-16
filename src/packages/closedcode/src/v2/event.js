@@ -29,6 +29,8 @@ export function define(input) {
 }
 export function run(def, data, options) {
   if (!Flag.CLOSEDCODE_EXPERIMENTAL_EVENT_SYSTEM) return;
-  SyncEvent.run(def, data, options);
+  // Return the promise so callers can await the (now async) SyncEvent write and
+  // surface its errors, instead of it running fire-and-forget.
+  return SyncEvent.run(def, data, options);
 }
 export * as EventV2 from "./event.js";

@@ -84,11 +84,11 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
       workspace: yield* InstanceState.workspaceID
     } : undefined;
 
-    // Note that the original sync layer used an "immediate" transaction here
-    // which is critical: we need to make sure we can safely read and write
-    // with nothing else changing the data from under us. transactionAsync does
-    // not expose the behavior option; the sqlite connection pool is capped at
-    // a single connection, which serializes writers within this process.
+    // The original sync layer used an IMMEDIATE transaction here, which is
+    // critical: reading the latest seq and writing the next one must hold the
+    // write lock so two concurrent appenders can't both read the same seq.
+    // transactionAsync DOES accept { behavior: "immediate" }; pass it so SQLite
+    // takes the write lock at BEGIN instead of the default DEFERRED.
     yield* Effect.promise(() => Database.transactionAsync(async h => {
       const id = EventID.ascending();
       const row = plain(await h.models.EventSequence.findOne({
@@ -106,13 +106,13 @@ export const layer = Layer.effect(Service)(Effect.gen(function* () {
         publish,
         context
       });
-    }));
+    }, { behavior: "immediate" }));
   });
   const remove = Effect.fn("SyncEvent.remove")(function* (aggregateID) {
     yield* Effect.promise(() => Database.transactionAsync(async h => {
       await h.models.EventSequence.destroy({ where: { aggregate_id: aggregateID }, transaction: h.tx });
       await h.models.Event.destroy({ where: { aggregate_id: aggregateID }, transaction: h.tx });
-    }));
+    }, { behavior: "immediate" }));
   });
   return Service.of({
     run,
@@ -183,6 +183,10 @@ async function process(def, event, options) {
 
   // idempotent: need to ignore any events already logged
 
+  // process() is only ever called from inside the IMMEDIATE append transaction
+  // above (via `await process(...)`), so transactionAsync sees an ambient
+  // transaction and reuses its handle — this nested call inherits the write
+  // lock and a behavior option here would be ignored.
   await Database.transactionAsync(async h => {
     await projector(h, event.data, event);
     if (Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES) {
