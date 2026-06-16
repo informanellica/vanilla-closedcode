@@ -13,7 +13,6 @@ export const TOOLBAR_ITEMS = [
   { id: "home", label: "ホーム" },
   { id: "chat", label: "チャット" },
   { id: "openProject", label: "プロジェクトを開く" },
-  { id: "server", label: "サーバー" },
   { id: "newFile", label: "新規ファイル" },
   { id: "newFolder", label: "新規フォルダ" },
   { id: "rename", label: "名前を変更" },
@@ -310,13 +309,10 @@ export function AppToolbar(props) {
     "aria-label": "プロジェクトを開く",
     onClick: () => props.onOpenProject?.()
   }));
-  add("server", createComponent(IconButton, {
-    icon: "server",
-    variant: "ghost",
-    title: "サーバー",
-    "aria-label": "サーバー",
-    onClick: () => props.onOpenServer?.()
-  }));
+  // (No "server" button: the local-only build has no remote server to connect
+  // to, the "server" sprite icon doesn't exist (rendered blank), and openServer
+  // remains reachable from the command menu. Removed from the toolbar + the
+  // customizer.)
 
   // File operations (each individually reorderable). Clicks dispatch vcc:fileop.
   const fileOp = (id, icon, title, op) => {
