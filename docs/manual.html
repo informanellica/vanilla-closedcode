@@ -51,7 +51,9 @@
       <li><a href="#llm">ローカル LLM サーバーの準備</a></li>
       <li><a href="#basics">基本操作</a></li>
       <li><a href="#agents">主な機能 (Agent / セッション / プロジェクト)</a></li>
+      <li><a href="#editor">ファイル編集 (エディタ・タブ・検索置換)</a></li>
       <li><a href="#terminal">統合ターミナルとファイルツリー</a></li>
+      <li><a href="#toolbar">ツールバーのカスタマイズ</a></li>
       <li><a href="#shortcuts">キーボードショートカット</a></li>
       <li><a href="#settings">設定とデータ保存先</a></li>
       <li><a href="#troubleshoot">トラブルシューティング</a></li>
@@ -127,12 +129,43 @@ npm run dev:desktop</code></pre>
     <li><strong>複数プロジェクト同時操作</strong> — 新規ウィンドウで別プロジェクトを並列に開ける</li>
   </ul>
 
+  <h2 id="editor">ファイル編集 (エディタ・タブ・検索置換)</h2>
+  <p>ファイルツリーでファイルを選ぶと、内蔵の CodeMirror エディタで開きます。複数のファイルを開くとタブで切り替えられます。</p>
+  <ul>
+    <li><i class="bi bi-window-stack"></i> <strong>タブ</strong> — 開いたファイルはタブとして並びます。タブをクリックして切り替え、タブの閉じるボタンで閉じられます。未保存の変更があるタブを閉じようとすると「保存しますか？」の確認ダイアログ (<strong>保存</strong> / <strong>保存しない</strong> / <strong>キャンセル</strong>) が表示され、誤って変更を失うことを防ぎます。</li>
+    <li><i class="bi bi-pencil-square"></i> <strong>編集モード切替</strong> <i class="bi bi-file-earmark-lock"></i> — ツールバーの編集モードボタンで、閲覧モードと編集モードを切り替えます。アイコンは現在のモード (鍵 = 閲覧、鉛筆 = 編集) を表します。</li>
+    <li><i class="bi bi-floppy"></i> <strong>保存</strong> — ツールバーの保存ボタンは編集中のみ表示され、未保存の変更があるときだけ有効になります。未保存ファイルを保存すると、保存先を選ぶダイアログが表示されます。</li>
+    <li><strong>元に戻す / やり直し / 切り取り / コピー / 貼り付け</strong> — ツールバーの各ボタンが編集中のエディタに対して動作します。</li>
+  </ul>
+  <h3>検索・置換</h3>
+  <p>ツールバーの「検索・置換」ウィジェット (<kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>F</kbd> でフォーカス) で、開いているファイルを検索・置換できます。VS Code 風の操作に対応しています。</p>
+  <ul>
+    <li><strong>3 つのトグル</strong> — <code>Aa</code> 大文字と小文字を区別、<code>ab</code> 単語単位、<code>.*</code> 正規表現</li>
+    <li><strong>一致件数の表示</strong> — 現在位置 / 総数 を表示。一致がなければ「結果なし」</li>
+    <li><strong>前後へ移動</strong> — <i class="bi bi-chevron-up"></i> / <i class="bi bi-chevron-down"></i>、または <kbd>Enter</kbd> (次へ) / <kbd>Shift</kbd>+<kbd>Enter</kbd> (前へ)</li>
+    <li><strong>置換</strong> — 置換の切り替えボタンで置換欄を開き、1 件ずつの置換とすべて置換に対応</li>
+    <li><strong>クリア</strong> — <kbd>Esc</kbd> または <i class="bi bi-x-lg"></i> で検索文字列をクリア</li>
+  </ul>
+  <p class="small text-body-secondary">検索・置換ウィジェットは編集できるファイルを開いているときのみ表示されます。</p>
+
   <h2 id="terminal">統合ターミナルとファイルツリー</h2>
   <ul>
     <li><i class="bi bi-terminal"></i> <strong>ターミナルパネル</strong> — <code>View &gt; Toggle Terminal</code> (<kbd>Ctrl</kbd>+<kbd>`</kbd>) でプロジェクト直下の shell を開閉。<code>node-pty</code> により実機シェルと同等の動作</li>
-    <li><i class="bi bi-folder"></i> <strong>ファイルツリー</strong> — <code>View &gt; Toggle File Tree</code> でプロジェクトのファイルツリーを表示</li>
-    <li><strong>コンテキストメニュー</strong> — Webview 内で右クリックすると <code>electron-context-menu</code> によるコピー/ペースト/検索などの標準メニュー</li>
+    <li><i class="bi bi-folder"></i> <strong>ファイルツリー</strong> — 左サイドバー (エクスプローラー) でプロジェクトのファイルツリーを表示。ツールバーの左サイドバーボタンで表示/非表示を切り替えます。ファイルをクリックするとエディタで開きます。</li>
+    <li><strong>ファイルツリーのコンテキストメニュー</strong> — ファイルツリーを右クリックすると、ファイル操作メニューが開きます: <strong>開く</strong>、<strong>新規ファイル</strong>、<strong>新規フォルダ</strong>、<strong>名前を変更</strong>、<strong>複製</strong>、<strong>削除</strong> (「削除しますか？」の確認ダイアログ付き)、<strong>コピー</strong>、<strong>切り取り</strong>、<strong>貼り付け</strong>、<strong>パスをコピー</strong>、<strong>ファイルの場所を開く</strong>。これらの操作は、ツールバーに対応するアイコンを追加して、現在開いているファイルに対して実行することもできます。</li>
+    <li><strong>エディタのコンテキストメニュー</strong> — エディタ領域内で右クリックすると、<code>electron-context-menu</code> によるコピー/ペースト/検索などの標準メニューが表示されます。</li>
   </ul>
+
+  <h2 id="toolbar">ツールバーのカスタマイズ</h2>
+  <p>上部ツールバーに表示するアイコンと並び順は、Office のクイックアクセスツールバーのような 2 ペイン式の画面で変更できます。<code>設定 → 一般 → 「ツールバー」</code>を開いてください。</p>
+  <ul>
+    <li><strong>左 (利用できるアイコン)</strong> — 現在隠しているアイコンの一覧。選んで「<strong>追加 ≫</strong>」(またはダブルクリック) でツールバーに表示します。</li>
+    <li><strong>右 (ツールバーに表示するアイコン)</strong> — 現在表示しているアイコンの一覧。選んで「<strong>≪ 削除</strong>」(またはダブルクリック) で隠します。</li>
+    <li><strong>並べ替え</strong> — 右側で項目を選び、「<strong>↑</strong>」「<strong>↓</strong>」で順番を入れ替えます。</li>
+    <li><strong>既定に戻す</strong> — 初期状態 (標準の並び・表示) にリセットします。</li>
+    <li><strong>スペーサー</strong> — 「スペーサー（以降を右寄せ）」を配置すると、それより後ろのアイコンがツールバーの右端に寄ります。</li>
+  </ul>
+  <p class="small text-body-secondary">並び順と表示/非表示の設定は保存され、次回起動時にも保たれます。ホーム・チャット・プロジェクトを開く・保存・元に戻す/やり直し・左右サイドバー・テーマ・設定・ヘルプなど、すべてのアイコンが対象です。</p>
 
   <h2 id="shortcuts">キーボードショートカット</h2>
   <p class="small text-body-secondary">macOS では <kbd>Cmd</kbd>、Windows/Linux では <kbd>Ctrl</kbd> に読み替えてください。アプリメニューは macOS のみ表示され、他 OS ではメニューバーは自動非表示です。</p>
@@ -144,6 +177,7 @@ npm run dev:desktop</code></pre>
       <tr><td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd></td><td>新規ウィンドウ</td></tr>
       <tr><td><kbd>Cmd</kbd>+<kbd>B</kbd></td><td>サイドバー切替</td></tr>
       <tr><td><kbd>Ctrl</kbd>+<kbd>`</kbd></td><td>ターミナル切替</td></tr>
+      <tr><td><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>F</kbd></td><td>エディタの検索・置換にフォーカス</td></tr>
       <tr><td><kbd>Cmd</kbd>+<kbd>[</kbd> / <kbd>Cmd</kbd>+<kbd>]</kbd></td><td>戻る / 進む</td></tr>
       <tr><td><kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>Option</kbd>+<kbd>↓</kbd></td><td>前 / 次のセッション</td></tr>
       <tr><td><kbd>Cmd</kbd>+<kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>↓</kbd></td><td>前 / 次のプロジェクト</td></tr>
@@ -177,7 +211,7 @@ npm run dev:desktop</code></pre>
     <li><strong>更新が失敗する</strong> — 一度アプリを終了し、最新リリースを再ダウンロードして上書きインストール</li>
     <li><strong>ログの場所</strong> — 上記「設定とデータ保存先」を参照。バグ報告時にはログ末尾を添付すると解決が早まります</li>
   </ul>
-  <p class="small text-body-secondary">サポートは <a href="https://github.com/informanellica/vanilla-closedcode/issues">本リポジトリの Issues</a> で受け付けています。</p>
+  <p class="small text-body-secondary">サポートは <a href="https://github.com/informanellica/vanilla-closedcode/issues">本リポジトリの Issues</a> または <a href="https://discord.gg/6bvnqcH3">コミュニティ Discord</a> で受け付けています。</p>
 
 </main>
 
