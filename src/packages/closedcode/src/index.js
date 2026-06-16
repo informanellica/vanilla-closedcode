@@ -1,3 +1,10 @@
+/**
+ * @file CLI entry point. Builds the yargs command tree (run, serve, tui, models,
+ * providers, etc.), initializes logging, runs the one-time JSON-to-SQLite database
+ * migration on first launch, and dispatches the parsed command.
+ * @module closedcode/cli
+ */
+
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
 import { RunCommand } from "./cli/cmd/run.js";

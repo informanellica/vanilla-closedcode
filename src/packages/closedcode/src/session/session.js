@@ -1,3 +1,10 @@
+/**
+ * @file Session domain model. Creates and persists chat sessions, tracks parent /
+ * child relationships and usage, maps between storage rows and runtime objects, and
+ * publishes session lifecycle events on the bus.
+ * @module closedcode/session
+ */
+
 import { Slug } from "core/util/slug";
 import path from "path";
 import { BusEvent } from "#bus/bus-event.js";

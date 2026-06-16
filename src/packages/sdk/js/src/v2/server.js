@@ -1,5 +1,23 @@
+/**
+ * @file v2 SDK process launchers. Spawns the `closedcode` binary as a headless HTTP
+ * server ({@link createOpencodeServer}) or as an interactive TUI
+ * ({@link createOpencodeTui}), passing configuration via env and forwarding aborts.
+ * @module sdk/v2/server
+ */
+
 import launch from "cross-spawn";
 import { stop, bindAbort } from "../process.js";
+
+/**
+ * Spawn a headless closedcode server process and resolve once it is listening.
+ * @param {Object} [options] - Server options.
+ * @param {string} [options.hostname="127.0.0.1"] - Interface to bind.
+ * @param {number} [options.port=4096] - Port to listen on.
+ * @param {number} [options.timeout=5000] - Milliseconds to wait for the server to report it is listening before rejecting.
+ * @param {Object} [options.config] - Server config serialized into `CLOSEDCODE_CONFIG_CONTENT`; `config.logLevel` is also passed as `--log-level`.
+ * @param {AbortSignal} [options.signal] - Signal that, when aborted, stops the server and rejects the promise.
+ * @returns {Promise<{url: string, close: Function}>} The server URL and a close handle.
+ */
 export async function createOpencodeServer(options) {
   options = Object.assign({
     hostname: "127.0.0.1",
@@ -72,6 +90,17 @@ export async function createOpencodeServer(options) {
     }
   };
 }
+/**
+ * Spawn an interactive closedcode TUI process that inherits the current stdio.
+ * @param {Object} [options] - TUI options.
+ * @param {string} [options.project] - Project directory to open (`--project`).
+ * @param {string} [options.model] - Model to use (`--model`).
+ * @param {string} [options.session] - Session id to resume (`--session`).
+ * @param {string} [options.agent] - Agent to start with (`--agent`).
+ * @param {Object} [options.config] - Config serialized into `CLOSEDCODE_CONFIG_CONTENT`.
+ * @param {AbortSignal} [options.signal] - Signal that, when aborted, stops the TUI.
+ * @returns {{close: Function}} A handle that terminates the TUI process.
+ */
 export function createOpencodeTui(options) {
   const args = [];
   if (options?.project) {

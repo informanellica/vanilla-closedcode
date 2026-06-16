@@ -1,3 +1,10 @@
+/**
+ * @file Provider registry and model resolution. Loads provider definitions, merges
+ * config/auth/env overrides, and exposes helpers — including the locality checks
+ * that enforce closedcode's local-only egress policy — used to instantiate models.
+ * @module closedcode/provider
+ */
+
 import fuzzysort from "fuzzysort";
 import { Config } from "#config/config.js";
 import { mapValues, mergeDeep, omit, pickBy, sortBy } from "remeda";
@@ -46,6 +53,13 @@ function isPrivateIPv6(host) {
   if (lower.startsWith("fe80:") || lower.startsWith("fe80::")) return true;
   return false;
 }
+/**
+ * Determine whether a URL points at the local machine or a private network. Treats
+ * `localhost`, loopback, RFC 1918 / link-local IPv4, ULA / loopback / link-local
+ * IPv6, and `.local` / `.lan` / `.internal` hostnames as local.
+ * @param {string} url - The URL to inspect.
+ * @returns {boolean} True when the URL host is local or private; false otherwise or when the URL is unparseable.
+ */
 export function isLocalURL(url) {
   try {
     let {
@@ -61,6 +75,12 @@ export function isLocalURL(url) {
     return false;
   }
 }
+/**
+ * Determine whether a provider talks only to local endpoints, checking its base URL
+ * and every model's API URL via {@link isLocalURL}.
+ * @param {Object} provider - The provider definition (`options.baseURL` and `models[id].api.url` are read).
+ * @returns {boolean} True when the provider's base URL or any model URL is local.
+ */
 export function isLocalProvider(provider) {
   const baseURL = provider.options?.baseURL;
   if (typeof baseURL === "string" && isLocalURL(baseURL)) return true;

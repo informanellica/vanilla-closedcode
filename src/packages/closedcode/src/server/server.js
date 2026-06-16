@@ -1,3 +1,10 @@
+/**
+ * @file HTTP server assembly. Wires the Express backend, request adapter, OpenAPI
+ * description and mDNS advertisement together into the closedcode server that the
+ * SDK and TUI connect to.
+ * @module closedcode/server
+ */
+
 import { lazy } from "#util/lazy.js";
 import * as Log from "core/util/log";
 import { MDNS } from "./mdns.js";

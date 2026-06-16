@@ -1,3 +1,10 @@
+/**
+ * @file Configuration schema and loader. Defines the closedcode config shape and
+ * merges layered sources (global, project `.closedcode`, env) into the effective
+ * configuration consumed across the app.
+ * @module closedcode/config
+ */
+
 import * as Log from "core/util/log";
 import path from "path";
 import { pathToFileURL } from "url";
