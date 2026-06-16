@@ -515,6 +515,28 @@ export function Dynamic(props) {
   if (typeof comp === "function") return createComponent(comp, others);
   if (typeof comp === "string") {
     const el = document.createElement(comp);
+    // Forward non-children props (the function-component branch forwards them via
+    // createComponent, but the string branch used to drop them — so e.g. the SSR
+    // diff's `ref` never fired and its `id` was missing). Handle ref, event
+    // handlers, and attributes (reactive accessors stay live via a render effect).
+    const applyAttr = (key, v) => {
+      if (key === "class" || key === "className") el.setAttribute("class", v == null ? "" : String(v));
+      else if (key === "style" && v && typeof v === "object") { for (const s in v) el.style[s] = v[s]; }
+      else if (v == null || v === false) el.removeAttribute(key);
+      else if (v === true) el.setAttribute(key, "");
+      else el.setAttribute(key, String(v));
+    };
+    for (const key in others) {
+      if (key === "children") continue;
+      if (key === "ref") { if (typeof others.ref === "function") others.ref(el); continue; }
+      if (key.length > 2 && key[0] === "o" && key[1] === "n" && typeof others[key] === "function") {
+        el.addEventListener(key.slice(2).toLowerCase(), others[key]);
+        continue;
+      }
+      const val = others[key];
+      if (typeof val === "function") createRenderEffect(() => applyAttr(key, val()));
+      else applyAttr(key, val);
+    }
     insert(el, () => others.children);
     return el;
   }
