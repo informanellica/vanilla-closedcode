@@ -11,7 +11,6 @@ import {  Flag  } from "core/flag/flag"
 import {  registerAdapter  } from "../../src/control-plane/adapters/index.js"
 import {  WorkspaceID  } from "../../src/control-plane/schema.js"
 import {  Workspace  } from "../../src/control-plane/workspace.js"
-import {  WorkspaceTable  } from "../../src/control-plane/workspace.sql.js"
 import {  Project  } from "../../src/project/project.js"
 import {  WorkspacePaths  } from "../../src/server/routes/instance/httpapi/groups/workspace.js"
 import {  WorkspaceRouteContext, workspaceRouterMiddleware  } from "../../src/server/routes/instance/httpapi/middleware/workspace-routing.js"
@@ -114,14 +113,14 @@ const createLocalWorkspace = input => createWorkspace({
   type: input.type,
   adapter: localAdapter(input.directory)
 });
-const insertRemoteWorkspaceWithoutSync = input => Effect.sync(() => {
+const insertRemoteWorkspaceWithoutSync = input => Effect.promise(async () => {
   const id = WorkspaceID.ascending();
   registerAdapter(input.projectID, input.type, remoteAdapter(path.join(input.dir, `.${input.type}`), input.url));
-  Database.use(db => db.insert(WorkspaceTable).values({
+  await Database.useAsync(h => h.models.Workspace.create({
     id,
     type: input.type,
     project_id: input.projectID
-  }).run());
+  }, { transaction: h.tx }));
   return id;
 });
 const startRemoteWorkspaceHttpServer = handler => listenAdditionalServer(request => Effect.gen(function* () {

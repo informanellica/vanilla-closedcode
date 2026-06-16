@@ -97,7 +97,10 @@ describe("experimental HttpApi", () => {
         lsp: false
       }
     });
-    Database.Client().$client.prepare("INSERT INTO account (id, email, url, access_token, refresh_token, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?)").run("account-test", "test@example.com", "https://console.example.com", "access", "refresh", Date.now(), Date.now());
+    await Database.useAsync(h => h.sequelize.query(
+      "INSERT INTO account (id, email, url, access_token, refresh_token, time_created, time_updated) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      { replacements: ["account-test", "test@example.com", "https://console.example.com", "access", "refresh", Date.now(), Date.now()], transaction: h.tx }
+    ));
     const switched = await app().request(ExperimentalPaths.consoleSwitch, {
       method: "POST",
       headers: {

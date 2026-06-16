@@ -1,12 +1,10 @@
 import {  Effect  } from "effect"
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
-import {  eq  } from "drizzle-orm"
 import {  WithInstance  } from "../../src/project/with-instance.js"
 import {  Session as SessionNs  } from "#session/session.js"
 import * as Log from "core/util/log";
 import {  Flag  } from "core/flag/flag"
 import {  Database  } from "#storage/db.js"
-import {  SessionTable  } from "#session/session.sql.js"
 import {  afterEach, describe, expect, test, beforeAll  } from "@jest/globals"
 
 import {  mkdir  } from "fs/promises"
@@ -195,12 +193,8 @@ describe("session.list", () => {
             title: "legacy-sibling"
           })
         });
-        Database.use(db => db.update(SessionTable).set({
-          path: null
-        }).where(eq(SessionTable.id, current.id)).run());
-        Database.use(db => db.update(SessionTable).set({
-          path: null
-        }).where(eq(SessionTable.id, sibling.id)).run());
+        await Database.useAsync(h => h.models.Session.update({ path: null }, { where: { id: current.id }, transaction: h.tx }));
+        await Database.useAsync(h => h.models.Session.update({ path: null }, { where: { id: sibling.id }, transaction: h.tx }));
         const pathIDs = (await svc.list({
           directory: path.join(tmp.path, "packages", "closedcode", "src"),
           path: "packages/closedcode/src"

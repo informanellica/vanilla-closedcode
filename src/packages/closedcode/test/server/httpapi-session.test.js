@@ -1,6 +1,5 @@
 import {  Effect  } from "effect"
 import * as DateTime from "effect/DateTime";
-import {  eq  } from "drizzle-orm"
 import {  resetDatabase  } from "../fixture/db.js"
 import {  disposeAllInstances, tmpdir  } from "../fixture/fixture.js"
 import {  it  } from "../lib/effect.js"
@@ -16,7 +15,6 @@ import {  SessionPaths  } from "../../src/server/routes/instance/httpapi/groups/
 import {  Session  } from "#session/session.js"
 import {  MessageID, PartID  } from "../../src/session/schema.js"
 import {  Database  } from "#storage/db.js"
-import {  SessionMessageTable, SessionTable  } from "#session/session.sql.js"
 import {  SessionMessage  } from "../../src/v2/session-message.js"
 import * as Log from "core/util/log";
 import {  afterEach, describe, expect, beforeAll  } from "@jest/globals"
@@ -224,7 +222,7 @@ describe("session HttpApi", () => {
           },
           content: []
         });
-        Database.use(db => db.insert(SessionMessageTable).values([{
+        await Database.useAsync(h => h.models.SessionMessage.create({
           id: message.id,
           session_id: parent.id,
           type: message.type,
@@ -237,7 +235,7 @@ describe("session HttpApi", () => {
             model: message.model,
             content: message.content
           }
-        }]).run());
+        }, { transaction: h.tx }));
       }
     }));
     expect((yield* requestJson(`/api/session/${parent.id}/message`, {
@@ -340,9 +338,10 @@ describe("session HttpApi", () => {
       id: created.id,
       workspaceID: workspace.id
     });
-    expect(yield* Effect.sync(() => Database.use(db => db.select({
-      workspaceID: SessionTable.workspace_id
-    }).from(SessionTable).where(eq(SessionTable.id, created.id)).get()))).toEqual({
+    expect(yield* Effect.promise(() => Database.useAsync(async h => {
+      const row = await h.models.Session.findOne({ attributes: ["workspace_id"], where: { id: created.id } });
+      return { workspaceID: row?.workspace_id };
+    }))).toEqual({
       workspaceID: workspace.id
     });
   })));
@@ -400,9 +399,7 @@ describe("session HttpApi", () => {
     }));
     const pathSession = yield* createSession(currentDir);
     const pathlessSession = yield* createSession(currentDir);
-    yield* Effect.sync(() => Database.use(db => db.update(SessionTable).set({
-      path: null
-    }).where(eq(SessionTable.id, pathlessSession.id)).run()));
+    yield* Effect.promise(() => Database.useAsync(h => h.models.Session.update({ path: null }, { where: { id: pathlessSession.id }, transaction: h.tx })));
     const query = new URLSearchParams({
       scope: "project",
       path: "packages/closedcode/src",
