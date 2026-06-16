@@ -1,9 +1,11 @@
+/** @file Defines the "websearch" tool, which runs a web search via the Exa MCP endpoint and returns LLM-optimized result context. */
 import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import { HttpClient } from "effect/unstable/http";
 import * as Tool from "./tool.js";
 import * as McpExa from "./mcp-exa.js";
 const DESCRIPTION = assetText("tool/websearch.txt");
+/** Schema for the websearch tool parameters: query, optional numResults, livecrawl mode, search type, and contextMaxCharacters. */
 export const Parameters = Schema.Struct({
   query: Schema.String.annotate({
     description: "Websearch query"
@@ -21,9 +23,16 @@ export const Parameters = Schema.Struct({
     description: "Maximum characters for context string optimized for LLMs (default: 10000)"
   })
 });
+/**
+ * The "websearch" tool. After requesting permission, calls the Exa
+ * `web_search_exa` MCP endpoint with the query and options, and returns the
+ * resulting context string (or a not-found message). The description is
+ * rendered dynamically with the current year substituted for `{{year}}`.
+ */
 export const WebSearchTool = Tool.define("websearch", Effect.gen(function* () {
   const http = yield* HttpClient.HttpClient;
   return {
+    /** Tool description with the `{{year}}` placeholder replaced by the current year. */
     get description() {
       return DESCRIPTION.replace("{{year}}", new Date().getFullYear().toString());
     },

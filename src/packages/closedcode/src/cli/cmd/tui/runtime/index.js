@@ -1,3 +1,4 @@
+/** @module tui/runtime - Vanilla TUI runtime (Stage T2 of the solid-free TUI milestone); public API re-exporting the toolkit pieces. */
 // Vanilla TUI runtime (Stage T2 of the solid-free TUI milestone) — public API.
 // A pure-JavaScript terminal UI toolkit built on terminal-kit (ANSI / input /
 // ScreenBuffer delta draw) + solid-js reactivity, replacing @opentui/solid (the

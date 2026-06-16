@@ -1,3 +1,9 @@
+/**
+ * @file Command + dialog registry for the vanilla TUI. Provides relativeTime() and
+ * buildCommands(ctx): a data-driven list of slash/palette commands whose run()
+ * bodies open dialogs and talk to the injected data layer, replacing shell.js's
+ * hard-coded command switch and keeping the registry headless-testable.
+ */
 // Command + dialog registry for the vanilla TUI. This replaces shell.js's inline
 // SLASH_COMMANDS array and its hard-coded openCommands()/runCommand() switch with
 // a single data-driven list, mirroring the live routes/session command registry
@@ -25,6 +31,12 @@
 import * as Dialogs from "./dialogs.js";
 
 // --- relative-time labels --------------------------------------------------
+/**
+ * Compact relative-time label ("just now" / "5m ago" / "3h ago" / "2d ago").
+ * @param {number} ts - The past timestamp in epoch milliseconds.
+ * @param {number} now - The reference "now" timestamp (injectable for tests; default Date.now()).
+ * @returns {string} The relative-time label, or "" when ts is nullish.
+ */
 // Compact "5m ago" / "3h ago" / "2d ago" using ctx.now (injectable for tests).
 export function relativeTime(ts, now = Date.now()) {
   if (!ts && ts !== 0) return "";
@@ -39,9 +51,16 @@ export function relativeTime(ts, now = Date.now()) {
   return `${d}d ago`;
 }
 
-// Best-effort error -> message string for toasts.
+/** Best-effort error -> message string for toasts. */
 const errMsg = e => (e instanceof Error ? e.message : String(e ?? "error"));
 
+/**
+ * Build the vanilla TUI command registry. Each entry's run() is self-contained:
+ * it opens its own dialogs and talks to the injected data layer, so the whole
+ * registry is headless-testable with mock data/dialog/toast objects.
+ * @param {Object} ctx - Injected context: `{data, dialog, toast, route, navigate, selection, onExit, theme, now, toggleDiffView, diffView}` (see the file header for shapes).
+ * @returns {Array} Command records `{label, value, slash, category, run}` in palette display order.
+ */
 export function buildCommands(ctx = {}) {
   const { data, dialog, toast, navigate, selection, onExit } = ctx;
   const now = ctx.now ?? (() => Date.now());
@@ -53,9 +72,16 @@ export function buildCommands(ctx = {}) {
   const store = data?.store;
   const sdk = data?.sdk;
 
+  /** Current session id, or undefined when the route is not a session. @returns {*} */
   const currentSid = () => { const r = route(); return r && r.type === "session" ? r.sessionID : undefined; };
+  /** Look up a session record by id from the store. @param {string} id @returns {*} */
   const sessionByID = id => (store?.sessions() ?? []).find(s => s.id === id);
 
+  /**
+   * Resolve the first model exposed by any connected provider (used as a fallback
+   * when no model is explicitly selected; Compact needs a model id).
+   * @returns {Object} `{providerID, modelID}`, or undefined when no providers/models exist.
+   */
   // Resolve the "current" model: prefer an explicit selection, else the first
   // model the connected providers expose. Used by Compact (needs a model id).
   function firstModel() {
@@ -65,8 +91,10 @@ export function buildCommands(ctx = {}) {
     }
     return undefined;
   }
+  /** Current model: an explicit selection if any, else the first provider model. @returns {*} */
   const currentModel = () => selection?.model?.current?.() ?? firstModel();
 
+  /** Show a toast. @param {string} message @param {string} variant - "info"|"warning"|"success"|"error" @returns {void} */
   const notify = (message, variant = "info") => toast?.show?.({ message, variant });
 
   // --------------------------------------------------------------------------
@@ -74,12 +102,21 @@ export function buildCommands(ctx = {}) {
   // caller may ignore; tests await the returned value to observe side effects.
   // --------------------------------------------------------------------------
 
+  /**
+   * Start a fresh session by navigating home (the shell creates it lazily on the
+   * next prompt submit).
+   * @returns {Promise<void>}
+   */
   async function newSession() {
     // Going home starts a fresh session on the next prompt submit (the shell
     // creates the session lazily). This mirrors the live "New session" command.
     navigate?.({ type: "home" });
   }
 
+  /**
+   * Open a select dialog of sessions (most-recent first) and navigate to the chosen one.
+   * @returns {Promise<void>}
+   */
   async function switchSession() {
     const sessions = store?.sessions() ?? [];
     if (!sessions.length) { notify("No sessions yet", "warning"); return; }
@@ -95,6 +132,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Prompt for a new title and rename the current session via the SDK.
+   * @returns {Promise<void>}
+   */
   async function renameSession() {
     const sid = currentSid();
     if (!sid) { notify("Open a session first", "warning"); return; }
@@ -109,6 +150,10 @@ export function buildCommands(ctx = {}) {
     } catch (e) { notify(errMsg(e), "error"); }
   }
 
+  /**
+   * Confirm and delete the current session via the SDK, then navigate home.
+   * @returns {Promise<void>}
+   */
   async function deleteSession() {
     const sid = currentSid();
     if (!sid) { notify("Open a session first", "warning"); return; }
@@ -126,6 +171,10 @@ export function buildCommands(ctx = {}) {
     } catch (e) { notify(errMsg(e), "error"); }
   }
 
+  /**
+   * Open a select dialog of all provider models and set the chosen one as the selection.
+   * @returns {Promise<void>}
+   */
   async function switchModel() {
     const options = [];
     for (const p of store?.providers() ?? []) {
@@ -144,6 +193,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Open a select dialog of visible agents and set the chosen one as the selection.
+   * @returns {Promise<void>}
+   */
   async function switchAgent() {
     const agents = (store?.agents() ?? []).filter(a => !a.hidden);
     if (!agents.length) { notify("No agents available", "warning"); return; }
@@ -158,6 +211,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Open a select dialog of the current model's variants (plus "Default") and set the choice.
+   * @returns {Promise<void>}
+   */
   async function switchVariant() {
     const model = currentModel();
     // Variants live on the selected model's provider entry: models[mid].variants.
@@ -179,6 +236,11 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Placeholder theme picker: offers a static theme list and just toasts the choice
+   * (the real ThemeProvider is not yet wired into the vanilla shell).
+   * @returns {Promise<void>}
+   */
   async function switchTheme() {
     // Placeholder theme list: the real ThemeProvider isn't wired into vanilla yet
     // (see theme.js), so this offers a static set and just toasts the choice.
@@ -189,6 +251,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Show an alert summarizing connection status, counts, and the current model/agent/session.
+   * @returns {Promise<void>}
+   */
   async function viewStatus() {
     const sid = currentSid();
     const sessions = store?.sessions() ?? [];
@@ -207,6 +273,10 @@ export function buildCommands(ctx = {}) {
     await Dialogs.alert(dialog, { ...base, title: "Status", message: lines.join("\n") });
   }
 
+  /**
+   * Placeholder export: shows an alert that transcript export is not available in this build.
+   * @returns {Promise<void>}
+   */
   async function exportSession() {
     // Placeholder: the live export writes a transcript file; here we acknowledge.
     await Dialogs.alert(dialog, {
@@ -215,6 +285,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Placeholder: shows an alert that provider connection is configured outside the TUI.
+   * @returns {Promise<void>}
+   */
   async function connectProvider() {
     // Placeholder: provider auth/connect is out of scope for the vanilla shell.
     await Dialogs.alert(dialog, {
@@ -223,6 +297,10 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Summarize (compact) the current session via the SDK using the current model.
+   * @returns {Promise<void>}
+   */
   async function compact() {
     const sid = currentSid();
     if (!sid) { notify("Open a session first", "warning"); return; }
@@ -234,6 +312,10 @@ export function buildCommands(ctx = {}) {
     } catch (e) { notify(errMsg(e), "error"); }
   }
 
+  /**
+   * Share the current session via the SDK and toast the resulting share URL.
+   * @returns {Promise<void>}
+   */
   async function share() {
     const sid = currentSid();
     if (!sid) { notify("Open a session first", "warning"); return; }
@@ -245,6 +327,10 @@ export function buildCommands(ctx = {}) {
     } catch (e) { notify(errMsg(e), "error"); }
   }
 
+  /**
+   * Unshare the current session via the SDK.
+   * @returns {Promise<void>}
+   */
   async function unshare() {
     const sid = currentSid();
     if (!sid) { notify("Open a session first", "warning"); return; }
@@ -254,6 +340,10 @@ export function buildCommands(ctx = {}) {
     } catch (e) { notify(errMsg(e), "error"); }
   }
 
+  /**
+   * Show an alert listing the keyboard shortcuts.
+   * @returns {Promise<void>}
+   */
   async function help() {
     const lines = [
       "Enter        send the prompt",
@@ -269,6 +359,11 @@ export function buildCommands(ctx = {}) {
     await Dialogs.alert(dialog, { ...base, title: "Help", message: lines.join("\n") });
   }
 
+  /**
+   * Toggle tool-diff rendering between unified (stacked) and split (side-by-side)
+   * via the shell-owned toggle, then toast the new mode.
+   * @returns {Promise<void>}
+   */
   // Toggle tool-diff rendering between unified (stacked) and split (side-by-side).
   // The shell owns the diffView signal + toggle; we just flip it and report.
   async function toggleDiffView() {
@@ -276,6 +371,12 @@ export function buildCommands(ctx = {}) {
     notify(`Diff view: ${ctx.diffView?.() ?? "unified"}`, "info");
   }
 
+  /**
+   * Open a select over skills (store commands with source === "skill") and submit
+   * the chosen one as a slash command via the data layer (which creates a session
+   * lazily if none exists). Defensive: no throw if store/submit are absent.
+   * @returns {Promise<void>}
+   */
   // Run a skill: skills are store commands with source === "skill". Opens a
   // select over them and submits the chosen one as a slash command via the data
   // layer (which creates a session lazily when there is none — see data/index.js
@@ -302,6 +403,12 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /**
+   * Read-only MCP server status view. Tolerates a missing sdk.mcp.status method and
+   * normalizes either a name->status object map or an array of records before showing
+   * the results in an alert/select.
+   * @returns {Promise<void>}
+   */
   // MCP servers: read-only status view. The sdk.mcp.status method may be absent
   // in some builds (optional chaining + .catch), and the response shape is not
   // guaranteed — handle both a name->status object map and an array of records.
@@ -338,6 +445,7 @@ export function buildCommands(ctx = {}) {
     });
   }
 
+  /** Exit the TUI via the injected onExit callback. @returns {Promise<void>} */
   async function exit() { onExit?.(); }
 
   // --------------------------------------------------------------------------

@@ -10,11 +10,17 @@
 // message.part.updated/delta/removed, session.updated/deleted/status, permission
 // + question). The SDK client is injected by the caller (real or mock), so this
 // is headless-testable by feeding a synthetic event stream.
+/** @file Event-driven data store for the vanilla TUI: mutates plain collections in place and bumps one `rev` signal per event batch so the whole-screen redraw sees fresh data. */
 import { createSignal } from "../../runtime/reactivity.js";
 
 const MESSAGE_CAP = 100;
 
-// Insert-or-replace `item` into `arr` keeping it ascending by string id.
+/**
+ * Insert-or-replace `item` into `arr`, keeping the array ascending by string id.
+ * @param {Array} arr - Array of items each with an `id` string, sorted ascending.
+ * @param {Object} item - Item to insert or replace (matched by `item.id`).
+ * @returns {void}
+ */
 function upsert(arr, item) {
   for (let i = 0; i < arr.length; i++) {
     if (arr[i].id === item.id) { arr[i] = item; return; }
@@ -22,12 +28,24 @@ function upsert(arr, item) {
   }
   arr.push(item);
 }
+/**
+ * Remove the first item whose `id` equals `id` from `arr` (in place).
+ * @param {Array} arr - Array of items each with an `id`.
+ * @param {string} id - The id to remove.
+ * @returns {boolean} True if an item was found and removed.
+ */
 function removeById(arr, id) {
   const i = arr.findIndex(x => x.id === id);
   if (i >= 0) arr.splice(i, 1);
   return i >= 0;
 }
 
+/**
+ * Create the event-driven data store for the vanilla TUI.
+ * Reduces an SDK event stream into plain JS collections and exposes rev-tracked
+ * accessors plus derived selectors (timeline, status).
+ * @returns {Object} The store: { rev, apply, applyBatch, setBootstrap, hydrateSession, sessions, messages, parts, providers, agents, commands, status, permissions, questions, todos, diff, timeline, sessionStatusText, _state }.
+ */
 export function createDataStore() {
   const [rev, setRev] = createSignal(0);
   const bump = () => setRev(v => v + 1);
@@ -47,6 +65,11 @@ export function createDataStore() {
     status: "loading",            // "loading" | "partial" | "complete"
   };
 
+  /**
+   * Apply a single SDK event to the store collections (no repaint bump).
+   * @param {Object} event - The event { type, properties }.
+   * @returns {boolean} True if the event type was recognized and handled.
+   */
   function apply(event) {
     const p = event.properties ?? {};
     switch (event.type) {
@@ -87,10 +110,23 @@ export function createDataStore() {
     return true;
   }
 
-  // Apply a batch of events as one repaint (mirrors sync.js's batched flush).
+  /**
+   * Apply a batch of events as one repaint (mirrors sync.js's batched flush).
+   * @param {Array} events - Events to apply, in order.
+   * @returns {void}
+   */
   function applyBatch(events) { for (const e of events) apply(e); bump(); }
 
-  // Bootstrap / lazy-hydrate setters (called after SDK fetches).
+  /**
+   * Bootstrap / lazy-hydrate the top-level collections (called after SDK fetches).
+   * @param {Object} [bootstrap] - Partial bootstrap data; only present keys are set.
+   * @param {Array} [bootstrap.providers] - Provider list.
+   * @param {Array} [bootstrap.agents] - Agent list.
+   * @param {Array} [bootstrap.commands] - Command list.
+   * @param {Array} [bootstrap.sessions] - Session list (copied and sorted ascending by id).
+   * @param {string} [bootstrap.status] - Store status ("loading" | "partial" | "complete").
+   * @returns {void}
+   */
   function setBootstrap({ providers, agents, commands, sessions, status } = {}) {
     if (providers) s.providers = providers;
     if (agents) s.agents = agents;
@@ -99,6 +135,17 @@ export function createDataStore() {
     if (status) s.status = status;
     bump();
   }
+  /**
+   * Hydrate one session's messages/parts/todos/diff from a full SDK fetch.
+   * @param {string} sessionID - The session to hydrate.
+   * @param {Object} [data] - Hydration data; only present keys are set.
+   * @param {Object} [data.session] - The session info (upserted into the session list).
+   * @param {Array} [data.messages] - Messages for the session (copied and sorted ascending by id).
+   * @param {Object} [data.parts] - Map of messageID to its parts array (each sorted ascending by id).
+   * @param {Array} [data.todo] - Todo list for the session.
+   * @param {*} [data.diff] - Diff for the session (unified string or {files}).
+   * @returns {void}
+   */
   function hydrateSession(sessionID, { session, messages, parts, todo, diff } = {}) {
     if (session) upsert(s.sessions, session);
     if (messages) s.message.set(sessionID, [...messages].sort((a, b) => (a.id < b.id ? -1 : 1)));
@@ -108,8 +155,12 @@ export function createDataStore() {
     bump();
   }
 
-  // Derived: the chat timeline for a session, mapped to the vanilla timeline
-  // model { role, parts:[{type:"text"|"reasoning"|"tool"|"file", ...}] }.
+  /**
+   * Derived: the chat timeline for a session, mapped to the vanilla timeline model.
+   * Filters synthetic/ignored text, extracts tool diffs/output/file paths, etc.
+   * @param {string} sessionID - The session to build the timeline for.
+   * @returns {Array} Array of { role, parts } where each part is { type: "text" | "reasoning" | "tool" | "file", ... }.
+   */
   function timeline(sessionID) {
     rev();
     const messages = s.message.get(sessionID) ?? [];
@@ -150,7 +201,11 @@ export function createDataStore() {
       return { role: m.role, parts };
     });
   }
-  // Derived status string for a session (mirrors sync.session.status()).
+  /**
+   * Derived status string for a session (mirrors sync.session.status()).
+   * @param {string} sessionID - The session to report status for.
+   * @returns {string} "idle" or "working".
+   */
   function sessionStatusText(sessionID) {
     rev();
     const session = s.sessions.find(x => x.id === sessionID);

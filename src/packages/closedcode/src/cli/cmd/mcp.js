@@ -1,3 +1,4 @@
+/** @file CLI `mcp` command group: list, add, authenticate, logout, and debug MCP (Model Context Protocol) servers. */
 import { cmd } from "./cmd.js";
 import { effectCmd } from "../effect-cmd.js";
 import { Cause } from "effect";
@@ -18,6 +19,11 @@ import { modify, applyEdits } from "jsonc-parser";
 import { Filesystem } from "#util/filesystem.js";
 import { Bus } from "../../bus/index.js";
 import { Effect } from "effect";
+/**
+ * Map an OAuth auth status to a status glyph.
+ * @param {string} status - One of "authenticated", "expired", "not_authenticated".
+ * @returns {string} A check, warning, or cross glyph for the status.
+ */
 function getAuthStatusIcon(status) {
   switch (status) {
     case "authenticated":
@@ -28,6 +34,11 @@ function getAuthStatusIcon(status) {
       return "✗";
   }
 }
+/**
+ * Map an OAuth auth status to a human-readable label.
+ * @param {string} status - One of "authenticated", "expired", "not_authenticated".
+ * @returns {string} A readable status label.
+ */
 function getAuthStatusText(status) {
   switch (status) {
     case "authenticated":
@@ -38,18 +49,42 @@ function getAuthStatusText(status) {
       return "not authenticated";
   }
 }
+/**
+ * Type guard for a valid MCP server config entry (an object carrying a `type` field).
+ * @param {*} config - A candidate MCP server config value.
+ * @returns {boolean} True when the value looks like a configured MCP server.
+ */
 function isMcpConfigured(config) {
   return typeof config === "object" && config !== null && "type" in config;
 }
+/**
+ * Test whether an MCP server config is a remote (URL-based) server.
+ * @param {*} config - A candidate MCP server config value.
+ * @returns {boolean} True when the config is configured and has `type === "remote"`.
+ */
 function isMcpRemote(config) {
   return isMcpConfigured(config) && config.type === "remote";
 }
+/**
+ * List all configured MCP servers from a config object.
+ * @param {Object} config - The resolved config with an optional `mcp` map.
+ * @returns {Array} Array of `[name, serverConfig]` entries for configured servers.
+ */
 function configuredServers(config) {
   return Object.entries(config.mcp ?? {}).filter(entry => isMcpConfigured(entry[1]));
 }
+/**
+ * List configured MCP servers that are OAuth-capable (remote and not explicitly `oauth: false`).
+ * @param {Object} config - The resolved config with an optional `mcp` map.
+ * @returns {Array} Array of `[name, serverConfig]` entries for OAuth-capable servers.
+ */
 function oauthServers(config) {
   return configuredServers(config).filter(entry => isMcpRemote(entry[1]) && entry[1].oauth !== false);
 }
+/**
+ * Gather the config, connection statuses, and stored-token flags for all configured MCP servers.
+ * @returns {Effect} An Effect resolving to `{config, statuses, stored}`.
+ */
 function listState() {
   return Effect.gen(function* () {
     const cfg = yield* Config.Service;
@@ -66,6 +101,10 @@ function listState() {
     };
   });
 }
+/**
+ * Gather the config and per-server OAuth auth status for all OAuth-capable MCP servers.
+ * @returns {Effect} An Effect resolving to `{config, auth}` where `auth` maps server name to auth status.
+ */
 function authState() {
   return Effect.gen(function* () {
     const cfg = yield* Config.Service;
@@ -80,12 +119,14 @@ function authState() {
     };
   });
 }
+/** Top-level `mcp` command group: dispatches to add/list/auth/logout/debug subcommands. */
 export const McpCommand = cmd({
   command: "mcp",
   describe: "manage MCP (Model Context Protocol) servers",
   builder: yargs => yargs.command(McpAddCommand).command(McpListCommand).command(McpAuthCommand).command(McpLogoutCommand).command(McpDebugCommand).demandCommand(),
   async handler() {}
 });
+/** `mcp list` command: prints each configured MCP server with a status icon, label, and connection hint. */
 export const McpListCommand = effectCmd({
   command: "list",
   aliases: ["ls"],
@@ -141,6 +182,7 @@ export const McpListCommand = effectCmd({
     prompts.outro(`${servers.length} server(s)`);
   })
 });
+/** `mcp auth [name]` command: runs the OAuth flow for an OAuth-capable MCP server, prompting for selection if needed. */
 export const McpAuthCommand = effectCmd({
   command: "auth [name]",
   describe: "authenticate with an OAuth-enabled MCP server",
@@ -260,6 +302,7 @@ export const McpAuthCommand = effectCmd({
     prompts.outro("Done");
   })
 });
+/** `mcp auth list` command: prints each OAuth-capable MCP server with its current auth status. */
 export const McpAuthListCommand = effectCmd({
   command: "list",
   aliases: ["ls"],
@@ -287,6 +330,7 @@ export const McpAuthListCommand = effectCmd({
     prompts.outro(`${servers.length} OAuth-capable server(s)`);
   })
 });
+/** `mcp logout [name]` command: removes stored OAuth credentials for a server, prompting for selection if needed. */
 export const McpLogoutCommand = effectCmd({
   command: "logout [name]",
   describe: "remove OAuth credentials for an MCP server",
@@ -334,6 +378,12 @@ export const McpLogoutCommand = effectCmd({
     prompts.outro("Done");
   })
 });
+/**
+ * Find the config file path to use under a base directory, preferring existing files over the default.
+ * @param {string} baseDir - Directory to search for config files.
+ * @param {boolean} global - When true, skip the `.closedcode` subdirectory candidates.
+ * @returns {Promise<string>} The first existing config path, or the default `closedcode.json` path when none exist.
+ */
 async function resolveConfigPath(baseDir, global = false) {
   // Check for existing config files. Also check the .closedcode subdirectory.
   const candidates = [path.join(baseDir, "closedcode.json"), path.join(baseDir, "closedcode.jsonc")];
@@ -349,6 +399,13 @@ async function resolveConfigPath(baseDir, global = false) {
   // Default to closedcode.json if none exist
   return candidates[0];
 }
+/**
+ * Add or update an MCP server entry inside a JSONC config file, preserving existing comments and formatting.
+ * @param {string} name - The MCP server name (config key under `mcp`).
+ * @param {Object} mcpConfig - The server config object to write.
+ * @param {string} configPath - Path to the config file to update (created from `{}` if missing).
+ * @returns {Promise<string>} The config path that was written.
+ */
 async function addMcpToConfig(name, mcpConfig, configPath) {
   let text = "{}";
   if (await Filesystem.exists(configPath)) {
@@ -366,6 +423,7 @@ async function addMcpToConfig(name, mcpConfig, configPath) {
   await Filesystem.write(configPath, result);
   return configPath;
 }
+/** `mcp add` command: interactively prompts for scope, name, type, URL/command, and OAuth, then writes the config. */
 export const McpAddCommand = effectCmd({
   command: "add",
   describe: "add an MCP server",
@@ -506,6 +564,7 @@ export const McpAddCommand = effectCmd({
     });
   })
 });
+/** `mcp debug <name>` command: probes a remote MCP server's HTTP/OAuth state and reports stored tokens and connectivity. */
 export const McpDebugCommand = effectCmd({
   command: "debug <name>",
   describe: "debug OAuth connection for an MCP server",

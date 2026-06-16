@@ -1,3 +1,4 @@
+/** @file Session prompt orchestration: turns a user prompt (text/files/agents/commands/subtasks) into assistant turns, resolves tools (registry + MCP), runs the agentic step loop with compaction/title generation/structured output, and supports shell execution and slash commands. */
 import { assetText } from "#util/asset.js";
 import path from "path";
 import os from "os";
@@ -72,7 +73,9 @@ const log = Log.create({
 const elog = EffectLogger.create({
   service: "session.prompt"
 });
+/** Effect service tag for the session prompt service. */
 export class Service extends Context.Service()("@closedcode/SessionPrompt") {}
+/** Layer that builds the SessionPrompt service (prompt / loop / shell / command / cancel operations). */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const status = yield* SessionStatus.Service;
@@ -98,9 +101,18 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const summary = yield* SessionSummary.Service;
   const sys = yield* SystemPrompt.Service;
   const llm = yield* LLM.Service;
+  /**
+   * Creates an EffectBridge used to run Effects from synchronous tool callbacks.
+   * @returns {*} An Effect yielding a runner bridge.
+   */
   const runner = Effect.fn("SessionPrompt.runner")(function* () {
     return yield* EffectBridge.make();
   });
+  /**
+   * Builds the prompt-ops bundle handed to tools so they can cancel, re-resolve
+   * prompt parts, or re-prompt the session via the bridge.
+   * @returns {*} An Effect yielding `{ cancel, resolvePromptParts, prompt }`.
+   */
   const ops = Effect.fn("SessionPrompt.ops")(function* () {
     const run = yield* runner();
     return {
@@ -109,12 +121,24 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       prompt: input => prompt(input)
     };
   });
+  /**
+   * Cancels any in-progress work for a session.
+   * @param {string} sessionID - The session to cancel.
+   * @returns {*} An Effect that completes once cancellation is requested.
+   */
   const cancel = Effect.fn("SessionPrompt.cancel")(function* (sessionID) {
     yield* elog.info("cancel", {
       sessionID
     });
     yield* state.cancel(sessionID);
   });
+  /**
+   * Resolves a prompt template into structured parts, expanding `@file` mentions
+   * into file/agent attachments (resolving `~` and worktree-relative paths) while
+   * deduplicating mentions.
+   * @param {string} template - The raw prompt text containing markdown mentions.
+   * @returns {*} An Effect yielding an array of prompt parts (text/file/agent).
+   */
   const resolvePromptParts = Effect.fn("SessionPrompt.resolvePromptParts")(function* (template) {
     const ctx = yield* InstanceState.context;
     const parts = [{
@@ -150,6 +174,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return parts;
   });
+  /**
+   * Generates and sets a session title from its first user message using the
+   * small/title model. No-ops for child sessions, non-default titles, or when
+   * there is not exactly one real user message yet.
+   * @param {Object} input - `{ session, history, providerID, modelID }`.
+   * @returns {*} An Effect that completes once a title is (or isn't) set.
+   */
   const title = Effect.fn("SessionPrompt.ensureTitle")(function* (input) {
     if (input.session.parentID) return;
     if (!Session.isDefaultTitle(input.session.title)) return;
@@ -194,6 +225,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       error: Cause.squash(cause)
     })));
   });
+  /**
+   * Appends synthetic system-reminder text parts to the latest user message
+   * based on the agent and plan-mode flag: plan-prompt for the plan agent,
+   * build-switch when transitioning out of plan, and the full plan-mode workflow
+   * reminder when the experimental plan mode is enabled.
+   * @param {Object} input - `{ messages, agent, session }`.
+   * @returns {*} An Effect yielding the (possibly augmented) messages array.
+   */
   const insertReminders = Effect.fn("SessionPrompt.insertReminders")(function* (input) {
     const userMessage = input.messages.findLast(msg => msg.info.role === "user");
     if (!userMessage) return input.messages;
@@ -322,6 +361,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     userMessage.parts.push(part);
     return input.messages;
   });
+  /**
+   * Builds the AI SDK tool map for a turn from the tool registry and connected
+   * MCP servers. Each tool's execute wraps the call in plugin before/after
+   * triggers, permission checks, schema transformation, and output/attachment
+   * normalization, running through the Effect bridge.
+   * @param {Object} input - `{ agent, session, model, tools, processor, bypassAgentCheck, messages }`.
+   * @returns {*} An Effect yielding a record of tool id to AI SDK tool definition.
+   */
   const resolveTools = Effect.fn("SessionPrompt.resolveTools")(function* (input) {
     using _ = log.time("resolveTools");
     const tools = {};
@@ -497,6 +544,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     }
     return tools;
   });
+  /**
+   * Runs a queued subtask by creating an assistant message and a task tool part,
+   * executing the task tool against the resolved subagent, persisting its
+   * completed/errored state, and (for command-driven subtasks) appending a
+   * synthetic follow-up user message to continue the parent loop.
+   * @param {Object} input - `{ task, model, lastUser, sessionID, session, msgs }`.
+   * @returns {*} An Effect that completes once the subtask is processed.
+   */
   const handleSubtask = Effect.fn("SessionPrompt.handleSubtask")(function* (input) {
     const {
       task,
@@ -712,6 +767,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       synthetic: true
     });
   });
+  /**
+   * Executes a user-initiated shell command as a synthetic assistant tool turn:
+   * creates the user/assistant messages and tool part, spawns the preferred
+   * shell, streams stdout/stderr into the part as it runs, and finalizes the
+   * part/message on completion, abort, or failure.
+   * @param {Object} input - `{ sessionID, messageID, agent, model, command }`.
+   * @param {*} ready - Optional Latch opened once the messages/part are set up.
+   * @returns {*} An Effect yielding `{ info, parts }` for the resulting assistant message.
+   */
   const shellImpl = Effect.fn("SessionPrompt.shellImpl")(function* (input, ready) {
     return yield* Effect.uninterruptibleMask(restore => Effect.gen(function* () {
       const markReady = ready ? ready.open.pipe(Effect.asVoid) : Effect.void;
@@ -904,6 +968,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       };
     }));
   });
+  /**
+   * Resolves a model, publishing a friendly session error (with suggestions)
+   * before failing when the model is not found.
+   * @param {string} providerID - The provider ID.
+   * @param {string} modelID - The model ID.
+   * @param {string} sessionID - Session to report errors against.
+   * @returns {*} An Effect yielding the resolved model, or failing if not found.
+   */
   const getModel = Effect.fn("SessionPrompt.getModel")(function* (providerID, modelID, sessionID) {
     const exit = yield* provider.getModel(providerID, modelID).pipe(Effect.exit);
     if (Exit.isSuccess(exit)) return exit.value;
@@ -919,11 +991,25 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     }
     return yield* Effect.failCause(exit.cause);
   });
+  /**
+   * Finds the model used by the most recent user message, falling back to the
+   * provider's default model.
+   * @param {string} sessionID - The session to inspect.
+   * @returns {*} An Effect yielding the resolved model reference.
+   */
   const lastModel = Effect.fnUntraced(function* (sessionID) {
     const match = yield* sessions.findMessage(sessionID, m => m.info.role === "user" && !!m.info.model);
     if (Option.isSome(match) && match.value.info.role === "user") return match.value.info.model;
     return yield* provider.defaultModel();
   });
+  /**
+   * Creates and persists a user message from prompt input: resolves the agent and
+   * model (emitting agent/model-switch events on change), expands each input part
+   * (reading files/MCP resources, attaching agents), runs the chat.message plugin,
+   * validates the message/parts, and dual-writes the v2 Prompted/Synthetic events.
+   * @param {Object} input - Prompt input `{ sessionID, messageID, agent, model, variant, parts, tools, system, format }`.
+   * @returns {*} An Effect yielding `{ info, parts }` for the saved user message.
+   */
   const createUserMessage = Effect.fn("SessionPrompt.createUserMessage")(function* (input) {
     const agentName = input.agent || (yield* agents.defaultAgent());
     const ag = yield* agents.get(agentName);
@@ -997,6 +1083,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       ...part,
       id: part.id ? PartID.make(part.id) : PartID.ascending()
     });
+    /**
+     * Expands a single user-message part into the parts actually stored. File
+     * parts are read (via MCP resource read, data URL decode, or the Read tool
+     * for files/directories) and accompanied by synthetic "Called the Read tool"
+     * context; agent parts get a synthetic task-tool instruction; other parts pass
+     * through with message/session IDs attached.
+     * @param {Object} part - The input part to resolve.
+     * @returns {*} An Effect yielding an array of resolved parts.
+     */
     const resolvePart = Effect.fn("SessionPrompt.resolveUserPart")(function* (part) {
       if (part.type === "file") {
         if (part.source?.type === "resource") {
@@ -1381,6 +1476,13 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       parts
     };
   }, Effect.scoped);
+  /**
+   * Entry point for sending a prompt: cleans up any pending revert, creates the
+   * user message, applies per-prompt tool permission overrides, and (unless
+   * `noReply`) runs the agentic loop until the assistant turn completes.
+   * @param {Object} input - Prompt input (see PromptInput schema).
+   * @returns {*} An Effect yielding the created user message (when `noReply`) or the final assistant message.
+   */
   const prompt = Effect.fn("SessionPrompt.prompt")(function* (input) {
     const session = yield* sessions.get(input.sessionID);
     yield* revert.cleanup(session);
@@ -1406,6 +1508,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       sessionID: input.sessionID
     });
   });
+  /**
+   * Returns the most recent non-user (assistant) message, falling back to the
+   * latest message if none is found.
+   * @param {string} sessionID - The session to inspect.
+   * @returns {*} An Effect yielding the message item.
+   */
   const lastAssistant = Effect.fnUntraced(function* (sessionID) {
     const match = yield* sessions.findMessage(sessionID, m => m.info.role !== "user");
     if (Option.isSome(match)) return match.value;
@@ -1416,6 +1524,17 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     if (msgs.length > 0) return msgs[0];
     throw new Error("Impossible");
   });
+  /**
+   * The core agentic step loop for a session. Each iteration finds the latest
+   * user/assistant/finished messages, processes any pending subtask or
+   * compaction, triggers auto-compaction on overflow, generates a title on the
+   * first step, then creates an assistant message, resolves tools/system prompt,
+   * and runs the processor until the model finishes, blocks, or requests
+   * compaction. Handles structured-output capture and max-step injection, and
+   * exits when the assistant turn is complete.
+   * @param {string} sessionID - The session to run.
+   * @returns {*} An Effect yielding the final assistant message.
+   */
   const runLoop = Effect.fn("SessionPrompt.run")(function* (sessionID) {
     const ctx = yield* InstanceState.context;
     const slog = elog.with({
@@ -1648,13 +1767,33 @@ NOTE: At any point in time through this workflow you should feel free to ask the
     }).pipe(Effect.ignore, Effect.forkIn(scope));
     return yield* lastAssistant(sessionID);
   });
+  /**
+   * Runs (or joins) the session's step loop on its Runner, ensuring only one loop
+   * runs per session at a time.
+   * @param {Object} input - `{ sessionID }`.
+   * @returns {*} An Effect yielding the final assistant message.
+   */
   const loop = Effect.fn("SessionPrompt.loop")(function* (input) {
     return yield* state.ensureRunning(input.sessionID, lastAssistant(input.sessionID), runLoop(input.sessionID));
   });
+  /**
+   * Runs a user shell command on the session's Runner, coordinating startup via a
+   * readiness latch.
+   * @param {Object} input - `{ sessionID, messageID, agent, model, command }`.
+   * @returns {*} An Effect yielding the shell turn's `{ info, parts }`.
+   */
   const shell = Effect.fn("SessionPrompt.shell")(function* (input) {
     const ready = yield* Latch.make();
     return yield* state.startShell(input.sessionID, lastAssistant(input.sessionID), shellImpl(input, ready), ready);
   });
+  /**
+   * Executes a slash command: resolves the command, substitutes positional /
+   * `$ARGUMENTS` placeholders and inline shell snippets in its template, resolves
+   * the target agent/model, then dispatches it either as a subtask or a normal
+   * prompt and publishes a Command.Executed event.
+   * @param {Object} input - `{ sessionID, messageID, command, arguments, agent, model, variant, parts }`.
+   * @returns {*} An Effect yielding the resulting assistant message.
+   */
   const command = Effect.fn("SessionPrompt.command")(function* (input) {
     yield* elog.info("command", {
       sessionID: input.sessionID,
@@ -1783,6 +1922,7 @@ const ModelRef = Schema.Struct({
   providerID: ProviderID,
   modelID: ModelID
 });
+/** Input schema for `prompt`: the session, optional model/agent/variant, output format, and the prompt parts (text/file/agent/subtask). */
 export const PromptInput = Schema.Struct({
   sessionID: SessionID,
   messageID: Schema.optional(MessageID),
@@ -1801,11 +1941,13 @@ export const PromptInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Input schema for `loop`: just the session ID to run the step loop for. */
 export class LoopInput extends Schema.Class("SessionPrompt.LoopInput")({
   sessionID: SessionID
 }) {
   static zod = zod(this);
 }
+/** Input schema for `shell`: the session, agent/model, and the command string to run. */
 export const ShellInput = Schema.Struct({
   sessionID: SessionID,
   messageID: Schema.optional(MessageID),
@@ -1815,6 +1957,7 @@ export const ShellInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Input schema for `command`: the slash command name plus arguments, optional agent/model/variant, and optional file parts. */
 export const CommandInput = Schema.Struct({
   messageID: Schema.optional(MessageID),
   sessionID: SessionID,
@@ -1839,7 +1982,14 @@ export const CommandInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
-/** @internal Exported for testing */
+/**
+ * Builds the special `StructuredOutput` AI SDK tool used when the prompt requests
+ * JSON-schema output. The tool validates the model's arguments against the schema
+ * (with `$schema` stripped) and invokes `onSuccess` with the captured output.
+ * @internal Exported for testing
+ * @param {Object} input - `{ schema, onSuccess }` where `schema` is the JSON schema and `onSuccess` receives the validated output.
+ * @returns {*} An AI SDK tool definition.
+ */
 export function createStructuredOutputTool(input) {
   // Remove $schema property if present (not needed for tool input)
   const {

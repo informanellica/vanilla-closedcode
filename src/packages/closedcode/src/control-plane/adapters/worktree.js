@@ -1,3 +1,4 @@
+/** @file Built-in workspace adapter that backs a workspace with a git worktree. */
 import { Schema } from "effect";
 import { WorkspaceInfo } from "../types.js";
 const WorktreeConfig = Schema.Struct({
@@ -6,6 +7,11 @@ const WorktreeConfig = Schema.Struct({
   directory: Schema.String
 });
 const decodeWorktreeConfig = Schema.decodeUnknownSync(WorktreeConfig);
+/**
+ * Lazily import the worktree dependencies (app runtime and worktree service)
+ * to avoid loading them until an adapter method is actually invoked.
+ * @returns {Promise<Object>} An object with `AppRuntime` and `Worktree` modules.
+ */
 async function loadWorktree() {
   const [{
     AppRuntime
@@ -17,9 +23,21 @@ async function loadWorktree() {
     Worktree
   };
 }
+/**
+ * Workspace adapter that creates and manages a git worktree as the workspace backing store.
+ * Implements the adapter contract: name/description metadata plus configure, create,
+ * remove and target lifecycle methods.
+ * @type {Object}
+ */
 export const WorktreeAdapter = {
   name: "Worktree",
   description: "Create a git worktree",
+  /**
+   * Fill in worktree-specific defaults (name, branch, directory) for a workspace,
+   * deriving them from the worktree service.
+   * @param {Object} info - The base workspace info to augment.
+   * @returns {Promise<Object>} The info merged with generated name, branch and directory.
+   */
   async configure(info) {
     const {
       AppRuntime,
@@ -33,6 +51,11 @@ export const WorktreeAdapter = {
       directory: next.directory
     };
   },
+  /**
+   * Create the git worktree described by the workspace info.
+   * @param {Object} info - Workspace info; decoded into `{name, branch, directory}`.
+   * @returns {Promise<void>} Resolves once the worktree has been created.
+   */
   async create(info) {
     const {
       AppRuntime,
@@ -45,6 +68,11 @@ export const WorktreeAdapter = {
       branch: config.branch
     })));
   },
+  /**
+   * Remove the git worktree backing the workspace.
+   * @param {Object} info - Workspace info; decoded to obtain the worktree directory.
+   * @returns {Promise<void>} Resolves once the worktree has been removed.
+   */
   async remove(info) {
     const {
       AppRuntime,
@@ -55,6 +83,11 @@ export const WorktreeAdapter = {
       directory: config.directory
     })));
   },
+  /**
+   * Describe the execution target for the workspace: a local directory pointing at the worktree.
+   * @param {Object} info - Workspace info; decoded to obtain the worktree directory.
+   * @returns {Object} A `{type: "local", directory}` target descriptor.
+   */
   target(info) {
     const config = decodeWorktreeConfig(info);
     return {

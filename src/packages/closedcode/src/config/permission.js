@@ -1,17 +1,30 @@
+/**
+ * @file Effect schemas for permission config: the `ask`/`allow`/`deny` actions,
+ * per-target rule maps, and the per-tool permission input (with shorthand
+ * normalization) used to decide which operations require confirmation.
+ * @module closedcode/config/permission
+ */
+
 export * as ConfigPermission from "./permission.js";
 import { Schema, SchemaGetter } from "effect";
 import { zod } from "#util/effect-zod.js";
 import { withStatics } from "#util/schema.js";
+
+/** Schema for a single permission decision: `"ask"`, `"allow"`, or `"deny"`. */
 export const Action = Schema.Literals(["ask", "allow", "deny"]).annotate({
   identifier: "PermissionActionConfig"
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+
+/** Schema for a map of target pattern to {@link Action} (per-target rules). */
 export const Object = Schema.Record(Schema.String, Action).annotate({
   identifier: "PermissionObjectConfig"
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+
+/** Schema for a permission rule: either a single {@link Action} or an {@link Object} of per-target actions. */
 export const Rule = Schema.Union([Action, Object]).annotate({
   identifier: "PermissionRuleConfig"
 }).pipe(withStatics(s => ({
@@ -44,9 +57,16 @@ const InputSchema = Schema.Union([Action, InputObject]);
 
 // Normalise the Action shorthand into `{ "*": action }`. Object inputs pass
 // through untouched.
+/**
+ * Normalize a permission input into its object form.
+ * @param {string|Object} input - Either an Action shorthand string or a per-target rule object.
+ * @returns {Object} `{ "*": input }` for a string shorthand, or the object unchanged.
+ */
 const normalizeInput = input => typeof input === "string" ? {
   "*": input
 } : input;
+
+/** Schema for a fully-decoded permission config; accepts the shorthand or object input and decodes to the per-tool object form. */
 export const Info = InputSchema.pipe(Schema.decodeTo(InputObject, {
   decode: SchemaGetter.transform(normalizeInput),
   // Not perfectly invertible (we lose whether the user originally typed an

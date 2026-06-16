@@ -1,3 +1,9 @@
+/**
+ * @file Effect-native CLI command helpers: the CliError domain failure, the
+ * fail() constructor, and the effectCmd() builder that wraps a yargs command so
+ * its handler runs as an Effect with InstanceRef provided and guaranteed instance
+ * disposal on every exit.
+ */
 import { Effect, Schema } from "effect";
 import { AppRuntime } from "#effect/app-runtime.js";
 import { InstanceStore } from "#project/instance-store.js";
@@ -15,6 +21,12 @@ export class CliError extends Schema.TaggedErrorClass()("CliError", {
   message: Schema.String,
   exitCode: Schema.optional(Schema.Number)
 }) {}
+/**
+ * Construct a failing Effect carrying a CliError (user-visible message + exit code).
+ * @param {string} message - The message to surface to the user.
+ * @param {number} exitCode - Process exit code to set (defaults to 1).
+ * @returns {Effect} A failed Effect with the CliError.
+ */
 export const fail = (message, exitCode = 1) => Effect.fail(new CliError({
   message,
   exitCode
@@ -35,12 +47,20 @@ export const fail = (message, exitCode = 1) => Effect.fail(new CliError({
  * which adds a named tracing span per CLI invocation. Once all commands use
  * `effectCmd`, swapping the underlying `cmd()` factory for effect/cli's
  * `Command.make(...)` won't touch any handler bodies.
+ *
+ * @param {Object} opts - Command spec: command, aliases, describe, builder, handler (Effect-returning), plus optional instance (boolean or Function returning boolean) and directory (Function returning a path).
+ * @returns {Object} A yargs command definition.
  */
 export const effectCmd = opts => cmd({
   command: opts.command,
   aliases: opts.aliases,
   describe: opts.describe,
   builder: opts.builder,
+  /**
+   * Run the command body as an Effect, optionally loading + disposing an InstanceContext.
+   * @param {Object} rawArgs - Parsed yargs arguments.
+   * @returns {Promise<void>}
+   */
   async handler(rawArgs) {
     // yargs typing wraps Args in ArgumentsCamelCase<WithDoubleDash<...>>; cast at the boundary.
     const args = rawArgs;

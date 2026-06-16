@@ -1,6 +1,11 @@
+/** @file CLI `generate` command: produces the OpenAPI spec (with JS code samples) and prints it as prettier-formatted JSON. */
 import { Server } from "../../server/server.js";
 import { PublicApi } from "../../server/routes/instance/httpapi/public.js";
 import { OpenApi } from "effect/unstable/httpapi";
+/**
+ * `generate` command definition: builds the OpenAPI spec, injects `x-codeSamples` SDK snippets per operation,
+ * formats the JSON through prettier, and writes it to stdout. Supports `--httpapi` to use the Effect HttpApi contract.
+ */
 export const GenerateCommand = {
   command: "generate",
   builder: yargs => yargs.option("httpapi", {

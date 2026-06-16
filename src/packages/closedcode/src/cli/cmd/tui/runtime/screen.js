@@ -1,5 +1,5 @@
-// The app shell for the vanilla TUI runtime (Stage T2): a terminal-kit
-// ScreenBuffer driven by solid-js reactivity. The render model is immediate-mode
+/** @file The app shell for the vanilla TUI runtime (Stage T2): a reactivity-driven terminal-kit ScreenBuffer with immediate-mode draw, input dispatch, and TTY suspend/resume. */
+// A terminal-kit ScreenBuffer driven by solid-js reactivity. The render model is immediate-mode
 // + reactive: a single render effect calls the root draw function, which reads
 // signals (so the effect re-runs and repaints on any change), and composites
 // into the ScreenBuffer with a delta draw (only changed cells hit the terminal).
@@ -13,9 +13,12 @@ import tk from "terminal-kit";
 import { createRoot, createRenderEffect, batch, onCleanup } from "./reactivity.js";
 import { makeRegion } from "./layout.js";
 
-// rootDraw(region, ctx) draws the whole UI into `region` each frame. ctx exposes
-// { focusCursor(x,y) } to request the hardware cursor at an absolute cell (for
-// input fields); if never called the cursor stays hidden.
+/**
+ * Create the TUI app shell around a root draw function.
+ * @param {Function} rootDraw - rootDraw(region, ctx) draws the whole UI each frame; ctx exposes focusCursor(x, y) to request the hardware cursor at an absolute cell (cursor stays hidden if never called).
+ * @param {Object} options - Options: terminal (terminal-kit instance), mouse (true/string/false), attr (base cell attributes), createBuffer(term) (test buffer injector), onError(error), installProcessHandlers (boolean).
+ * @returns {Object} App API: start, stop, onKey, onMouse, suspend, repaint, plus term and buffer getters.
+ */
 export function createApp(rootDraw, options = {}) {
   const term = options.terminal ?? tk.terminal;
   let buf = null;
@@ -31,6 +34,10 @@ export function createApp(rootDraw, options = {}) {
   const mouseMode = options.mouse === true ? "drag" : (options.mouse || false);
   const grab = () => term.grabInput({ mouse: mouseMode });
 
+  /**
+   * (Re)create the backing ScreenBuffer sized to the current terminal.
+   * @returns {void}
+   */
   function makeBuffer() {
     // ScreenBufferHD = 24-bit color (hex/RGBA themes). options.createBuffer lets
     // tests inject a detached/mock buffer (no TTY).
@@ -40,15 +47,24 @@ export function createApp(rootDraw, options = {}) {
   // HD has no "default" color sentinel — clear to the theme's bg/fg (hex).
   const baseAttr = options.attr ?? { color: "#cdd6f4", bgColor: "#1e1e2e" };
 
-  // Any throw from rootDraw or a key handler would otherwise leave the terminal
-  // in raw/fullscreen mode (unusable). Restore first, then surface the error via
-  // options.onError or rethrow.
+  /**
+   * Handle a fatal error: restore the terminal (any throw would otherwise leave
+   * it in raw/fullscreen mode), then surface via options.onError or rethrow.
+   * @param {*} error - The thrown error.
+   * @returns {void}
+   */
   function onFatal(error) {
     try { stop(); } catch { /* never let teardown mask the original error */ }
     if (options.onError) options.onError(error);
     else throw error;
   }
 
+  /**
+   * Render one frame: clear the buffer, run rootDraw, delta-draw to the
+   * terminal, and place or hide the hardware cursor. No-op while stopped or
+   * suspended. Also exposed publicly as repaint().
+   * @returns {void}
+   */
   function paint() {
     // Bail if stopped OR suspended: repaint()/onResize, a deferred toast timer, or
     // a tracked-signal change (e.g. a streaming token) can fire AFTER stop()
@@ -69,6 +85,12 @@ export function createApp(rootDraw, options = {}) {
   }
 
   let procHandlers = null;
+  /**
+   * Start the app: enter fullscreen, create the buffer, grab input, wire key/
+   * mouse/resize and process-error handlers, and install the reactive render
+   * effect (repaints on any tracked signal change). Idempotent while running.
+   * @returns {void}
+   */
   function start() {
     if (running) return;
     running = true;
@@ -95,6 +117,14 @@ export function createApp(rootDraw, options = {}) {
     });
   }
 
+  /**
+   * terminal-kit "key" event handler: dispatch the key to all registered key
+   * handlers inside a batch (so multi-signal updates coalesce to one repaint).
+   * @param {string} name - Key name.
+   * @param {*} _matches - terminal-kit match info (unused).
+   * @param {Object} data - terminal-kit key data.
+   * @returns {void}
+   */
   function onKeyEvent(name, _matches, data) {
     try {
       // batch so a handler that flips several signals produces a single repaint
@@ -106,6 +136,12 @@ export function createApp(rootDraw, options = {}) {
   // terminal-kit mouse events ("MOUSE_WHEEL_UP", "MOUSE_LEFT_BUTTON_PRESSED",
   // "MOUSE_DRAG", "MOUSE_LEFT_BUTTON_RELEASED", …) with data { x, y } (1-based
   // screen coords). Routed to mouse handlers inside a batch, same as keys.
+  /**
+   * terminal-kit "mouse" event handler: dispatch to mouse handlers in a batch.
+   * @param {string} name - Mouse event name (e.g. "MOUSE_WHEEL_UP").
+   * @param {Object} data - Event data { x, y } in 1-based screen coords.
+   * @returns {void}
+   */
   function onMouseEvent(name, data) {
     try {
       batch(() => { for (const h of [...mouseHandlers]) h(name, data); });
@@ -113,11 +149,20 @@ export function createApp(rootDraw, options = {}) {
       onFatal(error);
     }
   }
+  /**
+   * terminal-kit "resize" handler: rebuild the buffer at the new size and repaint.
+   * @returns {void}
+   */
   function onResize() {
     makeBuffer();
     paint();
   }
 
+  /**
+   * Stop the app: unwire handlers, dispose the reactive root, release input,
+   * restore the cursor/style, and leave fullscreen. Idempotent when not running.
+   * @returns {void}
+   */
   function stop() {
     if (!running) return;
     running = false;
@@ -138,15 +183,22 @@ export function createApp(rootDraw, options = {}) {
     buf = null; // so any late repaint() bails on the !buf guard too
   }
 
-  // Register a key handler; returns an unsubscribe. Inside a solid owner it
-  // auto-unregisters on cleanup.
+  /**
+   * Register a key handler. Inside a reactive owner it auto-unregisters on cleanup.
+   * @param {Function} handler - Handler h(name, data).
+   * @returns {Function} An unsubscribe function.
+   */
   function onKey(handler) {
     keyHandlers.add(handler);
     const off = () => keyHandlers.delete(handler);
     try { onCleanup(off); } catch { /* no owner — caller manages */ }
     return off;
   }
-  // Register a mouse handler (h(name, data)); same lifecycle as onKey.
+  /**
+   * Register a mouse handler; same lifecycle as onKey.
+   * @param {Function} handler - Handler h(name, data).
+   * @returns {Function} An unsubscribe function.
+   */
   function onMouse(handler) {
     mouseHandlers.add(handler);
     const off = () => mouseHandlers.delete(handler);
@@ -154,10 +206,14 @@ export function createApp(rootDraw, options = {}) {
     return off;
   }
 
-  // Temporarily hand the terminal back to a child process (e.g. $EDITOR): leave
-  // fullscreen + release input/mouse so the child owns the TTY, run fn(), then
-  // re-enter fullscreen, re-grab input, and repaint. Restores even if fn throws.
-  // When not running, just runs fn() (nothing to suspend).
+  /**
+   * Temporarily hand the terminal back to a child process (e.g. $EDITOR): leave
+   * fullscreen and release input/mouse so the child owns the TTY, run fn(), then
+   * re-enter fullscreen, re-grab input, and repaint. Restores even if fn throws.
+   * When not running, just runs fn() (nothing to suspend).
+   * @param {Function} fn - Async or sync function run while the TTY is released.
+   * @returns {Promise} Resolves with fn's result.
+   */
   async function suspend(fn) {
     if (!running) return fn();
     suspended = true; // paint() bails now, so any tracked-signal change during fn() can't draw over the child

@@ -1,3 +1,4 @@
+/** @file Builds the public OpenAPI spec for the closedcode HTTP API, rewriting the generated spec to match the legacy (Express-generated) SDK surface. */
 import { OpenApi } from "effect/unstable/httpapi";
 import { ClosedCodeHttpApi } from "./api.js";
 // Instance routes use middleware for directory/workspace resolution, but HttpApi
@@ -66,6 +67,14 @@ const LegacyComponentDescriptions = {
   ServerConfig: "Server configuration for closedcode serve and web commands",
   LayoutConfig: "@deprecated Always uses stretch layout."
 };
+/**
+ * Transform a freshly generated OpenAPI spec in place to match the legacy SDK surface.
+ * Fixes self-referencing components, strips optional-null union arms, normalizes/dedupes component
+ * names and descriptions, applies legacy schema overrides, removes built-in error/security schemas,
+ * injects instance query params, documents SSE event streams, and normalizes parameters/error responses.
+ * @param {Object} input - The generated OpenAPI spec object (mutated in place).
+ * @returns {Object} The same spec object, transformed.
+ */
 function matchLegacyOpenApi(input) {
   const spec = input;
 
@@ -156,6 +165,11 @@ function matchLegacyOpenApi(input) {
   }
   return input;
 }
+/**
+ * Add the legacy `BadRequestError` and `NotFoundError` component schemas the old SDK expected.
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
+ */
 function addLegacyErrorSchemas(spec) {
   if (!spec.components?.schemas) return;
   spec.components.schemas.BadRequestError = {
@@ -196,6 +210,12 @@ function addLegacyErrorSchemas(spec) {
     }
   };
 }
+/**
+ * Collapse numeric-suffixed duplicate component schemas (e.g. `Foo2`) into their base name (`Foo`)
+ * when the schemas are structurally equal, rewriting all `$ref`s and deleting the duplicate.
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
+ */
 function collapseDuplicateComponents(spec) {
   const schemas = spec.components?.schemas;
   if (!schemas) return;
@@ -207,6 +227,12 @@ function collapseDuplicateComponents(spec) {
     delete schemas[name];
   }
 }
+/**
+ * Rename dotted component names to PascalCase type names, merging into an existing target when structurally
+ * equal or renaming otherwise, and rewriting all `$ref`s accordingly.
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
+ */
 function normalizeComponentNames(spec) {
   const schemas = spec.components?.schemas;
   if (!schemas) return;
@@ -225,10 +251,21 @@ function normalizeComponentNames(spec) {
     delete schemas[name];
   }
 }
+/**
+ * Convert a dotted component name into a PascalCase type name, dropping purely numeric path segments.
+ * @param {string} name - The component name (possibly dotted, e.g. `foo.bar.2`).
+ * @returns {string} The PascalCase type name (unchanged when the name contains no dot).
+ */
 function componentTypeName(name) {
   if (!name.includes(".")) return name;
   return name.split(".").filter(part => !/^\d+$/.test(part)).map(part => part.slice(0, 1).toUpperCase() + part.slice(1)).join("");
 }
+/**
+ * Apply hand-tuned schema overrides so specific component schemas match the legacy SDK
+ * (e.g. open `additionalProperties`, string `Command.template`, and nullable Workspace/session/provider fields).
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
+ */
 function applyLegacySchemaOverrides(spec) {
   const schemas = spec.components?.schemas;
   if (!schemas) return;
@@ -250,6 +287,11 @@ function applyLegacySchemaOverrides(spec) {
   const syncInfo = schemas.SyncEventSessionUpdated?.properties?.data?.properties?.info;
   if (syncInfo?.properties) makePropertiesNullable(syncInfo.properties);
 }
+/**
+ * Replace component descriptions with the curated legacy descriptions, deleting descriptions for all others.
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
+ */
 function normalizeComponentDescriptions(spec) {
   for (const [name, schema] of Object.entries(spec.components?.schemas ?? {})) {
     const description = LegacyComponentDescriptions[name];
@@ -260,6 +302,12 @@ function normalizeComponentDescriptions(spec) {
     delete schema.description;
   }
 }
+/**
+ * Recursively wrap each property schema in a nullable union, with special handling for `share.url`
+ * (only the `url` made nullable) and `time` (recursed into).
+ * @param {Object} properties - The OpenAPI `properties` map to make nullable (mutated in place).
+ * @returns {void}
+ */
 function makePropertiesNullable(properties) {
   for (const [key, value] of Object.entries(properties)) {
     if (key === "share" && value.properties?.url) {
@@ -273,6 +321,11 @@ function makePropertiesNullable(properties) {
     properties[key] = nullable(value);
   }
 }
+/**
+ * Wrap a schema in an `anyOf: [schema, {type:"null"}]` union, unless it is already nullable.
+ * @param {Object} schema - The schema to make nullable.
+ * @returns {Object} The (possibly already-nullable) schema, made nullable.
+ */
 function nullable(schema) {
   if (flattenOptions(schema.anyOf ?? schema.oneOf)?.some(item => item.type === "null")) return schema;
   return {
@@ -281,9 +334,22 @@ function nullable(schema) {
     }]
   };
 }
+/**
+ * Produce a stable, comparable string for a schema by canonicalizing it (sorted keys, descriptions dropped, refs canonicalized).
+ * @param {*} input - The schema (or schema fragment) to serialize.
+ * @param {Object} schemas - The component schemas map used to canonicalize `$ref`s.
+ * @returns {string} A deterministic JSON string for structural comparison.
+ */
 function stableSchema(input, schemas) {
   return JSON.stringify(canonicalizeSchema(input, schemas));
 }
+/**
+ * Recursively canonicalize a schema for structural comparison: sort object keys, drop `description`,
+ * and rewrite `$ref`s to their canonical (base) form.
+ * @param {*} input - The schema (or fragment) to canonicalize.
+ * @param {Object} schemas - The component schemas map used to canonicalize `$ref`s.
+ * @returns {*} The canonicalized schema value.
+ */
 function canonicalizeSchema(input, schemas) {
   if (Array.isArray(input)) return input.map(item => canonicalizeSchema(item, schemas));
   if (!input || typeof input !== "object") return input;
@@ -293,12 +359,25 @@ function canonicalizeSchema(input, schemas) {
   };
   return Object.fromEntries(Object.entries(input).filter(([key]) => key !== "description").sort(([a], [b]) => a.localeCompare(b)).map(([key, value]) => [key, canonicalizeSchema(value, schemas)]));
 }
+/**
+ * Resolve a `$ref` to its canonical form, mapping numeric-suffixed names to their base name when that base exists.
+ * @param {string} ref - The original `$ref` string.
+ * @param {Object} schemas - The component schemas map used to detect base names.
+ * @returns {string} The canonical `$ref` string.
+ */
 function canonicalRef(ref, schemas) {
   const name = ref.replace("#components/schemas/", "");
   const base = name.replace(/\d+$/, "");
   if (base !== name && schemas[base]) return `#/components/schemas/${base}`;
   return ref;
 }
+/**
+ * Recursively rewrite every `$ref` pointing at the `from` component to point at the `to` component.
+ * @param {*} input - The spec value (object/array) to traverse (mutated in place).
+ * @param {string} from - The source component name.
+ * @param {string} to - The target component name.
+ * @returns {void}
+ */
 function rewriteRefs(input, from, to) {
   if (Array.isArray(input)) {
     for (const item of input) rewriteRefs(item, from, to);
@@ -309,6 +388,11 @@ function rewriteRefs(input, from, to) {
   if (schema.$ref === `#/components/schemas/${from}`) schema.$ref = `#/components/schemas/${to}`;
   for (const value of Object.values(input)) rewriteRefs(value, from, to);
 }
+/**
+ * Replace built-in 400/404 error responses on an operation with the legacy error response shapes.
+ * @param {Object} operation - The OpenAPI operation object (mutated in place).
+ * @returns {void}
+ */
 function normalizeLegacyErrorResponses(operation) {
   if (operation.responses?.["400"] && isBuiltInErrorResponse(operation.responses["400"], "BadRequest")) {
     operation.responses["400"] = legacyErrorResponse("Bad request", "BadRequestError");
@@ -317,6 +401,14 @@ function normalizeLegacyErrorResponses(operation) {
     operation.responses["404"] = legacyErrorResponse("Not found", "NotFoundError");
   }
 }
+/**
+ * Apply per-route legacy operation tweaks: drop spurious error responses on specific endpoints and
+ * give the message/command POST endpoints their explicit `{info, parts}` 200 response shape.
+ * @param {Object} operation - The OpenAPI operation object (mutated in place).
+ * @param {string} path - The route path (e.g. `/session/{sessionID}/message`).
+ * @param {string} method - The lowercase HTTP method (e.g. `post`).
+ * @returns {void}
+ */
 function normalizeLegacyOperation(operation, path, method) {
   if (path === "/experimental/console/switch" && method === "post") delete operation.responses?.["400"];
   if (path === "/pty/{ptyID}" && method === "put") delete operation.responses?.["404"];
@@ -339,12 +431,30 @@ function normalizeLegacyOperation(operation, path, method) {
     }
   };
 }
+/**
+ * Check whether a response's JSON schema is a `$ref` to the named component.
+ * @param {Object} response - The OpenAPI response object.
+ * @param {string} name - The component name to test against.
+ * @returns {boolean} True when the response references `#/components/schemas/<name>`.
+ */
 function isRefResponse(response, name) {
   return response.content?.["application/json"]?.schema?.$ref === `#/components/schemas/${name}`;
 }
+/**
+ * Determine whether a response is one of Effect's built-in error responses for the given error name.
+ * @param {Object} response - The OpenAPI response object.
+ * @param {string} name - The built-in error name (e.g. `BadRequest`, `NotFound`).
+ * @returns {boolean} True when the response is the built-in error (by description or `$ref`).
+ */
 function isBuiltInErrorResponse(response, name) {
   return response.description === name || isRefResponse(response, `EffectHttpApiError${name}`);
 }
+/**
+ * Build a legacy error response object that references a named error schema.
+ * @param {string} description - The response description.
+ * @param {string} name - The component schema name to reference.
+ * @returns {Object} An OpenAPI response object with a JSON `$ref` schema.
+ */
 function legacyErrorResponse(description, name) {
   return {
     description,
@@ -365,6 +475,9 @@ function legacyErrorResponse(description, name) {
  *
  * Resolves by finding the actual schema from a parent union's `anyOf`/`oneOf`
  * that references the broken component, then inlining that schema.
+ *
+ * @param {Object} spec - The OpenAPI spec object (mutated in place).
+ * @returns {void}
  */
 function fixSelfReferencingComponents(spec) {
   const schemas = spec.components?.schemas;
@@ -402,7 +515,12 @@ function fixSelfReferencingComponents(spec) {
   }
 }
 
-/** Strip `{type:"null"}` arms that Effect's `Schema.optional` adds to OpenAPI unions. */
+/**
+ * Strip `{type:"null"}` arms that Effect's `Schema.optional` adds to OpenAPI unions, recursing into
+ * `allOf`/`anyOf`/`oneOf`, `items`, `properties`, and `additionalProperties`, and collapsing single-arm unions.
+ * @param {Object} schema - The schema to normalize (mutated and returned).
+ * @returns {Object} The schema with optional-null arms removed.
+ */
 function stripOptionalNull(schema) {
   if (schema.allOf?.length === 1) {
     const [constraint] = schema.allOf;
@@ -444,19 +562,46 @@ function stripOptionalNull(schema) {
   }
   return schema;
 }
+/**
+ * Detect the degenerate "bare object OR bare array" union that Effect emits for an unconstrained record/array value.
+ * @param {Object} schema - The schema to test.
+ * @returns {boolean} True when the schema is a two-arm union of a bare object and a bare array.
+ */
 function isEmptyObjectUnion(schema) {
   const options = schema.anyOf ?? schema.oneOf;
   return options?.length === 2 && options.some(isBareObjectSchema) && options.some(isBareArraySchema);
 }
+/**
+ * Check whether a schema is a bare object type (no `properties` or `additionalProperties`).
+ * @param {Object} schema - The schema to test.
+ * @returns {boolean} True for a bare object schema.
+ */
 function isBareObjectSchema(schema) {
   return schema.type === "object" && !schema.properties && !schema.additionalProperties;
 }
+/**
+ * Check whether a schema is a bare array type (no `items` or `prefixItems`).
+ * @param {Object} schema - The schema to test.
+ * @returns {boolean} True for a bare array schema.
+ */
 function isBareArraySchema(schema) {
   return schema.type === "array" && !schema.items && !schema.prefixItems;
 }
+/**
+ * Flatten nested `anyOf`/`oneOf` unions into a single flat list of leaf option schemas.
+ * @param {Array|undefined} options - The union options to flatten.
+ * @returns {Array|undefined} The flattened option list, or undefined when `options` is absent.
+ */
 function flattenOptions(options) {
   return options?.flatMap(item => flattenOptions(item.anyOf ?? item.oneOf) ?? [item]);
 }
+/**
+ * Normalize an operation parameter's schema for the legacy SDK: apply path/query schema overrides,
+ * coerce known number/boolean query params, and otherwise strip optional-null arms.
+ * @param {Object} param - The OpenAPI parameter object (mutated in place).
+ * @param {string} route - The route key (e.g. `GET /find/file`) used to look up overrides.
+ * @returns {void}
+ */
 function normalizeParameter(param, route) {
   if (!param.schema || typeof param.schema !== "object") return;
   if (param.in === "path") {
@@ -489,6 +634,13 @@ function normalizeParameter(param, route) {
   }
   param.schema = stripOptionalNull(param.schema);
 }
+/**
+ * Resolve the override schema for a path parameter by name, with route-specific patterns for `id`/`requestID`
+ * on workspace, permission, and question routes.
+ * @param {string} route - The route key (e.g. `DELETE /experimental/workspace/...`).
+ * @param {string} name - The path parameter name.
+ * @returns {Object|undefined} The override schema, or undefined when there is no override.
+ */
 function pathParameterSchema(route, name) {
   if (name in PathParameterSchemas) return PathParameterSchemas[name];
   if (name === "id" && route.startsWith("DELETE /experimental/workspace/")) return {
@@ -509,6 +661,7 @@ function pathParameterSchema(route, name) {
   };
   return undefined;
 }
+/** The public closedcode HttpApi, annotated with OpenAPI metadata and the legacy-compatibility spec transform. */
 export const PublicApi = ClosedCodeHttpApi.annotateMerge(OpenApi.annotations({
   title: "closedcode",
   version: "1.0.0",

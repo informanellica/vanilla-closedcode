@@ -1,3 +1,4 @@
+/** @file Agent service: defines built-in agents (build/plan/explore/etc.), merges user config, and generates new agent configs via the model. */
 import { assetText } from "#util/asset.js";
 import { Config } from "#config/config.js";
 import z from "zod";
@@ -24,6 +25,7 @@ import * as Option from "effect/Option";
 import * as OtelTracer from "@effect/opentelemetry/Tracer";
 import { zod } from "#util/effect-zod.js";
 import { withStatics } from "#util/schema.js";
+/** Schema describing an agent definition (name, mode, prompt, permissions, model/variant, and tuning options). */
 export const Info = Schema.Struct({
   name: Schema.String,
   description: Schema.optional(Schema.String),
@@ -47,13 +49,17 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Effect service tag for the agent service. */
 export class Service extends Context.Service()("@closedcode/Agent") {}
+/** Effect Layer building the agent service from config, auth, plugin, skill, and provider dependencies. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const auth = yield* Auth.Service;
   const plugin = yield* Plugin.Service;
   const skill = yield* Skill.Service;
   const provider = yield* Provider.Service;
+  // Per-instance state factory: builds the full agent registry by combining native defaults
+  // with permission defaults and any user-defined agents from config, scoped to the worktree.
   const state = yield* InstanceState.make(Effect.fn("Agent.state")(function* (ctx) {
     const cfg = yield* config.get();
     const skillDirs = yield* skill.dirs();
@@ -219,13 +225,26 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         }
       }));
     }
+    /**
+     * Look up an agent definition by name.
+     * @param {string} agent - The agent name.
+     * @returns {Effect} An Effect resolving to the agent definition, or undefined when not found.
+     */
     const get = Effect.fnUntraced(function* (agent) {
       return agents[agent];
     });
+    /**
+     * List all agent definitions, sorting the default agent first then alphabetically by name.
+     * @returns {Effect} An Effect resolving to an array of agent definitions.
+     */
     const list = Effect.fnUntraced(function* () {
       const cfg = yield* config.get();
       return pipe(agents, values(), sortBy([x => cfg.default_agent ? x.name === cfg.default_agent : x.name === "build", "desc"], [x => x.name, "asc"]));
     });
+    /**
+     * Resolve the name of the default primary agent, honoring config.default_agent when valid.
+     * @returns {Effect} An Effect resolving to the default agent's name.
+     */
     const defaultAgent = Effect.fnUntraced(function* () {
       const c = yield* config.get();
       if (c.default_agent) {
@@ -246,15 +265,25 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   }));
   return Service.of({
+    /** Get an agent definition by name (delegates to the per-instance registry). */
     get: Effect.fn("Agent.get")(function* (agent) {
       return yield* InstanceState.useEffect(state, s => s.get(agent));
     }),
+    /** List all agent definitions (delegates to the per-instance registry). */
     list: Effect.fn("Agent.list")(function* () {
       return yield* InstanceState.useEffect(state, s => s.list());
     }),
+    /** Resolve the default primary agent's name (delegates to the per-instance registry). */
     defaultAgent: Effect.fn("Agent.defaultAgent")(function* () {
       return yield* InstanceState.useEffect(state, s => s.defaultAgent());
     }),
+    /**
+     * Generate a new agent configuration from a natural-language description using the model.
+     * Streams via OpenAI OAuth when applicable, otherwise uses a single generateObject call;
+     * avoids reusing identifiers of existing agents.
+     * @param {Object} input - {description, model}; model is optional and falls back to the provider default.
+     * @returns {Effect} An Effect resolving to {identifier, whenToUse, systemPrompt}.
+     */
     generate: Effect.fn("Agent.generate")(function* (input) {
       const cfg = yield* config.get();
       const model = input.model ?? (yield* provider.defaultModel());
@@ -315,5 +344,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     })
   });
 }));
+/** Agent service layer wired with all its default dependencies. */
 export const defaultLayer = layer.pipe(Layer.provide(Plugin.defaultLayer), Layer.provide(Provider.defaultLayer), Layer.provide(Auth.defaultLayer), Layer.provide(Config.defaultLayer), Layer.provide(Skill.defaultLayer));
 export * as Agent from "./agent.js";

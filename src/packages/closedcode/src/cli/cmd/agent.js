@@ -1,3 +1,4 @@
+/** @file CLI `agent` command and subcommands: interactively create a new agent (LLM-generated config + frontmatter) and list existing agents. */
 import { cmd } from "./cmd.js";
 import * as prompts from "@clack/prompts";
 import { UI } from "../ui.js";
@@ -16,6 +17,10 @@ import { effectCmd } from "../effect-cmd.js";
 // permission — e.g. write/edit/apply_patch all gate on `edit` — so we configure
 // agents at the permission level to match how the runtime actually enforces it.
 const AVAILABLE_PERMISSIONS = ["bash", "read", "edit", "glob", "grep", "webfetch", "task", "todowrite", "websearch", "lsp", "skill"];
+/**
+ * CLI command: `agent create` — generates an agent file, prompting for scope/description/permissions/mode
+ * unless all are supplied via flags (fully non-interactive mode). Writes a Markdown file with frontmatter.
+ */
 const AgentCreateCommand = effectCmd({
   command: "create",
   describe: "create a new agent",
@@ -192,6 +197,7 @@ const AgentCreateCommand = effectCmd({
     });
   })
 });
+/** CLI command: `agent list` — prints all available agents (native first, then alphabetical) with their permissions. */
 const AgentListCommand = effectCmd({
   command: "list",
   describe: "list all available agents",
@@ -209,6 +215,7 @@ const AgentListCommand = effectCmd({
     }
   })
 });
+/** CLI command: `agent` — parent command grouping the `create` and `list` subcommands. */
 export const AgentCommand = cmd({
   command: "agent",
   describe: "manage agents",

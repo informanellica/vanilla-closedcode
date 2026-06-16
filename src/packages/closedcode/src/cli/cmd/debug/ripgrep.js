@@ -1,15 +1,18 @@
+/** @file `debug rg` CLI command group: ripgrep-backed debugging utilities (directory tree, file listing, content search). */
 import { EOL } from "os";
 import { Effect, Stream } from "effect";
 import { Ripgrep } from "../../../file/ripgrep.js";
 import { effectCmd } from "../../effect-cmd.js";
 import { cmd } from "../cmd.js";
 import { InstanceRef } from "#effect/instance-ref.js";
+/** Parent CLI command `rg` that groups the ripgrep debugging subcommands (tree, files, search). */
 export const RipgrepCommand = cmd({
   command: "rg",
   describe: "ripgrep debugging utilities",
   builder: yargs => yargs.command(TreeCommand).command(FilesCommand).command(SearchCommand).demandCommand(),
   async handler() {}
 });
+/** Subcommand `tree` that prints a ripgrep-based file tree of the instance directory, honoring an optional `--limit`. */
 const TreeCommand = effectCmd({
   command: "tree",
   describe: "show file tree using ripgrep",
@@ -26,6 +29,7 @@ const TreeCommand = effectCmd({
     process.stdout.write(tree + EOL);
   })
 });
+/** Subcommand `files` that lists files in the instance directory via ripgrep, optionally filtered by `--glob` and capped by `--limit`, one path per line. */
 const FilesCommand = effectCmd({
   command: "files",
   describe: "list files using ripgrep",
@@ -50,6 +54,7 @@ const FilesCommand = effectCmd({
     process.stdout.write(files.join(EOL) + EOL);
   })
 });
+/** Subcommand `search <pattern>` that searches file contents via ripgrep (optional `--glob` and `--limit`) and prints the matched items as JSON. */
 const SearchCommand = effectCmd({
   command: "search <pattern>",
   describe: "search file contents using ripgrep",

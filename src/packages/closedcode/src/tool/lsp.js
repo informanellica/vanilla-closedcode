@@ -1,3 +1,4 @@
+/** @file "lsp" tool: exposes Language Server Protocol queries (definition, references, hover, symbols, call hierarchy, etc.) for a file/position to the model. */
 import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import * as Tool from "./tool.js";
@@ -8,7 +9,12 @@ import { InstanceState } from "#effect/instance-state.js";
 import { pathToFileURL } from "url";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 import { AppFileSystem } from "core/filesystem";
+/** Supported LSP operation names accepted by the tool's `operation` parameter. */
 const operations = ["goToDefinition", "findReferences", "hover", "documentSymbol", "workspaceSymbol", "goToImplementation", "prepareCallHierarchy", "incomingCalls", "outgoingCalls"];
+/**
+ * Parameter schema for the lsp tool: the `operation` to run, the `filePath`, the 1-based `line` and
+ * `character` position, and an optional `query` (used by workspaceSymbol).
+ */
 export const Parameters = Schema.Struct({
   operation: Schema.Literals(operations).annotate({
     description: "The LSP operation to perform"
@@ -26,6 +32,11 @@ export const Parameters = Schema.Struct({
     description: "Search query for workspaceSymbol. Empty string requests all symbols."
   })
 });
+/**
+ * The "lsp" tool definition. Resolves the file path, asks for lsp/external-directory permission,
+ * converts the 1-based line/character into a 0-based LSP position, verifies the file exists and an
+ * LSP client is available, then dispatches the requested operation and serializes the result as JSON.
+ */
 export const LspTool = Tool.define("lsp", Effect.gen(function* () {
   const lsp = yield* LSP.Service;
   const fs = yield* AppFileSystem.Service;

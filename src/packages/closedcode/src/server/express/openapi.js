@@ -1,3 +1,4 @@
+/** @file OpenAPI foundation: collects per-route operations in a registry, converts Zod schemas to JSON Schema, merges with the Effect httpapi contract, and serves the spec via swagger-ui. */
 // OpenAPI foundation: per-route operation metadata is collected in a registry,
 // Zod schemas are converted to JSON Schema, and everything is merged into a
 // single OpenAPI document (a plain JS object) served by swagger-ui-express.
@@ -7,11 +8,20 @@ import { OpenApi } from "effect/unstable/httpapi";
 import { PublicApi } from "../routes/instance/httpapi/public.js";
 
 // Shorthand for building the requestBody object for a JSON endpoint.
+/**
+ * Build an OpenAPI requestBody object for an application/json endpoint.
+ * @param {*} schema - The Zod or JSON Schema describing the JSON body.
+ * @returns {Object} A requestBody object with an application/json content entry.
+ */
 export function jsonBody(schema) {
   return { content: { "application/json": { schema } } };
 }
 
 // Per-app registry of OpenAPI path operations.
+/**
+ * Create an empty per-app registry for collecting OpenAPI operations and named schemas.
+ * @returns {{operations: Array, schemas: Object}} A fresh registry.
+ */
 export function createRegistry() {
   return {
     operations: [],
@@ -22,6 +32,14 @@ export function createRegistry() {
 // Convert a Zod schema to a JSON Schema fragment suitable for an OpenAPI
 // component or inline schema. If the Zod schema carries a `ref` (via
 // .meta({ref})) we register it under components/schemas and return a $ref.
+/**
+ * Convert a Zod schema to a JSON Schema fragment for OpenAPI. If the schema
+ * carries a `ref` via .meta({ref}), it is registered under components/schemas and
+ * a $ref is returned instead of the inline schema.
+ * @param {{operations: Array, schemas: Object}} registry - The registry to record named schemas in.
+ * @param {*} zodSchema - The Zod schema to convert.
+ * @returns {Object} A JSON Schema fragment, or a {$ref} pointing at the registered component.
+ */
 export function resolve(registry, zodSchema) {
   if (!zodSchema || typeof zodSchema !== "object") return {};
   const meta = typeof zodSchema.meta === "function" ? zodSchema.meta() : undefined;
@@ -50,6 +68,15 @@ export function resolve(registry, zodSchema) {
 // {summary, description, operationId, responses, requestBody, parameters};
 // `responses[code].content[type].schema` may be a Zod schema or plain JSON
 // Schema object.
+/**
+ * Register a single OpenAPI operation for `method path` in the registry, resolving
+ * any Zod schemas in responses/requestBody to JSON Schema.
+ * @param {{operations: Array, schemas: Object}} registry - The registry to push the operation into.
+ * @param {string} method - The HTTP method (case-insensitive).
+ * @param {string} path - The Express-style route path (normalized to OpenAPI form).
+ * @param {Object} describe - Operation metadata (summary, description, operationId, responses, requestBody, parameters).
+ * @returns {void}
+ */
 export function registerOperation(registry, method, path, describe) {
   if (!describe) return;
   const responses = {};
@@ -79,11 +106,24 @@ export function registerOperation(registry, method, path, describe) {
 // Convert an Express path to its OpenAPI form: ":param" -> "{param}", and
 // drop a trailing slash on group-root routes (a group mounted at "/config"
 // with a "/" route yields "/config/", but the canonical spec uses "/config").
+/**
+ * Normalize an Express route path to OpenAPI form: ":param" becomes "{param}" and
+ * a trailing slash is dropped except on the root path.
+ * @param {string} path - The Express-style route path.
+ * @returns {string} The normalized OpenAPI path.
+ */
 function normalizePath(path) {
   const oapi = path.replace(/:([A-Za-z0-9_]+)/g, "{$1}");
   return oapi.length > 1 ? oapi.replace(/\/+$/, "") : oapi;
 }
 
+/**
+ * Resolve a schema that may be either a Zod schema or an already-built JSON Schema.
+ * Zod schemas (detected via _def/_zod) are converted; plain objects pass through.
+ * @param {{operations: Array, schemas: Object}} registry - The registry used when converting Zod schemas.
+ * @param {*} schema - A Zod schema or plain JSON Schema object.
+ * @returns {Object} The resolved JSON Schema fragment.
+ */
 function maybeResolve(registry, schema) {
   if (!schema) return {};
   // A Zod schema exposes a `_def`; a plain JSON Schema object does not.
@@ -91,6 +131,12 @@ function maybeResolve(registry, schema) {
   return schema;
 }
 
+/**
+ * Resolve every content schema inside an OpenAPI requestBody, converting Zod schemas to JSON Schema.
+ * @param {{operations: Array, schemas: Object}} registry - The registry used for schema conversion.
+ * @param {Object} requestBody - The requestBody object whose content schemas are resolved.
+ * @returns {Object} A new requestBody with resolved content schemas.
+ */
 function resolveRequestBody(registry, requestBody) {
   const content = {};
   for (const [type, body] of Object.entries(requestBody.content ?? {})) {
@@ -101,6 +147,13 @@ function resolveRequestBody(registry, requestBody) {
 
 // Build the final OpenAPI document from the registry merged with the Effect
 // httpapi contract shape on top of a plain base object.
+/**
+ * Build the final OpenAPI document from the registry, merged with the Effect
+ * httpapi contract's paths and components on top of a plain base document.
+ * @param {{operations: Array, schemas: Object}} registry - The registry of collected operations and schemas.
+ * @param {Object} documentation - Top-level overrides (openapi version, info).
+ * @returns {Object} The complete OpenAPI document.
+ */
 export function buildSpec(registry, documentation = {}) {
   // Base OpenAPI document as a plain JS object; all path/operation metadata
   // comes from the registry below (no JSDoc or YAML source parsing).
@@ -127,6 +180,12 @@ export function buildSpec(registry, documentation = {}) {
   };
 }
 
+/**
+ * Fill in missing parameters/requestBody on registry operations from the Effect
+ * httpapi contract for matching path+method pairs, mutating `paths` in place.
+ * @param {Object} paths - The OpenAPI paths object to augment.
+ * @returns {void}
+ */
 function mergeEffectContractShape(paths) {
   const effectPaths = OpenApi.fromApi(PublicApi).paths ?? {};
   for (const [path, item] of Object.entries(paths)) {
@@ -147,6 +206,13 @@ function mergeEffectContractShape(paths) {
 }
 
 // Mount swagger-ui at the given Express path serving the built spec.
+/**
+ * Mount the swagger-ui docs UI on the Express app at the given path, serving the built spec.
+ * @param {Object} app - The Express application.
+ * @param {string} mountPath - The path to mount the docs UI at (e.g. "/docs").
+ * @param {Object} spec - The built OpenAPI document to serve.
+ * @returns {void}
+ */
 export function serveDocs(app, mountPath, spec) {
   app.use(mountPath, swaggerUi.serve, swaggerUi.setup(spec));
 }

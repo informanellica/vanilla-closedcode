@@ -54,6 +54,12 @@ process.on("uncaughtException", e => {
   });
 });
 const args = hideBin(process.argv);
+/**
+ * Write help/usage output to stderr, prefixing it with the logo unless it is
+ * already a closedcode usage string.
+ * @param {string} out - The text to display.
+ * @returns {void}
+ */
 function show(out) {
   const text = out.trimStart();
   if (!text.startsWith("closedcode ")) {

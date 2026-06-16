@@ -1,11 +1,28 @@
+/**
+ * @file MCP OAuth provider that implements the SDK's OAuthClientProvider interface
+ * by storing tokens, client info, PKCE verifier and CSRF state via the auth service.
+ */
 import { Effect } from "effect";
 import * as Log from "core/util/log";
 const log = Log.create({
   service: "mcp.oauth"
 });
+/** Default localhost port the OAuth redirect callback server listens on. */
 const OAUTH_CALLBACK_PORT = 19876;
+/** Default URL path for the OAuth redirect callback. */
 const OAUTH_CALLBACK_PATH = "/mcp/oauth/callback";
+/**
+ * OAuthClientProvider implementation backing MCP authentication, persisting state
+ * through the auth service and validating credentials against the current server URL.
+ */
 export class McpOAuthProvider {
+  /**
+   * @param {string} mcpName - MCP server name (auth store key).
+   * @param {string} serverUrl - Server URL credentials are bound to.
+   * @param {Object} config - OAuth config (clientId, clientSecret, scope, redirectUri).
+   * @param {Object} callbacks - Callbacks object, notably onRedirect(url).
+   * @param {Object} auth - The MCP auth service used for persistence.
+   */
   constructor(mcpName, serverUrl, config, callbacks, auth) {
     this.mcpName = mcpName;
     this.serverUrl = serverUrl;
@@ -13,12 +30,20 @@ export class McpOAuthProvider {
     this.callbacks = callbacks;
     this.auth = auth;
   }
+  /**
+   * The OAuth redirect URL (the configured override, or the default localhost callback).
+   * @returns {string} The redirect URL.
+   */
   get redirectUrl() {
     if (this.config.redirectUri) {
       return this.config.redirectUri;
     }
     return `http://127.0.0.1:${OAUTH_CALLBACK_PORT}${OAUTH_CALLBACK_PATH}`;
   }
+  /**
+   * OAuth dynamic client registration metadata for this client.
+   * @returns {Object} The client metadata (redirect URIs, name, grant/response types, auth method).
+   */
   get clientMetadata() {
     return {
       redirect_uris: [this.redirectUrl],
@@ -29,6 +54,11 @@ export class McpOAuthProvider {
       token_endpoint_auth_method: this.config.clientSecret ? "client_secret_post" : "none"
     };
   }
+  /**
+   * Resolve the OAuth client credentials, preferring config, then stored (URL-validated,
+   * non-expired) registration info; returns undefined to trigger dynamic registration.
+   * @returns {Promise<Object>} The {client_id, client_secret}, or undefined.
+   */
   async clientInformation() {
     // Check config first (pre-registered client)
     if (this.config.clientId) {
@@ -58,6 +88,11 @@ export class McpOAuthProvider {
     // No client info or URL changed - will trigger dynamic registration
     return undefined;
   }
+  /**
+   * Persist dynamically registered client information bound to the current server URL.
+   * @param {Object} info - Registration response (client_id, client_secret, issued/expiry timestamps).
+   * @returns {Promise<void>} Resolves once stored.
+   */
   async saveClientInformation(info) {
     await Effect.runPromise(this.auth.updateClientInfo(this.mcpName, {
       clientId: info.client_id,
@@ -70,6 +105,10 @@ export class McpOAuthProvider {
       clientId: info.client_id
     });
   }
+  /**
+   * Return stored OAuth tokens for the current server URL in SDK token format.
+   * @returns {Promise<Object>} The {access_token, token_type, refresh_token, expires_in, scope}, or undefined.
+   */
   async tokens() {
     // Use getForUrl to validate tokens are for the current server URL
     const entry = await Effect.runPromise(this.auth.getForUrl(this.mcpName, this.serverUrl));
@@ -82,6 +121,11 @@ export class McpOAuthProvider {
       scope: entry.tokens.scope
     };
   }
+  /**
+   * Persist OAuth tokens, converting expires_in into an absolute expiry timestamp.
+   * @param {Object} tokens - SDK token response (access_token, refresh_token, expires_in, scope).
+   * @returns {Promise<void>} Resolves once stored.
+   */
   async saveTokens(tokens) {
     await Effect.runPromise(this.auth.updateTokens(this.mcpName, {
       accessToken: tokens.access_token,
@@ -93,6 +137,11 @@ export class McpOAuthProvider {
       mcpName: this.mcpName
     });
   }
+  /**
+   * Drive the authorization redirect by invoking the configured onRedirect callback.
+   * @param {URL} authorizationUrl - The provider authorization URL to open.
+   * @returns {Promise<void>} Resolves after the callback completes.
+   */
   async redirectToAuthorization(authorizationUrl) {
     log.info("redirecting to authorization", {
       mcpName: this.mcpName,
@@ -100,9 +149,18 @@ export class McpOAuthProvider {
     });
     await this.callbacks.onRedirect(authorizationUrl);
   }
+  /**
+   * Persist the PKCE code verifier for the current flow.
+   * @param {string} codeVerifier - The PKCE code verifier to store.
+   * @returns {Promise<void>} Resolves once stored.
+   */
   async saveCodeVerifier(codeVerifier) {
     await Effect.runPromise(this.auth.updateCodeVerifier(this.mcpName, codeVerifier));
   }
+  /**
+   * Retrieve the stored PKCE code verifier, throwing if none was saved.
+   * @returns {Promise<string>} The code verifier.
+   */
   async codeVerifier() {
     const entry = await Effect.runPromise(this.auth.get(this.mcpName));
     if (!entry?.codeVerifier) {
@@ -110,9 +168,18 @@ export class McpOAuthProvider {
     }
     return entry.codeVerifier;
   }
+  /**
+   * Persist the OAuth CSRF state for the current flow.
+   * @param {string} state - The CSRF state value to store.
+   * @returns {Promise<void>} Resolves once stored.
+   */
   async saveState(state) {
     await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, state));
   }
+  /**
+   * Return the OAuth CSRF state, generating and persisting a new one if none exists.
+   * @returns {Promise<string>} The CSRF state value.
+   */
   async state() {
     const entry = await Effect.runPromise(this.auth.get(this.mcpName));
     if (entry?.oauthState) {
@@ -127,6 +194,11 @@ export class McpOAuthProvider {
     await Effect.runPromise(this.auth.updateOAuthState(this.mcpName, newState));
     return newState;
   }
+  /**
+   * Invalidate stored credentials of a given scope.
+   * @param {string} type - One of "all", "client", or "tokens".
+   * @returns {Promise<void>} Resolves once the relevant credentials are removed.
+   */
   async invalidateCredentials(type) {
     log.info("invalidating credentials", {
       mcpName: this.mcpName,
@@ -156,6 +228,8 @@ export { OAUTH_CALLBACK_PORT, OAUTH_CALLBACK_PATH };
 /**
  * Parse a redirect URI to extract port and path for the callback server.
  * Returns defaults if the URI can't be parsed.
+ * @param {string} redirectUri - Optional redirect URI to parse.
+ * @returns {Object} An object with the resolved {port, path}.
  */
 export function parseRedirectUri(redirectUri) {
   if (!redirectUri) {

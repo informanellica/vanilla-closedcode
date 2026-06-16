@@ -1,3 +1,4 @@
+/** @file Code-formatter service: discovers enabled formatters, matches them to file extensions, and runs them on files. */
 import { Effect, Layer, Context, Schema } from "effect";
 import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 import { CrossSpawnSpawner } from "core/cross-spawn-spawner";
@@ -12,6 +13,7 @@ import { withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "format"
 });
+/** Effect Schema describing a formatter's reported status: its name, supported extensions, and whether it is enabled. */
 export const Status = Schema.Struct({
   name: Schema.String,
   extensions: Schema.Array(Schema.String),
@@ -21,13 +23,20 @@ export const Status = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Effect Context service tag for the Format service. */
 export class Service extends Context.Service()("@closedcode/Format") {}
+/** Effect Layer that constructs the Format service, wiring config and a child-process spawner into formatter discovery and execution. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   const state = yield* InstanceState.make(Effect.fn("Format.state")(function* (ctx) {
     const commands = {};
     const formatters = {};
+    /**
+     * Resolve and cache the formatter command for a formatter definition.
+     * @param {Object} item - Formatter definition with a name and an enabled() resolver.
+     * @returns {Promise<*>} The resolved command (array of args) or false when the formatter is unavailable.
+     */
     async function getCommand(item) {
       let cmd = commands[item.name];
       if (cmd === false || cmd === undefined) {
@@ -36,10 +45,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
       return cmd;
     }
+    /**
+     * Determine whether a formatter is enabled (its command resolves to a value other than false).
+     * @param {Object} item - Formatter definition.
+     * @returns {Promise<boolean>} True when the formatter is available.
+     */
     async function isEnabled(item) {
       const cmd = await getCommand(item);
       return cmd !== false;
     }
+    /**
+     * Find every enabled formatter whose extensions include the given extension.
+     * @param {string} ext - File extension (including the leading dot, e.g. ".js").
+     * @returns {Promise<Array>} Array of {item, cmd} entries for enabled matching formatters.
+     */
     async function getFormatter(ext) {
       const matching = Object.values(formatters).filter(item => item.extensions.includes(ext));
       const checks = await Promise.all(matching.map(async item => {
@@ -64,6 +83,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         cmd: x.cmd
       }));
     }
+    /**
+     * Run every matching enabled formatter against a single file, in sequence.
+     * @param {string} filepath - Absolute or relative path of the file to format.
+     * @returns {Effect} Effect yielding true if any formatter ran, false when no formatter matched the extension.
+     */
     function formatFile(filepath) {
       return Effect.gen(function* () {
         log.info("formatting", {
@@ -149,9 +173,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       formatFile
     };
   }));
+  /** Eagerly initialize the per-instance formatter state (discovery side effects). */
   const init = Effect.fn("Format.init")(function* () {
     yield* InstanceState.get(state);
   });
+  /**
+   * Report the status of all known formatters for the current instance.
+   * @returns {Effect} Effect yielding an array of {name, extensions, enabled} entries.
+   */
   const status = Effect.fn("Format.status")(function* () {
     const {
       formatters,
@@ -168,6 +197,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return result;
   });
+  /**
+   * Format a single file with the current instance's configured formatters.
+   * @param {string} filepath - Path of the file to format.
+   * @returns {Effect} Effect yielding true if a formatter ran, false otherwise.
+   */
   const file = Effect.fn("Format.file")(function* (filepath) {
     const {
       formatFile
@@ -180,5 +214,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     file
   });
 }));
+/** Format service Layer with its default Config and cross-spawn spawner dependencies provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer));
 export * as Format from "./index.js";

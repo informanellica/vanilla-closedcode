@@ -1,3 +1,4 @@
+/** @file Session processor: consumes the LLM stream for one assistant message, turning stream events (text/reasoning/tool/step) into persisted message parts, capturing filesystem snapshots, handling doom-loop detection, retries, and compaction signals. */
 import { Cause, Deferred, Effect, Layer, Context, Scope } from "effect";
 import * as Stream from "effect/Stream";
 import { Agent } from "#agent/agent.js";
@@ -25,7 +26,9 @@ const DOOM_LOOP_THRESHOLD = 3;
 const log = Log.create({
   service: "session.processor"
 });
+/** Effect service tag for the session processor. */
 export class Service extends Context.Service()("@closedcode/SessionProcessor") {}
+/** Layer that builds the SessionProcessor service, exposing a `create` factory for per-message processors. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const session = yield* Session.Service;
   const config = yield* Config.Service;
@@ -38,6 +41,16 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const summary = yield* SessionSummary.Service;
   const scope = yield* Scope.Scope;
   const status = yield* SessionStatus.Service;
+  /**
+   * Creates a processor bound to a single assistant message. Sets up a local
+   * context (in-flight tool calls, current text/reasoning parts, snapshot) and
+   * returns a handle that can `process` an LLM stream and mutate its tool calls.
+   * @param {Object} input - Processor inputs.
+   * @param {Object} input.assistantMessage - The assistant message being generated.
+   * @param {string} input.sessionID - Session the message belongs to.
+   * @param {Object} input.model - The model info (providerID/id) used for the run.
+   * @returns {*} An Effect yielding a handle `{ message, updateToolCall, completeToolCall, process }`.
+   */
   const create = Effect.fn("SessionProcessor.create")(function* (input) {
     // Pre-capture snapshot before the LLM stream starts. The AI SDK
     // may execute tools internally before emitting start-step events,
@@ -61,11 +74,23 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       providerID: input.model.providerID,
       aborted
     });
+    /**
+     * Removes a tool call from the in-flight map and resolves its `done` deferred
+     * so any awaiter (e.g. cleanup) is released.
+     * @param {string} toolCallID - The tool call to settle.
+     * @returns {*} An Effect that completes once the call is settled.
+     */
     const settleToolCall = Effect.fn("SessionProcessor.settleToolCall")(function* (toolCallID) {
       const done = ctx.toolcalls[toolCallID]?.done;
       delete ctx.toolcalls[toolCallID];
       if (done) yield* Deferred.succeed(done, undefined).pipe(Effect.ignore);
     });
+    /**
+     * Looks up an in-flight tool call and loads its persisted part. Drops the
+     * call from the map if the part is missing or no longer a tool part.
+     * @param {string} toolCallID - The tool call to read.
+     * @returns {*} An Effect yielding `{ call, part }`, or undefined if not found.
+     */
     const readToolCall = Effect.fn("SessionProcessor.readToolCall")(function* (toolCallID) {
       const call = ctx.toolcalls[toolCallID];
       if (!call) return;
@@ -83,6 +108,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         part
       };
     });
+    /**
+     * Applies a transform to a tool call's part and persists it, keeping the
+     * in-flight map in sync with the updated part identifiers.
+     * @param {string} toolCallID - The tool call to update.
+     * @param {Function} update - Maps the current part to its next value.
+     * @returns {*} An Effect yielding the updated part, or undefined if not found.
+     */
     const updateToolCall = Effect.fn("SessionProcessor.updateToolCall")(function* (toolCallID, update) {
       const match = yield* readToolCall(toolCallID);
       if (!match) return;
@@ -95,6 +127,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       };
       return part;
     });
+    /**
+     * Marks a running tool call as completed, writing its output/metadata/title
+     * and end time, then settles it. No-op if the call is not currently running.
+     * @param {string} toolCallID - The tool call to complete.
+     * @param {Object} output - Tool result `{ output, metadata, title, attachments }`.
+     * @returns {*} An Effect that completes once the part is persisted and settled.
+     */
     const completeToolCall = Effect.fn("SessionProcessor.completeToolCall")(function* (toolCallID, output) {
       const match = yield* readToolCall(toolCallID);
       if (!match || match.part.state.status !== "running") return;
@@ -115,6 +154,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
       yield* settleToolCall(toolCallID);
     });
+    /**
+     * Marks a running tool call as errored with the formatted error message and
+     * end time, then settles it. If the error is a permission/question rejection
+     * and the loop should break, records the blocked state.
+     * @param {string} toolCallID - The tool call to fail.
+     * @param {*} error - The error that caused the failure.
+     * @returns {*} An Effect yielding true if the call was failed, false if it was not running.
+     */
     const failToolCall = Effect.fn("SessionProcessor.failToolCall")(function* (toolCallID, error) {
       const match = yield* readToolCall(toolCallID);
       if (!match || match.part.state.status !== "running") return false;
@@ -136,6 +183,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       yield* settleToolCall(toolCallID);
       return true;
     });
+    /**
+     * Handles a single LLM stream event, translating it into session-part
+     * mutations and dual-written v2 session events. Covers status, reasoning,
+     * tool input/call/result/error, step start/finish (snapshots, usage, cost,
+     * compaction check), and text start/delta/end.
+     * @param {Object} value - A stream event with a discriminating `type`.
+     * @returns {*} An Effect that completes once the event has been applied.
+     */
     const handleEvent = Effect.fnUntraced(function* (value) {
       switch (value.type) {
         case "start":
@@ -500,6 +555,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
           return;
       }
     });
+    /**
+     * Finalizes the assistant message when the stream ends or is interrupted:
+     * flushes any pending patch, closes the current text and reasoning parts,
+     * waits briefly for in-flight tool calls, marks any still-running ones as
+     * aborted/interrupted, and stamps the message completion time.
+     * @returns {*} An Effect that completes once all parts and the message are settled.
+     */
     const cleanup = Effect.fn("SessionProcessor.cleanup")(function* () {
       if (ctx.snapshot) {
         const patch = yield* snapshot.patch(ctx.snapshot);
@@ -565,6 +627,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       ctx.assistantMessage.time.completed = Date.now();
       yield* session.updateMessage(ctx.assistantMessage);
     });
+    /**
+     * Handles a fatal stream error: logs it, parses it into a message error, and
+     * either flags compaction (for context-overflow) or records the error on the
+     * message, publishes it on the bus, and sets the session idle.
+     * @param {*} e - The error/exception that halted processing.
+     * @returns {*} An Effect that completes once the error has been handled.
+     */
     const halt = Effect.fn("SessionProcessor.halt")(function* (e) {
       slog.error("process", {
         error: errorMessage(e),
@@ -588,6 +657,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         type: "idle"
       });
     });
+    /**
+     * Runs the LLM stream to completion: drains stream events through
+     * `handleEvent`, stopping early if compaction is needed, applying the retry
+     * policy and abort/error handling, and always running `cleanup`.
+     * @param {Object} streamInput - The input passed to `llm.stream` (messages, tools, model, etc.).
+     * @returns {*} An Effect yielding the next loop action: "compact", "stop", or "continue".
+     */
     const process = Effect.fn("SessionProcessor.process")(function* (streamInput) {
       slog.info("process");
       ctx.needsCompaction = false;

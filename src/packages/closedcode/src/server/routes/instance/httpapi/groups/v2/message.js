@@ -1,8 +1,14 @@
+/** @file HttpApi group defining the experimental v2 message route: cursor-paginated retrieval of projected session messages. */
 import { SessionID } from "#session/schema.js";
 import { SessionMessage } from "#v2/session-message.js";
 import { Schema } from "effect";
 import { HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../../middleware/authorization.js";
+/**
+ * Experimental v2 message route group, exposing a single endpoint that retrieves
+ * projected v2 messages for a session with order-based or cursor-based pagination.
+ * Guarded by authorization middleware.
+ */
 export const MessageGroup = HttpApiGroup.make("v2.message").add(HttpApiEndpoint.get("messages", "/api/session/:sessionID/message", {
   params: {
     sessionID: SessionID

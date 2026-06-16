@@ -1,3 +1,9 @@
+/**
+ * @file Express runtime adapter: wraps an Express app with
+ * node:http.createServer for listening, a noServer WebSocketServer (ws package)
+ * for upgrade handling (including remote-workspace WS proxying), and an
+ * in-process loopback fetch tuned for long-running agent requests.
+ */
 // Express runtime adapter: wraps an Express app with node:http.createServer for
 // listening and a noServer WebSocketServer (ws package) for upgrade handling.
 import http from "node:http";
@@ -17,7 +23,24 @@ import { AppRuntime } from "#effect/app-runtime.js";
 import { ProxyUtil } from "#server/proxy-util.js";
 import { resolveWorkspaceRoute, workspaceProxyURL } from "#server/workspace.js";
 
+/**
+ * Start an HTTP server for the given Express app and return a control handle.
+ * Disables per-request/header timeouts only for explicit loopback binds (so
+ * long agent loops are not aborted), tries port 4096 then a random port when
+ * `opts.port` is 0, and lets the optional injector hook the server before it
+ * listens (used to attach WebSocket upgrade handling).
+ * @param {Object} app - The Express application/request handler.
+ * @param {Object} opts - Listen options: `port` (0 = auto) and `hostname`.
+ * @param {Function} inject - Optional callback invoked with the http.Server before it listens.
+ * @returns {Promise<Object>} Resolves to a handle with `port` and a `stop(close)` method.
+ */
 async function listen(app, opts, inject) {
+  /**
+   * Create and bind an http.Server on the given port (and opts.hostname),
+   * resolving with the server once it is listening.
+   * @param {number} port - The TCP port to bind.
+   * @returns {Promise<Object>} Resolves to the listening http.Server.
+   */
   const start = (port) =>
     new Promise((resolve, reject) => {
       const server = http.createServer(app);
@@ -57,6 +80,11 @@ async function listen(app, opts, inject) {
   let closing;
   return {
     port: addr.port,
+    /**
+     * Stop the server, resolving once it has fully closed. Idempotent.
+     * @param {boolean} close - When true, also forcibly close all (idle and active) connections.
+     * @returns {Promise<void>} Resolves when the server has closed.
+     */
     stop(close) {
       closing ??= new Promise((resolve, reject) => {
         server.close((err) => {
@@ -80,10 +108,24 @@ async function listen(app, opts, inject) {
 // `upgradeWebSocket(handlerFactory)` produces an Express route handler that, on
 // a matched path, defers to the upgrade listener registered below. Mirrors the
 // shape used by route code (e.g. pty.js).
+/**
+ * Build the WebSocket upgrade machinery for the Express adapter.
+ * Returns an `upgradeWebSocket` route-handler factory (registers per-path WS
+ * handlers) and an `injectWebSocket(server)` injector that handles HTTP
+ * `upgrade` events, dispatching to local routes or remote-workspace proxying.
+ * @returns {Object} An object with `upgradeWebSocket` and `injectWebSocket`.
+ */
 function createWebSocket() {
   const wss = new WebSocketServer({ noServer: true });
   const routes = new Map(); // path -> handlerFactory
 
+  /**
+   * Create an Express middleware that registers a WS handler factory for the
+   * request's path; the actual upgrade is performed later in the server's
+   * `upgrade` event. Non-upgrade requests fall through.
+   * @param {Function} handlerFactory - Async factory `({req}) -> handlers` producing WS event handlers.
+   * @returns {Function} An Express middleware `(req, res, next)`.
+   */
   const upgradeWebSocket = (handlerFactory) => {
     return (req, res, next) => {
       // Record the handler for this exact path; the actual switch to a WS
@@ -100,6 +142,18 @@ function createWebSocket() {
   // Only REMOTE-target workspaces are proxied here; everything else falls back
   // to socket.destroy() (the WS analogue of the HTTP 503/no-route response,
   // since an upgrade has no clean handshake-level error reply).
+  /**
+   * Proxy an inbound WebSocket upgrade to a remote-workspace target.
+   * Resolves the workspace route (env → session → ?workspace= → adapter target);
+   * only remote, currently-syncing workspaces are proxied. On any non-match it
+   * destroys the socket (no clean handshake error is possible mid-upgrade).
+   * Otherwise it completes the inbound handshake and bridges to the remote.
+   * @param {Object} req - The incoming upgrade request.
+   * @param {Object} socket - The raw client socket.
+   * @param {Buffer} head - The first packet of the upgraded stream.
+   * @param {URL} url - The parsed request URL.
+   * @returns {Promise<void>} Resolves once the upgrade is handled or rejected.
+   */
   const handleRemoteUpgrade = async (req, socket, head, url) => {
     const envWorkspaceID = Flag.CLOSEDCODE_WORKSPACE_ID
       ? WorkspaceID.make(Flag.CLOSEDCODE_WORKSPACE_ID)
@@ -133,6 +187,14 @@ function createWebSocket() {
     });
   };
 
+  /**
+   * Attach the HTTP `upgrade` listener to a server. Local registered routes
+   * (e.g. the pty route) take priority and are upgraded via `wss`; otherwise
+   * the upgrade is attempted as a remote-workspace proxy, destroying the socket
+   * on any failure.
+   * @param {Object} server - The http.Server to attach the listener to.
+   * @returns {void}
+   */
   const injectWebSocket = (server) => {
     server.on("upgrade", (req, socket, head) => {
       const url = new URL(req.url, "http://localhost");
@@ -169,6 +231,17 @@ function createWebSocket() {
 // socket opens, messages are forwarded raw in both directions, and close/error
 // codes propagate across (1011 on error). Invalid close codes (e.g. 1005/1006
 // surfaced by ws) are guarded so close() can't throw.
+/**
+ * Bridge an already-upgraded inbound WebSocket to a freshly-dialed outbound
+ * one. Inbound messages are queued until the outbound socket opens, then
+ * forwarded raw in both directions; close/error codes propagate across (1011
+ * on error), with invalid close codes guarded so close() can't throw.
+ * @param {Object} inbound - The upgraded inbound `ws` connection.
+ * @param {string} wsURL - The remote WebSocket target URL.
+ * @param {Array<string>} protocols - WebSocket subprotocols to request (empty = none).
+ * @param {Object} headers - Outbound handshake headers (sanitized + target auth).
+ * @returns {void}
+ */
 function bridgeRemote(inbound, wsURL, protocols, headers) {
   const outbound = new WebSocket(wsURL, protocols.length ? protocols : undefined, {
     headers: Object.fromEntries(headers.entries()),
@@ -177,6 +250,14 @@ function bridgeRemote(inbound, wsURL, protocols, headers) {
   const queue = []; // inbound messages awaiting the outbound open
   let outboundOpen = false;
 
+  /**
+   * Close a socket with the given code/reason, falling back to a plain close()
+   * if the code is invalid (e.g. 1005/1006), so close() never throws.
+   * @param {Object} sock - The WebSocket to close.
+   * @param {number} code - The close code.
+   * @param {string} reason - The close reason.
+   * @returns {void}
+   */
   const safeClose = (sock, code, reason) => {
     try {
       sock.close(code, reason);
@@ -219,9 +300,21 @@ function bridgeRemote(inbound, wsURL, protocols, headers) {
 // Wrap an Express app with fetch() and request() methods for in-process use.
 // Do not mutate expressApp.request; Express uses that property as the request
 // prototype internally.
+/**
+ * Wrap an Express app with `fetch`/`request` methods that drive it over an
+ * in-process loopback HTTP server. The lazily-started server has per-request
+ * timeouts disabled so long agent loops (run inside a single request) are not
+ * capped at 5 minutes. Does not mutate `expressApp.request`.
+ * @param {Object} expressApp - The Express application to wrap.
+ * @returns {Object} An object exposing `fetch(input, init)` and `request(input, init)`.
+ */
 function createInProcessFetch(expressApp) {
   let _ready;
 
+  /**
+   * Lazily start (once) the loopback HTTP server bound to 127.0.0.1.
+   * @returns {Promise<string>} Resolves to the server's base URL.
+   */
   function ensureServer() {
     if (_ready) return _ready;
     _ready = new Promise((resolve, reject) => {
@@ -244,6 +337,14 @@ function createInProcessFetch(expressApp) {
   }
 
   const publicApp = {
+    /**
+     * Dispatch a request to the in-process server, forwarding method, headers,
+     * body, and the caller's abort signal (so explicit cancellation still
+     * propagates) via the no-timeout undici dispatcher.
+     * @param {string|Request} input - A URL string or a Request object.
+     * @param {Object} init - Optional fetch init (used when `input` is a string).
+     * @returns {Promise<Response>} The fetch Response from the loopback server.
+     */
     fetch: async function fetch(input, init) {
     const base = await ensureServer();
     const req = input instanceof Request ? input : new Request(input, init);
@@ -259,6 +360,13 @@ function createInProcessFetch(expressApp) {
     }
     return globalThis.fetch(target, fwdInit);
     },
+    /**
+     * Like `fetch`, but resolves relative URL strings against
+     * http://localhost first.
+     * @param {string|Request} input - A URL string (possibly relative) or a Request.
+     * @param {Object} init - Optional fetch init.
+     * @returns {Promise<Response>} The fetch Response from the loopback server.
+     */
     request(input, init) {
       if (typeof input === "string" && !input.startsWith("http")) {
         input = new URL(input, "http://localhost").toString();
@@ -270,7 +378,17 @@ function createInProcessFetch(expressApp) {
   return publicApp;
 }
 
+/**
+ * The Express runtime adapter implementation.
+ * @type {Object}
+ */
 export const adapter = {
+  /**
+   * Build the runtime bindings for an Express app: a WebSocket upgrade helper
+   * and a `listen` function that starts the server with WS injection wired in.
+   * @param {Object} app - The Express application.
+   * @returns {Object} An object with `upgradeWebSocket` and `listen(opts)`.
+   */
   create(app) {
     const ws = createWebSocket();
     return {

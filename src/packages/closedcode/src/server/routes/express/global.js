@@ -1,3 +1,4 @@
+/** @file Express route group for the /global endpoints (health, SSE events, config, dispose, upgrade). */
 // Express route group for the /global endpoints (health, SSE events, config, dispose, upgrade).
 import express from "express";
 import { Effect } from "effect";
@@ -20,6 +21,14 @@ import { disposeAllInstancesAndEmitGlobalDisposed } from "../../global-lifecycle
 const log = Log.create({ service: "server" });
 
 // SSE helper: sets headers, pumps an AsyncQueue to the client, and tears down on disconnect.
+/**
+ * Streams server-sent events to the client: sets SSE headers, sends an initial connected event plus periodic
+ * heartbeats, pumps an AsyncQueue to the response, and tears everything down when the request closes.
+ * @param {Object} res - The Express response object.
+ * @param {Object} req - The Express request object.
+ * @param {Function} subscribe - Called with the AsyncQueue; should push events onto it and return an unsubscribe function.
+ * @returns {void}
+ */
 function streamEvents(res, req, subscribe) {
   res.status(200);
   res.setHeader("Content-Type", "text/event-stream");
@@ -58,6 +67,11 @@ function streamEvents(res, req, subscribe) {
   })();
 }
 
+/**
+ * Builds the Express router for the /global route group (health, SSE event stream, global config, dispose, upgrade).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function GlobalRoutes(registry) {
   const router = express.Router();
 

@@ -1,3 +1,4 @@
+/** @file V2 session-message projectors: project SessionEvent sync events into the sqlite SessionMessage store via the synchronous SessionMessageUpdater bridged over async sequelize. */
 import { SessionMessage } from "#v2/session-message.js";
 import { SessionMessageUpdater } from "#v2/session-message-updater.js";
 import { SessionEvent } from "#v2/session-event.js";
@@ -5,6 +6,12 @@ import * as DateTime from "effect/DateTime";
 import { SyncEvent } from "#sync/index.js";
 import { Schema } from "effect";
 const decodeMessage = Schema.decodeUnknownSync(SessionMessage.Message);
+/**
+ * Recursively converts any Effect DateTime values within a structure to epoch
+ * milliseconds so the data can be JSON-serialized into a sqlite column.
+ * @param {*} value - Arbitrary value, array, or object to encode.
+ * @returns {*} The value with all DateTimes replaced by epoch-millisecond numbers.
+ */
 function encodeDateTimes(value) {
   if (DateTime.isDateTime(value)) return DateTime.toEpochMillis(value);
   if (Array.isArray(value)) return value.map(encodeDateTimes);
@@ -13,6 +20,11 @@ function encodeDateTimes(value) {
   }
   return value;
 }
+/**
+ * Encodes a message's data payload for storage (currently just DateTime encoding).
+ * @param {*} value - The message data to encode.
+ * @returns {*} The storage-ready encoded value.
+ */
 function encodeMessageData(value) {
   return encodeDateTimes(value);
 }
@@ -24,6 +36,16 @@ const json = value => (typeof value === "string" ? JSON.parse(value) : value);
 // adapter pre-loads the rows the updater may read (within a single event all
 // reads happen before all writes) and queues the writes, which are flushed
 // in order after the updater returns.
+/**
+ * Builds a synchronous SessionMessageUpdater adapter backed by sequelize. It
+ * pre-loads the assistant/compaction/shell messages for the session, exposes
+ * getters/setters the updater can call synchronously, and queues all writes so
+ * they can be flushed (in order) after the updater finishes.
+ * @param {Object} h - Sequelize handle `{ models, sequelize, tx }`.
+ * @param {string} sessionID - Session whose messages are being projected.
+ * @returns {Promise<Object>} A promise of `{ adapter, flush }` where `adapter` is the
+ *   synchronous updater interface and `flush` runs the queued writes.
+ */
 async function sqlite(h, sessionID) {
   const fetch = async type => (await h.models.SessionMessage.findAll({
     where: { session_id: sessionID, type },
@@ -97,11 +119,24 @@ async function sqlite(h, sessionID) {
     }
   };
 }
+/**
+ * Applies a single session-message event to the store: builds the adapter,
+ * runs the synchronous updater against it, then flushes the queued writes.
+ * @param {Object} h - Sequelize handle `{ models, sequelize, tx }`.
+ * @param {Object} event - The session-message event `{ id, type, data }` to project.
+ * @returns {Promise<void>} Resolves once the projection is persisted.
+ */
 async function update(h, event) {
   const store = await sqlite(h, event.data.sessionID);
   SessionMessageUpdater.update(store.adapter, event);
   await store.flush();
 }
+/**
+ * V2 projector handlers mapping each SessionEvent sync event to a sqlite write.
+ * Most handlers forward to `update` to project a `session.next.*` message; a few
+ * (agent/model switched) also update the session row, and delta events are no-ops.
+ * @type {Array}
+ */
 export default [SyncEvent.project(SessionEvent.AgentSwitched.Sync, async (h, data, event) => {
   await h.models.Session.update({
     agent: data.agent,

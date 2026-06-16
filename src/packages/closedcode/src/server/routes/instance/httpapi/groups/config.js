@@ -1,3 +1,7 @@
+/**
+ * @file Effect HttpApi group for the /config routes: get/update configuration and list
+ * configured providers. Guarded by instance-context, workspace-routing, and authorization middleware.
+ */
 import { Config } from "#config/config.js";
 import { Provider } from "#provider/provider.js";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
@@ -5,7 +9,9 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+// Base path for the config route group.
 const root = "/config";
+/** Effect HttpApi group exposing GET /config, PATCH /config, and GET /config/providers. */
 export const ConfigApi = HttpApi.make("config").add(HttpApiGroup.make("config").add(HttpApiEndpoint.get("get", root, {
   success: described(Config.Info, "Get config info")
 }).annotateMerge(OpenApi.annotations({

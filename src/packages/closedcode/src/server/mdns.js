@@ -1,3 +1,4 @@
+/** @file mDNS (Bonjour) service advertisement: publish/unpublish the server's HTTP endpoint on the local network. */
 import * as Log from "core/util/log";
 import { Bonjour } from "bonjour-service";
 const log = Log.create({
@@ -5,6 +6,13 @@ const log = Log.create({
 });
 let bonjour;
 let currentPort;
+/**
+ * Publish an mDNS/Bonjour "http" service advertising the server on the local network.
+ * No-op if the same port is already published; tears down any prior advertisement first.
+ * @param {number} port - TCP port the server is listening on.
+ * @param {string} domain - Optional mDNS host name to advertise (defaults to "closedcode.local").
+ * @returns {void}
+ */
 export function publish(port, domain) {
   if (currentPort === port) return;
   if (bonjour) unpublish();
@@ -46,6 +54,10 @@ export function publish(port, domain) {
     currentPort = undefined;
   }
 }
+/**
+ * Tear down the active mDNS/Bonjour advertisement (if any) and reset internal state.
+ * @returns {void}
+ */
 export function unpublish() {
   if (bonjour) {
     try {

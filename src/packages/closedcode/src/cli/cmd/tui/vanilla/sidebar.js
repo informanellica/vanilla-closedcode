@@ -1,7 +1,9 @@
-// Session sidebar for the vanilla TUI — a togglable right-hand panel showing the
-// current session's TODOs and changed files (from vanilla/data: todos(sid) +
-// diff(sid)). Mirrors routes/session/sidebar.js at a basic level. Toggled by the
-// sidebar_toggle keybind (Ctrl-X b); the shell row-splits the timeline when open.
+/**
+ * @file Session sidebar for the vanilla TUI — a togglable right-hand panel showing
+ * the current session's TODOs and changed files (from vanilla/data: todos(sid) +
+ * diff(sid)). Mirrors routes/session/sidebar.js at a basic level. Toggled by the
+ * sidebar_toggle keybind (Ctrl-X b); the shell row-splits the timeline when open.
+ */
 import { createSignal } from "../runtime/reactivity.js";
 import { truncate, fit } from "../runtime/text.js";
 import { attr, defaultTheme } from "./theme.js";
@@ -9,8 +11,12 @@ import { attr, defaultTheme } from "./theme.js";
 const TODO_MARK = { completed: "✓ ", in_progress: "▶ ", pending: "○ " };
 const TODO_TOKEN = { completed: "success", in_progress: "warning", pending: "textMuted" };
 
-// Normalize the session diff into a [{ path, ... }] file list. Accepts a unified
-// diff string, an array of paths, or a { files: [...] } object.
+/**
+ * Normalize the session diff into a [{ path, ... }] file list. Accepts a unified
+ * diff string, an array of paths, or a { files: [...] } object.
+ * @param {*} diff - A unified-diff string, an array of paths/objects, or {files}.
+ * @returns {Array} The {path, ...} file entries.
+ */
 export function diffFiles(diff) {
   if (!diff) return [];
   if (Array.isArray(diff)) return diff.map(f => (typeof f === "string" ? { path: f } : f));
@@ -26,14 +32,32 @@ export function diffFiles(diff) {
   return [];
 }
 
+/**
+ * Create the togglable session sidebar widget.
+ * @param {Object} opts - Options.
+ * @param {Object} opts.theme - Theme token map (defaults to defaultTheme).
+ * @param {Object} opts.data - The data layer (provides .store.todos/.diff).
+ * @param {*} opts.sessionID - The current session id (value or getter function).
+ * @returns {Object} The sidebar API {visible, setOpen, toggle, draw}.
+ */
 export function createSidebar(opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const data = opts.data;
   const sid = () => (typeof opts.sessionID === "function" ? opts.sessionID() : opts.sessionID);
   const [open, setOpen] = createSignal(false);
 
+  /**
+   * Toggle the sidebar's open/closed state.
+   * @returns {void}
+   */
   function toggle() { setOpen(v => !v); }
 
+  /**
+   * Draw the sidebar: a left separator, the session heading, the TODO list, and
+   * the changed-files list, clipped to the region height.
+   * @param {Object} region - The drawing region.
+   * @returns {void}
+   */
   function draw(region) {
     const W = region.width;
     // left separator + padded content area

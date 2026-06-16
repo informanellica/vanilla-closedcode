@@ -1,3 +1,4 @@
+/** @file Experimental HttpApi route definitions for permission requests: list pending requests and reply to them. */
 import { Permission } from "#permission/index.js";
 import { PermissionID } from "#permission/schema.js";
 import { Schema } from "effect";
@@ -6,11 +7,17 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path for the permission route group. */
 const root = "/permission";
+/** Payload schema for replying to a permission request: the reply decision plus an optional message. */
 const ReplyPayload = Schema.Struct({
   reply: Permission.Reply,
   message: Schema.optional(Schema.String)
 });
+/**
+ * HttpApi definition for the experimental permission route group.
+ * Bundles the list and reply endpoints under instance-context, workspace-routing, and authorization middleware.
+ */
 export const PermissionApi = HttpApi.make("permission").add(HttpApiGroup.make("permission").add(HttpApiEndpoint.get("list", root, {
   success: described(Schema.Array(Permission.Request), "List of pending permissions")
 }).annotateMerge(OpenApi.annotations({

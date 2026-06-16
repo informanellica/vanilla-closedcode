@@ -1,3 +1,4 @@
+/** @file One-time migration that lifts TUI-specific keys (theme, keybinds, tui) out of opencode.json files into dedicated tui.json files, backing up and stripping the originals. */
 import path from "path";
 import { applyEdits, modify, parse as parseJsonc } from "jsonc-parser";
 import { unique } from "remeda";
@@ -22,6 +23,8 @@ const TuiLegacy = z.object({
  * Migrates tui-specific keys (theme, keybinds, tui) from opencode.json files
  * into dedicated tui.json files. Migration is performed per-directory and
  * skips only locations where a tui.json already exists.
+ * @param {Object} input - Discovery input with `cwd` (string) and `directories` (Array) used to locate opencode config files.
+ * @returns {Promise<void>}
  */
 export async function migrateTuiConfig(input) {
   const opencode = await opencodeFiles(input);
@@ -79,6 +82,11 @@ export async function migrateTuiConfig(input) {
     });
   }
 }
+/**
+ * Parses and filters a legacy `tui` block, keeping only the known migratable options.
+ * @param {Object} data - The raw legacy `tui` object.
+ * @returns {Object} The parsed options, or undefined when none of the recognized keys are present.
+ */
 function normalizeTui(data) {
   const parsed = TuiLegacy.parse(data);
   if (parsed.scroll_speed === undefined && parsed.diff_style === undefined && parsed.scroll_acceleration === undefined) {
@@ -86,6 +94,13 @@ function normalizeTui(data) {
   }
   return parsed;
 }
+/**
+ * Backs up the source config (to a `.tui-migration.bak` sibling) and removes the migrated
+ * theme/keybinds/tui keys from it, preserving the rest of the JSONC formatting.
+ * @param {string} file - Path to the opencode config file being migrated.
+ * @param {string} source - The original text of that file.
+ * @returns {Promise<boolean>} True if the backup and strip both succeeded, false otherwise.
+ */
 async function backupAndStripLegacy(file, source) {
   const backup = file + ".tui-migration.bak";
   const hasBackup = await Filesystem.exists(backup);
@@ -123,6 +138,12 @@ async function backupAndStripLegacy(file, source) {
     return false;
   });
 }
+/**
+ * Collects all existing opencode config file paths to consider for migration: the global config dir,
+ * files found walking up from cwd, the supplied directories, and the CLOSEDCODE_CONFIG override.
+ * @param {Object} input - Discovery input with `cwd` (string) and `directories` (Array).
+ * @returns {Promise<Array>} The list of opencode config file paths that exist on disk.
+ */
 async function opencodeFiles(input) {
   const files = [...ConfigPaths.fileInDirectory(Global.Path.config, "opencode"), ...(await Filesystem.findUp(["opencode.json", "opencode.jsonc"], input.cwd, undefined, {
     rootFirst: true

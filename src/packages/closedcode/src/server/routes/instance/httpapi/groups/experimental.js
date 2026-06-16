@@ -1,3 +1,8 @@
+/**
+ * @file Effect HttpApi group for the experimental instance routes: Console org metadata
+ * and switching, tool listing, worktree management, cross-project session listing, and
+ * MCP resource listing. Guarded by instance-context, workspace-routing, and authorization middleware.
+ */
 import { AccountID, OrgID } from "#account/schema.js";
 import { MCP } from "#mcp/index.js";
 import { ProviderID, ModelID } from "#provider/schema.js";
@@ -10,6 +15,7 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+// Response describing the active Console org and the provider IDs it manages.
 const ConsoleStateResponse = Schema.Struct({
   consoleManagedProviders: Schema.mutable(Schema.Array(Schema.String)),
   activeOrgName: Schema.optionalKey(Schema.String),
@@ -17,6 +23,7 @@ const ConsoleStateResponse = Schema.Struct({
 }).annotate({
   identifier: "ConsoleState"
 });
+// A single switchable Console org option, with the account it belongs to.
 const ConsoleOrgOption = Schema.Struct({
   accountID: Schema.String,
   accountEmail: Schema.String,
@@ -25,16 +32,20 @@ const ConsoleOrgOption = Schema.Struct({
   orgName: Schema.String,
   active: Schema.Boolean
 });
+// Wrapper for the list of switchable Console org options.
 const ConsoleOrgList = Schema.Struct({
   orgs: Schema.Array(ConsoleOrgOption)
 });
+/** Payload selecting the account/org to make active when switching Console orgs. */
 export const ConsoleSwitchPayload = Schema.Struct({
   accountID: AccountID,
   orgID: OrgID
 });
+// List of available tool IDs.
 const ToolIDs = Schema.Array(Schema.String).annotate({
   identifier: "ToolIDs"
 });
+// A single tool entry: id, description, and its JSON schema parameters.
 const ToolListItem = Schema.Struct({
   id: Schema.String,
   description: Schema.String,
@@ -42,18 +53,23 @@ const ToolListItem = Schema.Struct({
 }).annotate({
   identifier: "ToolListItem"
 });
+// List of tool entries.
 const ToolList = Schema.Array(ToolListItem).annotate({
   identifier: "ToolList"
 });
+/** Query params selecting the provider/model whose tools should be listed. */
 export const ToolListQuery = Schema.Struct({
   provider: ProviderID,
   model: ModelID
 });
+// Query-string boolean: decodes "true"/"false" strings to/from a real boolean.
 const QueryBoolean = Schema.Literals(["true", "false"]).pipe(Schema.decodeTo(Schema.Boolean, {
   decode: SchemaGetter.transform(value => value === "true"),
   encode: SchemaGetter.transform(value => value ? "true" : "false")
 }));
+// List of worktree directories.
 const WorktreeList = Schema.Array(Schema.String);
+/** Query params for filtering the cross-project session list (directory, roots, time, search, pagination, archived). */
 export const SessionListQuery = Schema.Struct({
   directory: Schema.optional(Schema.String),
   roots: Schema.optional(QueryBoolean),
@@ -63,6 +79,7 @@ export const SessionListQuery = Schema.Struct({
   limit: Schema.optional(Schema.NumberFromString),
   archived: Schema.optional(QueryBoolean)
 });
+/** Route paths exposed by the experimental API group. */
 export const ExperimentalPaths = {
   console: "/experimental/console",
   consoleOrgs: "/experimental/console/orgs",
@@ -74,6 +91,7 @@ export const ExperimentalPaths = {
   session: "/experimental/session",
   resource: "/experimental/resource"
 };
+/** Effect HttpApi group exposing the experimental endpoints (Console, tools, worktrees, sessions, resources). */
 export const ExperimentalApi = HttpApi.make("experimental").add(HttpApiGroup.make("experimental").add(HttpApiEndpoint.get("console", ExperimentalPaths.console, {
   success: described(ConsoleStateResponse, "Active Console provider metadata")
 }).annotateMerge(OpenApi.annotations({

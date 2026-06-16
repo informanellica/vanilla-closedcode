@@ -1,9 +1,17 @@
+/** @file Self-update entry point; disabled in this signed private build but retains the legacy flow. */
 import { Bus } from "#bus/index.js";
 import { Config } from "#config/config.js";
 import { AppRuntime } from "#effect/app-runtime.js";
 import { Flag } from "core/flag/flag";
 import { Installation } from "#installation/index.js";
 import { InstallationVersion } from "core/installation/version";
+/**
+ * Perform the auto-update check and, where enabled, upgrade or publish an update-available event.
+ * In this build self-update is disabled and the function returns immediately; the remaining
+ * (unreachable) code is the legacy flow that consulted config/flags, queried the latest release,
+ * and either notified or upgraded depending on the configured autoupdate mode and release type.
+ * @returns {Promise<void>}
+ */
 export async function upgrade() {
   // Self-update is disabled: this is a privately distributed, signed build, not
   // a package-managed CLI. The legacy update path would hit a non-existent

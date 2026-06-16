@@ -1,3 +1,4 @@
+/** @file CLI entry bootstrap: wires up the yargs parser (closedcode scriptName, help/version/log/pure options) and dispatches to the TUI thread command. */
 import yargs from "yargs";
 import { TuiThreadCommand } from "./cli/cmd/tui/thread.js";
 import { InstallationVersion } from "core/installation/version";

@@ -1,4 +1,4 @@
-// Express route group for the instance /session endpoints (27 operations).
+/** @file Express route group for the instance /session endpoints (27 operations). */
 import express from "express";
 import { Effect } from "effect";
 import z from "zod";
@@ -38,12 +38,22 @@ const QueryBoolean = z.union([
   z.preprocess((value) => (value === "true" ? true : value === "false" ? false : value), z.boolean()),
   z.enum(["true", "false"]),
 ]);
+/**
+ * Coerces a query-string boolean into a real boolean.
+ * @param {*} value - Raw query value (`true`/`false` boolean, "true"/"false" string, or undefined).
+ * @returns {boolean} True when the value is `true` or the string "true"; undefined when value is undefined.
+ */
 function queryBoolean(value) {
   if (value === undefined) return;
   return value === true || value === "true";
 }
 
 // OTel attribute key normalisation: `fooID` -> `foo.id`; other params are namespaced under `closedcode.`.
+/**
+ * Normalises a route param name into an OTel span attribute key.
+ * @param {string} key - Route param name (e.g. "sessionID", "directory").
+ * @returns {string} Attribute key: `foo.id` for `fooID` params, else `closedcode.<key>`.
+ */
 function paramToAttributeKey(key) {
   const m = key.match(/^(.+)ID$/);
   if (m) return `${m[1].toLowerCase()}.id`;
@@ -51,6 +61,11 @@ function paramToAttributeKey(key) {
 }
 
 // OTel span attributes for an Express request; mirrors trace.js requestAttributes.
+/**
+ * Builds the OTel span attributes for an Express request (method, path, and route params).
+ * @param {Object} req - Express request object.
+ * @returns {Object} Attribute map keyed by OTel attribute names.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -63,6 +78,13 @@ function requestAttributes(req) {
 }
 
 // Runs an Effect inside a named span carrying the request attributes.
+/**
+ * Runs an Effect inside a named OTel span carrying the request attributes.
+ * @param {string} name - Span name.
+ * @param {Object} req - Express request object (source of span attributes).
+ * @param {Effect} effect - The Effect to run within the span.
+ * @returns {Promise<*>} Promise resolving to the Effect's result.
+ */
 function runRequest(name, req, effect) {
   return AppRuntime.runPromise(
     effect.pipe(
@@ -74,10 +96,24 @@ function runRequest(name, req, effect) {
 }
 
 // Runs an Effect generator and JSON-encodes the resolved value onto the response.
+/**
+ * Runs an Effect generator within a named span and writes the resolved value as JSON.
+ * @param {string} name - Span name.
+ * @param {Object} req - Express request object.
+ * @param {Object} res - Express response object.
+ * @param {Function} gen - Generator function producing the Effect to run.
+ * @returns {Promise<void>} Resolves once the JSON response has been written.
+ */
 async function jsonRequest(name, req, res, gen) {
   res.json(await runRequest(name, req, Effect.gen(gen)));
 }
 
+/**
+ * Builds the Express router for the instance /session endpoints (list, get, create,
+ * update, fork, abort, share, messages, parts, prompts, commands, revert, permissions, etc.).
+ * @param {Object} registry - OpenAPI operation registry; route metadata is registered against it when present.
+ * @returns {Object} Configured Express Router.
+ */
 export function SessionRoutes(registry) {
   const router = express.Router();
 

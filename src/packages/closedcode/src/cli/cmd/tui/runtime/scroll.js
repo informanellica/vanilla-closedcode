@@ -1,9 +1,23 @@
+/**
+ * @file Scrollable line view for the vanilla TUI runtime (Stage T2). Renders a
+ * list of pre-wrapped lines into a region, windowed by a scroll offset measured
+ * from the bottom (0 = pinned to the latest line — the chat-timeline default).
+ * Returns the clamped offset + maxScroll so callers can keep their scroll signal
+ * in range.
+ */
 // Scrollable line view for the vanilla TUI runtime (Stage T2). Renders a list of
 // pre-wrapped lines into a region, windowed by a scroll offset measured from the
 // bottom (0 = pinned to the latest line — the chat-timeline default). Returns the
 // clamped offset + maxScroll so callers can keep their scroll signal in range.
 import { wordWrap } from "./text.js";
 
+/**
+ * Turn an array of messages (strings, may contain "\n") into display lines wrapped
+ * to `width` columns. Use the result as `lines` for drawScrollLines.
+ * @param {Array} messages - Messages to render; each is coerced to a string.
+ * @param {number} width - Target display-column width to word-wrap each message to.
+ * @returns {Array} The flattened list of wrapped display lines.
+ */
 // Turn an array of messages (strings, may contain \n) into display lines wrapped
 // to `width` columns. Use the result as `lines` for drawScrollLines.
 export function wrapMessages(messages, width) {
@@ -12,6 +26,15 @@ export function wrapMessages(messages, width) {
   return lines;
 }
 
+/**
+ * Draw `lines` into `region`, scrolled. `offset` counts lines hidden BELOW the
+ * viewport (0 = bottom-pinned). The offset is clamped into [0, maxScroll].
+ * @param {Object} region - Render region with a numeric `height` and a `line(i, text, attr)` method.
+ * @param {Array} lines - Pre-wrapped display lines to window into the region.
+ * @param {number} offset - Lines hidden below the viewport; 0 pins to the latest line.
+ * @param {Object} attr - Optional cell attributes passed through to region.line().
+ * @returns {Object} `{offset, maxScroll, start}`: the clamped offset, the max scrollable offset, and the index of the first visible line.
+ */
 // Draw `lines` into `region`, scrolled. offset counts lines hidden BELOW the
 // viewport (0 = bottom-pinned). Returns { offset, maxScroll, start }.
 export function drawScrollLines(region, lines, offset, attr) {

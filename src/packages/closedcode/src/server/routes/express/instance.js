@@ -1,3 +1,4 @@
+/** @file Express InstanceRoutes: mounts all instance route groups on a single Router and serves inline instance-root routes (/instance/dispose, /path, /vcs, /command, /agent, /skill, /lsp, /formatter). */
 // Express InstanceRoutes: mounts all instance route groups on a single Router and
 // handles the inline instance-root routes (/instance/dispose, /path, /vcs, etc.).
 import express from "express";
@@ -31,6 +32,11 @@ import { EventRoutes } from "./event.js";
 import { PtyRoutes } from "./pty.js";
 
 // OTel span attributes for an Express request; mirrors routes/instance/trace.js requestAttributes.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, mounted path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = { "http.method": req.method, "http.path": req.baseUrl + req.path };
   for (const [key, value] of Object.entries(req.params ?? {})) {
@@ -40,11 +46,26 @@ function requestAttributes(req) {
 }
 
 // Run an Effect generator inside an OTel span built from the request, then res.json() the result.
+/**
+ * Runs an Effect generator inside an OTel span built from the request, then writes the resolved value as JSON.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} gen - The generator function passed to Effect.gen.
+ * @returns {Promise<void>} Resolves once the response JSON has been written.
+ */
 async function jsonRequest(name, req, res, gen) {
   const result = await AppRuntime.runPromise(Effect.gen(gen).pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })));
   res.json(result);
 }
 
+/**
+ * Builds the aggregate Express router for an instance: mounts every instance route group and the inline
+ * instance-root routes (/instance/dispose, /path, /vcs, /command, /agent, /skill, /lsp, /formatter).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @param {Function} upgradeWebSocket - Adapter factory that produces WebSocket-upgrade middleware (forwarded to PtyRoutes).
+ * @returns {Object} The configured Express Router for the instance.
+ */
 export function InstanceRoutes(registry, upgradeWebSocket) {
   const router = express.Router();
 

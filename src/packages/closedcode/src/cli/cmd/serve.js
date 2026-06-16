@@ -1,8 +1,13 @@
+/** @file CLI `serve` command: starts the headless closedcode HTTP server and keeps the process alive. */
 import { Effect } from "effect";
 import { Server } from "../../server/server.js";
 import { effectCmd } from "../effect-cmd.js";
 import { withNetworkOptions, resolveNetworkOptions } from "../network.js";
 import { Flag } from "core/flag/flag";
+/**
+ * The `serve` CLI command: starts a headless closedcode server on the configured host/port and never returns.
+ * @type {Object}
+ */
 export const ServeCommand = effectCmd({
   command: "serve",
   builder: yargs => withNetworkOptions(yargs),

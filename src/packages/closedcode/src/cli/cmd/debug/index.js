@@ -1,3 +1,4 @@
+/** @file `debug` CLI command group: aggregates all debugging/troubleshooting subcommands (config, lsp, rg, file, scrap, skill, snapshot, startup, agent, info, paths, wait). */
 import { Global } from "core/global";
 import { InstallationVersion } from "core/installation/version";
 import { Flag } from "core/flag/flag";
@@ -16,12 +17,14 @@ import { SkillCommand } from "./skill.js";
 import { SnapshotCommand } from "./snapshot.js";
 import { AgentCommand } from "./agent.js";
 import { StartupCommand } from "./startup.js";
+/** Parent CLI command `debug` that registers all debugging and troubleshooting subcommands. */
 export const DebugCommand = cmd({
   command: "debug",
   describe: "debugging and troubleshooting tools",
   builder: yargs => yargs.command(ConfigCommand).command(LSPCommand).command(RipgrepCommand).command(FileCommand).command(ScrapCommand).command(SkillCommand).command(SnapshotCommand).command(StartupCommand).command(AgentCommand).command(InfoCommand).command(PathsCommand).command(WaitCommand).demandCommand(),
   async handler() {}
 });
+/** Subcommand `wait` that sleeps for one day, effectively blocking indefinitely (useful for debugging/attaching). */
 const WaitCommand = effectCmd({
   command: "wait",
   describe: "wait indefinitely (for debugging)",
@@ -29,6 +32,7 @@ const WaitCommand = effectCmd({
     yield* Effect.sleep(Duration.days(1));
   })
 });
+/** Subcommand `info` that prints diagnostic information: closedcode version, OS, terminal, and configured external plugins (unless disabled via `--pure`). */
 const InfoCommand = effectCmd({
   command: "info",
   describe: "show debug information",
@@ -53,6 +57,7 @@ const InfoCommand = effectCmd({
     }
   })
 });
+/** Subcommand `paths` that prints each global path (data, config, cache, state) with its key padded for alignment. */
 const PathsCommand = cmd({
   command: "paths",
   describe: "show global paths (data, config, cache, state)",

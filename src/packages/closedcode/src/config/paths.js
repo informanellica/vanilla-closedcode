@@ -14,6 +14,14 @@ import { unique } from "remeda";
 import { JsonError } from "./error.js";
 import * as Effect from "effect/Effect";
 import { AppFileSystem } from "core/filesystem";
+/**
+ * Effect that finds `<name>.jsonc`/`<name>.json` config files by walking up from
+ * a directory to the worktree root, returned outermost-first (root before nested).
+ * @param {string} name - The config file base name (without extension).
+ * @param {string} directory - The directory to start the upward walk from.
+ * @param {string} worktree - The directory at which to stop walking.
+ * @returns {Effect} An Effect yielding the matching file paths, root-first.
+ */
 export const files = Effect.fn("ConfigPaths.projectFiles")(function* (name, directory, worktree) {
   const afs = yield* AppFileSystem.Service;
   return (yield* afs.up({
@@ -22,6 +30,15 @@ export const files = Effect.fn("ConfigPaths.projectFiles")(function* (name, dire
     stop: worktree
   })).toReversed();
 });
+/**
+ * Effect that resolves the deduplicated list of config directories to consult:
+ * the global config dir, any `.closedcode` dirs found between `directory` and the
+ * worktree root (unless project config is disabled) plus one in the home dir, and
+ * an explicit override directory when configured.
+ * @param {string} directory - The directory to start the upward walk from.
+ * @param {string} worktree - The directory at which to stop walking.
+ * @returns {Effect} An Effect yielding the unique config directory paths.
+ */
 export const directories = Effect.fn("ConfigPaths.directories")(function* (directory, worktree) {
   const afs = yield* AppFileSystem.Service;
   return unique([Global.Path.config, ...(!Flag.CLOSEDCODE_DISABLE_PROJECT_CONFIG ? yield* afs.up({

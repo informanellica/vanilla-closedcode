@@ -1,8 +1,13 @@
+/** @file CLI `stats` command: aggregates token usage, cost, and tool/model statistics across stored sessions and renders them as boxed tables. */
 import { Effect } from "effect";
 import { effectCmd } from "../effect-cmd.js";
 import { Session } from "#session/session.js";
 import { Database } from "#storage/db.js";
 import { InstanceRef } from "#effect/instance-ref.js";
+/**
+ * The `stats` CLI command: aggregates and displays token/cost/tool/model usage, optionally filtered by day window and project.
+ * @type {Object}
+ */
 export const StatsCommand = effectCmd({
   command: "stats",
   describe: "show token usage and cost statistics",
@@ -31,6 +36,10 @@ export const StatsCommand = effectCmd({
     displayStats(stats, args.tools, modelLimit);
   })
 });
+/**
+ * Effect that loads every stored session row from the database and maps it into a Session object.
+ * @type {Effect}
+ */
 // Sequelize layer: Effect.promise keeps the defect-on-failure semantics the
 // previous Effect.sync wrapper had.
 const getAllSessions = Effect.promise(() => Database.useAsync(async h => (await h.models.Session.findAll({
@@ -38,6 +47,14 @@ const getAllSessions = Effect.promise(() => Database.useAsync(async h => (await 
 })).map(row => Session.fromRow(row.get({
   plain: true
 })))));
+/**
+ * Aggregates usage statistics across all sessions, applying the day-window and project filters,
+ * then computes totals, per-day cost, and mean/median tokens per session.
+ * @param {number} days - The day window; undefined for all time, 0 for since midnight today, otherwise the last N days.
+ * @param {string} projectFilter - Project id to filter by; "" means the current project, undefined means all projects.
+ * @param {Object} currentProject - The current project context (required when projectFilter is "").
+ * @returns {Effect} An Effect resolving to the aggregated stats object.
+ */
 const aggregateSessionStats = Effect.fn("Cli.stats.aggregate")(function* (days, projectFilter, currentProject) {
   const svc = yield* Session.Service;
   const sessions = yield* getAllSessions;
@@ -218,8 +235,21 @@ const aggregateSessionStats = Effect.fn("Cli.stats.aggregate")(function* (days, 
   stats.medianTokensPerSession = sessionTotalTokens.length === 0 ? 0 : sessionTotalTokens.length % 2 === 0 ? (sessionTotalTokens[mid - 1] + sessionTotalTokens[mid]) / 2 : sessionTotalTokens[mid];
   return stats;
 });
+/**
+ * Renders aggregated statistics to the console as boxed sections (overview, cost & tokens, optional model usage, tool usage).
+ * @param {Object} stats - The aggregated stats object from aggregateSessionStats.
+ * @param {number} toolLimit - Maximum number of tools to display; falsy shows all.
+ * @param {number} modelLimit - Maximum number of models to display; Infinity shows all, undefined hides the model section.
+ * @returns {void}
+ */
 export function displayStats(stats, toolLimit, modelLimit) {
   const width = 56;
+  /**
+   * Renders a single boxed table row with the label left-aligned and the value right-aligned within the box width.
+   * @param {string} label - The row label.
+   * @param {string} value - The row value.
+   * @returns {string} The formatted row line.
+   */
   function renderRow(label, value) {
     const availableWidth = width - 1;
     const paddingNeeded = availableWidth - label.length - value.length;
@@ -303,6 +333,11 @@ export function displayStats(stats, toolLimit, modelLimit) {
   }
   console.log();
 }
+/**
+ * Formats a number with a compact suffix: M for millions, K for thousands, otherwise the plain integer.
+ * @param {number} num - The number to format.
+ * @returns {string} The compact string representation.
+ */
 function formatNumber(num) {
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + "M";

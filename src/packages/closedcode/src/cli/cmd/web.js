@@ -1,3 +1,7 @@
+/**
+ * @file `web` CLI command. Starts the closedcode server and opens the web
+ * interface in a browser, printing local/network/mDNS access URLs.
+ */
 import { Effect } from "effect";
 import { Server } from "../../server/server.js";
 import { UI } from "../ui.js";
@@ -6,6 +10,10 @@ import { withNetworkOptions, resolveNetworkOptions } from "../network.js";
 import { Flag } from "core/flag/flag";
 import open from "open";
 import { networkInterfaces } from "os";
+/**
+ * Collect external IPv4 addresses of this host (excluding internal and Docker bridge addresses).
+ * @returns {Array} Array of IPv4 address strings suitable for remote-access URLs.
+ */
 function getNetworkIPs() {
   const nets = networkInterfaces();
   const results = [];
@@ -23,6 +31,10 @@ function getNetworkIPs() {
   }
   return results;
 }
+/**
+ * The `web` command: starts the server, prints access URLs, and opens a browser.
+ * @type {Object}
+ */
 export const WebCommand = effectCmd({
   command: "web",
   builder: yargs => withNetworkOptions(yargs),

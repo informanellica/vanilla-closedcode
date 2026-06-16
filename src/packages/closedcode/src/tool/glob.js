@@ -1,3 +1,4 @@
+/** @file "glob" tool: matches files by glob pattern (via ripgrep) within a directory and returns up to 100 paths sorted by modification time. */
 import { assetText } from "#util/asset.js";
 import path from "path";
 import { Effect, Option, Schema } from "effect";
@@ -8,6 +9,9 @@ import { Ripgrep } from "../file/ripgrep.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 const DESCRIPTION = assetText("tool/glob.txt");
 import * as Tool from "./tool.js";
+/**
+ * Parameter schema for the glob tool: the required glob `pattern` and an optional `path` directory to search in.
+ */
 export const Parameters = Schema.Struct({
   pattern: Schema.String.annotate({
     description: "The glob pattern to match files against"
@@ -16,6 +20,11 @@ export const Parameters = Schema.Struct({
     description: `The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter "undefined" or "null" - simply omit it for the default behavior. Must be a valid directory path if provided.`
   })
 });
+/**
+ * The "glob" tool definition. Resolves the search directory (defaulting to the instance directory),
+ * asks for glob/external-directory permission, runs ripgrep's file matcher, sorts results newest-first,
+ * and truncates to 100 results with a notice when more exist.
+ */
 export const GlobTool = Tool.define("glob", Effect.gen(function* () {
   const rg = yield* Ripgrep.Service;
   const fs = yield* AppFileSystem.Service;

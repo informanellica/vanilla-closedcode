@@ -1,3 +1,4 @@
+/** @file keymap + LEADER-chord resolver for the vanilla TUI: a pure, dependency-free re-implementation of the solid/opentui keybinding context. */
 // keybind.js — keymap + LEADER-chord resolver for the vanilla TUI.
 //
 // This module is a pure, synchronous re-implementation of the keybinding

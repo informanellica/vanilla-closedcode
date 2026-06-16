@@ -1,3 +1,4 @@
+/** @file Retry policy for LLM streaming: classifies retryable provider errors and computes backoff delays (honoring retry-after headers). */
 import { Cause, Clock, Duration, Effect, Schedule } from "effect";
 import { MessageV2 } from "./message-v2.js";
 import { iife } from "#util/iife.js";
@@ -9,9 +10,22 @@ export const RETRY_BACKOFF_FACTOR = 2;
 export const RETRY_MAX_DELAY_NO_HEADERS = 30_000; // 30 seconds
 export const RETRY_MAX_DELAY = 2_147_483_647; // max 32-bit signed integer for setTimeout
 
+/**
+ * Clamps a delay so it never exceeds the maximum safe setTimeout value.
+ * @param {number} ms - Proposed delay in milliseconds.
+ * @returns {number} The delay capped at RETRY_MAX_DELAY.
+ */
 function cap(ms) {
   return Math.min(ms, RETRY_MAX_DELAY);
 }
+/**
+ * Computes the wait before the next retry attempt. Prefers the provider's
+ * `retry-after-ms` / `retry-after` response headers (seconds or HTTP date);
+ * otherwise falls back to exponential backoff capped per the no-headers limit.
+ * @param {number} attempt - 1-based attempt number.
+ * @param {*} error - Optional APIError-like value carrying `data.responseHeaders`.
+ * @returns {number} Delay in milliseconds before retrying.
+ */
 export function delay(attempt, error) {
   if (error) {
     const headers = error.data.responseHeaders;
@@ -41,6 +55,13 @@ export function delay(attempt, error) {
   }
   return cap(Math.min(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1), RETRY_MAX_DELAY_NO_HEADERS));
 }
+/**
+ * Decides whether an error should be retried and, if so, the human-readable
+ * reason. Treats 5xx and rate-limit-style errors (via status code, message
+ * heuristics, or parsed JSON error codes) as retryable; context overflow is not.
+ * @param {*} error - Parsed error to classify.
+ * @returns {string|undefined} A retry reason message when retryable, otherwise undefined.
+ */
 export function retryable(error) {
   // context overflow errors should not be retried
   if (MessageV2.ContextOverflowError.isInstance(error)) return undefined;
@@ -85,6 +106,14 @@ export function retryable(error) {
   }
   return undefined;
 }
+/**
+ * Builds an Effect Schedule that retries while `retryable` returns a reason,
+ * waiting the computed `delay` between attempts and reporting progress.
+ * @param {Object} opts - Policy hooks.
+ * @param {Function} opts.parse - Maps a raw stream error to the classified error consumed by `retryable`.
+ * @param {Function} opts.set - Called per attempt with `{attempt, message, next}` to report retry status.
+ * @returns {*} An Effect Schedule usable with `Effect.retry`.
+ */
 export function policy(opts) {
   return Schedule.fromStepWithMetadata(Effect.succeed(meta => {
     const error = opts.parse(meta.input);

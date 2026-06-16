@@ -6,13 +6,26 @@
 // bold / italic / `code` / ~~strike~~ / [links](url) / \escapes. Not a full
 // CommonMark parser (no tables/nested-list reflow/HTML) — those are rare in chat
 // and can be added later; unknown syntax falls through as plain text.
+/** @file Pragmatic terminal markdown renderer for the vanilla TUI: converts a markdown string into width-aware rich lines (headings, fenced code, blockquotes, lists, rules, and inline spans). Not a full CommonMark parser. */
 import { seg, wrapRich, withGutter } from "./richtext.js";
 import { width } from "../runtime/text.js";
 import { highlightLine } from "./syntax.js";
 
-// Inline scan -> styled segments. Recurses for nestable spans (bold/italic/link).
+/**
+ * True when `c` is an ASCII alphanumeric character (used for emphasis word-boundary checks).
+ * @param {string} c - A single character (or undefined past the string edge).
+ * @returns {boolean} True if alphanumeric.
+ */
 const ALNUM = c => c != null && /[A-Za-z0-9]/.test(c);
 
+/**
+ * Scan inline markdown into styled segments. Recurses for nestable spans
+ * (bold/italic/link). Handles code spans, bold, strike, italic, links, and
+ * backslash escapes; unbalanced syntax falls through literally.
+ * @param {string} text - The inline source text.
+ * @param {Object} [base] - Base style applied to plain text (e.g. { token }).
+ * @returns {Array} Array of segments; at least one (possibly empty) segment.
+ */
 function parseInline(text, base = {}) {
   const out = [];
   let buf = "";
@@ -55,10 +68,16 @@ function parseInline(text, base = {}) {
   return out.length ? out : [seg("", base)];
 }
 
-// Wrap `segs` under a gutter (bullet/quote/number). The wrap budget comes from the
-// gutter's DISPLAY width; if the gutter is as wide as the pane (inner < 1) the
-// gutter is dropped so content is never shoved entirely off-region (which silently
-// lost whole lines, worst for 2-col CJK glyphs).
+/**
+ * Wrap `segs` under a gutter (bullet/quote/number). The wrap budget comes from the
+ * gutter's DISPLAY width; if the gutter is too wide (inner < 2) it is dropped so
+ * content is never shoved entirely off-region (worst for 2-col CJK glyphs).
+ * @param {Array} segs - The content segments to wrap.
+ * @param {Object} first - The gutter segment for the first wrapped line.
+ * @param {Object} rest - The gutter segment for continuation lines.
+ * @param {number} W - The total pane width in columns.
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 function gutterBlock(segs, first, rest, W) {
   const gw = Math.max(width(first.text), width(rest.text));
   const inner = W - gw;
@@ -74,12 +93,24 @@ const BLOCKQUOTE = /^\s*>\s?(.*)$/;
 const UL = /^(\s*)[-*+]\s+(.*)$/;
 const OL = /^(\s*)(\d+)[.)]\s+(.*)$/;
 
+/**
+ * Render a markdown string into width-aware rich lines.
+ * @param {string} md - The markdown source.
+ * @param {number} maxWidth - Available render width in columns.
+ * @param {Object} [opts] - Options.
+ * @param {string} [opts.baseToken] - Base token for plain text (default "text").
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 export function markdownToRichLines(md, maxWidth, opts = {}) {
   const base = { token: opts.baseToken ?? "text" };
   const W = Math.max(1, maxWidth | 0);
   const lines = [];
   const src = String(md ?? "").replace(/\r\n/g, "\n").split("\n");
   let para = [];
+  /**
+   * Flush the buffered paragraph lines: join, parse inline, wrap, and append.
+   * @returns {void}
+   */
   const flushPara = () => {
     if (!para.length) return;
     const segs = parseInline(para.join(" "), base);

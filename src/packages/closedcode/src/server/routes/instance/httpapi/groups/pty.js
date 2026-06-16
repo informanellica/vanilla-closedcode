@@ -1,3 +1,4 @@
+/** @file Experimental HttpApi route definitions for pseudo-terminal (PTY) sessions: list shells/sessions, create, get, update, remove, and a websocket connect route. */
 import { Pty } from "#pty/index.js";
 import { PtyID } from "#pty/schema.js";
 import { Schema } from "effect";
@@ -6,18 +7,23 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path for the PTY route group. */
 const root = "/pty";
+/** Path-params schema identifying a PTY session by its id. */
 export const Params = Schema.Struct({
   ptyID: PtyID
 });
+/** Query schema carrying an optional pagination/stream cursor. */
 export const CursorQuery = Schema.Struct({
   cursor: Schema.optional(Schema.String)
 });
+/** Schema for a discoverable shell: its path, display name, and whether it is acceptable for use. */
 export const ShellItem = Schema.Struct({
   path: Schema.String,
   name: Schema.String,
   acceptable: Schema.Boolean
 });
+/** URL path constants for each PTY route, keyed by endpoint name. */
 export const PtyPaths = {
   shells: `${root}/shells`,
   list: root,
@@ -27,6 +33,10 @@ export const PtyPaths = {
   remove: `${root}/:ptyID`,
   connect: `${root}/:ptyID/connect`
 };
+/**
+ * HttpApi definition for the experimental PTY route group.
+ * Bundles the shells/list/create/get/update/remove endpoints under instance-context, workspace-routing, and authorization middleware.
+ */
 export const PtyApi = HttpApi.make("pty").add(HttpApiGroup.make("pty").add(HttpApiEndpoint.get("shells", PtyPaths.shells, {
   success: described(Schema.Array(ShellItem), "List of shells")
 }).annotateMerge(OpenApi.annotations({
@@ -86,6 +96,10 @@ export const PtyApi = HttpApi.make("pty").add(HttpApiGroup.make("pty").add(HttpA
   version: "0.0.1",
   description: "Experimental HttpApi surface for selected instance routes."
 }));
+/**
+ * HttpApi definition for the PTY websocket connect route group.
+ * Exposes the single connect endpoint used to attach to a PTY session in real time (no instance middleware).
+ */
 export const PtyConnectApi = HttpApi.make("pty-connect").add(HttpApiGroup.make("pty-connect").add(HttpApiEndpoint.get("connect", PtyPaths.connect, {
   params: Params,
   success: described(Schema.Boolean, "Connected session"),

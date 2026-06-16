@@ -1,3 +1,4 @@
+/** @file Express route group for the /experimental/workspace control-plane endpoints: list adapters, CRUD workspaces, status, and session restore. */
 // Express route group for the /experimental/workspace control-plane endpoints (6 ops).
 import express from "express";
 import { Effect } from "effect";
@@ -19,9 +20,22 @@ const log = Log.create({ service: "server.workspace" });
 // Group base path: this router is mounted at /experimental/workspace (see server.js).
 const BASE = "/experimental/workspace";
 
+/**
+ * Build the Express router for the "/experimental/workspace" route group
+ * (adapter listing, workspace create/list/status/remove, and session restore).
+ * @param {Object} registry - Optional OpenAPI registry to record operation metadata against; falsy disables registration.
+ * @returns {express.Router} The configured Express router.
+ */
 export function WorkspaceRoutes(registry) {
   const router = express.Router();
 
+  /**
+   * Register a route's OpenAPI operation metadata under the "/experimental/workspace" base mount.
+   * @param {string} method - HTTP method (e.g. "get", "post", "delete").
+   * @param {string} path - Path relative to the workspace base (e.g. "/", "/status", "/:id").
+   * @param {Object} meta - OpenAPI operation metadata.
+   * @returns {*} The registration result, or undefined when no registry is provided.
+   */
   const describe = (method, path, meta) => registry && registerOperation(registry, method, BASE + path, meta);
 
   describe("get", "/adapter", {

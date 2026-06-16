@@ -1,4 +1,4 @@
-// Side-by-side (split) diff rendering for the vanilla TUI — the from-scratch
+// @file Side-by-side (split) diff rendering for the vanilla TUI — the from-scratch
 // counterpart to the unified renderUnifiedDiff/renderTextDiff in diff.js. Where
 // the unified view stacks removed (-) and added (+) lines top-to-bottom in one
 // column, this lays them out in two columns: removed text on the LEFT, the added
@@ -20,10 +20,14 @@ import { width, truncate } from "../runtime/text.js";
 const TOKEN = { add: "diffAdded", del: "diffRemoved", ctx: "diffContext" };
 const BG_TOKEN = { add: "diffAddedBg", del: "diffRemovedBg" };
 
-// Compute the column geometry for a total `width`. A 1-col separator sits between
-// two columns; each inner column gets Math.max(1, floor((width-1)/2)) display cols.
-// The left column starts at col 0, the separator at `sep`, the right column after
-// it. Any odd remainder is left as blank gap before the separator (never exceeded).
+/**
+ * Compute the column geometry for a total `width`. A 1-col separator sits between
+ * two columns; each inner column gets Math.max(1, floor((width-1)/2)) display cols.
+ * The left column starts at col 0, the separator at `sep`, the right column after
+ * it. Any odd remainder is left as blank gap before the separator (never exceeded).
+ * @param {number} width - The total available width in columns.
+ * @returns {Object} {inner, sepCol, rightStart, width} column geometry.
+ */
 export function splitLayout(width) {
   // Guard a non-finite width (omitted call / NaN) at the single source so the
   // inner>=1 invariant holds and downstream truncate() always gets a real number
@@ -33,11 +37,15 @@ export function splitLayout(width) {
   return { inner, sepCol: inner, rightStart: inner + 1, width: w };
 }
 
-// Pair a computed line diff into side-by-side rows. ctx lines occupy BOTH columns
-// (left===right===text). A maximal run of consecutive "del" hunks and the run of
-// "add" hunks immediately following it are ZIPPED: row i = { left:del[i], right:add[i] }.
-// Uneven runs leave the surplus cell on the other side empty (null). Source order
-// is preserved. Each row is { left, right } where a cell is { text, kind } | null.
+/**
+ * Pair a computed line diff into side-by-side rows. ctx lines occupy BOTH columns
+ * (left===right===text). A maximal run of consecutive "del" hunks and the run of
+ * "add" hunks immediately following it are ZIPPED: row i = { left:del[i], right:add[i] }.
+ * Uneven runs leave the surplus cell on the other side empty (null). Source order
+ * is preserved.
+ * @param {Array} hunks - Diff hunks [{type:"ctx"|"del"|"add", text}].
+ * @returns {Array} Rows {left, right} where a cell is {text, kind} or null.
+ */
 export function pairRows(hunks) {
   const rows = [];
   const list = Array.isArray(hunks) ? hunks : [];
@@ -70,10 +78,18 @@ export function pairRows(hunks) {
   return rows;
 }
 
-// Build the segments for ONE cell, fitted to `inner` display columns. Truncates
-// the raw text FIRST, then (optionally) highlights the truncated text. `pad` left-
-// pads the cell to exactly `inner` columns (the left column needs this so the
-// separator lines up; the right column does not). An empty/null cell -> blank pad.
+/**
+ * Build the segments for ONE cell, fitted to `inner` display columns. Truncates
+ * the raw text FIRST, then (optionally) highlights the truncated text. `pad`
+ * pads the cell to exactly `inner` columns (the left column needs this so the
+ * separator lines up; the right column does not). An empty/null cell -> blank pad.
+ * @param {Object} cell - The cell {text, kind} or null.
+ * @param {number} inner - The inner column width in display columns.
+ * @param {boolean} pad - Whether to pad the cell to the full inner width.
+ * @param {boolean} useSyntax - Whether to apply per-cell syntax highlighting.
+ * @param {string} lang - The language id for highlighting.
+ * @returns {Array} The rich-line segments for this cell.
+ */
 function cellSegments(cell, inner, pad, useSyntax, lang) {
   // A genuinely ABSENT cell (the surplus side of an uneven del/add run) -> neutral
   // ctx-colored pad: it reads as "nothing on this side", not as a change.
@@ -108,11 +124,17 @@ function cellSegments(cell, inner, pad, useSyntax, lang) {
   return segs;
 }
 
-// Render already-paired rows into RICH LINES — the shared back end for both the
-// before/after and unified-string entry points. Two columns of inner width
-// floor((width-1)/2) with a 1-col `border` separator ("│") between them. CJK-safe;
-// cells truncate to stay aligned. opts.lang (when normalizeLang is non-null) turns
-// on per-cell syntax highlighting, tinting each segment's bg to convey add/removed.
+/**
+ * Render already-paired rows into RICH LINES — the shared back end for both the
+ * before/after and unified-string entry points. Two columns of inner width
+ * floor((width-1)/2) with a 1-col `border` separator ("│") between them. CJK-safe;
+ * cells truncate to stay aligned. opts.lang (when normalizeLang is non-null) turns
+ * on per-cell syntax highlighting, tinting each segment's bg to convey add/removed.
+ * @param {Array} rows - Paired rows {left, right} (from pairRows).
+ * @param {number} width - The total available width in columns.
+ * @param {Object} opts - {lang} optional highlight language.
+ * @returns {Array} An array of rich lines (each an array of segments).
+ */
 function renderRows(rows, width, opts) {
   const { inner } = splitLayout(width);
   const useSyntax = opts.lang != null && normalizeLang(opts.lang) != null;
@@ -126,14 +148,25 @@ function renderRows(rows, width, opts) {
   return out;
 }
 
-// Side-by-side diff of oldText vs newText (the {old,new} tool-diff form). Never throws.
+/**
+ * Side-by-side diff of oldText vs newText (the {old,new} tool-diff form). Never throws.
+ * @param {string} oldText - The original text.
+ * @param {string} newText - The new text.
+ * @param {number} width - The total available width in columns.
+ * @param {Object} opts - {lang} optional highlight language.
+ * @returns {Array} An array of rich lines (each an array of segments).
+ */
 export function renderSplitDiff(oldText, newText, width, opts = {}) {
   return renderRows(pairRows(computeLineDiff(oldText, newText)), width, opts);
 }
 
-// Parse a unified-diff STRING into hunks [{type,text}], dropping header/marker
-// lines (+++/---/@@/\) and preserving the exact +/-/context structure verbatim
-// (no re-diff, unlike renderSplitDiff which recomputes the LCS). "" / null -> [].
+/**
+ * Parse a unified-diff STRING into hunks [{type,text}], dropping header/marker
+ * lines (+++/---/@@/\) and preserving the exact +/-/context structure verbatim
+ * (no re-diff, unlike renderSplitDiff which recomputes the LCS). "" / null -> [].
+ * @param {string} diffText - The unified-diff text.
+ * @returns {Array} Hunks [{type:"add"|"del"|"ctx", text}].
+ */
 export function hunksFromUnified(diffText) {
   if (diffText == null || diffText === "") return [];
   const hunks = [];
@@ -146,8 +179,14 @@ export function hunksFromUnified(diffText) {
   return hunks;
 }
 
-// Side-by-side view from a unified-diff STRING (the permission-prompt / tool-diff
-// string form). Faithful to the diff's own hunk structure. Never throws.
+/**
+ * Side-by-side view from a unified-diff STRING (the permission-prompt / tool-diff
+ * string form). Faithful to the diff's own hunk structure. Never throws.
+ * @param {string} diffText - The unified-diff text.
+ * @param {number} width - The total available width in columns.
+ * @param {Object} opts - {lang} optional highlight language.
+ * @returns {Array} An array of rich lines (each an array of segments).
+ */
 export function renderSplitUnified(diffText, width, opts = {}) {
   return renderRows(pairRows(hunksFromUnified(diffText)), width, opts);
 }

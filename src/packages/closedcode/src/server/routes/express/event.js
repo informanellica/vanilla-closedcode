@@ -1,3 +1,4 @@
+/** @file Express route group for the instance "/event" Server-Sent Events endpoint that streams bus events (with periodic heartbeats) to clients. */
 // Express route group for the instance /event SSE endpoint.
 import express from "express";
 import z from "zod";
@@ -9,10 +10,24 @@ import { registerOperation } from "../../express/openapi.js";
 
 const log = Log.create({ service: "server" });
 
+/**
+ * Build the Express router exposing GET "/event", a Server-Sent Events stream of bus events.
+ * Each connection emits an initial "server.connected" event, periodic "server.heartbeat" events,
+ * and forwards all subscribed bus events until the client disconnects or the instance is disposed.
+ * @param {Object} registry - Optional OpenAPI registry to record operation metadata against; falsy disables registration.
+ * @returns {express.Router} The configured Express router.
+ */
 export function EventRoutes(registry) {
   const router = express.Router();
 
   // Register a route's openapi metadata against the GROUP-RELATIVE mount.
+  /**
+   * Register a route's OpenAPI operation metadata against the group-relative mount.
+   * @param {string} method - HTTP method (e.g. "get").
+   * @param {string} path - Group-relative path (e.g. "/event").
+   * @param {Object} meta - OpenAPI operation metadata.
+   * @returns {*} The registration result, or undefined when no registry is provided.
+   */
   const describe = (method, path, meta) => registry && registerOperation(registry, method, path, meta);
 
   describe("get", "/event", {
@@ -50,6 +65,11 @@ export function EventRoutes(registry) {
     const heartbeat = setInterval(() => {
       q.push(JSON.stringify({ id: Bus.createID(), type: "server.heartbeat", properties: {} }));
     }, 10_000);
+    /**
+     * Idempotently shut down this SSE connection: clear the heartbeat, unsubscribe from the bus,
+     * and signal the queue to terminate.
+     * @returns {void}
+     */
     const stop = () => {
       if (done) return;
       done = true;

@@ -1,3 +1,4 @@
+/** @module ConfigAgent Agent/mode config schema and loaders that parse markdown definitions from disk. */
 export * as ConfigAgent from "./agent.js";
 import { Exit, Schema, SchemaGetter } from "effect";
 import { Bus } from "#bus/index.js";
@@ -14,7 +15,9 @@ import { ConfigPermission } from "./permission.js";
 const log = Log.create({
   service: "config"
 });
+/** Schema for an agent color: a six-digit hex code or a named theme color. */
 const Color = Schema.Union([Schema.String.check(Schema.isPattern(/^#[0-9a-fA-F]{6}$/)), Schema.Literals(["primary", "secondary", "accent", "success", "warning", "error", "info"])]);
+/** Raw agent config schema as authored, allowing arbitrary extra keys (normalized later). */
 const AgentSchema = Schema.StructWithRest(Schema.Struct({
   model: Schema.optional(ConfigModelID),
   variant: Schema.optional(Schema.String).annotate({
@@ -46,6 +49,7 @@ const AgentSchema = Schema.StructWithRest(Schema.Struct({
   }),
   permission: Schema.optional(ConfigPermission.Info)
 }), [Schema.Record(Schema.String, Schema.Any)]);
+/** The set of recognized top-level agent config keys; any other key is folded into `options`. */
 const KNOWN_KEYS = new Set(["name", "model", "variant", "prompt", "description", "temperature", "top_p", "mode", "hidden", "color", "steps", "maxSteps", "options", "permission", "disable", "tools"]);
 
 // Post-parse normalisation:
@@ -54,6 +58,13 @@ const KNOWN_KEYS = new Set(["name", "model", "variant", "prompt", "description",
 //  - Translate the deprecated `tools: { name: boolean }` map into the new
 //    `permission` shape (write-adjacent tools collapse into `permission.edit`).
 //  - Coalesce `steps ?? maxSteps` so downstream can ignore the deprecated alias.
+/**
+ * Normalize a raw agent config: promote unknown keys into `options`, translate the deprecated
+ * `tools` boolean map into a `permission` object (write/edit/patch collapse into `permission.edit`),
+ * merge any explicit `permission` on top, and coalesce `steps ?? maxSteps`.
+ * @param {Object} agent - The raw parsed agent config.
+ * @returns {Object} The normalized agent config with `options`, `permission`, and `steps` settled.
+ */
 const normalize = agent => {
   const options = {
     ...agent.options
@@ -81,6 +92,7 @@ const normalize = agent => {
     } : {})
   };
 };
+/** Decoded agent config schema that applies `normalize` on decode and a Zod equivalent via statics. */
 export const Info = AgentSchema.pipe(Schema.decodeTo(AgentSchema, {
   decode: SchemaGetter.transform(normalize),
   encode: SchemaGetter.passthrough({
@@ -91,6 +103,13 @@ export const Info = AgentSchema.pipe(Schema.decodeTo(AgentSchema, {
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Load all agent definitions under a directory by scanning `{agent,agents}/**\/*.md`, parsing each
+ * markdown file's frontmatter and body, and decoding it into an agent config. Parse failures are
+ * logged and published as a session error event and skipped rather than aborting the whole load.
+ * @param {string} dir - The base directory to scan for agent markdown files.
+ * @returns {Promise<Object>} A map of agent name to its parsed config.
+ */
 export async function load(dir) {
   const result = {};
   for (const item of await Glob.scan("{agent,agents}/**/*.md", {
@@ -127,6 +146,13 @@ export async function load(dir) {
   }
   return result;
 }
+/**
+ * Load all mode definitions under a directory by scanning `{mode,modes}/*.md`, parsing each
+ * markdown file, and decoding it as an agent config forced into `mode: "primary"`. Parse failures
+ * are logged and published as a session error event; entries that fail schema decoding are skipped.
+ * @param {string} dir - The base directory to scan for mode markdown files.
+ * @returns {Promise<Object>} A map of mode name to its parsed config (each with mode set to "primary").
+ */
 export async function loadMode(dir) {
   const result = {};
   for (const item of await Glob.scan("{mode,modes}/*.md", {

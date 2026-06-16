@@ -1,3 +1,10 @@
+/**
+ * @file Provider error normalization. Classifies provider/LLM API errors into a
+ * common shape (e.g. context_overflow vs api_error), extracts human-readable
+ * messages from heterogeneous response bodies, and detects context-window
+ * overflow across many providers via message-pattern matching.
+ * @module closedcode/provider/error
+ */
 import { STATUS_CODES } from "http";
 import { iife } from "#util/iife.js";
 // Adapted from overflow detection patterns in:
@@ -40,6 +47,12 @@ const OVERFLOW_PATTERNS = [/prompt is too long/i,
 // Mistral
 /model_context_window_exceeded/i // z.ai non-standard finish_reason surfaced as error text
 ];
+/**
+ * Decide whether an OpenAI-style API error should be retried, treating 404 as
+ * retryable because OpenAI sometimes 404s models that are actually available.
+ * @param {Object} e - The provider error (`statusCode`, `isRetryable`).
+ * @returns {boolean} True when the request should be retried.
+ */
 function isOpenAiErrorRetryable(e) {
   const status = e.statusCode;
   if (!status) return e.isRetryable;
@@ -47,6 +60,13 @@ function isOpenAiErrorRetryable(e) {
   return status === 404 || e.isRetryable;
 }
 
+/**
+ * Detect whether an error message indicates a context-window overflow, matching
+ * the provider-specific {@link OVERFLOW_PATTERNS} plus bare 400/413 "(no body)"
+ * responses from providers like Cerebras and Mistral.
+ * @param {string} message - The error message text to test.
+ * @returns {boolean} True when the message looks like a context overflow.
+ */
 // Providers not reliably handled in this function:
 // - z.ai: can accept overflow silently (needs token-count/context-window checks)
 function isOverflow(message) {
@@ -57,6 +77,14 @@ function isOverflow(message) {
   // - Mistral: often returns "400 (no body)" / "413 (no body)"
   return /^4(00|13)\s*(status code)?\s*\(no body\)/i.test(message);
 }
+/**
+ * Build the best human-readable message for a provider error, falling back from
+ * the error message to the response body, JSON error fields, or the HTTP status
+ * text, and rewriting HTML gateway/proxy 401/403 pages into actionable guidance.
+ * @param {string} providerID - The provider id (reserved for provider-specific handling).
+ * @param {Object} e - The provider error (`message`, `responseBody`, `statusCode`).
+ * @returns {string} A trimmed, human-readable error message.
+ */
 function message(providerID, e) {
   return iife(() => {
     const msg = e.message;
@@ -94,6 +122,12 @@ function message(providerID, e) {
     return `${msg}: ${e.responseBody}`;
   }).trim();
 }
+/**
+ * Coerce a value to a plain object: parse a JSON string, pass through objects,
+ * and return undefined for anything that is not (or does not parse to) an object.
+ * @param {*} input - A JSON string or value to coerce.
+ * @returns {Object} The parsed object, or undefined.
+ */
 function json(input) {
   if (typeof input === "string") {
     try {
@@ -109,6 +143,13 @@ function json(input) {
   }
   return undefined;
 }
+/**
+ * Parse an error object delivered inside a streaming response into a normalized
+ * error, mapping known error codes (context_length_exceeded, insufficient_quota,
+ * usage_not_included, invalid_prompt, server_error) to their type and retryability.
+ * @param {*} input - The raw stream error payload (object or JSON string).
+ * @returns {Object} A normalized error `{type, message, ...}`, or undefined when not an error.
+ */
 export function parseStreamError(input) {
   const raw = json(input);
   const body = typeof raw?.message === "string" ? json(raw.message) ?? raw : raw;
@@ -152,6 +193,13 @@ export function parseStreamError(input) {
       };
   }
 }
+/**
+ * Normalize a non-streaming API call error into a common shape, classifying it as
+ * "context_overflow" (via {@link isOverflow}, a 413, or an explicit
+ * context_length_exceeded code) or otherwise "api_error" with status/retry info.
+ * @param {Object} input - `{providerID: string, error: Object}` — the provider id and the raw API error.
+ * @returns {Object} A normalized error descriptor.
+ */
 export function parseAPICallError(input) {
   const m = message(input.providerID, input.error);
   const body = json(input.error.responseBody);

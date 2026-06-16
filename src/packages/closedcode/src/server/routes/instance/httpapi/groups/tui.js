@@ -1,3 +1,4 @@
+/** @file HttpApi route definitions for the TUI group: drive the terminal UI (prompts, dialogs, toasts, events) and bridge the control request/response queue. */
 import { TuiEvent } from "#cli/cmd/tui/event.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
@@ -5,39 +6,48 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path prefix for all TUI endpoints. */
 const root = "/tui";
+/** Request body schema for executing a TUI command, carrying the command string. */
 export const CommandPayload = Schema.Struct({
   command: Schema.String
 });
+/** Schema for a queued TUI control request, describing the target path and an opaque body. */
 export const TuiRequestPayload = Schema.Struct({
   path: Schema.String,
   body: Schema.Unknown
 });
+/** Discriminated-union member schema for the prompt-append TUI event. */
 const EventTuiPromptAppend = Schema.Struct({
   type: Schema.Literal(TuiEvent.PromptAppend.type),
   properties: TuiEvent.PromptAppend.properties
 }).annotate({
   identifier: "EventTuiPromptAppend"
 });
+/** Discriminated-union member schema for the command-execute TUI event. */
 const EventTuiCommandExecute = Schema.Struct({
   type: Schema.Literal(TuiEvent.CommandExecute.type),
   properties: TuiEvent.CommandExecute.properties
 }).annotate({
   identifier: "EventTuiCommandExecute"
 });
+/** Discriminated-union member schema for the toast-show TUI event. */
 const EventTuiToastShow = Schema.Struct({
   type: Schema.Literal(TuiEvent.ToastShow.type),
   properties: TuiEvent.ToastShow.properties
 }).annotate({
   identifier: "EventTuiToastShow"
 });
+/** Discriminated-union member schema for the session-select TUI event. */
 const EventTuiSessionSelect = Schema.Struct({
   type: Schema.Literal(TuiEvent.SessionSelect.type),
   properties: TuiEvent.SessionSelect.properties
 }).annotate({
   identifier: "EventTuiSessionSelect"
 });
+/** Request body schema for the publish endpoint: any one of the supported TUI events. */
 export const TuiPublishPayload = Schema.Union([EventTuiPromptAppend, EventTuiCommandExecute, EventTuiToastShow, EventTuiSessionSelect]);
+/** Map of endpoint name to URL path template for every TUI route. */
 export const TuiPaths = {
   appendPrompt: `${root}/append-prompt`,
   openHelp: `${root}/open-help`,
@@ -53,6 +63,12 @@ export const TuiPaths = {
   controlNext: `${root}/control/next`,
   controlResponse: `${root}/control/response`
 };
+/**
+ * Experimental HttpApi surface for the TUI group, exposing endpoints to append
+ * or submit prompts, open dialogs, show toasts, execute and publish events, select
+ * sessions, and pump the control request/response queue.
+ * The group is guarded by instance-context, workspace-routing, and authorization middleware.
+ */
 export const TuiApi = HttpApi.make("tui").add(HttpApiGroup.make("tui").add(HttpApiEndpoint.post("appendPrompt", TuiPaths.appendPrompt, {
   payload: TuiEvent.PromptAppend.properties,
   success: described(Schema.Boolean, "Prompt processed successfully"),

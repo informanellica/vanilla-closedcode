@@ -1,3 +1,5 @@
+/** @file Plugin service: loads internal and external plugins, registers their hooks, and triggers hooks on bus events and tool lifecycle points. */
+
 import { Config } from "#config/config.js";
 import { Bus } from "../bus/index.js";
 import * as Log from "core/util/log";
@@ -18,19 +20,39 @@ const log = Log.create({
 
 // Hook names that follow the (input, output) => Promise<void> trigger pattern
 
+/** Effect Context service tag for the plugin service. */
 export class Service extends Context.Service()("@closedcode/Plugin") {}
 
 // Built-in plugins that are directly imported (not installed from npm)
 const INTERNAL_PLUGINS = [];
+/**
+ * Whether a module export is a plugin server factory function.
+ * @param {*} value - The value to test.
+ * @returns {boolean} True if the value is a function.
+ */
 function isServerPlugin(value) {
   return typeof value === "function";
 }
+/**
+ * Extract a plugin server factory from an export value.
+ *
+ * Accepts either a bare function or an object with a `server` function.
+ * @param {*} value - A module export to inspect.
+ * @returns {Function} The server factory function, or undefined if none.
+ */
 function getServerPlugin(value) {
   if (isServerPlugin(value)) return value;
   if (!value || typeof value !== "object" || !("server" in value)) return;
   if (!isServerPlugin(value.server)) return;
   return value.server;
 }
+/**
+ * Collect all server factories from a legacy plugin module's exports.
+ *
+ * Iterates over every export, dedupes, and unwraps each into a server factory.
+ * @param {Object} mod - The imported plugin module.
+ * @returns {Array} The list of server factory functions found.
+ */
 function getLegacyPlugins(mod) {
   const seen = new Set();
   const result = [];
@@ -43,6 +65,16 @@ function getLegacyPlugins(mod) {
   }
   return result;
 }
+/**
+ * Initialize a loaded plugin module and append its hooks.
+ *
+ * Prefers the V1 (default-export object with server()) shape, resolving its
+ * plugin id; falls back to legacy plugins that export server factories.
+ * @param {Object} load - A loaded plugin record (mod, spec, source, target, pkg, options).
+ * @param {Object} input - The shared plugin input/context passed to each factory.
+ * @param {Array} hooks - The hook list to push each plugin's returned hooks into.
+ * @returns {Promise<void>} Resolves once the plugin's hooks have been registered.
+ */
 async function applyPlugin(load, input, hooks) {
   const plugin = readV1Plugin(load.mod, load.spec, "server", "detect");
   if (plugin) {
@@ -54,12 +86,25 @@ async function applyPlugin(load, input, hooks) {
     hooks.push(await server(input, load.options));
   }
 }
+/**
+ * Effect layer providing the plugin Service.
+ *
+ * On first state access it builds the plugin client/input context, loads
+ * internal then external plugins (honoring pure mode), collects their hooks,
+ * notifies them of the current config, and forwards all bus events to plugin
+ * `event` hooks. Exposes trigger/list/init operations over the loaded hooks.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const config = yield* Config.Service;
   const state = yield* InstanceState.make(Effect.fn("Plugin.state")(function* (ctx) {
     const hooks = [];
     const bridge = yield* EffectBridge.make();
+    /**
+     * Publish a plugin failure as a session error event onto the bus.
+     * @param {string} message - The human-readable error message.
+     * @returns {void}
+     */
     function publishPluginError(message) {
       bridge.fork(bus.publish(Session.Event.Error, {
         error: new NamedError.Unknown({
@@ -221,6 +266,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       hooks
     };
   }));
+  // Invoke the named hook on every loaded plugin in registration order,
+  // passing (input, output), and return the (possibly mutated) output.
   const trigger = Effect.fn("Plugin.trigger")(function* (name, input, output) {
     if (!name) return output;
     const s = yield* InstanceState.get(state);
@@ -231,10 +278,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return output;
   });
+  // Return the list of all loaded plugin hook objects.
   const list = Effect.fn("Plugin.list")(function* () {
     const s = yield* InstanceState.get(state);
     return s.hooks;
   });
+  // Force plugin loading by touching the lazily-initialized state.
   const init = Effect.fn("Plugin.init")(function* () {
     yield* InstanceState.get(state);
   });
@@ -244,5 +293,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     init
   });
 }));
+/** The plugin layer with its Bus and Config dependencies provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer));
 export * as Plugin from "./index.js";

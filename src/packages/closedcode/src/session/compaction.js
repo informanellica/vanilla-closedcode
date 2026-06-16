@@ -1,3 +1,8 @@
+/**
+ * @file Session compaction: summarizes older conversation turns into an anchored
+ * Markdown summary, prunes stale tool output to reclaim context space, and
+ * (optionally) auto-continues the session after compacting on overflow.
+ */
 import { BusEvent } from "#bus/bus-event.js";
 import { Bus } from "#bus/index.js";
 import * as Session from "./session.js";
@@ -72,10 +77,22 @@ Rules:
 - Use terse bullets, not prose paragraphs.
 - Preserve exact file paths, commands, error strings, and identifiers when known.
 - Do not mention the summary process or that context was compacted.`;
+/**
+ * Concatenate the trimmed text parts of a message into a single summary string.
+ * @param {Object} message - A message with a `parts` array.
+ * @returns {string} The joined non-empty text, or undefined when there is none.
+ */
 function summaryText(message) {
   const text = message.parts.filter(part => part.type === "text").map(part => part.text.trim()).filter(Boolean).join("\n\n").trim();
   return text || undefined;
 }
+/**
+ * Find the prior completed compactions in a message list: each is an assistant
+ * summary message that finished without error, paired with the index of the
+ * user (compaction) message that triggered it.
+ * @param {Array} messages - Ordered session messages, each `{ info, parts }`.
+ * @returns {Array} Items `{ userIndex, assistantIndex, summary }` for every completed compaction.
+ */
 function completedCompactions(messages) {
   const users = new Map();
   for (let i = 0; i < messages.length; i++) {
@@ -96,13 +113,31 @@ function completedCompactions(messages) {
     }];
   });
 }
+/**
+ * Compose the compaction prompt: an anchor instruction (create-new vs
+ * update-existing), the fixed summary template, and any plugin-supplied context.
+ * @param {Object} input - `{ previousSummary, context }` where previousSummary may be undefined and context is an array of extra strings.
+ * @returns {string} The full prompt text sent to the compaction model.
+ */
 function buildPrompt(input) {
   const anchor = input.previousSummary ? ["Update the anchored summary below using the conversation history above.", "Preserve still-true details, remove stale details, and merge in the new facts.", "<previous-summary>", input.previousSummary, "</previous-summary>"].join("\n") : "Create a new anchored summary from the conversation history above.";
   return [anchor, SUMMARY_TEMPLATE, ...input.context].join("\n\n");
 }
+/**
+ * Compute the token budget reserved for preserving recent turns: the configured
+ * value if set, otherwise 25% of usable context clamped to the min/max bounds.
+ * @param {Object} input - `{ cfg, model }` config and model used to size the budget.
+ * @returns {number} The token budget for recent-turn preservation.
+ */
 function preserveRecentBudget(input) {
   return input.cfg.compaction?.preserve_recent_tokens ?? Math.min(MAX_PRESERVE_RECENT_TOKENS, Math.max(MIN_PRESERVE_RECENT_TOKENS, Math.floor(usable(input) * 0.25)));
 }
+/**
+ * Split a message list into conversational turns, where each turn starts at a
+ * non-compaction user message and ends at the next turn's start (or list end).
+ * @param {Array} messages - Ordered session messages, each `{ info, parts }`.
+ * @returns {Array} Turn descriptors `{ start, end, id }` (half-open [start, end) indices).
+ */
 function turns(messages) {
   const result = [];
   for (let i = 0; i < messages.length; i++) {
@@ -120,6 +155,13 @@ function turns(messages) {
   }
   return result;
 }
+/**
+ * Find the earliest split point inside a single turn whose suffix
+ * `[start, turn.end)` fits within the remaining token budget, so part of an
+ * oversized turn can still be preserved in the tail.
+ * @param {Object} input - `{ turn, messages, model, budget, estimate }` with the turn to split, full message list, model, remaining token budget, and an estimate Effect-fn.
+ * @returns {Effect} An Effect yielding `{ start, id }` for the chosen split, or undefined if none fits.
+ */
 function splitTurn(input) {
   return Effect.gen(function* () {
     if (input.budget <= 0) return undefined;
@@ -138,6 +180,7 @@ function splitTurn(input) {
     return undefined;
   });
 }
+/** Effect service tag for the session-compaction API (isOverflow/prune/process/create). */
 export class Service extends Context.Service()("@closedcode/SessionCompaction") {}
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
@@ -147,6 +190,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const plugin = yield* Plugin.Service;
   const processors = yield* SessionProcessor.Service;
   const provider = yield* Provider.Service;
+  /**
+   * Determine whether the given token usage overflows the model's usable
+   * context, using the current config.
+   * @param {Object} input - `{ tokens, model }` token counts and target model.
+   * @returns {Effect} An Effect yielding a boolean (true when over the limit).
+   */
   const isOverflow = Effect.fn("SessionCompaction.isOverflow")(function* (input) {
     return overflow({
       cfg: yield* config.get(),
@@ -154,10 +203,24 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       model: input.model
     });
   });
+  /**
+   * Estimate the token size of a set of messages by converting them to model
+   * messages and measuring the serialized JSON.
+   * @param {Object} input - `{ messages, model }` messages and target model.
+   * @returns {Effect} An Effect yielding the estimated token count.
+   */
   const estimate = Effect.fn("SessionCompaction.estimate")(function* (input) {
     const msgs = yield* MessageV2.toModelMessagesEffect(input.messages, input.model);
     return Token.estimate(JSON.stringify(msgs));
   });
+  /**
+   * Choose which recent turns to keep verbatim as the "tail" (within the
+   * preserve-recent budget) and which prefix becomes the "head" to summarize.
+   * Walks recent turns newest-first, fitting whole turns and splitting the
+   * boundary turn when only part of it fits.
+   * @param {Object} input - `{ messages, cfg, model }` filtered messages, config, and target model.
+   * @returns {Effect} An Effect yielding `{ head, tail_start_id }` where head is the prefix to compact and tail_start_id is the first kept message id (or undefined when nothing is split off).
+   */
   const select = Effect.fn("SessionCompaction.select")(function* (input) {
     const limit = input.cfg.compaction?.tail_turns ?? DEFAULT_TAIL_TURNS;
     if (limit <= 0) return {
@@ -218,6 +281,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   });
 
+  /**
+   * Reclaim context space by marking the output of older completed tool calls
+   * as compacted. Walks the session's messages newest-first, protects the most
+   * recent PRUNE_PROTECT tokens of tool output (and protected tool types), and
+   * only prunes when at least PRUNE_MINIMUM tokens can be freed. No-op when
+   * pruning is disabled in config.
+   * @param {Object} input - `{ sessionID }` the session to prune.
+   * @returns {Effect} An Effect that performs the pruning side effects (no value).
+   */
   // goes backwards through parts until there are PRUNE_PROTECT tokens worth of tool
   // calls, then erases output of older tool calls to free context space
   const prune = Effect.fn("SessionCompaction.prune")(function* (input) {
@@ -266,6 +338,16 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }
   });
+  /**
+   * Run a compaction pass for a pending compaction (user) message: select the
+   * head to summarize, build the prompt, stream the summary from the compaction
+   * model, persist the resulting assistant summary message, and on overflow
+   * optionally rewind to replay the last real user turn. When auto and the
+   * model returns "continue", appends a follow-up/replay user message so the
+   * session resumes. Publishes Event.Compacted on success.
+   * @param {Object} input - `{ sessionID, parentID, messages, auto, overflow }` describing the compaction request and current message list.
+   * @returns {Effect} An Effect yielding the processor result ("continue"/"stop"/"compact"-derived terminal value).
+   */
   const processCompaction = Effect.fn("SessionCompaction.process")(function* (input) {
     const parent = input.messages.findLast(m => m.info.id === input.parentID);
     if (!parent || parent.info.role !== "user") {
@@ -488,6 +570,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return result;
   });
+  /**
+   * Begin a compaction by writing a new user message that carries a compaction
+   * part (recording auto/overflow), and emit the Compaction.Started event. The
+   * actual summarization happens later when this message is processed.
+   * @param {Object} input - `{ sessionID, agent, model, auto, overflow }` for the new compaction message.
+   * @returns {Effect} An Effect that performs the message/part writes and event emission.
+   */
   const create = Effect.fn("SessionCompaction.create")(function* (input) {
     const msg = yield* session.updateMessage({
       id: MessageID.ascending(),
@@ -524,12 +613,28 @@ export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(Provide
 const {
   runPromise
 } = makeRuntime(Service, defaultLayer);
+/**
+ * Promise wrapper around the compaction service's overflow check.
+ * @param {Object} input - `{ tokens, model }` token counts and target model.
+ * @returns {Promise<boolean>} Resolves true when token usage overflows usable context.
+ */
 export async function isOverflow(input) {
   return runPromise(svc => svc.isOverflow(input));
 }
+/**
+ * Promise wrapper around the compaction service's prune operation.
+ * @param {Object} input - `{ sessionID }` the session to prune.
+ * @returns {Promise<void>} Resolves when pruning completes.
+ */
 export async function prune(input) {
   return runPromise(svc => svc.prune(input));
 }
+/**
+ * Validated entry point that starts a new compaction for a session.
+ * Validates input against the schema, then runs the service's create method.
+ * @param {Object} input - `{ sessionID, agent, model: { providerID, modelID }, auto, overflow? }`.
+ * @returns {Promise<void>} Resolves when the compaction message is created.
+ */
 export const create = fn(z.object({
   sessionID: SessionID.zod,
   agent: z.string(),

@@ -1,3 +1,4 @@
+/** @file CLI `session` command group: list and delete stored sessions, with paginated/JSON output. */
 import { Effect } from "effect";
 import { cmd } from "./cmd.js";
 import { effectCmd, fail } from "../effect-cmd.js";
@@ -11,6 +12,12 @@ import { Process } from "#util/process.js";
 import { EOL } from "os";
 import path from "path";
 import { which } from "../../util/which.js";
+/**
+ * Resolves the pager command to feed session list output through.
+ * Uses `less` on POSIX; on Windows it probes PATH, the configured Git Bash path, and the git install
+ * for a bundled `less.exe`, falling back to the built-in `more`.
+ * @returns {Array} The pager command and its arguments as an argv array.
+ */
 function pagerCmd() {
   const lessOptions = ["-R", "-S"];
   if (process.platform !== "win32") {
@@ -35,12 +42,20 @@ function pagerCmd() {
   // Fall back to Windows built-in more (via cmd.exe)
   return ["cmd", "/c", "more"];
 }
+/**
+ * The `session` CLI command group; dispatches to the list and delete subcommands.
+ * @type {Object}
+ */
 export const SessionCommand = cmd({
   command: "session",
   describe: "manage sessions",
   builder: yargs => yargs.command(SessionListCommand).command(SessionDeleteCommand).demandCommand(),
   async handler() {}
 });
+/**
+ * The `session delete <sessionID>` subcommand; removes a session after verifying it exists.
+ * @type {Object}
+ */
 export const SessionDeleteCommand = effectCmd({
   command: "delete <sessionID>",
   describe: "delete a session",
@@ -58,6 +73,10 @@ export const SessionDeleteCommand = effectCmd({
     UI.println(UI.Style.TEXT_SUCCESS_BOLD + `Session ${args.sessionID} deleted` + UI.Style.TEXT_NORMAL);
   })
 });
+/**
+ * The `session list` subcommand; lists root sessions as a table (paged through the pager on a TTY) or JSON.
+ * @type {Object}
+ */
 export const SessionListCommand = effectCmd({
   command: "list",
   describe: "list sessions",
@@ -99,6 +118,11 @@ export const SessionListCommand = effectCmd({
     }
   })
 });
+/**
+ * Formats sessions as an aligned text table (id, title, updated time) with a header and separator.
+ * @param {Array} sessions - The sessions to render.
+ * @returns {string} The table as a newline-joined string.
+ */
 function formatSessionTable(sessions) {
   const lines = [];
   const maxIdWidth = Math.max(20, ...sessions.map(s => s.id.length));
@@ -114,6 +138,11 @@ function formatSessionTable(sessions) {
   }
   return lines.join(EOL);
 }
+/**
+ * Formats sessions as a pretty-printed JSON array of summary objects.
+ * @param {Array} sessions - The sessions to render.
+ * @returns {string} The JSON string (2-space indented).
+ */
 function formatSessionJSON(sessions) {
   const jsonData = sessions.map(session => ({
     id: session.id,

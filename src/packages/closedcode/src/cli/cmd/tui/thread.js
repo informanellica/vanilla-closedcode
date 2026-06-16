@@ -1,3 +1,8 @@
+/**
+ * @file CLI entry for the closedcode TUI command. Spawns the server Worker thread,
+ * wires up the RPC client (with an optional in-process fetch/event transport),
+ * validates any continued session, and launches the native-free vanilla TUI shell.
+ */
 import { cmd } from "#cli/cmd/cmd.js";
 import { Worker } from "node:worker_threads";
 import { Rpc } from "#util/rpc.js";
@@ -14,6 +19,12 @@ import { writeHeapSnapshot } from "v8";
 import { TuiConfig } from "./config/tui.js";
 import { CLOSEDCODE_PROCESS_ROLE, CLOSEDCODE_RUN_ID, ensureRunID, sanitizedProcessEnv } from "core/util/closedcode-process";
 import { validateSession } from "./validate-session.js";
+/**
+ * Build a fetch-compatible function that forwards requests over the worker RPC
+ * client (used when the server runs in-process rather than on a real HTTP port).
+ * @param {Object} client - The RPC client with a `call(method, params)` method.
+ * @returns {Function} An async `(input, init)` fetch shim returning a Response.
+ */
 function createWorkerFetch(client) {
   const fn = async (input, init) => {
     const request = new Request(input, init);
@@ -31,6 +42,12 @@ function createWorkerFetch(client) {
   };
   return fn;
 }
+/**
+ * Build an in-process event source that relays the worker's "global.event"
+ * stream to a subscriber (used in place of an SSE connection).
+ * @param {Object} client - The RPC client with an `on(event, handler)` method.
+ * @returns {Object} An object with `subscribe(handler)` returning an unsubscribe handle.
+ */
 function createEventSource(client) {
   return {
     subscribe: async handler => {
@@ -40,28 +57,57 @@ function createEventSource(client) {
     }
   };
 }
+/**
+ * Resolve the worker script URL/path, preferring an injected build constant, then
+ * the dist layout, then the colocated worker.js.
+ * @returns {Promise<*>} The worker module URL or path string.
+ */
 async function target() {
   if (typeof CLOSEDCODE_WORKER_PATH !== "undefined") return CLOSEDCODE_WORKER_PATH;
   const dist = new URL("./cli/cmd/tui/worker.js", import.meta.url);
   if (await Filesystem.exists(fileURLToPath(dist))) return dist;
   return new URL("./worker.js", import.meta.url);
 }
+/**
+ * Read all of stdin to a UTF-8 string.
+ * @returns {Promise<string>} The full piped stdin contents.
+ */
 async function readStdin() {
   let text = "";
   for await (const chunk of process.stdin) text += chunk.toString("utf8");
   return text;
 }
+/**
+ * Combine the explicit --prompt value with any piped stdin into the initial prompt.
+ * @param {string} value - The explicit prompt value (may be undefined).
+ * @returns {Promise<string>} The piped text, the value, or both joined by a newline.
+ */
 async function input(value) {
   const piped = process.stdin.isTTY ? undefined : await readStdin();
   if (!value) return piped;
   if (!piped) return value;
   return piped + "\n" + value;
 }
+/**
+ * Resolve the working directory the TUI should start in. A relative `project` is
+ * resolved against PWD; otherwise the current cwd is used.
+ * @param {string} project - Optional project path (absolute or relative to PWD).
+ * @param {string} envPWD - The PWD environment value (default process.env.PWD).
+ * @param {string} cwd - The current working directory (default process.cwd()).
+ * @returns {string} The resolved absolute directory path.
+ */
 export function resolveThreadDirectory(project, envPWD = process.env.PWD, cwd = process.cwd()) {
   const root = Filesystem.resolve(envPWD ?? cwd);
   if (project) return Filesystem.resolve(path.isAbsolute(project) ? project : path.join(root, project));
   return Filesystem.resolve(cwd);
 }
+/**
+ * The default CLI command that starts the closedcode TUI. Spawns the server
+ * Worker, sets up the RPC transport (in-process or external HTTP), validates a
+ * continued session, and runs the vanilla TUI shell. Supports --model, --continue,
+ * --session, --fork, --prompt, and --agent options plus a positional project path.
+ * @type {Object}
+ */
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
   describe: "start closedcode tui",

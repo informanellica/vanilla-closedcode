@@ -1,3 +1,4 @@
+/** @file Express route group for the instance /project endpoints (list, current, git init, update). */
 // Express route group for the instance /project endpoints.
 import express from "express";
 import { Effect } from "effect";
@@ -13,6 +14,11 @@ import { errors } from "../../express/errors.js";
 import { paramToAttributeKey } from "../instance/trace.js";
 
 // OTel span attributes for an Express handler: method, path, and every matched route param.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -25,12 +31,24 @@ function requestAttributes(req) {
 }
 
 // Runs an Effect inside a span with the request attributes.
+/**
+ * Runs an Effect inside a named span carrying the request attributes.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Effect} effect - The Effect to run inside the span.
+ * @returns {Promise<*>} A promise resolving to the Effect's result.
+ */
 function runRequest(name, req, effect) {
   return AppRuntime.runPromise(effect.pipe(Effect.withSpan(name, {
     attributes: requestAttributes(req),
   })));
 }
 
+/**
+ * Builds the Express router for the /project route group (list projects, current project, git init, update).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function ProjectRoutes(registry) {
   const router = express.Router();
 

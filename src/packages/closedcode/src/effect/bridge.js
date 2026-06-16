@@ -1,9 +1,18 @@
+/** @file EffectBridge: helpers for crossing between Effect and Promise-based JS while preserving legacy Instance/Workspace AsyncLocalStorage context across the boundary. */
 import { Effect, Exit } from "effect";
 import { WorkspaceContext } from "#control-plane/workspace-context.js";
 import { Instance } from "#project/instance.js";
 import { LocalContext } from "#util/local-context.js";
 import { InstanceRef, WorkspaceRef } from "./instance-ref.js";
 import { attachWith } from "./run-service.js";
+/**
+ * Run a callback with the legacy Instance and/or WorkspaceContext
+ * AsyncLocalStorage restored, depending on which references are present.
+ * @param {*} instance - Instance context to restore, or undefined.
+ * @param {*} workspace - Workspace ID to restore, or undefined.
+ * @param {Function} fn - Callback to run inside the restored context(s).
+ * @returns {*} The callback's return value (typically a Promise).
+ */
 function restore(instance, workspace, fn) {
   if (instance && workspace !== undefined) {
     return WorkspaceContext.restore(workspace, () => Instance.restore(instance, fn));
@@ -30,6 +39,13 @@ export const fromPromise = fn => Effect.gen(function* () {
   const workspace = yield* WorkspaceRef;
   return yield* Effect.promise(() => Promise.resolve(restore(instance, workspace, () => fn())));
 });
+/**
+ * Build a bridge bound to the current Effect context plus the ambient
+ * instance/workspace references (falling back to the legacy Instance.current /
+ * WorkspaceContext.workspaceID). The returned object lets surrounding JS run
+ * effects later while re-attaching that captured context and legacy ALS.
+ * @returns {Effect} Effect resolving to a bridge with `promise`, `fork`, and `run` runners that each accept an effect.
+ */
 export function make() {
   return Effect.gen(function* () {
     const ctx = yield* Effect.context();

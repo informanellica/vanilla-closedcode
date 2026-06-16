@@ -1,3 +1,4 @@
+/** @file CLI `models` command: lists available models across providers, optionally filtered, verbose, or refreshed. */
 import { EOL } from "os";
 import { Effect } from "effect";
 import { Provider } from "#provider/provider.js";
@@ -5,6 +6,11 @@ import { ProviderID } from "../../provider/schema.js";
 import { ModelsDev } from "#provider/models.js";
 import { effectCmd, fail } from "../effect-cmd.js";
 import { UI } from "../ui.js";
+/**
+ * `models [provider]` command: prints `provider/model` lines for every (or one) provider.
+ * Supports `--verbose` to also dump each model's metadata JSON and `--refresh` to reload the models snapshot.
+ * Local providers (lmstudio, ollama) are sorted first when listing all providers.
+ */
 export const ModelsCommand = effectCmd({
   command: "models [provider]",
   describe: "list all available models",

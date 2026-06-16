@@ -1,4 +1,4 @@
-// Express route group for the instance /sync endpoints (start, replay, history).
+/** @file Express route group for the instance /sync endpoints (start, replay, history). */
 import express from "express";
 import z from "zod";
 import { SyncEvent } from "#sync/index.js";
@@ -12,6 +12,7 @@ import { registerOperation } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";
 
+// Zod schema for a single sync event accepted by the /replay endpoint.
 const ReplayEvent = z.object({
   id: z.string(),
   aggregateID: z.string(),
@@ -24,6 +25,12 @@ const log = Log.create({
   service: "server.sync"
 });
 
+/**
+ * Builds the Express router for the instance /sync endpoints: start workspace syncing,
+ * replay a full sync event history, and list sync events since known sequence IDs.
+ * @param {Object} registry - OpenAPI operation registry; route metadata is registered against it when present.
+ * @returns {Object} Configured Express Router.
+ */
 export function SyncRoutes(registry) {
   const router = express.Router();
 

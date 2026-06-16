@@ -1,3 +1,4 @@
+/** @file CLI `acp` command: starts an Agent Client Protocol server over stdio, bridging stdin/stdout to a local closedcode SDK client. */
 import * as Log from "core/util/log";
 import { Effect } from "effect";
 import { effectCmd } from "../effect-cmd.js";
@@ -9,6 +10,7 @@ import { withNetworkOptions, resolveNetworkOptions } from "../network.js";
 const log = Log.create({
   service: "acp-command"
 });
+/** CLI command: `acp` — starts the ACP (Agent Client Protocol) server, speaking newline-delimited JSON over stdio. */
 export const AcpCommand = effectCmd({
   command: "acp",
   describe: "start ACP (Agent Client Protocol) server",

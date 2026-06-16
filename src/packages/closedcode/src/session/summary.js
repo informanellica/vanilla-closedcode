@@ -1,3 +1,4 @@
+/** @file Computes and persists per-session and per-message diff summaries (additions/deletions/files) from snapshots. */
 import { Effect, Layer, Context, Schema } from "effect";
 import { Bus } from "#bus/index.js";
 import { Snapshot } from "#snapshot/index.js";
@@ -6,6 +7,11 @@ import { zod } from "#util/effect-zod.js";
 import { withStatics } from "#util/schema.js";
 import * as Session from "./session.js";
 import { SessionID, MessageID } from "./schema.js";
+/**
+ * Decodes a git "C-quoted" path (a path git wraps in double quotes with backslash/octal escapes) back into its real UTF-8 form. Returns the input unchanged when it is not a quoted path.
+ * @param {string} input - A path as emitted by git, possibly double-quoted with escape sequences.
+ * @returns {string} The decoded path, or the original input if it was not quoted.
+ */
 function unquoteGitPath(input) {
   if (!input.startsWith('"')) return input;
   if (!input.endsWith('"')) return input;
@@ -41,11 +47,19 @@ function unquoteGitPath(input) {
   return Buffer.from(bytes).toString();
 }
 export class Service extends Context.Service()("@closedcode/SessionSummary") {}
+/**
+ * Effect Layer providing the SessionSummary service, which derives file diffs between snapshots, stores them, and exposes summarize/diff/computeDiff operations.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const sessions = yield* Session.Service;
   const snapshot = yield* Snapshot.Service;
   const storage = yield* Storage.Service;
   const bus = yield* Bus.Service;
+  /**
+   * Computes the full diff between the first step-start snapshot and the last step-finish snapshot found across the given messages.
+   * @param {Object} input - Object with a `messages` array of message-with-parts objects.
+   * @returns {Promise<Array>} The list of file diff entries, or an empty array when no snapshot bounds are found.
+   */
   const computeDiff = Effect.fn("SessionSummary.computeDiff")(function* (input) {
     let from;
     let to;
@@ -65,6 +79,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     if (from && to) return yield* snapshot.diffFull(from, to);
     return [];
   });
+  /**
+   * Recomputes the session-wide diff summary (additions, deletions, file count), persists the diffs, publishes a Diff event, and updates the target user message's per-message diff summary.
+   * @param {Object} input - Object with `sessionID` and optional `messageID` identifying the message to attach a per-message summary to.
+   * @returns {void}
+   */
   const summarize = Effect.fn("SessionSummary.summarize")(function* (input) {
     const all = yield* sessions.messages({
       sessionID: input.sessionID
@@ -98,6 +117,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
     yield* sessions.updateMessage(target.info);
   });
+  /**
+   * Reads the stored session diff, normalizing any git-quoted file paths to their decoded form and re-persisting when changed.
+   * @param {Object} input - Object with `sessionID`.
+   * @returns {Promise<Array>} The (possibly path-normalized) list of stored diff entries.
+   */
   const diff = Effect.fn("SessionSummary.diff")(function* (input) {
     const diffs = yield* storage.read(["session_diff", input.sessionID]).pipe(Effect.catch(() => Effect.succeed([])));
     const next = diffs.map(item => {
@@ -118,7 +142,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     computeDiff
   });
 }));
+/** The SessionSummary layer with all its dependencies (Session, Snapshot, Storage, Bus) provided. */
 export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(Session.defaultLayer), Layer.provide(Snapshot.defaultLayer), Layer.provide(Storage.defaultLayer), Layer.provide(Bus.layer)));
+/** Schema for diff requests: a required `sessionID` and optional `messageID`. */
 export const DiffInput = Schema.Struct({
   sessionID: SessionID,
   messageID: Schema.optional(MessageID)

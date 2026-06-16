@@ -1,3 +1,4 @@
+/** @file Express route group for the instance /provider endpoints (list, auth methods, OAuth authorize/callback). */
 // Express route group for the instance /provider endpoints (list, auth, OAuth).
 import express from "express";
 import { Effect } from "effect";
@@ -14,6 +15,12 @@ import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";
 
 // OTel attribute key normalisation: `fooID` -> `foo.id`; any other param is namespaced under `closedcode.`.
+/**
+ * Normalises an Express route param name into an OTel attribute key: `fooID` becomes `foo.id`; any other
+ * param is namespaced under `closedcode.`.
+ * @param {string} key - The route param name.
+ * @returns {string} The normalised attribute key.
+ */
 function paramToAttributeKey(key) {
   const m = key.match(/^(.+)ID$/);
   if (m) return `${m[1].toLowerCase()}.id`;
@@ -21,6 +28,11 @@ function paramToAttributeKey(key) {
 }
 
 // OTel span attributes for an Express request: method, path, and matched route params.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, mounted path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -33,6 +45,14 @@ function requestAttributes(req) {
 }
 
 // Runs an Effect generator under an OTel span and responds with the JSON result.
+/**
+ * Runs an Effect generator under an OTel span built from the request, then writes the resolved value as JSON.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} effect - A function returning an Effect generator to run.
+ * @returns {Promise<void>} Resolves once the response JSON has been written.
+ */
 async function jsonRequest(name, req, res, effect) {
   const result = await AppRuntime.runPromise(
     Effect.gen(() => effect()).pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })),
@@ -40,6 +60,11 @@ async function jsonRequest(name, req, res, effect) {
   res.json(result);
 }
 
+/**
+ * Builds the Express router for the /provider route group (list providers, auth methods, OAuth authorize/callback).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function ProviderRoutes(registry) {
   const router = express.Router();
 

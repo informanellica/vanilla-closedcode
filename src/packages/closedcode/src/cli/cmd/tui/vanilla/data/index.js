@@ -1,3 +1,10 @@
+/**
+ * @file Vanilla data layer (SDK-integration phase): the store + the SDK-driven
+ * actions and event loop, replacing the solid-js context stack (sync/sdk/local)
+ * for the core chat loop. The SDK CLIENT is injected (real client from
+ * connection.js, or a mock in tests), as are the id minters — so this whole module
+ * is headless-testable by driving a fake sdk + pushing synthetic events.
+ */
 // Vanilla data layer (SDK-integration phase): the store + the SDK-driven actions
 // and event loop, replacing the solid-js context stack (sync/sdk/local) for the
 // core chat loop. The SDK CLIENT is injected (real client from connection.js, or
@@ -5,6 +12,12 @@
 // testable by driving a fake sdk + pushing synthetic events.
 import { createDataStore } from "./store.js";
 
+/**
+ * Coalesce streamed events into ~one flush per scheduled frame (mirrors sync/sdk.js).
+ * @param {Function} flush - Called with the queued events array on each scheduled frame.
+ * @param {Function} schedule - Schedules a callback for the next frame (e.g. setTimeout).
+ * @returns {Function} An `(event)` enqueue function that batches until the next flush.
+ */
 // Coalesce streamed events into ~one repaint per frame (mirrors sync/sdk.js).
 function createBatcher(flush, schedule) {
   let queue = [];
@@ -23,6 +36,12 @@ const defaultIds = {
   part: () => `prt_${Date.now()}_${(fallbackSeq++).toString().padStart(6, "0")}`,
 };
 
+/**
+ * Create the vanilla data layer: a reactive store plus SDK-driven actions and the
+ * event stream loop for the core chat experience.
+ * @param {Object} opts - `{sdk, ids, directory, events, schedule}`: the SDK client (real or mock), id minters, working directory, optional in-process event source, and a frame scheduler.
+ * @returns {Object} `{store, start, stop, bootstrap, syncSession, submit, abort, findFiles, permissionReply, questionReply, questionReject, ids, sdk}`.
+ */
 export function createDataLayer(opts = {}) {
   const sdk = opts.sdk; // the SDK client (real or mock)
   const ids = opts.ids ?? defaultIds;
@@ -35,6 +54,11 @@ export function createDataLayer(opts = {}) {
   const onBatch = events => store.applyBatch(events);
   const push = createBatcher(onBatch, schedule);
 
+  /**
+   * Start consuming the backend event stream — the in-process source (opts.events)
+   * if present, otherwise an SSE loop with exponential-backoff reconnect.
+   * @returns {Promise<void>}
+   */
   // Start consuming the event stream: in-process (opts.events) or SSE.
   async function start() {
     if (opts.events) { stopEvents = await opts.events.subscribe(push); return; }
@@ -54,8 +78,13 @@ export function createDataLayer(opts = {}) {
       }
     })();
   }
+  /** Stop the event stream loop (idempotent; ignores teardown errors). @returns {void} */
   function stop() { try { stopEvents?.(); } catch { /* ignore */ } }
 
+  /**
+   * Initial fetch of providers, agents, commands, and recent sessions into the store.
+   * @returns {Promise<void>}
+   */
   // Initial fetch of providers / agents / commands / sessions.
   async function bootstrap() {
     const [providers, agents, commands, sessions] = await Promise.all([
@@ -71,6 +100,12 @@ export function createDataLayer(opts = {}) {
     });
   }
 
+  /**
+   * Lazily hydrate a session's full message + part history (and todo/diff) into the
+   * store, at most once per session id.
+   * @param {string} sessionID - The session to hydrate.
+   * @returns {Promise<void>}
+   */
   // Lazily hydrate a session's full message+part history (once).
   async function syncSession(sessionID) {
     if (!sessionID || synced.has(sessionID)) return;
@@ -87,8 +122,17 @@ export function createDataLayer(opts = {}) {
     store.hydrateSession(sessionID, { session, messages: (messages ?? []).map(m => m.info ?? m), parts, todo, diff });
   }
 
+  /** Whether `name` matches a known store command. @param {string} name @returns {boolean} */
   const isKnownCommand = name => store.commands().some(c => c.name === name);
 
+  /**
+   * Submit a prompt, shell command, or slash command, creating a session first if
+   * needed. Streamed results arrive asynchronously via the event loop.
+   * @param {string} sessionID - Target session id, or falsy to create a new session.
+   * @param {string} text - The prompt text / shell command / slash command.
+   * @param {Object} options - `{mode, agent, model, variant, parts}`: mode is "normal" or "shell"; model is `{providerID, modelID}`; parts are extra message parts.
+   * @returns {Promise<string>} The (possibly newly created) session id.
+   */
   // Submit a prompt/shell/command. Creates a session first if needed. Returns the
   // (possibly newly created) sessionID. Streamed results arrive via the event loop.
   async function submit(sessionID, text, { mode = "normal", agent, model, variant, parts = [] } = {}) {
@@ -112,10 +156,15 @@ export function createDataLayer(opts = {}) {
     return sessionID;
   }
 
+  /** Abort an in-flight session run. @param {string} sessionID @returns {Promise<*>} */
   const abort = sessionID => sdk.session.abort({ sessionID }).catch(() => {});
+  /** Search project files for "@" mentions. @param {string} query @returns {Promise<Array>} matching file records (empty on error). */
   const findFiles = query => sdk.find.files({ query, directory }).then(r => r.data ?? []).catch(() => []);
+  /** Reply to a permission request. @param {string} requestID @param {*} reply @param {Object} extra @returns {Promise<*>} */
   const permissionReply = (requestID, reply, extra = {}) => sdk.permission.reply({ requestID, reply, ...extra }).catch(() => {});
+  /** Answer a pending question request. @param {string} requestID @param {*} answers @returns {Promise<*>} */
   const questionReply = (requestID, answers) => sdk.question.reply({ requestID, answers }).catch(() => {});
+  /** Reject a pending question request. @param {string} requestID @returns {Promise<*>} */
   const questionReject = requestID => sdk.question.reject({ requestID }).catch(() => {});
 
   return { store, start, stop, bootstrap, syncSession, submit, abort, findFiles, permissionReply, questionReply, questionReject, ids, get sdk() { return sdk; } };

@@ -1,10 +1,12 @@
-// Vanilla prompt (Stage T3, stage 2) — the immediate-mode replacement for
-// component/prompt/index.js (a 1500-line compiled-Solid textarea over @opentui
-// with extmarks/SDK). This keeps the user-facing behavior: a multi-line input
-// (createTextArea), shell mode ("!" at the start), prompt history (Up at start /
-// Down at end), an autocomplete dropdown, and a meta line (agent · model
-// provider). Submission and the data SOURCES are injected (onSubmit, commands,
-// listFiles, history), so it composes into the shell and is headless-testable.
+/**
+ * @file Vanilla prompt (Stage T3, stage 2) — the immediate-mode replacement for
+ * component/prompt/index.js (a 1500-line compiled-Solid textarea over @opentui
+ * with extmarks/SDK). This keeps the user-facing behavior: a multi-line input
+ * (createTextArea), shell mode ("!" at the start), prompt history (Up at start /
+ * Down at end), an autocomplete dropdown, and a meta line (agent · model
+ * provider). Submission and the data SOURCES are injected (onSubmit, commands,
+ * listFiles, history), so it composes into the shell and is headless-testable.
+ */
 import { createSignal } from "../runtime/reactivity.js";
 import { createTextArea } from "../runtime/textarea.js";
 import { createAutocomplete } from "./autocomplete.js";
@@ -12,9 +14,35 @@ import { attr, defaultTheme } from "./theme.js";
 import { fit } from "../runtime/text.js";
 
 const INDENT = 2; // matches the live prompt's paddingLeft
+/**
+ * Resolve a possibly-callable value: call it if a function, else return as-is.
+ * @param {*} v - A value or a zero-arg getter function.
+ * @returns {*} The value, or the function's return value.
+ */
 const resolve = v => (typeof v === "function" ? v() : v);
+/**
+ * Uppercase the first character of a string.
+ * @param {string} s - The input string.
+ * @returns {string} The title-cased string (or the input unchanged when empty).
+ */
 const titlecase = s => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
+/**
+ * Create the immediate-mode prompt widget: a multi-line textarea with shell
+ * mode, history browsing, autocomplete, and a meta/hint line.
+ * @param {Object} opts - Configuration and injected data sources.
+ * @param {Object} opts.theme - Theme token map (defaults to defaultTheme).
+ * @param {Function} opts.onSubmit - Called with (text, {mode}) on submit.
+ * @param {Function} opts.onChange - Forwarded to the textarea's change callback.
+ * @param {Array} opts.commands - Slash-command list for autocomplete.
+ * @param {Function} opts.listFiles - File lister for @-mention autocomplete.
+ * @param {Object} opts.history - Prompt history (createPromptHistory()).
+ * @param {Object} opts.placeholders - {normal, shell} arrays of example texts.
+ * @param {*} opts.agent - Agent name (value or getter) for the meta line.
+ * @param {*} opts.model - Model name (value or getter) for the meta line.
+ * @param {*} opts.provider - Provider name (value or getter) for the meta line.
+ * @returns {Object} The prompt API (textarea, autocomplete, mode, setMode, value, setText, handleKey, submit, draw, height, placeholder).
+ */
 export function createPrompt(opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const [mode, setMode] = createSignal("normal"); // "normal" | "shell"
@@ -25,11 +53,20 @@ export function createPrompt(opts = {}) {
   let historyActive = false; // true while browsing history (so Up/Down cycle)
 
   const refreshAC = () => ac.onInput(textarea.value(), textarea.cursor());
-  // Set the whole prompt text programmatically (e.g. --prompt prefill, a stash
-  // restore). Goes through the textarea directly so a leading "!" does NOT trip
-  // shell mode the way feeding it key-by-key would.
+  /**
+   * Set the whole prompt text programmatically (e.g. --prompt prefill, a stash
+   * restore). Goes through the textarea directly so a leading "!" does NOT trip
+   * shell mode the way feeding it key-by-key would.
+   * @param {string} str - The full text to set (null/undefined clears it).
+   * @returns {void}
+   */
   function setText(str) { textarea.setText(str ?? ""); setMode("normal"); historyActive = false; history?.reset?.(); refreshAC(); }
 
+  /**
+   * Apply an autocomplete accept splice to the textarea buffer.
+   * @param {Object} splice - {from, to, text} replacement over the buffer.
+   * @returns {void}
+   */
   function applyAccept(splice) {
     const cs = [...textarea.value()];
     const ins = [...splice.text];
@@ -39,6 +76,11 @@ export function createPrompt(opts = {}) {
     refreshAC();
   }
 
+  /**
+   * Submit the current (trimmed) input via onSubmit, append it to history, and
+   * reset the prompt. No-op when the input is blank.
+   * @returns {boolean} true if a submission occurred, false when input was empty.
+   */
   function submit() {
     const raw = textarea.value();
     const text = raw.trim();
@@ -53,6 +95,13 @@ export function createPrompt(opts = {}) {
     return true;
   }
 
+  /**
+   * Route a key event through the prompt's layered handling: autocomplete,
+   * shell-mode toggle/exit, submit/newline, history browsing, then editing.
+   * @param {string} name - Combined key name (e.g. "ENTER", "UP", "BACKSPACE").
+   * @param {Object} data - Key metadata (isCharacter, shift, ...).
+   * @returns {boolean} true when the key was consumed.
+   */
   function handleKey(name, data) {
     // 1. autocomplete owns nav/accept/escape while visible
     if (ac.visible()) {
@@ -102,6 +151,11 @@ export function createPrompt(opts = {}) {
     return handled;
   }
 
+  /**
+   * Pick the placeholder text for the current mode, rotating through the
+   * configured examples (or a default phrase when none are configured).
+   * @returns {string} The placeholder string for the empty input.
+   */
   function placeholder() {
     const m = mode();
     const arr = m === "shell" ? (opts.placeholders?.shell ?? []) : (opts.placeholders?.normal ?? []);
@@ -110,9 +164,21 @@ export function createPrompt(opts = {}) {
     return m === "shell" ? `Run a command... "${ex}"` : `Ask anything... "${ex}"`;
   }
 
-  // Total rows the prompt wants for `width` (input area + meta + hint).
+  /**
+   * Total rows the prompt wants for `width` (input area + meta + hint).
+   * @param {number} width - Available column width for the prompt.
+   * @returns {number} The number of rows the prompt occupies.
+   */
   function height(width) { return textarea.height(Math.max(1, width - INDENT)) + 2; }
 
+  /**
+   * Draw the prompt into a region: left bar, indented textarea, meta line, hint.
+   * @param {Object} region - The drawing region.
+   * @param {Object} ctx - Render context (passed to the textarea, e.g. cursor).
+   * @param {Object} options - Draw options.
+   * @param {boolean} options.focused - Whether the prompt currently has focus.
+   * @returns {void}
+   */
   function draw(region, ctx, { focused } = {}) {
     const m = mode();
     const barAttr = attr(theme, m === "shell" ? "primary" : "border");
@@ -139,16 +205,39 @@ export function createPrompt(opts = {}) {
   return { textarea, autocomplete: ac, mode, setMode, value: () => textarea.value(), setText, handleKey, submit, draw, height, placeholder };
 }
 
-// Minimal prompt history: Up (dir -1) walks back, Down (dir +1) walks forward and
-// restores the in-progress draft at the end. Mirrors the live history.move() UX.
+/**
+ * Minimal prompt history: Up (dir -1) walks back, Down (dir +1) walks forward and
+ * restores the in-progress draft at the end. Mirrors the live history.move() UX.
+ * @returns {Object} The history API (append, list, reset, move).
+ */
 export function createPromptHistory() {
   const items = [];
   let idx = null;
   let draft = "";
   return {
+    /**
+     * Append a submitted entry to history and reset the browse cursor.
+     * @param {Object} entry - {input, mode} of the submitted prompt.
+     * @returns {void}
+     */
     append(entry) { if (entry?.input?.trim()) items.push({ input: entry.input, mode: entry.mode ?? "normal" }); idx = null; draft = ""; },
+    /**
+     * The recorded history entries, oldest first.
+     * @returns {Array} The {input, mode} entries.
+     */
     list: () => items,
+    /**
+     * Reset to "not browsing" so the next Up captures a fresh draft + starts at latest.
+     * @returns {void}
+     */
     reset() { idx = null; draft = ""; }, // back to "not browsing" so the next Up captures a fresh draft + starts at latest
+    /**
+     * Step through history. dir<0 walks back; dir>0 walks forward, restoring the
+     * saved in-progress draft once it walks past the newest entry.
+     * @param {number} dir - Direction: negative walks back, positive walks forward.
+     * @param {string} current - The current buffer text (saved as the draft on first back-step).
+     * @returns {Object|undefined} The {input, mode, atDraft} entry to load, or undefined.
+     */
     move(dir, current) {
       if (items.length === 0) return;
       if (dir < 0) {

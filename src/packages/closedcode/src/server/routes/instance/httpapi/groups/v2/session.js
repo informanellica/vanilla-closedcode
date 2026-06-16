@@ -1,3 +1,4 @@
+/** @file HttpApi group defining the experimental v2 session routes: list sessions, prompt, compact, wait for idle, and fetch active context. */
 import { WorkspaceID } from "#control-plane/schema.js";
 import { SessionID } from "#session/schema.js";
 import { SessionMessage } from "#v2/session-message.js";
@@ -6,6 +7,12 @@ import { SessionV2 } from "#v2/session.js";
 import { Schema, SchemaGetter } from "effect";
 import { HttpApiEndpoint, HttpApiError, HttpApiGroup, HttpApiSchema, OpenApi } from "effect/unstable/httpapi";
 import { Authorization } from "../../middleware/authorization.js";
+/**
+ * Experimental v2 session route group, exposing endpoints to list sessions
+ * (order-based or cursor-based pagination), send a prompt, compact the conversation,
+ * wait for the agent loop to become idle, and retrieve the active context messages.
+ * Guarded by authorization middleware.
+ */
 export const SessionGroup = HttpApiGroup.make("v2.session").add(HttpApiEndpoint.get("sessions", "/api/session", {
   query: Schema.Union([Schema.Struct({
     limit: Schema.optional(Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(1), Schema.isLessThanOrEqualTo(200))).annotate({

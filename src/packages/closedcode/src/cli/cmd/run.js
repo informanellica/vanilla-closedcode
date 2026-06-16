@@ -1,3 +1,4 @@
+/** @file CLI `run` command: sends a single message (or command) to closedcode, either against an in-process server or a remote one via --attach, and renders streamed tool/text/reasoning events to the terminal. */
 import path from "path";
 import { pathToFileURL } from "url";
 import { Effect } from "effect";
@@ -14,6 +15,11 @@ import { Agent } from "../../agent/agent.js";
 import { ShellID } from "../../tool/shell/id.js";
 import { Locale } from "#util/locale.js";
 import { AppRuntime } from "#effect/app-runtime.js";
+/**
+ * Builds the renderer info object from a tool message part.
+ * @param {Object} part - The tool message part (has `state` and tool info).
+ * @returns {Object} An object with the tool input, optional metadata, and the original part.
+ */
 function props(part) {
   const state = part.state;
   return {
@@ -22,10 +28,21 @@ function props(part) {
     part
   };
 }
+/**
+ * Prints a single-line tool summary (icon + title, with an optional dimmed description suffix).
+ * @param {Object} info - Render info with `icon`, `title`, and optional `description`.
+ * @returns {void}
+ */
 function inline(info) {
   const suffix = info.description ? UI.Style.TEXT_DIM + ` ${info.description}` + UI.Style.TEXT_NORMAL : "";
   UI.println(UI.Style.TEXT_NORMAL + info.icon, UI.Style.TEXT_NORMAL + info.title + suffix);
 }
+/**
+ * Prints a tool summary line followed by an indented output block.
+ * @param {Object} info - Render info with `icon` and `title`.
+ * @param {string} output - The output text to print below the title; skipped when empty/blank.
+ * @returns {void}
+ */
 function block(info, output) {
   UI.empty();
   inline(info);
@@ -33,6 +50,11 @@ function block(info, output) {
   UI.println(output);
   UI.empty();
 }
+/**
+ * Generic renderer for tools without a dedicated formatter; shows the tool name plus a best-effort title.
+ * @param {Object} part - The tool message part.
+ * @returns {void}
+ */
 function fallback(part) {
   const state = part.state;
   const input = "input" in state ? state.input : undefined;
@@ -42,6 +64,11 @@ function fallback(part) {
     title: `${part.tool} ${title}`
   });
 }
+/**
+ * Renders a `glob` tool invocation (pattern, optional search root, and match count).
+ * @param {Object} info - Render info with `input` and `metadata`.
+ * @returns {void}
+ */
 function glob(info) {
   const root = info.input.path ?? "";
   const title = `Glob "${info.input.pattern}"`;
@@ -56,6 +83,11 @@ function glob(info) {
     })
   });
 }
+/**
+ * Renders a `grep` tool invocation (pattern, optional search root, and match count).
+ * @param {Object} info - Render info with `input` and `metadata`.
+ * @returns {void}
+ */
 function grep(info) {
   const root = info.input.path ?? "";
   const title = `Grep "${info.input.pattern}"`;
@@ -70,6 +102,11 @@ function grep(info) {
     })
   });
 }
+/**
+ * Renders a `read` tool invocation (file path plus any extra scalar input options).
+ * @param {Object} info - Render info with `input`.
+ * @returns {void}
+ */
 function read(info) {
   const file = normalizePath(info.input.filePath);
   const pairs = Object.entries(info.input).filter(([key, value]) => {
@@ -85,18 +122,33 @@ function read(info) {
     })
   });
 }
+/**
+ * Renders a `write` tool invocation, including its output block when completed.
+ * @param {Object} info - Render info with `input` and `part`.
+ * @returns {void}
+ */
 function write(info) {
   block({
     icon: "←",
     title: `Write ${normalizePath(info.input.filePath)}`
   }, info.part.state.status === "completed" ? info.part.state.output : undefined);
 }
+/**
+ * Renders a `webfetch` tool invocation (the fetched URL).
+ * @param {Object} info - Render info with `input`.
+ * @returns {void}
+ */
 function webfetch(info) {
   inline({
     icon: "%",
     title: `WebFetch ${info.input.url}`
   });
 }
+/**
+ * Renders an `edit` tool invocation, including the diff block from metadata.
+ * @param {Object} info - Render info with `input` and `metadata` (carries `diff`).
+ * @returns {void}
+ */
 function edit(info) {
   const title = normalizePath(info.input.filePath);
   const diff = info.metadata.diff;
@@ -105,12 +157,22 @@ function edit(info) {
     title: `Edit ${title}`
   }, diff);
 }
+/**
+ * Renders a `websearch` tool invocation (the search query).
+ * @param {Object} info - Render info with `input`.
+ * @returns {void}
+ */
 function websearch(info) {
   inline({
     icon: "◈",
     title: `Exa Web Search "${info.input.query}"`
   });
 }
+/**
+ * Renders a `task` (subagent) invocation with a status-dependent icon and the subagent name/description.
+ * @param {Object} info - Render info with `part` (carries the task state).
+ * @returns {void}
+ */
 function task(info) {
   const input = info.part.state.input;
   const status = info.part.state.status;
@@ -125,12 +187,22 @@ function task(info) {
     description: desc ? `${agent} Agent` : undefined
   });
 }
+/**
+ * Renders a `skill` tool invocation (the skill name).
+ * @param {Object} info - Render info with `input`.
+ * @returns {void}
+ */
 function skill(info) {
   inline({
     icon: "→",
     title: `Skill "${info.input.name}"`
   });
 }
+/**
+ * Renders a shell tool invocation (the command), including its output block when completed.
+ * @param {Object} info - Render info with `input` and `part`.
+ * @returns {void}
+ */
 function shell(info) {
   const output = info.part.state.status === "completed" ? info.part.state.output?.trim() : undefined;
   block({
@@ -138,17 +210,31 @@ function shell(info) {
     title: `${info.input.command}`
   }, output);
 }
+/**
+ * Renders a `todowrite` tool invocation as a checkbox list of todo items.
+ * @param {Object} info - Render info with `input` (carries `todos`).
+ * @returns {void}
+ */
 function todo(info) {
   block({
     icon: "#",
     title: "Todos"
   }, info.input.todos.map(item => `${item.status === "completed" ? "[x]" : "[ ]"} ${item.content}`).join("\n"));
 }
+/**
+ * Converts an absolute path to a cwd-relative path for display; returns input unchanged if already relative.
+ * @param {string} input - The path to normalize.
+ * @returns {string} The cwd-relative path, "." for the cwd itself, or "" for empty input.
+ */
 function normalizePath(input) {
   if (!input) return "";
   if (path.isAbsolute(input)) return path.relative(process.cwd(), input) || ".";
   return input;
 }
+/**
+ * The `run` CLI command: prompts closedcode with a one-off message or command and streams the result.
+ * @type {Object}
+ */
 export const RunCommand = effectCmd({
   command: "run [message..]",
   describe: "run closedcode with a message",
@@ -286,11 +372,20 @@ export const RunCommand = effectCmd({
         action: "deny",
         pattern: "*"
       }];
+      /**
+       * Resolves the session title from --title, falling back to a truncated prompt when the flag is passed without a value.
+       * @returns {string} The session title, or undefined when --title was not provided.
+       */
       function title() {
         if (args.title === undefined) return;
         if (args.title !== "") return args.title;
         return message.slice(0, 50) + (message.length > 50 ? "..." : "");
       }
+      /**
+       * Resolves the target session id: continues/forks an existing session or creates a new one.
+       * @param {Object} sdk - The closedcode SDK client.
+       * @returns {Promise<string>} The session id to prompt against (may be undefined if creation failed).
+       */
       async function session(sdk) {
         const baseID = args.continue ? (await sdk.session.list()).data?.find(s => !s.parentID)?.id : args.session;
         if (baseID && args.fork) {
@@ -307,6 +402,12 @@ export const RunCommand = effectCmd({
         });
         return result.data?.id;
       }
+      /**
+       * Shares the session when sharing is enabled (config `share: "auto"`, the auto-share flag, or --share) and prints the share URL.
+       * @param {Object} sdk - The closedcode SDK client.
+       * @param {string} sessionID - The session id to share.
+       * @returns {Promise<void>}
+       */
       async function share(sdk, sessionID) {
         const cfg = await sdk.config.get();
         if (!cfg.data) return;
@@ -325,7 +426,18 @@ export const RunCommand = effectCmd({
           UI.println(UI.Style.TEXT_INFO_BOLD + "~  " + res.data.share.url);
         }
       }
+      /**
+       * Runs the full prompt lifecycle against the given SDK: resolves the agent and session, optionally shares it,
+       * subscribes to the event stream, and dispatches either a command or a prompt with the message and attached files.
+       * @param {Object} sdk - The closedcode SDK client (in-process or remote).
+       * @returns {Promise<void>}
+       */
       async function execute(sdk) {
+        /**
+         * Routes a completed tool part to its dedicated renderer, falling back to the generic one on error.
+         * @param {Object} part - The tool message part.
+         * @returns {void}
+         */
         function tool(part) {
           try {
             if (part.tool === ShellID.ToolID) return shell(props(part));
@@ -344,6 +456,12 @@ export const RunCommand = effectCmd({
             return fallback(part);
           }
         }
+        /**
+         * Emits a raw JSON event line to stdout when --format json is set.
+         * @param {string} type - The event type label.
+         * @param {Object} data - Extra fields to merge into the emitted JSON object.
+         * @returns {boolean} True if JSON was emitted (caller should skip formatted output), false otherwise.
+         */
         function emit(type, data) {
           if (args.format === "json") {
             process.stdout.write(JSON.stringify({
@@ -358,6 +476,11 @@ export const RunCommand = effectCmd({
         }
         const events = await sdk.event.subscribe();
         let error;
+        /**
+         * Consumes the event stream for this session until it goes idle, rendering tool/text/reasoning parts,
+         * surfacing errors, and auto-replying to permission prompts.
+         * @returns {Promise<void>}
+         */
         async function loop() {
           const toggles = new Map();
           for await (const event of events.stream) {

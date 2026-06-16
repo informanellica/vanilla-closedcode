@@ -1,18 +1,37 @@
-// Text input controller for the vanilla TUI runtime (Stage T2 widgets). State is
-// signals (value + cursor); the cursor is a CODE-POINT index so a fullwidth
-// glyph edits/moves as one unit. Editing keys mutate the value; draw() renders
-// the (horizontally scrolled) text and, when focused, requests the hardware
-// cursor at the correct display column.
+/** @file Single-line text input controller for the vanilla TUI runtime (Stage T2 widgets). */
+// State is signals (value + cursor); the cursor is a CODE-POINT index so a
+// fullwidth glyph edits/moves as one unit. Editing keys mutate the value;
+// draw() renders the (horizontally scrolled) text and, when focused, requests
+// the hardware cursor at the correct display column.
 import { createSignal } from "./reactivity.js";
 import { width, sliceCols } from "./text.js";
 
+/**
+ * Create a single-line text input controller backed by reactive signals.
+ * @param {string} initial - Initial text value.
+ * @param {Object} opts - Callbacks: onChange(text) on edits, onSubmit(text) on Enter.
+ * @returns {Object} Controller with value, setValue, cursor, setCursor, handleKey, and draw.
+ */
 export function createTextInput(initial = "", opts = {}) {
   const [value, setValue] = createSignal(initial);
   const [cursor, setCursor] = createSignal([...initial].length); // code-point index
   const chars = () => [...value()];
 
+  /**
+   * Set both value and cursor together; the cursor is clamped to [0, arr.length].
+   * @param {Array} arr - Array of code-point characters forming the new value.
+   * @param {number} c - Desired cursor position (code-point index).
+   * @returns {void}
+   */
   function setBoth(arr, c) { setValue(arr.join("")); setCursor(Math.max(0, Math.min(c, arr.length))); }
 
+  /**
+   * Apply a key to the input: insert characters, edit (Backspace/Delete), move
+   * the cursor (arrows/Home/End), or submit (Enter).
+   * @param {string} name - Key name or the character to insert.
+   * @param {Object} data - terminal-kit key data; data.isCharacter marks printable input.
+   * @returns {boolean} True if the key was handled by this input.
+   */
   function handleKey(name, data) {
     const cs = chars();
     const c = cursor();
@@ -29,8 +48,12 @@ export function createTextInput(initial = "", opts = {}) {
     }
   }
 
-  // Compute the horizontal display-column scroll so the cursor stays visible in
-  // a viewport `cols` wide. Returns { scrollCols, cursorCol } (both in columns).
+  /**
+   * Compute the horizontal display-column scroll so the cursor stays visible in
+   * a viewport `cols` wide.
+   * @param {number} cols - Viewport width in display columns.
+   * @returns {{scrollCols: number, cursorCol: number}} Scroll offset and on-screen cursor column.
+   */
   function viewport(cols) {
     const cs = chars();
     const before = cs.slice(0, cursor()).join("");
@@ -40,6 +63,13 @@ export function createTextInput(initial = "", opts = {}) {
     return { scrollCols: scroll, cursorCol: cursorColAbs - scroll };
   }
 
+  /**
+   * Render the input into a Region: placeholder when empty, otherwise the
+   * horizontally-scrolled text; when focused, request the hardware cursor.
+   * @param {Object} region - Target Region (single row used).
+   * @param {Object} opts - Draw options: focused (boolean), attr (cell attributes), ctx ({ focusCursor(x, y) }), placeholder (string).
+   * @returns {void}
+   */
   function draw(region, { focused, attr, ctx, placeholder } = {}) {
     const cols = region.width;
     const text = value();

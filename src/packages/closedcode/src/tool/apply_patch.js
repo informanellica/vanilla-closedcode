@@ -1,3 +1,4 @@
+/** @file "apply_patch" tool: parses a multi-file patch into hunks, validates/permission-checks each target, then adds/updates/moves/deletes files and reports a diff plus LSP diagnostics. */
 import { assetText } from "#util/asset.js";
 import * as path from "path";
 import { Effect, Schema } from "effect";
@@ -15,16 +16,30 @@ const DESCRIPTION = assetText("tool/apply_patch.txt");
 import { File } from "../file/index.js";
 import { Format } from "../format/index.js";
 import * as Bom from "#util/bom.js";
+/** Parameter schema for the apply_patch tool: the full `patchText` describing all file changes. */
 export const Parameters = Schema.Struct({
   patchText: Schema.String.annotate({
     description: "The full patch text that describes all changes to be made"
   })
 });
+/**
+ * The "apply_patch" tool definition. Parses the patch into hunks, derives the new content for each
+ * add/update/move/delete (computing per-file diffs and addition/deletion counts), asks for a single
+ * "edit" permission covering all affected paths, applies the writes/removes/moves, runs the configured
+ * formatter, publishes file/edit events, refreshes the LSP and appends any diagnostics to the output.
+ */
 export const ApplyPatchTool = Tool.define("apply_patch", Effect.gen(function* () {
   const lsp = yield* LSP.Service;
   const afs = yield* AppFileSystem.Service;
   const format = yield* Format.Service;
   const bus = yield* Bus.Service;
+  /**
+   * Executes the patch: validates the patch text, builds the list of file changes, checks permissions,
+   * applies them to the filesystem, and returns the success summary with diff and diagnostics metadata.
+   * @param {Object} params - Tool arguments containing `patchText`.
+   * @param {Object} ctx - Tool execution context (provides `ask` for permission prompts and `abort`).
+   * @returns {Effect} An Effect resolving to an object with `title`, `metadata` (diff/files/diagnostics) and `output`.
+   */
   const run = Effect.fn("ApplyPatchTool.execute")(function* (params, ctx) {
     if (!params.patchText) {
       return yield* Effect.fail(new Error("patchText is required"));

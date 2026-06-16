@@ -1,3 +1,4 @@
+/** @file FileWatcher service: subscribes to filesystem changes via @parcel/watcher (native binding, even under a Node SEA) and republishes them as bus events. */
 import { Cause, Effect, Layer, Context, Schema } from "effect";
 import { createWrapper } from "@parcel/watcher/wrapper.js";
 import { readdir } from "fs/promises";
@@ -22,6 +23,10 @@ export const Event = {
     event: Schema.Literals(["add", "change", "unlink"])
   }))
 };
+/**
+ * Lazily load and wrap the platform-specific @parcel/watcher native binding.
+ * @returns {*} The watcher wrapper, or undefined if the binding fails to load.
+ */
 const watcher = lazy(() => {
   try {
     // In a Node SEA the embedded require resolves built-ins only, so route the
@@ -36,19 +41,39 @@ const watcher = lazy(() => {
     return;
   }
 });
+/**
+ * Pick the @parcel/watcher backend name for the current platform.
+ * @returns {string} The backend name, or undefined if unsupported.
+ */
 function getBackend() {
   if (process.platform === "win32") return "windows";
   if (process.platform === "darwin") return "fs-events";
   if (process.platform === "linux") return "inotify";
 }
+/**
+ * List protected paths that live inside the given directory (relative, non-escaping).
+ * @param {string} dir - The directory being watched.
+ * @returns {Array} Protected absolute paths nested under `dir`.
+ */
 function protecteds(dir) {
   return Protected.paths().filter(item => {
     const rel = path.relative(dir, item);
     return rel !== "" && !rel.startsWith("..") && !path.isAbsolute(rel);
   });
 }
+/**
+ * Whether the native @parcel/watcher binding loaded successfully.
+ * @returns {boolean} True if file watching is available.
+ */
 export const hasNativeBinding = () => !!watcher();
+/** Effect service tag for the file watcher. */
 export class Service extends Context.Service()("@closedcode/FileWatcher") {}
+/**
+ * Layer providing the FileWatcher service. On init it subscribes the project
+ * directory (when the experimental flag is set) and the git dir, publishing
+ * `file.watcher.updated` bus events for create/update/delete.
+ * @type {Layer}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const git = yield* Git.Service;
@@ -92,6 +117,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         });
       }
     });
+    /**
+     * Subscribe to changes under a directory, tracking the subscription for cleanup
+     * and tolerating subscribe timeouts/failures by logging and unsubscribing.
+     * @param {string} dir - Directory to watch.
+     * @param {Array} ignore - Ignore patterns/paths passed to the watcher.
+     * @returns {Effect} Effect that registers the subscription.
+     */
     const subscribe = (dir, ignore) => {
       const pending = w.subscribe(dir, cb, {
         ignore,

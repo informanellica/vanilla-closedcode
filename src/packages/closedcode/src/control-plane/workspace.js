@@ -1,3 +1,4 @@
+/** @file Workspace control-plane service: creates workspaces, syncs their event history over SSE/HTTP to remote targets, restores sessions, and tracks connection status. */
 import { Context, Effect, FiberMap, Layer, Schema, Stream } from "effect";
 import { FetchHttpClient, HttpBody, HttpClient, HttpClientRequest } from "effect/unstable/http";
 import { Database } from "#storage/db.js";
@@ -22,7 +23,9 @@ import { WorkspaceContext } from "./workspace-context.js";
 import { EffectBridge } from "#effect/bridge.js";
 import { NonNegativeInt, withStatics } from "#util/schema.js";
 import { zod as effectZod, zodObject } from "#util/effect-zod.js";
+/** Schema describing a workspace's persisted info. */
 export const Info = WorkspaceInfoSchema;
+/** Schema for a workspace connection status update ({ workspaceID, status }). */
 export const ConnectionStatus = Schema.Struct({
   workspaceID: WorkspaceID,
   status: Schema.Literals(["connected", "connecting", "disconnected", "error"])
@@ -33,6 +36,7 @@ const Restore = Schema.Struct({
   total: NonNegativeInt,
   step: NonNegativeInt
 });
+/** Bus event definitions emitted by the workspace service (ready, failed, restore progress, status). */
 export const Event = {
   Ready: BusEvent.define("workspace.ready", Schema.Struct({
     name: Schema.String
@@ -46,7 +50,17 @@ export const Event = {
 // sequelize v6's sqlite dialect stores DataTypes.JSON as TEXT but hands the
 // raw string back on reads; decode like drizzle's { mode: "json" } did. The
 // typeof guard keeps this a no-op if the layer ever starts parsing itself.
+/**
+ * Decode a column that sequelize's sqlite dialect stores as TEXT but returns raw.
+ * @param {*} value - Either a JSON string (decoded) or an already-parsed value (passed through).
+ * @returns {*} The parsed value, or the input unchanged when not a string.
+ */
 const json = value => (typeof value === "string" ? JSON.parse(value) : value);
+/**
+ * Map a plain Workspace database row into a WorkspaceInfo object.
+ * @param {Object} row - Plain workspace row from sequelize.
+ * @returns {Object} Workspace info with id, type, branch, name, directory, decoded extra, and projectID.
+ */
 function fromRow(row) {
   return {
     id: row.id,
@@ -61,11 +75,22 @@ function fromRow(row) {
 // Sequelize call-site conventions (ORM migration S3): Database.useAsync hands
 // a handle { models, sequelize, tx }; every model call passes
 // { transaction: h.tx } (undefined outside a tx). Reads return plain rows.
+/**
+ * Convert a sequelize model instance into a plain object, tolerating null.
+ * @param {*} row - A sequelize model instance, or null/undefined.
+ * @returns {Object} The plain row object, or undefined when the input is null.
+ */
 const plain = row => (row == null ? undefined : row.get({ plain: true }));
+/**
+ * Wrap an async database callback as an Effect using the shared Database handle.
+ * @param {Function} fn - Async callback receiving the Database handle { models, sequelize, tx }.
+ * @returns {Effect} Effect that resolves to the callback's result.
+ */
 const db = fn => Effect.promise(() => Database.useAsync(fn));
 const log = Log.create({
   service: "workspace-sync"
 });
+/** Input schema for creating a workspace (id optional; type, branch, projectID, extra). */
 export const CreateInput = Schema.Struct({
   id: Schema.optional(WorkspaceID),
   type: Info.fields.type,
@@ -76,6 +101,7 @@ export const CreateInput = Schema.Struct({
   zod: effectZod(s),
   zodObject: zodObject(s)
 })));
+/** Input schema for restoring a session into a workspace ({ workspaceID, sessionID }). */
 export const SessionRestoreInput = Schema.Struct({
   workspaceID: WorkspaceID,
   sessionID: SessionID
@@ -83,19 +109,23 @@ export const SessionRestoreInput = Schema.Struct({
   zod: effectZod(s),
   zodObject: zodObject(s)
 })));
+/** Tagged error for a non-2xx HTTP response during workspace sync. */
 export class SyncHttpError extends Schema.TaggedErrorClass()("WorkspaceSyncHttpError", {
   message: Schema.String,
   status: Schema.Number,
   body: Schema.optional(Schema.String)
 }) {}
+/** Tagged error raised when a referenced workspace does not exist. */
 export class WorkspaceNotFoundError extends Schema.TaggedErrorClass()("WorkspaceNotFoundError", {
   message: Schema.String,
   workspaceID: WorkspaceID
 }) {}
+/** Tagged error raised when a session has no events to restore. */
 export class SessionEventsNotFoundError extends Schema.TaggedErrorClass()("WorkspaceSessionEventsNotFoundError", {
   message: Schema.String,
   sessionID: SessionID
 }) {}
+/** Tagged error for a non-2xx HTTP response while replaying a session restore batch to a remote target. */
 export class SessionRestoreHttpError extends Schema.TaggedErrorClass()("WorkspaceSessionRestoreHttpError", {
   message: Schema.String,
   workspaceID: WorkspaceID,
@@ -103,15 +133,19 @@ export class SessionRestoreHttpError extends Schema.TaggedErrorClass()("Workspac
   status: Schema.Number,
   body: Schema.String
 }) {}
+/** Tagged error raised when waitForSync exceeds its timeout budget before reaching the fence. */
 export class SyncTimeoutError extends Schema.TaggedErrorClass()("WorkspaceSyncTimeoutError", {
   message: Schema.String,
   state: Schema.Record(Schema.String, Schema.Number)
 }) {}
+/** Tagged error raised when a sync wait is cancelled via its abort signal. */
 export class SyncAbortedError extends Schema.TaggedErrorClass()("WorkspaceSyncAbortedError", {
   message: Schema.String,
   cause: Schema.optional(Schema.Defect)
 }) {}
+/** Context tag for the Workspace control-plane service. */
 export class Service extends Context.Service()("@closedcode/Workspace") {}
+/** Layer providing the Workspace service: wires auth, session, HTTP, and sync event dependencies. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const auth = yield* Auth.Service;
   const session = yield* Session.Service;
@@ -119,6 +153,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const sync = yield* SyncEvent.Service;
   const connections = new Map();
   const syncFibers = yield* FiberMap.make();
+  /**
+   * Update a workspace's tracked connection status and broadcast a status event.
+   * No-op when the status is unchanged.
+   * @param {string} id - Workspace ID.
+   * @param {string} status - One of "connected", "connecting", "disconnected", or "error".
+   * @returns {void}
+   */
   const setStatus = (id, status) => {
     const prev = connections.get(id);
     if (prev?.status === status) return;
@@ -136,6 +177,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   };
+  /**
+   * Open the remote `/global/event` SSE endpoint and return its byte stream.
+   * @param {string} url - Base remote target URL.
+   * @param {Object} headers - Request headers (e.g. auth) for the connection.
+   * @returns {Effect} Effect resolving to the response byte stream, or failing with SyncHttpError on a non-2xx status.
+   */
   const connectSSE = Effect.fn("Workspace.connectSSE")(function* (url, headers) {
     const response = yield* http.execute(HttpClientRequest.get(route(url, "/global/event"), {
       headers: new Headers(headers),
@@ -149,6 +196,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return response.stream;
   });
+  /**
+   * Parse an SSE byte stream into events (accumulating data/id/retry fields per
+   * blank-line-delimited record) and invoke a handler for each decoded event.
+   * Each event's `data` is JSON-parsed; on parse failure it is wrapped as an
+   * "sse.message" event.
+   * @param {*} stream - SSE response byte stream from connectSSE.
+   * @param {Function} onEvent - Effect-returning handler invoked per decoded event.
+   * @returns {Effect} Effect that runs to completion when the stream ends.
+   */
   const parseSSE = Effect.fn("Workspace.parseSSE")(function* (stream, onEvent) {
     yield* stream.pipe(Stream.decodeText(), Stream.splitLines, Stream.mapAccum(() => ({
       data: [],
@@ -206,6 +262,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     }), Stream.runForEach(onEvent));
   });
+  /**
+   * Sync historical events from a remote target into the local store: posts the
+   * locally-known per-session sequence numbers, then replays the events the
+   * remote returns within the workspace context.
+   * @param {Object} space - Workspace info (id, projectID, type, etc.).
+   * @param {string} url - Base remote target URL.
+   * @param {Object} headers - Request headers for the sync request.
+   * @returns {Effect} Effect that completes when history is replayed, or fails with SyncHttpError on a non-2xx status.
+   */
   const syncHistory = Effect.fn("Workspace.syncHistory")(function* (space, url, headers) {
     const sessionIDs = yield* db(async h => (await h.models.Session.findAll({
       attributes: ["id"],
@@ -257,6 +322,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     });
   });
+  /**
+   * Long-running reconnect loop for a remote workspace: connects the SSE stream,
+   * syncs history, replays incoming sync events, re-broadcasts other events on
+   * the global bus, and reconnects with exponential backoff (capped at 2 minutes)
+   * on disconnect. Returns immediately for local targets.
+   * @param {Object} space - Workspace info to keep in sync.
+   * @returns {Effect} Effect that runs the loop indefinitely (never resolves for remote targets).
+   */
   const syncWorkspaceLoop = Effect.fn("Workspace.syncWorkspaceLoop")(function* (space) {
     const adapter = getAdapter(space.projectID, space.type);
     const target = yield* EffectBridge.fromPromise(() => adapter.target(space));
@@ -320,6 +393,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       attempt += 1;
     }
   });
+  /**
+   * Begin syncing a workspace. For local targets just sets connected/error based
+   * on directory existence; for remote targets forks syncWorkspaceLoop into the
+   * fiber map (unless already running and healthy). No-op unless the experimental
+   * workspaces flag is enabled.
+   * @param {Object} space - Workspace info to start syncing.
+   * @returns {Effect} Effect that completes once the sync fiber has been registered.
+   */
   const startSync = Effect.fn("Workspace.startSync")(function* (space) {
     if (!Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES) return;
     const adapter = getAdapter(space.projectID, space.type);
@@ -342,10 +423,22 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }))));
   });
+  /**
+   * Stop syncing a workspace: interrupt its sync fiber and drop its connection state.
+   * @param {string} id - Workspace ID.
+   * @returns {Effect} Effect that completes once the fiber is removed.
+   */
   const stopSync = Effect.fn("Workspace.stopSync")(function* (id) {
     yield* FiberMap.remove(syncFibers, id);
     connections.delete(id);
   });
+  /**
+   * Create a new workspace: configure it via its adapter, persist the row, spawn
+   * the adapter process with auth/OTEL env, then wait for it to report
+   * connected/error while starting sync.
+   * @param {Object} input - Create input (projectID, type, branch, extra, optional id).
+   * @returns {Effect} Effect resolving to the created workspace info.
+   */
   const create = Effect.fn("Workspace.create")(function* (input) {
     const id = WorkspaceID.ascending(input.id);
     const adapter = getAdapter(input.projectID, input.type);
@@ -401,6 +494,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return info;
   });
+  /**
+   * Replay a session's full event history into a workspace in batches of 10,
+   * emitting progress (Restore) events. Local targets replay directly; remote
+   * targets POST each batch to `/sync/replay`.
+   * @param {Object} input - { workspaceID, sessionID } identifying the restore.
+   * @returns {Effect} Effect resolving to { total } batch count, or failing with WorkspaceNotFoundError / SessionEventsNotFoundError / SessionRestoreHttpError.
+   */
   const sessionRestore = Effect.fn("Workspace.sessionRestore")(function* (input) {
     return yield* Effect.gen(function* () {
       log.info("session restore requested", {
@@ -551,17 +651,33 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       error: errorData(err)
     }))));
   });
+  /**
+   * List all workspaces belonging to a project, sorted by id.
+   * @param {Object} project - Project with an `id` field.
+   * @returns {Effect} Effect resolving to an array of workspace info objects.
+   */
   const list = Effect.fn("Workspace.list")(function* (project) {
     return yield* db(async h => (await h.models.Workspace.findAll({
       where: { project_id: project.id },
       transaction: h.tx
     })).map(row => fromRow(row.get({ plain: true }))).sort((a, b) => a.id.localeCompare(b.id)));
   });
+  /**
+   * Fetch a single workspace by id.
+   * @param {string} id - Workspace ID.
+   * @returns {Effect} Effect resolving to the workspace info, or undefined if not found.
+   */
   const get = Effect.fn("Workspace.get")(function* (id) {
     const row = yield* db(async h => plain(await h.models.Workspace.findOne({ where: { id }, transaction: h.tx })));
     if (!row) return;
     return fromRow(row);
   });
+  /**
+   * Delete a workspace: removes its sessions, stops sync, tears down adapter
+   * resources, and deletes the row.
+   * @param {string} id - Workspace ID.
+   * @returns {Effect} Effect resolving to the removed workspace info, or undefined if not found.
+   */
   const remove = Effect.fn("Workspace.remove")(function* (id) {
     const sessions = yield* db(async h => (await h.models.Session.findAll({
       attributes: ["id"],
@@ -586,13 +702,30 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* db(h => h.models.Workspace.destroy({ where: { id }, transaction: h.tx }));
     return info;
   });
+  /**
+   * Snapshot the current connection status of every tracked workspace.
+   * @returns {Effect} Effect resolving to an array of { workspaceID, status } records.
+   */
   const status = Effect.fn("Workspace.status")(function* () {
     return [...connections.values()];
   });
+  /**
+   * Report whether a workspace currently has a live (non-errored) sync fiber.
+   * @param {string} workspaceID - Workspace ID.
+   * @returns {Effect} Effect resolving to true when a healthy sync fiber exists.
+   */
   const isSyncing = Effect.fn("Workspace.isSyncing")(function* (workspaceID) {
     const exists = yield* FiberMap.has(syncFibers, workspaceID);
     return exists && connections.get(workspaceID)?.status !== "error";
   });
+  /**
+   * Wait until the local store has caught up to a per-aggregate sequence fence,
+   * re-checking after each relevant sync event within the TIMEOUT budget.
+   * @param {string} workspaceID - Workspace ID being watched.
+   * @param {Object} state - Map of aggregate ID to required sequence number.
+   * @param {AbortSignal} signal - Optional abort signal to cancel waiting.
+   * @returns {Effect} Effect that resolves once the fence is met, or fails with SyncTimeoutError / SyncAbortedError.
+   */
   const waitForSync = Effect.fn("Workspace.waitForSync")(function* (workspaceID, state, signal) {
     if (yield* Effect.promise(() => synced(state))) return;
     // synced() is async now, so it cannot run inside waitEvent's synchronous
@@ -623,6 +756,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       state
     })));
   });
+  /**
+   * Start syncing every workspace under a project that has at least one session,
+   * forking each sync detached and marking failures as errored.
+   * @param {string} projectID - Project ID whose workspaces to start.
+   * @returns {Effect} Effect that completes once all syncs have been forked.
+   */
   const startWorkspaceSyncing = Effect.fn("Workspace.startWorkspaceSyncing")(function* (projectID) {
     // This session table join makes this query only return
     // workspaces that have sessions. Models define no associations, so the
@@ -660,8 +799,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     startWorkspaceSyncing
   });
 }));
+/** Workspace service layer with its default dependency layers (auth, session, sync, HTTP) provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Auth.defaultLayer), Layer.provide(Session.defaultLayer), Layer.provide(SyncEvent.defaultLayer), Layer.provide(FetchHttpClient.layer));
+/** Default timeout in milliseconds for workspace create and sync-fence waits. */
 const TIMEOUT = 5000;
+/**
+ * Check whether the local event store has reached a required sequence fence.
+ * @param {Object} state - Map of aggregate ID to required sequence number.
+ * @returns {Promise<boolean>} True when every aggregate's stored seq meets or exceeds the fence (or the fence is empty).
+ */
 async function synced(state) {
   const ids = Object.keys(state);
   if (ids.length === 0) return true;
@@ -674,6 +820,13 @@ async function synced(state) {
     return (done[id] ?? -1) >= state[id];
   });
 }
+/**
+ * Build a target URL by appending a path to a base URL, stripping any trailing
+ * slash and clearing query/hash.
+ * @param {string} url - Base URL.
+ * @param {string} path - Path to append (e.g. "/sync/history").
+ * @returns {URL} The combined URL.
+ */
 function route(url, path) {
   const next = new URL(url);
   next.pathname = `${next.pathname.replace(/\/$/, "")}${path}`;

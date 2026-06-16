@@ -1,3 +1,4 @@
+/** @file Express app factory: wires the adapter, root middleware chain, shared OpenAPI registry, swagger-ui docs, and all route groups. */
 // Express app factory: wires the Express adapter, root middleware chain, shared
 // OpenAPI registry, swagger-ui docs, and all route groups (global, control
 // plane, control-plane workspace, instance, ui).
@@ -18,6 +19,14 @@ import { InstanceRoutes } from "../routes/express/instance.js";
 import { UIRoutes } from "../routes/express/ui.js";
 import * as ServerBackend from "../backend.js";
 
+/**
+ * Build the Express application: wires the root middleware chain, mounts every
+ * route group against a shared OpenAPI registry, builds the OpenAPI spec, serves
+ * the docs, and registers the error handler.
+ * @param {Object} opts - Server options (e.g. opts.cors allow-list) passed to CorsMiddleware.
+ * @param {{backend: string, reason: string}} selection - The backend selection; defaults to ServerBackend.select().
+ * @returns {{app: Object, runtime: Object, openapi: Function}} The fetch-wrapped Express app, the adapter runtime, and a getter returning the built OpenAPI spec.
+ */
 export function createExpress(opts = {}, selection = ServerBackend.select()) {
   const backendAttributes = ServerBackend.attributes(selection);
   const app = express();
@@ -72,6 +81,10 @@ export function createExpress(opts = {}, selection = ServerBackend.select()) {
 }
 
 // Standalone spec generation.
+/**
+ * Build a fresh Express app and return its OpenAPI spec, without listening.
+ * @returns {Object} The built OpenAPI document.
+ */
 export function openapi() {
   return createExpress({}).openapi();
 }

@@ -1,3 +1,8 @@
+/**
+ * @file apply_patch implementation: parses the "*** Begin Patch" text format into
+ * add/delete/update hunks, computes line replacements with fuzzy matching, and
+ * applies the resulting changes to the filesystem (mirrors the Rust apply_patch).
+ */
 import z from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -9,12 +14,14 @@ const log = Log.create({
 });
 
 // Schema definitions
+/** Zod schema for the apply_patch tool input (the full patch text). */
 export const PatchSchema = z.object({
   patchText: z.string().describe("The full patch text that describes all changes to be made")
 });
 
 // Core types matching the Rust implementation
 
+/** Enum of apply-patch failure categories (parse, IO, replacement computation, implicit invocation). */
 export let ApplyPatchError = /*#__PURE__*/function (ApplyPatchError) {
   ApplyPatchError["ParseError"] = "ParseError";
   ApplyPatchError["IoError"] = "IoError";
@@ -22,6 +29,7 @@ export let ApplyPatchError = /*#__PURE__*/function (ApplyPatchError) {
   ApplyPatchError["ImplicitInvocation"] = "ImplicitInvocation";
   return ApplyPatchError;
 }({});
+/** Enum of outcomes from detecting an apply_patch invocation in argv (body / parse errors / not a patch). */
 export let MaybeApplyPatch = /*#__PURE__*/function (MaybeApplyPatch) {
   MaybeApplyPatch["Body"] = "Body";
   MaybeApplyPatch["ShellParseError"] = "ShellParseError";
@@ -29,6 +37,7 @@ export let MaybeApplyPatch = /*#__PURE__*/function (MaybeApplyPatch) {
   MaybeApplyPatch["NotApplyPatch"] = "NotApplyPatch";
   return MaybeApplyPatch;
 }({});
+/** Enum of outcomes from verifying an apply_patch invocation against the filesystem (body / errors / not a patch). */
 export let MaybeApplyPatchVerified = /*#__PURE__*/function (MaybeApplyPatchVerified) {
   MaybeApplyPatchVerified["Body"] = "Body";
   MaybeApplyPatchVerified["ShellParseError"] = "ShellParseError";
@@ -38,6 +47,12 @@ export let MaybeApplyPatchVerified = /*#__PURE__*/function (MaybeApplyPatchVerif
 }({});
 
 // Parser implementation
+/**
+ * Parse an "*** Add/Delete/Update File:" header line (including an optional "*** Move to:").
+ * @param {Array} lines - All patch lines.
+ * @param {number} startIdx - Index of the header line.
+ * @returns {Object} Header info with filePath, optional movePath, and nextIdx, or null if not a header.
+ */
 function parsePatchHeader(lines, startIdx) {
   const line = lines[startIdx];
   if (line.startsWith("*** Add File:")) {
@@ -72,6 +87,12 @@ function parsePatchHeader(lines, startIdx) {
   }
   return null;
 }
+/**
+ * Parse the "@@" chunks of an Update File section into old/new line groups.
+ * @param {Array} lines - All patch lines.
+ * @param {number} startIdx - Index just after the file header.
+ * @returns {Object} Object with the parsed chunks array and nextIdx.
+ */
 function parseUpdateFileChunks(lines, startIdx) {
   const chunks = [];
   let i = startIdx;
@@ -121,6 +142,12 @@ function parseUpdateFileChunks(lines, startIdx) {
     nextIdx: i
   };
 }
+/**
+ * Collect the added-line content ("+" lines) of an Add File section.
+ * @param {Array} lines - All patch lines.
+ * @param {number} startIdx - Index just after the file header.
+ * @returns {Object} Object with the joined content string and nextIdx.
+ */
 function parseAddFileContent(lines, startIdx) {
   let content = "";
   let i = startIdx;
@@ -140,6 +167,11 @@ function parseAddFileContent(lines, startIdx) {
     nextIdx: i
   };
 }
+/**
+ * Strip a surrounding shell heredoc wrapper (e.g. cat <<'EOF' ... EOF), returning the body.
+ * @param {string} input - Possibly heredoc-wrapped patch text.
+ * @returns {string} The inner content, or the original input if no heredoc is detected.
+ */
 function stripHeredoc(input) {
   // Match heredoc patterns like: cat <<'EOF'\n...\nEOF or <<EOF\n...\nEOF
   const heredocMatch = input.match(/^(?:cat\s+)?<<['"]?(\w+)['"]?\s*\n([\s\S]*?)\n\1\s*$/);
@@ -148,6 +180,12 @@ function stripHeredoc(input) {
   }
   return input;
 }
+/**
+ * Parse full patch text (between "*** Begin Patch"/"*** End Patch") into typed hunks.
+ * @param {string} patchText - The raw patch text.
+ * @returns {Object} Object with a hunks array (add/delete/update entries).
+ * @throws {Error} If the Begin/End markers are missing or malformed.
+ */
 export function parsePatch(patchText) {
   const cleaned = stripHeredoc(patchText.trim());
   const lines = cleaned.split("\n");
@@ -210,6 +248,11 @@ export function parsePatch(patchText) {
 }
 
 // Apply patch functionality
+/**
+ * Detect and parse an apply_patch invocation from argv, supporting direct calls and the bash heredoc form.
+ * @param {Array} argv - Argument vector to inspect.
+ * @returns {Object} A result tagged with a MaybeApplyPatch type (Body with parsed args, a parse error, or NotApplyPatch).
+ */
 export function maybeParseApplyPatch(argv) {
   const APPLY_PATCH_COMMANDS = ["apply_patch", "applypatch"];
 
@@ -267,6 +310,13 @@ export function maybeParseApplyPatch(argv) {
 
 // File content manipulation
 
+/**
+ * Compute the new file contents (and unified diff) by applying update chunks to a file on disk.
+ * @param {string} filePath - Path of the file to read and transform.
+ * @param {Array} chunks - Update chunks (old_lines/new_lines/context) to apply.
+ * @returns {Object} Object with unified_diff, content (new text), and bom flag.
+ * @throws {Error} If the file cannot be read or a chunk's context/old lines cannot be matched.
+ */
 export function deriveNewContentsFromChunks(filePath, chunks) {
   // Read original file content
   let originalContent;
@@ -301,6 +351,14 @@ export function deriveNewContentsFromChunks(filePath, chunks) {
     bom: originalContent.bom || next.bom
   };
 }
+/**
+ * Locate each chunk in the original lines and compute ordered [startIdx, oldLen, newLines] replacements.
+ * @param {Array} originalLines - The file's current lines.
+ * @param {string} filePath - File path (used in error messages).
+ * @param {Array} chunks - Update chunks to resolve into replacements.
+ * @returns {Array} Replacements sorted by start index.
+ * @throws {Error} If a chunk's context or old lines cannot be found.
+ */
 function computeReplacements(originalLines, filePath, chunks) {
   const replacements = [];
   let lineIndex = 0;
@@ -346,6 +404,12 @@ function computeReplacements(originalLines, filePath, chunks) {
   replacements.sort((a, b) => a[0] - b[0]);
   return replacements;
 }
+/**
+ * Apply ordered replacements to a copy of the lines (in reverse to avoid index shifting).
+ * @param {Array} lines - The original lines.
+ * @param {Array} replacements - Replacement tuples [startIdx, oldLen, newSegment].
+ * @returns {Array} The resulting lines after all replacements.
+ */
 function applyReplacements(lines, replacements) {
   // Apply replacements in reverse order to avoid index shifting
   const result = [...lines];
@@ -364,6 +428,11 @@ function applyReplacements(lines, replacements) {
 }
 
 // Normalize Unicode punctuation to ASCII equivalents (like Rust's normalize_unicode)
+/**
+ * Normalize fancy Unicode punctuation (quotes, dashes, ellipsis, NBSP) to ASCII equivalents.
+ * @param {string} str - Input string.
+ * @returns {string} The normalized string.
+ */
 function normalizeUnicode(str) {
   return str.replace(/[\u2018\u2019\u201A\u201B]/g, "'") // single quotes
   .replace(/[\u201C\u201D\u201E\u201F]/g, '"') // double quotes
@@ -371,6 +440,15 @@ function normalizeUnicode(str) {
   .replace(/\u2026/g, "...") // ellipsis
   .replace(/\u00A0/g, " "); // non-breaking space
 }
+/**
+ * Find the index where a pattern matches in lines using a comparator, optionally anchoring at EOF first.
+ * @param {Array} lines - Lines to search.
+ * @param {Array} pattern - Pattern lines to match.
+ * @param {number} startIndex - Earliest index to consider.
+ * @param {Function} compare - Comparator (a, b) returning whether two lines match.
+ * @param {boolean} eof - When true, try matching at the end of file before forward-searching.
+ * @returns {number} The match start index, or -1 if not found.
+ */
 function tryMatch(lines, pattern, startIndex, compare, eof) {
   // If EOF anchor, try matching from end of file first
   if (eof) {
@@ -400,6 +478,14 @@ function tryMatch(lines, pattern, startIndex, compare, eof) {
   }
   return -1;
 }
+/**
+ * Find a pattern in lines with progressively looser matching (exact, rstrip, trim, Unicode-normalized).
+ * @param {Array} lines - Lines to search.
+ * @param {Array} pattern - Pattern lines to match.
+ * @param {number} startIndex - Earliest index to consider.
+ * @param {boolean} eof - When true, prefer an end-of-file anchored match.
+ * @returns {number} The match start index, or -1 if not found.
+ */
 function seekSequence(lines, pattern, startIndex, eof = false) {
   if (pattern.length === 0) return -1;
 
@@ -419,6 +505,12 @@ function seekSequence(lines, pattern, startIndex, eof = false) {
   const normalized = tryMatch(lines, pattern, startIndex, (a, b) => normalizeUnicode(a.trim()) === normalizeUnicode(b.trim()), eof);
   return normalized;
 }
+/**
+ * Generate a simplified unified diff between two file contents.
+ * @param {string} oldContent - Original file text.
+ * @param {string} newContent - New file text.
+ * @returns {string} A unified-diff string, or empty string if there are no changes.
+ */
 function generateUnifiedDiff(oldContent, newContent) {
   const oldLines = oldContent.split("\n");
   const newLines = newContent.split("\n");
@@ -444,6 +536,12 @@ function generateUnifiedDiff(oldContent, newContent) {
 }
 
 // Apply hunks to filesystem
+/**
+ * Apply parsed hunks to the filesystem (creating, deleting, updating, or moving files).
+ * @param {Array} hunks - The hunks to apply.
+ * @returns {Promise<Object>} Object with added, modified, and deleted path arrays.
+ * @throws {Error} If no hunks are provided or a filesystem operation fails.
+ */
 export async function applyHunksToFiles(hunks) {
   if (hunks.length === 0) {
     throw new Error("No files were modified.");
@@ -501,6 +599,11 @@ export async function applyHunksToFiles(hunks) {
 }
 
 // Main patch application function
+/**
+ * Parse patch text and apply all of its hunks to the filesystem.
+ * @param {string} patchText - The raw patch text.
+ * @returns {Promise<Object>} Object with added, modified, and deleted path arrays.
+ */
 export async function applyPatch(patchText) {
   const {
     hunks
@@ -509,6 +612,13 @@ export async function applyPatch(patchText) {
 }
 
 // Async version of maybeParseApplyPatchVerified
+/**
+ * Detect an apply_patch invocation and verify it against the filesystem, producing a
+ * preview of changes (per-file add/delete/update with diffs) without writing anything.
+ * @param {Array} argv - Argument vector to inspect.
+ * @param {string} cwd - Working directory used to resolve relative paths.
+ * @returns {Promise<Object>} A result tagged with a MaybeApplyPatchVerified type (Body with an action, an error, or NotApplyPatch).
+ */
 export async function maybeParseApplyPatchVerified(argv, cwd) {
   // Detect implicit patch invocation (raw patch without apply_patch command)
   if (argv.length === 1) {

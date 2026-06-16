@@ -1,3 +1,8 @@
+/**
+ * @file Registry of LSP language-server definitions. Each export describes how to
+ * detect a project root, which file extensions it handles, and how to spawn the
+ * server binary (optionally auto-downloading/installing it when opted in).
+ */
 import path from "path";
 import os from "os";
 import { Global } from "core/global";
@@ -19,15 +24,40 @@ const LSP_DOWNLOAD_ENABLED = ["1", "true"].includes(process.env["CLOSEDCODE_ENAB
 const log = Log.create({
   service: "lsp.server"
 });
+/**
+ * Check whether a filesystem path exists.
+ * @param {string} p - Path to test.
+ * @returns {Promise<boolean>} True if the path can be stat'd.
+ */
 const pathExists = async p => fs.stat(p).then(() => true).catch(() => false);
+/**
+ * Run a command without throwing on a non-zero exit code.
+ * @param {Array|string} cmd - Command and arguments to run.
+ * @param {Object} opts - Process options merged into the run call.
+ * @returns {Promise<Object>} The process result (code, stdout, stderr).
+ */
 const run = (cmd, opts = {}) => Process.run(cmd, {
   ...opts,
   nothrow: true
 });
+/**
+ * Run a command and capture its text output without throwing on failure.
+ * @param {Array|string} cmd - Command and arguments to run.
+ * @param {Object} opts - Process options merged into the call.
+ * @returns {Promise<Object>} The process result including captured text.
+ */
 const output = (cmd, opts = {}) => Process.text(cmd, {
   ...opts,
   nothrow: true
 });
+/**
+ * Build a root-resolver that walks up from a file to find the nearest directory
+ * containing one of the include patterns, optionally bailing out if an exclude
+ * pattern is found first. Falls back to the instance directory when nothing matches.
+ * @param {Array} includePatterns - File/glob names marking a project root.
+ * @param {Array} excludePatterns - Optional patterns that, if found, disqualify the lookup.
+ * @returns {Function} An async (file, ctx) resolver returning a directory path or undefined.
+ */
 const NearestRoot = (includePatterns, excludePatterns) => {
   return async (file, ctx) => {
     if (excludePatterns) {
@@ -51,6 +81,7 @@ const NearestRoot = (includePatterns, excludePatterns) => {
     return path.dirname(first.value);
   };
 };
+/** Deno LSP server definition (rooted at deno.json/deno.jsonc, requires the deno binary). */
 export const Deno = {
   id: "deno",
   root: async (file, ctx) => {
@@ -78,6 +109,7 @@ export const Deno = {
     };
   }
 };
+/** TypeScript/JavaScript LSP server definition (typescript-language-server over the workspace TypeScript). */
 export const Typescript = {
   id: "typescript",
   root: NearestRoot(["package-lock.json", "pnpm-lock.yaml", "yarn.lock"], ["deno.json", "deno.jsonc"]),
@@ -106,6 +138,7 @@ export const Typescript = {
     };
   }
 };
+/** Vue LSP server definition (@vue/language-server for .vue files). */
 export const Vue = {
   id: "vue",
   extensions: [".vue"],
@@ -134,6 +167,7 @@ export const Vue = {
     };
   }
 };
+/** ESLint LSP server definition (VS Code ESLint server, optionally downloaded and built on demand). */
 export const ESLint = {
   id: "eslint",
   root: NearestRoot(["package-lock.json", "pnpm-lock.yaml", "yarn.lock"]),
@@ -195,6 +229,7 @@ export const ESLint = {
     };
   }
 };
+/** Oxlint LSP server definition (oxc_language_server / oxlint --lsp). */
 export const Oxlint = {
   id: "oxlint",
   root: NearestRoot([".oxlintrc.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "package.json"]),
@@ -251,6 +286,7 @@ export const Oxlint = {
     return;
   }
 };
+/** Biome LSP server definition (biome lsp-proxy for JS/TS/JSON/CSS and more). */
 export const Biome = {
   id: "biome",
   root: NearestRoot(["biome.json", "biome.jsonc", "package-lock.json", "pnpm-lock.yaml", "yarn.lock"]),
@@ -282,6 +318,7 @@ export const Biome = {
     };
   }
 };
+/** Go LSP server definition (gopls, auto-installed via `go install` when enabled). */
 export const Gopls = {
   id: "gopls",
   root: async (file, ctx) => {
@@ -322,6 +359,7 @@ export const Gopls = {
     };
   }
 };
+/** Ruby LSP server definition (rubocop --lsp, auto-installed via `gem install` when enabled). */
 export const Rubocop = {
   id: "ruby-lsp",
   root: NearestRoot(["Gemfile"]),
@@ -359,6 +397,7 @@ export const Rubocop = {
     };
   }
 };
+/** Experimental Python "ty" LSP server definition (gated behind CLOSEDCODE_EXPERIMENTAL_LSP_TY). */
 export const Ty = {
   id: "ty",
   extensions: [".py", ".pyi"],
@@ -401,6 +440,7 @@ export const Ty = {
     };
   }
 };
+/** Python LSP server definition (pyright-langserver, with virtualenv python detection). */
 export const Pyright = {
   id: "pyright",
   extensions: [".py", ".pyi"],
@@ -437,6 +477,7 @@ export const Pyright = {
     };
   }
 };
+/** Elixir LSP server definition (elixir-ls, downloaded and compiled from GitHub when enabled). */
 export const ElixirLS = {
   id: "elixir-ls",
   extensions: [".ex", ".exs"],
@@ -498,6 +539,7 @@ export const ElixirLS = {
     };
   }
 };
+/** Zig LSP server definition (zls, downloaded from GitHub releases when enabled). */
 export const Zls = {
   id: "zls",
   extensions: [".zig", ".zon"],
@@ -580,6 +622,7 @@ export const Zls = {
     };
   }
 };
+/** C# LSP server definition (Roslyn language server). */
 export const CSharp = {
   id: "csharp",
   root: NearestRoot([".slnx", ".sln", ".csproj", "global.json"]),
@@ -594,6 +637,7 @@ export const CSharp = {
     };
   }
 };
+/** Razor LSP server definition (Roslyn server plus the VS Code C#/Razor extension). */
 export const Razor = {
   id: "razor",
   root: NearestRoot([".slnx", ".sln", ".csproj", "global.json"]),
@@ -616,7 +660,13 @@ export const Razor = {
     };
   }
 };
+/** Cached in-flight Roslyn install promise so concurrent callers share one installation. */
 let roslynLanguageServerInstall;
+/**
+ * Resolve the roslyn-language-server executable, falling back to a global dotnet
+ * tool path and finally a single shared install attempt.
+ * @returns {Promise<string>} Path to the executable, or undefined if unavailable.
+ */
 async function getRoslynLanguageServer() {
   const existing = which("roslyn-language-server");
   if (existing) return existing;
@@ -627,6 +677,10 @@ async function getRoslynLanguageServer() {
   });
   return roslynLanguageServerInstall;
 }
+/**
+ * Install roslyn-language-server as a global dotnet tool (requires the .NET SDK and download opt-in).
+ * @returns {Promise<string>} Path to the installed executable, or undefined on failure.
+ */
 async function installRoslynLanguageServer() {
   if (!which("dotnet")) {
     log.error(".NET SDK is required to install roslyn-language-server");
@@ -660,10 +714,18 @@ async function installRoslynLanguageServer() {
   }
   log.error("Installed roslyn-language-server but could not resolve executable");
 }
+/**
+ * Compute the path to a globally installed roslyn-language-server dotnet tool, if present.
+ * @returns {Promise<string>} The executable path, or undefined if it does not exist.
+ */
 async function roslynLanguageServerGlobalPath() {
   const bin = path.join(process.env.DOTNET_CLI_HOME ?? os.homedir(), ".dotnet", "tools", "roslyn-language-server" + (process.platform === "win32" ? ".cmd" : ""));
   return (await pathExists(bin)) ? bin : undefined;
 }
+/**
+ * Locate the VS Code C# extension's Razor support assets across known extension directories.
+ * @returns {Promise<Object>} Paths for the Razor compiler, targets, and extension dll, or undefined if not found.
+ */
 async function findVscodeRazorExtension() {
   const roots = [process.env.VSCODE_EXTENSIONS, path.join(os.homedir(), ".vscode", "extensions"), path.join(os.homedir(), ".vscode-insiders", "extensions"), path.join(os.homedir(), ".vscode-server", "extensions"), path.join(os.homedir(), ".vscode-server-insiders", "extensions")].filter(item => item !== undefined);
   for (const root of [...new Set(roots)]) {
@@ -686,6 +748,7 @@ async function findVscodeRazorExtension() {
     }
   }
 }
+/** F# LSP server definition (fsautocomplete, installed via dotnet tool when enabled). */
 export const FSharp = {
   id: "fsharp",
   root: NearestRoot([".slnx", ".sln", ".fsproj", "global.json"]),
@@ -721,6 +784,7 @@ export const FSharp = {
     };
   }
 };
+/** Swift/Objective-C LSP server definition (sourcekit-lsp from PATH or via xcrun). */
 export const SourceKit = {
   id: "sourcekit-lsp",
   extensions: [".swift", ".objc", "objcpp"],
@@ -750,6 +814,7 @@ export const SourceKit = {
     };
   }
 };
+/** Rust LSP server definition (rust-analyzer; root resolution prefers the Cargo workspace). */
 export const RustAnalyzer = {
   id: "rust",
   root: async (file, ctx) => {
@@ -792,6 +857,7 @@ export const RustAnalyzer = {
     };
   }
 };
+/** C/C++ LSP server definition (clangd, downloaded from GitHub releases when enabled). */
 export const Clangd = {
   id: "clangd",
   root: NearestRoot(["compile_commands.json", "compile_flags.txt", ".clangd"]),
@@ -927,6 +993,7 @@ export const Clangd = {
     };
   }
 };
+/** Svelte LSP server definition (svelte-language-server for .svelte files). */
 export const Svelte = {
   id: "svelte",
   extensions: [".svelte"],
@@ -953,6 +1020,7 @@ export const Svelte = {
     };
   }
 };
+/** Astro LSP server definition (@astrojs/language-server, requires workspace TypeScript). */
 export const Astro = {
   id: "astro",
   extensions: [".astro"],
@@ -989,6 +1057,7 @@ export const Astro = {
     };
   }
 };
+/** Java LSP server definition (Eclipse JDTLS; needs Java 21+, downloaded from Eclipse when enabled). */
 export const JDTLS = {
   id: "jdtls",
   root: async (file, ctx) => {
@@ -1088,6 +1157,7 @@ export const JDTLS = {
     };
   }
 };
+/** Kotlin LSP server definition (JetBrains kotlin-lsp, downloaded from GitHub/JetBrains CDN when enabled). */
 export const KotlinLS = {
   id: "kotlin-ls",
   extensions: [".kt", ".kts"],
@@ -1177,6 +1247,7 @@ export const KotlinLS = {
     };
   }
 };
+/** YAML LSP server definition (yaml-language-server). */
 export const YamlLS = {
   id: "yaml-ls",
   extensions: [".yaml", ".yml"],
@@ -1202,6 +1273,7 @@ export const YamlLS = {
     };
   }
 };
+/** Lua LSP server definition (lua-language-server, downloaded from GitHub releases when enabled). */
 export const LuaLS = {
   id: "lua-ls",
   root: NearestRoot([".luarc.json", ".luarc.jsonc", ".luacheckrc", ".stylua.toml", "stylua.toml", "selene.toml", "selene.yml"]),
@@ -1309,6 +1381,7 @@ export const LuaLS = {
     };
   }
 };
+/** PHP LSP server definition (Intelephense, telemetry disabled). */
 export const PHPIntelephense = {
   id: "php intelephense",
   extensions: [".php"],
@@ -1339,6 +1412,7 @@ export const PHPIntelephense = {
     };
   }
 };
+/** Prisma LSP server definition (prisma language-server for .prisma schemas). */
 export const Prisma = {
   id: "prisma",
   extensions: [".prisma"],
@@ -1356,6 +1430,7 @@ export const Prisma = {
     };
   }
 };
+/** Dart LSP server definition (dart language-server --lsp). */
 export const Dart = {
   id: "dart",
   extensions: [".dart"],
@@ -1373,6 +1448,7 @@ export const Dart = {
     };
   }
 };
+/** OCaml LSP server definition (ocamllsp). */
 export const Ocaml = {
   id: "ocaml-lsp",
   extensions: [".ml", ".mli"],
@@ -1390,6 +1466,7 @@ export const Ocaml = {
     };
   }
 };
+/** Bash/shell LSP server definition (bash-language-server). */
 export const BashLS = {
   id: "bash",
   extensions: [".sh", ".bash", ".zsh", ".ksh"],
@@ -1415,6 +1492,7 @@ export const BashLS = {
     };
   }
 };
+/** Terraform LSP server definition (terraform-ls, downloaded from HashiCorp releases when enabled). */
 export const TerraformLS = {
   id: "terraform",
   extensions: [".tf", ".tfvars"],
@@ -1482,6 +1560,7 @@ export const TerraformLS = {
     };
   }
 };
+/** LaTeX LSP server definition (texlab, downloaded from GitHub releases when enabled). */
 export const TexLab = {
   id: "texlab",
   extensions: [".tex", ".bib"],
@@ -1557,6 +1636,7 @@ export const TexLab = {
     };
   }
 };
+/** Dockerfile LSP server definition (dockerfile-language-server-nodejs). */
 export const DockerfileLS = {
   id: "dockerfile",
   extensions: [".dockerfile", "Dockerfile"],
@@ -1582,6 +1662,7 @@ export const DockerfileLS = {
     };
   }
 };
+/** Gleam LSP server definition (gleam lsp). */
 export const Gleam = {
   id: "gleam",
   extensions: [".gleam"],
@@ -1599,6 +1680,7 @@ export const Gleam = {
     };
   }
 };
+/** Clojure LSP server definition (clojure-lsp listen). */
 export const Clojure = {
   id: "clojure-lsp",
   extensions: [".clj", ".cljs", ".cljc", ".edn"],
@@ -1619,6 +1701,7 @@ export const Clojure = {
     };
   }
 };
+/** Nix LSP server definition (nixd; root prefers flake.nix, then git worktree). */
 export const Nixd = {
   id: "nixd",
   extensions: [".nix"],
@@ -1649,6 +1732,7 @@ export const Nixd = {
     };
   }
 };
+/** Typst LSP server definition (tinymist, downloaded from GitHub releases when enabled). */
 export const Tinymist = {
   id: "tinymist",
   extensions: [".typ", ".typc"],
@@ -1728,6 +1812,7 @@ export const Tinymist = {
     };
   }
 };
+/** Haskell LSP server definition (haskell-language-server-wrapper --lsp). */
 export const HLS = {
   id: "haskell-language-server",
   extensions: [".hs", ".lhs"],
@@ -1745,6 +1830,7 @@ export const HLS = {
     };
   }
 };
+/** Julia LSP server definition (LanguageServer.jl run via the julia binary). */
 export const JuliaLS = {
   id: "julials",
   extensions: [".jl"],

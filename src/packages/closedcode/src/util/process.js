@@ -1,7 +1,19 @@
+/** @file Child-process helpers: spawn, run-to-completion, abort/timeout handling, and cross-platform termination. */
+
 import launch from "cross-spawn";
 import { buffer } from "node:stream/consumers";
 import { errorMessage } from "./error.js";
+/**
+ * Error thrown when a command exits with a non-zero code (unless `nothrow` is set).
+ * Carries the command, exit code, and captured stdout/stderr buffers.
+ */
 export class RunFailedError extends Error {
+  /**
+   * @param {Array<string>} cmd - The command and its arguments.
+   * @param {number} code - The non-zero exit code.
+   * @param {Buffer} stdout - The captured standard output.
+   * @param {Buffer} stderr - The captured standard error.
+   */
   constructor(cmd, code, stdout, stderr) {
     const text = stderr.toString().trim();
     super(text ? `Command failed with code ${code}: ${cmd.join(" ")}\n${text}` : `Command failed with code ${code}: ${cmd.join(" ")}`);
@@ -12,6 +24,22 @@ export class RunFailedError extends Error {
     this.stderr = stderr;
   }
 }
+/**
+ * Spawn a child process via cross-spawn, wiring up optional abort-signal handling and a
+ * kill-then-SIGKILL timeout. Attaches an `exited` promise resolving to the exit code.
+ * @param {Array<string>} cmd - The command and its arguments; the first element is the executable.
+ * @param {Object} [opts] - Spawn options.
+ * @param {string} [opts.cwd] - Working directory for the child process.
+ * @param {boolean|string} [opts.shell] - Whether (or which shell) to run the command in.
+ * @param {Object} [opts.env] - Extra environment variables merged over `process.env`; `null` clears the env, `undefined` inherits.
+ * @param {*} [opts.stdin] - stdio config for stdin (defaults to "ignore").
+ * @param {*} [opts.stdout] - stdio config for stdout (defaults to "ignore").
+ * @param {*} [opts.stderr] - stdio config for stderr (defaults to "ignore").
+ * @param {AbortSignal} [opts.abort] - Signal that, when aborted, terminates the process.
+ * @param {string} [opts.kill] - Signal sent on abort (defaults to "SIGTERM").
+ * @param {number} [opts.timeout] - Milliseconds after the kill signal before escalating to SIGKILL (default 5000; <=0 disables).
+ * @returns {Object} The spawned child process augmented with an `exited` Promise<number>.
+ */
 export function spawn(cmd, opts = {}) {
   if (cmd.length === 0) throw new Error("Command is required");
   opts.abort?.throwIfAborted();
@@ -61,6 +89,21 @@ export function spawn(cmd, opts = {}) {
   child.exited = exited;
   return child;
 }
+/**
+ * Run a command to completion, capturing its stdout and stderr.
+ * Throws {@link RunFailedError} on a non-zero exit unless `opts.nothrow` is set.
+ * @param {Array<string>} cmd - The command and its arguments.
+ * @param {Object} [opts] - Run options.
+ * @param {string} [opts.cwd] - Working directory for the child process.
+ * @param {Object} [opts.env] - Extra environment variables (see {@link spawn}).
+ * @param {*} [opts.stdin] - stdio config for stdin.
+ * @param {boolean|string} [opts.shell] - Whether (or which shell) to run the command in.
+ * @param {AbortSignal} [opts.abort] - Signal that terminates the process.
+ * @param {string} [opts.kill] - Signal sent on abort.
+ * @param {number} [opts.timeout] - Kill-to-SIGKILL escalation timeout in ms.
+ * @param {boolean} [opts.nothrow] - When true, return a result with code 1 instead of throwing on failure.
+ * @returns {Promise<{code: number, stdout: Buffer, stderr: Buffer}>} The exit code and captured output.
+ */
 export async function run(cmd, opts = {}) {
   const proc = spawn(cmd, {
     cwd: opts.cwd,
@@ -90,8 +133,15 @@ export async function run(cmd, opts = {}) {
   throw new RunFailedError(cmd, out.code, out.stdout, out.stderr);
 }
 
-// Duplicated in `packages/sdk/js/src/process.ts` because the SDK cannot import
-// `closedcode` without creating a cycle. Keep both copies in sync.
+/**
+ * Terminate a child process and its descendants. On Windows uses `taskkill /T /F`
+ * to kill the whole tree, falling back to `proc.kill()`; no-ops if already exited.
+ *
+ * Duplicated in `packages/sdk/js/src/process.ts` because the SDK cannot import
+ * `closedcode` without creating a cycle. Keep both copies in sync.
+ * @param {Object} proc - The child process to stop.
+ * @returns {Promise<void>} Resolves once termination has been requested.
+ */
 export async function stop(proc) {
   if (proc.exitCode !== null || proc.signalCode !== null) return;
   if (process.platform !== "win32" || !proc.pid) {
@@ -104,6 +154,12 @@ export async function stop(proc) {
   if (out.code === 0) return;
   proc.kill();
 }
+/**
+ * Run a command and additionally decode its stdout as a UTF-8 string.
+ * @param {Array<string>} cmd - The command and its arguments.
+ * @param {Object} [opts] - Run options (see {@link run}).
+ * @returns {Promise<{code: number, stdout: Buffer, stderr: Buffer, text: string}>} The run result plus decoded `text`.
+ */
 export async function text(cmd, opts = {}) {
   const out = await run(cmd, opts);
   return {
@@ -111,6 +167,12 @@ export async function text(cmd, opts = {}) {
     text: out.stdout.toString()
   };
 }
+/**
+ * Run a command and split its stdout into non-empty lines.
+ * @param {Array<string>} cmd - The command and its arguments.
+ * @param {Object} [opts] - Run options (see {@link run}).
+ * @returns {Promise<Array<string>>} The output lines, with empty lines removed.
+ */
 export async function lines(cmd, opts = {}) {
   return (await text(cmd, opts)).text.split(/\r?\n/).filter(Boolean);
 }

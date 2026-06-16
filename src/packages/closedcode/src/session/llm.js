@@ -1,3 +1,9 @@
+/**
+ * @file LLM streaming service. Assembles the system prompt, provider options,
+ * tools, headers and telemetry for a request, then streams a model completion
+ * via the ai-sdk's streamText. Exposes a scoped `stream` Effect that aborts the
+ * underlying request when its scope closes.
+ */
 import { Provider } from "#provider/provider.js";
 import * as Log from "core/util/log";
 import { Context, Effect, Layer, Record } from "effect";
@@ -18,14 +24,32 @@ const log = Log.create({
   service: "llm"
 });
 export const OUTPUT_TOKEN_MAX = ProviderTransform.OUTPUT_TOKEN_MAX;
+/**
+ * Deep-merge a source options object into a target, treating a nullish source
+ * as an empty object.
+ * @param {Object} target - Base options object.
+ * @param {Object} source - Options to merge in (may be null/undefined).
+ * @returns {Object} The deep-merged options object.
+ */
 // Avoid re-instantiating remeda's deep merge types in this hot LLM path; the runtime behavior is still mergeDeep.
 const mergeOptions = (target, source) => mergeDeep(target, source ?? {});
+/** Effect service tag for the LLM streaming API (exposes `stream`). */
 export class Service extends Context.Service()("@closedcode/LLM") {}
 const live = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const provider = yield* Provider.Service;
   const plugin = yield* Plugin.Service;
   const perm = yield* Permission.Service;
+  /**
+   * Build and start a single streamText request: composes the system prompt
+   * (agent/provider prompt plus per-call and per-message additions), runs the
+   * chat.system/params/headers plugin triggers, merges provider/agent/variant
+   * options, resolves the active tools (injecting a no-op stub for LiteLLM-style
+   * proxies when tool history exists but no tools are active), wires telemetry
+   * and provider-specific headers, and returns the streaming result.
+   * @param {Object} input - Request inputs including `model`, `sessionID`, `agent`, `user`, `system`, `messages`, `tools`, `toolChoice`, `abort`, `small`, `permission`, `parentSessionID`, and `retries`.
+   * @returns {Effect} An Effect yielding the ai-sdk streamText result (with a fullStream async iterable).
+   */
   const run = Effect.fn("LLM.run")(function* (input) {
     const l = log.clone().tag("providerID", input.model.providerID).tag("modelID", input.model.id).tag("session.id", input.sessionID).tag("small", (input.small ?? false).toString()).tag("agent", input.agent.name).tag("mode", input.agent.mode);
     l.info("stream", {
@@ -256,6 +280,13 @@ const live = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  /**
+   * Scoped streaming entry point: allocates an AbortController tied to the
+   * stream's scope (aborting the request when the scope closes), runs `run`
+   * with that abort signal, and exposes the model output as an Effect Stream.
+   * @param {Object} input - Same request inputs accepted by `run` (without `abort`).
+   * @returns {Stream} A scoped Stream of streamText events; errors are normalized to Error.
+   */
   const stream = input => Stream.scoped(Stream.unwrap(Effect.gen(function* () {
     const ctrl = yield* Effect.acquireRelease(Effect.sync(() => new AbortController()), ctrl => Effect.sync(() => ctrl.abort()));
     const result = yield* run({
@@ -270,11 +301,24 @@ const live = Layer.effect(Service, Effect.gen(function* () {
 }));
 export const layer = live.pipe(Layer.provide(Permission.defaultLayer));
 export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(Config.defaultLayer), Layer.provide(Provider.defaultLayer), Layer.provide(Plugin.defaultLayer)));
+/**
+ * Filter the available tools down to those allowed for this request: drops
+ * tools disabled by merged agent/request permissions and tools the user
+ * message explicitly turned off.
+ * @param {Object} input - Request inputs with `tools`, `agent.permission`, `permission`, and `user.tools`.
+ * @returns {Object} The filtered tool map.
+ */
 function resolveTools(input) {
   const disabled = Permission.disabled(Object.keys(input.tools), Permission.merge(input.agent.permission, input.permission ?? []));
   return Record.filter(input.tools, (_, k) => input.user.tools?.[k] !== false && !disabled.has(k));
 }
 
+/**
+ * Report whether any message contains tool-call or tool-result content, used to
+ * decide if a stub tool must be injected for LiteLLM-style proxy compatibility.
+ * @param {Array} messages - Model messages whose `content` arrays are scanned.
+ * @returns {boolean} True if any part is a tool-call or tool-result.
+ */
 // Check if messages contain any tool-call content
 // Used to determine if a dummy tool should be added for LiteLLM proxy compatibility
 export function hasToolCalls(messages) {

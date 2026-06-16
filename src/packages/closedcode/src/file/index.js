@@ -1,3 +1,4 @@
+/** @file File service: project-scoped file reading, git status/diff, directory listing, and fuzzy path search, plus schemas describing file info/content. */
 import { BusEvent } from "#bus/bus-event.js";
 import { InstanceState } from "#effect/instance-state.js";
 import { AppFileSystem } from "core/filesystem";
@@ -15,6 +16,7 @@ import { Protected } from "./protected.js";
 import { Ripgrep } from "./ripgrep.js";
 import { zod } from "#util/effect-zod.js";
 import { NonNegativeInt, withStatics } from "#util/schema.js";
+/** Schema describing a changed file's path, added/removed line counts, and status. */
 export const Info = Schema.Struct({
   path: Schema.String,
   added: NonNegativeInt,
@@ -25,6 +27,7 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema describing a directory-listing entry (file or directory) with ignore status. */
 export const Node = Schema.Struct({
   name: Schema.String,
   path: Schema.String,
@@ -36,6 +39,7 @@ export const Node = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a single unified-diff hunk. */
 const Hunk = Schema.Struct({
   oldStart: NonNegativeInt,
   oldLines: NonNegativeInt,
@@ -43,6 +47,7 @@ const Hunk = Schema.Struct({
   newLines: NonNegativeInt,
   lines: Schema.Array(Schema.String)
 });
+/** Schema for a structured patch (old/new file names, headers, and hunks). */
 const Patch = Schema.Struct({
   oldFileName: Schema.String,
   newFileName: Schema.String,
@@ -51,6 +56,7 @@ const Patch = Schema.Struct({
   hunks: Schema.Array(Hunk),
   index: Schema.optional(Schema.String)
 });
+/** Schema for read file content: text/binary type, content body, optional diff/patch, encoding, and mime type. */
 export const Content = Schema.Struct({
   type: Schema.Literals(["text", "binary"]),
   content: Schema.String,
@@ -63,6 +69,7 @@ export const Content = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Bus events published by the file service (e.g. `file.edited`). */
 export const Event = {
   Edited: BusEvent.define("file.edited", Schema.Struct({
     file: Schema.String
@@ -71,10 +78,15 @@ export const Event = {
 const log = Log.create({
   service: "file"
 });
+/** File extensions treated as binary (non-text) content. */
 const binary = new Set(["exe", "dll", "pdb", "bin", "so", "dylib", "o", "a", "lib", "wav", "mp3", "ogg", "oga", "ogv", "ogx", "flac", "aac", "wma", "m4a", "weba", "mp4", "avi", "mov", "wmv", "flv", "webm", "mkv", "zip", "tar", "gz", "gzip", "bz", "bz2", "bzip", "bzip2", "7z", "rar", "xz", "lz", "z", "pdf", "doc", "docx", "ppt", "pptx", "xls", "xlsx", "dmg", "iso", "img", "vmdk", "ttf", "otf", "woff", "woff2", "eot", "sqlite", "db", "mdb", "apk", "ipa", "aab", "xapk", "app", "pkg", "deb", "rpm", "snap", "flatpak", "appimage", "msi", "msp", "jar", "war", "ear", "class", "kotlin_module", "dex", "vdex", "odex", "oat", "art", "wasm", "wat", "bc", "ll", "s", "ko", "sys", "drv", "efi", "rom", "com"]);
+/** File extensions treated as images. */
 const image = new Set(["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tif", "tiff", "svg", "svgz", "avif", "apng", "jxl", "heic", "heif", "raw", "cr2", "nef", "arw", "dng", "orf", "raf", "pef", "x3f"]);
+/** File extensions known to be text. */
 const text = new Set(["ts", "tsx", "mts", "cts", "mtsx", "ctsx", "js", "jsx", "mjs", "cjs", "sh", "bash", "zsh", "fish", "ps1", "psm1", "cmd", "bat", "json", "jsonc", "json5", "yaml", "yml", "toml", "md", "mdx", "txt", "xml", "html", "htm", "css", "scss", "sass", "less", "graphql", "gql", "sql", "ini", "cfg", "conf", "env"]);
+/** Full basenames (lowercased) known to be text regardless of extension. */
 const textName = new Set(["dockerfile", "makefile", ".gitignore", ".gitattributes", ".editorconfig", ".npmrc", ".nvmrc", ".prettierrc", ".eslintrc"]);
+/** Map of image extensions to their MIME types. */
 const mime = {
   png: "image/png",
   jpg: "image/jpeg",
@@ -93,14 +105,27 @@ const mime = {
   heic: "image/heic",
   heif: "image/heif"
 };
+/** Lowercased extension without the dot. @param {string} file - File path. @returns {string} The extension. */
 const ext = file => path.extname(file).toLowerCase().slice(1);
+/** Lowercased basename of a file. @param {string} file - File path. @returns {string} The basename. */
 const name = file => path.basename(file).toLowerCase();
+/** Whether a file is an image by extension. @param {string} file - File path. @returns {boolean} */
 const isImageByExtension = file => image.has(ext(file));
+/** Whether a file is text by extension. @param {string} file - File path. @returns {boolean} */
 const isTextByExtension = file => text.has(ext(file));
+/** Whether a file is text by full basename. @param {string} file - File path. @returns {boolean} */
 const isTextByName = file => textName.has(name(file));
+/** Whether a file is binary by extension. @param {string} file - File path. @returns {boolean} */
 const isBinaryByExtension = file => binary.has(ext(file));
+/** Whether a MIME type denotes an image. @param {string} mimeType - MIME type. @returns {boolean} */
 const isImage = mimeType => mimeType.startsWith("image/");
+/** Resolve an image MIME type for a file (falls back to `image/<ext>`). @param {string} file - File path. @returns {string} The MIME type. */
 const getImageMimeType = file => mime[ext(file)] || "image/" + ext(file);
+/**
+ * Decide whether content of a given MIME type should be base64-encoded (binary-like media).
+ * @param {string} mimeType - The MIME type to inspect.
+ * @returns {boolean} True if the content should be base64-encoded.
+ */
 function shouldEncode(mimeType) {
   const type = mimeType.toLowerCase();
   log.debug("shouldEncode", {
@@ -112,10 +137,21 @@ function shouldEncode(mimeType) {
   const top = type.split("/", 2)[0];
   return ["image", "audio", "video", "font", "model", "multipart"].includes(top);
 }
+/**
+ * Whether a path has any hidden segment (a dot-prefixed name longer than one char).
+ * @param {string} item - The path to inspect.
+ * @returns {boolean} True if any path segment is hidden.
+ */
 const hidden = item => {
   const normalized = item.replaceAll("\\", "/").replace(/\/+$/, "");
   return normalized.split("/").some(part => part.startsWith(".") && part.length > 1);
 };
+/**
+ * Sort items so hidden paths come last, unless hidden results are preferred.
+ * @param {Array} items - Path strings to reorder.
+ * @param {boolean} prefer - When true, return items unchanged (hidden preferred).
+ * @returns {Array} Reordered (or original) array.
+ */
 const sortHiddenLast = (items, prefer) => {
   if (prefer) return items;
   const visible = [];
@@ -125,7 +161,13 @@ const sortHiddenLast = (items, prefer) => {
   }
   return [...visible, ...hiddenItems];
 };
+/** Effect service tag for the File service. */
 export class Service extends Context.Service()("@closedcode/File") {}
+/**
+ * Layer providing the File service: maintains a cached file/dir index (via ripgrep),
+ * and exposes init/status/read/list/search scoped to the active project directory.
+ * @type {Layer}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const appFs = yield* AppFileSystem.Service;
   const rg = yield* Ripgrep.Service;
@@ -137,6 +179,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       dirs: []
     }
   })));
+  /**
+   * Rebuild the cached index of files and directories for the current project directory.
+   * Uses a shallow two-level scan for the global home, or ripgrep file listing otherwise.
+   * @returns {Effect} Effect that refreshes the cache in state.
+   */
   const scan = Effect.fn("File.scan")(function* () {
     const ctx = yield* InstanceState.context;
     if (ctx.directory === path.parse(ctx.directory).root) return;
@@ -149,7 +196,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       const dirs = new Set();
       const protectedNames = Protected.names();
       const ignoreNested = new Set(["node_modules", "dist", "build", "target", "vendor"]);
+      /** Ignore top-level home entries that are hidden or protected. @param {string} name - Entry basename. @returns {boolean} */
       const shouldIgnoreName = name => name.startsWith(".") || protectedNames.has(name);
+      /** Ignore nested entries that are hidden or common build/vendor dirs. @param {string} name - Entry basename. @returns {boolean} */
       const shouldIgnoreNested = name => name.startsWith(".") || ignoreNested.has(name);
       const top = yield* appFs.readDirectoryEntries(ctx.directory).pipe(Effect.orElseSucceed(() => []));
       for (const entry of top) {
@@ -188,18 +237,35 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     s.cache = next;
   });
   let cachedScan = yield* Effect.cached(scan().pipe(Effect.catchCause(() => Effect.void)));
+  /**
+   * Run the cached scan once, then re-arm the cache so a subsequent ensure() rescans.
+   * @returns {Effect} Effect that guarantees the index is built.
+   */
   const ensure = Effect.fn("File.ensure")(function* () {
     yield* cachedScan;
     cachedScan = yield* Effect.cached(scan().pipe(Effect.catchCause(() => Effect.void)));
   });
+  /**
+   * Run a git command in the project directory and return its stdout text.
+   * @param {Array} args - Git argument list.
+   * @returns {Effect} Effect yielding the command's text output.
+   */
   const gitText = Effect.fnUntraced(function* (args) {
     return (yield* git.run(args, {
       cwd: (yield* InstanceState.context).directory
     })).text();
   });
+  /**
+   * Kick off the initial index scan in the background.
+   * @returns {Effect} Effect that forks the scan into the service scope.
+   */
   const init = Effect.fn("File.init")(function* () {
     yield* ensure().pipe(Effect.forkIn(scope));
   });
+  /**
+   * Compute the project's changed files (modified/added/deleted) via git.
+   * @returns {Effect} Effect yielding an array of file Info records with relative paths.
+   */
   const status = Effect.fn("File.status")(function* () {
     const ctx = yield* InstanceState.context;
     if (ctx.project.vcs !== "git") return [];
@@ -248,6 +314,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       };
     });
   });
+  /**
+   * Read a project-relative file, returning text (optionally with git diff/patch),
+   * base64-encoded image/binary media, or an empty/binary marker as appropriate.
+   * @param {string} file - Project-relative file path.
+   * @returns {Effect} Effect yielding a Content record. Throws if the path escapes the project.
+   */
   const read = Effect.fn("File.read")(function* (file) {
     using _ = log.time("read", {
       file
@@ -328,6 +400,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       content
     };
   });
+  /**
+   * List the entries of a project-relative directory, marking each with its gitignore status.
+   * @param {string} dir - Project-relative directory (defaults to the project root when falsy).
+   * @returns {Effect} Effect yielding an array of Node records sorted dirs-first then by name. Throws if the path escapes the project.
+   */
   const list = Effect.fn("File.list")(function* (dir) {
     const ctx = yield* InstanceState.context;
     const exclude = [".git", ".DS_Store"];
@@ -366,6 +443,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return a.name.localeCompare(b.name);
     });
   });
+  /**
+   * Fuzzy-search the cached file/dir index, with empty-query and hidden-ordering handling.
+   * @param {Object} input - {query, limit, type, dirs} controlling kind and result count.
+   * @returns {Effect} Effect yielding an array of matching path strings.
+   */
   const search = Effect.fn("File.search")(function* (input) {
     yield* ensure();
     const {

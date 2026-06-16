@@ -1,15 +1,22 @@
+/**
+ * @file Effect HttpApi group for the control-plane routes: set/remove provider auth
+ * credentials and write server log entries.
+ */
 import { Auth } from "#auth/index.js";
 import { ProviderID } from "#provider/schema.js";
 import { Schema } from "effect";
 import { HttpApi, HttpApiEndpoint, HttpApiError, HttpApiGroup, OpenApi } from "effect/unstable/httpapi";
 import { described } from "./metadata.js";
+// Path params for the auth endpoints: the target provider.
 const AuthParams = Schema.Struct({
   providerID: ProviderID
 });
+// Optional query params scoping a log entry to a directory/workspace.
 const LogQuery = Schema.Struct({
   directory: Schema.optional(Schema.String),
   workspace: Schema.optional(Schema.String)
 });
+/** Schema for a log entry payload posted to the /log endpoint. */
 export const LogInput = Schema.Struct({
   service: Schema.String.annotate({
     description: "Service name for the log entry"
@@ -24,10 +31,12 @@ export const LogInput = Schema.Struct({
     description: "Additional metadata for the log entry"
   })
 });
+/** Route paths exposed by the control API group. */
 export const ControlPaths = {
   auth: "/auth/:providerID",
   log: "/log"
 };
+/** Effect HttpApi group exposing PUT/DELETE /auth/:providerID and POST /log. */
 export const ControlApi = HttpApi.make("control").add(HttpApiGroup.make("control").add(HttpApiEndpoint.put("authSet", ControlPaths.auth, {
   params: AuthParams,
   payload: Auth.Info,

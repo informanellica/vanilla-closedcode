@@ -1,3 +1,9 @@
+/**
+ * @file Message v2 model and persistence. Defines the message/part Effect
+ * schemas and error types, converts stored messages into provider model
+ * messages (with media/compaction handling), reads/paginates messages from the
+ * database, filters out compacted history, and normalizes provider errors.
+ */
 import { BusEvent } from "#bus/bus-event.js";
 import { SessionID, MessageID, PartID } from "./schema.js";
 import z from "zod";
@@ -305,6 +311,14 @@ export const ToolStateCompleted = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Truncate tool output to a maximum character count for compaction, appending a
+ * marker noting how many characters were omitted. Returns the text unchanged
+ * when maxChars is falsy or the text already fits.
+ * @param {string} text - The tool output text.
+ * @param {number} maxChars - Maximum allowed length, or 0/undefined for no limit.
+ * @returns {string} The (possibly truncated) text.
+ */
 function truncateToolOutput(text, maxChars) {
   if (!maxChars || text.length <= maxChars) return text;
   const omitted = text.length - maxChars;
@@ -570,10 +584,24 @@ const Cursor = Schema.Struct({
   time: Schema.Finite.check(Schema.isGreaterThanOrEqualTo(0))
 });
 const decodeCursor = Schema.decodeUnknownSync(Cursor);
+/**
+ * Opaque pagination cursor codec: encodes/decodes a `{ id, time }` keyset cursor
+ * as a base64url string for use in message pagination.
+ */
 export const cursor = {
+  /**
+   * Encode a cursor object to a base64url string.
+   * @param {Object} input - The `{ id, time }` cursor to encode.
+   * @returns {string} The base64url-encoded cursor.
+   */
   encode(input) {
     return Buffer.from(JSON.stringify(input)).toString("base64url");
   },
+  /**
+   * Decode a base64url cursor string back into a validated cursor object.
+   * @param {string} input - The base64url-encoded cursor.
+   * @returns {Object} The decoded `{ id, time }` cursor.
+   */
   decode(input) {
     return decodeCursor(JSON.parse(Buffer.from(input, "base64url").toString("utf8")));
   }
@@ -581,18 +609,41 @@ export const cursor = {
 // Sequelize call-site conventions (ORM migration S3): reads go through
 // Database.useAsync and return plain rows so consumers keep receiving plain
 // objects with JSON columns parsed (same shape as the previous drizzle rows).
+/**
+ * Convert a Sequelize model instance to a plain object, or undefined when null.
+ * @param {Object} row - A Sequelize model instance, or null/undefined.
+ * @returns {Object} The plain row object, or undefined.
+ */
 const plain = row => (row == null ? undefined : row.get({ plain: true }));
+/**
+ * Reconstruct a message Info object from a stored message row, hoisting the id
+ * and session id out of the JSON `data` column.
+ * @param {Object} row - A plain message row with `data`, `id`, and `session_id`.
+ * @returns {Object} The message Info object.
+ */
 const info = row => ({
   ...row.data,
   id: row.id,
   sessionID: row.session_id
 });
+/**
+ * Reconstruct a message Part object from a stored part row, hoisting the id,
+ * session id, and message id out of the JSON `data` column.
+ * @param {Object} row - A plain part row with `data`, `id`, `session_id`, and `message_id`.
+ * @returns {Object} The message Part object.
+ */
 const part = row => ({
   ...row.data,
   id: row.id,
   sessionID: row.session_id,
   messageID: row.message_id
 });
+/**
+ * Build a Sequelize WHERE clause selecting rows strictly older than a cursor,
+ * ordered by creation time then id (the keyset-pagination tiebreaker).
+ * @param {Object} row - Cursor `{ time, id }` to page before.
+ * @returns {Object} A Sequelize Op.or condition.
+ */
 const older = row => ({
   [Op.or]: [{
     time_created: {
@@ -605,6 +656,13 @@ const older = row => ({
     }
   }]
 });
+/**
+ * Attach parts to message rows: batch-loads all Part rows for the given
+ * messages (ordered), groups them by message, and returns `{ info, parts }`
+ * objects.
+ * @param {Array} rows - Plain message rows to hydrate.
+ * @returns {Promise<Array>} Resolves to an array of `{ info, parts }` messages.
+ */
 async function hydrate(rows) {
   const ids = rows.map(row => row.id);
   const partByMessage = new Map();
@@ -631,6 +689,12 @@ async function hydrate(rows) {
     parts: partByMessage.get(row.id) ?? []
   }));
 }
+/**
+ * Strip the internal `providerExecuted` flag from part metadata, returning the
+ * remaining provider metadata or undefined when nothing is left.
+ * @param {Object} metadata - Part metadata, possibly including providerExecuted.
+ * @returns {Object} The cleaned metadata object, or undefined.
+ */
 function providerMeta(metadata) {
   if (!metadata) return undefined;
   const {
@@ -639,10 +703,31 @@ function providerMeta(metadata) {
   } = metadata;
   return Object.keys(rest).length > 0 ? rest : undefined;
 }
+/**
+ * Convert stored session messages into provider model messages. Maps each part
+ * type to its model representation: user text/file/compaction/subtask parts,
+ * assistant text/reasoning/step-start parts, and tool parts (completed, error,
+ * and interrupted pending/running calls, which are forced to errors so every
+ * tool_use has a matching tool_result as Anthropic/Claude APIs require). Media
+ * from tool results is split into a synthetic follow-up user message when the
+ * provider can't carry media in tool results. Optionally strips media and
+ * truncates tool output for compaction.
+ * @param {Array} input - Stored messages, each `{ info, parts }`.
+ * @param {Object} model - Target model `{ id, providerID }` (used to detect cross-model history).
+ * @param {Object} options - Optional `{ stripMedia, toolOutputMaxChars }` conversion controls.
+ * @returns {Effect} An Effect yielding the array of provider model messages.
+ */
 export const toModelMessagesEffect = Effect.fnUntraced(function* (input, model, options) {
   const result = [];
   const toolNames = new Set();
   const supportsMediaInToolResults = false;
+  /**
+   * Convert a tool call's stored output into the model-message output shape:
+   * plain text, structured content with text plus inline (data:) media
+   * attachments, or JSON for non-string outputs.
+   * @param {Object} options - `{ output }` the stored tool output value.
+   * @returns {Object} A model output descriptor `{ type, value }`.
+   */
   const toModelOutput = options => {
     const output = options.output;
     if (typeof output === "string") {
@@ -866,9 +951,23 @@ export const toModelMessagesEffect = Effect.fnUntraced(function* (input, model, 
     tools
   }));
 });
+/**
+ * Promise wrapper around toModelMessagesEffect that runs it with the logger layer.
+ * @param {Array} input - Stored messages, each `{ info, parts }`.
+ * @param {Object} model - Target model `{ id, providerID }`.
+ * @param {Object} options - Optional `{ stripMedia, toolOutputMaxChars }` controls.
+ * @returns {Promise<Array>} Resolves to the array of provider model messages.
+ */
 export function toModelMessages(input, model, options) {
   return Effect.runPromise(toModelMessagesEffect(input, model, options).pipe(Effect.provide(EffectLogger.layer)));
 }
+/**
+ * Fetch one page of a session's messages (newest-first internally, returned
+ * oldest-first) using keyset pagination, hydrating each with its parts. Throws
+ * NotFoundError when the session does not exist and no rows are returned.
+ * @param {Object} input - `{ sessionID, limit, before }` where before is an optional encoded cursor.
+ * @returns {Promise<Object>} Resolves to `{ items, more, cursor }` (cursor present only when more pages exist).
+ */
 export async function page(input) {
   const before = input.before ? cursor.decode(input.before) : undefined;
   const where = before ? {
@@ -915,6 +1014,12 @@ export async function page(input) {
     }) : undefined
   };
 }
+/**
+ * Async-iterate all messages of a session in chronological (oldest-first)
+ * order, paging through the database in fixed-size batches.
+ * @param {string} sessionID - The session whose messages to stream.
+ * @returns {AsyncGenerator} Yields each `{ info, parts }` message in order.
+ */
 export async function* stream(sessionID) {
   const size = 50;
   let before;
@@ -932,6 +1037,11 @@ export async function* stream(sessionID) {
     before = next.cursor;
   }
 }
+/**
+ * Load all parts of a single message in id order, reconstructed as Part objects.
+ * @param {string} message_id - The message whose parts to load.
+ * @returns {Promise<Array>} Resolves to the message's Part objects.
+ */
 export async function parts(message_id) {
   const rows = await Database.useAsync(async h => (await h.models.Part.findAll({
     where: {
@@ -949,6 +1059,12 @@ export async function parts(message_id) {
     messageID: row.message_id
   }));
 }
+/**
+ * Fetch a single message (with its parts) by id within a session. Throws
+ * NotFoundError when no matching message exists.
+ * @param {Object} input - `{ messageID, sessionID }` identifying the message.
+ * @returns {Promise<Object>} Resolves to `{ info, parts }`.
+ */
 export async function get(input) {
   const row = await Database.useAsync(async h => plain(await h.models.Message.findOne({
     where: {
@@ -965,6 +1081,14 @@ export async function get(input) {
     parts: await parts(input.messageID)
   };
 }
+/**
+ * Trim a (newest-first) message list down to the active context after
+ * compaction: scans for the most recent completed compaction and drops the
+ * superseded history before its retained tail, keeping the summary and the
+ * preserved tail. Returns the result in chronological (oldest-first) order.
+ * @param {Array} msgs - Session messages in newest-first order.
+ * @returns {Array} The compaction-filtered messages, oldest-first.
+ */
 export function filterCompacted(msgs) {
   const result = [];
   const completed = new Set();
@@ -989,6 +1113,12 @@ export function filterCompacted(msgs) {
   result.reverse();
   return result;
 }
+/**
+ * Effect variant of filterCompacted that streams a session's messages from the
+ * database, collects them, and returns the compaction-filtered list.
+ * @param {string} sessionID - The session to load and filter.
+ * @returns {Effect} An Effect yielding the compaction-filtered messages (oldest-first).
+ */
 export const filterCompactedEffect = Effect.fnUntraced(function* (sessionID) {
   // stream() is an async generator since the Sequelize migration; collect it
   // before handing the messages to the (still sync, iterable-based) filter.
@@ -999,6 +1129,15 @@ export const filterCompactedEffect = Effect.fnUntraced(function* (sessionID) {
   });
   return filterCompacted(msgs);
 });
+/**
+ * Normalize an arbitrary thrown error into one of the named message error
+ * objects (Aborted/Auth/API/ContextOverflow/OutputLength/Unknown), classifying
+ * abort exceptions, socket resets, decompression failures, and provider
+ * API-call/stream errors (including context-overflow detection).
+ * @param {*} e - The caught error value.
+ * @param {Object} ctx - Context `{ providerID, aborted }` used during classification.
+ * @returns {Object} A plain serialized named-error object.
+ */
 export function fromError(e, ctx) {
   switch (true) {
     case e instanceof DOMException && e.name === "AbortError":

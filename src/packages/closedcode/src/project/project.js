@@ -1,3 +1,4 @@
+/** @file Project domain: schemas, persistence, and the Project Effect service that discovers a project from a directory (git aware), stores it, and manages icons/sandboxes. */
 import z from "zod";
 import { Database } from "#storage/db.js";
 import * as Log from "core/util/log";
@@ -23,10 +24,22 @@ const log = Log.create({
 // Sequelize call-site conventions (ORM migration S3): callbacks receive a
 // handle { models, sequelize, tx } from Database.useAsync; reads return plain
 // rows so fromRow keeps receiving plain objects with JSON columns parsed.
+/**
+ * Convert a Sequelize model row into a plain object, or undefined when null.
+ *
+ * @param {*} row - A Sequelize model instance or nullish value.
+ * @returns {Object|undefined} The plain row object, or undefined.
+ */
 const plain = row => (row == null ? undefined : row.get({ plain: true }));
 // The migration journal declares JSON columns as TEXT, so the sqlite dialect
 // returns them unparsed strings on reads (PRAGMA table_info drives parsing);
 // normalize to drizzle's mode:"json" behavior. Parsed values pass through.
+/**
+ * Normalize a JSON column value: parse strings, pass already-parsed values through.
+ *
+ * @param {*} value - The raw column value (string or already-parsed).
+ * @returns {*} The parsed value.
+ */
 const jsonValue = value => (typeof value === "string" ? JSON.parse(value) : value);
 const ProjectVcs = Schema.Literal("git");
 const ProjectIcon = Schema.Struct({
@@ -44,6 +57,7 @@ const ProjectTime = Schema.Struct({
   updated: NonNegativeInt,
   initialized: optionalOmitUndefined(NonNegativeInt)
 });
+/** Schema describing a project's persisted info (id, worktree, vcs, name, icon, commands, timestamps, sandboxes). */
 export const Info = Schema.Struct({
   id: ProjectID,
   worktree: Schema.String,
@@ -58,9 +72,18 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Bus event definitions emitted by the project service. */
 export const Event = {
   Updated: BusEvent.define("project.updated", Info)
 };
+
+/**
+ * Map a plain database row into a Project Info object, assembling the icon
+ * sub-object and parsing JSON columns.
+ *
+ * @param {Object} row - The plain database row for a project.
+ * @returns {Object} The Project Info object.
+ */
 export function fromRow(row) {
   const icon = row.icon_url || row.icon_url_override || row.icon_color ? {
     url: row.icon_url ?? undefined,
@@ -82,12 +105,14 @@ export function fromRow(row) {
     commands: jsonValue(row.commands) ?? undefined
   };
 }
+/** Zod schema for project update input (project id plus optional name/icon/commands). */
 export const UpdateInput = z.object({
   projectID: ProjectID.zod,
   name: z.string().optional(),
   icon: zod(ProjectIcon).optional(),
   commands: zod(ProjectCommands).optional()
 });
+/** Effect Schema for the project update payload (optional name/icon/commands). */
 export const UpdatePayload = Schema.Struct({
   name: Schema.optional(Schema.String),
   icon: Schema.optional(ProjectIcon),
@@ -102,12 +127,27 @@ export const UpdatePayload = Schema.Struct({
 // Effect service
 // ---------------------------------------------------------------------------
 
+/** Effect Context tag identifying the Project service. */
 export class Service extends Context.Service()("@closedcode/Project") {}
+
+/**
+ * Effect layer providing the Project Service: discovery from a directory,
+ * persistence (list/get/update), git init, icon discovery, and sandbox
+ * management.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const pathSvc = yield* Path.Path;
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   const bus = yield* Bus.Service;
+  /**
+   * Run a git subcommand and capture its result. Never rejects: on spawn
+   * failure it resolves to a non-zero code with empty output.
+   *
+   * @param {Array} args - Arguments passed to the git binary.
+   * @param {Object} opts - Spawn options; `cwd` sets the working directory.
+   * @returns {Effect} Effect yielding {code, text, stderr}.
+   */
   const git = Effect.fnUntraced(function* (args, opts) {
     const handle = yield* spawner.spawn(ChildProcess.make("git", args, {
       cwd: opts?.cwd,
@@ -128,7 +168,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     text: "",
     stderr: ""
   })));
+  /**
+   * Run a database callback inside a transaction-aware handle, wrapped as an Effect.
+   *
+   * @param {Function} fn - Callback receiving the Database handle ({models, sequelize, tx}).
+   * @returns {Effect} Effect yielding the callback's resolved value.
+   */
   const db = fn => Effect.promise(() => Database.useAsync(fn));
+
+  /**
+   * Emit a `project.updated` event on the global bus for the given project data.
+   *
+   * @param {Object} data - The updated Project Info.
+   * @returns {Effect} Effect that emits the event.
+   */
   const emitUpdated = data => Effect.sync(() => GlobalBus.emit("event", {
     directory: "global",
     project: data.id,
@@ -138,6 +191,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
   }));
   const fakeVcs = Schema.decodeUnknownSync(Schema.optional(ProjectVcs))(Flag.CLOSEDCODE_FAKE_VCS);
+  /**
+   * Resolve a path reported by git (which may be relative, absolute, or empty)
+   * against a base directory, normalizing Windows paths and trailing newlines.
+   *
+   * @param {string} cwd - Base directory to resolve relative paths against.
+   * @param {string} name - The git-reported path (possibly empty or newline-terminated).
+   * @returns {string} The resolved absolute path, or cwd when name is empty.
+   */
   const resolveGitPath = (cwd, name) => {
     if (!name) return cwd;
     name = name.replace(/[\r\n]+$/, "");
@@ -147,9 +208,25 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return pathSvc.resolve(cwd, name);
   };
   const scope = yield* Scope.Scope;
+  /**
+   * Read a cached project id from the `closedcode` marker file in a directory,
+   * falling back to the legacy `opencode` file, or undefined if neither exists.
+   *
+   * @param {string} dir - The directory (typically the git dir) to read from.
+   * @returns {Effect} Effect yielding the ProjectID or undefined.
+   */
   const readCachedProjectId = Effect.fnUntraced(function* (dir) {
     return yield* fs.readFileString(pathSvc.join(dir, "closedcode")).pipe(Effect.map(x => x.trim()), Effect.map(x => ProjectID.make(x)), Effect.catch(() => fs.readFileString(pathSvc.join(dir, "opencode")).pipe(Effect.map(x => x.trim()), Effect.map(x => ProjectID.make(x)), Effect.catch(() => Effect.void))));
   });
+  /**
+   * Resolve and persist the project for a directory. Phase 1 discovers git info
+   * (worktree, sandbox/top-level, common dir, bare repo, root-commit-derived id),
+   * Phase 2 upserts the project row, reconciles sandboxes, optionally kicks off
+   * icon discovery, reassigns global-scoped sessions, and emits an update event.
+   *
+   * @param {string} directory - The directory to resolve a project from.
+   * @returns {Effect} Effect yielding {project, sandbox}.
+   */
   const fromDirectory = Effect.fn("Project.fromDirectory")(function* (directory) {
     log.info("fromDirectory", {
       directory
@@ -291,6 +368,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       sandbox: data.sandbox
     };
   });
+  /**
+   * Best-effort icon discovery: for git projects without an existing icon, find
+   * the shortest-pathed favicon under the worktree, encode it as a data URL, and
+   * store it as the project icon.
+   *
+   * @param {Object} input - Project Info to discover an icon for.
+   * @returns {Effect} Effect that updates the icon when one is found.
+   */
   const discover = Effect.fn("Project.discover")(function* (input) {
     if (input.vcs !== "git") return;
     if (input.icon?.override) return;
@@ -313,13 +398,32 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  /**
+   * List all persisted projects.
+   *
+   * @returns {Effect} Effect yielding an array of Project Info objects.
+   */
   const list = Effect.fn("Project.list")(function* () {
     return yield* db(async h => (await h.models.Project.findAll({ transaction: h.tx })).map(row => fromRow(row.get({ plain: true }))));
   });
+
+  /**
+   * Get a single project by id.
+   *
+   * @param {string} id - The project id.
+   * @returns {Effect} Effect yielding the Project Info or undefined when not found.
+   */
   const get = Effect.fn("Project.get")(function* (id) {
     const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     return row ? fromRow(row) : undefined;
   });
+
+  /**
+   * Update a project's name/icon/commands and emit an update event.
+   *
+   * @param {Object} input - Update input ({projectID, name, icon, commands}).
+   * @returns {Effect} Effect yielding the updated Project Info.
+   */
   const update = Effect.fn("Project.update")(function* (input) {
     const result = yield* db(async h => {
       await h.models.Project.update({
@@ -337,6 +441,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* emitUpdated(data);
     return data;
   });
+  /**
+   * Initialize a git repository for a non-git project, then re-resolve and
+   * return the updated project.
+   *
+   * @param {Object} input - Input with `project` and `directory`.
+   * @returns {Effect} Effect yielding the (possibly newly git-backed) project.
+   */
   const initGit = Effect.fn("Project.initGit")(function* (input) {
     if (input.project.vcs === "git") return input.project;
     if (!(yield* Effect.sync(() => which("git")))) throw new Error("Git is not installed");
@@ -351,17 +462,38 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     } = yield* fromDirectory(input.directory);
     return project;
   });
+  /**
+   * Mark a project as initialized by stamping its `time_initialized` column.
+   *
+   * @param {string} id - The project id.
+   * @returns {Effect} Effect that performs the update.
+   */
   const setInitialized = Effect.fn("Project.setInitialized")(function* (id) {
     yield* db(h => h.models.Project.update({
       time_initialized: Date.now()
     }, { where: { id }, transaction: h.tx }));
   });
+  // Per-instance state: subscribe to command-executed events and stamp the
+  // project initialized when the INIT command runs.
   const initState = yield* InstanceState.make(Effect.fn("Project.initState")(function* (ctx) {
     yield* bus.subscribe(Command.Event.Executed).pipe(Stream.runForEach(payload => payload.properties.name === Command.Default.INIT ? setInitialized(ctx.project.id) : Effect.void), Effect.forkScoped);
   }));
+
+  /**
+   * Materialize the per-instance init state (sets up the INIT command subscription).
+   *
+   * @returns {Effect} Effect that initializes the project's per-instance state.
+   */
   const init = Effect.fn("Project.init")(function* () {
     yield* InstanceState.get(initState);
   });
+
+  /**
+   * Return the project's sandbox directories that still exist on disk.
+   *
+   * @param {string} id - The project id.
+   * @returns {Effect} Effect yielding an array of existing sandbox directory paths.
+   */
   const sandboxes = Effect.fn("Project.sandboxes")(function* (id) {
     const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) return [];
@@ -370,6 +502,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       concurrency: "unbounded"
     }).pipe(Effect.map(arr => arr.filter(x => x !== undefined)));
   });
+  /**
+   * Add a sandbox directory to a project (no-op if already present) and emit an
+   * update event.
+   *
+   * @param {string} id - The project id.
+   * @param {string} directory - The sandbox directory to add.
+   * @returns {Effect} Effect that performs the update.
+   */
   const addSandbox = Effect.fn("Project.addSandbox")(function* (id, directory) {
     const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) throw new Error(`Project not found: ${id}`);
@@ -385,6 +525,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     if (!result) throw new Error(`Project not found: ${id}`);
     yield* emitUpdated(fromRow(result));
   });
+  /**
+   * Remove a sandbox directory from a project and emit an update event.
+   *
+   * @param {string} id - The project id.
+   * @param {string} directory - The sandbox directory to remove.
+   * @returns {Effect} Effect that performs the update.
+   */
   const removeSandbox = Effect.fn("Project.removeSandbox")(function* (id, directory) {
     const row = yield* db(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
     if (!row) throw new Error(`Project not found: ${id}`);
@@ -413,16 +560,39 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     removeSandbox
   });
 }));
+/** Project layer with its Bus, child-process spawner, filesystem, and path dependencies provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Bus.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(NodePath.layer));
+
+/** Helper that yields the Project Service and invokes a callback with it. */
 export const use = serviceUse(Service);
+
+/**
+ * Promise-based list of all persisted projects (for non-Effect callers).
+ *
+ * @returns {Promise<Array>} Resolves to an array of Project Info objects.
+ */
 export async function list() {
   return Database.useAsync(async h => (await h.models.Project.findAll({ transaction: h.tx })).map(row => fromRow(row.get({ plain: true }))));
 }
+
+/**
+ * Promise-based lookup of a single project by id (for non-Effect callers).
+ *
+ * @param {string} id - The project id.
+ * @returns {Promise<Object|undefined>} Resolves to the Project Info, or undefined when not found.
+ */
 export async function get(id) {
   const row = await Database.useAsync(async h => plain(await h.models.Project.findOne({ where: { id }, transaction: h.tx })));
   if (!row) return undefined;
   return fromRow(row);
 }
+
+/**
+ * Promise-based marking of a project as initialized (for non-Effect callers).
+ *
+ * @param {string} id - The project id.
+ * @returns {Promise<void>} Resolves once the update completes.
+ */
 export async function setInitialized(id) {
   await Database.useAsync(h => h.models.Project.update({
     time_initialized: Date.now()

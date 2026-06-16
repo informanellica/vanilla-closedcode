@@ -1,3 +1,5 @@
+/** @module Keybind - Parse, compare, and stringify keyboard shortcut descriptors. */
+
 import { isDeepEqual } from "remeda";
 
 /**
@@ -5,6 +7,14 @@ import { isDeepEqual } from "remeda";
  * This ensures type compatibility and catches missing fields at compile time.
  */
 
+/**
+ * Deep-compare two keybind info objects, treating a missing `super` modifier as
+ * `false` so partially-specified bindings match correctly.
+ *
+ * @param {Object} a - The first keybind info (falsy values never match).
+ * @param {Object} b - The second keybind info to compare against.
+ * @returns {boolean} `true` when the normalized keybinds are deeply equal.
+ */
 export function match(a, b) {
   if (!a) return false;
   const normalizedA = {
@@ -21,6 +31,14 @@ export function match(a, b) {
 /**
  * Convert OpenTUI's ParsedKey to our Keybind.Info format.
  * This helper ensures all required fields are present and avoids manual object creation.
+ *
+ * Normalizes a `" "` key name to `"space"` and defaults a missing `super`
+ * modifier to `false`.
+ *
+ * @param {Object} key - The OpenTUI ParsedKey (with `name`, `ctrl`, `meta`,
+ *   `shift`, and optional `super`).
+ * @param {boolean} leader - Whether this key was preceded by the leader key.
+ * @returns {Object} A normalized keybind info object.
  */
 export function fromParsedKey(key, leader = false) {
   return {
@@ -32,6 +50,17 @@ export function fromParsedKey(key, leader = false) {
     leader
   };
 }
+/**
+ * Render a keybind info object as a display string (e.g. `ctrl+alt+a`).
+ *
+ * Modifiers are appended in a fixed order (ctrl, alt, super, shift) followed by
+ * the key name (`delete` is abbreviated to `del`), joined with `+`. A leader
+ * binding is prefixed with `<leader> ` (or rendered as just `<leader>` when no
+ * other parts are present).
+ *
+ * @param {Object} info - The keybind info to render (falsy yields `""`).
+ * @returns {string} The human-readable keybind string.
+ */
 export function toString(info) {
   if (!info) return "";
   const parts = [];
@@ -48,6 +77,17 @@ export function toString(info) {
   }
   return result;
 }
+/**
+ * Parse a keybind specification string into a list of keybind info objects.
+ *
+ * The spec is a comma-separated list of key combos; each combo is `+`-joined
+ * parts that are case-insensitive. `<leader>` is expanded to a `leader`
+ * modifier, `alt`/`meta`/`option` map to `meta`, and `esc` maps to the
+ * `escape` name. The literal `"none"` yields an empty list.
+ *
+ * @param {string} key - The keybind specification string.
+ * @returns {Array} An array of keybind info objects, one per comma-separated combo.
+ */
 export function parse(key) {
   if (key === "none") return [];
   return key.split(",").map(combo => {

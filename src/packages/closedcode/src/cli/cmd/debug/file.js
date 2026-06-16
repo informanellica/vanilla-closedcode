@@ -1,9 +1,11 @@
+/** @file `debug file` CLI command group: file system debugging utilities (search, read, status, list, tree). */
 import { EOL } from "os";
 import { Effect } from "effect";
 import { File } from "../../../file/index.js";
 import { Ripgrep } from "#file/ripgrep.js";
 import { effectCmd } from "../../effect-cmd.js";
 import { cmd } from "../cmd.js";
+/** Subcommand `search <query>` that searches files by query and prints matching paths, one per line. */
 const FileSearchCommand = effectCmd({
   command: "search <query>",
   describe: "search files by query",
@@ -19,6 +21,7 @@ const FileSearchCommand = effectCmd({
     process.stdout.write(results.join(EOL) + EOL);
   })
 });
+/** Subcommand `read <path>` that reads the given file's contents and prints them as JSON. */
 const FileReadCommand = effectCmd({
   command: "read <path>",
   describe: "read file contents as JSON",
@@ -32,6 +35,7 @@ const FileReadCommand = effectCmd({
     process.stdout.write(JSON.stringify(content, null, 2) + EOL);
   })
 });
+/** Subcommand `status` that prints file status information as JSON. */
 const FileStatusCommand = effectCmd({
   command: "status",
   describe: "show file status information",
@@ -41,6 +45,7 @@ const FileStatusCommand = effectCmd({
     process.stdout.write(JSON.stringify(status, null, 2) + EOL);
   })
 });
+/** Subcommand `list <path>` that lists files in the given directory and prints them as JSON. */
 const FileListCommand = effectCmd({
   command: "list <path>",
   describe: "list files in a directory",
@@ -54,6 +59,7 @@ const FileListCommand = effectCmd({
     process.stdout.write(JSON.stringify(files, null, 2) + EOL);
   })
 });
+/** Subcommand `tree [dir]` that builds a ripgrep-based directory tree (limited to 200 entries) and logs it as JSON. */
 const FileTreeCommand = effectCmd({
   command: "tree [dir]",
   describe: "show directory tree",
@@ -70,6 +76,7 @@ const FileTreeCommand = effectCmd({
     console.log(JSON.stringify(tree, null, 2));
   })
 });
+/** Parent CLI command `file` that groups the file system debugging subcommands (read, status, list, search, tree). */
 export const FileCommand = cmd({
   command: "file",
   describe: "file system debugging utilities",

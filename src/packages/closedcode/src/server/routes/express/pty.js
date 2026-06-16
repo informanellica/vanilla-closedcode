@@ -1,3 +1,4 @@
+/** @file Express route group for the instance /pty endpoints (shells listing, PTY session CRUD, and WebSocket connection). */
 // Express route group for the instance /pty endpoints (PTY sessions and WebSocket connection).
 import express from "express";
 import { Effect, Schema } from "effect";
@@ -18,9 +19,18 @@ const ShellItem = z.object({
   acceptable: z.boolean(),
 });
 
+/**
+ * Synchronously decodes and validates an unknown value into a PtyID, throwing on invalid input.
+ * @type {Function}
+ */
 const decodePtyID = Schema.decodeUnknownSync(PtyID);
 
 // OTel span attributes for an Express request: method, path, and every matched route param.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -33,16 +43,38 @@ function requestAttributes(req) {
 }
 
 // Runs an Effect generator inside an OTel span built from the request.
+/**
+ * Runs an Effect inside an OTel span built from the request.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Effect} effect - The Effect to run inside the span.
+ * @returns {Promise<*>} A promise resolving to the Effect's result.
+ */
 function runRequest(name, req, effect) {
   return AppRuntime.runPromise(effect.pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })));
 }
 
 // Runs an Effect generator inside an OTel span, then res.json() the result.
+/**
+ * Runs an Effect generator inside an OTel span built from the request, then writes the resolved value as JSON.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} effect - A function returning an Effect generator to run.
+ * @returns {Promise<void>} Resolves once the response JSON has been written.
+ */
 async function jsonRequest(name, req, res, effect) {
   const result = await runRequest(name, req, Effect.gen(() => effect()));
   res.json(result);
 }
 
+/**
+ * Builds the Express router for the /pty route group (list shells, PTY session list/create/get/update/remove,
+ * and a WebSocket route for real-time PTY interaction).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @param {Function} upgradeWebSocket - Adapter factory that produces WebSocket-upgrade middleware for the connect route.
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function PtyRoutes(registry, upgradeWebSocket) {
   const router = express.Router();
 

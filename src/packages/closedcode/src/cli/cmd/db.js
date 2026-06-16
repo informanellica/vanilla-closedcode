@@ -1,3 +1,4 @@
+/** @file CLI `db` command and subcommands: query the SQLite database, print its path, and migrate legacy JSON data into it. */
 import { spawn } from "child_process";
 import { Database } from "#storage/db.js";
 import { DatabaseSync } from "node:sqlite";
@@ -6,6 +7,10 @@ import { cmd } from "./cmd.js";
 import { JsonMigration } from "#storage/json-migration.js";
 import { EOL } from "os";
 import { errorMessage } from "../../util/error.js";
+/**
+ * CLI command (default): `db [query]` — runs a read-only SQL query (formatted as TSV or JSON),
+ * or opens an interactive `sqlite3` shell when no query is given.
+ */
 const QueryCommand = cmd({
   command: "$0 [query]",
   describe: "open an interactive sqlite3 shell or run a query",
@@ -50,6 +55,7 @@ const QueryCommand = cmd({
     await new Promise(resolve => child.on("close", resolve));
   }
 });
+/** CLI command: `db path` — prints the database file path. */
 const PathCommand = cmd({
   command: "path",
   describe: "print the database path",
@@ -57,6 +63,10 @@ const PathCommand = cmd({
     console.log(Database.Path);
   }
 });
+/**
+ * CLI command: `db migrate` — migrates legacy JSON data into SQLite (merging with existing data),
+ * rendering a progress bar on a TTY or plain progress lines otherwise.
+ */
 const MigrateCommand = cmd({
   command: "migrate",
   describe: "migrate JSON data to SQLite (merges with existing data)",
@@ -100,6 +110,7 @@ const MigrateCommand = cmd({
     }
   }
 });
+/** CLI command: `db` — parent command grouping the query, path, and migrate subcommands. */
 export const DbCommand = cmd({
   command: "db",
   describe: "database tools",

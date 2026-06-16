@@ -1,3 +1,8 @@
+/**
+ * @file TUI worker entry point. Hosts the closedcode server in a child process and
+ * exposes an RPC surface (fetch/snapshot/server/checkUpgrade/reload/shutdown)
+ * consumed by the TUI front-end, forwarding global bus events back over RPC.
+ */
 import { Installation } from "#installation/index.js";
 import { Server } from "#server/server.js";
 import * as Log from "core/util/log";
@@ -16,7 +21,16 @@ import { Effect } from "effect";
 import { disposeAllInstancesAndEmitGlobalDisposed } from "#server/global-lifecycle.js";
 
 let server;
+/**
+ * RPC handler table exposed to the TUI front-end over the worker channel.
+ * @type {Object}
+ */
 export const rpc = {
+  /**
+   * Proxy an HTTP request to the in-process server, injecting Basic auth when configured.
+   * @param {Object} input - Request spec: { url, method, headers, body }.
+   * @returns {Promise<Object>} { status, headers, body } from the server response.
+   */
   async fetch(input) {
     const headers = {
       ...input.headers
@@ -38,10 +52,19 @@ export const rpc = {
       body
     };
   },
+  /**
+   * Write a V8 heap snapshot to disk for debugging.
+   * @returns {string} The path of the written heap snapshot file.
+   */
   snapshot() {
     const result = writeHeapSnapshot("server.heapsnapshot");
     return result;
   },
+  /**
+   * Start (or restart) the in-process server listening with the given options.
+   * @param {Object} input - Listen options passed to Server.listen (hostname/port/etc).
+   * @returns {Promise<Object>} { url } the server is listening on.
+   */
   async server(input) {
     if (server) await server.stop(true);
     server = await Server.listen(input);
@@ -49,6 +72,11 @@ export const rpc = {
       url: server.url.toString()
     };
   },
+  /**
+   * Run the upgrade check within an instance scoped to the given directory (errors swallowed).
+   * @param {Object} input - { directory } the instance should be loaded for.
+   * @returns {Promise<void>}
+   */
   async checkUpgrade(input) {
     await WithInstance.provide({
       directory: input.directory,
@@ -57,6 +85,10 @@ export const rpc = {
       }
     });
   },
+  /**
+   * Invalidate config and dispose all instances, emitting the global "disposed" event.
+   * @returns {Promise<void>}
+   */
   async reload() {
     await AppRuntime.runPromise(Effect.gen(function* () {
       const cfg = yield* Config.Service;
@@ -66,12 +98,20 @@ export const rpc = {
       });
     }));
   },
+  /**
+   * Dispose all instances and stop the server in preparation for worker exit.
+   * @returns {Promise<void>}
+   */
   async shutdown() {
     Log.Default.info("worker shutting down");
     await InstanceRuntime.disposeAllInstances();
     if (server) await server.stop(true);
   }
 };
+/**
+ * Build the Basic Authorization header value from the configured server credentials.
+ * @returns {string} A "Basic <base64>" header value, or undefined when no password is set.
+ */
 function getAuthorizationHeader() {
   const password = Flag.CLOSEDCODE_SERVER_PASSWORD;
   if (!password) return undefined;

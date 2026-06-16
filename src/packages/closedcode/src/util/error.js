@@ -1,4 +1,17 @@
+/** @file Helpers for normalizing arbitrary thrown values into readable text and structured data. */
+
 import { isRecord } from "./record.js";
+
+/**
+ * Render an arbitrary error value as a human-readable string.
+ *
+ * For `Error` instances prefers the stack, falling back to `name: message`.
+ * Plain objects are JSON-stringified (with a fallback message when not
+ * serializable). Everything else is coerced via `String`.
+ *
+ * @param {*} error - The thrown value to format.
+ * @returns {string} A readable representation of `error`.
+ */
 export function errorFormat(error) {
   if (error instanceof Error) {
     return error.stack ?? `${error.name}: ${error.message}`;
@@ -12,6 +25,17 @@ export function errorFormat(error) {
   }
   return String(error);
 }
+/**
+ * Extract the most meaningful message from an arbitrary error value.
+ *
+ * Checks, in order: an `Error`'s `message` then `name`; a record's `message`
+ * or nested `data.message`; the `String` coercion (unless it is the unhelpful
+ * `"[object Object]"`); and finally the formatted form. Returns
+ * `"unknown error"` when nothing usable is found.
+ *
+ * @param {*} error - The thrown value to extract a message from.
+ * @returns {string} The best available message string.
+ */
 export function errorMessage(error) {
   if (error instanceof Error) {
     if (error.message) return error.message;
@@ -29,6 +53,18 @@ export function errorMessage(error) {
   if (formatted && formatted !== "{}") return formatted;
   return "unknown error";
 }
+/**
+ * Convert an arbitrary error value into a flat, serializable data record.
+ *
+ * For `Error` instances returns `{ type, message, stack, cause, formatted }`.
+ * For non-records returns `{ type, message, formatted }`. For other records,
+ * copies own enumerable properties (stringifying non-primitive values, using
+ * `.message` for nested `Error`s) and backfills `message`, `type`, and
+ * `formatted`.
+ *
+ * @param {*} error - The thrown value to describe.
+ * @returns {Object} A plain object capturing the error's relevant fields.
+ */
 export function errorData(error) {
   if (error instanceof Error) {
     return {
@@ -62,6 +98,13 @@ export function errorData(error) {
   data.formatted = errorFormatted(error);
   return data;
 }
+/**
+ * Format an error, falling back to its `String` coercion when the formatted
+ * form is just an empty object (`"{}"`).
+ *
+ * @param {*} error - The thrown value to format.
+ * @returns {string} The formatted representation, or the `String` coercion.
+ */
 function errorFormatted(error) {
   const formatted = errorFormat(error);
   if (formatted !== "{}") return formatted;

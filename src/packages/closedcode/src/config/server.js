@@ -1,6 +1,14 @@
+/**
+ * @file Effect schema for the HTTP server config: listen port/hostname, mDNS
+ * service discovery, and additional allowed CORS domains.
+ * @module closedcode/config/server
+ */
+
 import { Schema } from "effect";
 import { zod } from "#util/effect-zod.js";
 import { PositiveInt, withStatics } from "#util/schema.js";
+
+/** Schema for the server config: listen address, mDNS discovery, and CORS allowances. */
 export const Server = Schema.Struct({
   port: Schema.optional(PositiveInt).annotate({
     description: "Port to listen on"

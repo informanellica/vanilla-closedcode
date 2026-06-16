@@ -1,3 +1,4 @@
+/** @file Defines the "webfetch" tool, which fetches a URL over HTTP and returns its content as text, markdown, or html (with image handling and bot-detection retry). */
 import { assetText } from "#util/asset.js";
 import { Effect, Schema } from "effect";
 import { HttpClient, HttpClientRequest } from "effect/unstable/http";
@@ -9,6 +10,7 @@ const MAX_RESPONSE_SIZE = 5 * 1024 * 1024; // 5MB
 const DEFAULT_TIMEOUT = 30 * 1000; // 30 seconds
 const MAX_TIMEOUT = 120 * 1000; // 2 minutes
 
+/** Schema for the webfetch tool parameters: url, output format (text/markdown/html, default markdown), and optional timeout in seconds. */
 export const Parameters = Schema.Struct({
   url: Schema.String.annotate({
     description: "The URL to fetch content from"
@@ -20,6 +22,12 @@ export const Parameters = Schema.Struct({
     description: "Optional timeout in seconds (max 120)"
   })
 });
+/**
+ * The "webfetch" tool. Validates the URL scheme, requests permission, fetches
+ * the URL with a format-aware Accept header (retrying with an honest UA when
+ * blocked by Cloudflare), enforces a 5MB response cap and timeout, and returns
+ * the body in the requested format. Images are returned as a base64 data-URL attachment.
+ */
 export const WebFetchTool = Tool.define("webfetch", Effect.gen(function* () {
   const http = yield* HttpClient.HttpClient;
   const httpOk = HttpClient.filterStatusOk(http);
@@ -146,6 +154,12 @@ export const WebFetchTool = Tool.define("webfetch", Effect.gen(function* () {
     }).pipe(Effect.orDie)
   };
 }));
+/**
+ * Extracts visible text from an HTML document, stripping content inside
+ * script, style, noscript, iframe, object, and embed elements.
+ * @param {string} html - The raw HTML source.
+ * @returns {Promise<string>} The trimmed concatenated text content.
+ */
 async function extractTextFromHTML(html) {
   let text = "";
   let skipContent = false;
@@ -172,6 +186,12 @@ async function extractTextFromHTML(html) {
   await rewriter.text();
   return text.trim();
 }
+/**
+ * Converts an HTML document to Markdown using Turndown, removing script,
+ * style, meta, and link elements.
+ * @param {string} html - The raw HTML source.
+ * @returns {string} The Markdown rendering of the HTML.
+ */
 function convertHTMLToMarkdown(html) {
   const turndownService = new TurndownService({
     headingStyle: "atx",

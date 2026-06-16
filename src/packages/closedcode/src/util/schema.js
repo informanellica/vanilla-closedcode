@@ -1,3 +1,4 @@
+/** @file Reusable Effect Schema building blocks: numeric refinements, optional-key handling, static-method attachment, and nominal newtypes. */
 import { Option, Schema, SchemaGetter } from "effect";
 import { zod, ZodOverride } from "./effect-zod.js";
 
@@ -14,6 +15,9 @@ export const NonNegativeInt = Schema.Int.check(Schema.isGreaterThanOrEqualTo(0))
 /**
  * Optional public JSON field that can hold explicit `undefined` on the type
  * side but encodes it as an omitted key, matching legacy `JSON.stringify`.
+ *
+ * @param {Schema} schema - The inner schema describing the field's value.
+ * @returns {Schema} An optional-key schema that decodes a missing key as `undefined` and encodes `undefined` back to a missing key.
  */
 export const optionalOmitUndefined = schema => Schema.optionalKey(schema).pipe(Schema.decodeTo(Schema.optional(schema), {
   decode: SchemaGetter.passthrough({
@@ -53,6 +57,9 @@ export const optionalOmitUndefined = schema => Schema.optionalKey(schema).pipe(S
  *       from: Schema.decodeUnknownOption(schema),
  *     }))
  *   )
+ *
+ * @param {Function} methods - Factory that receives the schema and returns an object of static members to attach.
+ * @returns {Function} A pipe-able transform `(schema) => schema` that mutates the schema in place with the produced members.
  */
 export const withStatics = methods => schema => Object.assign(schema, methods(schema));
 
@@ -74,8 +81,15 @@ export const withStatics = methods => schema => Object.assign(schema, methods(sc
  *   }
  *
  *   Schema.decodeEffect(QuestionID)(input)
+ *
+ * @returns {Function} A curried factory `(tag, schema) => Base` producing a newtype class wrapping the given schema.
  */
 export function Newtype() {
+  /**
+   * @param {string} tag - Identifier tag for the nominal newtype.
+   * @param {Schema} schema - The underlying scalar schema being wrapped.
+   * @returns {Function} A class whose prototype is the schema and whose `make` returns the raw value.
+   */
   return (tag, schema) => {
     class Base {
       static make(value) {

@@ -1,3 +1,7 @@
+/**
+ * @file Local HTTP server that receives MCP OAuth redirect callbacks, validates
+ * the CSRF state, and resolves the pending authorization with the returned code.
+ */
 import { createConnection } from "net";
 import { createServer } from "http";
 import * as Log from "core/util/log";
@@ -9,6 +13,7 @@ const log = Log.create({
 // Current callback server configuration (may differ from defaults if custom redirectUri is used)
 let currentPort = OAUTH_CALLBACK_PORT;
 let currentPath = OAUTH_CALLBACK_PATH;
+/** HTML page shown in the browser when authorization succeeds (auto-closes the window). */
 const HTML_SUCCESS = `<!DOCTYPE html>
 <html>
 <head>
@@ -28,6 +33,11 @@ const HTML_SUCCESS = `<!DOCTYPE html>
   <script>setTimeout(() => window.close(), 2000);</script>
 </body>
 </html>`;
+/**
+ * Build the HTML error page shown in the browser when authorization fails.
+ * @param {string} error - Error message to display.
+ * @returns {string} The HTML document.
+ */
 const HTML_ERROR = error => `<!DOCTYPE html>
 <html>
 <head>
@@ -55,6 +65,11 @@ const pendingAuths = new Map();
 const mcpNameToState = new Map();
 const CALLBACK_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
+/**
+ * Remove the reverse-index entry (mcpName to oauthState) that maps to the given state.
+ * @param {string} oauthState - The OAuth CSRF state to purge from the reverse index.
+ * @returns {void}
+ */
 function cleanupStateIndex(oauthState) {
   for (const [name, state] of mcpNameToState) {
     if (state === oauthState) {
@@ -63,6 +78,13 @@ function cleanupStateIndex(oauthState) {
     }
   }
 }
+/**
+ * Handle an incoming OAuth callback HTTP request: validate path/state/error, then
+ * resolve or reject the matching pending authorization and render a result page.
+ * @param {Object} req - Node HTTP request.
+ * @param {Object} res - Node HTTP response.
+ * @returns {void}
+ */
 function handleRequest(req, res) {
   const url = new URL(req.url || "/", `http://localhost:${currentPort}`);
   if (url.pathname !== currentPath) {
@@ -138,6 +160,12 @@ function handleRequest(req, res) {
   });
   res.end(HTML_SUCCESS);
 }
+/**
+ * Ensure the callback HTTP server is running, (re)configuring its port/path from the
+ * redirect URI; no-ops if another instance already owns the port.
+ * @param {string} redirectUri - Optional redirect URI overriding the default port/path.
+ * @returns {Promise<void>} Resolves once the server is listening (or skipped).
+ */
 export async function ensureRunning(redirectUri) {
   // Parse the redirect URI to get port and path (uses defaults if not provided)
   const {
@@ -175,6 +203,13 @@ export async function ensureRunning(redirectUri) {
     server.on("error", reject);
   });
 }
+/**
+ * Register a pending authorization keyed by CSRF state and return a promise that
+ * resolves with the authorization code (or rejects on timeout/error).
+ * @param {string} oauthState - The expected OAuth CSRF state.
+ * @param {string} mcpName - Optional MCP server name to index for cancellation.
+ * @returns {Promise<string>} Resolves with the authorization code.
+ */
 export function waitForCallback(oauthState, mcpName) {
   if (mcpName) mcpNameToState.set(mcpName, oauthState);
   return new Promise((resolve, reject) => {
@@ -192,6 +227,11 @@ export function waitForCallback(oauthState, mcpName) {
     });
   });
 }
+/**
+ * Cancel a pending authorization for an MCP server, rejecting its waiter.
+ * @param {string} mcpName - MCP server name whose pending auth should be cancelled.
+ * @returns {void}
+ */
 export function cancelPending(mcpName) {
   // Look up the oauthState for this mcpName via the reverse index
   const oauthState = mcpNameToState.get(mcpName);
@@ -204,6 +244,11 @@ export function cancelPending(mcpName) {
     pending.reject(new Error("Authorization cancelled"));
   }
 }
+/**
+ * Check whether a TCP port is already accepting connections on localhost.
+ * @param {number} port - Port to probe (defaults to OAUTH_CALLBACK_PORT).
+ * @returns {Promise<boolean>} True if something is listening on the port.
+ */
 export async function isPortInUse(port = OAUTH_CALLBACK_PORT) {
   return new Promise(resolve => {
     const socket = createConnection(port, "127.0.0.1");
@@ -216,6 +261,10 @@ export async function isPortInUse(port = OAUTH_CALLBACK_PORT) {
     });
   });
 }
+/**
+ * Stop the callback server (if running) and reject all pending authorizations.
+ * @returns {Promise<void>} Resolves once the server is closed and state is cleared.
+ */
 export async function stop() {
   if (server) {
     await new Promise(resolve => server.close(() => resolve()));
@@ -229,6 +278,10 @@ export async function stop() {
   pendingAuths.clear();
   mcpNameToState.clear();
 }
+/**
+ * Report whether the callback server is currently running.
+ * @returns {boolean} True if the server is active.
+ */
 export function isRunning() {
   return server !== undefined;
 }

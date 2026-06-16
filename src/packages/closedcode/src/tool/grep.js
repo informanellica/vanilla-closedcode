@@ -1,3 +1,4 @@
+/** @file "grep"/"search" tool: regex content search across files (via ripgrep), returning matches grouped by file and sorted by modification time. */
 import { assetText } from "#util/asset.js";
 import path from "path";
 import { Schema } from "effect";
@@ -9,6 +10,10 @@ import { assertExternalDirectoryEffect } from "./external-directory.js";
 const DESCRIPTION = assetText("tool/grep.txt");
 import * as Tool from "./tool.js";
 const MAX_LINE_LENGTH = 2000;
+/**
+ * Parameter schema for the grep tool: the required regex `pattern`, an optional `path` to search in,
+ * and an optional `include` glob to limit which files are scanned.
+ */
 export const Parameters = Schema.Struct({
   pattern: Schema.String.annotate({
     description: "The regex pattern to search for in file contents"
@@ -22,6 +27,12 @@ export const Parameters = Schema.Struct({
 });
 // Shared with tool/search.js: some models insist on a `search` tool for code
 // search, so the same implementation is exposed under both ids.
+/**
+ * Shared grep/search tool definition Effect. Resolves the search target (file or directory),
+ * asks for grep/external-directory permission, runs the ripgrep search, collects file modification
+ * times concurrently, sorts matches newest-first, truncates to 100, and formats the matches grouped
+ * by file (long lines clamped to MAX_LINE_LENGTH).
+ */
 export const GrepDefinition = Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const rg = yield* Ripgrep.Service;
@@ -122,4 +133,5 @@ export const GrepDefinition = Effect.gen(function* () {
     }).pipe(Effect.orDie)
   };
 });
+/** The "grep" tool, built from the shared {@link GrepDefinition} (also re-exposed as "search" in tool/search.js). */
 export const GrepTool = Tool.define("grep", GrepDefinition);

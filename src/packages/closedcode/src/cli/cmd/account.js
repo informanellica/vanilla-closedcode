@@ -1,3 +1,4 @@
+/** @file CLI `console` subcommands for managing accounts: login (device-code flow), logout, org switch/list, and open. */
 import { cmd } from "./cmd.js";
 import { Duration, Effect, Match, Option } from "effect";
 import { UI } from "../ui.js";
@@ -6,18 +7,69 @@ import { PollExpired } from "#account/schema.js";
 import { effectCmd } from "../effect-cmd.js";
 import * as Prompt from "../effect/prompt.js";
 import open from "open";
+/**
+ * Open a URL in the default browser, swallowing any failure.
+ * @param {string} url - URL to open.
+ * @returns {Effect} Effect that resolves regardless of whether opening succeeded.
+ */
 const openBrowser = url => Effect.promise(() => open(url).catch(() => undefined));
+/**
+ * Print a line to the UI inside an Effect.
+ * @param {string} msg - Message to print.
+ * @returns {Effect} Effect that writes the line.
+ */
 const println = msg => Effect.sync(() => UI.println(msg));
+/**
+ * Wrap a value in dim styling escape codes.
+ * @param {string} value - Text to dim.
+ * @returns {string} The text surrounded by dim/normal style codes.
+ */
 const dim = value => UI.Style.TEXT_DIM + value + UI.Style.TEXT_NORMAL;
+/**
+ * Produce a dimmed " (active)" suffix when a row is the active selection.
+ * @param {boolean} isActive - Whether the item is currently active.
+ * @returns {string} The suffix, or an empty string when not active.
+ */
 const activeSuffix = isActive => isActive ? dim(" (active)") : "";
+/**
+ * Format a one-line label for an account (email + dimmed URL + optional active suffix).
+ * @param {{email: string, url: string}} account - Account to label.
+ * @param {boolean} isActive - Whether this account is currently active.
+ * @returns {string} The formatted label.
+ */
 export const formatAccountLabel = (account, isActive) => `${account.email} ${dim(account.url)}${activeSuffix(isActive)}`;
+/**
+ * Format a select-choice label for an org within an account.
+ * @param {{email: string}} account - Owning account.
+ * @param {{name: string}} org - Org being labeled.
+ * @param {boolean} isActive - Whether this org is currently active.
+ * @returns {string} The formatted choice label.
+ */
 const formatOrgChoiceLabel = (account, org, isActive) => `${org.name} (${account.email})${activeSuffix(isActive)}`;
+/**
+ * Format a listing line for an org, with an active-marker dot and styled name plus dimmed metadata.
+ * @param {{email: string, url: string}} account - Owning account.
+ * @param {{name: string, id: string}} org - Org being listed.
+ * @param {boolean} isActive - Whether this org is currently active.
+ * @returns {string} The formatted listing line.
+ */
 export const formatOrgLine = (account, org, isActive) => {
   const dot = isActive ? UI.Style.TEXT_SUCCESS + "●" + UI.Style.TEXT_NORMAL : " ";
   const name = isActive ? UI.Style.TEXT_HIGHLIGHT_BOLD + org.name + UI.Style.TEXT_NORMAL : org.name;
   return `  ${dot} ${name}  ${dim(account.email)}  ${dim(account.url)}  ${dim(org.id)}`;
 };
+/**
+ * Determine whether a given account/org choice matches the currently active account and org.
+ * @param {Option} active - Option of the active account (with `id` and `active_org_id`).
+ * @param {{accountID: string, orgID: string}} choice - Candidate account/org pair.
+ * @returns {boolean} True when the choice is the active account and org.
+ */
 const isActiveOrgChoice = (active, choice) => Option.isSome(active) && active.value.id === choice.accountID && active.value.active_org_id === choice.orgID;
+/**
+ * Run the device-code login flow: request a code, prompt the user, poll until authorized/expired, and report the result.
+ * @param {string} url - Server URL to log in against.
+ * @returns {Effect} Effect that drives the interactive login and prints the outcome.
+ */
 const loginEffect = Effect.fn("login")(function* (url) {
   const service = yield* Account.Service;
   yield* Prompt.intro("Log in");
@@ -27,6 +79,11 @@ const loginEffect = Effect.fn("login")(function* (url) {
   yield* openBrowser(login.url);
   const s = Prompt.spinner();
   yield* s.start("Waiting for authorization...");
+  /**
+   * Recursively poll the authorization endpoint, backing off by 5s when the server signals "slow down".
+   * @param {Duration} wait - Delay before the next poll attempt.
+   * @returns {Effect} Effect yielding the terminal poll result (success/denied/error/expired).
+   */
   const poll = wait => Effect.gen(function* () {
     yield* Effect.sleep(wait);
     const result = yield* service.poll(login);
@@ -47,6 +104,11 @@ const loginEffect = Effect.fn("login")(function* (url) {
     PollSlow: () => s.stop("Unexpected state", 1)
   });
 });
+/**
+ * Log out of an account: remove the named account directly, or prompt the user to pick one when no email is given.
+ * @param {string} email - Optional email of the account to log out from; if omitted, prompts interactively.
+ * @returns {Effect} Effect that performs the logout and prints the outcome.
+ */
 const logoutEffect = Effect.fn("logout")(function* (email) {
   const service = yield* Account.Service;
   const accounts = yield* service.list();
@@ -76,6 +138,10 @@ const logoutEffect = Effect.fn("logout")(function* (email) {
   yield* service.remove(selected.value.id);
   yield* Prompt.outro("Logged out from " + selected.value.email);
 });
+/**
+ * Prompt the user to select an org across all logged-in accounts and switch the active org to it.
+ * @returns {Effect} Effect that performs the org switch and prints the outcome.
+ */
 const switchEffect = Effect.fn("switch")(function* () {
   const service = yield* Account.Service;
   const groups = yield* service.orgsByAccount();
@@ -106,6 +172,10 @@ const switchEffect = Effect.fn("switch")(function* () {
   yield* service.use(choice.accountID, Option.some(choice.orgID));
   yield* Prompt.outro("Switched to " + choice.label);
 });
+/**
+ * List every org across all logged-in accounts, marking the active one.
+ * @returns {Effect} Effect that prints the org listing.
+ */
 const orgsEffect = Effect.fn("orgs")(function* () {
   const service = yield* Account.Service;
   const groups = yield* service.orgsByAccount();
@@ -122,6 +192,10 @@ const orgsEffect = Effect.fn("orgs")(function* () {
     }
   }
 });
+/**
+ * Open the active account's server URL in the browser.
+ * @returns {Effect} Effect that opens the URL or reports that no account is active.
+ */
 const openEffect = Effect.fn("open")(function* () {
   const service = yield* Account.Service;
   const active = yield* service.active();
@@ -130,6 +204,7 @@ const openEffect = Effect.fn("open")(function* () {
   yield* openBrowser(url);
   yield* Prompt.outro("Opened " + url);
 });
+/** CLI command: `login <url>` — runs the interactive device-code login flow. */
 export const LoginCommand = effectCmd({
   command: "login <url>",
   describe: false,
@@ -144,6 +219,7 @@ export const LoginCommand = effectCmd({
     yield* Effect.orDie(loginEffect(args.url));
   })
 });
+/** CLI command: `logout [email]` — logs out from a named or interactively selected account. */
 export const LogoutCommand = effectCmd({
   command: "logout [email]",
   describe: false,
@@ -157,6 +233,7 @@ export const LogoutCommand = effectCmd({
     yield* Effect.orDie(logoutEffect(args.email));
   })
 });
+/** CLI command: `switch` — interactively switches the active org. */
 export const SwitchCommand = effectCmd({
   command: "switch",
   describe: false,
@@ -166,6 +243,7 @@ export const SwitchCommand = effectCmd({
     yield* Effect.orDie(switchEffect());
   })
 });
+/** CLI command: `orgs` — lists all orgs across logged-in accounts. */
 export const OrgsCommand = effectCmd({
   command: "orgs",
   describe: false,
@@ -175,6 +253,7 @@ export const OrgsCommand = effectCmd({
     yield* Effect.orDie(orgsEffect());
   })
 });
+/** CLI command: `open` — opens the active account's URL in the browser. */
 export const OpenCommand = effectCmd({
   command: "open",
   describe: false,
@@ -184,6 +263,7 @@ export const OpenCommand = effectCmd({
     yield* Effect.orDie(openEffect());
   })
 });
+/** CLI command: `console` — parent command grouping the account login/logout/switch/orgs/open subcommands. */
 export const ConsoleCommand = cmd({
   command: "console",
   describe: false,

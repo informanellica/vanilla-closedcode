@@ -7,13 +7,18 @@
 // Everything IO is injectable so this is unit-testable under bare node:
 //   - opts.suspend(fn): run fn() with the TUI suspended (defaults to calling fn directly)
 //   - opts.spawn / opts.editor / opts.tmpdir / opts.fs: override the child + paths
+/** @file External-editor support for the vanilla TUI prompt: open $VISUAL/$EDITOR on the current prompt text and read it back on exit. All IO is injectable so it is unit-testable under bare node. */
 import nodeFs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawn as nodeSpawn } from "node:child_process";
 
-// Split a command string into argv, honoring simple double-quoted segments
-// (e.g. EDITOR='code --wait' -> ["code", "--wait"]).
+/**
+ * Split a command string into argv, honoring simple double-quoted segments
+ * (e.g. EDITOR='code --wait' -> ["code", "--wait"]).
+ * @param {string} cmd - The command string.
+ * @returns {Array<string>} The argv tokens.
+ */
 export function splitCommand(cmd) {
   const out = [];
   const re = /"([^"]*)"|(\S+)/g;
@@ -22,13 +27,33 @@ export function splitCommand(cmd) {
   return out;
 }
 
-// Resolve the editor command (VISUAL > EDITOR > platform default).
+/**
+ * Resolve the editor command (VISUAL > EDITOR > platform default).
+ * @param {Object} [env] - Environment map (defaults to process.env).
+ * @param {string} [platform] - Platform id (defaults to process.platform); "win32" picks notepad, else vi.
+ * @returns {string} The resolved editor command string.
+ */
 export function resolveEditor(env = process.env, platform = process.platform) {
   return env.VISUAL || env.EDITOR || (platform === "win32" ? "notepad" : "vi");
 }
 
-// Edit `initial` in the external editor; resolves to the edited text (or the
-// original on any failure). Removes the temp file afterward. Never throws.
+/**
+ * Edit `initial` in the external editor; resolves to the edited text (or the
+ * original on any failure). Removes the temp file afterward. Never throws.
+ * A non-zero editor exit code is treated as "discard edits" (git $EDITOR convention).
+ * @param {string} [initial] - The initial text to stage into the temp file.
+ * @param {Object} [opts] - Injectable IO/overrides.
+ * @param {Object} [opts.fs] - File system module (defaults to node:fs).
+ * @param {Function} [opts.spawn] - Child-process spawn (defaults to node:child_process spawn).
+ * @param {Function} [opts.suspend] - Runs fn() with the TUI suspended (defaults to calling fn directly).
+ * @param {string} [opts.editor] - Editor command (defaults to resolveEditor()).
+ * @param {Object} [opts.env] - Environment for resolveEditor.
+ * @param {string} [opts.platform] - Platform for resolveEditor.
+ * @param {string} [opts.tmpdir] - Temp directory (defaults to os.tmpdir()).
+ * @param {string} [opts.filename] - Temp file name override.
+ * @param {*} [opts.stamp] - Deterministic stamp for the temp filename (tests).
+ * @returns {Promise<string>} The edited text (CRLF/CR normalized to LF), or `initial` on any failure.
+ */
 export async function editInEditor(initial = "", opts = {}) {
   const fs = opts.fs ?? nodeFs;
   const spawn = opts.spawn ?? nodeSpawn;
@@ -43,6 +68,8 @@ export async function editInEditor(initial = "", opts = {}) {
     return initial; // can't stage the temp file — leave the prompt untouched
   }
 
+  // Spawn the editor on the temp file and resolve with its exit code (1 on
+  // spawn failure / "error"); stdio is inherited so the editor owns the TTY.
   const run = () => new Promise((resolve) => {
     const [bin, ...args] = splitCommand(editor);
     if (!bin) { resolve(0); return; }
@@ -73,8 +100,12 @@ export async function editInEditor(initial = "", opts = {}) {
   }
 }
 
-// A monotonic-ish stamp for the temp filename. opts.stamp lets tests pin it
-// (Date.now() is avoided so the module stays deterministic where it matters).
+/**
+ * A monotonic-ish stamp for the temp filename. opts.stamp lets tests pin it
+ * (Date.now() is avoided so the module stays deterministic where it matters).
+ * @param {Object} opts - Options; opts.stamp pins the value when provided.
+ * @returns {string} The stamp string (hrtime nanoseconds or pid).
+ */
 function stamp(opts) {
   if (opts.stamp != null) return String(opts.stamp);
   return String(process.hrtime ? process.hrtime.bigint() : process.pid);

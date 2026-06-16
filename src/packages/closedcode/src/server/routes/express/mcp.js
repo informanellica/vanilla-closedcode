@@ -1,3 +1,4 @@
+/** @file Express route group for the instance /mcp endpoints (MCP server management and OAuth). */
 // Express route group for the instance /mcp endpoints (MCP server management and OAuth).
 import express from "express";
 import { Effect } from "effect";
@@ -11,6 +12,11 @@ import { errors } from "../../express/errors.js";
 import { paramToAttributeKey } from "../instance/trace.js";
 
 // OTel span attributes for an Express request; mirrors trace.js requestAttributes.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -23,11 +29,26 @@ function requestAttributes(req) {
 }
 
 // Wraps an Effect in a span carrying the request attributes and runs it through AppRuntime.
+/**
+ * Wraps an Effect in a span carrying the request attributes and runs it through AppRuntime.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Effect} effect - The Effect to run inside the span.
+ * @returns {Promise<*>} A promise resolving to the Effect's result.
+ */
 function runRequest(name, req, effect) {
   return AppRuntime.runPromise(effect.pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })));
 }
 
 // Runs an Effect generator through runRequest and writes the result as JSON.
+/**
+ * Runs an Effect generator through runRequest and writes the resolved value as JSON.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} fn - A function returning an Effect generator to run.
+ * @returns {Promise<void>} Resolves once the response JSON has been written.
+ */
 async function jsonRequest(name, req, res, fn) {
   res.json(await runRequest(name, req, Effect.gen(() => fn())));
 }
@@ -47,6 +68,11 @@ const unsupportedOAuthErrorResponse = {
   },
 };
 
+/**
+ * Builds the Express router for the /mcp route group (MCP server status/add/connect/disconnect and OAuth flows).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function McpRoutes(registry) {
   const router = express.Router();
 

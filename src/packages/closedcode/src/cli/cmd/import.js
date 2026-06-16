@@ -1,3 +1,4 @@
+/** @file CLI `import` command: ingests a session from a local JSON file or a share URL into the local database. */
 import { Session } from "#session/session.js";
 import { MessageV2 } from "../../session/message-v2.js";
 import { CliError, effectCmd } from "../effect-cmd.js";
@@ -12,11 +13,21 @@ const decodePart = Schema.decodeUnknownSync(MessageV2.Part);
 
 /** Discriminated union returned by the ShareNext API (GET /api/shares/:id/data) */
 
-/** Extract share ID from a share URL like https://share.example.com/share/abc123 */
+/**
+ * Extract share ID from a share URL like https://share.example.com/share/abc123
+ * @param {string} url - The full share URL.
+ * @returns {string} The extracted share slug, or null when the URL does not match the expected shape.
+ */
 export function parseShareUrl(url) {
   const match = url.match(/^https?:\/\/[^/]+\/share\/([a-zA-Z0-9_-]+)$/);
   return match ? match[1] : null;
 }
+/**
+ * Decide whether the account's auth headers should be sent to the share URL (only when same-origin).
+ * @param {string} shareUrl - The share URL being fetched.
+ * @param {string} accountBaseUrl - The configured account/share service base URL.
+ * @returns {boolean} True when both URLs share the same origin, false on mismatch or parse error.
+ */
 export function shouldAttachShareAuthHeaders(shareUrl, accountBaseUrl) {
   try {
     return new URL(shareUrl).origin === new URL(accountBaseUrl).origin;
@@ -32,6 +43,9 @@ export function shouldAttachShareAuthHeaders(shareUrl, accountBaseUrl) {
  * Local storage expects: { info: session, messages: [{ info: message, parts: [part, ...] }, ...] }
  *
  * This groups parts by their messageID to reconstruct the hierarchy before writing to disk.
+ *
+ * @param {Array} shareData - Flat list of share items, each `{type, data}` where type is "session", "message", or "part".
+ * @returns {Object} The nested `{info, messages}` structure, or null when no session/messages are present.
  */
 export function transformShareData(shareData) {
   const sessionItem = shareData.find(d => d.type === "session");
@@ -57,6 +71,7 @@ export function transformShareData(shareData) {
     }))
   };
 }
+/** `import <file>` command definition: imports session data from a local JSON file path or a share URL. */
 export const ImportCommand = effectCmd({
   command: "import <file>",
   describe: "import session data from JSON file or URL",
@@ -71,6 +86,12 @@ export const ImportCommand = effectCmd({
     return yield* runImport(args.file, ctx.project.id);
   })
 });
+/**
+ * Load session data from a file path or share URL and upsert the session, its messages, and parts into the database.
+ * @param {string} file - Local JSON file path or a share URL (http/https).
+ * @param {string} projectID - Project id to associate the imported session with.
+ * @returns {Effect} An Effect that performs the import and writes a status line to stdout.
+ */
 const runImport = Effect.fn("Cli.import.body")(function* (file, projectID) {
   const share = yield* ShareNext.Service;
   let exportData;

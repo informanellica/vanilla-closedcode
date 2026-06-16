@@ -13,15 +13,35 @@
 // Escape goes manager.onEscape -> close -> onClose -> resolve(undefined). Earlier,
 // a finish() that both resolved AND called close from inside onClose popped two
 // layers on a single Escape when dialogs were stacked.
+/** @file Promise-returning dialog families (select / confirm / alert / prompt) for the vanilla TUI, bound to the shell's dialog manager. */
 import { createSignal } from "../runtime/reactivity.js";
 import { createTextInput } from "../runtime/input.js";
 import { createSelectList } from "../runtime/list.js";
 import { wordWrap, fit, truncate } from "../runtime/text.js";
 import { attr, defaultTheme } from "./theme.js";
 
+/**
+ * Normalize an option to { label, value }; a bare string becomes both.
+ * @param {string|Object} o - A string or an option object.
+ * @returns {Object} The normalized option { label, value, ... }.
+ */
 const normalizeOption = o => (typeof o === "string" ? { label: o, value: o } : o);
 
-// Filtered single-select. Resolves with the chosen option (or undefined on esc).
+/**
+ * Open a filtered single-select dialog.
+ * @param {Object} dialog - The shell dialog manager (open/close).
+ * @param {Object} [opts] - Options.
+ * @param {Object} [opts.theme] - Theme used for attributes.
+ * @param {boolean} [opts.filter] - Whether to show the filter input (default true).
+ * @param {number} [opts.maxRows] - Max visible rows / page step (default 10).
+ * @param {Array} [opts.options] - Options (strings or { label, value, category }).
+ * @param {Function} [opts.onSelect] - Called with the chosen option after this dialog closes.
+ * @param {Function} [opts.now] - Clock injected into the select list.
+ * @param {string} [opts.placeholder] - Filter input placeholder.
+ * @param {string} [opts.title] - Dialog title.
+ * @param {number} [opts.width] - Dialog width.
+ * @returns {Promise<Object>} Resolves with the chosen option, or undefined on escape/dismiss.
+ */
 export function select(dialog, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const filterOn = opts.filter !== false;
@@ -32,6 +52,11 @@ export function select(dialog, opts = {}) {
     let result; // undefined = escaped/dismissed
     const resolveOnce = () => { if (done) return; done = true; resolve(result); };
     const filterInput = filterOn ? createTextInput("", { onChange: () => list.setActive(0) }) : null;
+    /**
+     * The options matching the current filter query: prefix matches first, then
+     * substring matches over label + category. Returns all options when unfiltered.
+     * @returns {Array} The filtered option list.
+     */
     function filtered() {
       if (!filterInput) return options;
       const q = filterInput.value().toLowerCase();
@@ -80,7 +105,18 @@ export function select(dialog, opts = {}) {
   });
 }
 
-// Yes/No. Resolves true (confirm) / false (cancel) / undefined (escape).
+/**
+ * Open a yes/no confirmation dialog.
+ * @param {Object} dialog - The shell dialog manager (open/close).
+ * @param {Object} [opts] - Options.
+ * @param {Object} [opts.theme] - Theme used for attributes.
+ * @param {string} [opts.confirmLabel] - Confirm button label (default "Confirm").
+ * @param {string} [opts.cancelLabel] - Cancel button label (default "Cancel").
+ * @param {string} [opts.message] - Body message.
+ * @param {string} [opts.title] - Dialog title.
+ * @param {number} [opts.width] - Dialog width.
+ * @returns {Promise<boolean>} Resolves true (confirm), false (cancel), or undefined (escape).
+ */
 export function confirm(dialog, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const confirmLabel = opts.confirmLabel ?? "Confirm";
@@ -111,7 +147,16 @@ export function confirm(dialog, opts = {}) {
   });
 }
 
-// Message + dismiss (Enter/Esc). Resolves when closed.
+/**
+ * Open an alert dialog: a message dismissed with Enter or Esc.
+ * @param {Object} dialog - The shell dialog manager (open/close).
+ * @param {Object} [opts] - Options.
+ * @param {Object} [opts.theme] - Theme used for attributes.
+ * @param {string} [opts.message] - Body message.
+ * @param {string} [opts.title] - Dialog title.
+ * @param {number} [opts.width] - Dialog width.
+ * @returns {Promise<void>} Resolves when the dialog is closed.
+ */
 export function alert(dialog, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const message = opts.message ?? "";
@@ -131,7 +176,18 @@ export function alert(dialog, opts = {}) {
   });
 }
 
-// Single-line text prompt. Resolves with the entered string (or undefined).
+/**
+ * Open a single-line text prompt dialog.
+ * @param {Object} dialog - The shell dialog manager (open/close).
+ * @param {Object} [opts] - Options.
+ * @param {Object} [opts.theme] - Theme used for attributes.
+ * @param {string} [opts.initial] - Initial input value.
+ * @param {string} [opts.message] - Optional prompt message shown above the input.
+ * @param {string} [opts.placeholder] - Input placeholder.
+ * @param {string} [opts.title] - Dialog title.
+ * @param {number} [opts.width] - Dialog width.
+ * @returns {Promise<string>} Resolves with the entered string, or undefined on escape.
+ */
 export function prompt(dialog, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   return new Promise(resolve => {

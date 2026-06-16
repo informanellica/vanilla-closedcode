@@ -1,3 +1,5 @@
+/** @file Maps file extensions to LSP language identifiers. */
+/** Lookup table from file extension (including the leading dot) to its LSP languageId. */
 export const LANGUAGE_EXTENSIONS = {
   ".abap": "abap",
   ".bat": "bat",

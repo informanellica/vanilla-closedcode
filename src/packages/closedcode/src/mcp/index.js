@@ -1,3 +1,8 @@
+/**
+ * @file MCP service: connects to configured Model Context Protocol servers
+ * (remote HTTP/SSE with OAuth, or local stdio), exposes their tools/prompts/
+ * resources to the AI SDK, and drives the OAuth authentication flow.
+ */
 import { dynamicTool, jsonSchema } from "ai";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -30,6 +35,7 @@ const log = Log.create({
   service: "mcp"
 });
 const DEFAULT_TIMEOUT = 30_000;
+/** Schema describing an MCP resource exposed by a connected client. */
 export const Resource = Schema.Struct({
   name: Schema.String,
   uri: Schema.String,
@@ -41,13 +47,16 @@ export const Resource = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: effectZod(s)
 })));
+/** Bus event published when a server's tool list changes. */
 export const ToolsChanged = BusEvent.define("mcp.tools.changed", Schema.Struct({
   server: Schema.String
 }));
+/** Bus event published when the browser could not be opened for OAuth (user must open the URL manually). */
 export const BrowserOpenFailed = BusEvent.define("mcp.browser.open.failed", Schema.Struct({
   mcpName: Schema.String,
   url: Schema.String
 }));
+/** Named error type for a failed MCP server. */
 export const Failed = NamedError.create("MCPFailed", z.object({
   name: z.string()
 }));
@@ -78,6 +87,7 @@ const StatusNeedsClientRegistration = Schema.Struct({
 }).annotate({
   identifier: "MCPStatusNeedsClientRegistration"
 });
+/** Discriminated-union schema for an MCP server's status (connected/disabled/failed/needs_auth/needs_client_registration). */
 export const Status = Schema.Union([StatusConnected, StatusDisabled, StatusFailed, StatusNeedsAuth, StatusNeedsClientRegistration]).annotate({
   identifier: "MCPStatus",
   discriminator: "status"
@@ -91,10 +101,26 @@ const pendingOAuthTransports = new Map();
 
 // Prompt cache types
 
+/**
+ * Check whether a config entry is a valid MCP server config (an object with a "type").
+ * @param {*} entry - Candidate config entry.
+ * @returns {boolean} True if it looks like a configured MCP server.
+ */
 function isMcpConfigured(entry) {
   return typeof entry === "object" && entry !== null && "type" in entry;
 }
+/**
+ * Sanitize a string for use in tool keys by replacing disallowed characters with underscores.
+ * @param {string} s - Input string.
+ * @returns {string} The sanitized string.
+ */
 const sanitize = s => s.replace(/[^a-zA-Z0-9_-]/g, "_");
+/**
+ * Parse a remote MCP URL, logging a warning and returning undefined when invalid.
+ * @param {string} key - MCP server key (for logging).
+ * @param {string} value - Candidate URL string.
+ * @returns {URL} The parsed URL, or undefined if it cannot be parsed.
+ */
 function remoteURL(key, value) {
   if (URL.canParse(value)) return new URL(value);
   log.warn("invalid remote mcp url", {
@@ -102,7 +128,13 @@ function remoteURL(key, value) {
   });
 }
 
-// Convert MCP tool definition to AI SDK Tool type
+/**
+ * Convert an MCP tool definition into an AI SDK dynamic tool that calls back into the client.
+ * @param {Object} mcpTool - MCP tool definition (name, description, inputSchema).
+ * @param {Object} client - Connected MCP client used to execute the tool.
+ * @param {number} timeout - Per-call timeout in milliseconds.
+ * @returns {Object} An AI SDK dynamic tool.
+ */
 function convertMcpTool(mcpTool, client, timeout) {
   const inputSchema = mcpTool.inputSchema;
 
@@ -127,6 +159,13 @@ function convertMcpTool(mcpTool, client, timeout) {
     }
   });
 }
+/**
+ * List a client's tools with a timeout, returning undefined (and logging) on error.
+ * @param {string} key - MCP server key (for logging).
+ * @param {Object} client - Connected MCP client.
+ * @param {number} timeout - Optional timeout in milliseconds (defaults to DEFAULT_TIMEOUT).
+ * @returns {Promise<Array>} The tool definitions, or undefined on failure.
+ */
 function defs(key, client, timeout) {
   return Effect.tryPromise({
     try: () => withTimeout(client.listTools(), timeout ?? DEFAULT_TIMEOUT),
@@ -139,6 +178,14 @@ function defs(key, client, timeout) {
     return Effect.succeed(undefined);
   }));
 }
+/**
+ * Fetch a list of items (prompts/resources) from a client and key them by sanitized "client:name".
+ * @param {string} clientName - MCP client name.
+ * @param {Object} client - Connected MCP client.
+ * @param {Function} listFn - Callback that returns a Promise of an items array given the client.
+ * @param {string} label - Human-readable label used in error logging.
+ * @returns {Promise<Object>} Map of sanitized key to item (tagged with client), or undefined on failure.
+ */
 function fetchFromClient(clientName, client, listFn, label) {
   return Effect.tryPromise({
     try: () => listFn(client),
@@ -164,7 +211,9 @@ function fetchFromClient(clientName, client, listFn, label) {
 
 // --- Effect Service ---
 
+/** Effect service tag for the MCP service. */
 export class Service extends Context.Service()("@closedcode/MCP") {}
+/** Effect Layer that builds the MCP service: connects configured servers and exposes their capabilities. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   const auth = yield* McpAuth.Service;
@@ -188,6 +237,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       status: "disabled"
     }
   };
+  /**
+   * Connect to a remote MCP server, trying StreamableHTTP then SSE transports and
+   * handling OAuth/registration errors by surfacing the appropriate status.
+   * @param {string} key - MCP server key.
+   * @param {Object} mcp - Remote MCP config (url, oauth, headers, timeout).
+   * @returns {Object} Result with the connected client (or undefined) and a status.
+   */
   const connectRemote = Effect.fn("MCP.connectRemote")(function* (key, mcp) {
     const oauthDisabled = mcp.oauth === false;
     const oauthConfig = typeof mcp.oauth === "object" ? mcp.oauth : undefined;
@@ -310,6 +366,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     };
   });
+  /**
+   * Connect to a local MCP server over stdio by spawning the configured command.
+   * @param {string} key - MCP server key.
+   * @param {Object} mcp - Local MCP config (command, environment, timeout).
+   * @returns {Object} Result with the connected client (or undefined) and a status.
+   */
   const connectLocal = Effect.fn("MCP.connectLocal")(function* (key, mcp) {
     const [cmd, ...args] = mcp.command;
     const cwd = yield* InstanceState.directory;
@@ -351,6 +413,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }));
   });
+  /**
+   * Create an MCP client for a config entry (remote or local), connect it, and list its tools.
+   * @param {string} key - MCP server key.
+   * @param {Object} mcp - MCP config entry.
+   * @returns {Object} Object with status, and (on success) mcpClient and defs (tool definitions).
+   */
   const create = Effect.fn("MCP.create")(function* (key, mcp) {
     if (mcp.enabled === false) {
       log.info("mcp server disabled", {
@@ -392,6 +460,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   });
   const cfgSvc = yield* Config.Service;
+  /**
+   * Collect all descendant process IDs of a PID (POSIX only, via pgrep); empty on Windows.
+   * @param {number} pid - Parent process id.
+   * @returns {Promise<Array>} Array of descendant PIDs.
+   */
   const descendants = Effect.fnUntraced(function* (pid) {
     if (process.platform === "win32") return [];
     const pids = [];
@@ -413,6 +486,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return pids;
   }, Effect.scoped, Effect.catch(() => Effect.succeed([])));
+  /**
+   * Register a tool-list-changed handler that refreshes cached tool defs and publishes ToolsChanged.
+   * @param {Object} s - Mutable service state (clients, status, defs).
+   * @param {string} name - MCP server name.
+   * @param {Object} client - Connected MCP client to watch.
+   * @param {Object} bridge - Effect bridge used to run effects from the async callback.
+   * @param {number} timeout - Timeout for re-listing tools.
+   * @returns {void}
+   */
   function watch(s, name, client, bridge, timeout) {
     client.setNotificationHandler(ToolListChangedNotificationSchema, async () => {
       log.info("tools list changed notification received", {
@@ -480,12 +562,27 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }));
     return s;
   }));
+  /**
+   * Close a stored client by name and drop its cached tool defs.
+   * @param {Object} s - Mutable service state.
+   * @param {string} name - MCP server name.
+   * @returns {Effect} An effect that closes the client (ignoring errors).
+   */
   function closeClient(s, name) {
     const client = s.clients[name];
     delete s.defs[name];
     if (!client) return Effect.void;
     return Effect.tryPromise(() => client.close()).pipe(Effect.ignore);
   }
+  /**
+   * Replace any existing client for a name with a newly connected one and start watching it.
+   * @param {Object} s - Mutable service state.
+   * @param {string} name - MCP server name.
+   * @param {Object} client - Newly connected client to store.
+   * @param {Array} listed - Cached tool definitions for the client.
+   * @param {number} timeout - Timeout for tool re-listing.
+   * @returns {Object} The new connected status for the server.
+   */
   const storeClient = Effect.fnUntraced(function* (s, name, client, listed, timeout) {
     const bridge = yield* EffectBridge.make();
     yield* closeClient(s, name);
@@ -497,6 +594,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     watch(s, name, client, bridge, timeout);
     return s.status[name];
   });
+  /**
+   * Report the status of every configured MCP server (defaulting to "disabled" when unknown).
+   * @returns {Object} Map of MCP server key to its status.
+   */
   const status = Effect.fn("MCP.status")(function* () {
     const s = yield* InstanceState.get(state);
     const cfg = yield* cfgSvc.get();
@@ -510,10 +611,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return result;
   });
+  /**
+   * Get the map of currently connected MCP clients.
+   * @returns {Object} Map of MCP server name to client.
+   */
   const clients = Effect.fn("MCP.clients")(function* () {
     const s = yield* InstanceState.get(state);
     return s.clients;
   });
+  /**
+   * Create a client for a config entry and store it in state (closing any prior client on failure).
+   * @param {string} name - MCP server name.
+   * @param {Object} mcp - MCP config entry.
+   * @returns {Object} The resulting status for the server.
+   */
   const createAndStore = Effect.fn("MCP.createAndStore")(function* (name, mcp) {
     const s = yield* InstanceState.get(state);
     const result = yield* create(name, mcp);
@@ -525,6 +636,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return yield* storeClient(s, name, result.mcpClient, result.defs, mcp.timeout);
   });
+  /**
+   * Add (create + store) an MCP server at runtime and return the full status map.
+   * @param {string} name - MCP server name.
+   * @param {Object} mcp - MCP config entry.
+   * @returns {Object} Object with the current status map.
+   */
   const add = Effect.fn("MCP.add")(function* (name, mcp) {
     yield* createAndStore(name, mcp);
     const s = yield* InstanceState.get(state);
@@ -532,6 +649,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       status: s.status
     };
   });
+  /**
+   * Connect a configured-but-not-connected MCP server by name (force-enabling it).
+   * @param {string} name - MCP server name.
+   * @returns {void}
+   */
   const connect = Effect.fn("MCP.connect")(function* (name) {
     const mcp = yield* getMcpConfig(name);
     if (!mcp) {
@@ -545,6 +667,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       enabled: true
     });
   });
+  /**
+   * Disconnect a connected MCP server by name and mark it disabled.
+   * @param {string} name - MCP server name.
+   * @returns {void}
+   */
   const disconnect = Effect.fn("MCP.disconnect")(function* (name) {
     const s = yield* InstanceState.get(state);
     yield* closeClient(s, name);
@@ -553,6 +680,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       status: "disabled"
     };
   });
+  /**
+   * Build the combined AI SDK tool map from all connected servers' cached tool definitions.
+   * @returns {Object} Map of sanitized "client_tool" key to AI SDK tool.
+   */
   const tools = Effect.fn("MCP.tools")(function* () {
     const result = {};
     const s = yield* InstanceState.get(state);
@@ -579,19 +710,42 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return result;
   });
+  /**
+   * Fetch a list (prompts/resources) from every connected client and merge into one keyed map.
+   * @param {Object} s - Mutable service state.
+   * @param {Function} listFn - Callback returning a Promise of an items array given a client.
+   * @param {string} label - Human-readable label used in error logging.
+   * @returns {Object} Merged map of sanitized key to item.
+   */
   function collectFromConnected(s, listFn, label) {
     return Effect.forEach(Object.entries(s.clients).filter(([name]) => s.status[name]?.status === "connected"), ([clientName, client]) => fetchFromClient(clientName, client, listFn, label).pipe(Effect.map(items => Object.entries(items ?? {}))), {
       concurrency: "unbounded"
     }).pipe(Effect.map(results => Object.fromEntries(results.flat())));
   }
+  /**
+   * List prompts from all connected MCP servers.
+   * @returns {Object} Merged map of prompt key to prompt definition.
+   */
   const prompts = Effect.fn("MCP.prompts")(function* () {
     const s = yield* InstanceState.get(state);
     return yield* collectFromConnected(s, c => c.listPrompts().then(r => r.prompts), "prompts");
   });
+  /**
+   * List resources from all connected MCP servers.
+   * @returns {Object} Merged map of resource key to resource definition.
+   */
   const resources = Effect.fn("MCP.resources")(function* () {
     const s = yield* InstanceState.get(state);
     return yield* collectFromConnected(s, c => c.listResources().then(r => r.resources), "resources");
   });
+  /**
+   * Run an operation against a named client, logging and swallowing errors.
+   * @param {string} clientName - MCP client name.
+   * @param {Function} fn - Callback invoked with the client; returns a Promise.
+   * @param {string} label - Operation label used in logging.
+   * @param {Object} meta - Extra metadata merged into error logs.
+   * @returns {Promise<*>} The callback result, or undefined if the client is missing or the call fails.
+   */
   const withClient = Effect.fnUntraced(function* (clientName, fn, label, meta) {
     const s = yield* InstanceState.get(state);
     const client = s.clients[clientName];
@@ -613,6 +767,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     }).pipe(Effect.orElseSucceed(() => undefined));
   });
+  /**
+   * Fetch a named prompt (with arguments) from a specific MCP client.
+   * @param {string} clientName - MCP client name.
+   * @param {string} name - Prompt name.
+   * @param {Object} args - Prompt arguments.
+   * @returns {Promise<*>} The prompt result, or undefined on failure.
+   */
   const getPrompt = Effect.fn("MCP.getPrompt")(function* (clientName, name, args) {
     return yield* withClient(clientName, client => client.getPrompt({
       name,
@@ -621,6 +782,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       promptName: name
     });
   });
+  /**
+   * Read a resource by URI from a specific MCP client.
+   * @param {string} clientName - MCP client name.
+   * @param {string} resourceUri - URI of the resource to read.
+   * @returns {Promise<*>} The resource contents, or undefined on failure.
+   */
   const readResource = Effect.fn("MCP.readResource")(function* (clientName, resourceUri) {
     return yield* withClient(clientName, client => client.readResource({
       uri: resourceUri
@@ -628,12 +795,23 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       resourceUri
     });
   });
+  /**
+   * Look up a valid MCP config entry by name.
+   * @param {string} mcpName - MCP server name.
+   * @returns {Object} The config entry, or undefined if missing/invalid.
+   */
   const getMcpConfig = Effect.fnUntraced(function* (mcpName) {
     const cfg = yield* cfgSvc.get();
     const mcpConfig = cfg.mcp?.[mcpName];
     if (!mcpConfig || !isMcpConfigured(mcpConfig)) return undefined;
     return mcpConfig;
   });
+  /**
+   * Begin the OAuth flow for a remote MCP server: start the callback server, generate CSRF
+   * state, and attempt a connection that yields either an authorization URL or a ready client.
+   * @param {string} mcpName - MCP server name.
+   * @returns {Object} Either {authorizationUrl, oauthState} to open in a browser, or {authorizationUrl: "", oauthState, client} if already authorized.
+   */
   const startAuth = Effect.fn("MCP.startAuth")(function* (mcpName) {
     const mcpConfig = yield* getMcpConfig(mcpName);
     if (!mcpConfig) throw new Error(`MCP server ${mcpName} not found or disabled`);
@@ -687,6 +865,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return Effect.die(error);
     }));
   });
+  /**
+   * Run the full interactive OAuth flow for a server: start auth, open the browser,
+   * wait for the callback, verify CSRF state, and finish authentication.
+   * @param {string} mcpName - MCP server name.
+   * @returns {Object} The resulting connection status (or a failed status on error).
+   */
   const authenticate = Effect.fn("MCP.authenticate")(function* (mcpName) {
     const result = yield* startAuth(mcpName);
     if (!result.authorizationUrl) {
@@ -747,6 +931,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* auth.clearOAuthState(mcpName);
     return yield* finishAuth(mcpName, code);
   });
+  /**
+   * Complete a pending OAuth flow by exchanging the authorization code and (re)connecting the server.
+   * @param {string} mcpName - MCP server name.
+   * @param {string} authorizationCode - The authorization code returned to the callback.
+   * @returns {Object} The resulting connection status (or a failed status on error).
+   */
   const finishAuth = Effect.fn("MCP.finishAuth")(function* (mcpName, authorizationCode) {
     const transport = pendingOAuthTransports.get(mcpName);
     if (!transport) throw new Error(`No pending OAuth flow for MCP server: ${mcpName}`);
@@ -775,6 +965,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
     return yield* createAndStore(mcpName, mcpConfig);
   });
+  /**
+   * Remove stored OAuth credentials for a server and cancel any pending auth flow.
+   * @param {string} mcpName - MCP server name.
+   * @returns {void}
+   */
   const removeAuth = Effect.fn("MCP.removeAuth")(function* (mcpName) {
     yield* auth.remove(mcpName);
     McpOAuthCallback.cancelPending(mcpName);
@@ -783,15 +978,30 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       mcpName
     });
   });
+  /**
+   * Determine whether a server is remote with OAuth enabled.
+   * @param {string} mcpName - MCP server name.
+   * @returns {boolean} True if the server supports OAuth.
+   */
   const supportsOAuth = Effect.fn("MCP.supportsOAuth")(function* (mcpName) {
     const mcpConfig = yield* getMcpConfig(mcpName);
     if (!mcpConfig) return false;
     return mcpConfig.type === "remote" && mcpConfig.oauth !== false;
   });
+  /**
+   * Check whether OAuth tokens are stored for a server.
+   * @param {string} mcpName - MCP server name.
+   * @returns {boolean} True if tokens exist.
+   */
   const hasStoredTokens = Effect.fn("MCP.hasStoredTokens")(function* (mcpName) {
     const entry = yield* auth.get(mcpName);
     return !!entry?.tokens;
   });
+  /**
+   * Report the auth state for a server: not_authenticated, expired, or authenticated.
+   * @param {string} mcpName - MCP server name.
+   * @returns {string} The auth status string.
+   */
   const getAuthStatus = Effect.fn("MCP.getAuthStatus")(function* (mcpName) {
     const entry = yield* auth.get(mcpName);
     if (!entry?.tokens) return "not_authenticated";
@@ -820,5 +1030,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
 }));
 // --- Per-service runtime ---
 
+/** MCP service layer wired with its auth, bus, config, spawner, and filesystem dependencies. */
 export const defaultLayer = layer.pipe(Layer.provide(McpAuth.layer), Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer));
 export * as MCP from "./index.js";

@@ -1,3 +1,4 @@
+/** @file ConfigService factory: turns an object of Effect `Config` definitions into a typed Context service with generated production and test layers. */
 import { Config, Context, Effect, Layer } from "effect";
 
 /**
@@ -27,12 +28,24 @@ import { Config, Context, Effect, Layer } from "effect";
  * const live = ServerAuthConfig.defaultLayer
  * const test = ServerAuthConfig.layer({ password: Option.some("secret"), username: "kit" })
  * ```
+ *
+ * @returns {Function} A curried factory `(id, fields)` returning the generated Context service class.
  */
 export const Service = () => (id, fields) => {
   class ConfigTag extends Context.Service()(id) {
+    /**
+     * Build a layer that supplies an explicit (e.g. test) implementation.
+     * @param {Object} input - The service value matching the config field shape.
+     * @returns {Layer} Layer providing the service from the given value.
+     */
     static layer(input) {
       return Layer.succeed(this, this.of(input));
     }
+    /**
+     * Production layer that resolves the service by loading every field from
+     * Effect `Config` (env vars, defaults, validation).
+     * @returns {Layer} Layer providing the service from resolved config.
+     */
     static get defaultLayer() {
       return Layer.effect(this, Config.all(fields).asEffect().pipe(
       // oxlint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- Config.all preserves the field shape, but its conditional return type also supports iterable inputs.

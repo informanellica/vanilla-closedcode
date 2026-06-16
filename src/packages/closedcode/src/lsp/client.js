@@ -1,3 +1,4 @@
+/** @file Language Server Protocol client: drives the JSON-RPC handshake with a language server, tracks push/pull diagnostics, and exposes open/wait/shutdown operations. */
 import { BusEvent } from "#bus/bus-event.js";
 import { Bus } from "#bus/index.js";
 import { Instance } from "#project/instance.js";
@@ -25,25 +26,42 @@ const TEXT_DOCUMENT_SYNC_INCREMENTAL = 2;
 const log = Log.create({
   service: "lsp.client"
 });
+/** Error thrown when the LSP initialize handshake fails or times out; carries the server ID. */
 export const InitializeError = NamedError.create("LSPInitializeError", z.object({
   serverID: z.string()
 }));
+/** Bus events emitted by the LSP client (e.g. diagnostics updated for a path). */
 export const Event = {
   Diagnostics: BusEvent.define("lsp.client.diagnostics", Schema.Struct({
     serverID: Schema.String,
     path: Schema.String
   }))
 };
+/**
+ * Convert a file:// URI to a normalized local filesystem path.
+ * @param {string} uri - The document URI.
+ * @returns {string} The normalized path, or undefined when uri is not a file:// URI.
+ */
 function getFilePath(uri) {
   if (!uri.startsWith("file://")) return;
   return Filesystem.normalizePath(fileURLToPath(uri));
 }
+/**
+ * Extract the text-document sync kind from server capabilities.
+ * @param {Object} capabilities - The server's reported capabilities.
+ * @returns {number} The sync kind, or undefined when not advertised.
+ */
 function getSyncKind(capabilities) {
   if (!capabilities) return;
   const sync = capabilities.textDocumentSync;
   if (typeof sync === "number") return sync;
   return sync?.change;
 }
+/**
+ * Compute the LSP position at the end of a block of text.
+ * @param {string} text - The document text.
+ * @returns {Object} A position {line, character} pointing past the last character.
+ */
 function endPosition(text) {
   const lines = text.split(/\r\n|\r|\n/);
   return {
@@ -51,6 +69,11 @@ function endPosition(text) {
     character: lines.at(-1)?.length ?? 0
   };
 }
+/**
+ * Remove duplicate diagnostics, keying on code/severity/message/source/range.
+ * @param {Array} items - Diagnostics to deduplicate.
+ * @returns {Array} The list with duplicates removed (first occurrence kept).
+ */
 function dedupeDiagnostics(items) {
   const seen = new Set();
   return items.filter(item => {
@@ -66,6 +89,13 @@ function dedupeDiagnostics(items) {
     return true;
   });
 }
+/**
+ * Resolve a dotted configuration section from a settings object, for
+ * answering workspace/configuration requests.
+ * @param {Object} settings - The full settings object.
+ * @param {string} section - Dotted section path (e.g. "typescript.format"); falsy returns the whole settings.
+ * @returns {*} The resolved value, or null when the section is absent.
+ */
 function configurationValue(settings, section) {
   if (!section) return settings ?? null;
   const result = section.split(".").reduce((acc, key) => {
@@ -78,9 +108,22 @@ function configurationValue(settings, section) {
 // TypeScript's built-in LSP pushes diagnostics aggressively on first open.
 // We seed the push cache on the very first publish so waitForFreshPush can
 // resolve immediately instead of waiting for a second debounced push.
+/**
+ * Whether to seed the push-diagnostics cache on the server's first publish.
+ * @param {string} serverID - The language server identifier.
+ * @returns {boolean} True for servers (currently "typescript") that push eagerly on open.
+ */
 function shouldSeedDiagnosticsOnFirstPush(serverID) {
   return serverID === "typescript";
 }
+/**
+ * Create and initialize an LSP client over a server process's stdio.
+ * Sets up JSON-RPC handlers, performs the initialize handshake, tracks diagnostics,
+ * and returns the public client API.
+ * @param {Object} input - Client inputs: {serverID, server, root, directory}.
+ * @returns {Promise<Object>} The client API ({root, serverID, connection, notify, diagnostics, waitForDiagnostics, shutdown}).
+ * @throws {InitializeError} When the initialize request fails or times out.
+ */
 export async function create(input) {
   const logger = log.clone().tag("serverID", input.serverID);
   logger.info("starting client");
@@ -239,6 +282,12 @@ export async function create(input) {
 
   // --- Diagnostic helpers ---
 
+  /**
+   * Merge several pull-diagnostic results into the pull cache, keyed by file.
+   * @param {string} filePath - The file the diagnostics were requested for.
+   * @param {Array} results - Per-request results, each {handled, matched, byFile}.
+   * @returns {Object} Combined {handled, matched} flags.
+   */
   const mergeResults = (filePath, results) => {
     const handled = results.some(result => result.handled);
     const matched = results.some(result => result.matched);
@@ -262,6 +311,12 @@ export async function create(input) {
       matched
     };
   };
+  /**
+   * Request a document diagnostic report (textDocument/diagnostic) for one file.
+   * @param {string} filePath - The file to request diagnostics for.
+   * @param {string} identifier - Optional pull-diagnostics identifier.
+   * @returns {Promise<Object>} {handled, matched, byFile} where byFile maps paths to diagnostic arrays.
+   */
   async function requestDiagnosticReport(filePath, identifier) {
     const report = await withTimeout(connection.sendRequest("textDocument/diagnostic", {
       ...(identifier ? {
@@ -301,6 +356,12 @@ export async function create(input) {
       byFile
     };
   }
+  /**
+   * Request a workspace diagnostic report (workspace/diagnostic) spanning all files.
+   * @param {string} filePath - The file of interest, used to set the matched flag.
+   * @param {string} identifier - Optional pull-diagnostics identifier.
+   * @returns {Promise<Object>} {handled, matched, byFile} where byFile maps paths to diagnostic arrays.
+   */
   async function requestWorkspaceDiagnosticReport(filePath, identifier) {
     const report = await withTimeout(connection.sendRequest("workspace/diagnostic", {
       ...(identifier ? {
@@ -328,6 +389,11 @@ export async function create(input) {
       byFile
     };
   }
+  /**
+   * Inspect dynamic registrations to learn whether document-level pull diagnostics
+   * are supported and which identifiers to query.
+   * @returns {Object} {documentIdentifiers, supported}.
+   */
   function documentPullState() {
     const documentRegistrations = [...diagnosticRegistrations.values()].filter(registration => registration.registerOptions?.workspaceDiagnostics !== true);
     return {
@@ -335,6 +401,11 @@ export async function create(input) {
       supported: hasStaticPullDiagnostics || documentRegistrations.length > 0
     };
   }
+  /**
+   * Inspect dynamic registrations to learn whether workspace-level pull diagnostics
+   * are supported and which identifiers to query.
+   * @returns {Object} {workspaceIdentifiers, supported}.
+   */
   function workspacePullState() {
     const workspaceRegistrations = [...diagnosticRegistrations.values()].filter(registration => registration.registerOptions?.workspaceDiagnostics === true);
     return {
@@ -342,7 +413,21 @@ export async function create(input) {
       supported: workspaceRegistrations.length > 0
     };
   }
+  /**
+   * Whether any result already contains at least one diagnostic for the given file.
+   * @param {string} filePath - The file to check.
+   * @param {Array} results - Accumulated per-request results with byFile maps.
+   * @returns {boolean} True when the file has diagnostics in some result.
+   */
   const hasCurrentFileDiagnostics = (filePath, results) => results.some(result => (result.byFile.get(filePath)?.length ?? 0) > 0);
+  /**
+   * Run several diagnostic requests in parallel, resolving early once the `done`
+   * predicate is satisfied and finally once all requests settle.
+   * @param {string} filePath - The file diagnostics are being collected for.
+   * @param {Array<Promise>} requests - In-flight diagnostic-report promises.
+   * @param {Function} done - Predicate(results) deciding whether to resolve early.
+   * @returns {Promise<Object>} The merged {handled, matched} result.
+   */
   async function requestDiagnostics(filePath, requests, done) {
     if (!requests.length) return {
       handled: false,
@@ -374,6 +459,12 @@ export async function create(input) {
   // batch already produced diagnostics for the current file. Let slower pulls keep
   // merging in the background; do not sequence identifier-by-identifier, and do
   // not add a post-match settle/debounce delay. See PR #23771.
+  /**
+   * Pull document-level diagnostics for a file across all registered identifiers,
+   * unblocking as soon as one batch yields diagnostics for that file.
+   * @param {string} filePath - The file to pull diagnostics for.
+   * @returns {Promise<Object>} {handled, matched} (unsupported -> both false).
+   */
   async function requestDocumentDiagnostics(filePath) {
     const state = documentPullState();
     if (!state.supported) return {
@@ -382,6 +473,12 @@ export async function create(input) {
     };
     return requestDiagnostics(filePath, [requestDiagnosticReport(filePath), ...state.documentIdentifiers.map(identifier => requestDiagnosticReport(filePath, identifier))], results => hasCurrentFileDiagnostics(filePath, results));
   }
+  /**
+   * Pull both document- and workspace-level diagnostics for a file across every
+   * supported registration, merging all results.
+   * @param {string} filePath - The file to pull diagnostics for.
+   * @returns {Promise<Object>} {handled, matched} (nothing supported -> both false).
+   */
   async function requestFullDiagnostics(filePath) {
     const documentState = documentPullState();
     const workspaceState = workspacePullState();
@@ -391,6 +488,11 @@ export async function create(input) {
     };
     return mergeResults(filePath, await Promise.all([...(documentState.supported ? [requestDiagnosticReport(filePath)] : []), ...documentState.documentIdentifiers.map(identifier => requestDiagnosticReport(filePath, identifier)), ...(workspaceState.supported ? [requestWorkspaceDiagnosticReport(filePath)] : []), ...workspaceState.workspaceIdentifiers.map(identifier => requestWorkspaceDiagnosticReport(filePath, identifier))]));
   }
+  /**
+   * Wait until a dynamic diagnostic capability registration changes, or a timeout elapses.
+   * @param {number} timeout - Maximum time to wait in milliseconds.
+   * @returns {Promise<boolean>} True if a registration change occurred, false on timeout.
+   */
   function waitForRegistrationChange(timeout) {
     if (timeout <= 0) return Promise.resolve(false);
     return new Promise(resolve => {
@@ -408,6 +510,12 @@ export async function create(input) {
       timer = setTimeout(() => finish(false), timeout);
     });
   }
+  /**
+   * Wait for a fresh push-diagnostics publish for a path, debounced, matching the
+   * requested version and only counting publishes after the request started.
+   * @param {Object} request - {path, version, after, timeout}.
+   * @returns {Promise<boolean>} True when a qualifying push arrived, false on timeout.
+   */
   function waitForFreshPush(request) {
     if (request.timeout <= 0) return Promise.resolve(false);
     return new Promise(resolve => {
@@ -439,6 +547,12 @@ export async function create(input) {
       schedule();
     });
   }
+  /**
+   * Wait until document-level diagnostics for a file are available (via pull or push),
+   * retrying on push/registration signals until matched or timed out.
+   * @param {Object} request - {path, version, after}.
+   * @returns {Promise<void>} Resolves once matched or the wait window elapses.
+   */
   async function waitForDocumentDiagnostics(request) {
     const startedAt = request.after ?? Date.now();
     const pushWait = waitForFreshPush({
@@ -456,6 +570,12 @@ export async function create(input) {
       if (next !== "registration") return;
     }
   }
+  /**
+   * Wait until full (document + workspace) diagnostics for a file are available,
+   * retrying on push/registration signals until handled/matched or timed out.
+   * @param {Object} request - {path, version, after}.
+   * @returns {Promise<void>} Resolves once handled/matched or the wait window elapses.
+   */
   async function waitForFullDiagnostics(request) {
     const startedAt = request.after ?? Date.now();
     const pushWait = waitForFreshPush({
@@ -476,6 +596,7 @@ export async function create(input) {
 
   // --- Public API ---
 
+  /** The public LSP client API returned by create(). */
   const result = {
     root: input.root,
     get serverID() {
@@ -485,6 +606,12 @@ export async function create(input) {
       return connection;
     },
     notify: {
+      /**
+       * Notify the server that a file was opened or changed, sending didOpen on first
+       * sight and didChange (plus a watched-files change) thereafter.
+       * @param {Object} request - {path}; the path is normalized and resolved against the instance directory.
+       * @returns {Promise<number>} The document version after the notification.
+       */
       async open(request) {
         request.path = Filesystem.normalizePath(path.isAbsolute(request.path) ? request.path : path.resolve(input.directory, request.path));
         const text = await Filesystem.readText(request.path);
@@ -557,6 +684,10 @@ export async function create(input) {
         return 0;
       }
     },
+    /**
+     * Current merged (push + pull, deduplicated) diagnostics for every tracked file.
+     * @returns {Map} Map of file path to diagnostic array.
+     */
     get diagnostics() {
       const result = new Map();
       for (const key of new Set([...pushDiagnostics.keys(), ...pullDiagnostics.keys()])) {
@@ -564,6 +695,11 @@ export async function create(input) {
       }
       return result;
     },
+    /**
+     * Wait for diagnostics to become available for a file, in "document" or "full" mode.
+     * @param {Object} request - {path, mode, version, after}; path is normalized/resolved.
+     * @returns {Promise<void>} Resolves when diagnostics are ready or the wait window elapses.
+     */
     async waitForDiagnostics(request) {
       const normalizedPath = Filesystem.normalizePath(path.isAbsolute(request.path) ? request.path : path.resolve(input.directory, request.path));
       logger.info("waiting for diagnostics", {
@@ -585,6 +721,10 @@ export async function create(input) {
         after: request.after
       });
     },
+    /**
+     * Close the JSON-RPC connection and stop the underlying server process.
+     * @returns {Promise<void>} Resolves once the connection and process have stopped.
+     */
     async shutdown() {
       logger.info("shutting down");
       connection.end();

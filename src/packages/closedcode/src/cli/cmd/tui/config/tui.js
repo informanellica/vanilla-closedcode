@@ -1,3 +1,4 @@
+/** @file Loads, merges, and exposes the TUI configuration: walks global/project/.closedcode config dirs, migrates legacy opencode keys, resolves plugins, applies platform keybind tweaks, and installs plugin dependencies. */
 export * as TuiConfig from "./tui.js";
 import { mergeDeep, unique } from "remeda";
 import { Context, Effect, Fiber, Layer } from "effect";
@@ -21,13 +22,32 @@ import { Npm } from "core/npm";
 const log = Log.create({
   service: "tui.config"
 });
+/**
+ * Zod schema for the merged TUI config (re-export of TuiInfo).
+ * @type {Object}
+ */
 export const Info = TuiInfo;
+/**
+ * Effect service tag for the loaded TUI config (exposes `get` and `waitForDependencies`).
+ */
 export class Service extends Context.Service()("@closedcode/TuiConfig") {}
+/**
+ * Determines whether a plugin config file is project-local or global, relative to the instance directory.
+ * @param {string} file - Path to the config file declaring the plugin.
+ * @param {Object} ctx - Context with the instance `directory`.
+ * @returns {string} "local" if the file lives under the instance directory, otherwise "global".
+ */
 function pluginScope(file, ctx) {
   if (Filesystem.contains(ctx.directory, file)) return "local";
   // if (ctx.worktree !== "/" && Filesystem.contains(ctx.worktree, file)) return "local"
   return "global";
 }
+/**
+ * Flattens a nested `tui` key into the top-level config so users who mirrored the old opencode.json shape still apply.
+ * Top-level keys take precedence over nested ones; a non-record `tui` value is dropped.
+ * @param {Object} raw - The parsed config object.
+ * @returns {Object} The flattened config object.
+ */
 function normalize(raw) {
   const data = {
     ...raw
@@ -44,6 +64,12 @@ function normalize(raw) {
     ...data
   };
 }
+/**
+ * Resolves each plugin spec in the config to its concrete form relative to the config file location.
+ * @param {Object} config - The parsed config (mutated in place).
+ * @param {string} configFilepath - Path of the config file the plugins were declared in.
+ * @returns {Promise<Object>} The same config with resolved plugin specs.
+ */
 async function resolvePlugins(config, configFilepath) {
   if (!config.plugin) return config;
   for (let i = 0; i < config.plugin.length; i++) {
@@ -51,6 +77,13 @@ async function resolvePlugins(config, configFilepath) {
   }
   return config;
 }
+/**
+ * Loads one config file and deep-merges it into the accumulator, tracking deduplicated plugin origins/scopes.
+ * @param {Object} acc - Accumulator with a `result` object that is merged into.
+ * @param {string} file - Path of the config file to load and merge.
+ * @param {Object} ctx - Context with the instance `directory` (used to scope plugins).
+ * @returns {Promise<void>}
+ */
 async function mergeFile(acc, file, ctx) {
   const data = await loadFile(file);
   acc.result = mergeDeep(acc.result, data);
@@ -64,6 +97,12 @@ async function mergeFile(acc, file, ctx) {
   acc.result.plugin = plugins.map(item => item.spec);
   acc.result.plugin_origins = plugins;
 }
+/**
+ * Loads and merges the full TUI config for a directory in precedence order (global, explicit override, project files,
+ * .closedcode/.opencode dirs), runs legacy migration first, and applies Windows-specific keybind defaults.
+ * @param {Object} ctx - Context with the instance `directory`.
+ * @returns {Effect} An Effect resolving to `{config, dirs}` where `dirs` are plugin-dependency install locations.
+ */
 const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx) {
   // Every config dir we may read from: global config dir, any `.closedcode`
   // (or legacy `.opencode`) folders between cwd and home, and CLOSEDCODE_CONFIG_DIR.
@@ -120,6 +159,11 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx) {
     dirs: acc.result.plugin?.length ? dirs : []
   };
 });
+/**
+ * Effect Layer that builds the TuiConfig Service: loads config for the current working directory and
+ * kicks off (forked) installation of plugin dependencies in each discovered config dir.
+ * @type {Object}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const directory = yield* CurrentWorkingDirectory;
   const npm = yield* Npm.Service;
@@ -134,7 +178,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   }).pipe(Effect.forkScoped), {
     concurrency: "unbounded"
   });
+  // Returns the already-loaded merged config.
   const get = Effect.fn("TuiConfig.get")(() => Effect.succeed(data.config));
+  // Joins the forked plugin-dependency install fibers, ignoring failures.
   const waitForDependencies = Effect.fn("TuiConfig.waitForDependencies")(() => Effect.forEach(deps, Fiber.join, {
     concurrency: "unbounded"
   }).pipe(Effect.ignore(), Effect.asVoid));
@@ -143,16 +189,33 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     waitForDependencies
   });
 }).pipe(Effect.withSpan("TuiConfig.layer")));
+/**
+ * The TuiConfig layer wired with its default Npm and filesystem dependencies.
+ * @type {Object}
+ */
 export const defaultLayer = layer.pipe(Layer.provide(Npm.defaultLayer), Layer.provide(AppFileSystem.defaultLayer));
 const {
   runPromise
 } = makeRuntime(Service, defaultLayer);
+/**
+ * Waits for all plugin-dependency installs triggered during config load to finish.
+ * @returns {Promise<void>}
+ */
 export async function waitForDependencies() {
   await runPromise(svc => svc.waitForDependencies());
 }
+/**
+ * Loads and returns the merged TUI config for the current working directory.
+ * @returns {Promise<Object>} The merged config object.
+ */
 export async function get() {
   return runPromise(svc => svc.get());
 }
+/**
+ * Reads and parses a single TUI config file, returning an empty object on missing file or parse failure.
+ * @param {string} filepath - Path to the config file.
+ * @returns {Promise<Object>} The parsed config object, or {} on error.
+ */
 async function loadFile(filepath) {
   const text = await ConfigPaths.readFile(filepath);
   if (!text) return {};
@@ -164,6 +227,13 @@ async function loadFile(filepath) {
     return {};
   });
 }
+/**
+ * Substitutes config variables, parses the JSONC, normalizes the nested `tui` shape, validates against the schema,
+ * and resolves plugin specs; returns {} on any failure.
+ * @param {string} text - The raw config file contents.
+ * @param {string} configFilepath - Path of the config file (used for variable expansion and plugin resolution).
+ * @returns {Promise<Object>} The validated, plugin-resolved config object, or {} on error.
+ */
 async function load(text, configFilepath) {
   return ConfigVariable.substitute({
     text,

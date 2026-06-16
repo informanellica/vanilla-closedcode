@@ -11,12 +11,20 @@ import { Global } from "core/global";
 import * as Log from "core/util/log";
 import { NonNegativeInt, withStatics } from "#util/schema.js";
 import { zod } from "#util/effect-zod.js";
+/**
+ * @file Snapshot service: maintains a per-worktree shadow git repository (a
+ * separate git-dir under the data directory) so file states can be tracked,
+ * diffed, restored, and reverted without touching the project's own VCS.
+ */
+
+/** Schema describing a snapshot patch: a tree hash plus the list of touched files. */
 export const Patch = Schema.Struct({
   hash: Schema.String,
   files: Schema.mutable(Schema.Array(Schema.String))
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema describing a single file's diff: patch text, add/delete counts, and status. */
 export const FileDiff = Schema.Struct({
   file: Schema.String,
   patch: Schema.String,
@@ -36,12 +44,24 @@ const limit = 2 * 1024 * 1024;
 const core = ["-c", "core.longpaths=true", "-c", "core.symlinks=true"];
 const cfg = ["-c", "core.autocrlf=false", ...core];
 const quote = [...cfg, "-c", "core.quotepath=false"];
+/** Effect Context service tag for the snapshot service. */
 export class Service extends Context.Service()("@closedcode/Snapshot") {}
+/**
+ * Layer building the snapshot service. Wires the filesystem, child-process
+ * spawner, and config, and exposes per-instance snapshot operations
+ * (track/patch/restore/revert/diff/diffFull/cleanup).
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
   const config = yield* Config.Service;
   const locks = new Map();
+  /**
+   * Get (or lazily create) a single-permit semaphore keyed by git-dir, so
+   * operations against the same shadow repo are serialized.
+   * @param {string} key - The git-dir path used as the lock key.
+   * @returns {Semaphore} The semaphore guarding that key.
+   */
   const lock = key => {
     const hit = locks.get(key);
     if (hit) return hit;
@@ -49,6 +69,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     locks.set(key, next);
     return next;
   };
+  /**
+   * Per-instance snapshot state factory. Computes the shadow git-dir for the
+   * worktree and builds the suite of git-backed snapshot operations bound to it.
+   * @param {Object} ctx - Instance context (directory, worktree, project).
+   * @returns {Object} The set of snapshot operations for this instance.
+   */
   const state = yield* InstanceState.make(Effect.fn("Snapshot.state")(function* (ctx) {
     const state = {
       directory: ctx.directory,
@@ -56,9 +82,26 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       gitdir: path.join(Global.Path.data, "snapshot", ctx.project.id, Hash.fast(ctx.worktree)),
       vcs: ctx.project.vcs
     };
+    /**
+     * Prefix a git argv with this instance's --git-dir / --work-tree flags.
+     * @param {Array<string>} cmd - The git subcommand and its arguments.
+     * @returns {Array<string>} The argv with the shadow git-dir/work-tree prepended.
+     */
     const args = cmd => ["--git-dir", state.gitdir, "--work-tree", state.worktree, ...cmd];
     const enc = new TextEncoder();
+    /**
+     * Build a NUL-delimited stdin stream from a list (for --pathspec-file-nul / --stdin -z).
+     * @param {Array<string>} list - The items to feed, joined and terminated with NUL bytes.
+     * @returns {Stream} A stream emitting the encoded NUL-delimited payload.
+     */
     const feed = list => Stream.make(enc.encode(list.join("\0") + "\0"));
+    /**
+     * Run a git command, capturing stdout/stderr/exit code; never throws
+     * (failures are converted to a result with code 1 and the error in stderr).
+     * @param {Array<string>} cmd - The full git argv.
+     * @param {Object} opts - Spawn options (cwd, env, stdin).
+     * @returns {Effect} Effect resolving to {code, text, stderr}.
+     */
     const git = Effect.fnUntraced(function* (cmd, opts) {
       const proc = ChildProcess.make("git", cmd, {
         cwd: opts?.cwd,
@@ -81,6 +124,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       text: "",
       stderr: err instanceof Error ? err.message : String(err)
     })));
+    /**
+     * Resolve which of the given paths are ignored by the source repo's
+     * gitignore rules (pattern-based via --no-index, even for tracked paths).
+     * @param {Array<string>} files - Candidate paths relative to the worktree.
+     * @returns {Effect} Effect resolving to a Set of ignored paths.
+     */
     const ignore = Effect.fnUntraced(function* (files) {
       if (!files.length) return new Set();
       const check = yield* git([...quote, "--git-dir", path.join(state.worktree, ".git"), "--work-tree", state.worktree, "check-ignore", "--no-index", "--stdin", "-z"], {
@@ -90,6 +139,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       if (check.code !== 0 && check.code !== 1) return new Set();
       return new Set(check.text.split("\0").filter(Boolean));
     });
+    /**
+     * Remove the given paths from the snapshot index (git rm --cached) so they
+     * are no longer tracked by the shadow repo.
+     * @param {Array<string>} files - Paths to drop from the index.
+     * @returns {Effect} Effect that completes once the paths are unstaged.
+     */
     const drop = Effect.fnUntraced(function* (files) {
       if (!files.length) return;
       yield* git([...cfg, ...args(["rm", "--cached", "-f", "--ignore-unmatch", "--pathspec-from-file=-", "--pathspec-file-nul"])], {
@@ -97,6 +152,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         stdin: feed(files)
       });
     });
+    /**
+     * Stage the given paths into the snapshot index (git add); logs a warning
+     * on failure but does not throw.
+     * @param {Array<string>} files - Paths to add to the index.
+     * @returns {Effect} Effect that completes once the paths are staged.
+     */
     const stage = Effect.fnUntraced(function* (files) {
       if (!files.length) return;
       const result = yield* git([...cfg, ...args(["add", "--all", "--sparse", "--pathspec-from-file=-", "--pathspec-file-nul"])], {
@@ -109,14 +170,43 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         stderr: result.stderr
       });
     });
+    /**
+     * Check whether a path exists (dies on filesystem error).
+     * @param {string} file - The path to check.
+     * @returns {Effect} Effect resolving to a boolean.
+     */
     const exists = file => fs.exists(file).pipe(Effect.orDie);
+    /**
+     * Read a file as a string, returning "" on any error.
+     * @param {string} file - The path to read.
+     * @returns {Effect} Effect resolving to the file contents or "".
+     */
     const read = file => fs.readFileString(file).pipe(Effect.catch(() => Effect.succeed("")));
+    /**
+     * Remove a file, ignoring any error.
+     * @param {string} file - The path to remove.
+     * @returns {Effect} Effect that always completes.
+     */
     const remove = file => fs.remove(file).pipe(Effect.catch(() => Effect.void));
+    /**
+     * Run an effect while holding this instance's git-dir lock (serializes
+     * concurrent snapshot operations against the same shadow repo).
+     * @param {Effect} fx - The effect to run under the lock.
+     * @returns {Effect} The lock-guarded effect.
+     */
     const locked = fx => lock(state.gitdir).withPermits(1)(fx);
+    /**
+     * Whether snapshots are active for this instance (git VCS and config not disabled).
+     * @returns {Effect} Effect resolving to a boolean.
+     */
     const enabled = Effect.fnUntraced(function* () {
       if (state.vcs !== "git") return false;
       return (yield* config.get()).snapshot !== false;
     });
+    /**
+     * Resolve the absolute path to the source repo's info/exclude file, if it exists.
+     * @returns {Effect} Effect resolving to the path string, or undefined.
+     */
     const excludes = Effect.fnUntraced(function* () {
       const result = yield* git(["rev-parse", "--path-format=absolute", "--git-path", "info/exclude"], {
         cwd: state.worktree
@@ -126,6 +216,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       if (!(yield* exists(file))) return;
       return file;
     });
+    /**
+     * Regenerate the shadow repo's info/exclude file: the source repo's
+     * excludes plus any extra paths to block (e.g. large untracked files).
+     * @param {Array<string>} list - Extra worktree-relative paths to exclude.
+     * @returns {Effect} Effect that completes once the exclude file is written.
+     */
     const sync = Effect.fnUntraced(function* (list = []) {
       const file = yield* excludes();
       const target = path.join(state.gitdir, "info", "exclude");
@@ -133,6 +229,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       yield* fs.ensureDir(path.join(state.gitdir, "info")).pipe(Effect.orDie);
       yield* fs.writeFileString(target, text ? `${text}\n` : "").pipe(Effect.orDie);
     });
+    /**
+     * Refresh the snapshot index to mirror the worktree: list changed and
+     * untracked files, drop newly-ignored ones, block oversized untracked
+     * files via the exclude file, and stage the remaining candidates.
+     * @returns {Effect} Effect that completes once the index reflects the worktree.
+     */
     const add = Effect.fnUntraced(function* () {
       yield* sync();
       const [diff, other] = yield* Effect.all([git([...quote, ...args(["diff-files", "--name-only", "-z", "--", "."])], {
@@ -182,6 +284,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       // Stage only the allowed candidate paths so snapshot updates stay scoped.
       yield* stage(allow.filter(item => !block.has(item)));
     });
+    /**
+     * Garbage-collect the shadow repo (git gc with a prune window), under the
+     * git-dir lock; no-op when snapshots are disabled or the repo is absent.
+     * @returns {Effect} Effect that completes once gc has run (or been skipped).
+     */
     const cleanup = Effect.fnUntraced(function* () {
       return yield* locked(Effect.gen(function* () {
         if (!(yield* enabled())) return;
@@ -201,6 +308,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         });
       }));
     });
+    /**
+     * Capture a snapshot of the current worktree: initialize the shadow repo
+     * if needed, stage the worktree, and write a tree object.
+     * @returns {Effect} Effect resolving to the written tree hash (or undefined when disabled).
+     */
     const track = Effect.fnUntraced(function* () {
       return yield* locked(Effect.gen(function* () {
         if (!(yield* enabled())) return;
@@ -232,6 +344,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         return hash;
       }));
     });
+    /**
+     * Compute the list of files that changed between a snapshot tree and the
+     * current worktree, returned as absolute worktree paths (ignored-file
+     * removals are hidden).
+     * @param {string} hash - The snapshot tree hash to diff against.
+     * @returns {Effect} Effect resolving to {hash, files}.
+     */
     const patch = Effect.fnUntraced(function* (hash) {
       return yield* locked(Effect.gen(function* () {
         yield* add();
@@ -258,6 +377,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         };
       }));
     });
+    /**
+     * Restore the entire worktree to a snapshot tree (read-tree +
+     * checkout-index -a -f); logs errors but does not throw.
+     * @param {string} snapshot - The snapshot tree/commit hash to restore.
+     * @returns {Effect} Effect that completes once restore is attempted.
+     */
     const restore = Effect.fnUntraced(function* (snapshot) {
       return yield* locked(Effect.gen(function* () {
         log.info("restore", {
@@ -285,6 +410,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         });
       }));
     });
+    /**
+     * Revert specific files to their state in the given snapshots: checks each
+     * file out of its snapshot, deleting files that did not exist there.
+     * Batches non-overlapping same-hash files for fewer git invocations,
+     * falling back to per-file operations on failure.
+     * @param {Array<Object>} patches - Patch entries, each {hash, files}.
+     * @returns {Effect} Effect that completes once all files are reverted.
+     */
     const revert = Effect.fnUntraced(function* (patches) {
       return yield* locked(Effect.gen(function* () {
         const ops = [];
@@ -300,6 +433,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
             });
           }
         }
+        /**
+         * Revert a single file to its snapshot state: checkout from the
+         * snapshot; if the file is absent from the snapshot, delete it.
+         * @param {Object} op - Revert op {hash, file, rel}.
+         * @returns {Effect} Effect that completes once the file is reverted.
+         */
         const single = Effect.fnUntraced(function* (op) {
           log.info("reverting", {
             file: op.file,
@@ -325,6 +464,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
           });
           yield* remove(op.file);
         });
+        /**
+         * Whether two relative paths could affect each other (equal or one is
+         * a directory prefix of the other), used to keep batches independent.
+         * @param {string} a - First relative path.
+         * @param {string} b - Second relative path.
+         * @returns {boolean} True if the paths overlap.
+         */
         const clash = (a, b) => a === b || a.startsWith(`${b}/`) || b.startsWith(`${a}/`);
         for (let i = 0; i < ops.length;) {
           const first = ops[i];
@@ -391,6 +537,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         }
       }));
     });
+    /**
+     * Produce a unified diff (git diff text) between a snapshot tree and the
+     * current worktree.
+     * @param {string} hash - The snapshot tree hash to diff against.
+     * @returns {Effect} Effect resolving to the diff text (or "" on failure).
+     */
     const diff = Effect.fnUntraced(function* (hash) {
       return yield* locked(Effect.gen(function* () {
         yield* add();
@@ -408,8 +560,22 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         return result.text.trim();
       }));
     });
+    /**
+     * Compute per-file structured diffs between two snapshot trees, returning
+     * full-context patches plus addition/deletion counts and status for each
+     * changed file (ignored-file removals are hidden).
+     * @param {string} from - The base snapshot tree hash.
+     * @param {string} to - The target snapshot tree hash.
+     * @returns {Effect} Effect resolving to an Array of {file, patch, additions, deletions, status}.
+     */
     const diffFull = Effect.fnUntraced(function* (from, to) {
       return yield* locked(Effect.gen(function* () {
+        /**
+         * Load before/after contents for a single changed row via per-file
+         * git show (the fallback path when cat-file batch is unavailable).
+         * @param {Object} row - Changed-file row {file, status, binary}.
+         * @returns {Effect} Effect resolving to a [before, after] tuple.
+         */
         const show = Effect.fnUntraced(function* (row) {
           if (row.binary) return ["", ""];
           if (row.status === "added") {
@@ -422,6 +588,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
             concurrency: 2
           });
         });
+        /**
+         * Bulk-load before/after blob contents for a batch of changed rows
+         * using a single `git cat-file --batch` process; returns undefined to
+         * signal the caller should fall back to per-file `git show`.
+         * @param {Array<Object>} rows - Changed-file rows to load.
+         * @returns {Effect} Effect resolving to a Map of file to {before, after}, or undefined.
+         */
         const load = Effect.fnUntraced(function* (rows) {
           const refs = rows.flatMap(row => {
             if (row.binary) return [];
@@ -465,6 +638,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
             });
             return;
           }
+          /**
+           * Log a parse/consistency failure and signal the cat-file fast path
+           * should be abandoned (returns undefined).
+           * @param {string} msg - The log message describing the failure.
+           * @param {Object} extra - Optional extra log fields.
+           * @returns {undefined} Always undefined.
+           */
           const fail = (msg, extra) => {
             log.info(msg, {
               ...extra,
@@ -551,6 +731,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
           rows.push(...filtered);
         }
         const step = 100;
+        /**
+         * Build a full-context unified patch for a single file from its
+         * before/after contents.
+         * @param {string} file - The file path (used for both patch headers).
+         * @param {string} before - The previous file contents.
+         * @param {string} after - The new file contents.
+         * @returns {string} The formatted unified patch text.
+         */
         const patch = (file, before, after) => formatPatch(structuredPatch(file, file, before, after, "", "", {
           context: Number.MAX_SAFE_INTEGER
         }));
@@ -592,31 +780,56 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   }));
   return Service.of({
+    /** Eagerly resolve the per-instance snapshot state. */
     init: Effect.fn("Snapshot.init")(function* () {
       yield* InstanceState.get(state);
     }),
+    /** Garbage-collect the current instance's shadow repo. */
     cleanup: Effect.fn("Snapshot.cleanup")(function* () {
       return yield* InstanceState.useEffect(state, s => s.cleanup());
     }),
+    /** Capture a snapshot of the worktree and return its tree hash. */
     track: Effect.fn("Snapshot.track")(function* () {
       return yield* InstanceState.useEffect(state, s => s.track());
     }),
+    /**
+     * List files changed between a snapshot and the worktree.
+     * @param {string} hash - The snapshot tree hash.
+     */
     patch: Effect.fn("Snapshot.patch")(function* (hash) {
       return yield* InstanceState.useEffect(state, s => s.patch(hash));
     }),
+    /**
+     * Restore the worktree to a snapshot.
+     * @param {string} snapshot - The snapshot tree/commit hash.
+     */
     restore: Effect.fn("Snapshot.restore")(function* (snapshot) {
       return yield* InstanceState.useEffect(state, s => s.restore(snapshot));
     }),
+    /**
+     * Revert specific files to their state in the given snapshots.
+     * @param {Array<Object>} patches - Patch entries, each {hash, files}.
+     */
     revert: Effect.fn("Snapshot.revert")(function* (patches) {
       return yield* InstanceState.useEffect(state, s => s.revert(patches));
     }),
+    /**
+     * Produce a unified diff between a snapshot and the worktree.
+     * @param {string} hash - The snapshot tree hash.
+     */
     diff: Effect.fn("Snapshot.diff")(function* (hash) {
       return yield* InstanceState.useEffect(state, s => s.diff(hash));
     }),
+    /**
+     * Produce per-file structured diffs between two snapshots.
+     * @param {string} from - The base snapshot tree hash.
+     * @param {string} to - The target snapshot tree hash.
+     */
     diffFull: Effect.fn("Snapshot.diffFull")(function* (from, to) {
       return yield* InstanceState.useEffect(state, s => s.diffFull(from, to));
     })
   });
 }));
+/** Snapshot layer with its default dependencies (spawner, filesystem, config) provided. */
 export const defaultLayer = layer.pipe(Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Config.defaultLayer));
 export * as Snapshot from "./index.js";

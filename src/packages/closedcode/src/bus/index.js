@@ -1,3 +1,4 @@
+/** @module Bus — Effect-based publish/subscribe event bus: per-instance PubSub channels (typed + wildcard) bridged to the process-wide GlobalBus, with Promise/callback helpers for non-Effect callers. */
 import { Effect, Exit, Layer, PubSub, Scope, Context, Stream, Schema } from "effect";
 import { EffectBridge } from "#effect/bridge.js";
 import * as Log from "core/util/log";
@@ -9,10 +10,13 @@ import { Identifier } from "#id/id.js";
 const log = Log.create({
   service: "bus"
 });
+/** Event published right before an instance's bus is shut down, carrying the instance directory. */
 export const InstanceDisposed = BusEvent.define("server.instance.disposed", Schema.Struct({
   directory: Schema.String
 }));
+/** Effect service tag for the bus. */
 export class Service extends Context.Service()("@closedcode/Bus") {}
+/** Effect layer that builds the Bus service: per-instance state plus publish/subscribe operations. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const state = yield* InstanceState.make(Effect.fn("Bus.state")(function* (ctx) {
     const wildcard = yield* PubSub.unbounded();
@@ -36,6 +40,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       typed
     };
   }));
+  /**
+   * Get the typed PubSub channel for an event definition, creating it on first use.
+   * @param {{typed: Map}} state - Instance state holding the typed-channel map.
+   * @param {{type: string}} def - Event definition whose `type` keys the channel.
+   * @returns {Effect} Effect yielding the PubSub channel for `def.type`.
+   */
   function getOrCreate(state, def) {
     return Effect.gen(function* () {
       let ps = state.typed.get(def.type);
@@ -46,6 +56,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return ps;
     });
   }
+  /**
+   * Publish an event to its typed channel, the wildcard channel, and the process-wide GlobalBus.
+   * @param {{type: string}} def - Event definition identifying the channel/type.
+   * @param {Object} properties - Event payload properties.
+   * @param {{id: string}} options - Optional overrides; `id` sets an explicit event id (otherwise generated).
+   * @returns {Effect} Effect that completes once the event has been published everywhere.
+   */
   function publish(def, properties, options) {
     return Effect.gen(function* () {
       const s = yield* InstanceState.get(state);
@@ -71,6 +88,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     });
   }
+  /**
+   * Subscribe to a single event type as a Stream of payloads.
+   * @param {{type: string}} def - Event definition identifying the typed channel.
+   * @returns {Object} Effect Stream that emits payloads for `def.type` until the scope ends.
+   */
   function subscribe(def) {
     log.info("subscribing", {
       type: def.type
@@ -83,6 +105,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       type: def.type
     }))));
   }
+  /**
+   * Subscribe to every event type via the wildcard channel as a Stream of payloads.
+   * @returns {Object} Effect Stream that emits all published payloads until the scope ends.
+   */
   function subscribeAll() {
     log.info("subscribing", {
       type: "*"
@@ -94,6 +120,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       type: "*"
     }))));
   }
+  /**
+   * Bridge a PubSub channel to a plain callback, forking a scoped subscription and returning an unsubscribe function.
+   * Callback errors are caught and logged so one bad subscriber cannot break the stream.
+   * @param {Object} pubsub - The PubSub channel to subscribe to.
+   * @param {string} type - Event type label used in log messages ("*" for wildcard).
+   * @param {Function} callback - Invoked with each received message.
+   * @returns {Effect} Effect yielding an unsubscribe Function that closes the subscription scope.
+   */
   function on(pubsub, type, callback) {
     return Effect.gen(function* () {
       log.info("subscribing", {
@@ -119,11 +153,22 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       };
     });
   }
+  /**
+   * Subscribe to a single event type with a plain callback (Effect-aware wrapper around `on`).
+   * @param {{type: string}} def - Event definition identifying the typed channel.
+   * @param {Function} callback - Invoked with each payload of `def.type`.
+   * @returns {Effect} Effect yielding an unsubscribe Function.
+   */
   const subscribeCallback = Effect.fn("Bus.subscribeCallback")(function* (def, callback) {
     const s = yield* InstanceState.get(state);
     const ps = yield* getOrCreate(s, def);
     return yield* on(ps, def.type, callback);
   });
+  /**
+   * Subscribe to every event type with a plain callback via the wildcard channel.
+   * @param {Function} callback - Invoked with each published payload.
+   * @returns {Effect} Effect yielding an unsubscribe Function.
+   */
   const subscribeAllCallback = Effect.fn("Bus.subscribeAllCallback")(function* (callback) {
     const s = yield* InstanceState.get(state);
     return yield* on(s.wildcard, "*", callback);
@@ -136,6 +181,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     subscribeAllCallback
   });
 }));
+/** Default layer used when no explicit Bus layer is provided. */
 export const defaultLayer = layer;
 const {
   runPromise,
@@ -144,15 +190,37 @@ const {
 
 // runSync is safe here because the subscribe chain (InstanceState.get, PubSub.subscribe,
 // Scope.make, Effect.forkScoped) is entirely synchronous. If any step becomes async, this will throw.
+/**
+ * Generate a new ascending event id.
+ * @returns {string} A fresh "evt" identifier.
+ */
 export function createID() {
   return Identifier.create("evt", "ascending");
 }
+/**
+ * Publish an event from non-Effect code (resolves once published).
+ * @param {{type: string}} def - Event definition identifying the channel/type.
+ * @param {Object} properties - Event payload properties.
+ * @param {{id: string}} options - Optional overrides; `id` sets an explicit event id.
+ * @returns {Promise<void>} Resolves when the event has been published.
+ */
 export async function publish(def, properties, options) {
   return runPromise(svc => svc.publish(def, properties, options));
 }
+/**
+ * Subscribe to a single event type with a callback from non-Effect code.
+ * @param {{type: string}} def - Event definition identifying the typed channel.
+ * @param {Function} callback - Invoked with each payload of `def.type`.
+ * @returns {Function} Unsubscribe function.
+ */
 export function subscribe(def, callback) {
   return runSync(svc => svc.subscribeCallback(def, callback));
 }
+/**
+ * Subscribe to all event types with a callback from non-Effect code.
+ * @param {Function} callback - Invoked with each published payload.
+ * @returns {Function} Unsubscribe function.
+ */
 export function subscribeAll(callback) {
   return runSync(svc => svc.subscribeAllCallback(callback));
 }

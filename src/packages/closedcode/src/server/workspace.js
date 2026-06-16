@@ -1,3 +1,8 @@
+/**
+ * @file Workspace-route resolution for the server. Decides whether an incoming
+ * request should be served locally or proxied to a remote workspace adapter,
+ * and provides the URL/session helpers that drive that decision.
+ */
 import { SessionID } from "#session/schema.js";
 import { WorkspaceID } from "#control-plane/schema.js";
 import { Workspace } from "#control-plane/workspace.js";
@@ -15,6 +20,14 @@ const RULES = [{
   path: "/session",
   action: "local"
 }];
+/**
+ * Decide whether a request path/method should be served locally rather than
+ * proxied, by matching it against the static RULES table. Rules may pin a
+ * method and match a path exactly or as a prefix; the first matching rule wins.
+ * @param {string} method - HTTP method of the request (e.g. "GET").
+ * @param {string} path - Request URL pathname.
+ * @returns {boolean} True when the matched rule's action is "local"; false otherwise (including no match).
+ */
 export function isLocalWorkspaceRoute(method, path) {
   for (const rule of RULES) {
     if (rule.method && rule.method !== method) continue;
@@ -23,12 +36,26 @@ export function isLocalWorkspaceRoute(method, path) {
   }
   return false;
 }
+/**
+ * Extract the session ID embedded in a `/session/{id}` route URL. Returns null
+ * for the `/session/status` route and for any URL without a session segment.
+ * @param {URL} url - Absolute request URL.
+ * @returns {SessionID} The parsed SessionID, or null when none is present.
+ */
 export function getWorkspaceRouteSessionID(url) {
   if (url.pathname === "/session/status") return null;
   const id = url.pathname.match(/^\/session\/([^/]+)(?:\/|$)/)?.[1];
   if (!id) return null;
   return SessionID.make(id);
 }
+/**
+ * Build the upstream URL used to proxy a request to a remote workspace target.
+ * Joins the target's base path with the request pathname, carries over the
+ * request search/hash, and strips the internal `workspace` query parameter.
+ * @param {string} target - Base URL of the remote workspace adapter.
+ * @param {URL} requestURL - The incoming request URL being proxied.
+ * @returns {URL} The fully-qualified proxy destination URL.
+ */
 export function workspaceProxyURL(target, requestURL) {
   const proxyURL = new URL(target);
   proxyURL.pathname = `${proxyURL.pathname.replace(/\/$/, "")}${requestURL.pathname}`;

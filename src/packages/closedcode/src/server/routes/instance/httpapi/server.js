@@ -1,3 +1,4 @@
+/** @file Assembles the instance HTTP API server: composes auth/workspace/instance middleware, all route handlers, UI/CORS, and exposes web request handlers. */
 import { Context, Effect, Layer } from "effect";
 import { HttpApiBuilder } from "effect/unstable/httpapi";
 import { FetchHttpClient, HttpClient, HttpMiddleware, HttpRouter, HttpServer } from "effect/unstable/http";
@@ -71,24 +72,38 @@ import { workspaceRouterMiddleware, workspaceRoutingLayer } from "./middleware/w
 import { disposeMiddleware } from "./lifecycle.js";
 import { memoMap } from "core/effect/memo-map";
 import * as ServerBackend from "#server/backend.js";
+/** Shared, empty Effect context used as the base context for the server's request runtime. */
 export const context = Context.makeUnsafe(new Map());
+/** Router middleware that selects the server backend and annotates the current span with backend attributes before running each handler. */
 const runtime = HttpRouter.middleware()(Effect.succeed(effect => Effect.gen(function* () {
   const selected = ServerBackend.select();
   yield* Effect.annotateCurrentSpan(ServerBackend.attributes(ServerBackend.force(selected, "effect-httpapi")));
   return yield* effect;
 }))).layer;
+/**
+ * Build a global CORS router middleware that allows origins per the configured CORS options.
+ * @param {*} corsOptions - The server CORS configuration consulted by the allowed-origin check.
+ * @returns {*} A global router middleware layer applying CORS with a one-day max-age.
+ */
 const cors = corsOptions => HttpRouter.middleware(HttpMiddleware.cors({
   allowedOrigins: origin => isAllowedCorsOrigin(origin, corsOptions),
   maxAge: 86_400
 }), {
   global: true
 });
+/** Layer building the root (non-instance) API routes from control-plane and global handlers. */
 const rootApiRoutes = HttpApiBuilder.layer(RootHttpApi).pipe(Layer.provide([controlHandlers, globalHandlers]));
+/** Combined router middleware (authorization + instance context + workspace routing) for raw instance routes. */
 const instanceRouterLayer = authorizationRouterMiddleware.combine(instanceRouterMiddleware).combine(workspaceRouterMiddleware).layer.pipe(Layer.provide(Socket.layerWebSocketConstructorGlobal), Layer.provide(ServerAuthConfig.defaultLayer));
+/** Layer building the event (SSE) API routes, served behind the instance router middleware. */
 const eventApiRoutes = HttpApiBuilder.layer(EventApi).pipe(Layer.provide(eventHandlers), Layer.provide(instanceRouterLayer));
+/** Layer building the full instance HttpApi from every instance-scoped handler group. */
 const instanceApiRoutes = HttpApiBuilder.layer(InstanceHttpApi).pipe(Layer.provide([configHandlers, experimentalHandlers, fileHandlers, instanceHandlers, mcpHandlers, projectHandlers, ptyHandlers, questionHandlers, permissionHandlers, providerHandlers, sessionHandlers, syncHandlers, v2Handlers, tuiHandlers, workspaceHandlers]));
+/** Layer for raw (non-HttpApi) instance routes such as the PTY connect upgrade, behind the instance router middleware. */
 const rawInstanceRoutes = Layer.mergeAll(ptyConnectRoute).pipe(Layer.provide(instanceRouterLayer));
+/** Combined instance routes (raw + HttpApi) with authorization, workspace routing, and instance-context middleware provided. */
 const instanceRoutes = Layer.mergeAll(rawInstanceRoutes, instanceApiRoutes).pipe(Layer.provide([authorizationLayer.pipe(Layer.provide(ServerAuthConfig.defaultLayer)), workspaceRoutingLayer.pipe(Layer.provide(Socket.layerWebSocketConstructorGlobal)), instanceContextLayer]));
+/** Catch-all UI route layer that serves the web UI (and proxies dev assets) behind authorization middleware. */
 const uiRoute = HttpRouter.use(router => Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const client = yield* HttpClient.HttpClient;
@@ -97,14 +112,29 @@ const uiRoute = HttpRouter.use(router => Effect.gen(function* () {
     client
   }));
 })).pipe(Layer.provide(authorizationRouterMiddleware.layer.pipe(Layer.provide(ServerAuthConfig.defaultLayer))));
+/**
+ * Build the complete route layer for the server, merging root, event, instance, and UI routes
+ * and providing all required service layers (CORS, runtime, and every feature service layer).
+ * @param {*} corsOptions - The server CORS configuration applied to the global CORS middleware.
+ * @returns {*} A fully-wired Effect `Layer` for the HTTP router.
+ */
 export function createRoutes(corsOptions) {
   return Layer.mergeAll(rootApiRoutes, eventApiRoutes, instanceRoutes, uiRoute).pipe(Layer.provide([cors(corsOptions), runtime, Account.defaultLayer, Agent.defaultLayer, Auth.defaultLayer, Command.defaultLayer, Config.defaultLayer, File.defaultLayer, FileWatcher.defaultLayer, Format.defaultLayer, LSP.defaultLayer, Installation.defaultLayer, MCP.defaultLayer, ModelsDev.defaultLayer, Permission.defaultLayer, Plugin.defaultLayer, Project.defaultLayer, ProviderAuth.defaultLayer, Provider.defaultLayer, Pty.defaultLayer, Question.defaultLayer, Ripgrep.defaultLayer, Session.defaultLayer, SessionCompaction.defaultLayer, SessionPrompt.defaultLayer, SessionRevert.defaultLayer, SessionShare.defaultLayer, SessionRunState.defaultLayer, SessionStatus.defaultLayer, SessionSummary.defaultLayer, ShareNext.defaultLayer, Snapshot.defaultLayer, SyncEvent.defaultLayer, Skill.defaultLayer, Todo.defaultLayer, ToolRegistry.defaultLayer, Vcs.defaultLayer, Workspace.defaultLayer, Worktree.appLayer, Bus.layer, AppFileSystem.defaultLayer, FetchHttpClient.layer, HttpServer.layerServices]), Layer.provideMerge(InstanceLayer.layer), Layer.provideMerge(Observability.layer));
 }
+/** The default route layer built with no custom CORS options. */
 export const routes = createRoutes();
+/** Lazily-constructed default web handler over `routes`, with deferred instance disposal as outer middleware. */
 const defaultWebHandler = lazy(() => HttpRouter.toWebHandler(routes, {
   memoMap,
   middleware: disposeMiddleware
 }));
+/**
+ * Get a web (Fetch-style) request handler for the server.
+ * Returns the memoized default handler when no CORS options are supplied; otherwise builds a fresh handler
+ * with the given CORS options (using a non-shared memo map so the default route memoization is not reused).
+ * @param {*} corsOptions - Optional server CORS configuration; when its `cors` list is empty/absent the default handler is used.
+ * @returns {Function} A web request handler function.
+ */
 export function webHandler(corsOptions) {
   if (!corsOptions?.cors?.length) return defaultWebHandler();
   return HttpRouter.toWebHandler(createRoutes(corsOptions), {

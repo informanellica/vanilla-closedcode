@@ -1,3 +1,4 @@
+/** @file Express route group for the instance "/config" endpoints: read/update configuration and list configured providers. */
 // Express route group for the instance "/config" endpoints.
 import express from "express";
 import { Effect } from "effect";
@@ -16,6 +17,11 @@ const log = Log.create({ service: "server.config" });
 
 // Express equivalent of trace.js requestAttributes(c): build span attributes
 // from the Express request (method/path + matched route params).
+/**
+ * Build OpenTelemetry span attributes from an Express request (HTTP method/path plus matched route params).
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A map of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -29,14 +35,33 @@ function requestAttributes(req) {
 
 // Express equivalent of trace.js runRequest: run an Effect inside a span named
 // `name` with the request attributes.
+/**
+ * Run an Effect inside a named tracing span carrying the request's attributes.
+ * @param {string} name - Span name.
+ * @param {Object} req - The Express request object (used to derive span attributes).
+ * @param {Effect} effect - The Effect to execute within the span.
+ * @returns {Promise} A promise resolving to the Effect's success value.
+ */
 function runEffect(name, req, effect) {
   return AppRuntime.runPromise(effect.pipe(Effect.withSpan(name, { attributes: requestAttributes(req) })));
 }
 
+/**
+ * Build the Express router for the "/config" route group (GET/PATCH "/" and GET "/providers").
+ * @param {Object} registry - Optional OpenAPI registry to record operation metadata against; falsy disables registration.
+ * @returns {express.Router} The configured Express router.
+ */
 export function ConfigRoutes(registry) {
   const router = express.Router();
 
   // Register a route's openapi metadata against the GROUP-RELATIVE mount ("/config").
+  /**
+   * Register a route's OpenAPI operation metadata under the group-relative "/config" mount.
+   * @param {string} method - HTTP method (e.g. "get", "patch").
+   * @param {string} path - Group-relative path (e.g. "/" or "/providers").
+   * @param {Object} meta - OpenAPI operation metadata.
+   * @returns {*} The registration result, or undefined when no registry is provided.
+   */
   const describe = (method, path, meta) => registry && registerOperation(registry, method, "/config" + path, meta);
 
   describe("get", "/", {

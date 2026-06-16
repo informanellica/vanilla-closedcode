@@ -1,3 +1,4 @@
+/** @file HttpApi route definitions for the experimental workspace group: list adapters/workspaces, create, status, remove, and session restore. */
 import { Workspace } from "#control-plane/workspace.js";
 import { WorkspaceAdapterEntry } from "#control-plane/types.js";
 import { NonNegativeInt } from "#util/schema.js";
@@ -7,15 +8,20 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path prefix for all experimental workspace endpoints. */
 const root = "/experimental/workspace";
+/** Request body schema for creating a workspace, derived from Workspace.CreateInput minus projectID, with extra made optional. */
 export const CreatePayload = Schema.Struct({
   ...Struct.omit(Workspace.CreateInput.fields, ["projectID", "extra"]),
   extra: Schema.optional(Workspace.CreateInput.fields.extra)
 });
+/** Request body schema for restoring a session into a workspace, derived from Workspace.SessionRestoreInput minus the path-supplied workspaceID. */
 export const SessionRestorePayload = Schema.Struct(Struct.omit(Workspace.SessionRestoreInput.fields, ["workspaceID"]));
+/** Response schema for the session-restore endpoint, returning the total number of events scheduled for replay. */
 export const SessionRestoreResponse = Schema.Struct({
   total: NonNegativeInt
 });
+/** Map of endpoint name to URL path template for every workspace route. */
 export const WorkspacePaths = {
   adapters: `${root}/adapter`,
   list: root,
@@ -23,6 +29,12 @@ export const WorkspacePaths = {
   remove: `${root}/:id`,
   sessionRestore: `${root}/:id/session-restore`
 };
+/**
+ * Experimental HttpApi surface for the workspace group, exposing endpoints to list
+ * available workspace adapters, list/create workspaces, query connection status,
+ * remove a workspace, and restore a session's events into a workspace.
+ * The group is guarded by instance-context, workspace-routing, and authorization middleware.
+ */
 export const WorkspaceApi = HttpApi.make("workspace").add(HttpApiGroup.make("workspace").add(HttpApiEndpoint.get("adapters", WorkspacePaths.adapters, {
   success: described(Schema.Array(WorkspaceAdapterEntry), "Workspace adapters")
 }).annotateMerge(OpenApi.annotations({

@@ -1,3 +1,4 @@
+/** @file ACP agent: bridges the closedcode SDK to the Agent Client Protocol, translating sessions, prompts, tool calls, permissions, and streamed updates. */
 import { RequestError } from "@agentclientprotocol/sdk";
 import * as Log from "core/util/log";
 import { pathToFileURL } from "url";
@@ -20,6 +21,14 @@ const DEFAULT_VARIANT_VALUE = "default";
 const log = Log.create({
   service: "acp-agent"
 });
+/**
+ * Look up the context-window token limit for a given provider/model.
+ * @param {Object} sdk - The closedcode SDK.
+ * @param {string} providerID - The provider id.
+ * @param {string} modelID - The model id.
+ * @param {string} directory - The working directory used to scope provider config.
+ * @returns {Promise<number>} The context limit in tokens, or null when unknown.
+ */
 async function getContextLimit(sdk, providerID, modelID, directory) {
   const providers = await sdk.config.providers({
     directory
@@ -33,6 +42,14 @@ async function getContextLimit(sdk, providerID, modelID, directory) {
   const model = provider?.models[modelID];
   return model?.limit.context ?? null;
 }
+/**
+ * Compute token/cost usage from the latest assistant message and push a usage_update over the connection.
+ * @param {Object} connection - The ACP connection.
+ * @param {Object} sdk - The closedcode SDK.
+ * @param {string} sessionID - The session id.
+ * @param {string} directory - The working directory used to scope SDK calls.
+ * @returns {Promise<void>} Resolves once the update has been attempted (no-op when usage cannot be computed).
+ */
 async function sendUsageUpdate(connection, sdk, sessionID, directory) {
   const messages = await sdk.session.messages({
     sessionID,
@@ -75,6 +92,11 @@ async function sendUsageUpdate(connection, sdk, sessionID, directory) {
     });
   });
 }
+/**
+ * Initialize the ACP agent module, returning a factory for per-connection Agent instances.
+ * @param {Object} params - Module params; `sdk` is accepted but unused at this level.
+ * @returns {Object} An object with a `create(connection, fullConfig)` factory.
+ */
 export function init({
   sdk: _sdk
 }) {
@@ -84,6 +106,7 @@ export function init({
     }
   };
 }
+/** ACP Agent implementation: handles initialization, sessions, prompts, permissions, and event streaming for a single connection. */
 export class Agent {
   eventAbort = new AbortController();
   eventStarted = false;
@@ -103,6 +126,10 @@ export class Agent {
     kind: "reject_once",
     name: "Reject"
   }];
+  /**
+   * @param {Object} connection - The ACP connection used to send session updates and requests.
+   * @param {Object} config - Agent config carrying the SDK and default model.
+   */
   constructor(connection, config) {
     this.connection = connection;
     this.config = config;
@@ -110,6 +137,10 @@ export class Agent {
     this.sessionManager = new ACPSessionManager(this.sdk);
     this.startEventSubscription();
   }
+  /**
+   * Start the background subscription to SDK events (idempotent); logs unexpected failures.
+   * @returns {void}
+   */
   startEventSubscription() {
     if (this.eventStarted) return;
     this.eventStarted = true;
@@ -120,6 +151,10 @@ export class Agent {
       });
     });
   }
+  /**
+   * Continuously stream SDK events and dispatch each payload to handleEvent until aborted.
+   * @returns {Promise<void>} Resolves when the subscription is aborted.
+   */
   async runEventSubscription() {
     while (true) {
       if (this.eventAbort.signal.aborted) return;
@@ -139,6 +174,13 @@ export class Agent {
       }
     }
   }
+  /**
+   * Dispatch a single SDK event to the matching ACP behavior (permission prompts, tool-call
+   * updates, and streamed message/reasoning deltas). Permission requests are serialized per
+   * session via a promise queue.
+   * @param {Object} event - The SDK event payload with a `type` and `properties`.
+   * @returns {Promise<void>} Resolves once the event has been handled.
+   */
   async handleEvent(event) {
     switch (event.type) {
       case "permission.asked":
@@ -457,6 +499,11 @@ export class Agent {
         }
     }
   }
+  /**
+   * Handle the ACP `initialize` request, advertising agent capabilities and auth methods.
+   * @param {Object} params - Initialize params including protocolVersion and clientCapabilities.
+   * @returns {Promise<Object>} The initialize response (protocol version, capabilities, auth methods, agent info).
+   */
   async initialize(params) {
     log.info("initialize", {
       protocolVersion: params.protocolVersion
@@ -502,9 +549,19 @@ export class Agent {
       }
     };
   }
+  /**
+   * Handle the ACP `authenticate` request. Not supported; clients authenticate via the terminal.
+   * @param {Object} _params - Authenticate params (unused).
+   * @returns {Promise<void>} Always rejects with an error.
+   */
   async authenticate(_params) {
     throw new Error("Authentication not implemented");
   }
+  /**
+   * Create a new ACP session, resolving a default model and loading session mode/model options.
+   * @param {Object} params - {cwd, mcpServers}.
+   * @returns {Promise<Object>} The new-session response (sessionId, configOptions, models, modes, _meta).
+   */
   async newSession(params) {
     const directory = params.cwd;
     try {
@@ -539,6 +596,11 @@ export class Agent {
       throw e;
     }
   }
+  /**
+   * Load an existing session, replay its message history to the client, and report usage.
+   * @param {Object} params - {cwd, sessionId, mcpServers}.
+   * @returns {Promise<Object>} The session-mode response with model/mode state restored from history.
+   */
   async loadSession(params) {
     const directory = params.cwd;
     const sessionId = params.sessionId;
@@ -602,6 +664,11 @@ export class Agent {
       throw e;
     }
   }
+  /**
+   * List sessions for the given directory, newest first, with cursor-based pagination.
+   * @param {Object} params - {cwd, cursor}; cursor is the prior page's last updated timestamp.
+   * @returns {Promise<Object>} A response with `sessions` entries and an optional `nextCursor`.
+   */
   async listSessions(params) {
     try {
       const cursor = params.cursor ? Number(params.cursor) : undefined;
@@ -638,6 +705,11 @@ export class Agent {
       throw e;
     }
   }
+  /**
+   * Fork an existing session into a new one and replay the forked history to the client.
+   * @param {Object} params - {cwd, sessionId, mcpServers}.
+   * @returns {Promise<Object>} The session-mode response for the forked session.
+   */
   async unstable_forkSession(params) {
     const directory = params.cwd;
     const mcpServers = params.mcpServers ?? [];
@@ -690,6 +762,11 @@ export class Agent {
       throw e;
     }
   }
+  /**
+   * Resume a session without replaying history, restoring its mode/model state and reporting usage.
+   * @param {Object} params - {cwd, sessionId, mcpServers}.
+   * @returns {Promise<Object>} The session-mode response for the resumed session.
+   */
   async unstable_resumeSession(params) {
     const directory = params.cwd;
     const sessionId = params.sessionId;
@@ -718,6 +795,11 @@ export class Agent {
       throw e;
     }
   }
+  /**
+   * Replay a stored message to the ACP client, emitting tool-call, text, file, and reasoning updates.
+   * @param {Object} message - A message with info (role/id/sessionID) and parts.
+   * @returns {Promise<void>} Resolves once all parts have been sent.
+   */
   async processMessage(message) {
     log.debug("process message", message);
     if (message.info.role !== "assistant" && message.info.role !== "user") return;
@@ -995,6 +1077,11 @@ export class Agent {
       }
     }
   }
+  /**
+   * Extract streamed shell output text from a tool part's metadata, if present.
+   * @param {Object} part - A tool message part.
+   * @returns {string} The shell output string, or undefined when not a shell tool or no output exists.
+   */
   shellOutput(part) {
     if (part.tool !== ShellID.ToolID) return;
     if (!("metadata" in part.state) || !part.state.metadata || typeof part.state.metadata !== "object") return;
@@ -1002,6 +1089,12 @@ export class Agent {
     if (typeof output !== "string") return;
     return output;
   }
+  /**
+   * Emit a pending tool_call update the first time a tool part is seen (deduped by callID).
+   * @param {string} sessionId - The ACP session id.
+   * @param {Object} part - The tool message part.
+   * @returns {Promise<void>} Resolves once the update has been attempted.
+   */
   async toolStart(sessionId, part) {
     if (this.toolStarts.has(part.callID)) return;
     this.toolStarts.add(part.callID);
@@ -1022,6 +1115,11 @@ export class Agent {
       });
     });
   }
+  /**
+   * Load the selectable session modes (visible, non-subagent agents) for a directory.
+   * @param {string} directory - The working directory used to scope agent lookup.
+   * @returns {Promise<Array>} An array of {id, name, description} mode entries.
+   */
   async loadAvailableModes(directory) {
     const agents = await this.config.sdk.app.agents({
       directory
@@ -1034,6 +1132,12 @@ export class Agent {
       description: agent.description
     }));
   }
+  /**
+   * Resolve the available modes and the current mode for a session, defaulting it when unset.
+   * @param {string} directory - The working directory used to scope agent lookup.
+   * @param {string} sessionId - The session id.
+   * @returns {Promise<Object>} {availableModes, currentModeId}.
+   */
   async resolveModeState(directory, sessionId) {
     const availableModes = await this.loadAvailableModes(directory);
     const currentModeId = this.sessionManager.get(sessionId).modeId || (await (async () => {
@@ -1048,6 +1152,12 @@ export class Agent {
       currentModeId
     };
   }
+  /**
+   * Build the full session-mode payload: model/variant options, modes, config options, available
+   * commands, and registered MCP servers, then push an available-commands update to the client.
+   * @param {Object} params - {cwd, sessionId, mcpServers}.
+   * @returns {Promise<Object>} {sessionId, models, modes, configOptions, _meta}.
+   */
   async loadSessionMode(params) {
     const directory = params.cwd;
     const model = await defaultModel(this.config, directory);
@@ -1154,6 +1264,11 @@ export class Agent {
       })
     };
   }
+  /**
+   * Set the model (and any variant) for a session from a model id string.
+   * @param {Object} params - {sessionId, modelId}.
+   * @returns {Promise<Object>} A response whose _meta carries the resolved model/variant info.
+   */
   async unstable_setSessionModel(params) {
     const session = this.sessionManager.get(params.sessionId);
     const providers = await this.sdk.config.providers({
@@ -1174,6 +1289,11 @@ export class Agent {
       })
     };
   }
+  /**
+   * Set the active mode (agent) for a session, validating it against the available modes.
+   * @param {Object} params - {sessionId, modeId}.
+   * @returns {Promise<void>} Resolves once the mode is set; throws when the mode is unknown.
+   */
   async setSessionMode(params) {
     const session = this.sessionManager.get(params.sessionId);
     const availableModes = await this.loadAvailableModes(session.cwd);
@@ -1182,6 +1302,11 @@ export class Agent {
     }
     this.sessionManager.setMode(params.sessionId, params.modeId);
   }
+  /**
+   * Apply a config-option change (model or mode) for a session and return refreshed config options.
+   * @param {Object} params - {sessionId, configId, value}; configId is "model" or "mode".
+   * @returns {Promise<Object>} A response with updated configOptions; throws on invalid configId/value.
+   */
   async setSessionConfigOption(params) {
     const session = this.sessionManager.get(params.sessionId);
     const providers = await this.sdk.config.providers({
@@ -1229,6 +1354,12 @@ export class Agent {
       })
     };
   }
+  /**
+   * Handle a user prompt: convert ACP content blocks to closedcode parts, detect slash commands,
+   * dispatch to a command/built-in or a normal session prompt, and report usage.
+   * @param {Object} params - {sessionId, prompt}; prompt is an array of ACP content blocks.
+   * @returns {Promise<Object>} A response with stopReason, optional usage, and _meta.
+   */
   async prompt(params) {
     const sessionID = params.sessionId;
     const session = this.sessionManager.get(sessionID);
@@ -1391,6 +1522,11 @@ export class Agent {
       _meta: {}
     };
   }
+  /**
+   * Abort the in-progress turn for a session.
+   * @param {Object} params - {sessionId}.
+   * @returns {Promise<void>} Resolves once the abort has been requested.
+   */
   async cancel(params) {
     const session = this.sessionManager.get(params.sessionId);
     await this.config.sdk.session.abort({
@@ -1401,6 +1537,11 @@ export class Agent {
     });
   }
 }
+/**
+ * Map a closedcode tool name to an ACP tool-call kind.
+ * @param {string} toolName - The tool name.
+ * @returns {string} An ACP kind such as "execute", "fetch", "edit", "search", "read", or "other".
+ */
 function toToolKind(toolName) {
   const tool = toolName.toLocaleLowerCase();
   switch (tool) {
@@ -1423,6 +1564,12 @@ function toToolKind(toolName) {
       return "other";
   }
 }
+/**
+ * Derive the ACP file/path locations a tool call touches from its input.
+ * @param {string} toolName - The tool name.
+ * @param {Object} input - The tool input, possibly containing filePath/path.
+ * @returns {Array} An array of {path} location objects (empty when not applicable).
+ */
 function toLocations(toolName, input) {
   const tool = toolName.toLocaleLowerCase();
   switch (tool) {
@@ -1443,6 +1590,13 @@ function toLocations(toolName, input) {
       return [];
   }
 }
+/**
+ * Resolve the default model: prefer the explicit config default, then the user's configured model,
+ * then the highest-ranked available provider model, falling back to a built-in default.
+ * @param {Object} config - Agent config carrying the SDK and optional defaultModel.
+ * @param {string} cwd - The working directory used to scope provider/config lookup.
+ * @returns {Promise<Object>} A {providerID, modelID} model selection.
+ */
 async function defaultModel(config, cwd) {
   const sdk = config.sdk;
   const configured = config.defaultModel;
@@ -1491,6 +1645,11 @@ async function defaultModel(config, cwd) {
     modelID: ModelID.make("openai/gpt-oss-20b")
   };
 }
+/**
+ * Parse a resource URI into a closedcode part, handling file:// and zed:// schemes.
+ * @param {string} uri - The URI to parse.
+ * @returns {Object} A file part {type, url, filename, mime} for known schemes, otherwise a text part.
+ */
 function parseUri(uri) {
   try {
     if (uri.startsWith("file://")) {
@@ -1527,6 +1686,12 @@ function parseUri(uri) {
     };
   }
 }
+/**
+ * Apply a unified diff to original file content.
+ * @param {string} fileOriginal - The original file contents.
+ * @param {string} unifiedDiff - The unified diff to apply.
+ * @returns {string} The patched content, or undefined when the patch fails to apply.
+ */
 function getNewContent(fileOriginal, unifiedDiff) {
   const result = applyPatch(fileOriginal, unifiedDiff);
   if (result === false) {
@@ -1535,6 +1700,11 @@ function getNewContent(fileOriginal, unifiedDiff) {
   }
   return result;
 }
+/**
+ * Return providers sorted case-insensitively by name (without mutating the input).
+ * @param {Array} providers - The providers to sort.
+ * @returns {Array} A new array sorted by name.
+ */
 function sortProvidersByName(providers) {
   return [...providers].sort((a, b) => {
     const nameA = a.name.toLowerCase();
@@ -1544,6 +1714,12 @@ function sortProvidersByName(providers) {
     return 0;
   });
 }
+/**
+ * List the variant names available for a model within the given providers.
+ * @param {Array} providers - The provider entries to search.
+ * @param {Object} model - The model selection {providerID, modelID}.
+ * @returns {Array} An array of variant name strings (empty when none).
+ */
 function modelVariantsFromProviders(providers, model) {
   const provider = providers.find(entry => entry.id === model.providerID);
   if (!provider) return [];
@@ -1551,6 +1727,12 @@ function modelVariantsFromProviders(providers, model) {
   if (!modelInfo?.variants) return [];
   return Object.keys(modelInfo.variants);
 }
+/**
+ * Build the flat list of selectable models (optionally expanding non-default variants) for the client.
+ * @param {Array} providers - The provider entries.
+ * @param {Object} options - Options; `includeVariants` adds per-variant entries.
+ * @returns {Array} An array of {modelId, name} entries.
+ */
 function buildAvailableModels(providers, options = {}) {
   const includeVariants = options.includeVariants ?? false;
   return providers.flatMap(provider => {
@@ -1571,11 +1753,24 @@ function buildAvailableModels(providers, options = {}) {
     });
   });
 }
+/**
+ * Format a model id string, optionally appending the selected variant when valid.
+ * @param {Object} model - The model selection {providerID, modelID}.
+ * @param {string} variant - The selected variant, if any.
+ * @param {Array} availableVariants - Variants known for the model.
+ * @param {boolean} includeVariant - Whether to append the variant segment.
+ * @returns {string} The formatted model id, with a trailing variant segment when applicable.
+ */
 function formatModelIdWithVariant(model, variant, availableVariants, includeVariant) {
   const base = `${model.providerID}/${model.modelID}`;
   if (!includeVariant || !variant || !availableVariants.includes(variant)) return base;
   return `${base}/${variant}`;
 }
+/**
+ * Build the `_meta` payload carrying the current model id, selected variant, and available variants.
+ * @param {Object} input - {model, variant, availableVariants}.
+ * @returns {Object} The _meta object under the `opencode` key.
+ */
 function buildVariantMeta(input) {
   return {
     opencode: {
@@ -1585,6 +1780,13 @@ function buildVariantMeta(input) {
     }
   };
 }
+/**
+ * Parse a model id into a model selection and optional variant, splitting a trailing variant segment
+ * when the base model id is otherwise unknown but exposes that variant.
+ * @param {string} modelId - The model id string, possibly with a trailing variant segment.
+ * @param {Array} providers - The provider entries used to validate the model and variants.
+ * @returns {Object} {model: {providerID, modelID}, variant}; variant is undefined when none applies.
+ */
 function parseModelSelection(modelId, providers) {
   const parsed = Provider.parseModel(modelId);
   const provider = providers.find(p => p.id === parsed.providerID);
@@ -1624,6 +1826,11 @@ function parseModelSelection(modelId, providers) {
     variant: undefined
   };
 }
+/**
+ * Build the ACP session config options (a model selector, plus a mode selector when modes exist).
+ * @param {Object} input - {currentModelId, availableModels, modes}.
+ * @returns {Array} An array of config-option descriptors.
+ */
 function buildConfigOptions(input) {
   const options = [{
     id: "model",

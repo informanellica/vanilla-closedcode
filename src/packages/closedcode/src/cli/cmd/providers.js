@@ -1,3 +1,4 @@
+/** @file CLI `providers` command group (alias `auth`): list, log in to, and log out from AI providers and their credentials. */
 import { Auth } from "../../auth/index.js";
 import { AppRuntime } from "../../effect/app-runtime.js";
 import { cmd } from "./cmd.js";
@@ -5,7 +6,15 @@ import { effectCmd } from "../effect-cmd.js";
 import * as prompts from "@clack/prompts";
 import { UI } from "../ui.js";
 import { ModelsDev } from "#provider/models.js";
+/**
+ * Load the current models.dev provider/model database.
+ * @returns {Promise<Object>} A promise resolving to the provider database keyed by provider id.
+ */
 const getModels = () => AppRuntime.runPromise(ModelsDev.Service.use(s => s.get()));
+/**
+ * Force-refresh the local models.dev snapshot.
+ * @returns {Promise<*>} A promise resolving once the refresh completes.
+ */
 const refreshModels = () => AppRuntime.runPromise(ModelsDev.Service.use(s => s.refresh(true)));
 import { map, pipe, sortBy, values } from "remeda";
 import path from "path";
@@ -16,10 +25,23 @@ import { Plugin } from "../../plugin/index.js";
 import { Process } from "#util/process.js";
 import { text } from "node:stream/consumers";
 import { Effect } from "effect";
+/**
+ * Persist a credential for a provider into the auth store.
+ * @param {string} key - The provider id to store the credential under.
+ * @param {Object} info - The credential payload (e.g. `{type: "api", key}` or `{type: "oauth", ...}`).
+ * @returns {Promise<*>} A promise resolving once the credential is saved.
+ */
 const put = (key, info) => AppRuntime.runPromise(Effect.gen(function* () {
   const auth = yield* Auth.Service;
   yield* auth.set(key, info);
 }));
+/**
+ * Drive an interactive plugin-provided auth flow (oauth or api) for a provider, prompting for inputs and saving credentials.
+ * @param {Object} plugin - The plugin object exposing `auth.methods` (login methods with prompts/authorize).
+ * @param {string} provider - The provider id being authenticated.
+ * @param {string} methodName - Optional method label to skip interactive method selection.
+ * @returns {Promise<boolean>} True when the auth method was handled (oauth or api), false otherwise.
+ */
 async function handlePluginAuth(plugin, provider, methodName) {
   let index = 0;
   if (methodName) {
@@ -190,6 +212,11 @@ async function handlePluginAuth(plugin, provider, methodName) {
   }
   return false;
 }
+/**
+ * Collect plugin-contributed auth providers that are not already known and are not disabled/filtered out.
+ * @param {Object} input - `{hooks, existingProviders, disabled, enabled, providerNames}` used to filter candidates.
+ * @returns {Array} A deduplicated list of `{id, name}` providers contributed by plugin hooks.
+ */
 export function resolvePluginProviders(input) {
   const seen = new Set();
   const result = [];
@@ -208,6 +235,7 @@ export function resolvePluginProviders(input) {
   }
   return result;
 }
+/** Top-level `providers` command group (alias `auth`): dispatches to list/login/logout subcommands. */
 export const ProvidersCommand = cmd({
   command: "providers",
   aliases: ["auth"],
@@ -215,6 +243,7 @@ export const ProvidersCommand = cmd({
   builder: yargs => yargs.command(ProvidersListCommand).command(ProvidersLoginCommand).command(ProvidersLogoutCommand).demandCommand(),
   async handler() {}
 });
+/** `providers list` command (alias `ls`): prints stored credentials and any active provider environment variables. */
 export const ProvidersListCommand = effectCmd({
   command: "list",
   aliases: ["ls"],
@@ -262,6 +291,10 @@ export const ProvidersListCommand = effectCmd({
     });
   })
 });
+/**
+ * `providers login` command: selects a provider (or uses `--provider`), runs any plugin auth flow,
+ * and otherwise prompts for and stores an API key. Supports `--method` to preselect a plugin login method.
+ */
 export const ProvidersLoginCommand = effectCmd({
   command: "login",
   describe: "log in to a provider",
@@ -373,6 +406,7 @@ export const ProvidersLoginCommand = effectCmd({
     });
   })
 });
+/** `providers logout` command: prompts for a stored credential and removes it from the auth store. */
 export const ProvidersLogoutCommand = effectCmd({
   command: "logout",
   describe: "log out from a configured provider",

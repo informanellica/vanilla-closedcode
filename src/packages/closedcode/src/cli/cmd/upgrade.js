@@ -1,7 +1,17 @@
+/**
+ * @file `upgrade` CLI command. In this build self-update is disabled (the app is
+ * shipped as a signed installer, not via a package manager), so the handler prints
+ * a notice and returns early; the legacy package-manager upgrade flow is retained
+ * below as unreachable code.
+ */
 import { UI } from "../ui.js";
 import * as prompts from "@clack/prompts";
 import { Installation } from "../../installation/index.js";
 import { InstallationVersion } from "core/installation/version";
+/**
+ * Yargs command definition for `closedcode upgrade [target]`.
+ * @type {Object}
+ */
 export const UpgradeCommand = {
   command: "upgrade [target]",
   describe: "upgrade closedcode to the latest or a specific version",

@@ -1,5 +1,15 @@
+/** @file Archive helpers: extract ZIP files using platform-native tooling (PowerShell on Windows, `unzip` elsewhere). */
 import path from "path";
 import * as Process from "./process.js";
+/**
+ * Extracts a ZIP archive into a destination directory, overwriting existing files.
+ *
+ * On Windows uses PowerShell's `Expand-Archive`; on other platforms uses the `unzip` CLI.
+ *
+ * @param {string} zipPath - Path to the source ZIP file
+ * @param {string} destDir - Directory to extract the archive contents into
+ * @returns {Promise<void>} Resolves once extraction completes
+ */
 export async function extractZip(zipPath, destDir) {
   if (process.platform === "win32") {
     const winZipPath = path.resolve(zipPath);

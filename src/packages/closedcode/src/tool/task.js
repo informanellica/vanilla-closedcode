@@ -1,3 +1,4 @@
+/** @file Defines the "task" tool, which spawns (or resumes) a specialized subagent session to perform a delegated task and returns its final text result. */
 import { assetText } from "#util/asset.js";
 import * as Tool from "./tool.js";
 const DESCRIPTION = assetText("tool/task.txt");
@@ -8,6 +9,7 @@ import { Agent } from "../agent/agent.js";
 import { Config } from "#config/config.js";
 import { Effect, Schema } from "effect";
 const id = "task";
+/** Schema for the task tool parameters: description, prompt, subagent_type, and optional task_id (to resume) and command. */
 export const Parameters = Schema.Struct({
   description: Schema.String.annotate({
     description: "A short (3-5 words) description of the task"
@@ -25,10 +27,23 @@ export const Parameters = Schema.Struct({
     description: "The command that triggered this task"
   })
 });
+/**
+ * The "task" tool. Validates the requested subagent type and permissions,
+ * creates a fresh child session (or resumes the one named by task_id),
+ * derives the model from the agent or the parent assistant message, runs the
+ * subagent prompt to completion, and returns its last text part as the result.
+ * Wires the abort signal to cancel the subagent run.
+ */
 export const TaskTool = Tool.define(id, Effect.gen(function* () {
   const agent = yield* Agent.Service;
   const config = yield* Config.Service;
   const sessions = yield* Session.Service;
+  /**
+   * Executes a single task invocation.
+   * @param {Object} params - Decoded task parameters (description, prompt, subagent_type, task_id, command).
+   * @param {Object} ctx - Tool execution context (sessionID, messageID, abort signal, ask/metadata callbacks, and extra options such as promptOps).
+   * @returns {Effect} An Effect yielding the task result with title, metadata (sessionId, model) and the subagent's final text output.
+   */
   const run = Effect.fn("TaskTool.execute")(function* (params, ctx) {
     const cfg = yield* config.get();
     if (!ctx.extra?.bypassAgentCheck) {
@@ -87,6 +102,7 @@ export const TaskTool = Tool.define(id, Effect.gen(function* () {
     const ops = ctx.extra?.promptOps;
     if (!ops) return yield* Effect.fail(new Error("TaskTool requires promptOps in ctx.extra"));
     const messageID = MessageID.ascending();
+    /** Cancels the in-flight subagent prompt for the child session; bound to the abort signal. */
     function cancel() {
       ops.cancel(nextSession.id);
     }

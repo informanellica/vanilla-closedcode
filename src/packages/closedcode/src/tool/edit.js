@@ -1,3 +1,4 @@
+/** @file "edit" tool: performs a single find-and-replace edit on a file, using a cascade of fuzzy "replacer" strategies to locate the target text, then writes/formats the result and reports a diff plus LSP diagnostics. */
 import { assetText } from "#util/asset.js";
 // the approaches in this edit tool are sourced from
 // https://github.com/cline/cline/blob/main/evals/diff-edits/diff-apply/diff-06-23-25.ts
@@ -18,17 +19,39 @@ import { InstanceState } from "#effect/instance-state.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 import { AppFileSystem } from "core/filesystem";
 import * as Bom from "#util/bom.js";
+/**
+ * Converts all CRLF line endings in the text to LF.
+ * @param {string} text - The text to normalize.
+ * @returns {string} The text with `\r\n` replaced by `\n`.
+ */
 function normalizeLineEndings(text) {
   return text.replaceAll("\r\n", "\n");
 }
+/**
+ * Detects the dominant line ending of a text.
+ * @param {string} text - The text to inspect.
+ * @returns {string} "\r\n" if any CRLF is present, otherwise "\n".
+ */
 function detectLineEnding(text) {
   return text.includes("\r\n") ? "\r\n" : "\n";
 }
+/**
+ * Converts LF line endings in the text to the requested ending.
+ * @param {string} text - LF-normalized text.
+ * @param {string} ending - The target line ending ("\n" leaves the text unchanged, otherwise CRLF is used).
+ * @returns {string} The text with line endings converted to `ending`.
+ */
 function convertToLineEnding(text, ending) {
   if (ending === "\n") return text;
   return text.replaceAll("\n", "\r\n");
 }
+/** Per-file semaphores keyed by resolved path, used to serialize concurrent edits to the same file. */
 const locks = new Map();
+/**
+ * Returns (creating if needed) the single-permit semaphore guarding edits to a given file.
+ * @param {string} filePath - The file path to lock; resolved to a canonical key.
+ * @returns {Object} An Effect Semaphore with one permit for that file.
+ */
 function lock(filePath) {
   const resolvedFilePath = AppFileSystem.resolve(filePath);
   const hit = locks.get(resolvedFilePath);
@@ -37,6 +60,10 @@ function lock(filePath) {
   locks.set(resolvedFilePath, next);
   return next;
 }
+/**
+ * Parameter schema for the edit tool: the `filePath` to modify, the `oldString` to find, the
+ * `newString` to substitute, and an optional `replaceAll` flag.
+ */
 export const Parameters = Schema.Struct({
   filePath: Schema.String.annotate({
     description: "The absolute path to the file to modify"
@@ -51,6 +78,13 @@ export const Parameters = Schema.Struct({
     description: "Replace all occurrences of oldString (default false)"
   })
 });
+/**
+ * The "edit" tool definition. Validates the arguments, resolves the path, and under a per-file lock
+ * either creates the file (when `oldString` is empty) or applies a find-and-replace (preserving the
+ * file's existing line endings and BOM). It asks for "edit" permission, writes and optionally formats
+ * the file, publishes edit/update events, computes a trimmed diff plus addition/deletion counts, and
+ * appends any LSP diagnostics to the output.
+ */
 export const EditTool = Tool.define("edit", Effect.gen(function* () {
   const lsp = yield* LSP.Service;
   const afs = yield* AppFileSystem.Service;
@@ -178,11 +212,17 @@ export const EditTool = Tool.define("edit", Effect.gen(function* () {
   };
 }));
 // Similarity thresholds for block anchor fallback matching
+/** Minimum middle-line similarity to accept a block-anchor match when there is exactly one candidate (anchors alone suffice). */
 const SINGLE_CANDIDATE_SIMILARITY_THRESHOLD = 0.0;
+/** Minimum middle-line similarity required to accept the best candidate when multiple block-anchor candidates exist. */
 const MULTIPLE_CANDIDATES_SIMILARITY_THRESHOLD = 0.3;
 
 /**
- * Levenshtein distance algorithm implementation
+ * Levenshtein distance algorithm implementation: the minimum number of single-character edits
+ * (insertions, deletions, substitutions) needed to turn `a` into `b`.
+ * @param {string} a - First string.
+ * @param {string} b - Second string.
+ * @returns {number} The edit distance between `a` and `b`.
  */
 function levenshtein(a, b) {
   // Handle empty strings
@@ -202,9 +242,22 @@ function levenshtein(a, b) {
   }
   return matrix[a.length][b.length];
 }
+/**
+ * Replacer that yields the search string verbatim (exact match candidate).
+ * @param {string} _content - The full file content (unused).
+ * @param {string} find - The text to locate.
+ * @returns {Generator<string>} Yields `find` once.
+ */
 export const SimpleReplacer = function* (_content, find) {
   yield find;
 };
+/**
+ * Replacer that matches a block of lines ignoring leading/trailing whitespace on each line, yielding
+ * the corresponding raw substring of the original content.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The text to locate (compared line-by-line after trimming).
+ * @returns {Generator<string>} Yields each matching original-content substring.
+ */
 export const LineTrimmedReplacer = function* (content, find) {
   const originalLines = content.split("\n");
   const searchLines = find.split("\n");
@@ -237,6 +290,14 @@ export const LineTrimmedReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Replacer for blocks of 3+ lines that anchors on the trimmed first and last lines, then scores
+ * candidate blocks by middle-line similarity (Levenshtein-based) and yields the best/only acceptable
+ * match's raw substring. Tolerates differences in the interior lines.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The multi-line text to locate (its first/last lines act as anchors).
+ * @returns {Generator<string>} Yields at most one matching original-content substring.
+ */
 export const BlockAnchorReplacer = function* (content, find) {
   const originalLines = content.split("\n");
   const searchLines = find.split("\n");
@@ -375,6 +436,13 @@ export const BlockAnchorReplacer = function* (content, find) {
     yield content.substring(matchStartIndex, matchEndIndex);
   }
 };
+/**
+ * Replacer that matches by collapsing all runs of whitespace to single spaces, handling both single-line
+ * (full-line or substring) and multi-line matches, and yields the matching raw substring of the content.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The text to locate (whitespace-normalized before comparison).
+ * @returns {Generator<string>} Yields each matching original-content substring.
+ */
 export const WhitespaceNormalizedReplacer = function* (content, find) {
   const normalizeWhitespace = text => text.replace(/\s+/g, " ").trim();
   const normalizedFind = normalizeWhitespace(find);
@@ -418,6 +486,13 @@ export const WhitespaceNormalizedReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Replacer that matches blocks after stripping their common leading indentation, so the search text can
+ * be matched regardless of how deeply the original block is indented; yields the matching raw substring.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The text to locate (compared with common indentation removed).
+ * @returns {Generator<string>} Yields each matching original-content block.
+ */
 export const IndentationFlexibleReplacer = function* (content, find) {
   const removeIndentation = text => {
     const lines = text.split("\n");
@@ -439,6 +514,14 @@ export const IndentationFlexibleReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Replacer that interprets backslash escape sequences (\n, \t, \r, quotes, \\, \$) in the search text,
+ * then yields either the unescaped string if found directly or any content block whose own unescaping
+ * matches the unescaped search text.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The text to locate (escape sequences are resolved before comparison).
+ * @returns {Generator<string>} Yields each matching content substring/block.
+ */
 export const EscapeNormalizedReplacer = function* (content, find) {
   const unescapeString = str => {
     return str.replace(/\\(n|t|r|'|"|`|\\|\n|\$)/g, (match, capturedChar) => {
@@ -484,6 +567,13 @@ export const EscapeNormalizedReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Replacer that yields the exact search string once for every occurrence in the content, letting the
+ * caller decide how to handle multiple matches (e.g. via replaceAll).
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The exact text to locate.
+ * @returns {Generator<string>} Yields `find` once per occurrence found.
+ */
 export const MultiOccurrenceReplacer = function* (content, find) {
   // This replacer yields all exact matches, allowing the replace function
   // to handle multiple occurrences based on replaceAll parameter
@@ -495,6 +585,14 @@ export const MultiOccurrenceReplacer = function* (content, find) {
     startIndex = index + find.length;
   }
 };
+/**
+ * Replacer that retries matching after trimming the search text's leading/trailing whitespace, yielding
+ * the trimmed string if found directly or any content block whose trimmed form equals it. No-ops when the
+ * search text is already trimmed.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The text to locate (its surrounding whitespace is trimmed before comparison).
+ * @returns {Generator<string>} Yields each matching content substring/block.
+ */
 export const TrimmedBoundaryReplacer = function* (content, find) {
   const trimmedFind = find.trim();
   if (trimmedFind === find) {
@@ -517,6 +615,14 @@ export const TrimmedBoundaryReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Replacer for blocks of 3+ lines that anchors on the trimmed first and last lines and accepts a block of
+ * the same length only when at least half of its interior non-empty lines match (after trimming), yielding
+ * the matching raw substring.
+ * @param {string} content - The full file content to search.
+ * @param {string} find - The multi-line text to locate (first/last lines act as context anchors).
+ * @returns {Generator<string>} Yields at most one matching original-content block.
+ */
 export const ContextAwareReplacer = function* (content, find) {
   const findLines = find.split("\n");
   if (findLines.length < 3) {
@@ -570,6 +676,13 @@ export const ContextAwareReplacer = function* (content, find) {
     }
   }
 };
+/**
+ * Removes the common leading indentation shared by all content lines (+/-/space) of a unified diff,
+ * leaving the +/-/space prefixes and the `---`/`+++` header lines untouched, so the diff renders without
+ * a large uniform indent.
+ * @param {string} diff - A unified diff string.
+ * @returns {string} The diff with shared content-line indentation stripped (unchanged if there is none).
+ */
 export function trimDiff(diff) {
   const lines = diff.split("\n");
   const contentLines = lines.filter(line => (line.startsWith("+") || line.startsWith("-") || line.startsWith(" ")) && !line.startsWith("---") && !line.startsWith("+++"));
@@ -593,6 +706,16 @@ export function trimDiff(diff) {
   });
   return trimmedLines.join("\n");
 }
+/**
+ * Replaces an occurrence of `oldString` with `newString` in `content`, trying each replacer strategy in
+ * order until one finds a match. Throws if `oldString` equals `newString`, if no replacer locates the text,
+ * or (when not replacing all) if the located text is ambiguous (multiple occurrences).
+ * @param {string} content - The original file content.
+ * @param {string} oldString - The text to find (matched via the replacer cascade).
+ * @param {string} newString - The replacement text.
+ * @param {boolean} replaceAll - When true, replaces every occurrence; otherwise requires a unique match.
+ * @returns {string} The content with the replacement applied.
+ */
 export function replace(content, oldString, newString, replaceAll = false) {
   if (oldString === newString) {
     throw new Error("No changes to apply: oldString and newString are identical.");

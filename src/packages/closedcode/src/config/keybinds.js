@@ -1,3 +1,4 @@
+/** @file Schema and default values for all configurable TUI keybindings. */
 export * as ConfigKeybinds from "./keybinds.js";
 import { Effect, Schema } from "effect";
 import { zod } from "#util/effect-zod.js";
@@ -5,13 +6,22 @@ import { zod } from "#util/effect-zod.js";
 // Every keybind field has the same shape: an optional string with a default
 // binding and a human description.  `keybind()` keeps the declaration list
 // below dense and readable.
+/**
+ * Build a schema for one keybind field: an optional string that decodes to a
+ * default binding when omitted, annotated with a human-readable description.
+ * @param {string} value - The default key binding (e.g. "ctrl+x").
+ * @param {string} description - Human-readable description of the action.
+ * @returns {Schema} The Effect Schema for the field.
+ */
 const keybind = (value, description) => Schema.String.pipe(Schema.optional, Schema.withDecodingDefault(Effect.succeed(value))).annotate({
   description
 });
 
 // Windows prepends ctrl+z to the undo binding because `terminal_suspend`
 // cannot consume ctrl+z on native Windows terminals (no POSIX suspend).
+/** Default binding for `input_undo`, with `ctrl+z` prepended on Windows. */
 const inputUndoDefault = process.platform === "win32" ? "ctrl+z,ctrl+-,super+z" : "ctrl+-,super+z";
+/** Effect Schema describing every configurable keybinding field and its default. */
 const KeybindsSchema = Schema.Struct({
   leader: keybind("ctrl+x", "Leader key for keybind combinations"),
   app_exit: keybind("ctrl+c,ctrl+d,<leader>q", "Exit the application"),
@@ -119,4 +129,8 @@ const KeybindsSchema = Schema.Struct({
 // Consumers access `Keybinds.shape` and `Keybinds.shape.X.parse(undefined)`,
 // which requires the runtime type to be a ZodObject, not just ZodType.  Every
 // field is `string().optional().default(...)` at runtime, so widen to that.
+/**
+ * Zod-compatible object schema for the keybindings config, derived from
+ * {@link KeybindsSchema}; exposes `.shape` so consumers can parse individual fields.
+ */
 export const Keybinds = zod(KeybindsSchema);

@@ -1,6 +1,14 @@
+/**
+ * @file Effect schemas describing MCP (Model Context Protocol) server config:
+ * local (spawned command) and remote (URL, optional OAuth) server definitions.
+ * @module closedcode/config/mcp
+ */
+
 import { Schema } from "effect";
 import { zod } from "#util/effect-zod.js";
 import { PositiveInt, withStatics } from "#util/schema.js";
+
+/** Schema for a local MCP server launched by running a command on the host. */
 export const Local = Schema.Struct({
   type: Schema.Literal("local").annotate({
     description: "Type of MCP server connection"
@@ -22,6 +30,7 @@ export const Local = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for OAuth authentication settings used by a remote MCP server. */
 export const OAuth = Schema.Struct({
   clientId: Schema.optional(Schema.String).annotate({
     description: "OAuth client ID. If not provided, dynamic client registration (RFC 7591) will be attempted."
@@ -40,6 +49,7 @@ export const OAuth = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a remote MCP server reached over HTTP, with optional OAuth. */
 export const Remote = Schema.Struct({
   type: Schema.Literal("remote").annotate({
     description: "Type of MCP server connection"
@@ -64,6 +74,7 @@ export const Remote = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Discriminated union (on `type`) of any MCP server config, local or remote. */
 export const Info = Schema.Union([Local, Remote]).annotate({
   discriminator: "type"
 }).pipe(withStatics(s => ({

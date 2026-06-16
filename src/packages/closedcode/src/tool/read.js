@@ -1,3 +1,4 @@
+/** @file The "read" tool: reads files (text, images, PDFs) and directory listings with offset/limit paging, byte/line caps, and binary detection. */
 import { assetText } from "#util/asset.js";
 import { Effect, Option, Schema, Scope } from "effect";
 import { NonNegativeInt } from "#util/schema.js";
@@ -25,6 +26,11 @@ const SUPPORTED_IMAGE_MIMES = new Set(["image/jpeg", "image/png", "image/gif", "
 // purpose in the LLM tool-call path (the model emits typed JSON). The JSON
 // Schema output is identical (`type: "number"`), so the LLM view is
 // unchanged; purely CLI-facing uses must now send numbers rather than strings.
+/**
+ * Parameter schema for the read tool: an absolute file or directory path with
+ * optional 1-indexed `offset` and `limit` line/entry counts.
+ * @type {Object}
+ */
 export const Parameters = Schema.Struct({
   filePath: Schema.String.annotate({
     description: "The absolute path to the file or directory to read"
@@ -36,11 +42,24 @@ export const Parameters = Schema.Struct({
     description: "The maximum number of lines to read (defaults to 2000)"
   })
 });
+/**
+ * The "read" tool. Resolves the requested path, checks permissions and external
+ * directory access, then renders a directory listing, an image/PDF attachment,
+ * or a paged, byte/line-capped text view; binary files are rejected. Also warms
+ * the LSP and appends any resolved instruction files as a system reminder.
+ * @type {Object}
+ */
 export const ReadTool = Tool.define("read", Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const instruction = yield* Instruction.Service;
   const lsp = yield* LSP.Service;
   const scope = yield* Scope.Scope;
+  /**
+   * Build a "file not found" error, suggesting up to three sibling entries whose
+   * names fuzzily match the missing basename.
+   * @param {string} filepath - The absolute path that was not found.
+   * @returns {Effect} An effect that always fails with a descriptive Error.
+   */
   const miss = Effect.fn("ReadTool.miss")(function* (filepath) {
     const dir = path.dirname(filepath);
     const base = path.basename(filepath);
@@ -50,6 +69,12 @@ export const ReadTool = Tool.define("read", Effect.gen(function* () {
     }
     return yield* Effect.fail(new Error(`File not found: ${filepath}`));
   });
+  /**
+   * List the entries of a directory, suffixing directory names (and symlinks
+   * that resolve to directories) with a trailing slash, sorted alphabetically.
+   * @param {string} filepath - Absolute path of the directory to list.
+   * @returns {Effect} An effect yielding a sorted Array of entry name strings.
+   */
   const list = Effect.fn("ReadTool.list")(function* (filepath) {
     const items = yield* fs.readDirectoryEntries(filepath);
     return yield* Effect.forEach(items, Effect.fnUntraced(function* (item) {
@@ -62,9 +87,22 @@ export const ReadTool = Tool.define("read", Effect.gen(function* () {
       concurrency: "unbounded"
     }).pipe(Effect.map(items => items.sort((a, b) => a.localeCompare(b))));
   });
+  /**
+   * Warm the LSP for a file by touching it in a forked, error-ignoring fiber.
+   * @param {string} filepath - Absolute path of the file to warm.
+   * @returns {Effect} An effect that forks the touch and returns immediately.
+   */
   const warm = Effect.fn("ReadTool.warm")(function* (filepath) {
     yield* lsp.touchFile(filepath).pipe(Effect.ignore, Effect.forkIn(scope));
   });
+  /**
+   * Read up to `sampleSize` bytes from the start of a file (used for MIME and
+   * binary detection); returns an empty array for empty files.
+   * @param {string} filepath - Absolute path of the file to sample.
+   * @param {number} fileSize - Known total size of the file in bytes.
+   * @param {number} sampleSize - Maximum number of bytes to read.
+   * @returns {Effect} An effect yielding a Uint8Array of the sampled bytes.
+   */
   const readSample = Effect.fn("ReadTool.readSample")(function* (filepath, fileSize, sampleSize) {
     if (fileSize === 0) return new Uint8Array();
     return yield* Effect.scoped(Effect.gen(function* () {
@@ -74,6 +112,14 @@ export const ReadTool = Tool.define("read", Effect.gen(function* () {
       return Option.getOrElse(yield* file.readAlloc(Math.min(sampleSize, fileSize)), () => new Uint8Array());
     }));
   });
+  /**
+   * Decide whether a file is binary, first by a denylist of known binary
+   * extensions, then by scanning the sampled bytes for NUL or a high ratio
+   * (over 30%) of non-printable control characters.
+   * @param {string} filepath - Absolute path of the file (used for its extension).
+   * @param {Uint8Array} bytes - Sampled leading bytes of the file.
+   * @returns {boolean} True if the file is considered binary.
+   */
   const isBinaryFile = (filepath, bytes) => {
     const ext = path.extname(filepath).toLowerCase();
     switch (ext) {
@@ -117,6 +163,15 @@ export const ReadTool = Tool.define("read", Effect.gen(function* () {
     }
     return nonPrintableCount / bytes.length > 0.3;
   };
+  /**
+   * Core execution for the read tool: resolves/normalizes the path, enforces
+   * permission and external-directory checks, and dispatches to directory
+   * listing, image/PDF attachment, or paged text reading. Throws for missing
+   * files, binary files, or out-of-range offsets.
+   * @param {Object} params - Tool parameters (filePath, optional offset/limit).
+   * @param {Object} ctx - Tool execution context (sessionID, ask, messages, etc.).
+   * @returns {Effect} An effect yielding the tool result (title, output, metadata, optional attachments).
+   */
   const run = Effect.fn("ReadTool.execute")(function* (params, ctx) {
     const instance = yield* InstanceState.context;
     let filepath = params.filePath;
@@ -221,6 +276,17 @@ export const ReadTool = Tool.define("read", Effect.gen(function* () {
     execute: (params, ctx) => run(params, ctx).pipe(Effect.orDie)
   };
 }));
+/**
+ * Stream a text file line by line, returning a window of lines starting at
+ * `opts.offset` (1-indexed) up to `opts.limit` lines. Individual lines longer
+ * than MAX_LINE_LENGTH are truncated, and the window is capped at MAX_BYTES; it
+ * also reports total line count and whether more content / a byte cut occurred.
+ * @param {string} filepath - Absolute path of the file to read.
+ * @param {Object} opts - Paging options: {offset: number, limit: number}.
+ * @returns {Promise<Object>} Resolves to {raw, count, cut, more, offset} where
+ *   `raw` is the Array of selected lines, `count` is the total lines scanned,
+ *   `cut` indicates a byte-budget cut, and `more` indicates additional unread lines.
+ */
 async function lines(filepath, opts) {
   const stream = createReadStream(filepath, {
     encoding: "utf8"

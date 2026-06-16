@@ -1,3 +1,4 @@
+/** @file `debug agent` CLI command: shows an agent's resolved configuration and tool set, and optionally executes a single tool with given params. */
 import { EOL } from "os";
 import { basename } from "path";
 import { Effect } from "effect";
@@ -10,6 +11,11 @@ import { Permission } from "../../../permission/index.js";
 import { iife } from "../../../util/iife.js";
 import { effectCmd, fail } from "../../effect-cmd.js";
 import { InstanceRef } from "#effect/instance-ref.js";
+/**
+ * CLI command `agent <name>` that prints an agent's configuration (including its
+ * resolved tool enablement) or, when `--tool` is given, executes that tool with
+ * `--params` and prints the result.
+ */
 export const AgentCommand = effectCmd({
   command: "agent <name>",
   describe: "show agent configuration details",
@@ -30,6 +36,13 @@ export const AgentCommand = effectCmd({
     return yield* run(args, ctx);
   })
 });
+/**
+ * Resolves the named agent and either prints its config + resolved tools, or
+ * runs a single tool against a debug session when `args.tool` is set.
+ * @param {Object} args - Parsed CLI args (name, tool, params).
+ * @param {Object} ctx - Instance context providing directory and worktree paths.
+ * @returns {Effect} An Effect that writes output to stdout/stderr; fails with exit code 1 on missing/disabled agent or tool.
+ */
 const run = Effect.fn("Cli.debug.agent.body")(function* (args, ctx) {
   const agentName = args.name;
   const agent = yield* Agent.Service.use(svc => svc.get(agentName));
@@ -66,6 +79,12 @@ const run = Effect.fn("Cli.debug.agent.body")(function* (args, ctx) {
   };
   process.stdout.write(JSON.stringify(output, null, 2) + EOL);
 });
+/**
+ * Returns the list of tools available to the given agent, using the agent's
+ * model (or the provider's default model) to query the tool registry.
+ * @param {Agent} agent - The agent whose available tools are requested.
+ * @returns {Effect} An Effect resolving to an array of tool definitions.
+ */
 const getAvailableTools = Effect.fn("Cli.debug.agent.getAvailableTools")(function* (agent) {
   const provider = yield* Provider.Service;
   const registry = yield* ToolRegistry.Service;
@@ -75,6 +94,13 @@ const getAvailableTools = Effect.fn("Cli.debug.agent.getAvailableTools")(functio
     agent
   });
 });
+/**
+ * Maps each available tool id to whether it is enabled for the agent, based on
+ * the agent's permission ruleset.
+ * @param {Agent} agent - The agent whose permissions decide tool enablement.
+ * @param {Array} availableTools - The tools available to the agent.
+ * @returns {Object} A record mapping tool id to a boolean (true = enabled).
+ */
 function resolveTools(agent, availableTools) {
   const disabled = Permission.disabled(availableTools.map(tool => tool.id), agent.permission);
   const resolved = {};
@@ -83,6 +109,13 @@ function resolveTools(agent, availableTools) {
   }
   return resolved;
 }
+/**
+ * Parses the `--params` CLI value into a plain object, accepting either JSON or
+ * a JavaScript object literal. Returns an empty object for empty input.
+ * @param {string} input - The raw params string from the CLI.
+ * @returns {Object} The parsed params object.
+ * @throws {Error} If the input cannot be parsed as JSON or a JS object literal, or does not evaluate to a plain object.
+ */
 function parseToolParams(input) {
   if (!input) return {};
   const trimmed = input.trim();
@@ -105,6 +138,14 @@ function parseToolParams(input) {
   }
   return parsed;
 }
+/**
+ * Builds a tool execution context for a one-off debug tool run: creates a debug
+ * session and assistant message, resolves the model, merges permission rules,
+ * and returns the context object passed to `tool.execute`.
+ * @param {Agent} agent - The agent on whose behalf the tool runs.
+ * @param {Object} ctx - Instance context providing directory and worktree paths.
+ * @returns {Effect} An Effect resolving to a tool context with sessionID, messageID, callID, agent, abort signal, and an `ask` permission gate.
+ */
 const createToolContext = Effect.fn("Cli.debug.agent.createToolContext")(function* (agent, ctx) {
   const sessionSvc = yield* Session.Service;
   const session = yield* sessionSvc.create({

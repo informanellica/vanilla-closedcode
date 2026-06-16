@@ -52,9 +52,22 @@ const log = Log.create({
 
 // Custom merge function that concatenates array fields instead of replacing them
 // Keep remeda's deep conditional merge type out of hot config-loading paths; TS profiling showed it dominates here.
+/**
+ * Deep-merge two config objects, with `source` values overriding `target`.
+ * @param {Object} target - Base config object.
+ * @param {Object} source - Config object whose values take precedence.
+ * @returns {Object} The merged config object.
+ */
 function mergeConfig(target, source) {
   return mergeDeep(target, source);
 }
+/**
+ * Deep-merge two config objects but union their `instructions` arrays instead of
+ * letting `source` replace `target`'s array.
+ * @param {Object} target - Base config object.
+ * @param {Object} source - Config object whose values take precedence.
+ * @returns {Object} The merged config object with concatenated `instructions`.
+ */
 function mergeConfigConcatArrays(target, source) {
   const merged = mergeConfig(target, source);
   if (target.instructions && source.instructions) {
@@ -62,6 +75,13 @@ function mergeConfigConcatArrays(target, source) {
   }
   return merged;
 }
+/**
+ * Strip deprecated TUI-related keys (`theme`, `keybinds`, `tui`) from a loaded
+ * config record, logging a deprecation warning when any are present.
+ * @param {*} data - The raw parsed config value (only normalized when a record).
+ * @param {string} source - Path/source identifier used in the deprecation warning.
+ * @returns {*} A copy of the config without the legacy keys, or the input unchanged when not a record.
+ */
 function normalizeLoadedConfig(data, source) {
   if (!isRecord(data)) return data;
   const copy = {
@@ -77,6 +97,13 @@ function normalizeLoadedConfig(data, source) {
   });
   return copy;
 }
+/**
+ * Resolve each plugin spec in a loaded config relative to the file that declared
+ * it, so path-like specs (e.g. `./plugin.mjs`) keep their original base location.
+ * @param {Object} config - The loaded config object, possibly containing a `plugin` array.
+ * @param {string} filepath - Path of the config file that declared the plugins.
+ * @returns {Promise<Object>} The same config object with plugin specs resolved in place.
+ */
 async function resolveLoadedPlugins(config, filepath) {
   if (!config.plugin) return config;
   for (let i = 0; i < config.plugin.length; i++) {
@@ -86,7 +113,9 @@ async function resolveLoadedPlugins(config, filepath) {
   }
   return config;
 }
+/** Zod-compatible schema for the server config section. */
 export const Server = ConfigServer.Server.zod;
+/** Zod-compatible schema for the (deprecated) layout config value. */
 export const Layout = ConfigLayout.Layout.zod;
 const LogLevelRef = Schema.Literals(["DEBUG", "INFO", "WARN", "ERROR"]).annotate({
   identifier: "LogLevel",
@@ -101,6 +130,10 @@ const LogLevelRef = Schema.Literals(["DEBUG", "INFO", "WARN", "ERROR"]).annotate
 // historically uses `.strict()` (additionalProperties: false in openapi.json),
 // so layer that on after derivation.  Re-apply the Config ref afterward
 // since `.strict()` strips the walker's meta annotation.
+/**
+ * The canonical Effect Schema describing the full closedcode configuration shape.
+ * Carries a derived `.zod` strict-object compatibility surface for Express validators.
+ */
 export const Info = Schema.Struct({
   $schema: Schema.optional(Schema.String).annotate({
     description: "JSON schema reference for configuration validation"
@@ -261,7 +294,17 @@ export const Info = Schema.Struct({
 // there for why the local variant is needed over `Types.DeepMutable` from
 // effect-smol (the upstream version collapses `unknown` to `{}`).
 
+/**
+ * Effect service tag for the configuration service. Provides accessors and
+ * mutators for the effective merged config (see {@link layer}).
+ */
 export class Service extends Context.Service()("@closedcode/Config") {}
+/**
+ * Resolve the path of the global config file, preferring an existing
+ * `closedcode.jsonc`/`closedcode.json`/`config.json` under the global config dir,
+ * and falling back to the first candidate when none exist.
+ * @returns {string} The chosen global config file path.
+ */
 function globalConfigFile() {
   const candidates = ["closedcode.jsonc", "closedcode.json", "config.json"].map(file => path.join(Global.Path.config, file));
   for (const file of candidates) {
@@ -269,6 +312,15 @@ function globalConfigFile() {
   }
   return candidates[0];
 }
+/**
+ * Apply a (possibly nested) patch object onto a JSONC document string while
+ * preserving comments and formatting, recursing through record values to build
+ * the JSON path for each leaf edit.
+ * @param {string} input - The original JSONC document text.
+ * @param {*} patch - The patch value; records are recursed, leaves are written at `path`.
+ * @param {Array<string>} path - The current JSON property path (accumulated during recursion).
+ * @returns {string} The updated JSONC document text.
+ */
 function patchJsonc(input, patch, path = []) {
   if (!isRecord(patch)) {
     const edits = modify(input, path, patch, {
@@ -281,6 +333,12 @@ function patchJsonc(input, patch, path = []) {
   }
   return Object.entries(patch).reduce((result, [key, value]) => patchJsonc(result, value, [...path, key]), input);
 }
+/**
+ * Produce a writable copy of a config object by dropping the internal
+ * `plugin_origins` provenance metadata that should never be persisted.
+ * @param {Object} info - The config object, possibly containing `plugin_origins`.
+ * @returns {Object} A copy of the config without `plugin_origins`.
+ */
 function writable(info) {
   const {
     plugin_origins: _plugin_origins,
@@ -288,6 +346,12 @@ function writable(info) {
   } = info;
   return next;
 }
+/**
+ * Produce a writable copy of a config object for persisting to the global file,
+ * additionally clearing an empty-string `shell` so a blank key is not written.
+ * @param {Object} info - The config object to make writable.
+ * @returns {Object} A copy suitable for serializing to the global config file.
+ */
 function writableGlobal(info) {
   const next = writable(info);
   // When a user changes config from a value back to default in the Desktop app, we don't want to leave a blank `"shell": "",` key
@@ -297,20 +361,42 @@ function writableGlobal(info) {
   };
   return next;
 }
+/**
+ * Named error raised when a config directory path appears to be a typo,
+ * carrying the offending path, directory, and a suggested correction.
+ */
 export const ConfigDirectoryTypoError = NamedError.create("ConfigDirectoryTypoError", z.object({
   path: z.string(),
   dir: z.string(),
   suggestion: z.string()
 }));
+/**
+ * Effect Layer that builds the {@link Service}: loads and merges global, custom,
+ * project-local, console/org, and managed config sources, resolves plugins, and
+ * exposes accessors (`get`, `getGlobal`, `getConsoleState`, `directories`,
+ * `waitForDependencies`) and mutators (`update`, `updateGlobal`, `invalidate`).
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const authSvc = yield* Auth.Service;
   const accountSvc = yield* Account.Service;
   const env = yield* Env.Service;
   const npmSvc = yield* Npm.Service;
+  /**
+   * Read a config file's text, returning `undefined` when the file does not exist.
+   * @param {string} filepath - Absolute path of the config file to read.
+   * @returns {Effect} Effect yielding the file text, or `undefined` if not found.
+   */
   const readConfigFile = Effect.fnUntraced(function* (filepath) {
     return yield* fs.readFileString(filepath).pipe(Effect.catchIf(e => e.reason._tag === "NotFound", () => Effect.succeed(undefined)), Effect.orDie);
   });
+  /**
+   * Parse raw config text: substitute variables, parse JSONC, validate against
+   * {@link Info}, and (for file sources) resolve declared plugin specs.
+   * @param {string} text - The raw config text to parse.
+   * @param {Object} options - Source descriptor; either `{path}` for a file or `{dir, source}` for virtual content.
+   * @returns {Effect} Effect yielding the parsed and validated config object.
+   */
   const loadConfig = Effect.fnUntraced(function* (text, options) {
     const source = "path" in options ? options.path : options.source;
     const expanded = yield* Effect.promise(() => ConfigVariable.substitute("path" in options ? {
@@ -330,6 +416,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     // so writing a dead URL into the user's config would break editor validation.
     return data;
   });
+  /**
+   * Read and parse a config file, returning an empty object when the file is absent.
+   * @param {string} filepath - Absolute path of the config file to load.
+   * @returns {Effect} Effect yielding the parsed config object (or `{}` when missing).
+   */
   const loadFile = Effect.fnUntraced(function* (filepath) {
     log.info("loading", {
       path: filepath
@@ -340,6 +431,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       path: filepath
     });
   });
+  /**
+   * Load and merge the global config from the global config dir, migrating any
+   * legacy TOML `config` file into `config.json` on first encounter.
+   * @returns {Effect} Effect yielding the merged global config object.
+   */
   const loadGlobal = Effect.fnUntraced(function* () {
     let result = {};
     result = mergeConfig(result, yield* loadFile(path.join(Global.Path.config, "config.json")));
@@ -368,9 +464,19 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const [cachedGlobal, invalidateGlobal] = yield* Effect.cachedInvalidateWithTTL(loadGlobal().pipe(Effect.tapError(error => Effect.sync(() => log.error("failed to load global config, using defaults", {
     error: String(error)
   }))), Effect.orElseSucceed(() => ({}))), Duration.infinity);
+  /**
+   * Get the cached global config, loading it on first access.
+   * @returns {Effect} Effect yielding the global config object.
+   */
   const getGlobal = Effect.fn("Config.getGlobal")(function* () {
     return yield* cachedGlobal;
   });
+  /**
+   * Ensure a `.gitignore` exists in the given config directory, creating one that
+   * ignores generated dependency files when absent.
+   * @param {string} dir - The config directory to check/seed.
+   * @returns {Effect} Effect that completes once the gitignore is ensured.
+   */
   const ensureGitignore = Effect.fn("Config.ensureGitignore")(function* (dir) {
     const gitignore = path.join(dir, ".gitignore");
     const hasIgnore = yield* fs.existsSafe(gitignore);
@@ -378,17 +484,39 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       yield* fs.writeFileString(gitignore, ["node_modules", "package.json", "package-lock.json", ".gitignore"].join("\n")).pipe(Effect.catchIf(e => e.reason._tag === "PermissionDenied", () => Effect.void));
     }
   });
+  /**
+   * Build the full per-instance config state for a project context: merges every
+   * config source (global, custom, project-local, `.closedcode` dirs, console/org,
+   * managed), discovers commands/agents/plugins, kicks off dependency installs,
+   * and applies derived/legacy fields (tools→permission, autoshare, username, flags).
+   * @param {Object} ctx - Instance context with `directory` and `worktree` paths.
+   * @returns {Effect} Effect yielding `{config, directories, deps, consoleState}`.
+   */
   const loadInstanceState = Effect.fn("Config.loadInstanceState")(function* (ctx) {
     const auth = yield* authSvc.all().pipe(Effect.orDie);
     let result = {};
     const consoleManagedProviders = new Set();
     let activeOrgName;
+    /**
+     * Determine whether plugins declared by a config source should be treated as
+     * `"global"` or `"local"` scope, based on the source location.
+     * @param {string} source - The config source path/identifier.
+     * @returns {Effect} Effect yielding "global" or "local".
+     */
     const pluginScopeForSource = Effect.fnUntraced(function* (source) {
       if (source.startsWith("http://") || source.startsWith("https://")) return "global";
       if (source === "CLOSEDCODE_CONFIG_CONTENT") return "local";
       if (containsPath(source, ctx)) return "local";
       return "global";
     });
+    /**
+     * Attach provenance to plugin specs from one config source and merge them
+     * (deduped by plugin identity) into the accumulated `result.plugin`/`plugin_origins`.
+     * @param {string} source - The config source path/identifier that declared the specs.
+     * @param {Array} list - The raw plugin specs from this source.
+     * @param {string} kind - Optional explicit scope ("global"/"local"); inferred from `source` when omitted.
+     * @returns {Effect} Effect that completes once origins are merged.
+     */
     const mergePluginOrigins = Effect.fnUntraced(function* (source,
     // mergePluginOrigins receives raw Specs from one config source, before provenance for this merge step
     // is attached.
@@ -408,6 +536,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       result.plugin = plugins.map(item => item.spec);
       result.plugin_origins = plugins;
     });
+    /**
+     * Merge one config source into the accumulated `result` and record its plugin origins.
+     * @param {string} source - The config source path/identifier.
+     * @param {Object} next - The config object loaded from `source`.
+     * @param {string} kind - Optional explicit plugin scope ("global"/"local").
+     * @returns {Effect} Effect that completes once plugin origins are merged.
+     */
     const merge = (source, next, kind) => {
       result = mergeConfigConcatArrays(result, next);
       return mergePluginOrigins(source, next.plugin, kind);
@@ -578,32 +713,64 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     };
   }, Effect.provideService(AppFileSystem.Service, fs));
+  // Per-instance state container that lazily builds and caches the loaded config.
   const state = yield* InstanceState.make(Effect.fn("Config.state")(function* (ctx) {
     return yield* loadInstanceState(ctx).pipe(Effect.orDie);
   }));
+  /**
+   * Get the effective merged config for the current instance.
+   * @returns {Effect} Effect yielding the config object.
+   */
   const get = Effect.fn("Config.get")(function* () {
     return yield* InstanceState.use(state, s => s.config);
   });
+  /**
+   * Get the list of config directories discovered for the current instance.
+   * @returns {Effect} Effect yielding an array of directory paths.
+   */
   const directories = Effect.fn("Config.directories")(function* () {
     return yield* InstanceState.use(state, s => s.directories);
   });
+  /**
+   * Get the console/org-derived state (managed providers, active org, switchable count).
+   * @returns {Effect} Effect yielding the console state object.
+   */
   const getConsoleState = Effect.fn("Config.getConsoleState")(function* () {
     return yield* InstanceState.use(state, s => s.consoleState);
   });
+  /**
+   * Wait for all background dependency-install fibers started during config load to finish.
+   * @returns {Effect} Effect that completes once all dependency installs settle.
+   */
   const waitForDependencies = Effect.fn("Config.waitForDependencies")(function* () {
     yield* InstanceState.useEffect(state, s => Effect.forEach(s.deps, Fiber.join, {
       concurrency: "unbounded"
     }).pipe(Effect.asVoid));
   });
+  /**
+   * Merge a config patch into the project-local `config.json`, persisting the result.
+   * @param {Object} config - Partial config to merge into the local config file.
+   * @returns {Effect} Effect that completes once the file is written.
+   */
   const update = Effect.fn("Config.update")(function* (config) {
     const dir = yield* InstanceState.directory;
     const file = path.join(dir, "config.json");
     const existing = yield* loadFile(file);
     yield* fs.writeFileString(file, JSON.stringify(mergeDeep(writable(existing), writable(config)), null, 2)).pipe(Effect.orDie);
   });
+  /**
+   * Invalidate the cached global config so the next access reloads it from disk.
+   * @returns {Effect} Effect that completes once the cache is invalidated.
+   */
   const invalidate = Effect.fn("Config.invalidate")(function* () {
     yield* invalidateGlobal;
   });
+  /**
+   * Merge a config patch into the global config file (JSON or JSONC), persisting
+   * only when the serialized result changes and invalidating the cache afterward.
+   * @param {Object} config - Partial config to merge into the global config file.
+   * @returns {Effect} Effect yielding `{info, changed}` where `info` is the resulting config and `changed` indicates whether a write occurred.
+   */
   const updateGlobal = Effect.fn("Config.updateGlobal")(function* (config) {
     const file = globalConfigFile();
     const before = (yield* readConfigFile(file)) ?? "{}";
@@ -640,5 +807,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     waitForDependencies
   });
 }));
+/**
+ * The config {@link layer} with all of its dependency layers (filesystem, env,
+ * auth, account, npm, flock) provided, ready to be used standalone.
+ */
 export const defaultLayer = layer.pipe(Layer.provide(EffectFlock.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Env.defaultLayer), Layer.provide(Auth.defaultLayer), Layer.provide(Account.defaultLayer), Layer.provide(Npm.defaultLayer));
 export * as Config from "./config.js";

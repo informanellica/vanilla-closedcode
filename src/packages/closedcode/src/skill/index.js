@@ -1,3 +1,4 @@
+/** @file Skill registry: discovers SKILL.md files across external, config, and remote sources, parses their frontmatter, and exposes lookup/listing plus prompt formatting. */
 import path from "path";
 import { pathToFileURL } from "url";
 import z from "zod";
@@ -19,10 +20,15 @@ import { Discovery } from "./discovery.js";
 const log = Log.create({
   service: "skill"
 });
+/** Directory name (under home / project ancestors) holding externally-managed agent skills. */
 const AGENTS_EXTERNAL_DIR = ".agents";
+/** Glob for SKILL.md files within an external `.agents` directory. */
 const EXTERNAL_SKILL_PATTERN = "skills/**/SKILL.md";
+/** Glob for SKILL.md files within closedcode config directories (skill/ or skills/). */
 const CLOSEDCODE_SKILL_PATTERN = "{skill,skills}/**/SKILL.md";
+/** Glob for SKILL.md files under user-provided skill paths or pulled remote directories. */
 const SKILL_PATTERN = "**/SKILL.md";
+/** Schema for a loaded skill: its name, description, source location, and body content. */
 export const Info = Schema.Struct({
   name: Schema.String,
   description: Schema.String,
@@ -31,16 +37,25 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Error raised when a skill file is structurally invalid (bad frontmatter/schema). */
 export const InvalidError = NamedError.create("SkillInvalidError", z.object({
   path: z.string(),
   message: z.string().optional(),
   issues: z.custom().optional()
 }));
+/** Error raised when a skill's declared name does not match its expected (directory-derived) name. */
 export const NameMismatchError = NamedError.create("SkillNameMismatchError", z.object({
   path: z.string(),
   expected: z.string(),
   actual: z.string()
 }));
+/**
+ * Parses one SKILL.md file and, when it has a valid name/description frontmatter, registers it into `state.skills`. Parse failures are logged and surfaced as a session error event; duplicate names log a warning and overwrite.
+ * @param {Object} state - Mutable load state with `skills` (name to skill record) and `dirs` (Set of skill directories).
+ * @param {string} match - Absolute path to the SKILL.md file.
+ * @param {Object} bus - The bus service used to publish parse-error events.
+ * @returns {void}
+ */
 const add = Effect.fnUntraced(function* (state, match, bus) {
   const md = yield* Effect.tryPromise({
     try: () => ConfigMarkdown.parse(match),
@@ -82,6 +97,14 @@ const add = Effect.fnUntraced(function* (state, match, bus) {
     content: md.content
   };
 });
+/**
+ * Globs `pattern` under `root` for SKILL.md files and records the matches and their parent directories into `state`. Scan failures die unless `opts.scope` is set, in which case they are logged and treated as no matches.
+ * @param {Object} state - Mutable scan state with `matches` and `dirs` Sets.
+ * @param {string} root - Directory to scan from.
+ * @param {string} pattern - The glob pattern to match.
+ * @param {Object} opts - Options; `opts.dot` includes dotfiles, `opts.scope` names the scope for soft error handling/logging.
+ * @returns {void}
+ */
 const scan = Effect.fnUntraced(function* (state, root, pattern, opts) {
   const matches = yield* Effect.tryPromise({
     try: () => Glob.scan(pattern, {
@@ -105,6 +128,16 @@ const scan = Effect.fnUntraced(function* (state, root, pattern, opts) {
     state.dirs.add(path.dirname(match));
   }
 });
+/**
+ * Discovers all candidate SKILL.md files from every source: external `.agents` dirs (home + project ancestors), closedcode config directories, user-configured skill paths, and remote skill URLs (pulled via discovery).
+ * @param {Object} config - Config service exposing `directories()` and `get()`.
+ * @param {Object} discovery - SkillDiscovery service used to pull remote skill URLs.
+ * @param {Object} fsys - Filesystem service (`isDir`, `up`).
+ * @param {Object} global - Global service providing `home`.
+ * @param {string} directory - The current working directory.
+ * @param {string} worktree - The workspace root used as the upward-search boundary.
+ * @returns {Promise<Object>} An object `{ matches, dirs }` of discovered SKILL.md paths and their directories.
+ */
 const discoverSkills = Effect.fnUntraced(function* (config, discovery, fsys, global, directory, worktree) {
   const state = {
     matches: new Set(),
@@ -160,6 +193,13 @@ const discoverSkills = Effect.fnUntraced(function* (config, discovery, fsys, glo
     dirs: Array.from(state.dirs)
   };
 });
+/**
+ * Loads (parses and registers) all discovered SKILL.md files into `state`, then logs the resulting skill count.
+ * @param {Object} state - Mutable load state with `skills` and `dirs`.
+ * @param {Object} discovered - The discovery result with a `matches` array of SKILL.md paths.
+ * @param {Object} bus - The bus service forwarded to per-skill parsing.
+ * @returns {void}
+ */
 const loadSkills = Effect.fnUntraced(function* (state, discovered, bus) {
   yield* Effect.forEach(discovered.matches, match => add(state, match, bus), {
     concurrency: "unbounded",
@@ -170,6 +210,9 @@ const loadSkills = Effect.fnUntraced(function* (state, discovered, bus) {
   });
 });
 export class Service extends Context.Service()("@closedcode/Skill") {}
+/**
+ * Effect Layer providing the Skill service, which lazily discovers and loads skills per instance and exposes get/all/dirs/available accessors.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const discovery = yield* Discovery.Service;
   const config = yield* Config.Service;
@@ -187,17 +230,35 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* loadSkills(s, yield* InstanceState.get(discovered), bus);
     return s;
   }));
+  /**
+   * Looks up a loaded skill by name.
+   * @param {string} name - The skill name.
+   * @returns {Promise<Object>} The skill record, or undefined when not found.
+   */
   const get = Effect.fn("Skill.get")(function* (name) {
     const s = yield* InstanceState.get(state);
     return s.skills[name];
   });
+  /**
+   * Returns all loaded skills.
+   * @returns {Promise<Array<Object>>} The list of skill records.
+   */
   const all = Effect.fn("Skill.all")(function* () {
     const s = yield* InstanceState.get(state);
     return Object.values(s.skills);
   });
+  /**
+   * Returns the set of directories that contain discovered skills.
+   * @returns {Promise<Set<string>>} The discovered skill directories.
+   */
   const dirs = Effect.fn("Skill.dirs")(function* () {
     return (yield* InstanceState.get(discovered)).dirs;
   });
+  /**
+   * Returns the skills available to an agent, sorted by name. With no agent, returns all; otherwise filters out skills the agent's permissions deny.
+   * @param {Object} agent - The agent whose `permission` configuration gates skill access; may be falsy for the unfiltered list.
+   * @returns {Promise<Array<Object>>} The available, name-sorted skill records.
+   */
   const available = Effect.fn("Skill.available")(function* (agent) {
     const s = yield* InstanceState.get(state);
     const list = Object.values(s.skills).toSorted((a, b) => a.name.localeCompare(b.name));
@@ -211,7 +272,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     available
   });
 }));
+/** The Skill layer with all its dependencies (Discovery, Config, Bus, filesystem, Global) provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Discovery.defaultLayer), Layer.provide(Config.defaultLayer), Layer.provide(Bus.layer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Global.layer));
+/**
+ * Formats a list of skills for inclusion in a prompt: a verbose XML `<available_skills>` block (with file URLs) when `opts.verbose`, otherwise a concise Markdown bullet list. Returns a placeholder string when the list is empty.
+ * @param {Array<Object>} list - Skill records to format.
+ * @param {Object} opts - Options; `opts.verbose` selects the verbose XML form.
+ * @returns {string} The formatted skills text.
+ */
 export function fmt(list, opts) {
   if (list.length === 0) return "No skills are currently available.";
   if (opts.verbose) {

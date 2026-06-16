@@ -1,3 +1,4 @@
+/** @file Defines the "write" tool, which writes content to a file (preserving BOM), formats it, emits edit events, and reports LSP diagnostics. */
 import { assetText } from "#util/asset.js";
 import { Schema } from "effect";
 import * as path from "path";
@@ -16,6 +17,7 @@ import { trimDiff } from "./edit.js";
 import { assertExternalDirectoryEffect } from "./external-directory.js";
 import * as Bom from "#util/bom.js";
 const MAX_PROJECT_DIAGNOSTICS_FILES = 5;
+/** Schema for the write tool parameters: the content to write and the absolute filePath to write it to. */
 export const Parameters = Schema.Struct({
   content: Schema.String.annotate({
     description: "The content to write to the file"
@@ -24,6 +26,14 @@ export const Parameters = Schema.Struct({
     description: "The absolute path to the file to write (must be absolute, not relative)"
   })
 });
+/**
+ * The "write" tool. Resolves the target path (relative to the instance
+ * directory if needed), guards external-directory access, computes a diff for
+ * the permission prompt, writes the content while preserving any byte-order
+ * mark, runs the configured formatter, publishes file edit/update events, and
+ * appends LSP diagnostics (for the written file and up to a few other affected
+ * files) to the output.
+ */
 export const WriteTool = Tool.define("write", Effect.gen(function* () {
   const lsp = yield* LSP.Service;
   const fs = yield* AppFileSystem.Service;

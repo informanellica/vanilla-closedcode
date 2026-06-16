@@ -1,3 +1,4 @@
+/** @file Sync-event projectors that write session, message, and part changes into the sqlite store; re-exports the v2 (next) projectors. */
 import { NotFoundError } from "#storage/storage.js";
 import { SyncEvent } from "#sync/index.js";
 import * as Session from "./session.js";
@@ -10,6 +11,12 @@ const log = Log.create({
 // Projectors receive the sequelize handle h = { models, sequelize, tx } from
 // the SyncEvent dispatcher and are awaited; every model call passes
 // { transaction: h.tx }.
+/**
+ * Determines whether an error is a SQLite foreign-key constraint violation,
+ * unwrapping sequelize's wrapped driver error via `original` if needed.
+ * @param {*} err - The error to inspect.
+ * @returns {boolean} True if the error is (or wraps) a foreign-key constraint failure.
+ */
 function foreign(err) {
   if (typeof err !== "object" || err === null) return false;
   if ("code" in err && err.code === "SQLITE_CONSTRAINT_FOREIGNKEY") return true;
@@ -18,6 +25,16 @@ function foreign(err) {
   // underlying sqlite error is preserved on `original`.
   return "original" in err && err.original !== err && foreign(err.original);
 }
+/**
+ * Reads a field from a partial-update object, optionally descending into a
+ * nested object via `cb`. Returns undefined when the field is absent, but
+ * throws if the field is present yet explicitly `undefined` (callers must pass
+ * `null` to clear a value).
+ * @param {Object} obj - Source object (may be undefined).
+ * @param {string} field1 - Field name to read.
+ * @param {Function} cb - Optional callback applied to the value when it is an object.
+ * @returns {*} The field value (or callback result), or undefined when absent.
+ */
 function grab(obj, field1, cb) {
   if (obj == undefined || !(field1 in obj)) return undefined;
   const val = obj[field1];
@@ -29,6 +46,13 @@ function grab(obj, field1, cb) {
   }
   return val;
 }
+/**
+ * Maps a partial session-update info object to a partial sqlite row, flattening
+ * nested `share`/`summary`/`time` fields to their column names and dropping any
+ * keys whose value resolved to undefined (so absent fields aren't overwritten).
+ * @param {Object} info - Partial session update info.
+ * @returns {Object} A partial row object containing only the columns to update.
+ */
 export function toPartialRow(info) {
   const obj = {
     id: grab(info, "id"),
@@ -54,6 +78,13 @@ export function toPartialRow(info) {
   };
   return Object.fromEntries(Object.entries(obj).filter(([_, val]) => val !== undefined));
 }
+/**
+ * Projector handlers for session/message/part sync events. Each `SyncEvent.project`
+ * pairs an event with an async handler that applies the change to the sqlite store
+ * using the dispatcher handle `h = { models, sequelize, tx }`. The v2 projectors
+ * (`nextProjectors`) are appended at the end.
+ * @type {Array}
+ */
 export default [SyncEvent.project(Session.Event.Created, async (h, data) => {
   await h.models.Session.create(Session.toRow(data.info), { transaction: h.tx });
 }), SyncEvent.project(Session.Event.Updated, async (h, data) => {

@@ -35,12 +35,28 @@ const log = Log.create({
 });
 const parentTitlePrefix = "New session - ";
 const childTitlePrefix = "Child session - ";
+/**
+ * Builds a default session title from a timestamped prefix.
+ * @param {boolean} isChild - Whether the session is a child session (uses the child prefix).
+ * @returns {string} The generated default title.
+ */
 function createDefaultTitle(isChild = false) {
   return (isChild ? childTitlePrefix : parentTitlePrefix) + new Date().toISOString();
 }
+/**
+ * Tests whether a title is an auto-generated default (prefix + ISO timestamp).
+ * @param {string} title - The session title to test.
+ * @returns {boolean} True if the title matches the default-title pattern.
+ */
 export function isDefaultTitle(title) {
   return new RegExp(`^(${parentTitlePrefix}|${childTitlePrefix})\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$`).test(title);
 }
+/**
+ * Converts a sqlite session row into a runtime session Info object, decoding
+ * nested summary/share/model/time fields and normalizing nulls to undefined.
+ * @param {Object} row - The plain database row.
+ * @returns {Object} The session Info object.
+ */
 export function fromRow(row) {
   const summary = row.summary_additions !== null || row.summary_deletions !== null || row.summary_files !== null ? {
     additions: row.summary_additions ?? 0,
@@ -80,6 +96,12 @@ export function fromRow(row) {
     }
   };
 }
+/**
+ * Converts a runtime session Info object into a sqlite row, flattening nested
+ * summary/share/time fields to their column names.
+ * @param {Object} info - The session Info object.
+ * @returns {Object} The database row representation.
+ */
 export function toRow(info) {
   return {
     id: info.id,
@@ -106,6 +128,12 @@ export function toRow(info) {
     time_archived: info.time.archived
   };
 }
+/**
+ * Derives a forked-session title, incrementing an existing `(fork #N)` suffix or
+ * appending `(fork #1)` when none is present.
+ * @param {string} title - The original session title.
+ * @returns {string} The title for the new fork.
+ */
 function getForkedTitle(title) {
   const match = title.match(/^(.+) \(fork #(\d+)\)$/);
   if (match) {
@@ -115,6 +143,13 @@ function getForkedTitle(title) {
   }
   return `${title} (fork #1)`;
 }
+/**
+ * Computes a session's directory path relative to the worktree, normalized to
+ * forward slashes.
+ * @param {string} worktree - Absolute worktree root.
+ * @param {string} cwd - The session's working directory.
+ * @returns {string} The worktree-relative, slash-normalized path.
+ */
 function sessionPath(worktree, cwd) {
   return path.relative(path.resolve(worktree), cwd).replaceAll("\\", "/");
 }
@@ -272,6 +307,10 @@ const UpdatedEventSchema = Schema.Struct({
   sessionID: SessionID,
   info: UpdatedInfo
 });
+/**
+ * Session-related events. `Created`/`Updated`/`Deleted` are sync events
+ * persisted via projectors; `Diff` and `Error` are bus-only events.
+ */
 export const Event = {
   Created: SyncEvent.define({
     type: "session.created",
@@ -303,10 +342,25 @@ export const Event = {
     error: MessageV2.Assistant.fields.error
   }))
 };
+/**
+ * Computes the absolute path of a session's plan markdown file. Stored under the
+ * worktree's `.closedcode/plans` when the project is under version control,
+ * otherwise under the global data directory.
+ * @param {Object} input - Session info providing `time.created` and `slug`.
+ * @param {Object} instance - Instance context with `project.vcs` and `worktree`.
+ * @returns {string} The absolute path to the plan file.
+ */
 export function plan(input, instance) {
   const base = instance.project.vcs ? path.join(instance.worktree, ".closedcode", "plans") : path.join(Global.Path.data, "plans");
   return path.join(base, [input.time.created, input.slug].join("-") + ".md");
 }
+/**
+ * Computes token usage and cost for a model step. Normalizes provider usage
+ * fields (subtracting cached tokens from input, separating reasoning tokens) and
+ * applies the model's per-million pricing, including the optional over-200K tier.
+ * @param {Object} input - `{ model, usage, metadata }` for the step.
+ * @returns {{cost: number, tokens: Object}} The computed cost and token breakdown.
+ */
 export const getUsage = input => {
   const safe = value => {
     if (!Number.isFinite(value)) return 0;
@@ -339,22 +393,44 @@ export const getUsage = input => {
     tokens
   };
 };
+/** Error thrown when an operation targets a session that is currently busy. */
 export class BusyError extends Error {
+  /**
+   * @param {string} sessionID - The busy session's ID.
+   */
   constructor(sessionID) {
     super(`Session ${sessionID} is busy`);
     this.sessionID = sessionID;
   }
 }
+/** Effect service tag for the Session service. */
 export class Service extends Context.Service()("@closedcode/Session") {}
 // Sequelize call-site conventions (ORM migration S3): callbacks receive the
 // handle { models, sequelize, tx } and every model call passes
 // { transaction: h.tx }; reads return plain rows (JSON columns parsed).
+/**
+ * Extracts a plain JS object from a sequelize row instance.
+ * @param {*} row - The sequelize row (or null/undefined).
+ * @returns {Object} The plain row object, or undefined when the row is null.
+ */
 const plain = row => (row == null ? undefined : row.get({ plain: true }));
+/**
+ * Runs an async database callback inside an Effect, providing the sequelize handle.
+ * @param {Function} fn - Async callback receiving the handle `{ models, sequelize, tx }`.
+ * @returns {*} An Effect yielding the callback's result.
+ */
 const db = fn => Effect.promise(() => Database.useAsync(fn));
+/** Layer that builds the Session service: CRUD over sessions, messages, and parts. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const storage = yield* Storage.Service;
   const sync = yield* SyncEvent.Service;
+  /**
+   * Builds a new session Info, emits the Created sync event, and (when workspaces
+   * are disabled) republishes a legacy Updated bus event for compatibility.
+   * @param {Object} input - Session fields (directory, path, parentID, title, agent, model, permission, workspaceID).
+   * @returns {*} An Effect yielding the newly created session Info.
+   */
   const createNext = Effect.fn("Session.createNext")(function* (input) {
     const ctx = yield* InstanceState.context;
     const result = {
@@ -390,6 +466,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return result;
   });
+  /**
+   * Loads a session by ID, throwing NotFoundError if it does not exist.
+   * @param {string} id - The session ID.
+   * @returns {*} An Effect yielding the session Info.
+   */
   const get = Effect.fn("Session.get")(function* (id) {
     const row = yield* db(async h => plain(await h.models.Session.findOne({
       where: {
@@ -402,6 +483,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return fromRow(row);
   });
+  /**
+   * Lists sessions for the current project, merging in the provided filters.
+   * @param {Object} input - Optional list filters (directory, path, search, limit, etc.).
+   * @returns {*} An Effect yielding an array of session Info objects.
+   */
   const list = Effect.fn("Session.list")(function* (input) {
     const ctx = yield* InstanceState.context;
     return yield* Effect.promise(() => listByProject({
@@ -409,6 +495,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       ...(input ?? {})
     }));
   });
+  /**
+   * Lists the direct child sessions of a parent session.
+   * @param {string} parentID - The parent session ID.
+   * @returns {*} An Effect yielding an array of child session Info objects.
+   */
   const children = Effect.fn("Session.children")(function* (parentID) {
     const rows = yield* db(async h => (await h.models.Session.findAll({
       where: {
@@ -420,6 +511,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     })));
     return rows.map(fromRow);
   });
+  /**
+   * Recursively deletes a session and all of its child sessions, emitting the
+   * Deleted sync event (publishing only when an instance context exists) and
+   * removing its sync history. Errors are logged rather than thrown.
+   * @param {string} sessionID - The session to remove.
+   * @returns {*} An Effect that completes once removal is attempted.
+   */
   const remove = Effect.fnUntraced(function* (sessionID) {
     try {
       const session = yield* get(sessionID);
@@ -444,6 +542,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       log.error(e);
     }
   });
+  /**
+   * Upserts a message by emitting the MessageV2 Updated sync event.
+   * @param {Object} msg - The message info to persist.
+   * @returns {*} An Effect yielding the same message.
+   */
   const updateMessage = msg => Effect.gen(function* () {
     yield* sync.run(MessageV2.Event.Updated, {
       sessionID: msg.sessionID,
@@ -451,6 +554,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return msg;
   }).pipe(Effect.withSpan("Session.updateMessage"));
+  /**
+   * Upserts a message part by emitting the MessageV2 PartUpdated sync event with
+   * a structured clone of the part.
+   * @param {Object} part - The part to persist.
+   * @returns {*} An Effect yielding the same part.
+   */
   const updatePart = part => Effect.gen(function* () {
     yield* sync.run(MessageV2.Event.PartUpdated, {
       sessionID: part.sessionID,
@@ -459,6 +568,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return part;
   }).pipe(Effect.withSpan("Session.updatePart"));
+  /**
+   * Loads a single message part by session/message/part ID.
+   * @param {Object} input - `{ sessionID, messageID, partID }`.
+   * @returns {*} An Effect yielding the part (with id/sessionID/messageID merged in), or undefined.
+   */
   const getPart = Effect.fn("Session.getPart")(function* (input) {
     const row = yield* db(async h => plain(await h.models.Part.findOne({
       where: {
@@ -476,6 +590,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       messageID: row.message_id
     };
   });
+  /**
+   * Creates a new session in the current instance's directory/worktree,
+   * defaulting the workspace from instance state.
+   * @param {Object} input - Optional `{ parentID, title, agent, model, permission, workspaceID }`.
+   * @returns {*} An Effect yielding the created session Info.
+   */
   const create = Effect.fn("Session.create")(function* (input) {
     const ctx = yield* InstanceState.context;
     const workspace = yield* InstanceState.workspaceID;
@@ -490,6 +610,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       workspaceID: input?.workspaceID ?? workspace
     });
   });
+  /**
+   * Forks a session into a new one, copying its messages and parts (with fresh
+   * IDs) up to but not including the optional `messageID` cutoff, remapping
+   * parent/tail references via an ID map.
+   * @param {Object} input - `{ sessionID, messageID }`.
+   * @returns {*} An Effect yielding the new forked session Info.
+   */
   const fork = Effect.fn("Session.fork")(function* (input) {
     const ctx = yield* InstanceState.context;
     const original = yield* get(input.sessionID);
@@ -532,10 +659,21 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return session;
   });
+  /**
+   * Emits an Updated sync event applying a partial change to a session.
+   * @param {string} sessionID - The session to update.
+   * @param {Object} info - Partial session fields to change (use `null` to clear).
+   * @returns {*} An Effect that completes once the event is run.
+   */
   const patch = (sessionID, info) => sync.run(Event.Updated, {
     sessionID,
     info
   });
+  /**
+   * Bumps a session's `time.updated` to the current time.
+   * @param {string} sessionID - The session to touch.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const touch = Effect.fn("Session.touch")(function* (sessionID) {
     yield* patch(sessionID, {
       time: {
@@ -543,11 +681,21 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  /**
+   * Sets a session's title.
+   * @param {Object} input - `{ sessionID, title }`.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const setTitle = Effect.fn("Session.setTitle")(function* (input) {
     yield* patch(input.sessionID, {
       title: input.title
     });
   });
+  /**
+   * Sets (or clears) a session's archived timestamp.
+   * @param {Object} input - `{ sessionID, time }`.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const setArchived = Effect.fn("Session.setArchived")(function* (input) {
     yield* patch(input.sessionID, {
       time: {
@@ -555,6 +703,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  /**
+   * Updates a session's permission ruleset and bumps `time.updated`.
+   * @param {Object} input - `{ sessionID, permission }`.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const setPermission = Effect.fn("Session.setPermission")(function* (input) {
     yield* patch(input.sessionID, {
       permission: input.permission,
@@ -563,6 +716,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  /**
+   * Records a session's revert marker and diff summary, bumping `time.updated`.
+   * @param {Object} input - `{ sessionID, revert, summary }`.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const setRevert = Effect.fn("Session.setRevert")(function* (input) {
     yield* patch(input.sessionID, {
       summary: input.summary,
@@ -572,6 +730,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       revert: input.revert
     });
   });
+  /**
+   * Clears a session's revert marker and bumps `time.updated`.
+   * @param {string} sessionID - The session to clear the revert from.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const clearRevert = Effect.fn("Session.clearRevert")(function* (sessionID) {
     yield* patch(sessionID, {
       time: {
@@ -580,6 +743,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       revert: null
     });
   });
+  /**
+   * Updates a session's diff summary and bumps `time.updated`.
+   * @param {Object} input - `{ sessionID, summary }`.
+   * @returns {*} An Effect that completes once the update is emitted.
+   */
   const setSummary = Effect.fn("Session.setSummary")(function* (input) {
     yield* patch(input.sessionID, {
       time: {
@@ -588,9 +756,20 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       summary: input.summary
     });
   });
+  /**
+   * Reads the stored file-diff summary for a session, defaulting to an empty array.
+   * @param {string} sessionID - The session whose diff to read.
+   * @returns {*} An Effect yielding the array of file diffs.
+   */
   const diff = Effect.fn("Session.diff")(function* (sessionID) {
     return yield* storage.read(["session_diff", sessionID]).pipe(Effect.orElseSucceed(() => []));
   });
+  /**
+   * Lists a session's messages (with parts). With a `limit`, returns a page of
+   * the most recent messages; otherwise streams and returns all in chronological order.
+   * @param {Object} input - `{ sessionID, limit }`.
+   * @returns {*} An Effect yielding an array of message items.
+   */
   const messages = Effect.fn("Session.messages")(function* (input) {
     if (input.limit) {
       const result = yield* Effect.promise(() => MessageV2.page({
@@ -605,6 +784,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return items.reverse();
     });
   });
+  /**
+   * Removes a message by emitting the MessageV2 Removed sync event.
+   * @param {Object} input - `{ sessionID, messageID }`.
+   * @returns {*} An Effect yielding the removed message ID.
+   */
   const removeMessage = Effect.fn("Session.removeMessage")(function* (input) {
     yield* sync.run(MessageV2.Event.Removed, {
       sessionID: input.sessionID,
@@ -612,6 +796,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return input.messageID;
   });
+  /**
+   * Removes a message part by emitting the MessageV2 PartRemoved sync event.
+   * @param {Object} input - `{ sessionID, messageID, partID }`.
+   * @returns {*} An Effect yielding the removed part ID.
+   */
   const removePart = Effect.fn("Session.removePart")(function* (input) {
     yield* sync.run(MessageV2.Event.PartRemoved, {
       sessionID: input.sessionID,
@@ -620,6 +809,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return input.partID;
   });
+  /**
+   * Publishes an incremental part-delta event on the bus (e.g. streaming text/reasoning).
+   * @param {Object} input - The part-delta payload `{ sessionID, messageID, partID, field, delta }`.
+   * @returns {*} An Effect that completes once published.
+   */
   const updatePartDelta = Effect.fnUntraced(function* (input) {
     yield* bus.publish(MessageV2.Event.PartDelta, input);
   });
@@ -659,6 +853,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   });
 }));
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Storage.defaultLayer), Layer.provide(SyncEvent.defaultLayer));
+/**
+ * Queries sessions for a project, applying optional workspace/path/directory,
+ * roots-only, start time, and title-search filters, ordered by most recently
+ * updated.
+ * @param {Object} input - Filters including `projectID` plus optional
+ *   `workspaceID`, `path`, `directory`, `scope`, `roots`, `start`, `search`, `limit`.
+ * @returns {Promise<Array>} A promise of matching session Info objects.
+ */
 async function listByProject(input) {
   const where = {
     project_id: input.projectID
@@ -713,6 +915,13 @@ async function listByProject(input) {
   })));
   return rows.map(fromRow);
 }
+/**
+ * Async-iterates sessions across all projects (not scoped to the current
+ * instance), applying optional directory/roots/time-range/search/archived
+ * filters and joining each session with its project summary.
+ * @param {Object} input - Optional filters `{ directory, roots, start, cursor, search, archived, limit }`.
+ * @returns {AsyncGenerator<Object>} Yields GlobalInfo-shaped session objects with an attached `project`.
+ */
 export async function* listGlobal(input) {
   const where = {};
   if (input?.directory) {

@@ -1,3 +1,4 @@
+/** @file The "plan_exit" tool: asks the user to approve a completed plan and, if approved, switches the session to the build agent. */
 import { assetText } from "#util/asset.js";
 import path from "path";
 import { Effect, Schema } from "effect";
@@ -9,13 +10,31 @@ import { Provider } from "#provider/provider.js";
 import { InstanceState } from "#effect/instance-state.js";
 import { MessageID, PartID } from "../session/schema.js";
 const EXIT_DESCRIPTION = assetText("tool/plan-exit.txt");
+/**
+ * Find the model most recently used by a user message in the session, scanning
+ * the message stream and returning the first user message that carries a model.
+ * @param {string} sessionID - The session whose messages to scan.
+ * @returns {Promise<*>} The model of the latest user message, or undefined if none.
+ */
 async function getLastModel(sessionID) {
   for await (const item of MessageV2.stream(sessionID)) {
     if (item.info.role === "user" && item.info.model) return item.info.model;
   }
   return undefined;
 }
+/**
+ * Parameter schema for the plan_exit tool: takes no parameters.
+ * @type {Object}
+ */
 export const Parameters = Schema.Struct({});
+/**
+ * The "plan_exit" tool. Prompts the user to approve the completed plan; on "No"
+ * it raises a RejectedError to stay in the plan agent, and on approval it
+ * appends a synthetic user message switching the session to the build agent
+ * (reusing the last user model, or the provider default) and instructing it to
+ * execute the plan.
+ * @type {Object}
+ */
 export const PlanExitTool = Tool.define("plan_exit", Effect.gen(function* () {
   const session = yield* Session.Service;
   const question = yield* Question.Service;

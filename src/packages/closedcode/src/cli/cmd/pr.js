@@ -1,9 +1,15 @@
+/** @file CLI `pr` command: checks out a GitHub PR branch (via gh), imports any linked session, then launches closedcode. */
 import { Effect } from "effect";
 import { UI } from "../ui.js";
 import { effectCmd, fail } from "../effect-cmd.js";
 import { Git } from "#git/index.js";
 import { InstanceRef } from "#effect/instance-ref.js";
 import { Process } from "#util/process.js";
+/**
+ * `pr <number>` command: uses `gh pr checkout` to fetch a PR into a local `pr/<n>` branch, adds a fork
+ * remote and upstream tracking for cross-repo PRs, imports a closedcode session linked in the PR body if present,
+ * then spawns `closedcode` (resuming the imported session when available).
+ */
 export const PrCommand = effectCmd({
   command: "pr <number>",
   describe: "fetch and checkout a GitHub PR branch, then run closedcode",

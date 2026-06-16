@@ -1,3 +1,4 @@
+/** @file Express route group for the control-plane endpoints: set/remove provider auth credentials, serve the OpenAPI spec (/doc), and accept remote log entries (/log). */
 // Express route group for the control-plane endpoints (auth, /log, OpenAPI /doc).
 import express from "express";
 import { Auth } from "#auth/index.js";
@@ -10,10 +11,23 @@ import { registerOperation, buildSpec } from "../../express/openapi.js";
 import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";
 
+/**
+ * Build the Express router for the control-plane route group
+ * (PUT/DELETE "/auth/:providerID", GET "/doc", POST "/log").
+ * @param {Object} registry - Optional OpenAPI registry to record operation metadata against; also used to build the /doc spec.
+ * @returns {express.Router} The configured Express router.
+ */
 export function ControlPlaneRoutes(registry) {
   const router = express.Router();
 
   // Helper that registers a route's openapi metadata against the GROUP-RELATIVE mount (root, "").
+  /**
+   * Register a route's OpenAPI operation metadata against the group-relative (root) mount.
+   * @param {string} method - HTTP method (e.g. "put", "delete", "post").
+   * @param {string} path - Group-relative path (e.g. "/auth/:providerID", "/log").
+   * @param {Object} meta - OpenAPI operation metadata.
+   * @returns {*} The registration result, or undefined when no registry is provided.
+   */
   const describe = (method, path, meta) => registry && registerOperation(registry, method, path, meta);
 
   describe("put", "/auth/:providerID", {

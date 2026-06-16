@@ -1,3 +1,4 @@
+/** @file CLI `plugin` command: installs a plugin npm package, detects its targets, and patches the config. */
 import { intro, log, outro, spinner } from "@clack/prompts";
 import { Effect } from "effect";
 import { ConfigPaths } from "#config/paths.js";
@@ -10,6 +11,7 @@ import { Process } from "#util/process.js";
 import { UI } from "../ui.js";
 import { effectCmd } from "../effect-cmd.js";
 import { InstanceRef } from "#effect/instance-ref.js";
+/** Default dependency bundle for `createPlugTask`: wires UI spinner/log, plugin resolution, and filesystem helpers. */
 const defaultPlugDeps = {
   spinner: () => spinner(),
   log: {
@@ -26,11 +28,22 @@ const defaultPlugDeps = {
   files: (dir, name) => ConfigPaths.fileInDirectory(dir, name),
   global: Global.Path.config
 };
+/**
+ * Extract the `cause` field from an error-like object, if present.
+ * @param {*} err - A candidate error value.
+ * @returns {*} The error's `cause`, or undefined when not an object with a cause.
+ */
 function cause(err) {
   if (!err || typeof err !== "object") return;
   if (!("cause" in err)) return;
   return err.cause;
 }
+/**
+ * Build an async task that installs a plugin package, reads its manifest, patches config, and reports progress.
+ * @param {Object} input - `{mod, force, global}` describing the package spec and install flags.
+ * @param {Object} dep - Injectable dependencies (spinner/log/resolve/readText/write/exists/files/global); defaults to `defaultPlugDeps`.
+ * @returns {Function} An async function taking a context `{vcs, worktree, directory}` and resolving to a boolean success flag.
+ */
 export function createPlugTask(input, dep = defaultPlugDeps) {
   const mod = input.mod;
   const force = Boolean(input.force);
@@ -119,6 +132,7 @@ export function createPlugTask(input, dep = defaultPlugDeps) {
     return true;
   };
 }
+/** `plugin <module>` command (alias `plug`): installs an npm plugin module and updates config, with `--global`/`--force` flags. */
 export const PluginCommand = effectCmd({
   command: "plugin <module>",
   aliases: ["plug"],

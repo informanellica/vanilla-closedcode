@@ -1,3 +1,5 @@
+/** @file Permission service: schemas, rule evaluation, and the Effect layer that asks the user for and records tool-call permissions. */
+
 import { Bus } from "#bus/index.js";
 import { BusEvent } from "#bus/bus-event.js";
 import { InstanceState } from "#effect/instance-state.js";
@@ -15,11 +17,13 @@ import { PermissionID } from "./schema.js";
 const log = Log.create({
   service: "permission"
 });
+/** Permission action literal: one of "allow", "deny", or "ask". */
 export const Action = Schema.Literals(["allow", "deny", "ask"]).annotate({
   identifier: "PermissionAction"
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** A single permission rule: a permission key, a pattern, and the action to take. */
 export const Rule = Schema.Struct({
   permission: Schema.String,
   pattern: Schema.String,
@@ -29,11 +33,13 @@ export const Rule = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** A mutable ordered array of permission Rules. */
 export const Ruleset = Schema.mutable(Schema.Array(Rule)).annotate({
   identifier: "PermissionRuleset"
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** A pending permission request shown to the user for a specific tool call. */
 export class Request extends Schema.Class("PermissionRequest")({
   id: PermissionID,
   sessionID: SessionID,
@@ -48,6 +54,7 @@ export class Request extends Schema.Class("PermissionRequest")({
 }) {
   static zod = zod(this);
 }
+/** User reply to a permission request: "once", "always", or "reject". */
 export const Reply = Schema.Literals(["once", "always", "reject"]).pipe(withStatics(s => ({
   zod: zod(s)
 })));
@@ -55,17 +62,20 @@ const reply = {
   reply: Reply,
   message: Schema.optional(Schema.String)
 };
+/** Body of a permission reply: the reply value plus an optional message. */
 export const ReplyBody = Schema.Struct(reply).annotate({
   identifier: "PermissionReplyBody"
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** A set of always-allowed patterns approved for a given project. */
 export class Approval extends Schema.Class("PermissionApproval")({
   projectID: ProjectID,
   patterns: Schema.Array(Schema.String)
 }) {
   static zod = zod(this);
 }
+/** Bus events published by the permission service: Asked (request raised) and Replied (request resolved). */
 export const Event = {
   Asked: BusEvent.define("permission.asked", Request),
   Replied: BusEvent.define("permission.replied", Schema.Struct({
@@ -74,11 +84,13 @@ export const Event = {
     reply: Reply
   }))
 };
+/** Error raised when the user rejects permission for a tool call without feedback. */
 export class RejectedError extends Schema.TaggedErrorClass()("PermissionRejectedError", {}) {
   get message() {
     return "The user rejected permission to use this specific tool call.";
   }
 }
+/** Error raised when the user rejects permission for a tool call and provides corrective feedback. */
 export class CorrectedError extends Schema.TaggedErrorClass()("PermissionCorrectedError", {
   feedback: Schema.String
 }) {
@@ -86,6 +98,7 @@ export class CorrectedError extends Schema.TaggedErrorClass()("PermissionCorrect
     return `The user rejected permission to use this specific tool call with the following feedback: ${this.feedback}`;
   }
 }
+/** Error raised when a configured rule explicitly denies a tool call; carries the relevant rules. */
 export class DeniedError extends Schema.TaggedErrorClass()("PermissionDeniedError", {
   ruleset: Schema.Any
 }) {
@@ -93,6 +106,7 @@ export class DeniedError extends Schema.TaggedErrorClass()("PermissionDeniedErro
     return `The user has specified a rule which prevents you from using this specific tool call. Here are some of the relevant rules ${JSON.stringify(this.ruleset)}`;
   }
 }
+/** Input to the ask operation: a Request (with optional id) plus the ruleset to evaluate against. */
 export const AskInput = Schema.Struct({
   ...Request.fields,
   id: Schema.optional(PermissionID),
@@ -102,6 +116,7 @@ export const AskInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Input to the reply operation: the target requestID plus the reply value and optional message. */
 export const ReplyInput = Schema.Struct({
   requestID: PermissionID,
   ...reply
@@ -110,10 +125,25 @@ export const ReplyInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Evaluate a permission/pattern pair against rulesets (thin re-export of evaluate.js).
+ * @param {string} permission - The permission key being checked.
+ * @param {string} pattern - The concrete pattern/argument being checked.
+ * @param {...Array} rulesets - One or more rule arrays to evaluate against.
+ * @returns {Object} The matched rule, or a default "ask" rule.
+ */
 export function evaluate(permission, pattern, ...rulesets) {
   return evalRule(permission, pattern, ...rulesets);
 }
+/** Effect Context service tag for the permission service. */
 export class Service extends Context.Service()("@closedcode/Permission") {}
+/**
+ * Effect layer providing the permission Service.
+ *
+ * Loads previously approved rules from the database, exposes ask/reply/list
+ * operations over pending requests, persists "always" approvals, and resolves
+ * other pending requests in the same session when a reply makes them allowable.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const bus = yield* Bus.Service;
   const state = yield* InstanceState.make(Effect.fn("Permission.state")(function* (ctx) {
@@ -145,6 +175,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }));
     return state;
   }));
+  // Evaluate each requested pattern; deny immediately on a deny rule, skip
+  // allowed patterns, and otherwise raise a pending request and await the
+  // user's reply (returns once approved, fails on rejection).
   const ask = Effect.fn("Permission.ask")(function* (input) {
     const {
       approved,
@@ -191,6 +224,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       pending.delete(id);
     }));
   });
+  // Resolve a pending request by id: rejecting fails the deferred (and rejects
+  // every other pending request in the same session); approving succeeds it,
+  // records "always" approvals, and unblocks other now-allowable requests.
   const reply = Effect.fn("Permission.reply")(function* (input) {
     const {
       approved,
@@ -242,6 +278,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       yield* Deferred.succeed(item.deferred, undefined);
     }
   });
+  // Return the info objects for all currently pending permission requests.
   const list = Effect.fn("Permission.list")(function* () {
     const pending = (yield* InstanceState.get(state)).pending;
     return Array.from(pending.values(), item => item.info);
@@ -252,6 +289,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     list
   });
 }));
+/**
+ * Expand leading home-directory shorthands in a pattern to an absolute path.
+ *
+ * Handles "~", "~/", "$HOME" and "$HOME/" prefixes; returns the pattern
+ * unchanged otherwise.
+ * @param {string} pattern - The pattern that may begin with a home shorthand.
+ * @returns {string} The pattern with the home prefix expanded, if any.
+ */
 function expand(pattern) {
   if (pattern.startsWith("~/")) return os.homedir() + pattern.slice(1);
   if (pattern === "~") return os.homedir();
@@ -259,6 +304,15 @@ function expand(pattern) {
   if (pattern.startsWith("$HOME")) return os.homedir() + pattern.slice(5);
   return pattern;
 }
+/**
+ * Build a permission ruleset from a config permission object.
+ *
+ * Each config entry maps a permission key either to a single action string
+ * (applied with pattern "*") or to an object of pattern-to-action entries
+ * (patterns are home-expanded).
+ * @param {Object} permission - Config object mapping permission keys to actions or pattern maps.
+ * @returns {Array} The resulting list of {permission, pattern, action} rules.
+ */
 export function fromConfig(permission) {
   const ruleset = [];
   for (const [key, value] of Object.entries(permission)) {
@@ -278,10 +332,25 @@ export function fromConfig(permission) {
   }
   return ruleset;
 }
+/**
+ * Merge multiple rulesets into a single flat ruleset.
+ * @param {...Array} rulesets - The rulesets to merge.
+ * @returns {Array} A single flattened array of rules.
+ */
 export function merge(...rulesets) {
   return rulesets.flat();
 }
+/** Tool names that all map to the "edit" permission key. */
 const EDIT_TOOLS = ["edit", "write", "apply_patch"];
+/**
+ * Determine which tools are fully disabled by the ruleset.
+ *
+ * A tool is disabled when the last rule matching its permission has pattern
+ * "*" and action "deny". Edit-family tools are checked under the "edit" key.
+ * @param {Array} tools - Tool names to check.
+ * @param {Array} ruleset - The ruleset to evaluate against.
+ * @returns {Set} The set of tool names that are disabled.
+ */
 export function disabled(tools, ruleset) {
   const result = new Set();
   for (const tool of tools) {
@@ -292,5 +361,6 @@ export function disabled(tools, ruleset) {
   }
   return result;
 }
+/** The permission layer with its Bus dependency provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer));
 export * as Permission from "./index.js";

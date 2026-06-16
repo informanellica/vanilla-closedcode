@@ -1,3 +1,8 @@
+/**
+ * @file Shared UI-serving utilities used by the httpapi backend. The Express
+ * route group lives in routes/express/ui.js; only the Effect-based
+ * serveUIEffect helper is kept here for the httpapi server.
+ */
 // Shared UI-serving utilities used by the httpapi backend. The Express route
 // group lives in routes/express/ui.js; only the Effect-based serveUIEffect
 // helper is kept here for the httpapi server.
@@ -5,6 +10,11 @@ import { Flag } from "core/flag/flag";
 import { Effect } from "effect";
 import { HttpServerResponse } from "effect/unstable/http";
 import { lookup as mimeLookup } from "mime-types";
+/**
+ * Look up the MIME type for a file path by extension.
+ * @param {string} filePath - File path or name whose extension is inspected.
+ * @returns {string|undefined} The matched MIME type, or undefined if unknown.
+ */
 function getMimeType(filePath) {
   return mimeLookup(filePath) || undefined;
 }
@@ -14,11 +24,26 @@ const embeddedUIPromise = Flag.CLOSEDCODE_DISABLE_EMBEDDED_WEB_UI ? Promise.reso
 
 const DEFAULT_CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:";
 
+/**
+ * Resolve the lazily-imported embedded web UI bundle (a map of asset path to
+ * on-disk file path), or null when the embedded UI is disabled or unavailable.
+ * @returns {Promise<Object>} The embedded UI manifest object, or null.
+ */
 function embeddedUI() {
   if (Flag.CLOSEDCODE_DISABLE_EMBEDDED_WEB_UI) return Promise.resolve(null);
   return embeddedUIPromise;
 }
 
+/**
+ * Serve a static file from the embedded web UI bundle for the given request.
+ * Resolves the request path against the embedded manifest (falling back to
+ * index.html), reads the matched file, and returns it with the appropriate
+ * content-type and CSP headers. Returns 404 when the asset is missing and 503
+ * when the build has no embedded web UI.
+ * @param {Object} request - HTTP request whose url is matched against the bundle.
+ * @param {Object} services - Service bag providing fs.existsSafe and fs.readFile.
+ * @returns {Effect} An Effect yielding the HttpServerResponse to send.
+ */
 export function serveUIEffect(request, services) {
   return Effect.gen(function* () {
     const embeddedWebUI = yield* Effect.promise(() => embeddedUI());

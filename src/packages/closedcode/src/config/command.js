@@ -1,3 +1,4 @@
+/** @module ConfigCommand Command config schema and loader that parses markdown command definitions from disk. */
 export * as ConfigCommand from "./command.js";
 import * as Log from "core/util/log";
 import { Schema } from "effect";
@@ -13,6 +14,7 @@ import { ConfigModelID } from "./model-id.js";
 const log = Log.create({
   service: "config"
 });
+/** Schema for a user-defined command (template plus optional description, agent, model, subtask flag). */
 export const Info = Schema.Struct({
   template: Schema.String,
   description: Schema.optional(Schema.String),
@@ -22,6 +24,14 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Load all command definitions under a directory by scanning `{command,commands}/**\/*.md`, parsing
+ * each markdown file's frontmatter and body (the body becomes the command template), and validating
+ * against the command schema. Markdown parse failures are logged and published as a session error
+ * event and skipped; a file that parses but fails schema validation throws an InvalidError.
+ * @param {string} dir - The base directory to scan for command markdown files.
+ * @returns {Promise<Object>} A map of command name to its validated config.
+ */
 export async function load(dir) {
   const result = {};
   for (const item of await Glob.scan("{command,commands}/**/*.md", {

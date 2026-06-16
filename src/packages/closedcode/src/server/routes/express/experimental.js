@@ -1,3 +1,4 @@
+/** @file Express route group for the "/experimental" instance endpoints: Console org metadata/switching, tool listing, git worktree CRUD/reset, global session listing, and MCP resources. */
 // Express route group for the experimental instance endpoints (11 ops).
 import express from "express";
 import { Effect, Option } from "effect";
@@ -36,6 +37,11 @@ const ConsoleSwitchBody = z.object({
   orgID: z.string(),
 });
 const QueryBoolean = z.union([z.preprocess(value => value === "true" ? true : value === "false" ? false : value, z.boolean()), z.enum(["true", "false"])]);
+/**
+ * Coerce a query-string boolean ("true"/"false" or an actual boolean) into a boolean.
+ * @param {*} value - The raw query value (string, boolean, or undefined).
+ * @returns {boolean} True for `true`/"true", false for other defined values, or undefined when the input is undefined.
+ */
 function queryBoolean(value) {
   if (value === undefined) return;
   return value === true || value === "true";
@@ -43,11 +49,22 @@ function queryBoolean(value) {
 
 // Local equivalents of trace.js requestAttributes/runRequest/jsonRequest.
 // Mirrors the OTel attribute naming (`fooID` -> `foo.id`, else `closedcode.<key>`).
+/**
+ * Map a route-param name to an OpenTelemetry attribute key: a "fooID" param becomes "foo.id",
+ * any other key becomes "closedcode.<key>".
+ * @param {string} key - The route parameter name.
+ * @returns {string} The corresponding span attribute key.
+ */
 function paramToAttributeKey(key) {
   const m = key.match(/^(.+)ID$/);
   if (m) return `${m[1].toLowerCase()}.id`;
   return `closedcode.${key}`;
 }
+/**
+ * Build OpenTelemetry span attributes from an Express request (HTTP method/path plus matched route params).
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A map of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -58,19 +75,47 @@ function requestAttributes(req) {
   }
   return attributes;
 }
+/**
+ * Run an Effect inside a named tracing span carrying the request's attributes.
+ * @param {string} name - Span name.
+ * @param {Object} req - The Express request object (used to derive span attributes).
+ * @param {Effect} effect - The Effect to execute within the span.
+ * @returns {Promise} A promise resolving to the Effect's success value.
+ */
 function runRequestExpress(name, req, effect) {
   return AppRuntime.runPromise(effect.pipe(Effect.withSpan(name, {
     attributes: requestAttributes(req),
   })));
 }
+/**
+ * Run an Effect generator within a traced span and write its result as the JSON response body.
+ * @param {string} name - Span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} genFn - A generator function consumed by Effect.gen producing the response value.
+ * @returns {Promise<void>} Resolves once the JSON response has been sent.
+ */
 async function jsonRequestExpress(name, req, res, genFn) {
   res.json(await runRequestExpress(name, req, Effect.gen(genFn)));
 }
 
+/**
+ * Build the Express router for the "/experimental" route group (Console org metadata/list/switch,
+ * tool ids/list, worktree create/list/remove/reset, global session list, and MCP resources).
+ * @param {Object} registry - Optional OpenAPI registry to record operation metadata against; falsy disables registration.
+ * @returns {express.Router} The configured Express router.
+ */
 export function ExperimentalRoutes(registry) {
   const router = express.Router();
 
   // Helper that registers a route's openapi metadata against the group mount ("/experimental").
+  /**
+   * Register a route's OpenAPI operation metadata under the group-relative "/experimental" mount.
+   * @param {string} method - HTTP method (e.g. "get", "post", "delete").
+   * @param {string} path - Path relative to "/experimental" (e.g. "/console", "/worktree").
+   * @param {Object} meta - OpenAPI operation metadata.
+   * @returns {*} The registration result, or undefined when no registry is provided.
+   */
   const describe = (method, path, meta) => registry && registerOperation(registry, method, "/experimental" + path, meta);
 
   describe("get", "/console", {

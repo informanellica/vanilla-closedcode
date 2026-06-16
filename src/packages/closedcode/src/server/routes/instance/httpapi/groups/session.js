@@ -1,3 +1,4 @@
+/** @file HttpApi route definitions for the session group: list/get sessions, messages, diffs, prompting, forking, reverting, sharing, and permission handling. */
 import { Permission } from "#permission/index.js";
 import { PermissionID } from "#permission/schema.js";
 import { ModelID, ProviderID } from "#provider/schema.js";
@@ -16,11 +17,14 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path prefix for all session endpoints. */
 const root = "/session";
+/** Query-string boolean schema that decodes the strings "true"/"false" to a boolean and back. */
 const QueryBoolean = Schema.Literals(["true", "false"]).pipe(Schema.decodeTo(Schema.Boolean, {
   decode: SchemaGetter.transform(value => value === "true"),
   encode: SchemaGetter.transform(value => value ? "true" : "false")
 }));
+/** Query-string schema for listing sessions, with optional directory, scope, path, roots-only, pagination, and search filters. */
 export const ListQuery = Schema.Struct({
   directory: Schema.optional(Schema.String),
   scope: Schema.optional(Schema.Literals(["project"])),
@@ -30,12 +34,16 @@ export const ListQuery = Schema.Struct({
   search: Schema.optional(Schema.String),
   limit: Schema.optional(Schema.NumberFromString)
 });
+/** Query-string schema for the diff endpoint, derived from SessionSummary.DiffInput minus the path-supplied sessionID. */
 export const DiffQuery = Schema.Struct(Struct.omit(SessionSummary.DiffInput.fields, ["sessionID"]));
+/** Query-string schema for listing messages, supporting an optional non-negative integer limit and a before cursor. */
 export const MessagesQuery = Schema.Struct({
   limit: Schema.optional(Schema.NumberFromString.check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0))),
   before: Schema.optional(Schema.String)
 });
+/** Response schema mapping each session ID to its current status info. */
 export const StatusMap = Schema.Record(Schema.String, SessionStatus.Info);
+/** Request body schema for updating a session: optional title, permission ruleset, and archived timestamp. */
 export const UpdatePayload = Schema.Struct({
   title: Schema.optional(Schema.String),
   permission: Schema.optional(Permission.Ruleset),
@@ -43,24 +51,33 @@ export const UpdatePayload = Schema.Struct({
     archived: Schema.optional(Session.ArchivedTimestamp)
   }))
 });
+/** Request body schema for forking a session, derived from Session.ForkInput minus the path-supplied sessionID. */
 export const ForkPayload = Schema.Struct(Struct.omit(Session.ForkInput.fields, ["sessionID"]));
+/** Request body schema for initializing a session: the provider/model to use and the seed message ID. */
 export const InitPayload = Schema.Struct({
   modelID: ModelID,
   providerID: ProviderID,
   messageID: MessageID
 });
+/** Request body schema for summarizing a session: the provider/model to use and an optional auto flag. */
 export const SummarizePayload = Schema.Struct({
   providerID: ProviderID,
   modelID: ModelID,
   auto: Schema.optional(Schema.Boolean)
 });
+/** Request body schema for sending a prompt, derived from SessionPrompt.PromptInput minus the path-supplied sessionID. */
 export const PromptPayload = Schema.Struct(Struct.omit(SessionPrompt.PromptInput.fields, ["sessionID"]));
+/** Request body schema for sending a command, derived from SessionPrompt.CommandInput minus the path-supplied sessionID. */
 export const CommandPayload = Schema.Struct(Struct.omit(SessionPrompt.CommandInput.fields, ["sessionID"]));
+/** Request body schema for running a shell command, derived from SessionPrompt.ShellInput minus the path-supplied sessionID. */
 export const ShellPayload = Schema.Struct(Struct.omit(SessionPrompt.ShellInput.fields, ["sessionID"]));
+/** Request body schema for reverting a message, derived from SessionRevert.RevertInput minus the path-supplied sessionID. */
 export const RevertPayload = Schema.Struct(Struct.omit(SessionRevert.RevertInput.fields, ["sessionID"]));
+/** Request body schema for responding to a permission request, carrying the user's approve/deny reply. */
 export const PermissionResponsePayload = Schema.Struct({
   response: Permission.Reply
 });
+/** Map of endpoint name to URL path template for every session route. */
 export const SessionPaths = {
   list: root,
   status: `${root}/status`,
@@ -89,6 +106,13 @@ export const SessionPaths = {
   deletePart: `${root}/:sessionID/message/:messageID/part/:partID`,
   updatePart: `${root}/:sessionID/message/:messageID/part/:partID`
 };
+/**
+ * Experimental HttpApi surface for the session group, exposing the full set of
+ * session endpoints (list, status, get, children, todo, diff, messages, create,
+ * delete, update, fork, abort, init, share, summarize, prompt, command, shell,
+ * revert, permission response, and message/part mutations).
+ * The group is guarded by instance-context, workspace-routing, and authorization middleware.
+ */
 export const SessionApi = HttpApi.make("session").add(HttpApiGroup.make("session").add(HttpApiEndpoint.get("list", SessionPaths.list, {
   query: ListQuery,
   success: described(Schema.Array(Session.Info), "List of sessions")

@@ -1,14 +1,16 @@
-// Vanilla TUI app shell (Stage T3 + SDK integration). Immediate-mode replacement
-// for the compiled-Solid app.js: state is signals, the view is a single
-// rootDraw(region), and keys route through the layer-stack key router.
-//
-// DUAL-MODE: when a `data` layer (vanilla/data) is injected, the shell drives a
-// REAL backend — the timeline streams server messages/parts, prompt submit calls
-// session.create/prompt/shell/command, the model/agent dialogs list real
-// providers/agents, `/` autocomplete merges server commands, and `@` queries
-// sdk.find.files. With no `data` it runs the original self-contained stub (so the
-// headless tests need no SDK). The model (createShell) renders into any region
-// and is driven by dispatch() — headless-testable either way.
+/**
+ * @file Vanilla TUI app shell (Stage T3 + SDK integration). Immediate-mode
+ * replacement for the compiled-Solid app.js: state is signals, the view is a
+ * single rootDraw(region), and keys route through the layer-stack key router.
+ *
+ * DUAL-MODE: when a `data` layer (vanilla/data) is injected, the shell drives a
+ * REAL backend — the timeline streams server messages/parts, prompt submit calls
+ * session.create/prompt/shell/command, the model/agent dialogs list real
+ * providers/agents, `/` autocomplete merges server commands, and `@` queries
+ * sdk.find.files. With no `data` it runs the original self-contained stub (so the
+ * headless tests need no SDK). The model (createShell) renders into any region
+ * and is driven by dispatch() — headless-testable either way.
+ */
 import { createSignal } from "../runtime/reactivity.js";
 import { column, row, box } from "../runtime/layout.js";
 import { createKeyRouter } from "../runtime/focus.js";
@@ -27,8 +29,13 @@ import { buildCommands } from "./commands.js";
 import { createKeybind } from "./keybind.js";
 import { createSidebar } from "./sidebar.js";
 
-// Map a terminal-kit combined key NAME ("CTRL_X","ENTER","PAGE_UP",…) to the
-// {name, ctrl, shift, meta} event shape the keybind resolver expects.
+/**
+ * Map a terminal-kit combined key NAME ("CTRL_X","ENTER","PAGE_UP",…) to the
+ * {name, ctrl, shift, meta} event shape the keybind resolver expects.
+ * @param {string} name - The combined key name from terminal-kit.
+ * @param {Object} data - The raw key metadata (isCharacter, ...).
+ * @returns {Object} {name, ctrl, shift, meta, isCharacter} normalized event.
+ */
 function tkToEvent(name, data) {
   let ctrl = false, shift = false, meta = false, n = name;
   if (n.startsWith("CTRL_")) { ctrl = true; n = n.slice(5); }
@@ -52,6 +59,30 @@ const SLASH_COMMANDS = [
   { name: "exit", description: "Exit the app" },
 ];
 
+/**
+ * Create the headless-testable TUI shell model: route + timeline + prompt +
+ * dialogs + selection, all driven by dispatch(name, data) and rendered by
+ * draw(region, ctx). Runs against a real backend when `opts.data` is injected,
+ * otherwise a self-contained stub.
+ * @param {Object} opts - Options.
+ * @param {Object} opts.theme - Theme token map (defaults to defaultTheme).
+ * @param {Object} opts.data - Optional vanilla/data layer (real backend).
+ * @param {Object} opts.keybinds - Custom keybind config for the resolver.
+ * @param {Function} opts.now - Clock function for lists/toasts.
+ * @param {Object} opts.initialRoute - Starting route (defaults to {type:"home"}).
+ * @param {string} opts.diffView - Initial diff display mode ("unified"|"split").
+ * @param {Function} opts.onExit - Called when the app should exit.
+ * @param {string} opts.agent - Default agent name in stub mode.
+ * @param {string} opts.model - Default model display name in stub mode.
+ * @param {string} opts.provider - Default provider display name in stub mode.
+ * @param {Object} opts.placeholders - {normal, shell} prompt placeholder examples.
+ * @param {Object} opts.selectionStorage - Optional persistence for createSelection.
+ * @param {Function} opts.listFiles - File lister (stub mode @-autocomplete).
+ * @param {Function} opts.scheduleRepaint - Schedule a repaint after a delay.
+ * @param {Function} opts.suspend - Hand the TTY to an external editor and back.
+ * @param {Function} opts.copyToClipboard - Copy text to the system clipboard.
+ * @returns {Object} The shell API (route, navigate, messages, prompt, timeline, toast, dialog, selection, sidebar, dispatch, handleMouse, draw, init, ...).
+ */
 export function createShell(opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const data = opts.data; // optional vanilla/data layer
@@ -60,6 +91,11 @@ export function createShell(opts = {}) {
 
   // --- route ---------------------------------------------------------------
   const [route, setRoute] = createSignal(opts.initialRoute ?? { type: "home" });
+  /**
+   * Navigate to a route and (in data mode) start syncing its session.
+   * @param {Object} next - The target route ({type:"home"} or {type:"session", sessionID}).
+   * @returns {void}
+   */
   function navigate(next) { setRoute(next); if (data && next.type === "session") data.syncSession(next.sessionID); }
   const currentSid = () => { const r = route(); return r.type === "session" ? r.sessionID : undefined; };
 
@@ -106,6 +142,13 @@ export function createShell(opts = {}) {
     onSubmit: (text, { mode }) => onPromptSubmit(text, mode),
   });
 
+  /**
+   * Handle a prompt submission: run a local slash command in the TUI, or send
+   * the text to the backend (data mode) / echo into the stub timeline.
+   * @param {string} text - The submitted (trimmed) prompt text.
+   * @param {string} mode - "normal" or "shell".
+   * @returns {void}
+   */
   function onPromptSubmit(text, mode) {
     // Local slash command -> run in the TUI, do not send to the server.
     if (mode === "normal" && text.startsWith("/")) {
@@ -131,6 +174,11 @@ export function createShell(opts = {}) {
   // --- dialog overlay (layer stack) ----------------------------------------
   const [dialogs, setDialogs] = createSignal([]);
   const dialog = {
+    /**
+     * Push a dialog onto the overlay stack and a key-capturing layer.
+     * @param {Object} spec - {title, width, height, widget, onClose} dialog spec.
+     * @returns {void}
+     */
     open(spec) {
       const remove = router.pushLayer({
         handleKey: (name, dt) => spec.widget.handleKey?.(name, dt) ?? false,
@@ -138,6 +186,10 @@ export function createShell(opts = {}) {
       });
       setDialogs(list => [...list, { ...spec, remove }]);
     },
+    /**
+     * Close the topmost dialog, remove its key layer, and fire its onClose.
+     * @returns {void}
+     */
     close() {
       const top = dialogs().at(-1);
       if (!top) return;
@@ -155,6 +207,10 @@ export function createShell(opts = {}) {
   const registryBySlash = registry ? new Map(registry.filter(c => c.slash).map(c => [c.slash, c])) : null;
   const runRegistry = value => registry?.find(c => c.value === value)?.run();
 
+  /**
+   * Open the command palette dialog (full registry in data mode, inline set in stub mode).
+   * @returns {void}
+   */
   function openCommands() {
     if (registry) {
       Dialogs.select(dialog, {
@@ -177,6 +233,11 @@ export function createShell(opts = {}) {
       onSelect: it => { if (it) runCommand(it.value); },
     });
   }
+  /**
+   * Run a stub-mode command by its value key.
+   * @param {string} value - The command value ("session.new", "route.home", "help", "models", "agents", "app.exit").
+   * @returns {void}
+   */
   function runCommand(value) {
     switch (value) {
       case "session.new": if (!data) setLocalMessages([]); navigate({ type: "home" }); break;
@@ -187,6 +248,10 @@ export function createShell(opts = {}) {
       case "app.exit": opts.onExit?.(); break;
     }
   }
+  /**
+   * Open the model picker (real providers/models in data mode, a stub list otherwise).
+   * @returns {void}
+   */
   function openModelDialog() {
     if (data) {
       const options = [];
@@ -197,6 +262,10 @@ export function createShell(opts = {}) {
     }
     openStub("Models", ["opus-4.8", "sonnet-4.6", "haiku-4.5"]).then(o => o && toast.show({ message: `Switched model: ${o.value}`, variant: "success" }));
   }
+  /**
+   * Open the agent picker (real agents in data mode, a stub list otherwise).
+   * @returns {void}
+   */
   function openAgentDialog() {
     if (data) {
       const options = data.store.agents().map(a => ({ label: a.name, value: a.name }));
@@ -206,6 +275,10 @@ export function createShell(opts = {}) {
     }
     openStub("Agents", ["build", "plan", "general"]).then(o => o && toast.show({ message: `Switched agent: ${o.value}`, variant: "success" }));
   }
+  /**
+   * Open the keybindings help dialog.
+   * @returns {void}
+   */
   function openHelp() {
     const lines = [
       "Enter        send the prompt",
@@ -221,10 +294,20 @@ export function createShell(opts = {}) {
     const widget = { draw: r => lines.forEach((l, i) => r.line(i, l, attr(theme, "textMuted"))), handleKey: () => false };
     dialog.open({ title: "Help", width: 48, height: lines.length + 2, widget });
   }
+  /**
+   * Open a small stub single-select dialog of string options.
+   * @param {string} title - The dialog title.
+   * @param {Array} options - The string option values.
+   * @returns {Promise<Object>} Resolves with the selected {label, value} or null.
+   */
   function openStub(title, options) { return Dialogs.select(dialog, { title, theme, now: opts.now, width: 40, options }); }
 
   // --- permission / question modal (data-driven, not user-opened) ----------
   let pwId = null, pw = null;
+  /**
+   * The first pending permission/question for the current session, if any.
+   * @returns {Object|null} {kind:"permission"|"question", req} or null.
+   */
   function pendingRequest() {
     if (!data) return null;
     const sid = currentSid();
@@ -235,6 +318,11 @@ export function createShell(opts = {}) {
     if (q) return { kind: "question", req: q };
     return null;
   }
+  /**
+   * The active permission/question widget for the current pending request,
+   * rebuilt only when the pending request id changes (to keep stable select state).
+   * @returns {Object|null} The prompt widget, or null when nothing is pending.
+   */
   function activePrompt() {
     const p = pendingRequest();
     if (!p) { pwId = null; pw = null; return null; }
@@ -263,6 +351,11 @@ export function createShell(opts = {}) {
   // key flow: a leader keypress arms the chord and the NEXT key resolves an
   // action; everything else (editing, autocomplete Tab, Enter, etc.) passes
   // through unchanged. Maps the resolved action -> a command/dialog.
+  /**
+   * Map a resolved leader-chord action name to a command / dialog / selection op.
+   * @param {string} action - The resolved keybind action name.
+   * @returns {void}
+   */
   function handleAction(action) {
     const run = registry ? runRegistry : runCommand;
     switch (action) {
@@ -294,7 +387,10 @@ export function createShell(opts = {}) {
   // Direct (non-leader) bindings safe to fire globally without the prompt seeing
   // the key (Ctrl-T / F2 / Shift-F2 / Shift-Tab). Tab/Enter/Up/Down stay with the
   // widgets, so they're NOT here.
-  // Copy the most recent assistant message's text to the system clipboard (OSC 52).
+  /**
+   * Copy the most recent assistant message's text to the system clipboard (OSC 52).
+   * @returns {void}
+   */
   function copyLastMessage() {
     const msgs = timelineSource() ?? [];
     let text = "";
@@ -308,8 +404,11 @@ export function createShell(opts = {}) {
     toast.show({ message: "Copied last message", variant: "success" });
   }
 
-  // Compose the prompt in $EDITOR: hand the TTY to the editor (opts.suspend),
-  // read the edited text back, and load it into the prompt.
+  /**
+   * Compose the prompt in $EDITOR: hand the TTY to the editor (opts.suspend),
+   * read the edited text back, and load it into the prompt.
+   * @returns {Promise<void>}
+   */
   async function openEditor() {
     try {
       const { editInEditor } = await import("./editor.js");
@@ -318,8 +417,13 @@ export function createShell(opts = {}) {
     } catch (e) { toast.error?.(e); }
   }
 
-  // Mouse routing: wheel scrolls the timeline; clicks pin/keep follow. A modal or
-  // open dialog owns the screen, so mouse is ignored while one is up.
+  /**
+   * Mouse routing: wheel scrolls the timeline; clicks pin/keep follow. A modal or
+   * open dialog owns the screen, so mouse is ignored while one is up.
+   * @param {string} name - The mouse event name (e.g. "MOUSE_WHEEL_UP").
+   * @param {Object} data - The mouse event metadata.
+   * @returns {boolean} true when the event was consumed.
+   */
   function handleMouse(name, data) {
     if (activePrompt() || dialogs().length > 0) return false;
     if (route().type !== "session") return false;
@@ -329,6 +433,14 @@ export function createShell(opts = {}) {
   }
 
   const GLOBAL_DIRECT = new Set(["variant_cycle", "model_cycle_recent", "model_cycle_recent_reverse", "agent_cycle_reverse"]);
+  /**
+   * Top-level key entry point: handle global Ctrl-C, leader chords, and direct
+   * global bindings; otherwise dispatch through the layer-stack router (prompt /
+   * widgets / dialogs).
+   * @param {string} name - The combined key name.
+   * @param {Object} dt - The raw key metadata.
+   * @returns {boolean} true when the key was consumed.
+   */
   function dispatch(name, dt) {
     // Global escape hatch: Ctrl-C exits even mid-chord / behind a modal.
     if (name === "CTRL_C" && opts.onExit) { keymap.clearLeader?.(); opts.onExit(); return true; }
@@ -345,12 +457,22 @@ export function createShell(opts = {}) {
   }
 
   // --- draw ----------------------------------------------------------------
+  /**
+   * Draw the vertically-centered home screen (logo + hint).
+   * @param {Object} region - The drawing region.
+   * @returns {void}
+   */
   function drawHomeBody(region) {
     const blockH = LOGO_HEIGHT + 2;
     const top = Math.max(0, Math.floor((region.height - blockH) / 2));
     drawLogo(region.sub(0, top, region.width, LOGO_HEIGHT), attr(theme, "primary"), { row: 0, center: true });
     region.line(top + LOGO_HEIGHT + 1, "Type a message and press Enter  •  Ctrl-P for commands", attr(theme, "textMuted"), "center");
   }
+  /**
+   * Draw the bottom status row (route + mode on the left, hotkey hints on the right).
+   * @param {Object} region - The drawing region (one row tall).
+   * @returns {void}
+   */
   function drawStatus(region) {
     const r = route();
     const mode = prompt.mode() === "shell" ? "  · shell" : "";
@@ -359,6 +481,13 @@ export function createShell(opts = {}) {
     const right = "Ctrl-P commands  Ctrl-C exit ";
     region.line(0, fit(label + mode, Math.max(0, region.width - right.length), "left") + right, attr(theme, "textMuted"));
   }
+  /**
+   * Draw the centered permission/question modal box and its widget.
+   * @param {Object} region - The full screen region.
+   * @param {Object} ap - The active prompt widget ({kind, draw}).
+   * @param {Object} ctx - Render context passed to the widget.
+   * @returns {void}
+   */
   function drawPromptModal(region, ap, ctx) {
     const w = Math.min(100, Math.max(24, region.width - 4));
     const h = Math.min(ap.kind === "permission" ? 24 : 12, Math.max(6, region.height - 4));
@@ -368,12 +497,26 @@ export function createShell(opts = {}) {
     });
     ap.draw(inner, ctx);
   }
+  /**
+   * Draw the topmost overlay dialog (centered box + its widget), if any.
+   * @param {Object} region - The full screen region.
+   * @param {Object} ctx - Render context passed to the widget.
+   * @returns {void}
+   */
   function drawDialog(region, ctx) {
     const top = dialog.current();
     if (!top) return;
     const inner = centerBox(region, top.width, top.height, { title: top.title, fill: " ", fillAttr: attr(theme, "text"), attr: attr(theme, "primary") });
     top.widget.draw(inner, { ...ctx, attr: attr(theme, "text"), activeAttr: { inverse: true } });
   }
+  /**
+   * Draw the autocomplete dropdown above the prompt, when visible.
+   * @param {Object} region - The full screen region.
+   * @param {number} promptH - The prompt's height in rows.
+   * @param {number} promptW - The prompt's width in columns.
+   * @param {number} aoffset - The horizontal offset of the prompt (home centering).
+   * @returns {void}
+   */
   function drawAutocomplete(region, promptH, promptW, aoffset) {
     const ac = prompt.autocomplete;
     if (!ac.visible()) return;
@@ -383,6 +526,13 @@ export function createShell(opts = {}) {
     const inner = box(region.sub(aoffset, top, promptW, overlayH), { attr: attr(theme, "primary") });
     ac.draw(inner, { attr: attr(theme, "text"), activeAttr: { inverse: true } });
   }
+  /**
+   * Render the whole shell into a region: timeline/home + sidebar, prompt,
+   * status row, then any autocomplete / modal / dialog overlays and toasts.
+   * @param {Object} region - The full screen region.
+   * @param {Object} ctx - Render context (cursor, etc.).
+   * @returns {void}
+   */
   function draw(region, ctx = {}) {
     const ap = activePrompt();
     const dialogOpen = dialogs().length > 0;
@@ -411,7 +561,10 @@ export function createShell(opts = {}) {
     toast.draw(region);
   }
 
-  // Start the backend (events + bootstrap). No-op in stub mode.
+  /**
+   * Start the backend (events + bootstrap) and sync the current session. No-op in stub mode.
+   * @returns {Promise<void>}
+   */
   async function init() {
     if (!data) return;
     try { await data.start(); await data.bootstrap(); if (route().type === "session") data.syncSession(route().sessionID); }
@@ -421,7 +574,12 @@ export function createShell(opts = {}) {
   return { route, navigate, messages: timelineSource, pushMessage, prompt, timeline, toast, dialog, selection, sidebar, openCommands, openHelp, dispatch, handleMouse, draw, init, theme, data };
 }
 
-// Wire the shell model into a live terminal-kit app. Returns { app, shell }.
+/**
+ * Wire the shell model into a live terminal-kit app: route keys/mouse to the
+ * shell, draw on repaint, and supply repaint/suspend/clipboard side effects.
+ * @param {Object} opts - createShell options plus {terminal, mouse, onExit}.
+ * @returns {Object} {app, shell}.
+ */
 export function mountShell(opts = {}) {
   let app;
   // Mouse on by default (wheel scroll + click + app drag-selection). Native
@@ -444,8 +602,12 @@ export function mountShell(opts = {}) {
   return { app, shell };
 }
 
-// OSC 52 "set clipboard" escape: base64 the text into the terminal's clipboard.
-// Works over SSH / tmux-aware terminals where shelling out to pbcopy/xclip can't.
+/**
+ * OSC 52 "set clipboard" escape: base64 the text into the terminal's clipboard.
+ * Works over SSH / tmux-aware terminals where shelling out to pbcopy/xclip can't.
+ * @param {string} text - The text to place on the clipboard.
+ * @returns {string} The OSC 52 escape sequence.
+ */
 export function osc52(text) {
   const b64 = Buffer.from(String(text ?? ""), "utf8").toString("base64");
   return `\x1b]52;c;${b64}\x07`;

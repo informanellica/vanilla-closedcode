@@ -1,29 +1,68 @@
+/** @module SessionMessageUpdater - Folds session events onto a mutable message list, projecting the event stream into the materialized SessionMessage view. */
 import { produce } from "immer";
 import { SessionEvent } from "./session-event.js";
 import { SessionMessage } from "./session-message.js";
+
+/**
+ * Build an in-memory adapter over a mutable state object holding a `messages` array.
+ * The adapter exposes get/update/append accessors used by {@link update} to apply events.
+ * @param {Object} state - Mutable state with a `messages` array of SessionMessage values.
+ * @returns {Object} An adapter with getCurrent/update/append/finish methods.
+ */
 export function memory(state) {
+  /**
+   * Index of the most recent assistant message that has not yet completed.
+   * @returns {number} The index, or -1 if none.
+   */
   const activeAssistantIndex = () => state.messages.findLastIndex(message => message.type === "assistant" && !message.time.completed);
+  /**
+   * Index of the most recent compaction message.
+   * @returns {number} The index, or -1 if none.
+   */
   const activeCompactionIndex = () => state.messages.findLastIndex(message => message.type === "compaction");
+  /**
+   * Index of the most recent shell message matching the given call id.
+   * @param {string} callID - The shell call identifier.
+   * @returns {number} The index, or -1 if none.
+   */
   const activeShellIndex = callID => state.messages.findLastIndex(message => message.type === "shell" && message.callID === callID);
   return {
+    /**
+     * Get the current in-progress assistant message, if any.
+     * @returns {Object} The assistant message, or undefined.
+     */
     getCurrentAssistant() {
       const index = activeAssistantIndex();
       if (index < 0) return;
       const assistant = state.messages[index];
       return assistant?.type === "assistant" ? assistant : undefined;
     },
+    /**
+     * Get the current compaction message, if any.
+     * @returns {Object} The compaction message, or undefined.
+     */
     getCurrentCompaction() {
       const index = activeCompactionIndex();
       if (index < 0) return;
       const compaction = state.messages[index];
       return compaction?.type === "compaction" ? compaction : undefined;
     },
+    /**
+     * Get the current shell message for the given call id, if any.
+     * @param {string} callID - The shell call identifier.
+     * @returns {Object} The shell message, or undefined.
+     */
     getCurrentShell(callID) {
       const index = activeShellIndex(callID);
       if (index < 0) return;
       const shell = state.messages[index];
       return shell?.type === "shell" ? shell : undefined;
     },
+    /**
+     * Replace the current in-progress assistant message in place.
+     * @param {Object} assistant - The replacement assistant message.
+     * @returns {void}
+     */
     updateAssistant(assistant) {
       const index = activeAssistantIndex();
       if (index < 0) return;
@@ -31,6 +70,11 @@ export function memory(state) {
       if (current?.type !== "assistant") return;
       state.messages[index] = assistant;
     },
+    /**
+     * Replace the current compaction message in place.
+     * @param {Object} compaction - The replacement compaction message.
+     * @returns {void}
+     */
     updateCompaction(compaction) {
       const index = activeCompactionIndex();
       if (index < 0) return;
@@ -38,6 +82,11 @@ export function memory(state) {
       if (current?.type !== "compaction") return;
       state.messages[index] = compaction;
     },
+    /**
+     * Replace the current shell message (matched by its call id) in place.
+     * @param {Object} shell - The replacement shell message, including its callID.
+     * @returns {void}
+     */
     updateShell(shell) {
       const index = activeShellIndex(shell.callID);
       if (index < 0) return;
@@ -45,18 +94,51 @@ export function memory(state) {
       if (current?.type !== "shell") return;
       state.messages[index] = shell;
     },
+    /**
+     * Append a new message to the end of the list.
+     * @param {Object} message - The message to append.
+     * @returns {void}
+     */
     appendMessage(message) {
       state.messages.push(message);
     },
+    /**
+     * Return the underlying state after processing.
+     * @returns {Object} The mutated state object.
+     */
     finish() {
       return state;
     }
   };
 }
+/**
+ * Apply a single session event to the message list via the given adapter, mutating/appending
+ * messages so the projection stays in sync with the event stream.
+ * @param {Object} adapter - An adapter as returned by {@link memory}.
+ * @param {Object} event - A decoded SessionEvent.All value to fold in.
+ * @returns {Object} The result of `adapter.finish()` (the updated state).
+ */
 export function update(adapter, event) {
   const currentAssistant = adapter.getCurrentAssistant();
+  /**
+   * Find the most recent tool content block in an assistant message, optionally matching a call id.
+   * @param {Object} assistant - The assistant message to search.
+   * @param {string} callID - Optional call id to match; when omitted, returns the last tool block.
+   * @returns {Object} The matching tool content block, or undefined.
+   */
   const latestTool = (assistant, callID) => assistant?.content.findLast(item => item.type === "tool" && (callID === undefined || item.id === callID));
+  /**
+   * Find the most recent text content block in an assistant message.
+   * @param {Object} assistant - The assistant message to search.
+   * @returns {Object} The matching text content block, or undefined.
+   */
   const latestText = assistant => assistant?.content.findLast(item => item.type === "text");
+  /**
+   * Find the most recent reasoning content block matching a reasoning id.
+   * @param {Object} assistant - The assistant message to search.
+   * @param {string} reasoningID - The reasoning id to match.
+   * @returns {Object} The matching reasoning content block, or undefined.
+   */
   const latestReasoning = (assistant, reasoningID) => assistant?.content.findLast(item => item.type === "reasoning" && item.id === reasoningID);
   SessionEvent.All.match(event, {
     "session.next.agent.switched": event => {

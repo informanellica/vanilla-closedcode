@@ -1,3 +1,4 @@
+/** @file Ripgrep service: locates (or optionally downloads) the `rg` binary and exposes file-listing, content search, and directory-tree streaming as Effects. */
 import path from "path";
 import { AppFileSystem } from "core/filesystem";
 import { Cause, Context, Effect, Fiber, Layer, Queue, Schema, Stream } from "effect";
@@ -110,12 +111,22 @@ const Summary = Schema.Struct({
 });
 const Result = Schema.Union([Begin, Match, End, Summary]);
 const decodeResult = Schema.decodeUnknownEffect(Schema.fromJsonString(Result));
+/** Effect service tag for the ripgrep wrapper. */
 export class Service extends Context.Service()("@closedcode/Ripgrep") {}
+/**
+ * Build a sanitized environment for spawning ripgrep, dropping RIPGREP_CONFIG_PATH.
+ * @returns {Object} Environment variable map.
+ */
 function env() {
   const env = sanitizedProcessEnv();
   delete env.RIPGREP_CONFIG_PATH;
   return env;
 }
+/**
+ * Normalize an AbortSignal's reason into an Error (defaulting to an AbortError).
+ * @param {AbortSignal} signal - The abort signal whose reason to convert.
+ * @returns {Error} The abort error.
+ */
 function aborted(signal) {
   const err = signal?.reason;
   if (err instanceof Error) return err;
@@ -123,6 +134,11 @@ function aborted(signal) {
   out.name = "AbortError";
   return out;
 }
+/**
+ * Produce an Effect that fails when the given signal aborts (never resolves otherwise).
+ * @param {AbortSignal} signal - The abort signal to watch (may be undefined).
+ * @returns {Effect} Effect that fails with the abort error.
+ */
 function waitForAbort(signal) {
   if (!signal) return Effect.never;
   if (signal.aborted) return Effect.fail(aborted(signal));
@@ -134,14 +150,30 @@ function waitForAbort(signal) {
     return Effect.sync(() => signal.removeEventListener("abort", onabort));
   });
 }
+/**
+ * Build a named RipgrepError from stderr text and an exit code.
+ * @param {string} stderr - The captured stderr output.
+ * @param {number} code - The process exit code.
+ * @returns {Error} The constructed error.
+ */
 function error(stderr, code) {
   const err = new Error(stderr.trim() || `ripgrep failed with code ${code}`);
   err.name = "RipgrepError";
   return err;
 }
+/**
+ * Normalize a ripgrep-reported path, stripping a leading `./` (or `.\`) prefix.
+ * @param {string} file - The path as emitted by ripgrep.
+ * @returns {string} The cleaned, normalized path.
+ */
 function clean(file) {
   return path.normalize(file.replace(/^\.[\\/]/, ""));
 }
+/**
+ * Return a copy of a match-data record with its path text cleaned.
+ * @param {Object} data - A ripgrep match `data` object containing a `path.text`.
+ * @returns {Object} The record with normalized path text.
+ */
 function row(data) {
   return {
     ...data,
@@ -151,14 +183,30 @@ function row(data) {
     }
   };
 }
+/**
+ * Decode one line of ripgrep `--json` output into a Result, wrapping decode failures.
+ * @param {string} line - A single JSON line from ripgrep stdout.
+ * @returns {Effect} Effect yielding the decoded Result or failing with an Error.
+ */
 function parse(line) {
   return decodeResult(line).pipe(Effect.mapError(cause => new Error("invalid ripgrep output", {
     cause
   })));
 }
+/**
+ * Fail a stream queue with the given error.
+ * @param {Object} queue - The Effect Queue backing a callback stream.
+ * @param {*} err - The error to fail with.
+ * @returns {void}
+ */
 function fail(queue, err) {
   Queue.failCauseUnsafe(queue, Cause.fail(err));
 }
+/**
+ * Build ripgrep CLI args for listing files.
+ * @param {Object} input - Listing options (follow, hidden, maxDepth, glob).
+ * @returns {Array} Array of argument strings.
+ */
 function filesArgs(input) {
   const args = ["--no-config", "--files", "--glob=!.git/*"];
   if (input.follow) args.push("--follow");
@@ -171,6 +219,11 @@ function filesArgs(input) {
   args.push(".");
   return args;
 }
+/**
+ * Build ripgrep CLI args for a content search (JSON output).
+ * @param {Object} input - Search options (follow, glob, limit, pattern, file).
+ * @returns {Array} Array of argument strings.
+ */
 function searchArgs(input) {
   const args = ["--no-config", "--json", "--hidden", "--glob=!.git/*", "--no-messages"];
   if (input.follow) args.push("--follow");
@@ -181,13 +234,32 @@ function searchArgs(input) {
   args.push("--", input.pattern, ...(input.file ?? ["."]));
   return args;
 }
+/**
+ * Race an effect against an optional abort signal, failing early if it aborts.
+ * @param {Effect} effect - The effect to run.
+ * @param {AbortSignal} signal - The abort signal (may be undefined).
+ * @returns {Effect} The (possibly raced) effect.
+ */
 function raceAbort(effect, signal) {
   return signal ? effect.pipe(Effect.raceFirst(waitForAbort(signal))) : effect;
 }
+/**
+ * Layer providing the Ripgrep service. Resolves the `rg` binary (PATH, cached
+ * download dir, or optional GitHub download when tool-download is enabled) and
+ * exposes `files`, `tree`, and `search`.
+ * @type {Layer}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const http = HttpClient.filterStatusOk(yield* HttpClient.HttpClient);
   const spawner = yield* ChildProcessSpawner;
+  /**
+   * Spawn a process and collect its full stdout, stderr, and exit code.
+   * @param {string} command - Executable to run.
+   * @param {Array} args - Argument list.
+   * @param {Object} opts - Spawn options (e.g. cwd).
+   * @returns {Effect} Effect yielding {stdout, stderr, code}.
+   */
   const run = Effect.fnUntraced(function* (command, args, opts) {
     const handle = yield* spawner.spawn(ChildProcess.make(command, args, {
       cwd: opts?.cwd,
@@ -203,6 +275,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       code
     };
   }, Effect.scoped);
+  /**
+   * Extract the downloaded ripgrep archive (zip via PowerShell, tar.gz via tar) and copy the binary to target.
+   * @param {string} archive - Path to the downloaded archive file.
+   * @param {Object} config - Platform config {platform, extension}.
+   * @param {string} target - Destination path for the extracted `rg` binary.
+   * @returns {Effect} Effect that completes once the binary is in place.
+   */
   const extract = Effect.fnUntraced(function* (archive, config, target) {
     const dir = yield* fs.makeTempDirectoryScoped({
       directory: Global.Path.bin,
@@ -229,6 +308,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     if (process.platform === "win32") return;
     yield* fs.chmod(target, 0o755);
   }, Effect.scoped);
+  /**
+   * Cached resolution of the ripgrep binary path: prefers a system `rg` on PATH,
+   * then a previously downloaded copy, otherwise downloads it (if enabled).
+   * @type {Effect}
+   */
   const filepath = yield* Effect.cached(Effect.gen(function* () {
     const system = yield* Effect.sync(() => which(process.platform === "win32" ? "rg.exe" : "rg"));
     if (system && (yield* fs.isFile(system).pipe(Effect.orDie))) return system;
@@ -260,6 +344,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).pipe(Effect.ignore);
     return target;
   }));
+  /**
+   * Ensure the working directory exists, failing with an ENOENT-style error otherwise.
+   * @param {string} cwd - Directory expected to exist.
+   * @returns {Effect} Effect that completes if the directory exists, else fails.
+   */
   const check = Effect.fnUntraced(function* (cwd) {
     if (yield* fs.isDir(cwd).pipe(Effect.orDie)) return;
     return yield* Effect.fail(Object.assign(new Error(`No such file or directory: '${cwd}'`), {
@@ -268,6 +357,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       path: cwd
     }));
   });
+  /**
+   * Build a ChildProcess spec for the resolved ripgrep binary.
+   * @param {string} cwd - Working directory for the process.
+   * @param {Array} args - Ripgrep argument list.
+   * @returns {Effect} Effect yielding the ChildProcess spec.
+   */
   const command = Effect.fnUntraced(function* (cwd, args) {
     const binary = yield* filepath;
     return ChildProcess.make(binary, args, {
@@ -277,6 +372,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       stdin: "ignore"
     });
   });
+  /**
+   * Stream the list of files under a directory as cleaned path strings, honoring an abort signal.
+   * @param {Object} input - {cwd, follow, hidden, maxDepth, glob, signal}.
+   * @returns {Stream} Stream of file path strings.
+   */
   const files = input => Stream.callback(queue => Effect.gen(function* () {
     yield* Effect.forkScoped(Effect.gen(function* () {
       yield* check(input.cwd);
@@ -294,6 +394,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       fail(queue, err);
     }))));
   }));
+  /**
+   * Run a content search and collect match rows, reporting partiality on exit code 2.
+   * @param {Object} input - {cwd, pattern, file, glob, follow, limit, signal}.
+   * @returns {Effect} Effect yielding {items, partial}.
+   */
   const search = Effect.fn("Ripgrep.search")(function* (input) {
     yield* check(input.cwd);
     const program = Effect.scoped(Effect.gen(function* () {
@@ -311,12 +416,23 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }));
     return yield* raceAbort(program, input.signal);
   });
+  /**
+   * Build a breadth-first directory-tree listing (directories only) up to an optional limit.
+   * @param {Object} input - {cwd, signal, limit}.
+   * @returns {Effect} Effect yielding a newline-joined tree string (with a truncation note when limited).
+   */
   const tree = Effect.fn("Ripgrep.tree")(function* (input) {
     log.info("tree", input);
     const list = Array.from(yield* files({
       cwd: input.cwd,
       signal: input.signal
     }).pipe(Stream.runCollect));
+    /**
+     * Get or create a named child node under a tree node.
+     * @param {Object} node - Parent node with a `children` Map.
+     * @param {string} name - Child directory name.
+     * @returns {Object} The existing or newly created child node.
+     */
     function child(node, name) {
       const item = node.children.get(name);
       if (item) return item;
@@ -327,6 +443,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       node.children.set(name, next);
       return next;
     }
+    /**
+     * Count all descendant nodes of a tree node (recursive).
+     * @param {Object} node - The node whose descendants to count.
+     * @returns {number} Total descendant count.
+     */
     function count(node) {
       return Array.from(node.children.values()).reduce((sum, child) => sum + 1 + count(child), 0);
     }

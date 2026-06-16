@@ -1,4 +1,4 @@
-// In-memory model/agent/variant selection for the vanilla TUI. This is the
+// @file In-memory model/agent/variant selection for the vanilla TUI. This is the
 // immediate-mode, disk-free replacement for the slices of context/local.js that
 // the shell actually uses: the active agent, the active model (providerID +
 // modelID), the model's reasoning/effort variant, plus a favorites list.
@@ -22,30 +22,52 @@
 // sees up-to-date provider/agent lists. createSelection itself holds no signals
 // — its mutable state is plain fields, and the shell repaints on key events.
 
-// Stable key for a {providerID, modelID} pair (favorites + variant maps).
+/**
+ * Stable key for a {providerID, modelID} pair (favorites + variant maps).
+ * @param {Object} m - A model reference {providerID, modelID}.
+ * @returns {string} The "providerID/modelID" key.
+ */
 function modelKey(m) {
   return `${m.providerID}/${m.modelID}`;
 }
 
-// The non-subagent, non-hidden agents — the ones a user can pick / cycle.
+/**
+ * The non-subagent, non-hidden agents — the ones a user can pick / cycle.
+ * @param {Object} store - The data layer store.
+ * @returns {Array} The visible agent objects.
+ */
 function visibleAgents(store) {
   return (store.agents() ?? []).filter(a => a.mode !== "subagent" && !a.hidden);
 }
 
-// Find a provider by id in the live providers() list.
+/**
+ * Find a provider by id in the live providers() list.
+ * @param {Object} store - The data layer store.
+ * @param {string} providerID - The provider id to look up.
+ * @returns {Object|undefined} The provider, or undefined if not found.
+ */
 function findProvider(store, providerID) {
   return (store.providers() ?? []).find(p => p.id === providerID);
 }
 
-// Is this {providerID, modelID} a real model in the current provider list?
+/**
+ * Is this {providerID, modelID} a real model in the current provider list?
+ * @param {Object} store - The data layer store.
+ * @param {Object} m - A model reference {providerID, modelID}.
+ * @returns {boolean} true if the model exists in the current providers.
+ */
 function isModelValid(store, m) {
   if (!m) return false;
   const provider = findProvider(store, m.providerID);
   return !!(provider && provider.models && provider.models[m.modelID]);
 }
 
-// The fallback model: the first provider's first model. Used when nothing has
-// been explicitly selected (mirrors local.js's fallbackModel tail).
+/**
+ * The fallback model: the first provider's first model. Used when nothing has
+ * been explicitly selected (mirrors local.js's fallbackModel tail).
+ * @param {Object} store - The data layer store.
+ * @returns {Object|undefined} A {providerID, modelID}, or undefined if no models.
+ */
 function firstModel(store) {
   for (const p of store.providers() ?? []) {
     const ids = Object.keys(p.models ?? {});
@@ -54,7 +76,11 @@ function firstModel(store) {
   return undefined;
 }
 
-// Flat list of every selectable model across all providers, in provider order.
+/**
+ * Flat list of every selectable model across all providers, in provider order.
+ * @param {Object} store - The data layer store.
+ * @returns {Array} {providerID, modelID, name} entries.
+ */
 function allModels(store) {
   const out = [];
   for (const p of store.providers() ?? []) {
@@ -65,6 +91,18 @@ function allModels(store) {
   return out;
 }
 
+/**
+ * Create the in-memory model/agent/variant selection for the vanilla shell.
+ * Holds only the user's explicit overrides; accessors fall back to live store
+ * data so a fresh selection works before any set(). Optionally persists via an
+ * injected synchronous storage adapter.
+ * @param {Object} opts - Options.
+ * @param {Object} opts.data - The data layer (provides .store).
+ * @param {Object} opts.toast - Optional toaster {show({message, variant})} for invalid picks.
+ * @param {string} opts.agent - Final fallback agent name when none is visible.
+ * @param {Object} opts.storage - Optional adapter {load(): snapshot|null, save(snapshot): void}.
+ * @returns {Object} The selection API {agent, model, variant}.
+ */
 export function createSelection(opts = {}) {
   const data = opts.data;
   const store = data.store;
@@ -77,11 +115,19 @@ export function createSelection(opts = {}) {
   let variants = new Map(); // modelKey -> chosen variant string
   let favorites = []; // [{ providerID, modelID }] in insertion order
 
+  /**
+   * Show a non-fatal warning toast (swallowing any toaster error).
+   * @param {string} message - The warning text.
+   * @returns {void}
+   */
   const warn = message => { try { toast?.show?.({ message, variant: "warning" }); } catch { /* ignore */ } };
 
-  // Build the plain, round-trippable snapshot from the *overrides* (what the
-  // user explicitly chose — never the resolved fallbacks), and persist it. No-op
-  // when no storage adapter is injected. Mutators call this after any change.
+  /**
+   * Build the plain, round-trippable snapshot from the *overrides* (what the
+   * user explicitly chose — never the resolved fallbacks), and persist it. No-op
+   * when no storage adapter is injected. Mutators call this after any change.
+   * @returns {void}
+   */
   const persist = () => {
     if (!storage?.save) return;
     const variantsObj = {};
@@ -98,23 +144,37 @@ export function createSelection(opts = {}) {
 
   // ---- agent --------------------------------------------------------------
   const agent = {
-    // The selectable agents (visible, non-subagent).
+    /**
+     * The selectable agents (visible, non-subagent).
+     * @returns {Array} The visible agent objects.
+     */
     list() {
       return visibleAgents(store);
     },
-    // Active agent name. Falls back to the first visible agent, then opts.agent.
+    /**
+     * Active agent name. Falls back to the first visible agent, then opts.agent.
+     * @returns {string|undefined} The current agent name.
+     */
     current() {
       const list = visibleAgents(store);
       const found = list.find(a => a.name === agentOverride);
       return (found ?? list[0])?.name ?? opts.agent;
     },
-    // Select by name; no-op (warns) if the name is not a visible agent.
+    /**
+     * Select by name; no-op (warns) if the name is not a visible agent.
+     * @param {string} name - The agent name to select.
+     * @returns {void}
+     */
     set(name) {
       if (!visibleAgents(store).some(a => a.name === name)) { warn(`Agent not found: ${name}`); return; }
       agentOverride = name;
       persist();
     },
-    // Cycle to the next/prev agent, wrapping at both ends. dir defaults to +1.
+    /**
+     * Cycle to the next/prev agent, wrapping at both ends.
+     * @param {number} dir - Direction (+1 next, -1 previous); defaults to +1.
+     * @returns {void}
+     */
     cycle(dir = 1) {
       const list = visibleAgents(store);
       if (!list.length) return;
@@ -130,13 +190,19 @@ export function createSelection(opts = {}) {
 
   // ---- model --------------------------------------------------------------
   const model = {
-    // Active model {providerID, modelID} or undefined when no providers.
-    // Falls back to the first provider's first model when nothing is set.
+    /**
+     * Active model {providerID, modelID} or undefined when no providers. Falls
+     * back to the first provider's first model when nothing is set.
+     * @returns {Object|undefined} The current model reference (a copy).
+     */
     current() {
       if (modelOverride && isModelValid(store, modelOverride)) return { ...modelOverride };
       return firstModel(store);
     },
-    // Display-friendly { provider, model } names for the meta line.
+    /**
+     * Display-friendly { provider, model } names for the meta line.
+     * @returns {Object} {provider, model} display strings.
+     */
     parsed() {
       const m = this.current();
       if (!m) return { provider: "Connect a provider", model: "No model selected" };
@@ -144,17 +210,28 @@ export function createSelection(opts = {}) {
       const info = provider?.models?.[m.modelID];
       return { provider: provider?.name ?? m.providerID, model: info?.name ?? m.modelID };
     },
-    // Every selectable model across providers: {providerID, modelID, name}[].
+    /**
+     * Every selectable model across providers.
+     * @returns {Array} {providerID, modelID, name} entries.
+     */
     list() {
       return allModels(store);
     },
-    // Select a model; no-op (warns) if it is not a valid {providerID, modelID}.
+    /**
+     * Select a model; no-op (warns) if it is not a valid {providerID, modelID}.
+     * @param {Object} m - The model reference {providerID, modelID}.
+     * @returns {void}
+     */
     set(m) {
       if (!isModelValid(store, m)) { warn(`Model ${m?.providerID}/${m?.modelID} is not valid`); return; }
       modelOverride = { providerID: m.providerID, modelID: m.modelID };
       persist();
     },
-    // Cycle through the flat model list, wrapping. dir defaults to +1.
+    /**
+     * Cycle through the flat model list, wrapping.
+     * @param {number} dir - Direction (+1 next, -1 previous); defaults to +1.
+     * @returns {void}
+     */
     cycle(dir = 1) {
       const list = allModels(store);
       if (!list.length) return;
@@ -168,7 +245,11 @@ export function createSelection(opts = {}) {
       persist();
     },
     favorite: {
-      // Toggle a model in/out of the favorites list (validated).
+      /**
+       * Toggle a model in/out of the favorites list (validated).
+       * @param {Object} m - The model reference {providerID, modelID}.
+       * @returns {void}
+       */
       toggle(m) {
         if (!isModelValid(store, m)) { warn(`Model ${m?.providerID}/${m?.modelID} is not valid`); return; }
         const key = modelKey(m);
@@ -179,7 +260,10 @@ export function createSelection(opts = {}) {
         }
         persist();
       },
-      // Current favorites that are still valid, as {providerID, modelID}[].
+      /**
+       * Current favorites that are still valid.
+       * @returns {Array} {providerID, modelID} entries (copies).
+       */
       list() {
         return favorites.filter(f => isModelValid(store, f)).map(f => ({ ...f }));
       },
@@ -190,15 +274,21 @@ export function createSelection(opts = {}) {
   // Variants are per-model (keyed by the current model). list() comes straight
   // from the provider's model.variants object.
   const variant = {
-    // Variant names available for the current model (provider-declared).
+    /**
+     * Variant names available for the current model (provider-declared).
+     * @returns {Array} The variant name strings (empty when none).
+     */
     list() {
       const m = model.current();
       if (!m) return [];
       const info = findProvider(store, m.providerID)?.models?.[m.modelID];
       return info?.variants ? Object.keys(info.variants) : [];
     },
-    // Chosen variant for the current model, or undefined. A stored value that is
-    // no longer in the model's variant list reads back as undefined.
+    /**
+     * Chosen variant for the current model, or undefined. A stored value that is
+     * no longer in the model's variant list reads back as undefined.
+     * @returns {string|undefined} The current variant name.
+     */
     current() {
       const m = model.current();
       if (!m) return undefined;
@@ -206,7 +296,11 @@ export function createSelection(opts = {}) {
       if (!v) return undefined;
       return this.list().includes(v) ? v : undefined;
     },
-    // Set the variant for the current model (pass undefined/falsey to clear).
+    /**
+     * Set the variant for the current model (pass undefined/falsey to clear).
+     * @param {string} v - The variant name, or falsey to clear.
+     * @returns {void}
+     */
     set(v) {
       const m = model.current();
       if (!m) return;
@@ -215,7 +309,10 @@ export function createSelection(opts = {}) {
       else variants.set(key, v);
       persist();
     },
-    // Cycle: undefined -> first -> ... -> last -> undefined. No-op with 0 variants.
+    /**
+     * Cycle: undefined -> first -> ... -> last -> undefined. No-op with 0 variants.
+     * @returns {void}
+     */
     cycle() {
       const list = this.list();
       if (!list.length) return;

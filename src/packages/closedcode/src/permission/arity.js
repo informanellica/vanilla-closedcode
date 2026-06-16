@@ -1,3 +1,14 @@
+/** @file Maps a tokenized shell command to its "human-understandable command" prefix using a dictionary of command-prefix arities. */
+
+/**
+ * Extract the meaningful command prefix from a tokenized shell command.
+ *
+ * Looks for the longest leading token sequence that matches an entry in the
+ * ARITY dictionary and returns that many leading tokens. Falls back to the
+ * first token when no dictionary entry matches.
+ * @param {Array} tokens - The shell command split into tokens.
+ * @returns {Array} The leading tokens that identify the command.
+ */
 export function prefix(tokens) {
   for (let len = tokens.length; len > 0; len--) {
     const prefix = tokens.slice(0, len).join(" ");
@@ -21,6 +32,11 @@ This dictionary is used to identify the "human-understandable command" from an i
 * `npm run dev` → `npm run dev` (because `npm run` has arity 3)
 * `python script.py` → `python script.py` (default: whole input, not in dictionary)### **Now generate the dictionary.**
 */
+/**
+ * Dictionary mapping a command-prefix string to the number of leading tokens
+ * that define the command. Longest matching prefix wins; flags are never
+ * counted as tokens. See the generation prompt above for the exact rules.
+ */
 const ARITY = {
   cat: 1,
   // cat file.txt

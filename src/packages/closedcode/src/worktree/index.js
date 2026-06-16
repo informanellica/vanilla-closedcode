@@ -1,3 +1,4 @@
+/** @module Worktree - Effect service for managing per-project git worktrees: create, boot, remove and reset isolated working directories. */
 import z from "zod";
 import { NamedError } from "core/util/error";
 import { Global } from "core/global";
@@ -22,6 +23,10 @@ import { withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "worktree"
 });
+/**
+ * Bus event definitions emitted as a worktree boots: `Ready` once it is usable, `Failed` on error.
+ * @type {Object}
+ */
 export const Event = {
   Ready: BusEvent.define("worktree.ready", Schema.Struct({
     name: Schema.String,
@@ -31,6 +36,8 @@ export const Event = {
     message: Schema.String
   }))
 };
+
+/** Schema describing a created worktree: its name, branch and on-disk directory. @type {Object} */
 export const Info = Schema.Struct({
   name: Schema.String,
   branch: Schema.String,
@@ -40,6 +47,7 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: effectZod(s)
 })));
+/** Schema for create() input: optional desired name and optional extra start command. @type {Object} */
 export const CreateInput = Schema.Struct({
   name: Schema.optional(Schema.String),
   startCommand: Schema.optional(Schema.String.annotate({
@@ -50,6 +58,7 @@ export const CreateInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: effectZod(s)
 })));
+/** Schema for remove() input: the worktree directory to remove. @type {Object} */
 export const RemoveInput = Schema.Struct({
   directory: Schema.String
 }).annotate({
@@ -57,6 +66,7 @@ export const RemoveInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: effectZod(s)
 })));
+/** Schema for reset() input: the worktree directory to reset back to the default branch. @type {Object} */
 export const ResetInput = Schema.Struct({
   directory: Schema.String
 }).annotate({
@@ -64,27 +74,44 @@ export const ResetInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: effectZod(s)
 })));
+/** Error thrown when worktree operations are attempted on a non-git project. @type {Object} */
 export const NotGitError = NamedError.create("WorktreeNotGitError", z.object({
   message: z.string()
 }));
+/** Error thrown when a unique worktree name/branch could not be generated. @type {Object} */
 export const NameGenerationFailedError = NamedError.create("WorktreeNameGenerationFailedError", z.object({
   message: z.string()
 }));
+/** Error thrown when creating the git worktree fails. @type {Object} */
 export const CreateFailedError = NamedError.create("WorktreeCreateFailedError", z.object({
   message: z.string()
 }));
+/** Error thrown when a post-create start command fails. @type {Object} */
 export const StartCommandFailedError = NamedError.create("WorktreeStartCommandFailedError", z.object({
   message: z.string()
 }));
+/** Error thrown when removing the worktree (or its directory/branch) fails. @type {Object} */
 export const RemoveFailedError = NamedError.create("WorktreeRemoveFailedError", z.object({
   message: z.string()
 }));
+/** Error thrown when resetting the worktree back to the default branch fails. @type {Object} */
 export const ResetFailedError = NamedError.create("WorktreeResetFailedError", z.object({
   message: z.string()
 }));
+
+/**
+ * Normalize an arbitrary string into a lowercase, hyphen-separated slug.
+ * @param {string} input - The raw string to slugify.
+ * @returns {string} The slugified value.
+ */
 function slugify(input) {
   return input.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+/, "").replace(/-+$/, "");
 }
+/**
+ * Parse `git clean` output chunks and extract the paths it warned it failed to remove.
+ * @param {...string} chunks - One or more stderr/stdout text blocks from git clean.
+ * @returns {Array} The list of file paths that git reported it could not remove.
+ */
 function failedRemoves(...chunks) {
   return chunks.filter(Boolean).flatMap(chunk => chunk.split("\n").map(line => line.trim()).flatMap(line => {
     const match = line.match(/^warning:\s+failed to remove\s+(.+):\s+/i);
@@ -99,7 +126,14 @@ function failedRemoves(...chunks) {
 // Effect service
 // ---------------------------------------------------------------------------
 
+/** Effect Context tag for the Worktree service. */
 export class Service extends Context.Service()("@closedcode/Worktree") {}
+
+/**
+ * Layer that builds the Worktree service, wiring filesystem, path, process spawner, git and project
+ * dependencies and exposing makeWorktreeInfo/createFromInfo/create/remove/reset operations.
+ * @type {Object}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const scope = yield* Scope.Scope;
   const fs = yield* AppFileSystem.Service;
@@ -108,6 +142,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const gitSvc = yield* Git.Service;
   const project = yield* Project.Service;
   const store = yield* InstanceStore.Service;
+  /**
+   * Run a git command, capturing stdout/stderr/exit code; never fails (spawn errors become a code-1 result).
+   * @param {Array} args - The git CLI arguments.
+   * @param {Object} opts - Spawn options; `cwd` sets the working directory.
+   * @returns {Object} A result `{code, text, stderr}`.
+   */
   const git = Effect.fnUntraced(function* (args, opts) {
     const handle = yield* spawner.spawn(ChildProcess.make("git", args, {
       cwd: opts?.cwd,
@@ -129,6 +169,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     stderr: e instanceof Error ? e.message : String(e)
   })));
   const MAX_NAME_ATTEMPTS = 26;
+  /**
+   * Find an unused worktree name/branch/directory under `root`, retrying with random slug suffixes.
+   * @param {string} root - The parent directory under which worktrees live.
+   * @param {string} base - Optional base name; when given, the first attempt uses it verbatim.
+   * @returns {Object} An info `{name, branch, directory}` that does not yet exist.
+   */
   const candidate = Effect.fn("Worktree.candidate")(function* (root, base) {
     const ctx = yield* InstanceState.context;
     for (const attempt of Array.from({
@@ -153,6 +199,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       message: "Failed to generate a unique worktree name"
     });
   });
+  /**
+   * Compute info for a new worktree (validating the project is git and ensuring the root dir exists).
+   * @param {string} name - Optional desired display name to seed the slug.
+   * @returns {Object} An info `{name, branch, directory}` for an available worktree.
+   */
   const makeWorktreeInfo = Effect.fn("Worktree.makeWorktreeInfo")(function* (name) {
     const ctx = yield* InstanceState.context;
     if (ctx.project.vcs !== "git") {
@@ -167,6 +218,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     const base = name ? slugify(name) : "";
     return yield* candidate(root, base || undefined);
   });
+  /**
+   * Create the git worktree (no checkout) for the given info and register it as a project sandbox.
+   * @param {Object} info - The worktree info `{name, branch, directory}`.
+   * @returns {void}
+   */
   const setup = Effect.fnUntraced(function* (info) {
     const ctx = yield* InstanceState.context;
     const created = yield* git(["worktree", "add", "--no-checkout", "-b", info.branch, info.directory], {
@@ -179,6 +235,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     yield* project.addSandbox(ctx.project.id, info.directory).pipe(Effect.catch(() => Effect.void));
   });
+  /**
+   * Populate the worktree (hard reset), bootstrap its instance store, emit Ready/Failed bus events,
+   * and run any start scripts. Failures are reported via the bus rather than thrown.
+   * @param {Object} info - The worktree info `{name, branch, directory}`.
+   * @param {string} startCommand - Optional extra startup command to run after boot.
+   * @returns {void}
+   */
   const boot = Effect.fnUntraced(function* (info, startCommand) {
     const ctx = yield* InstanceState.context;
     const workspaceID = yield* InstanceState.workspaceID;
@@ -245,10 +308,21 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       extra
     });
   });
+  /**
+   * Create and boot a worktree synchronously from pre-computed info (setup then boot, awaited inline).
+   * @param {Object} info - The worktree info `{name, branch, directory}`.
+   * @param {string} startCommand - Optional extra startup command.
+   * @returns {void}
+   */
   const createFromInfo = Effect.fn("Worktree.createFromInfo")(function* (info, startCommand) {
     yield* setup(info);
     yield* boot(info, startCommand);
   });
+  /**
+   * Create a new worktree from input, set it up, then boot it in the background and return its info immediately.
+   * @param {Object} input - Create input `{name, startCommand}` (both optional).
+   * @returns {Object} The created worktree info `{name, branch, directory}`.
+   */
   const create = Effect.fn("Worktree.create")(function* (input) {
     const info = yield* makeWorktreeInfo(input?.name);
     yield* setup(info);
@@ -257,12 +331,23 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }))), Effect.forkIn(scope));
     return info;
   });
+  /**
+   * Resolve a path to its canonical form for comparison: absolute, real (symlinks resolved), normalized,
+   * and lowercased on Windows.
+   * @param {string} input - The path to canonicalize.
+   * @returns {string} The canonical path string.
+   */
   const canonical = Effect.fnUntraced(function* (input) {
     const abs = pathSvc.resolve(input);
     const real = yield* fs.realPath(abs).pipe(Effect.catch(() => Effect.succeed(abs)));
     const normalized = pathSvc.normalize(real);
     return process.platform === "win32" ? normalized.toLowerCase() : normalized;
   });
+  /**
+   * Parse the output of `git worktree list --porcelain` into entries with path and optional branch.
+   * @param {string} text - The porcelain worktree list output.
+   * @returns {Array} An array of `{path, branch}` entries.
+   */
   function parseWorktreeList(text) {
     return text.split("\n").map(line => line.trim()).reduce((acc, line) => {
       if (!line) return acc;
@@ -280,6 +365,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return acc;
     }, []);
   }
+  /**
+   * Find the parsed worktree entry whose canonicalized path matches the given canonical directory.
+   * @param {Array} entries - Parsed worktree entries from {@link parseWorktreeList}.
+   * @param {string} directory - The canonical directory to match against.
+   * @returns {Object} The matching entry, or undefined.
+   */
   const locateWorktree = Effect.fnUntraced(function* (entries, directory) {
     for (const item of entries) {
       if (!item.path) continue;
@@ -288,11 +379,21 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return undefined;
   });
+  /**
+   * Stop the git fsmonitor daemon for a directory if it exists, so the directory can be removed cleanly.
+   * @param {string} target - The worktree directory.
+   * @returns {Object} An Effect that completes once the daemon is stopped (or skipped).
+   */
   function stopFsmonitor(target) {
     return fs.exists(target).pipe(Effect.orDie, Effect.flatMap(exists => exists ? git(["fsmonitor--daemon", "stop"], {
       cwd: target
     }) : Effect.void));
   }
+  /**
+   * Recursively delete a directory with retries, raising RemoveFailedError on failure.
+   * @param {string} target - The directory to remove.
+   * @returns {Object} An Effect that completes once the directory is removed.
+   */
   function cleanDirectory(target) {
     return Effect.promise(() => import("fs/promises").then(fsp => fsp.rm(target, {
       recursive: true,
@@ -306,6 +407,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }));
   }
+  /**
+   * Remove a worktree: stop its fsmonitor, run `git worktree remove --force`, delete its directory and
+   * its branch. Falls back to direct directory deletion if git no longer tracks it.
+   * @param {Object} input - Remove input `{directory}`.
+   * @returns {boolean} True once removal succeeds.
+   */
   const remove = Effect.fn("Worktree.remove")(function* (input) {
     const ctx = yield* InstanceState.context;
     if (ctx.project.vcs !== "git") {
@@ -366,11 +473,25 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return true;
   });
+  /**
+   * Run a git command and throw a caller-supplied error if it exits non-zero.
+   * @param {Array} args - The git CLI arguments.
+   * @param {Object} opts - Spawn options (e.g. `cwd`).
+   * @param {Function} error - Factory called with the failing result to build the error to throw.
+   * @returns {Object} The successful git result `{code, text, stderr}`.
+   */
   const gitExpect = Effect.fnUntraced(function* (args, opts, error) {
     const result = yield* git(args, opts);
     if (result.code !== 0) throw error(result);
     return result;
   });
+  /**
+   * Run an arbitrary shell command in a directory (cmd on Windows, bash -lc elsewhere), draining stdout
+   * and capturing stderr; never fails (errors become a code-1 result).
+   * @param {string} directory - The working directory.
+   * @param {string} cmd - The shell command to run.
+   * @returns {Object} A result `{code, stderr}`.
+   */
   const runStartCommand = Effect.fnUntraced(function* (directory, cmd) {
     const [shell, args] = process.platform === "win32" ? ["cmd", ["/c", cmd]] : ["bash", ["-lc", cmd]];
     const handle = yield* spawner.spawn(ChildProcess.make(shell, args, {
@@ -391,6 +512,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     code: 1,
     stderr: ""
   })));
+  /**
+   * Run a single start script (trimmed); logs and returns false on non-zero exit, true otherwise (including empty).
+   * @param {string} directory - The working directory.
+   * @param {string} cmd - The command to run; blank commands are treated as success.
+   * @param {string} kind - A label (e.g. "project" or "worktree") used in error logs.
+   * @returns {boolean} True on success, false on failure.
+   */
   const runStartScript = Effect.fnUntraced(function* (directory, cmd, kind) {
     const text = cmd.trim();
     if (!text) return true;
@@ -403,6 +531,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return false;
   });
+  /**
+   * Run the project's configured start command followed by any extra worktree start command.
+   * @param {string} directory - The worktree directory to run scripts in.
+   * @param {Object} input - `{projectID, extra}`: the project id to look up and an optional extra command.
+   * @returns {boolean} True if scripts ran (false if the project start command failed).
+   */
   const runStartScripts = Effect.fnUntraced(function* (directory, input) {
     // Sequelize layer (ORM migration S3): plain row keeps JSON columns parsed.
     const row = yield* Effect.promise(() => Database.useAsync(async h => {
@@ -416,6 +550,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* runStartScript(directory, input.extra ?? "", "worktree");
     return true;
   });
+  /**
+   * Force-remove a set of leftover paths under `root`, ignoring ones that escape the root or equal it.
+   * @param {string} root - The base directory paths must live under.
+   * @param {Array} entries - Relative or absolute paths to remove.
+   * @returns {void}
+   */
   const prune = Effect.fnUntraced(function* (root, entries) {
     const base = yield* canonical(root);
     yield* Effect.forEach(entries, entry => Effect.gen(function* () {
@@ -429,6 +569,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       concurrency: "unbounded"
     });
   });
+  /**
+   * Run `git clean -ffdx`; if some paths could not be removed, prune them manually and retry once.
+   * @param {string} root - The worktree directory to clean.
+   * @returns {Object} The final git clean result `{code, text, stderr}`.
+   */
   const sweep = Effect.fnUntraced(function* (root) {
     const first = yield* git(["clean", "-ffdx"], {
       cwd: root
@@ -441,6 +586,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       cwd: root
     });
   });
+  /**
+   * Reset a worktree back to the project's default branch: fetch if needed, hard reset, clean, reset and
+   * clean submodules, verify the tree is clean, then re-run start scripts in the background.
+   * @param {Object} input - Reset input `{directory}`.
+   * @returns {boolean} True once the reset completes.
+   */
   const reset = Effect.fn("Worktree.reset")(function* (input) {
     const ctx = yield* InstanceState.context;
     if (ctx.project.vcs !== "git") {
@@ -540,6 +691,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     reset
   });
 }));
+/**
+ * Worktree layer with its application-level dependencies (git, spawner, project, filesystem, path) provided.
+ * @type {Object}
+ */
 export const appLayer = layer.pipe(Layer.provide(Git.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(Project.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(NodePath.layer));
+
+/**
+ * Fully wired Worktree layer including the instance layer; the default entry point for consumers.
+ * @type {Object}
+ */
 export const defaultLayer = appLayer.pipe(Layer.provide(InstanceLayer.layer));
 export * as Worktree from "./index.js";

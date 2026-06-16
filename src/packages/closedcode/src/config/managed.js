@@ -1,3 +1,4 @@
+/** @file Reads MDM-managed configuration (config dir + macOS managed-preferences plist). */
 export * as ConfigManaged from "./managed.js";
 import { existsSync } from "fs";
 import os from "os";
@@ -13,6 +14,10 @@ const MANAGED_PLIST_DOMAINS = ["ai.closedcode.managed"];
 
 // Keys injected by macOS/MDM into the managed plist that are not closedcode config
 const PLIST_META = new Set(["PayloadDisplayName", "PayloadIdentifier", "PayloadType", "PayloadUUID", "PayloadVersion", "_manualProfile"]);
+/**
+ * Resolve the OS-specific system directory for managed (MDM-deployed) closedcode config.
+ * @returns {string} The managed config directory path for the current platform.
+ */
 function systemManagedConfigDir() {
   // Only the closedcode managed dir is used; never fall back to an opencode dir.
   switch (process.platform) {
@@ -26,9 +31,20 @@ function systemManagedConfigDir() {
       return "/etc/closedcode";
   }
 }
+/**
+ * Get the managed config directory, honoring the `CLOSEDCODE_TEST_MANAGED_CONFIG_DIR`
+ * test override before falling back to the system directory.
+ * @returns {string} The managed config directory path.
+ */
 export function managedConfigDir() {
   return process.env.CLOSEDCODE_TEST_MANAGED_CONFIG_DIR || systemManagedConfigDir();
 }
+/**
+ * Strip MDM/plist metadata keys from a JSON-encoded managed plist, returning the
+ * remaining closedcode config as a JSON string.
+ * @param {string} json - The plist contents as a JSON string.
+ * @returns {string} JSON string of the config with payload metadata removed.
+ */
 export function parseManagedPlist(json) {
   const raw = JSON.parse(json);
   for (const key of Object.keys(raw)) {
@@ -36,6 +52,12 @@ export function parseManagedPlist(json) {
   }
   return JSON.stringify(raw);
 }
+/**
+ * On macOS, read MDM-deployed managed preferences for the closedcode domain by
+ * locating the managed `.plist`, converting it to JSON via `plutil`, and
+ * stripping payload metadata. No-op on non-macOS platforms.
+ * @returns {Promise<Object|undefined>} A `{source, text}` object when a managed plist is found, otherwise `undefined`.
+ */
 export async function readManagedPreferences() {
   if (process.platform !== "darwin") return;
   const user = os.userInfo().username;

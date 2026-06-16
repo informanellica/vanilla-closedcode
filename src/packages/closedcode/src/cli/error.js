@@ -1,8 +1,25 @@
+/**
+ * @file Top-level CLI error formatting. Maps known tagged/named error shapes
+ * (CliError, MCP, account, provider, config, UI-cancelled) to user-friendly
+ * messages, with a generic fallback formatter for everything else.
+ */
 import { NamedError } from "core/util/error";
 import { errorFormat } from "#util/error.js";
+/**
+ * Test whether a value is a tagged error carrying the given _tag.
+ * @param {*} error - The value to inspect.
+ * @param {string} tag - The expected _tag value.
+ * @returns {boolean} True if error is an object with a matching _tag.
+ */
 function isTaggedError(error, tag) {
   return typeof error === "object" && error !== null && "_tag" in error && error._tag === tag;
 }
+/**
+ * Format a recognized CLI/domain error into a user-facing message string.
+ * Sets process.exitCode for CliError; returns undefined for unrecognized errors.
+ * @param {*} input - The thrown/raised error value.
+ * @returns {string} A formatted message, or undefined when the error type is not handled here.
+ */
 export function FormatError(input) {
   // CliError: domain failure surfaced from an effectCmd handler via fail("...")
   if (isTaggedError(input, "CliError")) {
@@ -64,6 +81,11 @@ export function FormatError(input) {
     return "";
   }
 }
+/**
+ * Generic fallback formatter for unrecognized errors.
+ * @param {*} input - The error value to format.
+ * @returns {string} A best-effort formatted error string.
+ */
 export function FormatUnknownError(input) {
   return errorFormat(input);
 }

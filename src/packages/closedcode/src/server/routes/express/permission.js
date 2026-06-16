@@ -1,3 +1,4 @@
+/** @file Express route group for the instance /permission endpoints (reply to and list pending permission requests). */
 // Express route group for the instance /permission endpoints.
 import express from "express";
 import { Effect } from "effect";
@@ -13,6 +14,12 @@ import { errors } from "../../express/errors.js";
 const BASE = "/permission";
 
 // OTel attribute key normalisation: `fooID` -> `foo.id`; other params are namespaced under `closedcode.`.
+/**
+ * Normalises an Express route param name into an OTel attribute key: `fooID` becomes `foo.id`; any other
+ * param is namespaced under `closedcode.`.
+ * @param {string} key - The route param name.
+ * @returns {string} The normalised attribute key.
+ */
 function paramToAttributeKey(key) {
   const m = key.match(/^(.+)ID$/);
   if (m) return `${m[1].toLowerCase()}.id`;
@@ -20,6 +27,11 @@ function paramToAttributeKey(key) {
 }
 
 // OTel span attributes for an Express request; mirrors trace.js requestAttributes.
+/**
+ * Builds OTel span attributes from an Express request: HTTP method, path, and every matched route param.
+ * @param {Object} req - The Express request object.
+ * @returns {Object} A flat record of span attribute keys to values.
+ */
 function requestAttributes(req) {
   const attributes = {
     "http.method": req.method,
@@ -32,6 +44,13 @@ function requestAttributes(req) {
 }
 
 // Runs an Effect inside a named span carrying the request attributes.
+/**
+ * Runs an Effect inside a named span carrying the request attributes.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Effect} effect - The Effect to run inside the span.
+ * @returns {Promise<*>} A promise resolving to the Effect's result.
+ */
 function runRequest(name, req, effect) {
   return AppRuntime.runPromise(
     effect.pipe(
@@ -43,10 +62,23 @@ function runRequest(name, req, effect) {
 }
 
 // Runs an Effect generator and JSON-encodes the resolved value onto the response.
+/**
+ * Runs an Effect generator inside a request span and JSON-encodes the resolved value onto the response.
+ * @param {string} name - The span name.
+ * @param {Object} req - The Express request object.
+ * @param {Object} res - The Express response object.
+ * @param {Function} gen - The generator function passed to Effect.gen.
+ * @returns {Promise<void>} Resolves once the response JSON has been written.
+ */
 async function jsonRequest(name, req, res, gen) {
   res.json(await runRequest(name, req, Effect.gen(gen)));
 }
 
+/**
+ * Builds the Express router for the /permission route group (reply to a permission request, list pending requests).
+ * @param {Object} registry - The OpenAPI registry used to register route metadata (may be falsy to skip).
+ * @returns {Object} The configured Express Router for this group.
+ */
 export function PermissionRoutes(registry) {
   const router = express.Router();
 

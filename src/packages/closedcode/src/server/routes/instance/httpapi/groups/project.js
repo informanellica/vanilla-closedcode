@@ -1,3 +1,4 @@
+/** @file Experimental HttpApi route definitions for projects: list, current, git init, and update. */
 import { Project } from "#project/project.js";
 import { ProjectID } from "#project/schema.js";
 import { Schema } from "effect";
@@ -6,12 +7,18 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path for the project route group. */
 const root = "/project";
+/** Payload schema for updating a project: optional name, icon, and commands fields. */
 const UpdatePayload = Schema.Struct({
   name: Schema.optional(Schema.String),
   icon: Schema.optional(Project.Info.fields.icon),
   commands: Schema.optional(Project.Info.fields.commands)
 });
+/**
+ * HttpApi definition for the experimental project route group.
+ * Bundles the list/current/initGit/update endpoints under instance-context, workspace-routing, and authorization middleware.
+ */
 export const ProjectApi = HttpApi.make("project").add(HttpApiGroup.make("project").add(HttpApiEndpoint.get("list", root, {
   success: described(Schema.Array(Project.Info), "List of projects")
 }).annotateMerge(OpenApi.annotations({

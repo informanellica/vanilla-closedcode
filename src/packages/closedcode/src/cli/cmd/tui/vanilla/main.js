@@ -10,9 +10,19 @@
 // @-file search). Without a url (or if the client fails to construct) it falls
 // back to the self-contained stub shell. Feature parity vs the @opentui app is
 // still partial — see docs/milestones/solid-free-tui.md "Remaining work".
+/** @module Vanilla TUI entry — drop-in for app.js's tui(): mounts the immediate-mode shell, optionally wiring the real SDK backend, and resolves on exit. */
 import { mountShell } from "./shell.js";
 import { createDataLayer } from "./data/index.js";
 
+/**
+ * Launch the vanilla immediate-mode TUI.
+ * With input.url present, connects to the real backend (HTTP+SSE client + data
+ * layer + persisted selection); otherwise falls back to the self-contained stub shell.
+ * @param {Object} [input] - Entry input (same shape as app.js's tui()).
+ * @param {Object} [input.args] - CLI args ({ agent, sessionID, prompt }).
+ * @param {string} [input.url] - Backend URL; when set, the real SDK connection is used.
+ * @returns {Promise<void>} Resolves when the TUI exits.
+ */
 export function tui(input = {}) {
   const args = input.args ?? {};
   return new Promise(async resolve => {

@@ -1,3 +1,5 @@
+/** @file Helpers for building AbortControllers/AbortSignals that auto-abort after a timeout. */
+
 /**
  * Creates an AbortController that automatically aborts after a timeout.
  *
@@ -5,8 +7,8 @@
  * scope in closures. Arrow functions like `() => controller.abort()` capture
  * request bodies and other large objects, preventing GC for the timer lifetime.
  *
- * @param ms Timeout in milliseconds
- * @returns Object with controller, signal, and clearTimeout function
+ * @param {number} ms - Timeout in milliseconds
+ * @returns {Object} Object with `controller` (AbortController), `signal` (AbortSignal), and `clearTimeout` (Function that cancels the timer)
  */
 export function abortAfter(ms) {
   const controller = new AbortController();
@@ -21,9 +23,9 @@ export function abortAfter(ms) {
 /**
  * Combines multiple AbortSignals with a timeout.
  *
- * @param ms Timeout in milliseconds
- * @param signals Additional signals to combine
- * @returns Combined signal that aborts on timeout or when any input signal aborts
+ * @param {number} ms - Timeout in milliseconds
+ * @param {...AbortSignal} signals - Additional signals to combine
+ * @returns {Object} Object with `signal` (combined AbortSignal that aborts on timeout or when any input signal aborts) and `clearTimeout` (Function that cancels the timer)
  */
 export function abortAfterAny(ms, ...signals) {
   const timeout = abortAfter(ms);

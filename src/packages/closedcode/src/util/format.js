@@ -1,3 +1,15 @@
+/** @file Human-readable formatting helpers (durations, etc.). */
+
+/**
+ * Format a duration in seconds as a compact human-readable string.
+ *
+ * Produces units that scale with magnitude: seconds (`s`), minutes/seconds
+ * (`m`/`s`), hours/minutes (`h`/`m`), approximate days (`~N days`), and
+ * approximate weeks (`~N weeks`). Non-positive durations yield an empty string.
+ *
+ * @param {number} secs - The duration in seconds.
+ * @returns {string} The formatted duration, or an empty string when `secs <= 0`.
+ */
 export function formatDuration(secs) {
   if (secs <= 0) return "";
   if (secs < 60) return `${secs}s`;

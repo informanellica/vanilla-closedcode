@@ -1,9 +1,15 @@
+/** @file CLI `attach` command: connects the vanilla terminal-kit TUI to a running closedcode server over HTTP. */
 import { cmd } from "../cmd.js";
 import { UI } from "#cli/ui.js";
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32.js";
 import { TuiConfig } from "#cli/cmd/tui/config/tui.js";
 import { errorMessage } from "#util/error.js";
 import { validateSession } from "./validate-session.js";
+/**
+ * The `attach <url>` CLI command: validates the target session/server, then launches the lazily-imported
+ * vanilla TUI against the running closedcode server (with optional continue/fork and basic auth).
+ * @type {Object}
+ */
 export const AttachCommand = cmd({
   command: "attach <url>",
   describe: "attach to a running closedcode server",

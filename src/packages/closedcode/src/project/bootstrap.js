@@ -1,3 +1,4 @@
+/** @file Instance bootstrap Effect layer: initializes all per-instance services (config, plugins, LSP, formatting, file watching, VCS, snapshots, project) when an instance is loaded. */
 import { Plugin } from "../plugin/index.js";
 import { Format } from "../format/index.js";
 import { LSP } from "#lsp/lsp.js";
@@ -13,6 +14,13 @@ import { Effect, Layer } from "effect";
 import { Config } from "#config/config.js";
 import { Service } from "./bootstrap-service.js";
 export { Service } from "./bootstrap-service.js";
+
+/**
+ * Effect layer providing the InstanceBootstrap Service.
+ * Resolves every bootstrap dependency at layer init so the returned `run`
+ * effect has no remaining requirements, then exposes a `run` effect that
+ * initializes config, plugins, and the per-instance services concurrently.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   // Yield each bootstrap dep at layer init so `run` itself has R = never.
   // InstanceStore imports only the lightweight tag from bootstrap-service.ts,
@@ -49,5 +57,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     run
   });
 }));
+
+/** Bootstrap layer with all of its service dependencies provided by their default layers. */
 export const defaultLayer = layer.pipe(Layer.provide([Bus.layer, Config.defaultLayer, File.defaultLayer, FileWatcher.defaultLayer, Format.defaultLayer, LSP.defaultLayer, Plugin.defaultLayer, Project.defaultLayer, ShareNext.defaultLayer, Snapshot.defaultLayer, Vcs.defaultLayer]));
 export * as InstanceBootstrap from "./bootstrap.js";

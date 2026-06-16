@@ -18,10 +18,20 @@ initProjectors();
 const log = Log.create({
   service: "server"
 });
+/**
+ * Log the chosen server backend selection and pass the built server through.
+ * @param {Object} selection - Backend selection descriptor from ServerBackend.select.
+ * @param {*} built - The constructed server instance to return unchanged.
+ * @returns {*} The same `built` value that was passed in.
+ */
 function withBackend(selection, built) {
   log.info("server backend selected", ServerBackend.attributes(selection));
   return built;
 }
+/**
+ * Determine which server backend to use.
+ * @returns {Object} The backend selection descriptor.
+ */
 function select() {
   return ServerBackend.select();
 }
@@ -32,19 +42,40 @@ const DefaultExpress = lazy(() => {
   return withBackend(selection, built);
 });
 export const Default = () => DefaultExpress();
+/**
+ * Build a fresh Express server with the auto-selected backend and given options.
+ * @param {Object} opts - Server construction options forwarded to createExpress.
+ * @returns {Object} The constructed server instance.
+ */
 function create(opts) {
   const selection = select();
   return withBackend(selection, createExpress(opts, selection));
 }
+/**
+ * Build an Express server, forcing the explicit "express" backend selection.
+ * @param {Object} opts - Server construction options forwarded to createExpress.
+ * @returns {Object} The constructed server instance.
+ */
 export function Legacy(opts = {}) {
   const selection = { backend: "express", reason: "explicit" };
   const built = createExpress(opts, selection);
   return withBackend(selection, built);
 }
+/**
+ * Return the OpenAPI description document for the Express backend.
+ * @returns {Object} The OpenAPI specification object.
+ */
 export function openapi() {
   return expressOpenapi();
 }
 export let url;
+/**
+ * Build and start the server, listening on the configured hostname/port, and
+ * optionally publishing an mDNS advertisement (skipped for loopback hosts).
+ * Sets the module-level `url` to the resolved listen address.
+ * @param {Object} opts - Listen options including hostname, port, mdns, and mdnsDomain.
+ * @returns {Promise<Object>} A handle `{ hostname, port, url, stop }` where stop(close) shuts the server down (idempotent) and unpublishes mDNS.
+ */
 export async function listen(opts) {
   const built = create(opts);
   const server = await built.runtime.listen(opts);

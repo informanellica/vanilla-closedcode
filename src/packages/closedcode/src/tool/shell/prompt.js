@@ -1,3 +1,4 @@
+/** @file Builds the shell tool's parameter schema and per-shell (bash/PowerShell/cmd) description prompt and usage guidance. */
 import { assetText } from "#util/asset.js";
 import { Schema } from "effect";
 const DESCRIPTION = assetText("tool/shell/shell.txt");
@@ -11,6 +12,13 @@ const descriptions = {
   powershell: 'Clear, concise description of what this command does in 5-10 words. Examples:\nInput: Get-ChildItem -LiteralPath "."\nOutput: Lists current directory\n\nInput: git status\nOutput: Shows working tree status\n\nInput: npm install\nOutput: Installs package dependencies\n\nInput: New-Item -ItemType Directory -Path "tmp"\nOutput: Creates directory tmp',
   cmd: 'Clear, concise description of what this command does in 5-10 words. Examples:\nInput: dir\nOutput: Lists current directory\n\nInput: if exist "package.json" type "package.json"\nOutput: Prints package.json when it exists\n\nInput: mkdir tmp\nOutput: Creates directory tmp'
 };
+/**
+ * Build the shell tool's parameter schema (command, optional timeout, optional
+ * workdir, and a required description) using the supplied description text for
+ * the `description` field.
+ * @param {string} description - Annotation text describing the `description` parameter, tailored per shell.
+ * @returns {Object} An Effect Schema.Struct for the shell tool parameters.
+ */
 export function parameterSchema(description) {
   return Schema.Struct({
     command: Schema.String.annotate({
@@ -27,7 +35,18 @@ export function parameterSchema(description) {
     })
   });
 }
+/**
+ * Default shell tool parameter schema, using the bash description text.
+ * @type {Object}
+ */
 export const Parameters = parameterSchema(descriptions.bash);
+/**
+ * Substitute `${key}` placeholders in a template with the matching value,
+ * throwing if any referenced key is missing.
+ * @param {string} template - Template string containing `${key}` placeholders.
+ * @param {Object} values - Map of placeholder keys to replacement strings.
+ * @returns {string} The rendered string with all placeholders substituted.
+ */
 function renderPrompt(template, values) {
   return template.replace(/\$\{(\w+)\}/g, (_, key) => {
     const value = values[key];
@@ -35,12 +54,23 @@ function renderPrompt(template, values) {
     return value;
   });
 }
+/**
+ * Map an internal shell name to a human-readable display name.
+ * @param {string} name - Internal shell name (e.g. "pwsh", "powershell", "cmd").
+ * @returns {string} The display name, or the input unchanged if unrecognized.
+ */
 function shellDisplayName(name) {
   if (name === "pwsh") return "PowerShell (7+)";
   if (name === "powershell") return "Windows PowerShell (5.1)";
   if (name === "cmd") return "cmd.exe";
   return name;
 }
+/**
+ * Return the PowerShell-specific usage notes block for the given PowerShell
+ * variant (pwsh 7+ or Windows PowerShell 5.1); empty for other shells.
+ * @param {string} name - Shell name ("pwsh" or "powershell").
+ * @returns {string} The notes markdown block, or an empty string.
+ */
 function powershellNotes(name) {
   if (name === "pwsh") {
     return `# PowerShell (7+) shell notes
@@ -62,6 +92,12 @@ function powershellNotes(name) {
   }
   return "";
 }
+/**
+ * Return guidance on how to chain dependent commands for the given shell
+ * (PowerShell 5.1 lacks `&&`; other shells get `&&`/`&` advice).
+ * @param {string} name - Shell name.
+ * @returns {string} The chaining guidance sentence for that shell.
+ */
 function chainGuidance(name) {
   if (name === "powershell") {
     return "If the commands depend on each other and must run sequentially, avoid '&&' in this shell because Windows PowerShell (5.1) does not support it. Use PowerShell conditionals such as `cmd1; if ($?) { cmd2 }` when later commands must depend on earlier success.";
@@ -74,6 +110,13 @@ function chainGuidance(name) {
   }
   return "If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like mkdir before cp, Write before Bash for git operations, or git add before git commit), run these operations sequentially instead.";
 }
+/**
+ * Build the bash-specific "command section" of the tool description, covering
+ * directory verification, quoting, output limits, and command chaining.
+ * @param {string} chain - The chaining guidance sentence to embed.
+ * @param {Object} limits - Output limits with `maxLines` and `maxBytes`.
+ * @returns {string} The rendered bash command-section text.
+ */
 function bashCommandSection(chain, limits) {
   return `Before executing the command, please follow these steps:
 
@@ -117,6 +160,15 @@ Usage notes:
     cd /foo/bar && pytest tests
     </bad-example>`;
 }
+/**
+ * Build the PowerShell-specific "command section" of the tool description,
+ * covering notes, directory verification, quoting, output limits, and chaining.
+ * @param {string} name - PowerShell variant name ("pwsh" or "powershell").
+ * @param {string} chain - The chaining guidance sentence to embed.
+ * @param {string} pathSep - Path separator to use in examples ("\\" or "/").
+ * @param {Object} limits - Output limits with `maxLines` and `maxBytes`.
+ * @returns {string} The rendered PowerShell command-section text.
+ */
 function powershellCommandSection(name, chain, pathSep, limits) {
   return `${powershellNotes(name)}
 
@@ -162,6 +214,13 @@ Usage notes:
     ${name === "powershell" ? `Set-Location -LiteralPath "project${pathSep}subdir"; if ($?) { pytest tests }` : `Set-Location -LiteralPath "project${pathSep}subdir" && pytest tests`}
     </bad-example>`;
 }
+/**
+ * Build the cmd.exe-specific "command section" of the tool description,
+ * covering notes, directory verification, quoting, output limits, and chaining.
+ * @param {string} chain - The chaining guidance sentence to embed.
+ * @param {Object} limits - Output limits with `maxLines` and `maxBytes`.
+ * @returns {string} The rendered cmd.exe command-section text.
+ */
 function cmdCommandSection(chain, limits) {
   return `# cmd.exe shell notes
 - Use double quotes for paths with spaces.
@@ -211,6 +270,15 @@ Usage notes:
     cd /d "project\\subdir" && dir
     </bad-example>`;
 }
+/**
+ * Assemble the full set of prompt fragments (intro, workdir section, command
+ * section, git/PR guidance, parameter description) for the given shell and
+ * platform.
+ * @param {string} name - Shell name ("bash", "pwsh", "powershell", or "cmd").
+ * @param {string} platform - Node platform string (e.g. "win32").
+ * @param {Object} limits - Output limits with `maxLines` and `maxBytes`.
+ * @returns {Object} A profile object of prompt fragment strings.
+ */
 function profile(name, platform, limits) {
   const isPowerShell = PS.has(name);
   const chain = chainGuidance(name);
@@ -254,6 +322,15 @@ function profile(name, platform, limits) {
     parameterDescription: descriptions.bash
   };
 }
+/**
+ * Render the complete shell tool definition for a given shell and platform:
+ * substitutes the profile fragments into the description template and builds
+ * the matching parameter schema.
+ * @param {string} name - Shell name ("bash", "pwsh", "powershell", or "cmd").
+ * @param {string} platform - Node platform string (e.g. "win32").
+ * @param {Object} limits - Output limits with `maxLines` and `maxBytes`.
+ * @returns {Object} An object with `description` (string) and `parameters` (Schema).
+ */
 export function render(name, platform, limits) {
   const selected = profile(name, platform, limits);
   return {

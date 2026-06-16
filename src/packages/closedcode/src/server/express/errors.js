@@ -1,3 +1,4 @@
+/** @file Shared error response schemas (400/404) for OpenAPI-documented routes, plus a helper to spread them into a route's responses. */
 // Shared error response schemas for OpenAPI-documented routes. Response schemas
 // are raw Zod schemas; ./openapi.js resolve()/registerOperation converts them to
 // JSON Schema via z.toJSONSchema.
@@ -37,6 +38,12 @@ export const ERRORS = {
   }
 };
 
+/**
+ * Build a responses fragment for the given HTTP error status codes, for spreading
+ * into a route's describeRoute responses (e.g. ...errors(400, 404)).
+ * @param {...number} codes - One or more status codes present in ERRORS (400, 404).
+ * @returns {Object} A map of status code to its shared error response definition.
+ */
 export function errors(...codes) {
   return Object.fromEntries(codes.map(code => [code, ERRORS[code]]));
 }

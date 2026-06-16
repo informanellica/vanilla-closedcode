@@ -1,3 +1,10 @@
+/**
+ * @file Version-control service (`Vcs`). Tracks the current/default git branch,
+ * publishes branch-change events, and produces file diffs — returning lightweight
+ * metadata immediately while patch bodies are computed off-thread (via a
+ * worker_thread pool) and streamed back to the renderer in batches.
+ * @module closedcode/project/vcs
+ */
 import { Effect, Layer, Context, Schema, Stream, Scope, Fiber } from "effect";
 import { formatPatch, structuredPatch } from "diff";
 import path from "path";
@@ -23,6 +30,12 @@ const PATCH_WORKER_URL = new URL("./vcs-patch-worker.js", import.meta.url);
 let __patchWorker;
 let __patchSeq = 0;
 const __patchPending = new Map();
+/**
+ * Lazily spawn (and memoize) the single patch worker_thread, wiring up its
+ * message/error/exit handlers. On error or exit, every pending request is
+ * resolved with an empty patch and the worker is reset so the next call respawns.
+ * @returns {Worker} The shared worker instance.
+ */
 const ensurePatchWorker = () => {
   if (__patchWorker) return __patchWorker;
   __patchWorker = new Worker(fileURLToPath(PATCH_WORKER_URL));
@@ -46,6 +59,15 @@ const ensurePatchWorker = () => {
   });
   return __patchWorker;
 };
+/**
+ * Format a unified patch for one file by dispatching the work to the patch
+ * worker. Falls back to running formatPatch + structuredPatch inline (and to an
+ * empty string if even that throws) when the worker cannot be spawned.
+ * @param {string} file - The repo-relative file path (used for both sides of the diff header).
+ * @param {string} before - The "before" file contents.
+ * @param {string} after - The "after" file contents.
+ * @returns {Promise<string>} Resolves with the unified patch text, or "" on failure.
+ */
 const formatViaWorker = (file, before, after) =>
   new Promise((resolve) => {
     let worker;
@@ -67,11 +89,25 @@ const formatViaWorker = (file, before, after) =>
 const log = Log.create({
   service: "vcs"
 });
+/**
+ * Count the number of lines in a block of text, ignoring a single trailing
+ * newline (so "a\nb\n" counts as 2, not 3).
+ * @param {string} text - The text to count lines in.
+ * @returns {number} The line count (0 for empty/falsy input).
+ */
 const count = text => {
   if (!text) return 0;
   if (!text.endsWith("\n")) return text.split("\n").length;
   return text.slice(0, -1).split("\n").length;
 };
+/**
+ * Read a working-tree file as UTF-8 text. Returns "" for missing files and for
+ * binary files (detected by a NUL byte), so they never produce a text diff.
+ * @param {Object} fs - The AppFileSystem service (provides `exists` and `readFile`).
+ * @param {string} cwd - The repository root directory.
+ * @param {string} file - The repo-relative file path.
+ * @returns {Effect} An Effect yielding the file contents as a string, or "".
+ */
 const work = Effect.fnUntraced(function* (fs, cwd, file) {
   const full = path.join(cwd, file);
   if (!(yield* fs.exists(full).pipe(Effect.orDie))) return "";
@@ -79,10 +115,21 @@ const work = Effect.fnUntraced(function* (fs, cwd, file) {
   if (Buffer.from(buf).includes(0)) return "";
   return Buffer.from(buf).toString("utf8");
 });
+/**
+ * Index a list of git stat entries by file path into a Map of add/delete counts.
+ * @param {Array} list - Stat entries, each `{file, additions, deletions}`.
+ * @returns {Map} Map from file path to `{additions, deletions}`.
+ */
 const nums = list => new Map(list.map(item => [item.file, {
   additions: item.additions,
   deletions: item.deletions
 }]));
+/**
+ * Merge one or more lists of file entries into a single de-duplicated list,
+ * keeping the first occurrence of each file path.
+ * @param {...Array} lists - Lists of entries, each with a `file` property.
+ * @returns {Array} The merged, de-duplicated entries.
+ */
 const merge = (...lists) => {
   const out = new Map();
   lists.flat().forEach(item => {
@@ -90,6 +137,12 @@ const merge = (...lists) => {
   });
   return [...out.values()];
 };
+/**
+ * Build the lightweight metadata entry (no patch body) for one changed file.
+ * @param {Object} item - The status/diff entry `{file, status}`.
+ * @param {Map} map - The stats map from {@link nums} keyed by file path.
+ * @returns {Object} `{file, patch: "", additions, deletions, status}`.
+ */
 // Build the lightweight metadata entry for a single file — no per-file
 // git show / structuredPatch work, so this returns in O(1) per file once
 // the git status / stats batch is already computed.
@@ -103,6 +156,17 @@ const meta = (item, map) => {
     status: item.status,
   };
 };
+/**
+ * Compute the patch body and accurate add/delete counts for one changed file.
+ * @param {Object} fs - The AppFileSystem service.
+ * @param {Object} git - The Git service (provides `show`).
+ * @param {string} cwd - The repository root directory.
+ * @param {string} ref - The git ref to diff against ("HEAD" or a merge base), or falsy for none.
+ * @param {string} base - The path prefix returned by `git rev-parse --show-prefix`.
+ * @param {Object} item - The status/diff entry `{file, status}`.
+ * @param {Object} stat - The matching stats entry `{additions, deletions}`, or undefined.
+ * @returns {Effect} An Effect yielding `{file, patch, additions, deletions, status}`.
+ */
 // Compute patch + accurate add/del counts for one file. The `git show`
 // + working-tree read happen on the main thread (small, I/O-bound), but
 // the synchronous structuredPatch is dispatched to a worker_thread so it
@@ -123,18 +187,36 @@ const computePatch = Effect.fnUntraced(function* (fs, git, cwd, ref, base, item,
 // diff — the working-tree comparison or branch comparison plus stats. Patch
 // generation is split off into computePatch() so it can run in the
 // background, off the HTTP critical path.
+/**
+ * List the working-tree changes against a ref ("git" mode), pairing the status
+ * list with a stats map. With no ref, returns the raw status and an empty map.
+ * @param {Object} git - The Git service.
+ * @param {string} cwd - The repository root directory.
+ * @param {string} ref - The ref to compute stats against, or falsy.
+ * @returns {Effect} An Effect yielding `{list, map}`.
+ */
 const trackList = Effect.fnUntraced(function* (git, cwd, ref) {
   if (!ref) return { list: yield* git.status(cwd), map: new Map() };
   const [list, stats] = yield* Effect.all([git.status(cwd), git.stats(cwd, ref)], { concurrency: 2 });
   return { list, map: nums(stats) };
 });
+/**
+ * List the changes for "branch" mode: the diff against the merge-base ref plus
+ * any untracked files (status code "??"), paired with a stats map.
+ * @param {Object} git - The Git service.
+ * @param {string} cwd - The repository root directory.
+ * @param {string} ref - The merge-base ref to diff against.
+ * @returns {Effect} An Effect yielding `{list, map}`.
+ */
 const compareList = Effect.fnUntraced(function* (git, cwd, ref) {
   const [list, stats, extra] = yield* Effect.all([git.diff(cwd, ref), git.stats(cwd, ref), git.status(cwd)], { concurrency: 3 });
   return { list: merge(list, extra.filter(item => item.code === "??")), map: nums(stats) };
 });
+/** Diff mode: "git" (working tree vs HEAD) or "branch" (vs default-branch merge base). */
 export const Mode = Schema.Literals(["git", "branch"]).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Bus event definitions published by the Vcs service. */
 export const Event = {
   BranchUpdated: BusEvent.define("vcs.branch.updated", Schema.Struct({
     branch: Schema.optional(Schema.String)
@@ -154,6 +236,7 @@ export const Event = {
     })),
   })),
 };
+/** Schema describing the current and default branch names for a repository. */
 export const Info = Schema.Struct({
   branch: Schema.optional(Schema.String),
   default_branch: Schema.optional(Schema.String)
@@ -162,6 +245,7 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a single file's diff: path, unified patch, add/delete counts, and status. */
 export const FileDiff = Schema.Struct({
   file: Schema.String,
   patch: Schema.String,
@@ -173,7 +257,13 @@ export const FileDiff = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Effect Context tag for the Vcs service. */
 export class Service extends Context.Service()("@closedcode/Vcs") {}
+/**
+ * Layer constructing the Vcs service: resolves the current/default branch,
+ * forks a HEAD watcher that publishes {@link Event.BranchUpdated} on change, and
+ * exposes `init`, `branch`, `defaultBranch`, and `diff` operations.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const git = yield* Git.Service;
@@ -225,15 +315,23 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return value;
   }));
   return Service.of({
+    // Eagerly initialize the branch state (and HEAD watcher) in the background.
     init: Effect.fn("Vcs.init")(function* () {
       yield* InstanceState.get(state).pipe(Effect.forkIn(scope));
     }),
+    // Return the current branch name (undefined for non-git projects).
     branch: Effect.fn("Vcs.branch")(function* () {
       return yield* InstanceState.use(state, x => x.current);
     }),
+    // Return the default branch name (e.g. "main"), or undefined.
     defaultBranch: Effect.fn("Vcs.defaultBranch")(function* () {
       return yield* InstanceState.use(state, x => x.root?.name);
     }),
+    // Compute the diff for the given mode. Returns per-file metadata
+    // synchronously; for projects under PATCH_AUTOLOAD_LIMIT files it also
+    // forks a background fiber that computes patch bodies off-thread and
+    // publishes them in batches via Event.FileDiffReady. The prior in-flight
+    // fiber for this mode is interrupted first.
     diff: Effect.fn("Vcs.diff")(function* (mode) {
       const value = yield* InstanceState.get(state);
       const ctx = yield* InstanceState.context;
@@ -325,5 +423,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     })
   });
 }));
+/** The Vcs layer with its Git, AppFileSystem, and Bus dependencies provided. */
 export const defaultLayer = layer.pipe(Layer.provide(Git.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Bus.layer));
 export * as Vcs from "./vcs.js";

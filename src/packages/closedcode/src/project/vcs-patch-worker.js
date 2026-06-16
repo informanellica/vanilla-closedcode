@@ -1,3 +1,9 @@
+/**
+ * @file Worker-thread side of the Vcs.diff patch pipeline. Listens for
+ * `{id, file, before, after}` messages, runs the synchronous CPU-heavy
+ * formatPatch + structuredPatch off the main thread, and posts back
+ * `{id, patch}` (or `{id, patch: "", error}` on failure) for each request.
+ */
 // Worker-thread side of the Vcs.diff patch pipeline. Receives
 // `{id, file, before, after}` messages, runs the (synchronous, CPU-heavy)
 // formatPatch + structuredPatch off the Electron main thread, and posts

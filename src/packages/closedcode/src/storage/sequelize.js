@@ -3,6 +3,12 @@
 // the single source of schema truth — these models are mappers only:
 // timestamps:false, explicit tableName, attributes mirroring *.sql.js.
 // `sequelize.sync()` must never be called.
+/**
+ * @file Sequelize mapping layer over the existing closedcode.db schema. Defines
+ * the ORM models (mappers only; the SQL migration journal owns schema truth),
+ * wires timestamp/JSON-column behavior, and provides the ambient-transaction
+ * AsyncLocalStorage used by the Database wrapper.
+ */
 import { createRequire } from "node:module";
 import { AsyncLocalStorage } from "node:async_hooks";
 
@@ -17,10 +23,22 @@ export { DataTypes, Op, Sequelize };
 // NOTE: Sequelize mutates attribute descriptor objects (adds field/fieldName)
 // during define() — sharing one descriptor between attributes silently aliases
 // columns (e.g. `email AS worktree`). Always hand out fresh objects.
+/**
+ * Build a fresh pair of time_created/time_updated attribute descriptors.
+ * Always returns new objects (Sequelize mutates descriptors during define()).
+ * @returns {Object} The timestamp attribute descriptors.
+ */
 const TIMESTAMPS = () => ({
   time_created: { type: DataTypes.INTEGER, allowNull: false },
   time_updated: { type: DataTypes.INTEGER, allowNull: false },
 });
+/**
+ * Attach hooks to a model so time_created is set on first insert and
+ * time_updated is stamped on inserts and updates (including bulk operations),
+ * unless an explicit value was provided.
+ * @param {Object} model - The Sequelize model to wire timestamp hooks onto.
+ * @returns {void}
+ */
 function wireTimestamps(model) {
   // beforeValidate (not beforeCreate): notNull validation runs BEFORE the
   // create hooks, so the values must exist by validation time. Fires for both
@@ -59,6 +77,13 @@ function wireTimestamps(model) {
 // table_info; our migration DDL declares JSON columns as `text`, so reads
 // come back as raw strings. Parse in the attribute getter (writes still go
 // through DataTypes.JSON stringification).
+/**
+ * Build a JSON column attribute descriptor whose getter parses raw TEXT values
+ * back into objects (the sqlite dialect returns JSON columns declared as text
+ * as raw strings).
+ * @param {Object} extra - Extra descriptor fields to merge in (e.g. allowNull).
+ * @returns {Object} The JSON attribute descriptor.
+ */
 function jsonAttr(extra = {}) {
   return {
     type: DataTypes.JSON,
@@ -70,11 +95,22 @@ function jsonAttr(extra = {}) {
     },
   };
 }
+/** Nullable JSON column attribute descriptor factory. */
 const JSON_COL = () => jsonAttr();
+/** Non-null JSON column attribute descriptor factory. */
 const JSON_NN = () => jsonAttr({ allowNull: false });
+/** Text primary-key column attribute descriptor factory. */
 const TEXT_PK = () => ({ type: DataTypes.TEXT, primaryKey: true });
+/** Non-null text column attribute descriptor factory. */
 const TEXT_NN = () => ({ type: DataTypes.TEXT, allowNull: false });
 
+/**
+ * Create a Sequelize instance for the sqlite database at the given path
+ * (single pooled connection, no auto-timestamps, frozen table names) and
+ * define all models against it.
+ * @param {string} storagePath - The sqlite database file path (or ":memory:").
+ * @returns {Object} An object {sequelize, models}.
+ */
 export function createSequelize(storagePath) {
   const sequelize = new Sequelize({
     dialect: "sqlite",
@@ -89,7 +125,20 @@ export function createSequelize(storagePath) {
   return { sequelize, models };
 }
 
+/**
+ * Define and return every ORM model mapping the existing database tables.
+ * @param {Sequelize} sequelize - The Sequelize instance to define models on.
+ * @returns {Object} A map of model name to defined model.
+ */
 function defineModels(sequelize) {
+  /**
+   * Define a single model with a fixed table name.
+   * @param {string} name - The model name.
+   * @param {string} table - The physical table name.
+   * @param {Object} attributes - The attribute descriptors.
+   * @param {Object} options - Extra define() options.
+   * @returns {Object} The defined Sequelize model.
+   */
   const define = (name, table, attributes, options = {}) =>
     sequelize.define(name, attributes, { tableName: table, ...options });
 
@@ -250,4 +299,9 @@ function defineModels(sequelize) {
 // the Database wrapper itself: it stores { tx, effects } here and hands the
 // transaction to callbacks, which pass it via the standard `transaction`
 // query option.)
+/**
+ * AsyncLocalStorage holding the ambient transaction handle and its deferred
+ * effects ({tx, effects, handle}), enabling continuation-local transactions.
+ * @type {AsyncLocalStorage}
+ */
 export const transactionStorage = new AsyncLocalStorage();

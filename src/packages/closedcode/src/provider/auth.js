@@ -1,3 +1,9 @@
+/**
+ * @file Provider authentication service. Collects plugin-supplied auth methods
+ * (OAuth and API-key flows with their interactive prompts) and drives the
+ * authorize/callback handshake, persisting the resulting credentials via Auth.
+ * @module closedcode/provider/auth
+ */
 import { Auth } from "#auth/index.js";
 import { InstanceState } from "#effect/instance-state.js";
 import { zod } from "#util/effect-zod.js";
@@ -6,11 +12,13 @@ import { optionalOmitUndefined, withStatics } from "#util/schema.js";
 import { Plugin } from "../plugin/index.js";
 import { ProviderID } from "./schema.js";
 import { Array as Arr, Effect, Layer, Record, Result, Context, Schema } from "effect";
+/** Conditional that shows/hides a prompt based on another input's value (`eq`/`neq`). */
 const When = Schema.Struct({
   key: Schema.String,
   op: Schema.Literals(["eq", "neq"]),
   value: Schema.String
 });
+/** A free-text auth prompt (e.g. asking the user for an API base URL). */
 const TextPrompt = Schema.Struct({
   type: Schema.Literal("text"),
   key: Schema.String,
@@ -18,11 +26,13 @@ const TextPrompt = Schema.Struct({
   placeholder: optionalOmitUndefined(Schema.String),
   when: optionalOmitUndefined(When)
 });
+/** A single choice in a {@link SelectPrompt}. */
 const SelectOption = Schema.Struct({
   label: Schema.String,
   value: Schema.String,
   hint: optionalOmitUndefined(Schema.String)
 });
+/** A single-choice auth prompt presenting a fixed set of options. */
 const SelectPrompt = Schema.Struct({
   type: Schema.Literal("select"),
   key: Schema.String,
@@ -30,7 +40,9 @@ const SelectPrompt = Schema.Struct({
   options: Schema.Array(SelectOption),
   when: optionalOmitUndefined(When)
 });
+/** Union of the supported interactive auth prompt kinds. */
 const Prompt = Schema.Union([TextPrompt, SelectPrompt]);
+/** A single auth method offered by a provider ("oauth" or "api"), with optional prompts. */
 export class Method extends Schema.Class("ProviderAuthMethod")({
   type: Schema.Literals(["oauth", "api"]),
   label: Schema.String,
@@ -38,9 +50,11 @@ export class Method extends Schema.Class("ProviderAuthMethod")({
 }) {
   static zod = zod(this);
 }
+/** Map from provider id to the list of auth methods it supports. */
 export const Methods = Schema.Record(Schema.String, Schema.Array(Method)).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Result of starting an OAuth authorization: where to send the user and how the callback works. */
 export class Authorization extends Schema.Class("ProviderAuthAuthorization")({
   url: Schema.String,
   method: Schema.Literals(["auto", "code"]),
@@ -48,6 +62,7 @@ export class Authorization extends Schema.Class("ProviderAuthAuthorization")({
 }) {
   static zod = zod(this);
 }
+/** Input to the authorize step: the chosen method index and any prompt answers. */
 export const AuthorizeInput = Schema.Struct({
   method: Schema.Finite.annotate({
     description: "Auth method index"
@@ -58,6 +73,7 @@ export const AuthorizeInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Input to the callback step: the method index and (for "code" flows) the OAuth code. */
 export const CallbackInput = Schema.Struct({
   method: Schema.Finite.annotate({
     description: "Auth method index"
@@ -68,18 +84,28 @@ export const CallbackInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Error: callback was called for a provider with no pending authorization. */
 export const OauthMissing = namedSchemaError("ProviderAuthOauthMissing", {
   providerID: ProviderID
 });
+/** Error: a "code" OAuth flow reached callback without an authorization code. */
 export const OauthCodeMissing = namedSchemaError("ProviderAuthOauthCodeMissing", {
   providerID: ProviderID
 });
+/** Error: the provider's OAuth callback did not return a successful result. */
 export const OauthCallbackFailed = namedSchemaError("ProviderAuthOauthCallbackFailed", {});
+/** Error: a prompt input failed the provider's validation. */
 export const ValidationFailed = namedSchemaError("ProviderAuthValidationFailed", {
   field: Schema.String,
   message: Schema.String
 });
+/** Effect Context tag for the ProviderAuth service. */
 export class Service extends Context.Service()("@closedcode/ProviderAuth") {}
+/**
+ * Layer building the ProviderAuth service. Reads auth hooks from loaded plugins
+ * and exposes `methods` (list available methods), `authorize` (start an OAuth
+ * flow), and `callback` (finish the flow and persist credentials).
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const auth = yield* Auth.Service;
   const plugin = yield* Plugin.Service;
@@ -91,6 +117,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     };
   }));
   const decode = Schema.decodeUnknownSync(Methods);
+  // Build the serializable list of auth methods per provider from plugin hooks,
+  // stripping non-serializable fields (e.g. validate/authorize callbacks) and
+  // keeping only the prompt shape the client needs.
   const methods = Effect.fn("ProviderAuth.methods")(function* () {
     const hooks = (yield* InstanceState.get(state)).hooks;
     return decode(Record.map(hooks, item => item.methods.map(method => ({
@@ -124,6 +153,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       })
     }))));
   });
+  // Start the OAuth flow for the selected method: validate any prompt inputs,
+  // invoke the plugin's authorize(), stash the pending handle, and return the
+  // authorization URL/method/instructions for the user.
   const authorize = Effect.fn("ProviderAuth.authorize")(function* (input) {
     const {
       hooks,
@@ -150,6 +182,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       instructions: result.instructions
     };
   });
+  // Finish the OAuth flow: look up the pending handle, run the plugin callback,
+  // and persist the resulting credentials as an "api" key or "oauth" token set.
   const callback = Effect.fn("ProviderAuth.callback")(function* (input) {
     const pending = (yield* InstanceState.get(state)).pending;
     const match = pending.get(input.providerID);
@@ -193,5 +227,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     callback
   });
 }));
+/** The ProviderAuth layer with its Auth and Plugin dependencies provided. */
 export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(Auth.defaultLayer), Layer.provide(Plugin.defaultLayer)));
 export * as ProviderAuth from "./auth.js";

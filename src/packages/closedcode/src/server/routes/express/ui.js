@@ -1,4 +1,4 @@
-// Express route group for the static UI catch-all: serves embedded web UI assets.
+/** @file Express route group for the static UI catch-all: serves embedded web UI assets. */
 import { Flag } from "core/flag/flag";
 import express from "express";
 import { lookup as mimeLookup } from "mime-types";
@@ -10,6 +10,10 @@ const embeddedUIPromise = Flag.CLOSEDCODE_DISABLE_EMBEDDED_WEB_UI ? Promise.reso
 
 const DEFAULT_CSP = "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; media-src 'self' data:; connect-src 'self' data:";
 
+/**
+ * Resolves the lazily-loaded embedded web UI asset map.
+ * @returns {Promise<Object>} Promise resolving to the embedded asset map, or null when disabled/unavailable.
+ */
 function embeddedUI() {
   if (Flag.CLOSEDCODE_DISABLE_EMBEDDED_WEB_UI) return Promise.resolve(null);
   return embeddedUIPromise;
@@ -17,12 +21,24 @@ function embeddedUI() {
 
 // mime-types lookup() returns `false` for unknown extensions; normalise to undefined
 // so the `?? "text/plain"` fallback behaves as expected.
+/**
+ * Looks up the MIME type for a file path, normalising the library's `false` to undefined.
+ * @param {string} filePath - File path or name to inspect.
+ * @returns {string} The resolved MIME type, or undefined when unknown.
+ */
 function getMimeType(filePath) {
   return mimeLookup(filePath) || undefined;
 }
 
 // Resolves the embedded UI asset for the request path and streams it, applying
 // the CSP header for HTML. Returns 404 when missing, 503 when no embedded bundle.
+/**
+ * Serves the embedded web UI asset matching the request path (falling back to index.html).
+ * Sets the content type and, for HTML, the default CSP header.
+ * @param {Object} req - Express request object (uses `req.path`).
+ * @param {Object} res - Express response object.
+ * @returns {Promise<Object>} Promise resolving to the Express response (200 with asset, 404 when missing, 503 when no bundle).
+ */
 async function serveUI(req, res) {
   const embeddedWebUI = await embeddedUI();
   const path = req.path;
@@ -43,6 +59,11 @@ async function serveUI(req, res) {
   return res.status(503).json({ error: "Web UI is not available in this build." });
 }
 
+/**
+ * Builds the Express router that serves the embedded web UI via a catch-all route.
+ * @param {Object} registry - OpenAPI operation registry (unused here; this route registers no metadata).
+ * @returns {Object} Configured Express Router.
+ */
 export function UIRoutes(registry) {
   const router = express.Router();
   // Catch-all static UI route. No describeRoute metadata, validators, or SSE in

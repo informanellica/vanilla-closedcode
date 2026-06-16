@@ -1,3 +1,4 @@
+/** @file The shell tool: parses commands with tree-sitter to discover file/path arguments for permission prompts, then spawns them with output streaming, truncation, timeout, and abort handling. */
 import { Effect, Stream } from "effect";
 import os from "os";
 import { createWriteStream } from "node:fs";
@@ -36,6 +37,12 @@ const SWITCHES = new Set(["-confirm", "-debug", "-force", "-nonewline", "-recurs
 export const log = Log.create({
   service: "shell-tool"
 });
+/**
+ * Resolve a tree-sitter wasm asset reference to a plain filesystem path,
+ * accepting `file://` URLs, absolute paths, and module-relative references.
+ * @param {string} asset - The asset reference (URL, absolute, or relative path).
+ * @returns {string} The resolved filesystem path.
+ */
 const resolveWasm = asset => {
   if (asset.startsWith("file://")) return fileURLToPath(asset);
   if (asset.startsWith("/") || /^[a-z]:/i.test(asset)) return asset;
@@ -48,6 +55,12 @@ const resolveWasm = asset => {
 // returns the on-disk path without importing the module, which is all
 // Parser.init/Language.load need.
 const requireWasm = createRequire(import.meta.url);
+/**
+ * Extract the meaningful tokens (command name and argument-like elements) of a
+ * tree-sitter command node, skipping separators and redirections.
+ * @param {Object} node - A tree-sitter command syntax node.
+ * @returns {Array} An Array of {type, text} token objects.
+ */
 function parts(node) {
   const out = [];
   for (let i = 0; i < node.childCount; i++) {
@@ -74,12 +87,28 @@ function parts(node) {
   }
   return out;
 }
+/**
+ * Return the trimmed source text of a command node, preferring the enclosing
+ * redirected statement so redirections are included in the captured command.
+ * @param {Object} node - A tree-sitter command syntax node.
+ * @returns {string} The command's source text.
+ */
 function source(node) {
   return (node.parent?.type === "redirected_statement" ? node.parent.text : node.text).trim();
 }
+/**
+ * Collect all `command` descendant nodes within a parse tree node.
+ * @param {Object} node - A tree-sitter syntax node (typically the root).
+ * @returns {Array} An Array of command syntax nodes.
+ */
 function commands(node) {
   return node.descendantsOfType("command").filter(child => Boolean(child));
 }
+/**
+ * Strip a single matching pair of surrounding single or double quotes.
+ * @param {string} text - The possibly-quoted token text.
+ * @returns {string} The unquoted text, or the input unchanged if not quoted.
+ */
 function unquote(text) {
   if (text.length < 2) return text;
   const first = text[0];
@@ -87,26 +116,58 @@ function unquote(text) {
   if ((first === '"' || first === "'") && first === last) return text.slice(1, -1);
   return text;
 }
+/**
+ * Expand a leading `~` (home directory) in a path-like token.
+ * @param {string} text - The token possibly beginning with `~`.
+ * @returns {string} The token with `~` expanded to the home directory.
+ */
 function home(text) {
   if (text === "~") return os.homedir();
   if (text.startsWith("~/") || text.startsWith("~\\")) return path.join(os.homedir(), text.slice(2));
   return text;
 }
+/**
+ * Look up an environment variable, matching case-insensitively on Windows.
+ * @param {string} key - The environment variable name.
+ * @returns {string} The variable's value, or undefined if unset.
+ */
 function envValue(key) {
   if (process.platform !== "win32") return process.env[key];
   const name = Object.keys(process.env).find(item => item.toLowerCase() === key.toLowerCase());
   return name ? process.env[name] : undefined;
 }
+/**
+ * Resolve the value of an automatic shell variable (HOME, PWD, PSHOME).
+ * @param {string} key - The variable name (case-insensitive).
+ * @param {string} cwd - The current working directory (value for PWD).
+ * @param {string} shell - The shell executable path (PSHOME is its directory).
+ * @returns {string} The variable value, or undefined if not an automatic variable.
+ */
 function auto(key, cwd, shell) {
   const name = key.toUpperCase();
   if (name === "HOME") return os.homedir();
   if (name === "PWD") return cwd;
   if (name === "PSHOME") return path.dirname(shell);
 }
+/**
+ * Expand environment-variable and automatic-variable references in a token
+ * (`${env:X}`, `$env:X`, `$HOME`/`$PWD`/`$PSHOME`) and then expand `~`.
+ * @param {string} text - The token to expand.
+ * @param {string} cwd - Current working directory for PWD/relative expansion.
+ * @param {string} shell - Shell executable path for PSHOME.
+ * @returns {string} The expanded token.
+ */
 function expand(text, cwd, shell) {
   const out = unquote(text).replace(/\$\{env:([^}]+)\}/gi, (_, key) => envValue(key) || "").replace(/\$env:([A-Za-z_][A-Za-z0-9_]*)/gi, (_, key) => envValue(key) || "").replace(/\$(HOME|PWD|PSHOME)(?=$|[\\/])/gi, (_, key) => auto(key, cwd, shell) || "");
   return home(out);
 }
+/**
+ * Strip a PowerShell provider qualifier from a path, returning the bare path
+ * only for the filesystem provider. Returns undefined for non-filesystem
+ * providers (e.g. `Env:`) and leaves drive-letter paths (`C:`) untouched.
+ * @param {string} text - The possibly provider-qualified path token.
+ * @returns {string} The filesystem path, or undefined if not a filesystem path.
+ */
 function provider(text) {
   const match = text.match(/^([A-Za-z]+)::(.*)$/);
   if (match) {
@@ -118,18 +179,42 @@ function provider(text) {
   if (prefix[1].length === 1) return text;
   return;
 }
+/**
+ * Detect whether a token contains dynamic/computed content (subexpressions,
+ * command substitution, or unresolved variables) that cannot be treated as a
+ * static path for permission scanning.
+ * @param {string} text - The token to inspect.
+ * @param {boolean} ps - Whether the active shell is PowerShell.
+ * @returns {boolean} True if the token is dynamic and not a literal path.
+ */
 function dynamic(text, ps) {
   if (text.startsWith("(") || text.startsWith("@(")) return true;
   if (text.includes("$(") || text.includes("${") || text.includes("`")) return true;
   if (ps) return /\$(?!env:)/i.test(text);
   return text.includes("$");
 }
+/**
+ * Return the literal (non-glob) prefix of a token up to the first glob
+ * metacharacter (`?`, `*`, `[`); returns undefined if the token begins with a
+ * glob character.
+ * @param {string} text - The token to inspect.
+ * @returns {string} The literal prefix, or undefined if it starts with a glob char.
+ */
 function prefix(text) {
   const match = /[?*[]/.exec(text);
   if (!match) return text;
   if (match.index === 0) return;
   return text.slice(0, match.index);
 }
+/**
+ * Extract the path-like arguments from a command's token list, skipping the
+ * command name, flags/switches, and special leading characters. For PowerShell
+ * it also follows value-taking parameters (e.g. `-Path`) to grab their value.
+ * @param {Array} list - The command's tokens (first entry is the command name).
+ * @param {boolean} ps - Whether the active shell is PowerShell.
+ * @param {boolean} cmd - Whether the active shell is cmd.exe (affects `/`-flag handling).
+ * @returns {Array} An Array of path argument strings.
+ */
 function pathArgs(list, ps, cmd = false) {
   if (!ps) {
     return list.slice(1).filter(item => !item.text.startsWith("-") && !(cmd && item.text.startsWith("/")) && !(list[0]?.text === "chmod" && item.text.startsWith("+"))).map(item => item.text);
@@ -152,10 +237,24 @@ function pathArgs(list, ps, cmd = false) {
   }
   return out;
 }
+/**
+ * Produce a metadata-sized preview of output, keeping the tail and prefixing
+ * "..." when the text exceeds MAX_METADATA_LENGTH.
+ * @param {string} text - The output text to preview.
+ * @returns {string} The original text or a truncated tail preview.
+ */
 function preview(text) {
   if (text.length <= MAX_METADATA_LENGTH) return text;
   return "...\n\n" + text.slice(-MAX_METADATA_LENGTH);
 }
+/**
+ * Keep only the tail of the output within the given line and byte budgets,
+ * truncating a final overlong line mid-character on a UTF-8 boundary.
+ * @param {string} text - The full output text.
+ * @param {number} maxLines - Maximum number of trailing lines to keep.
+ * @param {number} maxBytes - Maximum byte budget for the kept text.
+ * @returns {Object} An object {text, cut} where `cut` indicates truncation occurred.
+ */
 function tail(text, maxLines, maxBytes) {
   const lines = text.split("\n");
   if (lines.length <= maxLines && Buffer.byteLength(text, "utf-8") <= maxBytes) {
@@ -186,11 +285,26 @@ function tail(text, maxLines, maxBytes) {
     cut: true
   };
 }
+/**
+ * Parse a command string into a tree-sitter syntax tree using the bash or
+ * PowerShell grammar.
+ * @param {string} command - The raw command string.
+ * @param {boolean} ps - Whether to use the PowerShell grammar.
+ * @returns {Effect} An effect yielding the parsed tree-sitter tree.
+ */
 const parse = Effect.fn("ShellTool.parse")(function* (command, ps) {
   const tree = yield* Effect.promise(() => parser().then(p => (ps ? p.ps : p.bash).parse(command)));
   if (!tree) throw new Error("Failed to parse command");
   return tree;
 });
+/**
+ * Issue the permission prompts implied by a scan result: an external-directory
+ * prompt for out-of-tree file directories and a shell-command prompt for the
+ * command patterns.
+ * @param {Object} ctx - Tool execution context providing `ask`.
+ * @param {Object} scan - Scan result with `dirs`, `patterns`, and `always` Sets.
+ * @returns {Effect} An effect that resolves once all required prompts are answered.
+ */
 const ask = Effect.fn("ShellTool.ask")(function* (ctx, scan) {
   if (scan.dirs.size > 0) {
     const globs = Array.from(scan.dirs).map(dir => {
@@ -212,6 +326,16 @@ const ask = Effect.fn("ShellTool.ask")(function* (ctx, scan) {
     metadata: {}
   });
 });
+/**
+ * Build the ChildProcess spec to run a command: on Windows PowerShell it
+ * invokes the shell with `-Command`, otherwise it runs the command through the
+ * shell's `-c`/shell option, detaching on non-Windows platforms.
+ * @param {string} shell - The shell executable path.
+ * @param {string} command - The command string to execute.
+ * @param {string} cwd - The working directory.
+ * @param {Object} env - The environment variables.
+ * @returns {Object} A ChildProcess specification.
+ */
 function cmd(shell, command, cwd, env) {
   if (process.platform === "win32" && Shell.ps(shell)) {
     return ChildProcess.make(shell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command], {
@@ -229,6 +353,11 @@ function cmd(shell, command, cwd, env) {
     detached: process.platform !== "win32"
   });
 }
+/**
+ * Lazily initialize tree-sitter and load the bash and PowerShell grammars once,
+ * returning the two configured parsers.
+ * @returns {Promise<Object>} Resolves to {bash, ps} parser instances.
+ */
 const parser = lazy(async () => {
   const {
     Parser
@@ -251,18 +380,41 @@ const parser = lazy(async () => {
     ps
   };
 });
+/**
+ * The shell tool. Selects the configured shell, parses each command to find the
+ * file/path arguments and directories it touches (prompting for read/external
+ * access permissions), then runs the command with streamed output, byte/line
+ * truncation to a spill file, a configurable timeout, and abort handling.
+ * @type {Object}
+ */
 export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
   const config = yield* Config.Service;
   const spawner = yield* ChildProcessSpawner;
   const fs = yield* AppFileSystem.Service;
   const trunc = yield* Truncate.Service;
   const plugin = yield* Plugin.Service;
+  /**
+   * Convert a POSIX-style path to a Windows path using the shell's `cygpath`
+   * (for Git Bash / Cygwin style shells); returns undefined on failure.
+   * @param {string} shell - The shell executable path.
+   * @param {string} text - The POSIX path to convert.
+   * @returns {Effect} An effect yielding the normalized Windows path, or undefined.
+   */
   const cygpath = Effect.fn("ShellTool.cygpath")(function* (shell, text) {
     const lines = yield* spawner.lines(ChildProcess.make(shell, ["-lc", 'cygpath -w -- "$1"', "_", text])).pipe(Effect.catch(() => Effect.succeed([])));
     const file = lines[0]?.trim();
     if (!file) return;
     return AppFileSystem.normalizePath(file);
   });
+  /**
+   * Resolve a path token to an absolute filesystem path relative to `root`,
+   * handling Windows/POSIX shell quirks (cygpath for posix-shell `/` paths,
+   * Windows path normalization).
+   * @param {string} text - The path token to resolve.
+   * @param {string} root - The base directory to resolve relative paths against.
+   * @param {string} shell - The shell executable path.
+   * @returns {Effect} An effect yielding the resolved absolute path.
+   */
   const resolvePath = Effect.fn("ShellTool.resolvePath")(function* (text, root, shell) {
     if (process.platform === "win32") {
       if (Shell.posix(shell) && text.startsWith("/") && AppFileSystem.windowsPath(text) === text) {
@@ -273,6 +425,16 @@ export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
     }
     return path.resolve(root, text);
   });
+  /**
+   * Turn a single raw command argument into a resolved absolute path, returning
+   * undefined when the argument is dynamic, glob-leading, or a non-filesystem
+   * PowerShell provider path.
+   * @param {string} arg - The raw argument token.
+   * @param {string} cwd - The current working directory.
+   * @param {boolean} ps - Whether the active shell is PowerShell.
+   * @param {string} shell - The shell executable path.
+   * @returns {Effect} An effect yielding the resolved path, or undefined.
+   */
   const argPath = Effect.fn("ShellTool.argPath")(function* (arg, cwd, ps, shell) {
     const text = ps ? expand(arg, cwd, shell) : home(unquote(arg));
     const file = text && prefix(text);
@@ -281,6 +443,17 @@ export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
     if (!next) return;
     return yield* resolvePath(next, cwd, shell);
   });
+  /**
+   * Walk every command in the parse tree to build the permission scan: collects
+   * out-of-tree directories touched by file-mutating commands (into `dirs`) and
+   * the command source patterns plus their argv-prefix `always` rules.
+   * @param {Object} root - The tree-sitter root node of the parsed command.
+   * @param {string} cwd - The current working directory.
+   * @param {boolean} ps - Whether the active shell is PowerShell.
+   * @param {string} shell - The shell executable path.
+   * @param {Object} instance - The instance context (used to test in-tree paths).
+   * @returns {Effect} An effect yielding the scan {dirs, patterns, always} of Sets.
+   */
   const collect = Effect.fn("ShellTool.collect")(function* (root, cwd, ps, shell, instance) {
     const scan = {
       dirs: new Set(),
@@ -311,6 +484,13 @@ export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
     }
     return scan;
   });
+  /**
+   * Build the environment for the spawned command: the process environment
+   * merged with any extra variables contributed by the `shell.env` plugin hook.
+   * @param {Object} ctx - Tool execution context (sessionID, callID).
+   * @param {string} cwd - The working directory passed to the hook.
+   * @returns {Effect} An effect yielding the merged environment Object.
+   */
   const shellEnv = Effect.fn("ShellTool.shellEnv")(function* (ctx, cwd) {
     const extra = yield* plugin.trigger("shell.env", {
       cwd,
@@ -324,6 +504,16 @@ export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
       ...extra.env
     };
   });
+  /**
+   * Spawn and supervise the command process: streams combined stdout/stderr
+   * (publishing live previews via `ctx.metadata`), keeps a rolling buffer and
+   * spills overflow output to a truncation file, and races process exit against
+   * abort and timeout, killing the process on the latter two. Returns the final
+   * tool result with the (possibly truncated) output, exit code, and metadata.
+   * @param {Object} input - Run input: {shell, command, cwd, env, timeout, description}.
+   * @param {Object} ctx - Tool execution context (metadata, abort signal).
+   * @returns {Effect} An effect yielding the tool result {title, metadata, output}.
+   */
   const run = Effect.fn("ShellTool.run")(function* (input, ctx) {
     const limits = yield* trunc.limits();
     const keep = limits.maxBytes * 2;
@@ -458,6 +648,10 @@ export const ShellTool = Tool.define(ShellID.ToolID, Effect.gen(function* () {
       output
     };
   });
+  // Factory invoked per use: resolves the configured shell, renders its prompt,
+  // and returns the tool definition (description, parameters, execute). The
+  // execute step resolves the workdir, validates the timeout, runs the
+  // permission scan, and then runs the command.
   return () => Effect.gen(function* () {
     const cfg = yield* config.get();
     const shell = Shell.acceptable(cfg.shell);

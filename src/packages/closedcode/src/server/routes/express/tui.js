@@ -1,6 +1,8 @@
-// Express route group for the instance /tui endpoints (TUI event publishing and control queue).
-// The module-level AsyncQueues and exported helpers (nextTuiRequest, submitTuiRequest,
-// submitTuiResponse, callTui, TuiRequest) are shared with the rest of the system.
+/**
+ * @file Express route group for the instance /tui endpoints (TUI event publishing and control queue).
+ * The module-level AsyncQueues and exported helpers (nextTuiRequest, submitTuiRequest,
+ * submitTuiResponse, callTui, TuiRequest) are shared with the rest of the system.
+ */
 import express from "express";
 import z from "zod";
 import { Bus } from "#bus/index.js";
@@ -13,23 +15,46 @@ import { validator } from "../../express/validate.js";
 import { errors } from "../../express/errors.js";
 import { runRequest } from "../instance/trace.js";
 
+// Zod schema for a queued TUI request: the request path plus its raw JSON body.
 export const TuiRequest = z.object({
   path: z.string(),
   body: z.any()
 });
 
+// Queue of inbound TUI requests awaiting a connected TUI to pull them.
 const request = new AsyncQueue();
+// Queue of TUI responses awaiting the originating caller.
 const response = new AsyncQueue();
 
+/**
+ * Pulls the next pending TUI request from the request queue.
+ * @returns {Promise<Object>} Promise resolving to the next queued TUI request.
+ */
 export function nextTuiRequest() {
   return request.next();
 }
+/**
+ * Enqueues a TUI request for a connected TUI to pull.
+ * @param {Object} body - The TUI request to enqueue (`{path, body}`).
+ * @returns {void}
+ */
 export function submitTuiRequest(body) {
   request.push(body);
 }
+/**
+ * Enqueues a TUI response for the originating caller waiting in callTui.
+ * @param {*} body - The response payload to enqueue.
+ * @returns {void}
+ */
 export function submitTuiResponse(body) {
   response.push(body);
 }
+/**
+ * Forwards a request to the TUI and waits for its matching response.
+ * Reads the JSON body from the context, enqueues a TUI request, then awaits the next response.
+ * @param {Object} ctx - Request context exposing `req.json()` and `req.path`.
+ * @returns {Promise<*>} Promise resolving to the TUI's response payload.
+ */
 export async function callTui(ctx) {
   const body = await ctx.req.json();
   submitTuiRequest({
@@ -42,6 +67,11 @@ export async function callTui(ctx) {
 // Adapter shaping an Express req into the context surface that trace.js'
 // requestAttributes() reads (method, url, param()). The TUI routes carry no route
 // params, so param() returns an empty object.
+/**
+ * Adapts an Express request into the minimal context shape trace.js expects.
+ * @param {Object} req - Express request object.
+ * @returns {Object} Context with `req.method`, `req.url`, and a `req.param()` accessor.
+ */
 function traceContext(req) {
   return {
     req: {
@@ -52,6 +82,13 @@ function traceContext(req) {
   };
 }
 
+/**
+ * Builds the Express router for the instance /tui endpoints: publishing TUI events
+ * (prompt append/submit/clear, open dialogs, toasts, command execution, session select)
+ * and the /control request/response queue bridge.
+ * @param {Object} registry - OpenAPI operation registry; route metadata is registered against it when present.
+ * @returns {Object} Configured Express Router.
+ */
 export function TuiRoutes(registry) {
   const router = express.Router();
 

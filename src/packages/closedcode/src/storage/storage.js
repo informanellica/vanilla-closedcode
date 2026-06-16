@@ -7,9 +7,15 @@ import { AppFileSystem } from "core/filesystem";
 import { Effect, Exit, Layer, Option, RcMap, Schema, Context, TxReentrantLock } from "effect";
 import { NonNegativeInt } from "#util/schema.js";
 import { Git } from "#git/index.js";
+/**
+ * @file File-backed JSON storage service. Reads/writes/lists keyed JSON files
+ * under the data directory with per-file read/write locking, and runs the
+ * one-time on-disk layout migrations on first use.
+ */
 const log = Log.create({
   service: "storage"
 });
+/** Error thrown when a requested storage key does not exist. */
 export const NotFoundError = NamedError.create("NotFoundError", z.object({
   message: z.string()
 }));
@@ -39,10 +45,23 @@ const decodeRoot = Schema.decodeUnknownOption(RootFile);
 const decodeSession = Schema.decodeUnknownOption(SessionFile);
 const decodeMessage = Schema.decodeUnknownOption(MessageFile);
 const decodeSummary = Schema.decodeUnknownOption(SummaryFile);
+/** Effect Context service tag for the JSON storage service. */
 export class Service extends Context.Service()("@closedcode/Storage") {}
+/**
+ * Resolve a storage key (an array of path segments) to its JSON file path.
+ * @param {string} dir - The storage root directory.
+ * @param {Array<string>} key - The key segments.
+ * @returns {string} The absolute path to the corresponding .json file.
+ */
 function file(dir, key) {
   return path.join(dir, ...key) + ".json";
 }
+/**
+ * Determine whether an error represents a missing file/resource (ENOENT or a
+ * NotFound tag).
+ * @param {*} err - The error to inspect.
+ * @returns {boolean} True if the error indicates the resource is missing.
+ */
 function missing(err) {
   if (!err || typeof err !== "object") return false;
   if ("code" in err && err.code === "ENOENT") return true;
@@ -51,10 +70,22 @@ function missing(err) {
   }
   return false;
 }
+/**
+ * Parse the migration marker file's contents into the next migration index,
+ * defaulting to 0 when invalid.
+ * @param {string} text - The raw marker file contents.
+ * @returns {number} The parsed migration index, or 0.
+ */
 function parseMigration(text) {
   const value = Number.parseInt(text, 10);
   return Number.isNaN(value) ? 0 : value;
 }
+/**
+ * Ordered on-disk storage layout migrations, each an Effect of (dir, fs, git).
+ * Migration 1 re-keys legacy per-project storage by git root commit; migration
+ * 2 splits session summary diffs into their own files.
+ * @type {Array<Function>}
+ */
 const MIGRATIONS = [Effect.fn("Storage.migration.1")(function* (dir, fs, git) {
   const project = path.resolve(dir, "../project");
   if (!(yield* fs.isDir(project))) return;
@@ -168,6 +199,11 @@ const MIGRATIONS = [Effect.fn("Storage.migration.1")(function* (dir, fs, git) {
     }, null, 2));
   }
 })];
+/**
+ * Layer building the JSON storage service: runs pending layout migrations once
+ * and exposes per-file remove/read/update/write/list operations guarded by
+ * per-key read/write locks.
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const git = yield* Git.Service;
@@ -198,24 +234,66 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       dir
     };
   }));
+  /**
+   * Build a NotFoundError effect for a target path.
+   * @param {string} target - The missing resource path.
+   * @returns {Effect} A failing effect carrying a NotFoundError.
+   */
   const fail = target => Effect.fail(new NotFoundError({
     message: `Resource not found: ${target}`
   }));
+  /**
+   * Translate a missing-file failure in the body into a NotFoundError.
+   * @param {string} target - The resource path (for the error message).
+   * @param {Effect} body - The effect to run.
+   * @returns {Effect} The body, with missing errors mapped to NotFoundError.
+   */
   const wrap = (target, body) => body.pipe(Effect.catchIf(missing, () => fail(target)));
+  /**
+   * Write a value to a JSON file, creating parent directories as needed.
+   * @param {string} target - The destination file path.
+   * @param {*} content - The value to serialize as pretty JSON.
+   * @returns {Effect} Effect that completes once the file is written.
+   */
   const writeJson = Effect.fnUntraced(function* (target, content) {
     yield* fs.writeWithDirs(target, JSON.stringify(content, null, 2));
   });
+  /**
+   * Resolve a key to its file path and per-file lock, then run a callback with
+   * both, within a fresh scope.
+   * @param {Array<string>} key - The storage key segments.
+   * @param {Function} fn - Receives (target, lock) and returns an effect.
+   * @returns {Effect} The callback's effect.
+   */
   const withResolved = (key, fn) => Effect.scoped(Effect.gen(function* () {
     const target = file((yield* state).dir, key);
     return yield* fn(target, yield* RcMap.get(locks, target));
   }));
+  /**
+   * Delete the JSON file for a key (no-op if it does not exist), under a write lock.
+   * @param {Array<string>} key - The storage key segments.
+   * @returns {Effect} Effect that completes once the file is removed.
+   */
   const remove = Effect.fn("Storage.remove")(function* (key) {
     yield* withResolved(key, (target, rw) => TxReentrantLock.withWriteLock(rw, fs.remove(target).pipe(Effect.catchIf(missing, () => Effect.void))));
   });
+  /**
+   * Read and parse the JSON value for a key, under a read lock; fails with
+   * NotFoundError if absent.
+   * @param {Array<string>} key - The storage key segments.
+   * @returns {Effect} Effect resolving to the parsed value.
+   */
   const read = key => Effect.gen(function* () {
     const value = yield* withResolved(key, (target, rw) => TxReentrantLock.withReadLock(rw, wrap(target, fs.readJson(target))));
     return value;
   });
+  /**
+   * Read, mutate in place via the callback, and write back the JSON value for
+   * a key, under a write lock; fails with NotFoundError if absent.
+   * @param {Array<string>} key - The storage key segments.
+   * @param {Function} fn - Mutator invoked with the parsed content.
+   * @returns {Effect} Effect resolving to the updated content.
+   */
   const update = (key, fn) => Effect.gen(function* () {
     const value = yield* withResolved(key, (target, rw) => TxReentrantLock.withWriteLock(rw, Effect.gen(function* () {
       const content = yield* wrap(target, fs.readJson(target));
@@ -225,9 +303,21 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     })));
     return value;
   });
+  /**
+   * Write a JSON value for a key, under a write lock.
+   * @param {Array<string>} key - The storage key segments.
+   * @param {*} content - The value to store.
+   * @returns {Effect} Effect that completes once the value is written.
+   */
   const write = (key, content) => Effect.gen(function* () {
     yield* withResolved(key, (target, rw) => TxReentrantLock.withWriteLock(rw, writeJson(target, content)));
   });
+  /**
+   * List all keys stored under a key prefix, sorted lexicographically. Returns
+   * an empty list if the prefix directory does not exist.
+   * @param {Array<string>} prefix - The key prefix segments.
+   * @returns {Effect} Effect resolving to an Array of key segment arrays.
+   */
   const list = Effect.fn("Storage.list")(function* (prefix) {
     const dir = (yield* state).dir;
     const cwd = path.join(dir, ...prefix);
@@ -245,5 +335,6 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     list
   });
 }));
+/** Storage layer with its default dependencies (filesystem, git) provided. */
 export const defaultLayer = layer.pipe(Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Git.defaultLayer));
 export * as Storage from "./storage.js";

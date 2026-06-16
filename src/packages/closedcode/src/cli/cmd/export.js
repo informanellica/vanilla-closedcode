@@ -1,3 +1,4 @@
+/** @file CLI `export` command: dumps a session (info + messages) as JSON, optionally redacting sensitive data. */
 import { Session } from "#session/session.js";
 import { SessionID } from "../../session/schema.js";
 import { effectCmd, fail } from "../effect-cmd.js";
@@ -5,21 +6,47 @@ import { UI } from "../ui.js";
 import * as prompts from "@clack/prompts";
 import { EOL } from "os";
 import { Effect } from "effect";
+/**
+ * Replace a non-empty string value with a redaction placeholder.
+ * @param {string} kind - Category label for the redacted value (e.g. "text", "file-path").
+ * @param {string} id - Identifier (typically part/message id) used to scope the placeholder.
+ * @param {string} value - The original string value.
+ * @returns {string} A `[redacted:kind:id]` placeholder when non-empty, otherwise the original value.
+ */
 function redact(kind, id, value) {
   return value.trim() ? `[redacted:${kind}:${id}]` : value;
 }
+/**
+ * Replace a non-empty object payload with a redaction marker object.
+ * @param {string} kind - Category label for the redacted payload.
+ * @param {string} id - Identifier used to scope the marker.
+ * @param {Object} value - The original object payload (may be null/undefined).
+ * @returns {Object} A `{redacted: "kind:id"}` marker when the object has keys, otherwise the original value.
+ */
 function data(kind, id, value) {
   if (!value) return value;
   return Object.keys(value).length ? {
     redacted: `${kind}:${id}`
   } : value;
 }
+/**
+ * Redact the `.value` text of a file-text span while keeping its other fields.
+ * @param {string} id - Identifier used to scope the redaction.
+ * @param {Object} value - Span object containing a `value` text field.
+ * @returns {Object} The span with its text value redacted.
+ */
 function span(id, value) {
   return {
     ...value,
     value: redact("file-text", id, value.value)
   };
 }
+/**
+ * Redact the file path and patch text of each diff entry.
+ * @param {string} kind - Category prefix for the redacted diff fields.
+ * @param {Array} diffs - List of diff entries each with `file` and `patch` fields.
+ * @returns {Array} The diffs with redacted `file` and `patch` fields (or undefined if no diffs).
+ */
 function diff(kind, diffs) {
   return diffs?.map((item, i) => ({
     ...item,
@@ -27,6 +54,11 @@ function diff(kind, diffs) {
     patch: redact(`${kind}-patch`, String(i), item.patch)
   }));
 }
+/**
+ * Redact the source descriptor of a file part, handling symbol, resource, and plain-file sources.
+ * @param {Object} part - A file part with an optional `source` descriptor and an `id`.
+ * @returns {Object} The redacted source descriptor (or the original falsy source).
+ */
 function source(part) {
   if (!part.source) return part.source;
   if (part.source.type === "symbol") {
@@ -51,6 +83,11 @@ function source(part) {
     text: span(part.id, part.source.text)
   };
 }
+/**
+ * Redact the URL, filename, and source of a file part.
+ * @param {Object} part - A file part with `url`, optional `filename`, `source`, and `id`.
+ * @returns {Object} The part with sensitive file fields redacted.
+ */
 function filepart(part) {
   return {
     ...part,
@@ -59,6 +96,11 @@ function filepart(part) {
     source: source(part)
   };
 }
+/**
+ * Redact a single message part according to its `type` (text, reasoning, file, subtask, tool, patch, snapshot, step-*, agent).
+ * @param {Object} part - A message part with a `type` discriminator and an `id`.
+ * @returns {Object} The part with its type-specific sensitive fields redacted (unknown types returned unchanged).
+ */
 function part(part) {
   switch (part.type) {
     case "text":
@@ -141,7 +183,13 @@ function part(part) {
       return part;
   }
 }
+/** Alias to the `part` redactor, used inside `sanitize` where the parameter named `part` would shadow it. */
 const partFn = part;
+/**
+ * Redact all sensitive fields of an exported session: info (title, directory, summary, revert) and every message/part.
+ * @param {Object} data - Export payload `{info, messages}` for a session.
+ * @returns {Object} A deep copy of the export payload with sensitive fields redacted.
+ */
 function sanitize(data) {
   return {
     info: {
@@ -179,6 +227,7 @@ function sanitize(data) {
     }))
   };
 }
+/** `export [sessionID]` command definition: exports a session as JSON to stdout, with an optional `--sanitize` flag. */
 export const ExportCommand = effectCmd({
   command: "export [sessionID]",
   describe: "export session data as JSON",
@@ -193,6 +242,11 @@ export const ExportCommand = effectCmd({
     return yield* run(args);
   })
 });
+/**
+ * Resolve the target session (prompting for selection when none is given), load its messages, and print JSON.
+ * @param {Object} args - Parsed CLI args with optional `sessionID` and `sanitize` boolean.
+ * @returns {Effect} An Effect that writes the (optionally sanitized) session JSON to stdout.
+ */
 const run = Effect.fn("Cli.export.body")(function* (args) {
   const svc = yield* Session.Service;
   let sessionID = args.sessionID ? SessionID.make(args.sessionID) : undefined;

@@ -1,10 +1,12 @@
-// Message timeline for the vanilla session view. Renders the plain message model
-// { role, parts:[{type:"text"|"reasoning"|"tool"|"file", ...}] } into RICH LINES
-// (styled segments, richtext.js): assistant text goes through the markdown
-// renderer (bold/code/lists/…), user text is a plain "›"-marked bubble, reasoning
-// is dim, tool parts are a status-colored bullet. Scroll is follow + absolute
-// topIndex (appends below don't shift a scrolled view); draw() is pure (no signal
-// writes). Width-aware / CJK-safe throughout.
+/**
+ * @file Message timeline for the vanilla session view. Renders the plain message
+ * model { role, parts:[{type:"text"|"reasoning"|"tool"|"file", ...}] } into RICH
+ * LINES (styled segments, richtext.js): assistant text goes through the markdown
+ * renderer (bold/code/lists/…), user text is a plain "›"-marked bubble, reasoning
+ * is dim, tool parts are a status-colored bullet. Scroll is follow + absolute
+ * topIndex (appends below don't shift a scrolled view); draw() is pure (no signal
+ * writes). Width-aware / CJK-safe throughout.
+ */
 import { createSignal } from "../runtime/reactivity.js";
 import { truncate } from "../runtime/text.js";
 import { defaultTheme } from "./theme.js";
@@ -16,7 +18,13 @@ import { langFromPath } from "./syntax.js";
 
 const TOOL_DETAIL_CAP = 8; // max detail (diff/output) lines shown per tool part
 
-// One message -> rich display lines. opts.split renders tool diffs side-by-side.
+/**
+ * Convert one message into an array of rich display lines.
+ * @param {Object} msg - The message ({ role, parts }) to render.
+ * @param {number} width - Available render width in columns.
+ * @param {Object} opts - Render options; opts.split renders tool diffs side-by-side.
+ * @returns {Array} Array of rich lines (each an array of styled segments).
+ */
 function messageLines(msg, width, opts = {}) {
   const out = [];
   for (const part of msg.parts ?? []) {
@@ -58,8 +66,13 @@ function messageLines(msg, width, opts = {}) {
   return out;
 }
 
-// Flatten all messages to rich lines, with a blank separator between them.
-// opts.split is forwarded to each message's tool-diff rendering.
+/**
+ * Flatten all messages to rich lines, with a blank separator between them.
+ * @param {Array} messages - The messages to render.
+ * @param {number} width - Available render width in columns.
+ * @param {Object} opts - Render options; opts.split is forwarded to each message's tool-diff rendering.
+ * @returns {Array} Flat array of rich lines (each an array of styled segments).
+ */
 export function buildTimelineLines(messages, width, opts = {}) {
   const lines = [];
   messages.forEach((m, i) => {
@@ -69,6 +82,12 @@ export function buildTimelineLines(messages, width, opts = {}) {
   return lines;
 }
 
+/**
+ * Create a scrollable timeline controller for the session message view.
+ * @param {Array|Function} messages - The messages array, or a getter returning it.
+ * @param {Object} opts - Options: theme (Theme), diffView (Function returning "split"|other).
+ * @returns {Object} Controller with { follow, pin, offset, scrollBy, handleKey, draw }.
+ */
 export function createTimeline(messages, opts = {}) {
   const theme = opts.theme ?? defaultTheme;
   const getMessages = typeof messages === "function" ? messages : () => messages;
@@ -80,13 +99,24 @@ export function createTimeline(messages, opts = {}) {
   const curStart = () => (follow() ? lastMaxStart : Math.min(Math.max(0, topIndex()), lastMaxStart));
   const offset = () => Math.max(0, lastMaxStart - curStart());
 
+  /** Re-enable follow mode so the view sticks to the newest content. */
   function pin() { setFollow(true); }
+  /**
+   * Scroll the view by a number of lines; scrolling to the bottom re-pins follow.
+   * @param {number} deltaLines - Positive scrolls down, negative scrolls up.
+   * @returns {void}
+   */
   function scrollBy(deltaLines) {
     if (lastMaxStart <= 0) { setFollow(true); return; }
     const next = curStart() + deltaLines;
     if (next >= lastMaxStart) { setFollow(true); return; }
     setFollow(false); setTopIndex(Math.max(0, next));
   }
+  /**
+   * Handle a key by name for timeline scrolling.
+   * @param {string} name - Key name (e.g. "PAGE_UP", "PAGE_DOWN").
+   * @returns {boolean} True if the key was handled, false otherwise.
+   */
   function handleKey(name) {
     switch (name) {
       case "PAGE_UP": scrollBy(-lastViewH); return true;
@@ -95,6 +125,11 @@ export function createTimeline(messages, opts = {}) {
     }
   }
 
+  /**
+   * Draw the visible slice of the timeline into the region (pure: no signal writes).
+   * @param {Object} region - Render region with { width, height } and a drawing surface.
+   * @returns {Object} View state { start, maxStart, follow, offset }.
+   */
   function draw(region) {
     const h = Math.max(1, region.height);
     const lines = buildTimelineLines(getMessages(), region.width, { split: isSplit() });

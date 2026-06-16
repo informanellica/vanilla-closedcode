@@ -1,3 +1,4 @@
+/** @file Session revert/unrevert: rolls the workspace back to a chosen message/part via filesystem snapshots, recording the resulting diff, and prunes the reverted messages on cleanup. */
 import { Effect, Layer, Context, Schema } from "effect";
 import { Bus } from "../bus/index.js";
 import { Snapshot } from "../snapshot/index.js";
@@ -14,6 +15,7 @@ import { SessionSummary } from "./summary.js";
 const log = Log.create({
   service: "session.revert"
 });
+/** Input schema for a revert request: the session plus the message (and optional part) to revert back to. */
 export const RevertInput = Schema.Struct({
   sessionID: SessionID,
   messageID: MessageID,
@@ -21,7 +23,9 @@ export const RevertInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Effect service tag for the session revert service. */
 export class Service extends Context.Service()("@closedcode/SessionRevert") {}
+/** Layer that builds the SessionRevert service (revert / unrevert / cleanup operations). */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const sessions = yield* Session.Service;
   const snap = yield* Snapshot.Service;
@@ -30,6 +34,17 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const summary = yield* SessionSummary.Service;
   const state = yield* SessionRunState.Service;
   const sync = yield* SyncEvent.Service;
+  /**
+   * Reverts the session's workspace back to the given message/part. Captures a
+   * snapshot of the current state (so it can be undone), restores the prior
+   * snapshot and reverses intervening patches, computes the resulting file diff,
+   * persists it, and records the revert point on the session.
+   * @param {Object} input - Revert target.
+   * @param {string} input.sessionID - Session to revert.
+   * @param {string} input.messageID - Message to revert back to.
+   * @param {string} input.partID - Optional part within the message to revert to.
+   * @returns {*} An Effect yielding the updated session info.
+   */
   const revert = Effect.fn("SessionRevert.revert")(function* (input) {
     yield* state.assertNotBusy(input.sessionID);
     const all = yield* sessions.messages({
@@ -84,6 +99,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return yield* sessions.get(input.sessionID);
   });
+  /**
+   * Undoes a prior revert by restoring the snapshot captured at revert time and
+   * clearing the recorded revert point. No-op if the session is not reverted.
+   * @param {Object} input - The session to unrevert.
+   * @param {string} input.sessionID - Session to unrevert.
+   * @returns {*} An Effect yielding the updated session info.
+   */
   const unrevert = Effect.fn("SessionRevert.unrevert")(function* (input) {
     log.info("unreverting", input);
     yield* state.assertNotBusy(input.sessionID);
@@ -93,6 +115,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     yield* sessions.clearRevert(input.sessionID);
     return yield* sessions.get(input.sessionID);
   });
+  /**
+   * Finalizes a pending revert by permanently removing messages (and trailing
+   * parts) after the revert point, then clears the revert marker. Called before
+   * a session resumes so the reverted-away history is discarded.
+   * @param {Object} session - Session info carrying an optional `revert` marker.
+   * @returns {*} An Effect that completes once messages/parts are pruned.
+   */
   const cleanup = Effect.fn("SessionRevert.cleanup")(function* (session) {
     if (!session.revert) return;
     const sessionID = session.id;

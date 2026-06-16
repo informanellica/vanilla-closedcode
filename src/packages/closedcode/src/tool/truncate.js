@@ -1,3 +1,4 @@
+/** @file Truncate service: caps oversized tool output to line/byte limits, persists the full text to a retention-managed directory, and periodically cleans up expired files. */
 import { NodePath } from "@effect/platform-node";
 import { Cause, Duration, Effect, Layer, Option, Schedule, Context } from "effect";
 import path from "path";
@@ -16,13 +17,29 @@ export const MAX_LINES = 2000;
 export const MAX_BYTES = 50 * 1024;
 export const DIR = TRUNCATION_DIR;
 export const GLOB = path.join(TRUNCATION_DIR, "*");
+/**
+ * Determines whether the given agent is allowed to use the task tool, used to
+ * decide which truncation hint to show (delegate to an explore agent vs. read directly).
+ * @param {Object} agent - The agent whose permission rules to evaluate; may be undefined.
+ * @returns {boolean} True if the agent has a non-deny task permission, otherwise false.
+ */
 function hasTaskTool(agent) {
   if (!agent?.permission) return false;
   return evaluate("task", "*", agent.permission).action !== "deny";
 }
+/** Effect service tag for the Truncate service. */
 export class Service extends Context.Service()("@closedcode/Truncate") {}
+/**
+ * Layer constructing the Truncate service. Provides cleanup, write, output,
+ * and limits operations, and forks a background fiber that purges expired
+ * truncation files once per hour (after a 1-minute startup delay).
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
+  /**
+   * Removes truncation output files (`tool_*`) older than the retention window.
+   * @returns {Effect} An Effect that deletes expired files, tolerating read/remove errors.
+   */
   const cleanup = Effect.fn("Truncate.cleanup")(function* () {
     const cutoff = Identifier.timestamp(Identifier.create("tool", "ascending", Date.now() - Duration.toMillis(RETENTION)));
     const entries = yield* fs.readDirectory(TRUNCATION_DIR).pipe(Effect.map(all => all.filter(name => name.startsWith("tool_"))), Effect.catch(() => Effect.succeed([])));
@@ -31,12 +48,22 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       yield* fs.remove(path.join(TRUNCATION_DIR, entry)).pipe(Effect.catch(() => Effect.void));
     }
   });
+  /**
+   * Writes the full (untruncated) text to a new file in the truncation directory.
+   * @param {string} text - The full content to persist.
+   * @returns {Effect} An Effect yielding the absolute path of the written file.
+   */
   const write = Effect.fn("Truncate.write")(function* (text) {
     const file = path.join(TRUNCATION_DIR, ToolID.ascending());
     yield* fs.ensureDir(TRUNCATION_DIR).pipe(Effect.orDie);
     yield* fs.writeFileString(file, text).pipe(Effect.orDie);
     return file;
   });
+  /**
+   * Resolves the effective max line/byte limits, preferring configured
+   * `tool_output` values and falling back to MAX_LINES / MAX_BYTES.
+   * @returns {Effect} An Effect yielding `{maxLines: number, maxBytes: number}`.
+   */
   const limits = Effect.fn("Truncate.limits")(function* () {
     const configSvc = yield* Effect.serviceOption(Config.Service);
     if (Option.isNone(configSvc)) return {
@@ -49,6 +76,16 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       maxBytes: cfg?.tool_output?.max_bytes ?? MAX_BYTES
     };
   });
+  /**
+   * Truncates text to the line and byte limits when it exceeds either. If
+   * within limits, returns it untouched; otherwise keeps a head or tail
+   * preview, persists the full text to disk, and appends a hint pointing to
+   * the saved file (tailored to whether the agent can delegate via the task tool).
+   * @param {string} text - The tool output to potentially truncate.
+   * @param {Object} options - Optional overrides: maxLines, maxBytes, and direction ("head" or "tail").
+   * @param {Object} agent - The current agent, used to choose the truncation hint wording.
+   * @returns {Effect} An Effect yielding `{content: string, truncated: boolean, outputPath?: string}`.
+   */
   const output = Effect.fn("Truncate.output")(function* (text, options = {}, agent) {
     const resolved = yield* limits();
     const maxLines = options.maxLines ?? resolved.maxLines;

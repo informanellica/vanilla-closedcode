@@ -1,3 +1,4 @@
+/** @file Tool registry service: assembles built-in, plugin, and config-directory tools and exposes them (filtered per model/agent) to the session. */
 import { PlanExitTool } from "./plan.js";
 import { Session } from "#session/session.js";
 import { QuestionTool } from "./question.js";
@@ -47,7 +48,15 @@ import { Permission } from "#permission/index.js";
 const log = Log.create({
   service: "tool.registry"
 });
+/** Effect Context service tag for the tool registry. */
 export class Service extends Context.Service()("@closedcode/ToolRegistry") {}
+/**
+ * Layer that constructs the ToolRegistry service. It discovers custom tools
+ * (from `tool(s)/*.js|ts` in config directories and from plugins), initializes
+ * the built-in tools, and exposes `ids`, `all`, `named`, and `tools` for
+ * resolving the active tool set for a given model/agent.
+ * @type {Object}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const plugin = yield* Plugin.Service;
@@ -74,6 +83,15 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
   const agent = yield* Agent.Service;
   const state = yield* InstanceState.make(Effect.fn("ToolRegistry.state")(function* (ctx) {
     const custom = [];
+    /**
+     * Adapt a plugin/config tool definition (raw Zod arg shape + async execute)
+     * into a framework tool: it wraps the Zod object in a Schema.declare with a
+     * ZodOverride annotation, runs the plugin's execute within the instance
+     * context, and truncates oversized output (recording the spill file path).
+     * @param {string} id - The tool id to register.
+     * @param {Object} def - Plugin tool definition with `args`, `description`, and `execute`.
+     * @returns {Object} A framework tool object with id, parameters, description, and execute.
+     */
     function fromPlugin(id, def) {
       // Plugin tools define their args as a raw Zod shape. Wrap the
       // derived Zod object in a `Schema.declare` so it slots into the
@@ -173,13 +191,28 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       read: tool.read
     };
   }));
+  /**
+   * Return every registered tool (built-in followed by custom) for the current
+   * instance.
+   * @returns {Effect} An effect yielding an Array of tool objects.
+   */
   const all = Effect.fn("ToolRegistry.all")(function* () {
     const s = yield* InstanceState.get(state);
     return [...s.builtin, ...s.custom];
   });
+  /**
+   * Return the ids of every registered tool.
+   * @returns {Effect} An effect yielding an Array of tool id strings.
+   */
   const ids = Effect.fn("ToolRegistry.ids")(function* () {
     return (yield* all()).map(tool => tool.id);
   });
+  /**
+   * Build the dynamic description appended to the skill tool, listing the
+   * skills available to the given agent (or a no-skills message).
+   * @param {*} agent - The agent for which to enumerate available skills.
+   * @returns {Effect} An effect yielding the description string.
+   */
   const describeSkill = Effect.fn("ToolRegistry.describeSkill")(function* (agent) {
     const list = yield* skill.available(agent);
     if (list.length === 0) return "No skills are currently available.";
@@ -187,6 +220,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       verbose: false
     })].join("\n");
   });
+  /**
+   * Build the dynamic description appended to the task tool, listing the
+   * non-primary subagent types the given agent is permitted to dispatch to.
+   * @param {Object} agent - The dispatching agent (provides `permission`).
+   * @returns {Effect} An effect yielding the description string.
+   */
   const describeTask = Effect.fn("ToolRegistry.describeTask")(function* (agent) {
     const items = (yield* agents.list()).filter(item => item.mode !== "primary");
     const filtered = items.filter(item => Permission.evaluate("task", item.name, agent.permission).action !== "deny");
@@ -194,6 +233,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     const description = list.map(item => `- ${item.name}: ${item.description ?? "This subagent should only be called manually by the user."}`).join("\n");
     return ["Available agent types and the tools they have access to:", description].join("\n");
   });
+  /**
+   * Resolve the tool set exposed for a given model/agent: filters tools by
+   * model capability (Exa websearch, gpt apply-patch vs edit/write), then for
+   * each tool fires the `tool.definition` plugin hook and merges in the dynamic
+   * task/skill descriptions.
+   * @param {Object} input - Selection input with `modelID` and `agent`.
+   * @returns {Effect} An effect yielding an Array of resolved tool objects (id, description, parameters, execute, formatValidationError).
+   */
   const tools = Effect.fn("ToolRegistry.tools")(function* (input) {
     const filtered = (yield* all()).filter(tool => {
       if (tool.id === WebSearchTool.id) return Flag.CLOSEDCODE_ENABLE_EXA;
@@ -222,6 +269,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       concurrency: "unbounded"
     });
   });
+  /**
+   * Return the specially-referenced built-in tools (task and read) that other
+   * subsystems need direct access to.
+   * @returns {Effect} An effect yielding {task, read} tool objects.
+   */
   const named = Effect.fn("ToolRegistry.named")(function* () {
     const s = yield* InstanceState.get(state);
     return {
@@ -236,5 +288,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     tools
   });
 }));
+/**
+ * The ToolRegistry layer wired with all of its default dependency layers
+ * (config, plugin, question, todo, skill, agent, session, provider, LSP, etc.).
+ * @type {Object}
+ */
 export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(Config.defaultLayer), Layer.provide(Plugin.defaultLayer), Layer.provide(Question.defaultLayer), Layer.provide(Todo.defaultLayer), Layer.provide(Skill.defaultLayer), Layer.provide(Agent.defaultLayer), Layer.provide(Session.defaultLayer), Layer.provide(Provider.defaultLayer), Layer.provide(LSP.defaultLayer), Layer.provide(Instruction.defaultLayer), Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Bus.layer), Layer.provide(FetchHttpClient.layer), Layer.provide(Format.defaultLayer), Layer.provide(CrossSpawnSpawner.defaultLayer), Layer.provide(Ripgrep.defaultLayer), Layer.provide(Truncate.defaultLayer)));
 export * as ToolRegistry from "./registry.js";

@@ -1,3 +1,7 @@
+/**
+ * @file Assembles the Effect HttpApi definitions for ClosedCode: composes the root,
+ * event, instance, and PTY-connect API groups into the top-level ClosedCodeHttpApi.
+ */
 import { Schema } from "effect";
 import { HttpApi } from "effect/unstable/httpapi";
 import { BusEvent } from "#bus/bus-event.js";
@@ -27,6 +31,9 @@ const EventSchema = Schema.Union(BusEvent.effectPayloads()).annotate({
   identifier: "Event"
 });
 const SyncEventSchemas = SyncEvent.effectPayloads();
+/** Root (control-plane) HttpApi: control + global route groups. */
 export const RootHttpApi = HttpApi.make("closedcode-root").addHttpApi(ControlApi).addHttpApi(GlobalApi);
+/** Instance HttpApi: all per-instance route groups (config, file, session, sync, etc.). */
 export const InstanceHttpApi = HttpApi.make("closedcode-instance").addHttpApi(ConfigApi).addHttpApi(ExperimentalApi).addHttpApi(FileApi).addHttpApi(InstanceApi).addHttpApi(McpApi).addHttpApi(ProjectApi).addHttpApi(PtyApi).addHttpApi(QuestionApi).addHttpApi(PermissionApi).addHttpApi(ProviderApi).addHttpApi(SessionApi).addHttpApi(SyncApi).addHttpApi(V2Api).addHttpApi(TuiApi).addHttpApi(WorkspaceApi);
+/** Top-level HttpApi combining root, event stream, instance, and PTY-connect APIs, with shared Event/SyncEvent schemas annotated. */
 export const ClosedCodeHttpApi = HttpApi.make("closedcode").addHttpApi(RootHttpApi).addHttpApi(EventApi).addHttpApi(InstanceHttpApi).addHttpApi(PtyConnectApi).annotate(HttpApi.AdditionalSchemas, [EventSchema, ...SyncEventSchemas]);

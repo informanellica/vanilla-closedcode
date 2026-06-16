@@ -1,3 +1,8 @@
+/**
+ * @file LSP service: manages language-server client connections per file/root,
+ * routes textDocument requests (hover, definition, references, symbols, call
+ * hierarchy) to the matching clients, and exposes their diagnostics/status.
+ */
 import { BusEvent } from "#bus/bus-event.js";
 import { Bus } from "#bus/index.js";
 import * as Log from "core/util/log";
@@ -18,13 +23,16 @@ import { zod, ZodOverride } from "#util/effect-zod.js";
 const log = Log.create({
   service: "lsp"
 });
+/** Bus events published by the LSP service. */
 export const Event = {
   Updated: BusEvent.define("lsp.updated", Schema.Struct({}))
 };
+/** Schema for an LSP zero-based source position (line/character). */
 const Position = Schema.Struct({
   line: NonNegativeInt,
   character: NonNegativeInt
 });
+/** Schema for an LSP source range (start/end positions). */
 export const Range = Schema.Struct({
   start: Position,
   end: Position
@@ -33,6 +41,7 @@ export const Range = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a workspace symbol (name, kind, and its location). */
 export const Symbol = Schema.Struct({
   name: Schema.String,
   kind: NonNegativeInt,
@@ -45,6 +54,7 @@ export const Symbol = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a document symbol (hierarchical symbol within a single file). */
 export const DocumentSymbol = Schema.Struct({
   name: Schema.String,
   detail: Schema.optional(Schema.String),
@@ -56,6 +66,7 @@ export const DocumentSymbol = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema describing the connection status of a single LSP client. */
 export const Status = Schema.Struct({
   id: Schema.String,
   name: Schema.String,
@@ -68,6 +79,7 @@ export const Status = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** LSP SymbolKind enum: maps symbol category names to their LSP numeric codes. */
 var SymbolKind = /*#__PURE__*/function (SymbolKind) {
   SymbolKind[SymbolKind["File"] = 1] = "File";
   SymbolKind[SymbolKind["Module"] = 2] = "Module";
@@ -97,7 +109,14 @@ var SymbolKind = /*#__PURE__*/function (SymbolKind) {
   SymbolKind[SymbolKind["TypeParameter"] = 26] = "TypeParameter";
   return SymbolKind;
 }(SymbolKind || {});
+/** Symbol kinds surfaced from workspace symbol queries (declarations of interest). */
 const kinds = [SymbolKind.Class, SymbolKind.Function, SymbolKind.Method, SymbolKind.Interface, SymbolKind.Variable, SymbolKind.Constant, SymbolKind.Struct, SymbolKind.Enum];
+/**
+ * Mutate the server registry to honor the experimental "ty" Python LSP flag:
+ * when enabled, drop pyright; when disabled, drop ty.
+ * @param {Object} servers - Map of server id to server definition (mutated in place).
+ * @returns {void}
+ */
 const filterExperimentalServers = servers => {
   if (Flag.CLOSEDCODE_EXPERIMENTAL_LSP_TY) {
     if (servers["pyright"]) {
@@ -110,7 +129,9 @@ const filterExperimentalServers = servers => {
     }
   }
 };
+/** Effect service tag for the LSP service. */
 export class Service extends Context.Service()("@closedcode/LSP") {}
+/** Effect Layer that builds the LSP service: loads enabled servers from config and exposes LSP operations. */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const state = yield* InstanceState.make(Effect.fn("LSP.state")(function* (ctx) {
@@ -164,6 +185,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }));
     return s;
   }));
+  /**
+   * Resolve (and lazily spawn) the set of LSP clients that apply to a given file,
+   * matching by extension and project root and de-duplicating in-flight spawns.
+   * @param {string} file - Absolute path of the file to find clients for.
+   * @returns {Promise<Array>} The connected clients applicable to the file.
+   */
   const getClients = Effect.fnUntraced(function* (file) {
     const ctx = yield* InstanceState.context;
     if (!containsPath(file, ctx)) return [];
@@ -171,6 +198,14 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     return yield* Effect.promise(async () => {
       const extension = path.parse(file).ext || file;
       const result = [];
+      /**
+       * Spawn a server and create its LSP client for a root, tracking failures
+       * in the broken set and reusing an existing client if one already exists.
+       * @param {Object} server - Server definition with id and spawn function.
+       * @param {string} root - Resolved project root directory for the server.
+       * @param {string} key - Cache key (root + server id) used to flag broken servers.
+       * @returns {Promise<Object>} The created or existing client, or undefined on failure.
+       */
       async function schedule(server, root, key) {
         const handle = await server.spawn(root, ctx).then(value => {
           if (!value) s.broken.add(key);
@@ -241,17 +276,36 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return result;
     });
   });
+  /**
+   * Run a function against every client applicable to a file and collect results.
+   * @param {string} file - File whose clients should handle the request.
+   * @param {Function} fn - Callback invoked with each client; may return a Promise.
+   * @returns {Promise<Array>} Results from each client.
+   */
   const run = Effect.fnUntraced(function* (file, fn) {
     const clients = yield* getClients(file);
     return yield* Effect.promise(() => Promise.all(clients.map(x => fn(x))));
   });
+  /**
+   * Run a function against all currently connected clients and collect results.
+   * @param {Function} fn - Callback invoked with each client; may return a Promise.
+   * @returns {Promise<Array>} Results from each client.
+   */
   const runAll = Effect.fnUntraced(function* (fn) {
     const s = yield* InstanceState.get(state);
     return yield* Effect.promise(() => Promise.all(s.clients.map(x => fn(x))));
   });
+  /**
+   * Force initialization of the LSP service state (eagerly building the server registry).
+   * @returns {void}
+   */
   const init = Effect.fn("LSP.init")(function* () {
     yield* InstanceState.get(state);
   });
+  /**
+   * List the status of every connected client (id, server name, relative root).
+   * @returns {Array} Status entries for each connected client.
+   */
   const status = Effect.fn("LSP.status")(function* () {
     const ctx = yield* InstanceState.context;
     const s = yield* InstanceState.get(state);
@@ -266,6 +320,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return result;
   });
+  /**
+   * Report whether any configured server could handle the given file (by extension and root).
+   * @param {string} file - Absolute path of the file to check.
+   * @returns {Promise<boolean>} True if at least one non-broken server matches.
+   */
   const hasClients = Effect.fn("LSP.hasClients")(function* (file) {
     const ctx = yield* InstanceState.context;
     const s = yield* InstanceState.get(state);
@@ -281,6 +340,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       return false;
     });
   });
+  /**
+   * Notify applicable clients that a file was opened/changed, optionally waiting for diagnostics.
+   * @param {string} input - Absolute path of the file to open/touch.
+   * @param {string} diagnostics - When set, the wait mode passed to waitForDiagnostics; falsy skips waiting.
+   * @returns {void}
+   */
   const touchFile = Effect.fn("LSP.touchFile")(function* (input, diagnostics) {
     log.info("touching file", {
       file: input
@@ -305,6 +370,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }));
   });
+  /**
+   * Aggregate diagnostics across all connected clients, keyed by file path.
+   * @returns {Object} Map of file path to an array of diagnostics.
+   */
   const diagnostics = Effect.fn("LSP.diagnostics")(function* () {
     const results = {};
     const all = yield* runAll(async client => client.diagnostics);
@@ -317,6 +386,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return results;
   });
+  /**
+   * Request hover information at a position via textDocument/hover.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Hover results from each applicable client (null per client on failure).
+   */
   const hover = Effect.fn("LSP.hover")(function* (input) {
     return yield* run(input.file, client => client.connection.sendRequest("textDocument/hover", {
       textDocument: {
@@ -328,6 +402,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     }).catch(() => null));
   });
+  /**
+   * Resolve symbol definitions at a position via textDocument/definition.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Flattened list of definition locations.
+   */
   const definition = Effect.fn("LSP.definition")(function* (input) {
     const results = yield* run(input.file, client => client.connection.sendRequest("textDocument/definition", {
       textDocument: {
@@ -340,6 +419,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).catch(() => null));
     return results.flat().filter(Boolean);
   });
+  /**
+   * Find references to a symbol at a position via textDocument/references (includes the declaration).
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Flattened list of reference locations.
+   */
   const references = Effect.fn("LSP.references")(function* (input) {
     const results = yield* run(input.file, client => client.connection.sendRequest("textDocument/references", {
       textDocument: {
@@ -355,6 +439,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).catch(() => []));
     return results.flat().filter(Boolean);
   });
+  /**
+   * Resolve implementations of a symbol at a position via textDocument/implementation.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Flattened list of implementation locations.
+   */
   const implementation = Effect.fn("LSP.implementation")(function* (input) {
     const results = yield* run(input.file, client => client.connection.sendRequest("textDocument/implementation", {
       textDocument: {
@@ -367,6 +456,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).catch(() => null));
     return results.flat().filter(Boolean);
   });
+  /**
+   * List the symbols declared in a single document via textDocument/documentSymbol.
+   * @param {string} uri - File URI of the document to inspect.
+   * @returns {Promise<Array>} Flattened list of document symbols.
+   */
   const documentSymbol = Effect.fn("LSP.documentSymbol")(function* (uri) {
     const file = fileURLToPath(uri);
     const results = yield* run(file, client => client.connection.sendRequest("textDocument/documentSymbol", {
@@ -376,12 +470,22 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).catch(() => []));
     return results.flat().filter(Boolean);
   });
+  /**
+   * Search workspace symbols across all clients, keeping interesting kinds and capping results per client.
+   * @param {string} query - Symbol name query string.
+   * @returns {Promise<Array>} Flattened list of matching workspace symbols (max 10 per client).
+   */
   const workspaceSymbol = Effect.fn("LSP.workspaceSymbol")(function* (query) {
     const results = yield* runAll(client => client.connection.sendRequest("workspace/symbol", {
       query
     }).then(result => result.filter(x => kinds.includes(x.kind)).slice(0, 10)).catch(() => []));
     return results.flat();
   });
+  /**
+   * Prepare call-hierarchy items at a position via textDocument/prepareCallHierarchy.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Flattened list of call-hierarchy items.
+   */
   const prepareCallHierarchy = Effect.fn("LSP.prepareCallHierarchy")(function* (input) {
     const results = yield* run(input.file, client => client.connection.sendRequest("textDocument/prepareCallHierarchy", {
       textDocument: {
@@ -394,6 +498,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }).catch(() => []));
     return results.flat().filter(Boolean);
   });
+  /**
+   * Prepare call-hierarchy at a position then query a direction (incoming/outgoing calls).
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @param {string} direction - LSP method to query, e.g. "callHierarchy/incomingCalls".
+   * @returns {Promise<Array>} Flattened list of call-hierarchy call entries for the first prepared item.
+   */
   const callHierarchyRequest = Effect.fnUntraced(function* (input, direction) {
     const results = yield* run(input.file, async client => {
       const items = await client.connection.sendRequest("textDocument/prepareCallHierarchy", {
@@ -412,9 +522,19 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return results.flat().filter(Boolean);
   });
+  /**
+   * Find incoming calls to the symbol at a position.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Incoming call entries.
+   */
   const incomingCalls = Effect.fn("LSP.incomingCalls")(function* (input) {
     return yield* callHierarchyRequest(input, "callHierarchy/incomingCalls");
   });
+  /**
+   * Find outgoing calls from the symbol at a position.
+   * @param {Object} input - Request location with file, line, and character fields.
+   * @returns {Promise<Array>} Outgoing call entries.
+   */
   const outgoingCalls = Effect.fn("LSP.outgoingCalls")(function* (input) {
     return yield* callHierarchyRequest(input, "callHierarchy/outgoingCalls");
   });
@@ -435,6 +555,7 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     outgoingCalls
   });
 }));
+/** LSP service layer wired up with the default Config layer. */
 export const defaultLayer = layer.pipe(Layer.provide(Config.defaultLayer));
 export * as Diagnostic from "./diagnostic.js";
 export * as LSP from "./lsp.js";

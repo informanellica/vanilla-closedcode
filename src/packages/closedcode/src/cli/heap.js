@@ -1,3 +1,4 @@
+/** @file Background watchdog that writes a V8 heap snapshot when process RSS exceeds a limit. */
 import path from "path";
 import { writeHeapSnapshot } from "node:v8";
 import { Flag } from "core/flag/flag";
@@ -11,6 +12,14 @@ const LIMIT = 2 * 1024 * 1024 * 1024;
 let timer;
 let lock = false;
 let armed = true;
+/**
+ * Start the heap-snapshot watchdog timer (a no-op unless the CLOSEDCODE_AUTO_HEAP_SNAPSHOT
+ * flag is set). Once started, it polls RSS every minute and, when usage crosses the limit,
+ * writes a single .heapsnapshot to the log directory; it re-arms only after RSS drops back
+ * below the limit so it does not write repeatedly. Calling more than once is a no-op while
+ * a timer is already running.
+ * @returns {void}
+ */
 export function start() {
   if (!Flag.CLOSEDCODE_AUTO_HEAP_SNAPSHOT) return;
   if (timer) return;

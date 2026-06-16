@@ -1,3 +1,9 @@
+/**
+ * @file Legacy (v1) message schema definitions. Declares the Effect/Zod schemas
+ * for message parts (text, reasoning, tool invocations, file/source), the
+ * provider error variants, and the top-level message Info shape used by the
+ * older OpenAPI surface.
+ */
 import { Schema } from "effect";
 import { SessionID } from "./schema.js";
 import { ModelID, ProviderID } from "../provider/schema.js";

@@ -13,20 +13,31 @@
 // diffRemovedBg). Context lines are highlighted with no background tint. With no
 // (or an unrecognized) lang, bodies render as a single diff-colored segment — the
 // original behavior — so existing callers are unaffected.
+/** @file Diff rendering for the vanilla TUI: turns unified-diff strings or before/after pairs into rich lines (added/removed/context), width-aware/CJK-safe, with optional syntax highlighting. */
 import { seg } from "./richtext.js";
 import { truncate, wrap } from "../runtime/text.js";
 import { highlightLine, normalizeLang } from "./syntax.js";
 
-// Background-tint token for a given diff line token (only add/removed lines get a
-// band; context and everything else get none).
+/**
+ * Background-tint token for a given diff line token (only add/removed lines get a
+ * band; context and everything else get none).
+ * @param {string} token - The diff line token ("diffAdded" | "diffRemoved" | ...).
+ * @returns {string|null} The background token, or null when no tint applies.
+ */
 function bgFor(token) {
   return token === "diffAdded" ? "diffAddedBg" : token === "diffRemoved" ? "diffRemovedBg" : null;
 }
 
-// Wrap a diff/code body PRESERVING leading indentation (hard char-wrap, not the
-// prose wrapRich which would strip it), with a 2-col +/- gutter. Tabs -> spaces.
-// `lang` is an already-normalized language id (or null) — when set, the body is
-// syntax-highlighted and add/removed lines get a faint background tint.
+/**
+ * Wrap a diff/code body PRESERVING leading indentation (hard char-wrap, not the
+ * prose wrapRich which would strip it), with a 2-col +/- gutter. Tabs become spaces.
+ * @param {string} body - The line body text (without the diff marker).
+ * @param {string} token - The diff token for this line ("diffAdded" | "diffRemoved" | "diffContext").
+ * @param {string} marker - The gutter marker ("+", "-", or " ").
+ * @param {number} width - Available render width in columns.
+ * @param {string|null} lang - An already-normalized language id, or null for no highlighting.
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 function gutterLines(body, token, marker, width, lang) {
   const inner = Math.max(1, width - 2);
   const pieces = wrap(String(body ?? "").replace(/\t/g, "    "), inner);
@@ -47,7 +58,14 @@ function gutterLines(body, token, marker, width, lang) {
   });
 }
 
-// Render a unified-diff string into rich lines. opts.lang enables syntax coloring.
+/**
+ * Render a unified-diff string into rich lines.
+ * @param {string} diffText - The unified-diff text.
+ * @param {number} width - Available render width in columns.
+ * @param {Object} [opts] - Options.
+ * @param {string} [opts.lang] - Language id for syntax highlighting (normalized internally).
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 export function renderUnifiedDiff(diffText, width, opts = {}) {
   const lang = opts.lang ? normalizeLang(opts.lang) : null;
   const out = [];
@@ -62,9 +80,13 @@ export function renderUnifiedDiff(diffText, width, opts = {}) {
   return out;
 }
 
-// Split into lines, treating "" as ZERO lines and dropping the single trailing
-// "" produced by a final newline — so creating/clearing a file (or just adding a
-// trailing newline) doesn't render a phantom +/- blank line.
+/**
+ * Split text into lines, treating "" as ZERO lines and dropping the single trailing
+ * "" produced by a final newline — so creating/clearing a file (or just adding a
+ * trailing newline) doesn't render a phantom +/- blank line.
+ * @param {string} t - The text to split.
+ * @returns {Array<string>} The lines.
+ */
 function splitLines(t) {
   if (t == null || t === "") return [];
   const lines = String(t).split("\n");
@@ -72,7 +94,12 @@ function splitLines(t) {
   return lines;
 }
 
-// Minimal LCS line diff between two texts -> [{ type:"add"|"del"|"ctx", text }].
+/**
+ * Minimal LCS line diff between two texts.
+ * @param {string} oldText - The original text.
+ * @param {string} newText - The new text.
+ * @returns {Array} Array of { type: "add" | "del" | "ctx", text }.
+ */
 export function computeLineDiff(oldText, newText) {
   const a = splitLines(oldText);
   const b = splitLines(newText);
@@ -96,8 +123,14 @@ export function computeLineDiff(oldText, newText) {
 const HUNK_TOKEN = { add: "diffAdded", del: "diffRemoved", ctx: "diffContext" };
 const HUNK_MARK = { add: "+", del: "-", ctx: " " };
 
-// Render a computed line diff ([{type,text}]) into rich lines. opts.lang enables
-// syntax coloring (same contract as renderUnifiedDiff).
+/**
+ * Render a computed line diff into rich lines.
+ * @param {Array} hunks - Hunks from computeLineDiff ([{ type, text }]).
+ * @param {number} width - Available render width in columns.
+ * @param {Object} [opts] - Options.
+ * @param {string} [opts.lang] - Language id for syntax highlighting (same contract as renderUnifiedDiff).
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 export function renderLineDiff(hunks, width, opts = {}) {
   const lang = opts.lang ? normalizeLang(opts.lang) : null;
   const out = [];
@@ -105,7 +138,14 @@ export function renderLineDiff(hunks, width, opts = {}) {
   return out;
 }
 
-// Convenience: before/after text -> rendered rich lines.
+/**
+ * Convenience: compute and render the line diff of a before/after text pair.
+ * @param {string} oldText - The original text.
+ * @param {string} newText - The new text.
+ * @param {number} width - Available render width in columns.
+ * @param {Object} [opts] - Options (forwarded to renderLineDiff; e.g. opts.lang).
+ * @returns {Array} Array of rich lines (each an array of segments).
+ */
 export function renderTextDiff(oldText, newText, width, opts = {}) {
   return renderLineDiff(computeLineDiff(oldText, newText), width, opts);
 }

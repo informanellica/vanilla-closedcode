@@ -1,3 +1,8 @@
+/**
+ * @file PTY service: spawns and manages pseudo-terminal sessions, streams their
+ * output to WebSocket subscribers with a replay buffer, and publishes
+ * created/updated/exited/deleted events on the bus.
+ */
 import { BusEvent } from "#bus/bus-event.js";
 import { Bus } from "#bus/index.js";
 import { Config } from "#config/config.js";
@@ -14,10 +19,24 @@ import { NonNegativeInt, PositiveInt, withStatics } from "#util/schema.js";
 const log = Log.create({
   service: "pty"
 });
+/** Maximum bytes retained in a session's replay buffer (2 MiB). */
 const BUFFER_LIMIT = 1024 * 1024 * 2;
+/** Chunk size used when replaying buffered output to a newly-connected client (64 KiB). */
 const BUFFER_CHUNK = 64 * 1024;
 const encoder = new TextEncoder();
+/**
+ * Resolve the stable subscriber key for a WebSocket, preferring its `.data`
+ * object (used to dedupe/track subscribers) and falling back to the socket itself.
+ * @param {Object} ws - The WebSocket-like object.
+ * @returns {Object} The subscriber key.
+ */
 const sock = ws => ws.data && typeof ws.data === "object" ? ws.data : ws;
+/**
+ * Build a WebSocket control frame carrying the current output cursor.
+ * The frame is a 0x00 prefix byte followed by UTF-8 JSON `{cursor}`.
+ * @param {number} cursor - The current absolute output byte cursor.
+ * @returns {Uint8Array} The encoded control frame.
+ */
 // WebSocket control frame: 0x00 + UTF-8 JSON.
 const meta = cursor => {
   const json = JSON.stringify({
@@ -29,7 +48,13 @@ const meta = cursor => {
   out.set(bytes, 1);
   return out;
 };
+/** Lazily-imported, platform-specific PTY backend (provides `spawn`). */
 const pty = lazy(() => import("#pty"));
+/**
+ * Schema describing a PTY session's public info (id, title, command, args,
+ * cwd, status, pid). Carries a `zod` static for validation.
+ * @type {Object}
+ */
 export const Info = Schema.Struct({
   id: PtyID,
   title: Schema.String,
@@ -43,6 +68,11 @@ export const Info = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Schema for the input accepted by `create`: optional command, args, cwd,
+ * title, and environment overrides. Carries a `zod` static.
+ * @type {Object}
+ */
 export const CreateInput = Schema.Struct({
   command: Schema.optional(Schema.String),
   args: Schema.optional(Schema.Array(Schema.String)),
@@ -52,6 +82,11 @@ export const CreateInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Schema for the input accepted by `update`: optional new title and/or terminal
+ * size (rows/cols). Carries a `zod` static.
+ * @type {Object}
+ */
 export const UpdateInput = Schema.Struct({
   title: Schema.optional(Schema.String),
   size: Schema.optional(Schema.Struct({
@@ -61,6 +96,11 @@ export const UpdateInput = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Bus event definitions for the PTY session lifecycle: Created, Updated,
+ * Exited, Deleted.
+ * @type {Object}
+ */
 export const Event = {
   Created: BusEvent.define("pty.created", Schema.Struct({
     info: Info
@@ -76,11 +116,25 @@ export const Event = {
     id: PtyID
   }))
 };
+/**
+ * Effect Context tag for the PTY service.
+ */
 export class Service extends Context.Service()("@closedcode/Pty") {}
+/**
+ * Layer that builds the PTY service: keeps per-instance sessions, exposes
+ * list/get/create/update/remove/resize/write/connect, and tears down all
+ * sessions on finalization.
+ * @type {Object}
+ */
 export const layer = Layer.effect(Service, Effect.gen(function* () {
   const config = yield* Config.Service;
   const bus = yield* Bus.Service;
   const plugin = yield* Plugin.Service;
+  /**
+   * Kill a session's process and close/clear all of its WebSocket subscribers.
+   * @param {Object} session - The session record to tear down.
+   * @returns {void}
+   */
   function teardown(session) {
     try {
       session.process.kill();
@@ -92,6 +146,10 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     session.subscribers.clear();
   }
+  /**
+   * Per-instance PTY state: the working directory and the map of active
+   * sessions. Registers a finalizer that tears down every session on shutdown.
+   */
   const state = yield* InstanceState.make(Effect.fn("Pty.state")(function* (ctx) {
     const state = {
       dir: ctx.directory,
@@ -105,6 +163,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     }));
     return state;
   }));
+  /**
+   * Remove a session: delete it from state, tear it down, and publish Deleted.
+   * No-ops if the session does not exist.
+   * @param {PtyID} id - The session id to remove.
+   * @returns {Effect} An Effect that completes the removal.
+   */
   const remove = Effect.fn("Pty.remove")(function* (id) {
     const s = yield* InstanceState.get(state);
     const session = s.sessions.get(id);
@@ -118,14 +182,32 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       id: session.info.id
     });
   });
+  /**
+   * List the info objects of all active sessions.
+   * @returns {Effect} An Effect resolving to an array of session info objects.
+   */
   const list = Effect.fn("Pty.list")(function* () {
     const s = yield* InstanceState.get(state);
     return Array.from(s.sessions.values()).map(session => session.info);
   });
+  /**
+   * Get a single session's info by id.
+   * @param {PtyID} id - The session id.
+   * @returns {Effect} An Effect resolving to the info object, or undefined if not found.
+   */
   const get = Effect.fn("Pty.get")(function* (id) {
     const s = yield* InstanceState.get(state);
     return s.sessions.get(id)?.info;
   });
+  /**
+   * Create and spawn a new PTY session.
+   * Resolves the command/args/cwd/env (applying shell preferences, the
+   * `shell.env` plugin hook, and platform UTF-8 locale on win32), spawns the
+   * process, wires up output buffering + subscriber fan-out and exit handling,
+   * and publishes the Created event.
+   * @param {Object} input - The CreateInput (optional command, args, cwd, title, env).
+   * @returns {Effect} An Effect resolving to the new session's info object.
+   */
   const create = Effect.fn("Pty.create")(function* (input) {
     const s = yield* InstanceState.get(state);
     const bridge = yield* EffectBridge.make();
@@ -186,6 +268,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       subscribers: new Map()
     };
     s.sessions.set(id, session);
+    // Output handler: advance the cursor, fan the chunk out to live subscribers
+    // (pruning dead/mismatched sockets), and append to the replay buffer while
+    // trimming it from the front once it exceeds BUFFER_LIMIT.
     proc.onData(chunk => {
       session.cursor += chunk.length;
       for (const [key, ws] of session.subscribers.entries()) {
@@ -209,6 +294,8 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       session.buffer = session.buffer.slice(excess);
       session.bufferCursor += excess;
     });
+    // Exit handler: mark the session exited once, publish Exited, and schedule
+    // its removal.
     proc.onExit(({
       exitCode
     }) => {
@@ -229,6 +316,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return info;
   });
+  /**
+   * Update a session's title and/or terminal size, then publish Updated.
+   * No-ops if the session does not exist.
+   * @param {PtyID} id - The session id.
+   * @param {Object} input - The UpdateInput (optional title and/or size {rows, cols}).
+   * @returns {Effect} An Effect resolving to the updated session info, or undefined.
+   */
   const update = Effect.fn("Pty.update")(function* (id, input) {
     const s = yield* InstanceState.get(state);
     const session = s.sessions.get(id);
@@ -244,6 +338,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     });
     return session.info;
   });
+  /**
+   * Resize a running session's terminal. No-ops if missing or already exited.
+   * @param {PtyID} id - The session id.
+   * @param {number} cols - New column count.
+   * @param {number} rows - New row count.
+   * @returns {Effect} An Effect that performs the resize.
+   */
   const resize = Effect.fn("Pty.resize")(function* (id, cols, rows) {
     const s = yield* InstanceState.get(state);
     const session = s.sessions.get(id);
@@ -251,6 +352,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       session.process.resize(cols, rows);
     }
   });
+  /**
+   * Write input data to a running session's stdin. No-ops if missing or exited.
+   * @param {PtyID} id - The session id.
+   * @param {string} data - The data to write.
+   * @returns {Effect} An Effect that performs the write.
+   */
   const write = Effect.fn("Pty.write")(function* (id, data) {
     const s = yield* InstanceState.get(state);
     const session = s.sessions.get(id);
@@ -258,6 +365,16 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       session.process.write(data);
     }
   });
+  /**
+   * Attach a WebSocket client to a session: register it as a subscriber, replay
+   * buffered output from the requested cursor (or just live output / from the
+   * tail), send a cursor control frame, and return live message/close handlers.
+   * Closes the socket if the session does not exist or a send fails.
+   * @param {PtyID} id - The session id to connect to.
+   * @param {Object} ws - The WebSocket-like connection.
+   * @param {number} cursor - Desired starting output cursor: -1 = live only (from tail), a safe integer = replay from that absolute offset, otherwise from the beginning of the buffer.
+   * @returns {Effect} An Effect resolving to a handler object with `onMessage` and `onClose`, or undefined if the session was missing.
+   */
   const connect = Effect.fn("Pty.connect")(function* (id, ws, cursor) {
     const s = yield* InstanceState.get(state);
     const session = s.sessions.get(id);
@@ -325,5 +442,9 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
     connect
   });
 }));
+/**
+ * The PTY service layer with its Bus, Plugin, and Config dependencies provided.
+ * @type {Object}
+ */
 export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Plugin.defaultLayer), Layer.provide(Config.defaultLayer));
 export * as Pty from "./index.js";

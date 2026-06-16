@@ -1,3 +1,5 @@
+/** @file Derives Zod schemas (and JSON Schema) from Effect Schema ASTs by walking and translating each node. */
+
 import { Effect, Option, SchemaAST } from "effect";
 import z from "zod";
 
@@ -17,6 +19,13 @@ const walkCache = new WeakMap();
 // Shared empty ParseOptions for the rare callers that need one — avoids
 // allocating a fresh object per parse inside refinements and transforms.
 const EMPTY_PARSE_OPTIONS = {};
+
+/**
+ * Derive a Zod type from an Effect Schema by walking its AST.
+ *
+ * @param {Object} schema - An Effect Schema (anything exposing an `.ast`).
+ * @returns {Object} The equivalent Zod type.
+ */
 export function zod(schema) {
   return walk(schema.ast);
 }
@@ -38,11 +47,22 @@ export function zod(schema) {
  * `updateSchema`, etc.), and zod's inference through `z.ZodType<T | undefined>`
  * wrappers also can't reconstruct `T` cleanly. Consumers that care about the
  * post-`.omit()` shape should cast `c.req.valid(...)` to the expected type.
+ *
+ * @param {Object} schema - An Effect Schema; if it carries a `.zod` static that
+ *   is already a Zod type, that is used directly, otherwise the AST is walked.
+ * @returns {Object} The derived Zod object type.
  */
 export function zodObject(schema) {
   const derived = "zod" in schema && isZodType(schema.zod) ? schema.zod : walk(schema.ast);
   return derived;
 }
+
+/**
+ * Test whether a value is a Zod type instance (detected by its internal `_zod`).
+ *
+ * @param {*} value - The candidate value.
+ * @returns {boolean} `true` when `value` looks like a Zod type.
+ */
 function isZodType(value) {
   return typeof value === "object" && value !== null && "_zod" in value;
 }
@@ -52,12 +72,21 @@ function isZodType(value) {
  * via the walker so Effect Schema inputs flow through the same zod-openapi
  * pipeline the LLM/SDK layer already depends on.  `io: "input"` mirrors what
  * `session/prompt.ts` has always passed to `ai`'s `jsonSchema()` helper.
+ *
+ * @param {Object} schema - An Effect Schema to convert.
+ * @returns {Object} The JSON Schema (input variant) for `schema`.
  */
 export function toJsonSchema(schema) {
   return z.toJSONSchema(zod(schema), {
     io: "input"
   });
 }
+/**
+ * Convert an AST node into a Zod type, memoized by node identity.
+ *
+ * @param {Object} ast - The Effect Schema AST node.
+ * @returns {Object} The corresponding Zod type (cached across calls).
+ */
 function walk(ast) {
   const cached = walkCache.get(ast);
   if (cached) return cached;
@@ -65,6 +94,17 @@ function walk(ast) {
   walkCache.set(ast, result);
   return result;
 }
+
+/**
+ * Build the Zod type for an AST node without consulting the cache.
+ *
+ * Honors a `ZodOverride` annotation as the base type (otherwise derives via
+ * `bodyWithChecks`), then layers on any resolved description (`.describe`) and
+ * identifier reference (`.meta({ ref })`).
+ *
+ * @param {Object} ast - The Effect Schema AST node.
+ * @returns {Object} The derived Zod type.
+ */
 function walkUncached(ast) {
   const override = ast.annotations?.[ZodOverride];
   // `description` annotations layer on top of an override so callers can
@@ -78,6 +118,13 @@ function walkUncached(ast) {
     ref
   }) : described;
 }
+/**
+ * Build the base Zod type for a node, choosing between the decoded body and the
+ * encoded/transformed view, then applying any filter checks.
+ *
+ * @param {Object} ast - The Effect Schema AST node.
+ * @returns {Object} The Zod type with checks applied.
+ */
 function bodyWithChecks(ast) {
   // Schema.Class wraps its fields in a Declaration AST plus an encoding that
   // constructs the class instance. For the Zod derivation we want the plain
@@ -95,6 +142,13 @@ function bodyWithChecks(ast) {
   return ast.checks?.length ? applyChecks(base, ast.checks, ast) : base;
 }
 
+/**
+ * Build a Zod type from a node's encoded side, applying each link's decode as a
+ * `.transform` to recover the decoded shape.
+ *
+ * @param {Object} ast - The AST node carrying a non-empty `encoding` array.
+ * @returns {Object} A Zod type that decodes through the encoding links.
+ */
 // Walk the encoded side and apply each link's decode to produce the decoded
 // shape. A node `Target` produced by `from.decodeTo(Target)` carries
 // `Target.encoding = [Link(from, transformation)]`. Chained decodeTo calls
@@ -105,6 +159,15 @@ function encoded(ast) {
   return encoding.reduce((acc, link) => acc.transform(v => decode(link.transformation, v)), walk(encoding[0].to));
 }
 
+/**
+ * Synchronously run an Effect Schema transformation's decode on a value.
+ *
+ * @param {Object} transformation - The link transformation to run.
+ * @param {*} value - The input value to decode.
+ * @returns {*} The decoded value, or the original `value` when the decode
+ *   yields `Option.none`.
+ * @throws {Error} When the transformation fails (e.g. effectful transforms).
+ */
 // Transformations built via pure `SchemaGetter.transform(fn)` (the common
 // decodeTo case) resolve synchronously, so running with no services is safe.
 // Effectful / middleware-based transforms will surface as Effect defects.
@@ -114,6 +177,18 @@ function decode(transformation, value) {
   return Option.getOrElse(exit.value, () => value);
 }
 
+/**
+ * Apply Effect Schema filter checks to a Zod type.
+ *
+ * Well-known filters are translated to native Zod constraints (so they appear
+ * in JSON Schema); any unrecognized filters are collected into a single
+ * runtime-only `.superRefine` layer.
+ *
+ * @param {Object} out - The base Zod type to constrain.
+ * @param {Array} checks - The AST's checks (Filters and/or FilterGroups).
+ * @param {Object} ast - The owning AST node (passed to filters' `run`).
+ * @returns {Object} The Zod type with all checks applied.
+ */
 // Flatten FilterGroups and any nested variants into a linear list of Filters.
 // Well-known filters (Schema.isInt, isGreaterThan, isPattern, …) are
 // translated into native Zod methods so their JSON Schema output includes
@@ -147,6 +222,15 @@ function applyChecks(out, checks, ast) {
   });
 }
 
+/**
+ * Translate a single well-known Effect Schema filter into a native Zod call.
+ *
+ * @param {Object} out - The Zod type to apply the constraint to.
+ * @param {Object} filter - The filter whose `annotations.meta._tag` selects the
+ *   Zod method to invoke.
+ * @returns {Object} The constrained Zod type, or `undefined` when the filter is
+ *   not recognized (so the caller falls back to `.superRefine`).
+ */
 // Translate a well-known Effect Schema filter into a native Zod method call on
 // `out`. Dispatch is keyed on `filter.annotations.meta._tag`, which every
 // built-in check factory (isInt, isGreaterThan, isPattern, …) attaches at
@@ -206,6 +290,14 @@ function translateFilter(out, filter) {
   return undefined;
 }
 
+/**
+ * Invoke a named Zod method on a target if present.
+ *
+ * @param {Object} target - The Zod type to call the method on.
+ * @param {string} method - The method name to invoke.
+ * @param {...*} args - Arguments forwarded to the method.
+ * @returns {*} The method's result, or `undefined` when no such method exists.
+ */
 // Invoke a named Zod method on `target` if it exists, otherwise return
 // undefined so the caller can fall back. Using this helper instead of a
 // typed cast keeps `translateFilter` free of per-case narrowing noise.
@@ -213,11 +305,28 @@ function call(target, method, ...args) {
   const fn = target[method];
   return typeof fn === "function" ? fn.apply(target, args) : undefined;
 }
+
+/**
+ * Extract a human-readable message from an Effect Schema validation issue.
+ *
+ * @param {Object} issue - The issue object (may carry `annotations.message` or `message`).
+ * @returns {string} The message string, or `undefined` when none is present.
+ */
 function issueMessage(issue) {
   if (typeof issue?.annotations?.message === "string") return issue.annotations.message;
   if (typeof issue?.message === "string") return issue.message;
   return undefined;
 }
+/**
+ * Map a (decoded-view) AST node to its base Zod type by node tag.
+ *
+ * Optional nodes are delegated to `opt`; primitives, literals, unions, objects,
+ * arrays, and single-parameter declarations are each translated; anything
+ * unsupported routes to `fail`.
+ *
+ * @param {Object} ast - The Effect Schema AST node.
+ * @returns {Object} The corresponding base Zod type.
+ */
 function body(ast) {
   if (SchemaAST.isOptional(ast)) return opt(ast);
   switch (ast._tag) {
@@ -250,6 +359,15 @@ function body(ast) {
       return fail(ast);
   }
 }
+/**
+ * Build the Zod type for an optional node (a Union containing `Undefined`).
+ *
+ * Drops the `Undefined` member and emits `.default(...)` when the encoding
+ * supplies a decoding default, otherwise `.optional()`.
+ *
+ * @param {Object} ast - The optional Union AST node.
+ * @returns {Object} The optional (or defaulted) Zod type.
+ */
 function opt(ast) {
   if (ast._tag !== "Union") return fail(ast);
   const items = ast.types.filter(item => item._tag !== "Undefined");
@@ -261,6 +379,13 @@ function opt(ast) {
   if (fallback !== undefined) return inner.default(fallback.value);
   return inner.optional();
 }
+/**
+ * Probe a node's encoding for a decoding default produced from `Option.none`.
+ *
+ * @param {Object} ast - The AST node to inspect.
+ * @returns {Object} `{ value }` wrapping the default when one is found, or
+ *   `undefined` when no encoding link yields a default.
+ */
 function extractDefault(ast) {
   const encoding = ast.encoding;
   if (!encoding?.length) return undefined;
@@ -276,6 +401,16 @@ function extractDefault(ast) {
   }
   return undefined;
 }
+/**
+ * Build the Zod type for a Union node.
+ *
+ * Emits `z.enum` when every member is a string literal, collapses a single
+ * member, uses `z.discriminatedUnion` when a `discriminator` annotation is
+ * present, and otherwise `z.union`.
+ *
+ * @param {Object} ast - The Union AST node.
+ * @returns {Object} The corresponding Zod type.
+ */
 function union(ast) {
   // When every member is a string literal, emit z.enum() so that
   // JSON Schema produces { "enum": [...] } instead of { "anyOf": [{ "const": ... }] }.
@@ -291,6 +426,16 @@ function union(ast) {
   }
   return z.union(items);
 }
+/**
+ * Build the Zod type for an object/struct node.
+ *
+ * Handles three shapes: a pure string-keyed record (`z.record`), a plain object
+ * with known fields (`z.object`), and a struct with a string-keyed catchall
+ * (`z.object(...).catchall(...)`). Unsupported key kinds route to `fail`.
+ *
+ * @param {Object} ast - The object/struct AST node.
+ * @returns {Object} The corresponding Zod type.
+ */
 function object(ast) {
   // Pure record: { [k: string]: V }
   if (ast.propertySignatures.length === 0 && ast.indexSignatures.length === 1) {
@@ -312,6 +457,15 @@ function object(ast) {
   if (sig.parameter._tag !== "String") return fail(ast);
   return z.object(Object.fromEntries(ast.propertySignatures.map(p => [String(p.name), walk(p.type)]))).catchall(walk(sig.type));
 }
+/**
+ * Build the Zod type for an array/tuple node.
+ *
+ * Emits `z.array` for a pure variadic array and `z.tuple` for a fixed-length
+ * tuple. Tuples with a variadic tail are unsupported and route to `fail`.
+ *
+ * @param {Object} ast - The array/tuple AST node.
+ * @returns {Object} The corresponding Zod type.
+ */
 function array(ast) {
   // Pure variadic arrays: { elements: [], rest: [item] }
   if (ast.elements.length === 0) {
@@ -324,10 +478,24 @@ function array(ast) {
   const items = ast.elements.map(walk);
   return z.tuple(items);
 }
+/**
+ * Build the Zod type for a Declaration node by walking its single type parameter.
+ *
+ * @param {Object} ast - The Declaration AST node (must have exactly one type parameter).
+ * @returns {Object} The Zod type for the wrapped type parameter.
+ */
 function decl(ast) {
   if (ast.typeParameters.length !== 1) return fail(ast);
   return walk(ast.typeParameters[0]);
 }
+
+/**
+ * Throw a descriptive error for an AST node that the walker cannot translate.
+ *
+ * @param {Object} ast - The unsupported AST node.
+ * @returns {never} Always throws.
+ * @throws {Error} Always, naming the node's identifier or tag.
+ */
 function fail(ast) {
   const ref = SchemaAST.resolveIdentifier(ast);
   throw new Error(`unsupported effect schema: ${ref ?? ast._tag}`);

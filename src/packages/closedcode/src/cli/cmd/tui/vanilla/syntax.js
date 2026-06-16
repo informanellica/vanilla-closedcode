@@ -1,4 +1,4 @@
-// Pure-JS syntax highlighter for the vanilla TUI (renderer parity phase). The
+// @file Pure-JS syntax highlighter for the vanilla TUI (renderer parity phase). The
 // live timeline hands fenced code blocks (markdown.js) and code lines inside
 // diffs (diff.js) to @opentui's syntax-aware renderer; this is a lightweight,
 // dependency-free stand-in that tokenizes a single code line into RICH SEGMENTS
@@ -31,6 +31,13 @@ const FALLBACK_TOKEN = "codeBlock";
 // rules are tried in order and the FIRST one that matches wins. A rule that does
 // not match at the position is skipped (the scanner falls through to the next
 // rule, and finally to a single fallback char if none match).
+/**
+ * Build a sticky-anchored RegExp (the "y" flag) so a match only succeeds at the
+ * scanner's current position.
+ * @param {string} src - The regex source pattern.
+ * @param {string} flags - Extra flags to append to the sticky flag.
+ * @returns {RegExp} The sticky regular expression.
+ */
 const sticky = (src, flags = "") => new RegExp(src, "y" + flags);
 
 // Whitespace run: kept as its own un-tokenized (plain) segment so indentation is
@@ -61,10 +68,15 @@ const blockComment = { token: "syntaxComment", re: sticky("/\\*[\\s\\S]*?(?:\\*/
 const OPERATOR = { token: "syntaxOperator", re: sticky("[+\\-*/%=<>!&|^~?:]+") };
 const PUNCT = { token: "syntaxPunctuation", re: sticky("[()\\[\\]{}.,;]") };
 
-// Build a keyword/type rule that matches a WHOLE word from a Set, classified to
-// the given token. We can't use \b inside a sticky match cleanly, so we capture a
-// candidate identifier and accept it only if it's in the set (returning the exact
-// matched text). Implemented as a function rule (see scan()).
+/**
+ * Build a keyword/type rule that matches a WHOLE word from a Set, classified to
+ * the given token. We can't use \b inside a sticky match cleanly, so we capture a
+ * candidate identifier and accept it only if it's in the set (returning the exact
+ * matched text). Implemented as a function rule (see scan()).
+ * @param {Set|Array} words - The accepted words (a Set or array).
+ * @param {string} token - The style token to classify matches as.
+ * @returns {Object} A rule {token, word, re}.
+ */
 function wordRule(words, token) {
   const set = words instanceof Set ? words : new Set(words);
   return { token, word: set, re: sticky(IDENT) };
@@ -123,6 +135,12 @@ const JSON_LITERALS = new Set(["true", "false", "null"]);
 // then numbers, then keyword/type words, then call sites, then plain idents,
 // then operators / punctuation, then whitespace. Anything left becomes a
 // 1-char fallback segment.
+/**
+ * The JavaScript/TypeScript rule pipeline (ordered: comments/strings, numbers,
+ * keywords, optional TS types, call sites, idents, operators, punctuation).
+ * @param {boolean} withTypes - Whether to include the TypeScript type-name rule.
+ * @returns {Array} The ordered rule list.
+ */
 function jsRules(withTypes) {
   return [
     WS,
@@ -139,6 +157,10 @@ function jsRules(withTypes) {
   ];
 }
 
+/**
+ * The Python rule pipeline.
+ * @returns {Array} The ordered rule list.
+ */
 function pythonRules() {
   return [
     WS,
@@ -154,6 +176,10 @@ function pythonRules() {
   ];
 }
 
+/**
+ * The Bash/shell rule pipeline (adds a $VAR / ${VAR} / $(...) rule).
+ * @returns {Array} The ordered rule list.
+ */
 function bashRules() {
   return [
     WS,
@@ -170,6 +196,10 @@ function bashRules() {
   ];
 }
 
+/**
+ * The JSON rule pipeline (double-quoted strings, numbers, true/false/null literals).
+ * @returns {Array} The ordered rule list.
+ */
 function jsonRules() {
   return [
     WS,
@@ -202,17 +232,25 @@ const ALIASES = {
   console: "bash", shellsession: "bash",
 };
 
-// Resolve a raw fence language string (e.g. "JS", " ts ", "python3") to a rule
-// pipeline. Returns null for plaintext / unknown languages.
+/**
+ * Resolve a raw fence language string (e.g. "JS", " ts ", "python3") to a
+ * canonical language id. Returns null for plaintext / unknown languages.
+ * @param {string} lang - The raw language string.
+ * @returns {string|null} The canonical language id, or null.
+ */
 export function normalizeLang(lang) {
   const key = String(lang ?? "").trim().toLowerCase();
   return ALIASES[key] ?? null;
 }
 
-// Derive a canonical language id from a file path's extension, or null. Callers
-// that have a filename but no explicit fence language (the diff renderers, given
-// a tool's edited file) use this to turn on syntax coloring. Dotfiles with no
-// real extension (".bashrc") and extension-less names ("Makefile") return null.
+/**
+ * Derive a canonical language id from a file path's extension, or null. Callers
+ * that have a filename but no explicit fence language (the diff renderers, given
+ * a tool's edited file) use this to turn on syntax coloring. Dotfiles with no
+ * real extension (".bashrc") and extension-less names ("Makefile") return null.
+ * @param {string} filepath - The file path.
+ * @returns {string|null} The canonical language id, or null.
+ */
 export function langFromPath(filepath) {
   const base = String(filepath ?? "").replace(/\\/g, "/").split("/").pop() ?? "";
   const dot = base.lastIndexOf(".");
@@ -220,13 +258,22 @@ export function langFromPath(filepath) {
   return normalizeLang(base.slice(dot + 1));
 }
 
+/**
+ * Resolve a raw language string to its rule pipeline (or null for plaintext).
+ * @param {string} lang - The raw language string.
+ * @returns {Array|null} The rule list, or null.
+ */
 function rulesFor(lang) {
   const canon = normalizeLang(lang);
   return canon ? LANGS[canon] : null;
 }
 
-// Coalesce adjacent segments that share an identical style, so the output is
-// compact (e.g. a run of fallback chars becomes one segment). Pure text-preserving.
+/**
+ * Coalesce adjacent segments that share an identical style, so the output is
+ * compact (e.g. a run of fallback chars becomes one segment). Pure text-preserving.
+ * @param {Array} segments - The segments to coalesce.
+ * @returns {Array} The coalesced segments.
+ */
 function coalesce(segments) {
   const out = [];
   for (const s of segments) {
@@ -242,15 +289,26 @@ function coalesce(segments) {
   return out;
 }
 
-// Build a segment for matched text. token===null -> fallback (codeBlock) color.
+/**
+ * Build a segment for matched text and push it. token===null -> fallback (codeBlock) color.
+ * @param {Array} out - The output segment array to push to.
+ * @param {string} text - The matched text.
+ * @param {string} token - The style token, or null for the fallback color.
+ * @returns {void}
+ */
 function emit(out, text, token) {
   if (!text) return;
   out.push(seg(text, { token: token ?? FALLBACK_TOKEN, code: true }));
 }
 
-// Core scanner: walk `line` left-to-right, trying rules at each position. Returns
-// segments tiling the line exactly. Pure / total (assumes valid inputs; the public
-// wrapper guards against throws).
+/**
+ * Core scanner: walk `line` left-to-right, trying rules at each position. Returns
+ * segments tiling the line exactly. Pure / total (assumes valid inputs; the public
+ * wrapper guards against throws).
+ * @param {string} line - The single line of code to tokenize.
+ * @param {Array} rules - The ordered rule pipeline for the language.
+ * @returns {Array} The coalesced rich segments tiling the line.
+ */
 function scan(line, rules) {
   const out = [];
   const n = line.length;
@@ -293,9 +351,14 @@ function scan(line, rules) {
 
 // --- public API -------------------------------------------------------------
 
-// Highlight ONE line into rich segments. The returned segments tile the input
-// exactly (concat(.text) === line). Never throws: any failure falls back to a
-// single plaintext (codeBlock) segment so the caller can always render the line.
+/**
+ * Highlight ONE line into rich segments. The returned segments tile the input
+ * exactly (concat(.text) === line). Never throws: any failure falls back to a
+ * single plaintext (codeBlock) segment so the caller can always render the line.
+ * @param {string} line - The single line of code.
+ * @param {string} lang - The raw language string.
+ * @returns {Array} The rich segments (possibly empty for an empty line).
+ */
 export function highlightLine(line, lang) {
   const text = line == null ? "" : String(line);
   try {
@@ -313,8 +376,13 @@ export function highlightLine(line, lang) {
   }
 }
 
-// Highlight a whole code block: returns one segment array per line. Line splitting
-// normalizes CRLF and preserves empty lines (each becomes []). Never throws.
+/**
+ * Highlight a whole code block: returns one segment array per line. Line splitting
+ * normalizes CRLF and preserves empty lines (each becomes []). Never throws.
+ * @param {string} code - The multi-line code block.
+ * @param {string} lang - The raw language string.
+ * @returns {Array} One rich-segment array per line.
+ */
 export function highlight(code, lang) {
   const src = code == null ? "" : String(code);
   const lines = src.replace(/\r\n/g, "\n").replace(/\r/g, "\n").split("\n");

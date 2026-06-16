@@ -1,6 +1,15 @@
+/**
+ * @file Effect schemas describing model-provider config: per-model metadata
+ * (cost, limits, modalities, capabilities, variants) and the provider-level
+ * config (API/npm settings, model whitelist/blacklist, request options).
+ * @module closedcode/config/provider
+ */
+
 import { Schema } from "effect";
 import { zod } from "#util/effect-zod.js";
 import { PositiveInt, withStatics } from "#util/schema.js";
+
+/** Schema for a single model's metadata: identity, capabilities, cost, limits, modalities, and variants. */
 export const Model = Schema.Struct({
   id: Schema.optional(Schema.String),
   name: Schema.optional(Schema.String),
@@ -52,6 +61,7 @@ export const Model = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a provider's config: endpoint/package identity, model allow/deny lists, request options, and per-model overrides. */
 export const Info = Schema.Struct({
   api: Schema.optional(Schema.String),
   name: Schema.optional(Schema.String),

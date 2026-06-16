@@ -33,6 +33,12 @@ import { ModelID, ProviderID } from "./schema.js";
 const log = Log.create({
   service: "provider"
 });
+/**
+ * Determine whether a host string is a private/loopback/link-local IPv4 address
+ * (loopback 127/8, RFC 1918 10/8, 172.16/12, 192.168/16, and link-local 169.254/16).
+ * @param {string} host - The host string to test.
+ * @returns {boolean} True for a private/loopback IPv4 address; false otherwise or when not an IPv4 literal.
+ */
 function isPrivateIPv4(host) {
   const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(host);
   if (!m) return false;
@@ -46,6 +52,12 @@ function isPrivateIPv4(host) {
   if (a === 169 && b === 254) return true;
   return false;
 }
+/**
+ * Determine whether a host string is a loopback/private/link-local IPv6 address
+ * (::1 loopback, fc00::/7 unique-local, fe80::/10 link-local).
+ * @param {string} host - The host string to test.
+ * @returns {boolean} True for a loopback/private/link-local IPv6 address; false otherwise.
+ */
 function isPrivateIPv6(host) {
   const lower = host.toLowerCase();
   if (lower === "::1") return true;
@@ -89,6 +101,15 @@ export function isLocalProvider(provider) {
     return typeof url === "string" && isLocalURL(url);
   });
 }
+/**
+ * Wrap a Server-Sent-Events Response so that a stalled stream is aborted if no
+ * chunk arrives within `ms`. Returns the response unchanged for non-positive
+ * timeouts, bodyless responses, or non-SSE content types.
+ * @param {Response} res - The fetch Response to wrap.
+ * @param {number} ms - The per-chunk read timeout in milliseconds.
+ * @param {AbortController} ctl - The controller aborted when a read times out.
+ * @returns {Response} The original or a timeout-guarded Response.
+ */
 function wrapSSE(res, ms, ctl) {
   if (typeof ms !== "number" || ms <= 0) return res;
   if (!res.body) return res;
@@ -174,6 +195,7 @@ const ProviderLimit = Schema.Struct({
   input: optionalOmitUndefined(Schema.Finite),
   output: Schema.Finite
 });
+/** Schema for a fully-resolved model (merged from models.dev, config, env, and auth). */
 export const Model = Schema.Struct({
   id: ModelID,
   providerID: ProviderID,
@@ -193,6 +215,7 @@ export const Model = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for a resolved provider, including its source, env var names, key, and models. */
 export const Info = Schema.Struct({
   id: ProviderID,
   name: Schema.String,
@@ -207,6 +230,7 @@ export const Info = Schema.Struct({
   zod: zod(s)
 })));
 const DefaultModelIDs = Schema.Record(Schema.String, Schema.String);
+/** Schema for the /provider list response: all providers, default model per provider, and connected ids. */
 export const ListResult = Schema.Struct({
   all: Schema.Array(Info),
   default: DefaultModelIDs,
@@ -214,12 +238,19 @@ export const ListResult = Schema.Struct({
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/** Schema for the config-providers response: the config-defined providers and their default models. */
 export const ConfigProvidersResult = Schema.Struct({
   providers: Schema.Array(Info),
   default: DefaultModelIDs
 }).pipe(withStatics(s => ({
   zod: zod(s)
 })));
+/**
+ * Pick a default model id for each provider — the top of {@link sort}'s ordering.
+ * Providers with no models are skipped (rather than crashing) so they still list.
+ * @param {Object} providers - Map from provider id to a provider object with a `models` record.
+ * @returns {Object} Map from provider id to its chosen default model id.
+ */
 export function defaultModelIDs(providers) {
   // A config-defined local provider (e.g. a freshly added Ollama endpoint) may
   // have zero models until they are pulled. sort([])[0] is undefined, so reading
@@ -233,7 +264,14 @@ export function defaultModelIDs(providers) {
   }
   return result;
 }
+/** Effect Context tag for the Provider service. */
 export class Service extends Context.Service()("@closedcode/Provider") {}
+/**
+ * Convert a models.dev cost record into the internal cost shape, defaulting
+ * missing fields to 0 and carrying over the optional >200k-context override.
+ * @param {Object} c - The models.dev cost record (may be undefined).
+ * @returns {Object} The internal cost object `{input, output, cache: {read, write}, ...}`.
+ */
 function cost(c) {
   const result = {
     input: c?.input ?? 0,
@@ -255,6 +293,13 @@ function cost(c) {
   }
   return result;
 }
+/**
+ * Build an internal Model from a models.dev provider+model pair, deriving API
+ * info, capabilities/modalities, cost, limits, and reasoning-effort variants.
+ * @param {Object} provider - The models.dev provider record.
+ * @param {Object} model - The models.dev model record.
+ * @returns {Object} The internal Model object (with `variants` populated).
+ */
 function fromModelsDevModel(provider, model) {
   const base = {
     id: ModelID.make(model.id),
@@ -304,6 +349,13 @@ function fromModelsDevModel(provider, model) {
     variants: mapValues(ProviderTransform.variants(base), v => v)
   };
 }
+/**
+ * Build an internal provider record from a models.dev provider, expanding each
+ * model and adding synthetic `<id>-<mode>` entries for any experimental modes
+ * (merging their cost/body/header overrides on top of the base model).
+ * @param {Object} provider - The models.dev provider record.
+ * @returns {Object} The internal provider object with id, name, env, and models.
+ */
 export function fromModelsDevProvider(provider) {
   const models = {};
   for (const [key, model] of Object.entries(provider.models)) {
@@ -330,6 +382,12 @@ export function fromModelsDevProvider(provider) {
     models
   };
 }
+/**
+ * Layer building the Provider service. Resolves the full provider/model database
+ * by merging the models.dev snapshot with plugin hooks, config, environment
+ * variables, and stored auth — enforcing the local-only policy by dropping any
+ * non-local provider — and exposes the lookup/SDK-resolution operations.
+ */
 const layer = Layer.effect(Service, Effect.gen(function* () {
   const fs = yield* AppFileSystem.Service;
   const config = yield* Config.Service;
@@ -348,6 +406,13 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     const varsLoaders = {};
     const sdk = new Map();
     log.info("init");
+    /**
+     * Deep-merge a partial provider into the resolved `providers` map, seeding
+     * from the models.dev `database` entry on first sight (and ignoring unknown ids).
+     * @param {string} providerID - The provider id.
+     * @param {Object} provider - The partial provider to merge in.
+     * @returns {void}
+     */
     function mergeProvider(providerID, provider) {
       const existing = providers[providerID];
       if (existing) {
@@ -366,6 +431,12 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     const configProviders = Object.entries(cfg.provider ?? {});
     const disabled = new Set(cfg.disabled_providers ?? []);
     const enabled = cfg.enabled_providers ? new Set(cfg.enabled_providers) : null;
+    /**
+     * Apply the config allow/deny lists: a provider must be in `enabled_providers`
+     * (when that list is set) and absent from `disabled_providers`.
+     * @param {string} providerID - The provider id to check.
+     * @returns {boolean} True when the provider is allowed by config.
+     */
     function isProviderAllowed(providerID) {
       if (enabled && !enabled.has(providerID)) return false;
       if (disabled.has(providerID)) return false;
@@ -571,7 +642,19 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
       varsLoaders
     };
   }));
+  // List all resolved providers (keyed by id).
   const list = Effect.fn("Provider.list")(() => InstanceState.use(state, s => s.providers));
+  /**
+   * Resolve (and cache) the AI-SDK provider instance for a model: assembles the
+   * base URL, API key, and headers; installs a fetch wrapper that blocks any
+   * non-local host (enforcing the local-only egress policy) and applies chunk/
+   * request timeouts; then loads the bundled, npm-installed, or file:// provider
+   * package. Wraps failures in {@link InitError}.
+   * @param {Object} model - The resolved model (`providerID`, `api`, `headers`, ...).
+   * @param {Object} s - The provider state (`providers`, `sdk` cache, `varsLoaders`).
+   * @param {Object} envs - The environment variables used for URL interpolation.
+   * @returns {Promise<Object>} The constructed provider SDK instance.
+   */
   async function resolveSDK(model, s, envs) {
     try {
       using _ = log.time("getSDK", {
@@ -688,7 +771,10 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
       });
     }
   }
+  // Look up a resolved provider by id (undefined when not found).
   const getProvider = Effect.fn("Provider.getProvider")(providerID => InstanceState.use(state, s => s.providers[providerID]));
+  // Look up a model by provider+model id, throwing ModelNotFoundError with fuzzy
+  // suggestions when the provider or model is unknown.
   const getModel = Effect.fn("Provider.getModel")(function* (providerID, modelID) {
     const s = yield* InstanceState.get(state);
     const provider = s.providers[providerID];
@@ -719,6 +805,8 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return info;
   });
+  // Resolve (and memoize) the AI-SDK language model for a model descriptor,
+  // building the SDK via resolveSDK and mapping NoSuchModelError to ModelNotFoundError.
   const getLanguage = Effect.fn("Provider.getLanguage")(function* (model) {
     const s = yield* InstanceState.get(state);
     const envs = yield* env.all();
@@ -745,6 +833,8 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
       }
     });
   });
+  // Find the first model under a provider whose id contains one of the query
+  // substrings (tried in order); returns undefined when nothing matches.
   const closest = Effect.fn("Provider.closest")(function* (providerID, query) {
     const s = yield* InstanceState.get(state);
     const provider = s.providers[providerID];
@@ -759,6 +849,8 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return undefined;
   });
+  // Pick a small/auxiliary model: the configured small_model if set, else the
+  // first provider model matching a priority substring (qwen/llama/gpt-oss).
   const getSmallModel = Effect.fn("Provider.getSmallModel")(function* (providerID) {
     const cfg = yield* config.get();
     if (cfg.small_model) {
@@ -776,6 +868,8 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     }
     return undefined;
   });
+  // Determine the default model: the configured `model`, else the most recently
+  // used available model from state, else the first model of the first provider.
   const defaultModel = Effect.fn("Provider.defaultModel")(function* () {
     const cfg = yield* config.get();
     if (cfg.model) return parseModel(cfg.model);
@@ -820,11 +914,24 @@ const layer = Layer.effect(Service, Effect.gen(function* () {
     defaultModel
   });
 }));
+/** The Provider layer with all its service dependencies provided. */
 export const defaultLayer = Layer.suspend(() => layer.pipe(Layer.provide(AppFileSystem.defaultLayer), Layer.provide(Env.defaultLayer), Layer.provide(Config.defaultLayer), Layer.provide(Auth.defaultLayer), Layer.provide(Plugin.defaultLayer), Layer.provide(ModelsDev.defaultLayer)));
 const priority = ["qwen", "llama", "gpt-oss"];
+/**
+ * Sort models into a preferred display order: by priority family
+ * (qwen/llama/gpt-oss) first, then "latest"-tagged ids, then id descending.
+ * @param {Array} models - The models to sort.
+ * @returns {Array} The sorted models.
+ */
 export function sort(models) {
   return sortBy(models, [model => priority.findIndex(filter => model.id.includes(filter)), "desc"], [model => model.id.includes("latest") ? 0 : 1, "asc"], [model => model.id, "desc"]);
 }
+/**
+ * Split a "provider/model" string into branded provider and model ids (the model
+ * portion may itself contain slashes, which are rejoined).
+ * @param {string} model - A "providerID/modelID" string.
+ * @returns {Object} `{providerID, modelID}` with branded ids.
+ */
 export function parseModel(model) {
   const [providerID, ...rest] = model.split("/");
   return {
@@ -832,11 +939,13 @@ export function parseModel(model) {
     modelID: ModelID.make(rest.join("/"))
   };
 }
+/** Error: the requested provider or model id was not found (carries fuzzy suggestions). */
 export const ModelNotFoundError = namedSchemaError("ProviderModelNotFoundError", {
   providerID: ProviderID,
   modelID: ModelID,
   suggestions: Schema.optional(Schema.Array(Schema.String))
 });
+/** Error: the provider SDK could not be constructed (wraps the underlying cause). */
 export const InitError = namedSchemaError("ProviderInitError", {
   providerID: ProviderID
 });

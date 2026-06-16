@@ -5,6 +5,11 @@ import path from "path";
 import { existsSync } from "fs";
 import { Filesystem } from "#util/filesystem.js";
 import { Glob } from "core/util/glob";
+/**
+ * @file One-time migration of the legacy on-disk JSON storage (project,
+ * session, message, part, todo, permission, session_share files) into the
+ * SQLite database via batched INSERT OR IGNORE statements.
+ */
 const log = Log.create({
   service: "json-migration"
 });
@@ -14,6 +19,11 @@ const log = Log.create({
 // survive — the model bulkCreate hooks would overwrite time_updated. JSON
 // columns are stringified manually, the same physical encoding as drizzle's
 // text({ mode: "json" }).
+/**
+ * Per-table insert specs: target table name, ordered column list, and the set
+ * of columns whose values must be JSON-stringified before insertion.
+ * @type {Object}
+ */
 const TABLES = {
   project: {
     name: "project",
@@ -51,6 +61,14 @@ const TABLES = {
     json: new Set()
   }
 };
+/**
+ * Migrate the legacy JSON storage directory into SQLite. Scans all entity
+ * files, then inserts them in dependency order (projects, sessions, messages,
+ * parts, todos, permissions, shares) within a single transaction, skipping
+ * orphaned records whose parent is missing.
+ * @param {Object} options - Optional settings; `progress` is a callback receiving {current, total, label}.
+ * @returns {Promise<Object>} Promise resolving to per-entity counts plus an `errors` array.
+ */
 export async function run(options) {
   const storageDir = path.join(Global.Path.data, "storage");
   if (!existsSync(storageDir)) {
@@ -99,12 +117,25 @@ export async function run(options) {
   const errs = stats.errors;
   const batchSize = 1000;
   const now = Date.now();
+  /**
+   * Glob the storage directory for files matching a pattern.
+   * @param {string} pattern - The glob pattern relative to the storage dir.
+   * @returns {Promise<Array<string>>} Promise resolving to absolute file paths.
+   */
   async function list(pattern) {
     return Glob.scan(pattern, {
       cwd: storageDir,
       absolute: true
     });
   }
+  /**
+   * Read a contiguous slice of JSON files concurrently, recording read errors
+   * and leaving failed slots undefined.
+   * @param {Array<string>} files - The full list of file paths.
+   * @param {number} start - Inclusive start index.
+   * @param {number} end - Exclusive end index.
+   * @returns {Promise<Array<*>>} Promise resolving to the parsed JSON for each file in range.
+   */
   async function read(files, start, end) {
     const count = end - start;
     // oxlint-disable-next-line unicorn/no-new-array -- pre-allocated for index-based batch fill
@@ -141,6 +172,12 @@ export async function run(options) {
   const total = Math.max(1, projectFiles.length + sessionFiles.length + messageFiles.length + partFiles.length + todoFiles.length + permFiles.length + shareFiles.length);
   const progress = options?.progress;
   let current = 0;
+  /**
+   * Advance the migration progress counter and notify the progress callback.
+   * @param {string} label - The current phase label.
+   * @param {number} count - Number of items just processed.
+   * @returns {void}
+   */
   const step = (label, count) => {
     current = Math.min(total, current + count);
     progress?.({
@@ -155,6 +192,15 @@ export async function run(options) {
     label: "starting"
   });
   await Database.transactionAsync(async h => {
+    /**
+     * Insert a batch of row objects via a single parameterized
+     * INSERT OR IGNORE, JSON-stringifying the columns named in the spec.
+     * Records errors and returns 0 on failure.
+     * @param {Array<Object>} values - Row objects keyed by spec column names.
+     * @param {Object} spec - The table spec {name, columns, json}.
+     * @param {string} label - Label used in error messages.
+     * @returns {Promise<number>} Promise resolving to the number of rows attempted (0 on error).
+     */
     async function insert(values, spec, label) {
       if (values.length === 0) return 0;
       try {

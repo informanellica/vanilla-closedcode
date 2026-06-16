@@ -1,3 +1,4 @@
+/** @file Experimental HttpApi route definitions for AI providers: list, auth methods, and OAuth authorize/callback. */
 import { ProviderAuth } from "#provider/auth.js";
 import { Provider } from "#provider/provider.js";
 import { ProviderID } from "#provider/schema.js";
@@ -7,7 +8,12 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Base URL path for the provider route group. */
 const root = "/provider";
+/**
+ * HttpApi definition for the experimental provider route group.
+ * Bundles the list/auth/authorize/callback endpoints under instance-context, workspace-routing, and authorization middleware.
+ */
 export const ProviderApi = HttpApi.make("provider").add(HttpApiGroup.make("provider").add(HttpApiEndpoint.get("list", root, {
   success: described(Provider.ListResult, "List of providers")
 }).annotateMerge(OpenApi.annotations({

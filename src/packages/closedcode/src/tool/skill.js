@@ -1,3 +1,4 @@
+/** @file Defines the "skill" tool, which loads a named skill's SKILL.md content and a sampled list of its accompanying files into the conversation. */
 import { assetText } from "#util/asset.js";
 import path from "path";
 import { pathToFileURL } from "url";
@@ -7,11 +8,18 @@ import { Ripgrep } from "../file/ripgrep.js";
 import { Skill } from "../skill/index.js";
 import * as Tool from "./tool.js";
 const DESCRIPTION = assetText("tool/skill.txt");
+/** Schema for the skill tool parameters: the name of the skill to load. */
 export const Parameters = Schema.Struct({
   name: Schema.String.annotate({
     description: "The name of the skill from available_skills"
   })
 });
+/**
+ * The "skill" tool. Resolves a skill by name, asks for permission to load it,
+ * then returns the skill's markdown content plus a sampled list of its files
+ * (excluding SKILL.md) so the model can reference them by absolute path.
+ * Fails if the named skill is not found, listing the available skills.
+ */
 export const SkillTool = Tool.define("skill", Effect.gen(function* () {
   const skill = yield* Skill.Service;
   const rg = yield* Ripgrep.Service;

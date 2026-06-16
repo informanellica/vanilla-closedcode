@@ -1,3 +1,4 @@
+/** @file Experimental HttpApi route definitions for instance read routes: dispose, paths, VCS info/diff, commands, agents, skills, LSP and formatter status. */
 import { Agent } from "#agent/agent.js";
 import { Command } from "#command/index.js";
 import { Format } from "#format/index.js";
@@ -10,6 +11,7 @@ import { Authorization } from "../middleware/authorization.js";
 import { InstanceContextMiddleware } from "../middleware/instance-context.js";
 import { WorkspaceRoutingMiddleware } from "../middleware/workspace-routing.js";
 import { described } from "./metadata.js";
+/** Success schema for the path endpoint: the instance's home, state, config, worktree, and directory paths. */
 const PathInfo = Schema.Struct({
   home: Schema.String,
   state: Schema.String,
@@ -19,9 +21,11 @@ const PathInfo = Schema.Struct({
 }).annotate({
   identifier: "Path"
 });
+/** Query schema for the VCS diff endpoint: which diff mode to compute (e.g. working tree vs default branch). */
 export const VcsDiffQuery = Schema.Struct({
   mode: Vcs.Mode
 });
+/** URL path constants for each instance read route, keyed by endpoint name. */
 export const InstancePaths = {
   dispose: "/instance/dispose",
   path: "/path",
@@ -33,6 +37,10 @@ export const InstancePaths = {
   lsp: "/lsp",
   formatter: "/formatter"
 };
+/**
+ * HttpApi definition for the experimental instance read route group.
+ * Bundles the dispose/path/vcs/command/agent/skill/lsp/formatter endpoints under instance-context, workspace-routing, and authorization middleware.
+ */
 export const InstanceApi = HttpApi.make("instance").add(HttpApiGroup.make("instance").add(HttpApiEndpoint.post("dispose", InstancePaths.dispose, {
   success: described(Schema.Boolean, "Instance disposed")
 }).annotateMerge(OpenApi.annotations({
