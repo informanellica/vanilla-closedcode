@@ -19,6 +19,10 @@ COPY . /app
 # Install the workspace (linux native prebuilds). Fall back to `npm install` if the
 # lockfile can't be satisfied with `ci`.
 RUN npm ci 2>&1 | tail -25 || npm install 2>&1 | tail -25
+# sqlite3's npm prebuilt targets a newer glibc (2.38 / GLIBCXX_3.4.31) than this
+# base (bookworm, 2.36), so the copied .node fails dlopen. Rebuild it from source
+# against this image's glibc so the SEA sidecar loads on bookworm-era systems.
+RUN npm rebuild sqlite3 --build-from-source 2>&1 | tail -20
 WORKDIR /app/packages/closedcode
 RUN node script/build.js --sea --skip-embed-web-ui
 RUN node script/sea.js
