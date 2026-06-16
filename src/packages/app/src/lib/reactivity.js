@@ -529,6 +529,20 @@ export function Portal(props) {
   return document.createComment("portal");
 }
 
+// Suspense pending-resource tracking. A <Suspense> publishes an { inc, dec }
+// handle on its owner-node context; resources created beneath it bump the count
+// while a fetch is in flight so Suspense can show its fallback until they
+// settle. Looked up by walking the owner chain (same as useContext).
+const SUSPENSE_KEY = Symbol("suspense");
+function currentSuspense() {
+  let o = Owner;
+  while (o) {
+    if (o.context && SUSPENSE_KEY in o.context) return o.context[SUSPENSE_KEY];
+    o = o.parent;
+  }
+  return null;
+}
+
 // ---- control flow (accessor-returning, consumed through insert()) ----------
 export function Show(props) {
   const condition = createMemo(() => props.when, undefined, { equals: props.keyed ? undefined : (a, b) => !!a === !!b });
@@ -542,15 +556,26 @@ export function Show(props) {
   // is the cached FUNCTION and is re-invoked per run so keyed values stay dynamic;
   // a plain subtree is the cached value and is returned as a stable accessor for
   // insert()'s nested effects to resolve in place.
-  const node = new OwnerNode(Owner);
-  let captured, hasCaptured = false, isRenderProp = false;
+  const showOwner = Owner;
+  let node = new OwnerNode(showOwner);
+  let captured, hasCaptured = false, isRenderProp = false, prevKey;
   return createMemo(() => {
     const conditionValue = condition();
     if (conditionValue) {
+      // keyed <Show>: a CHANGED key must remount — dispose the old subtree (so
+      // its onCleanup runs, e.g. a provider aborting its event stream) and
+      // re-capture under a fresh owner. Non-keyed Show never re-captures (the
+      // condition memo only re-runs on truthiness flips), so this is keyed-only.
+      if (props.keyed && hasCaptured && conditionValue !== prevKey) {
+        node.dispose();
+        node = new OwnerNode(showOwner);
+        hasCaptured = false;
+      }
       if (!hasCaptured) {
         captured = runWithOwner(node, () => props.children);
         isRenderProp = typeof captured === "function" && captured.length > 0;
         hasCaptured = true;
+        prevKey = conditionValue;
       }
       if (isRenderProp) return captured(props.keyed ? conditionValue : () => props.when);
       return captured;
@@ -681,12 +706,25 @@ export function ErrorBoundary(props) {
 }
 
 export function Suspense(props) {
-  // suspense-lite: no transitions; resources render their loading state inline.
-  // Capture children once (see ErrorBoundary) so a descendant signal flicker doesn't
-  // re-create the subtree on every re-run.
+  // suspense-lite: no transitions. Capture children once (see ErrorBoundary) so a
+  // descendant signal flicker doesn't re-create the subtree on every re-run, and
+  // track resources created beneath us so we show the fallback while any are
+  // pending (otherwise a child <Show> gated on a not-yet-resolved resource would
+  // render its own fallback — e.g. the connection-error screen — instead of the
+  // splash during startup). Toggling fallback<->children only swaps which DOM
+  // insert() shows; children are never re-created, so there's no loading loop.
+  const node = new OwnerNode(Owner);
+  const [pending, setPending] = createSignal(0);
+  node.context = {
+    ...(Owner?.context),
+    [SUSPENSE_KEY]: {
+      inc: () => setPending(c => c + 1),
+      dec: () => setPending(c => Math.max(0, c - 1)),
+    },
+  };
   let childrenOnce;
-  try { childrenOnce = props.children; } catch { /* leave undefined -> fallback */ }
-  return createMemo(() => childrenOnce ?? props.fallback);
+  try { childrenOnce = runWithOwner(node, () => props.children); } catch { /* leave undefined -> fallback */ }
+  return createMemo(() => (childrenOnce === undefined || pending() > 0) ? props.fallback : childrenOnce);
 }
 
 export function lazy(loader) {
@@ -716,7 +754,12 @@ export function createResource(sourceOrFetcher, fetcherOrOptions, optionsArg) {
   const [error, setError] = createSignal(undefined);
   let latestRequestId = 0;
   let firstRun = true;
+  // refetch() works by bumping this signal, which the effect reads — without it
+  // the no-source form (sourceAccessor === () => true) has no dependency, so the
+  // effect never re-runs and refetch would be a no-op (broken retry buttons).
+  const [refetchTick, setRefetchTick] = createSignal(0);
   createRenderEffect(() => {
+    refetchTick();
     const sourceValue = typeof sourceAccessor === "function" ? sourceAccessor() : sourceAccessor;
     if (sourceValue === false || sourceValue == null) return;
     const requestId = ++latestRequestId;
@@ -733,12 +776,33 @@ export function createResource(sourceOrFetcher, fetcherOrOptions, optionsArg) {
       rejection => { if (requestId === latestRequestId) { setError(() => rejection); setLoading(false); } }
     );
   });
-  const read = () => value();
+  // <Suspense> integration (read-based, matching solid): when this resource is
+  // READ while loading from inside a Suspense subtree, bump that Suspense's
+  // pending count so it shows its fallback (e.g. the startup splash), and release
+  // it once loading ends. The loading check is untracked so reading the value
+  // doesn't subscribe consumers to `loading`; resources read outside any Suspense
+  // are unaffected (currentSuspense() is null).
+  let suspendedIn = null;
+  const read = () => {
+    if (!suspendedIn && untrack(loading)) {
+      const s = currentSuspense();
+      if (s) { suspendedIn = s; s.inc(); }
+    }
+    return value();
+  };
+  createRenderEffect(() => {
+    // Read loading() UNCONDITIONALLY so this effect subscribes to it on the first
+    // run (when suspendedIn is still null). A short-circuit `suspendedIn && !loading()`
+    // would skip the read, never subscribe, and never release the Suspense -> the
+    // fallback (splash) would stick forever.
+    const isLoading = loading();
+    if (suspendedIn && !isLoading) { suspendedIn.dec(); suspendedIn = null; }
+  });
   Object.defineProperties(read, {
     loading: { get: loading },
     error: { get: error },
     latest: { get: value },
   });
-  const refetch = () => { latestRequestId++; /* re-run by bumping source readers */ };
+  const refetch = () => { setRefetchTick(c => c + 1); };
   return [read, { refetch, mutate: v => setValue(typeof v === "function" ? v : () => v) }];
 }
