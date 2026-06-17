@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that retroactively redirects babel-preset-solid's generated DOM-helper imports from "solid-js" to "solid-js/web" for web Solid packages, leaving the closedcode TUI (which targets @opentui/solid) untouched. */
 // babel-preset-solid emits imports like `import { template as _$template } from "X"`.
 // We told babel `moduleName: "solid-js"` (and "@opentui/solid" for closedcode),
 // but for web Solid the DOM helpers live in `solid-js/web` (not `solid-js`).
@@ -18,6 +19,12 @@ const EXCLUDE_DIRS = new Set(["node_modules", ".git", "dist", "build", ".output"
 const WEB_PREFIX = path.join(ROOT, "packages") + path.sep
 const CLOSEDCODE_PREFIX = path.join(ROOT, "packages/closedcode") + path.sep
 
+/**
+ * Recursively collect `.js` files under a directory, skipping excluded dirs.
+ * @param {string} dir - Directory to walk.
+ * @param {Array<string>} out - Accumulator array that matching file paths are pushed onto.
+ * @returns {Promise<void>}
+ */
 async function walk(dir, out) {
   let entries
   try {
@@ -74,6 +81,14 @@ const WEB_HELPERS = new Set([
   "nextElement",
 ])
 
+/**
+ * Rewrite a single import line that pulls babel-preset-solid helpers from "solid-js"
+ * so it imports from "solid-js/web" instead. Lines without the `_$` helper signature,
+ * lines not importing from "solid-js", and files under the closedcode package are skipped.
+ * @param {string} file - Absolute path of the file containing the import line.
+ * @param {string} importLine - A single source line to inspect.
+ * @returns {string|null} The rewritten import line, or null if no rewrite applies.
+ */
 function rewriteImport(file, importLine) {
   // Match `import { X as _$Y } from "solid-js"`. The `_$` prefix is babel-preset-solid's
   // signature — whenever the line uses it and pulls from "solid-js", redirect to "solid-js/web".
@@ -86,6 +101,11 @@ function rewriteImport(file, importLine) {
   return importLine.replace(/from\s*"solid-js"/, `from "solid-js/web"`)
 }
 
+/**
+ * Entry point: walk the repo, rewrite qualifying Solid helper imports line by line
+ * in every `.js` file, and report how many files were modified.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const files = []
   await walk(ROOT, files)

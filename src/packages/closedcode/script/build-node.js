@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* Node/esbuild build script */
+/** @file esbuild build for the Node sidecar bundle (dist/node): loads SQL migrations, bundles src/node.js + the VCS patch worker with path-alias/native-externalize/optional-stub plugins, injects build-time constants, then copies *.txt assets next to the output. */
 import { Script } from "script"
 import fs from "fs"
 import path from "path"
@@ -151,6 +152,11 @@ await esbuild({
 // Stage 2 (pure-vanilla): prompts/tool descriptions are read via fs at runtime
 // (src/util/asset.js) instead of bundler text imports — ship every src/**/*.txt
 // next to the bundle under assets/, preserving the src/-relative layout.
+/**
+ * Recursively copy every src/**\/*.txt file into <outRoot>/assets, preserving the src-relative directory layout.
+ * @param {string} outRoot - Output directory whose `assets/` subfolder receives the copied text files.
+ * @returns {void}
+ */
 function copyTextAssets(outRoot) {
   const srcRoot = path.join(dir, "src");
   const walk = d =>

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+/** @file npm postinstall hook that locates the platform-specific closedcode binary package and links its executable into bin/ on non-Windows platforms (no-op on Windows, which ships a packaged .exe). */
 import fs from "fs"
 import path from "path"
 import os from "os"
@@ -9,6 +10,10 @@ import { createRequire } from "module"
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const require = createRequire(import.meta.url)
 
+/**
+ * Determine the current platform and architecture, normalized to the naming scheme used by the closedcode binary packages.
+ * @returns {Object} An object with `platform` (e.g. "darwin", "linux", "windows") and `arch` (e.g. "x64", "arm64", "arm") string fields.
+ */
 function detectPlatformAndArch() {
   // Map platform names
   let platform
@@ -47,6 +52,11 @@ function detectPlatformAndArch() {
   return { platform, arch }
 }
 
+/**
+ * Resolve the installed platform-specific binary package and locate its executable on disk.
+ * @returns {Object} An object with `binaryPath` (absolute path to the executable) and `binaryName` (the executable filename).
+ * @throws {Error} When the platform package cannot be resolved or the expected binary file does not exist.
+ */
 function findBinary() {
   const { platform, arch } = detectPlatformAndArch()
   const packageName = `closedcode-${platform}-${arch}`
@@ -68,6 +78,10 @@ function findBinary() {
   }
 }
 
+/**
+ * Postinstall entry point: on Windows it does nothing (the packaged .exe is used directly); on other platforms it hard-links (falling back to copy) the resolved binary into bin/.closedcode and marks it executable.
+ * @returns {Promise<void>} A promise that resolves when setup completes; exits the process with code 1 on failure.
+ */
 async function main() {
   try {
     if (os.platform() === "win32") {

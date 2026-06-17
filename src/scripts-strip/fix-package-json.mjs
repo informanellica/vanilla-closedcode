@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that sweeps the monorepo's package.json files to remove TypeScript/babel tooling deps, neutralize typecheck scripts, and rewrite `.ts`/`.tsx` paths to `.js` after the type-strip pass. */
 // Sweep every package.json:
 //   - Drop TypeScript/babel-related deps: typescript, tsx, ts-jest, @tsconfig/*, @types/*,
 //     @typescript/native-preview, oxlint-tsgolint
@@ -55,6 +56,12 @@ const DEP_REMOVALS = new Set([
   "@tsconfig/bun",
 ])
 
+/**
+ * Decide whether a dependency name is TypeScript-related and should be removed.
+ * Matches the explicit removal set plus any `@types/` or `@tsconfig/` scoped package.
+ * @param {string} name - Dependency package name.
+ * @returns {boolean} True if the dependency should be dropped.
+ */
 function isTypeDep(name) {
   if (DEP_REMOVALS.has(name)) return true
   if (name.startsWith("@types/")) return true
@@ -62,6 +69,12 @@ function isTypeDep(name) {
   return false
 }
 
+/**
+ * Rewrite an npm script command for a TypeScript-free build: turn tsgo/tsc
+ * typecheck invocations into a no-op echo and replace the `tsx` runner with `node`.
+ * @param {string} s - The original script command (non-strings pass through unchanged).
+ * @returns {string} The rewritten script command.
+ */
 function convertScript(s) {
   if (typeof s !== "string") return s
   let out = s
@@ -75,6 +88,11 @@ function convertScript(s) {
   return out
 }
 
+/**
+ * Rewrite a single path-like string ending in `.ts`/`.tsx` to `.js`.
+ * @param {string} v - The value to rewrite (non-strings pass through unchanged).
+ * @returns {string} The possibly rewritten string.
+ */
 function fixPathString(v) {
   if (typeof v !== "string") return v
   if (v.endsWith(".tsx")) return v.slice(0, -4) + ".js"
@@ -82,6 +100,12 @@ function fixPathString(v) {
   return v
 }
 
+/**
+ * Recursively rewrite every `.ts`/`.tsx` path string within a JSON-like value
+ * (used for the exports/imports/main/module/bin fields), preserving structure.
+ * @param {*} node - A string, array, object, or primitive from the package manifest.
+ * @returns {*} The structurally identical value with path strings rewritten to `.js`.
+ */
 function walkPaths(node) {
   if (node == null) return node
   if (typeof node === "string") return fixPathString(node)
@@ -94,6 +118,11 @@ function walkPaths(node) {
   return node
 }
 
+/**
+ * Entry point: for each known package.json, strip TS deps and typings fields,
+ * convert scripts, rewrite path fields to `.js`, and write back any file that changed.
+ * @returns {Promise<void>}
+ */
 async function main() {
   for (const rel of PKG_FILES) {
     const full = path.join(ROOT, rel)

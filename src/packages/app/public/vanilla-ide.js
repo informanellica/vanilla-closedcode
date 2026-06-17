@@ -1,3 +1,4 @@
+/** @file In-app CodeMirror-based file editor exposed as the global window.VanillaIDE (vanilla browser script, no bundler). */
 /*
  * vanilla-ide.js — in-app file editor (vanilla, no bundler, no `import`).
  *
@@ -21,12 +22,27 @@
   // switch. We stash the dirty buffer here on unmount and restore it on remount.
   var unsavedCache = Object.create(null);
 
+  /**
+   * Report whether the Electron preload file bridge (window.api.readFile) is
+   * available, i.e. whether file editing can actually read/write to disk.
+   *
+   * @returns {boolean} True when the readFile bridge is present.
+   */
   function hasBridge() {
     return typeof window !== "undefined" && window.api && typeof window.api.readFile === "function";
   }
 
   // Pick a CodeMirror mime/mode for a filename, but only if the corresponding
   // mode script was actually loaded (see index.html). Otherwise plain text.
+  /**
+   * Resolve the CodeMirror mode/mime for a filename, returning a mode only when
+   * the corresponding CodeMirror mode script was actually loaded; otherwise the
+   * editor falls back to plain text.
+   *
+   * @param {string} name - The file name (or path) to classify by extension.
+   * @returns {string} The CodeMirror mime or mode identifier, or null when no
+   *   loaded mode matches the file.
+   */
   function detectMode(name) {
     var CM = window.CodeMirror;
     if (!CM || typeof CM.findModeByFileName !== "function") return null;
@@ -36,15 +52,34 @@
     return info.mime || info.mode;
   }
 
+  /**
+   * Report whether the document is currently in Bootstrap dark color mode
+   * (data-bs-theme="dark" on the root element).
+   *
+   * @returns {boolean} True when dark mode is active.
+   */
   function isDark() {
     var root = document.documentElement;
     return (root.getAttribute("data-bs-theme") || "").toLowerCase() === "dark";
   }
 
+  /**
+   * Choose the CodeMirror editor theme name matching the current color mode.
+   *
+   * @returns {string} "material-darker" in dark mode, otherwise "default".
+   */
   function themeName() {
     return isDark() ? "material-darker" : "default";
   }
 
+  /**
+   * Create a DOM element with an optional class and text content.
+   *
+   * @param {string} tag - Tag name to create (e.g. "div", "span").
+   * @param {string} cls - CSS class to assign, or a falsy value for none.
+   * @param {string} text - Text content to set; when null/undefined no text is set.
+   * @returns {Node} The newly created element.
+   */
   function el(tag, cls, text) {
     var node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -52,6 +87,18 @@
     return node;
   }
 
+  /**
+   * Build the editor's surrounding chrome (toolbar with unsaved indicator and
+   * status text plus an empty editor wrapper) into a host element, replacing
+   * any existing content.
+   *
+   * @param {Node} hostEl - The host element to populate with editor chrome.
+   * @param {string} relName - Project-relative file name (currently unused for
+   *   layout; the file name is shown in the tab instead).
+   * @param {Function} onExit - Optional exit callback (currently unused).
+   * @returns {Object} References to the created chrome nodes: { bar, editorWrap,
+   *   dirty, status }.
+   */
   function buildChrome(hostEl, relName, onExit) {
     hostEl.innerHTML = "";
     hostEl.classList.add("vide-host");
@@ -78,6 +125,15 @@
     return { bar: bar, editorWrap: editorWrap, dirty: dirty, status: status };
   }
 
+  /**
+   * Set the editor's status-bar message. Non-error messages auto-clear after a
+   * short delay; error messages are styled and persist.
+   *
+   * @param {Object} inst - The editor instance whose chrome to update.
+   * @param {string} msg - The status text to display, or empty to clear.
+   * @param {boolean} isError - When true, render as an error and skip auto-clear.
+   * @returns {void}
+   */
   function setStatus(inst, msg, isError) {
     if (!inst.chrome) return;
     inst.chrome.status.textContent = msg || "";
@@ -92,6 +148,15 @@
 
   // Notify the Solid tab system when an editor's dirty state changes, keyed by
   // the project-relative path (inst.relName === file.pathFromTab(tab)).
+  /**
+   * Dispatch a "vide:dirty" window CustomEvent (keyed by the editor's relative
+   * path) when its unsaved/dirty state transitions, so the tab UI can update.
+   * Only fires on an actual change in dirty state.
+   *
+   * @param {Object} inst - The editor instance.
+   * @param {boolean} dirty - The new dirty state (true = unsaved changes).
+   * @returns {void}
+   */
   function emitDirty(inst, dirty) {
     if (!inst || !inst.relName) return;
     if (inst._lastDirty === dirty) return; // only on change
@@ -103,6 +168,13 @@
     } catch (e) {}
   }
 
+  /**
+   * Recompute the editor's dirty state from CodeMirror, toggle the unsaved
+   * indicator's visibility, and emit a dirty-change event.
+   *
+   * @param {Object} inst - The editor instance.
+   * @returns {void}
+   */
   function refreshDirty(inst) {
     var clean = inst.cm ? inst.cm.isClean(inst.baseGen) : true;
     inst.chrome.dirty.style.visibility = clean ? "hidden" : "visible";
@@ -111,6 +183,14 @@
 
   // Notepad++-style editor status (cursor line/col, char count, EOL, encoding,
   // read-only), keyed by path. Consumed by the bottom status bar.
+  /**
+   * Dispatch a "vide:editorstate" window CustomEvent describing the editor's
+   * current cursor position, character/line counts, selection length, line
+   * ending, encoding, and read-only state, for the bottom status bar.
+   *
+   * @param {Object} inst - The editor instance whose CodeMirror state to read.
+   * @returns {void}
+   */
   function emitEditorState(inst) {
     if (!inst || !inst.cm || !inst.relName) return;
     var cm = inst.cm;
@@ -133,6 +213,14 @@
     } catch (e) {}
   }
 
+  /**
+   * Save the editor's current content to disk via the file bridge. Untitled
+   * (new) buffers are routed to the Save-as dialog; clean buffers are skipped.
+   * Updates the dirty state, clears the unsaved cache, and reports status.
+   *
+   * @param {Object} inst - The editor instance to save.
+   * @returns {void}
+   */
   function save(inst) {
     if (!inst.cm || !hasBridge()) return;
     // A new (untitled) in-memory buffer has no disk path yet: prompt the user
@@ -155,6 +243,15 @@
 
   // Save-as for a brand-new untitled buffer: ask where to write, then write and
   // signal the app (vide:saved-as) to swap the untitled tab for the real file.
+  /**
+   * Prompt for a destination via the native save dialog, write the editor's
+   * content there, then dispatch a "vide:saved-as" event so the app can swap
+   * the untitled tab for the real file. No-op if the picker bridge is missing
+   * or the user cancels.
+   *
+   * @param {Object} inst - The (typically untitled) editor instance to save.
+   * @returns {void}
+   */
   function saveAs(inst) {
     if (!inst.cm) return;
     if (!window.api || typeof window.api.saveFilePicker !== "function") {
@@ -182,12 +279,30 @@
     });
   }
 
+  /**
+   * Apply the editor theme that matches the current color mode to the instance's
+   * CodeMirror.
+   *
+   * @param {Object} inst - The editor instance.
+   * @returns {void}
+   */
   function applyTheme(inst) {
     if (inst.cm) inst.cm.setOption("theme", themeName());
   }
 
   // Build the CodeMirror editor into the (already-mounted) host from a raw
   // string. Shared by the disk-read path and the new-buffer (untitled) path.
+  /**
+   * Instantiate the CodeMirror editor for an instance from raw file content.
+   * Detects line ending and encoding from the original string, restores any
+   * unsaved buffer cached across a tab switch, wires change/cursor listeners,
+   * and installs resize/visibility/theme observers so the editor stays correctly
+   * sized and themed. Shared by both the disk-read and untitled-buffer paths.
+   *
+   * @param {Object} inst - The editor instance (must already have built chrome).
+   * @param {string} raw - The initial editor content as a raw string.
+   * @returns {void}
+   */
   function buildEditor(inst, raw) {
     var chrome = inst.chrome;
     chrome.editorWrap.innerHTML = "";
@@ -260,6 +375,18 @@
     inst.observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-bs-theme"] });
   }
 
+  /**
+   * Public API: mount an editor into a host element for a file or a new
+   * untitled buffer. Idempotent (unmounts any prior instance first). Shows a
+   * fallback message when the file bridge or CodeMirror is unavailable; reads
+   * the file via the bridge unless opts.newBuffer is set.
+   *
+   * @param {Node} hostEl - The host element to mount the editor into.
+   * @param {Object} opts - Mount options: absPath (absolute file path),
+   *   relName (project-relative name/label), newBuffer (boolean, start an empty
+   *   untitled buffer without reading disk), tabId, saveDefaultPath, onExit.
+   * @returns {void}
+   */
   function mount(hostEl, opts) {
     if (!hostEl) return;
     unmount(hostEl); // idempotent
@@ -315,6 +442,15 @@
     });
   }
 
+  /**
+   * Public API: tear down the editor mounted in a host element. Disconnects all
+   * observers and timers, clears the tab dirty indicator, caches unsaved edits
+   * by the instance's cache key (so a remount can restore them) or clears stale
+   * cache when clean, and empties the host element. No-op if nothing is mounted.
+   *
+   * @param {Node} hostEl - The host element whose editor should be unmounted.
+   * @returns {void}
+   */
   function unmount(hostEl) {
     var inst = instances.get(hostEl);
     if (!inst) return;
@@ -338,11 +474,21 @@
     }
   }
 
+  /**
+   * Public API: report whether the editor mounted in a host element has unsaved
+   * changes.
+   *
+   * @param {Node} hostEl - The host element to check.
+   * @returns {boolean} True when an editor is mounted there with unsaved edits.
+   */
   function isDirty(hostEl) {
     var inst = instances.get(hostEl);
     return !!(inst && inst.cm && !inst.cm.isClean(inst.baseGen));
   }
 
+  // Public global API surface. mount/unmount/isDirty as above; save triggers a
+  // save of the editor in the host; refresh re-measures its CodeMirror; and
+  // dropUnsaved discards a stashed unsaved buffer by its cache key.
   window.VanillaIDE = { mount: mount, unmount: unmount, isDirty: isDirty, save: function (hostEl) {
     var inst = instances.get(hostEl);
     if (inst) save(inst);

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build script that packages the prebuilt CJS bundle into a Node SEA single-executable binary (with optional code signing) for the host or a cross-build target. */
 /* Node SEA packaging: turn dist/<platform>/bin/closedcode.cjs (built by
  * `node script/build.js --sea`) into the platform binary closedcode(.exe) via a
  * SEA blob + postject injection.
@@ -24,6 +25,12 @@ const pkg = require(path.join(dir, "package.json"));
 
 // Target identity: default = host; override OS/arch via --target-os / --target-arch
 // (cross-build) so the platform package name + exe extension match the target.
+/**
+ * Read the value following a CLI flag in process.argv, or fall back to a default.
+ * @param {string} flag - The flag name to look for (e.g. "--target-os").
+ * @param {*} dflt - The value to return when the flag is absent.
+ * @returns {*} The argument following the flag, or dflt.
+ */
 const arg = (flag, dflt) => { const i = process.argv.indexOf(flag); return i >= 0 ? process.argv[i + 1] : dflt; };
 const targetOs = arg("--target-os", process.platform === "win32" ? "windows" : process.platform);
 const targetArch = arg("--target-arch", process.arch);

@@ -1,3 +1,4 @@
+/** @file CDP debug script: attaches to the running desktop app via Playwright, toggles the Bootstrap dark/light theme on the renderer, captures before/after screenshots into artifacts/, and reports any error-boundary input value. */
 import { chromium } from "playwright";
 
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");

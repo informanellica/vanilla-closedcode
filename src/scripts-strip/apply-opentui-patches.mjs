@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that idempotently re-applies the source patches to installed @opentui/* packages required for them to run under Node instead of Bun. */
 // Re-applies the @opentui/* tweaks needed for Node interop.
 // Safe to run more than once.
 
@@ -9,6 +10,13 @@ import { fileURLToPath } from "node:url"
 // Source root (this script lives in <root>/scripts-strip); node_modules sits here.
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..")
 
+/**
+ * Patch @opentui/core's bundled index for Node interop: convert Bun `with { type: "file" }`
+ * static imports to plain const declarations, route `node:ffi` dynamic imports to a
+ * globalThis polyfill in both importModule helpers, and switch the dynamic platform
+ * binding import from a `.ts` to a `.js` path.
+ * @returns {void}
+ */
 function patchCore() {
   const file = path.join(ROOT, "node_modules/@opentui/core/index-jv9g79dk.js")
   let s = fs.readFileSync(file, "utf8")
@@ -40,6 +48,12 @@ function patchCore() {
   fs.writeFileSync(file, s)
 }
 
+/**
+ * Overwrite @opentui/solid's runtime-plugin-support module with a Node-safe stub
+ * whose ensureRuntimePluginSupport always returns false, since Bun's runtime JIT
+ * plugin hook is unavailable under Node.
+ * @returns {void}
+ */
 function patchSolid() {
   const file = path.join(ROOT, "node_modules/@opentui/solid/scripts/runtime-plugin-support-configure.ts")
   fs.writeFileSync(
@@ -62,6 +76,11 @@ export function ensureRuntimePluginSupport(_options: SolidRuntimePluginSupportOp
   )
 }
 
+/**
+ * Write index.ts and index.js for the @opentui/core-darwin-arm64 native binding
+ * package so each exports the resolved filesystem path to the bundled libopentui dylib.
+ * @returns {void}
+ */
 function patchDarwinArm64() {
   const dir = path.join(ROOT, "node_modules/@opentui/core-darwin-arm64")
   const tsFile = path.join(dir, "index.ts")

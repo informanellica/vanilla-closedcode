@@ -1,3 +1,4 @@
+/** @file Slack bot entry point: boots a Bolt socket-mode app and a local closedcode server, maps each Slack thread to a closedcode session, relays user messages as prompts, and streams live tool updates back into the thread. */
 import { App } from "@slack/bolt";
 import { createOpencode } from "sdk";
 const app = new App({
@@ -33,6 +34,15 @@ void (async () => {
     }
   }
 })();
+/**
+ * Post a Slack message summarizing a completed tool invocation into the
+ * thread tied to its closedcode session. No-op for tool updates that are not
+ * yet in the "completed" state; posting failures are swallowed.
+ * @param {Object} part - The tool message part from a `message.part.updated` event.
+ * @param {string} channel - The Slack channel ID to post into.
+ * @param {string} thread - The thread timestamp to reply under.
+ * @returns {Promise<void>} Resolves once the post attempt completes.
+ */
 async function handleToolUpdate(part, channel, thread) {
   if (part.state.status !== "completed") return;
   const toolMessage = `*${part.tool}* - ${part.state.title}`;

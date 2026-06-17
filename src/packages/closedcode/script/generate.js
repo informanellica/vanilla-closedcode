@@ -1,3 +1,4 @@
+/** @file Build-time generator that fetches the models.dev catalog snapshot, strips hosted middleman/aggregator gateways, and writes src/provider/models-snapshot.js. */
 import path from "path";
 import { fileURLToPath } from "url";
 import { readFile, writeFile, mkdir } from "node:fs/promises";

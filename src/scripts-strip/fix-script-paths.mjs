@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that rewrites `.ts`/`.tsx` file paths embedded in package.json `scripts` entries to `.js` after the type-strip pass. */
 // After the type-strip pass, package.json scripts like "node script/build.ts" still
 // reference the old TS path. Rewrite those to .js.
 
@@ -28,11 +29,21 @@ const PKG_FILES = [
 
 const PATH_RE = /(\S+)\.tsx?(?=\s|$|"|')/g
 
+/**
+ * Rewrite any `.ts`/`.tsx` file path tokens in a script command to `.js`.
+ * @param {string} s - The original script command (non-strings pass through unchanged).
+ * @returns {string} The rewritten script command.
+ */
 function fixScript(s) {
   if (typeof s !== "string") return s
   return s.replace(PATH_RE, "$1.js")
 }
 
+/**
+ * Entry point: for each known package.json, rewrite `.ts`/`.tsx` paths in its
+ * `scripts` entries to `.js` and write back any file that changed.
+ * @returns {Promise<void>}
+ */
 async function main() {
   for (const rel of PKG_FILES) {
     const full = path.join(ROOT, rel)

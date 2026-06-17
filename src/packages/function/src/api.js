@@ -1,3 +1,4 @@
+/** @file Cloudflare Worker API: a SyncServer Durable Object for session sharing plus a Hono router for share, Feishu relay, and GitHub app token exchange endpoints. */
 import { Hono } from "hono";
 import { DurableObject } from "cloudflare:workers";
 import { randomUUID } from "node:crypto";
@@ -5,11 +6,24 @@ import { jwtVerify, createRemoteJWKSet } from "jose";
 import { createAppAuth } from "@octokit/auth-app";
 import { Octokit } from "@octokit/rest";
 import { Resource } from "sst";
+/**
+ * Durable Object that fans out shared session state to subscribed WebSocket clients
+ * and persists session messages to a bucket and durable storage.
+ */
 export class SyncServer extends DurableObject {
+  /**
+   * Constructs the Durable Object.
+   * @param {Object} ctx - The Durable Object state/context.
+   * @param {Object} env - The Worker environment bindings.
+   */
   // oxlint-disable-next-line no-useless-constructor
   constructor(ctx, env) {
     super(ctx, env);
   }
+  /**
+   * Handles a subscribe request by accepting a WebSocket and replaying existing session state.
+   * @returns {Promise<Response>} A 101 Switching Protocols response carrying the client WebSocket.
+   */
   async fetch() {
     console.log("SyncServer subscribe");
     const webSocketPair = new WebSocketPair();
@@ -25,10 +39,28 @@ export class SyncServer extends DurableObject {
       webSocket: client
     });
   }
+  /**
+   * Handles inbound WebSocket messages from subscribers. No-op; subscribers are read-only.
+   * @param {Object} _ws - The WebSocket that received the message.
+   * @param {*} _message - The received message payload.
+   */
   async webSocketMessage(_ws, _message) {}
+  /**
+   * Handles a WebSocket close event by closing the server-side socket with the given code.
+   * @param {Object} ws - The WebSocket being closed.
+   * @param {number} code - The close status code.
+   * @param {string} _reason - The close reason (unused).
+   * @param {boolean} _wasClean - Whether the connection closed cleanly (unused).
+   */
   async webSocketClose(ws, code, _reason, _wasClean) {
     ws.close(code, "Durable Object is closing WebSocket");
   }
+  /**
+   * Validates and stores a session entry, then broadcasts it to all subscribed clients.
+   * @param {string} key - The storage key; must belong to this session's info, message, or part namespace.
+   * @param {*} content - The entry content to persist and broadcast.
+   * @returns {Promise<Response>} A 400 Response if the key is invalid; otherwise resolves with no value.
+   */
   async publish(key, content) {
     const sessionID = await this.getSessionID();
     if (!key.startsWith(`session/info/${sessionID}`) && !key.startsWith(`session/message/${sessionID}/`) && !key.startsWith(`session/part/${sessionID}/`)) return new Response("Error: Invalid key", {
@@ -51,6 +83,11 @@ export class SyncServer extends DurableObject {
       }));
     }
   }
+  /**
+   * Returns the share secret for the session, creating and persisting one (with the session id) on first use.
+   * @param {string} sessionID - The session id to associate with the share secret.
+   * @returns {Promise<string>} The existing or newly created share secret.
+   */
   async share(sessionID) {
     let secret = await this.getSecret();
     if (secret) return secret;
@@ -59,6 +96,10 @@ export class SyncServer extends DurableObject {
     await this.ctx.storage.put("sessionID", sessionID);
     return secret;
   }
+  /**
+   * Returns all stored session entries as an array of key/content pairs.
+   * @returns {Promise<Array>} The session entries currently held in durable storage.
+   */
   async getData() {
     const data = await this.ctx.storage.list();
     return Array.from(data.entries()).filter(([key, _]) => key.startsWith("session/")).map(([key, content]) => ({
@@ -66,15 +107,32 @@ export class SyncServer extends DurableObject {
       content
     }));
   }
+  /**
+   * Throws if the provided secret does not match the stored share secret.
+   * @param {string} secret - The secret to verify.
+   * @returns {Promise<void>} Resolves when the secret matches; otherwise throws.
+   */
   async assertSecret(secret) {
     if (secret !== (await this.getSecret())) throw new Error("Invalid secret");
   }
+  /**
+   * Returns the stored share secret.
+   * @returns {Promise<string>} The share secret, or undefined if none has been set.
+   */
   async getSecret() {
     return this.ctx.storage.get("secret");
   }
+  /**
+   * Returns the stored session id.
+   * @returns {Promise<string>} The session id, or undefined if none has been set.
+   */
   async getSessionID() {
     return this.ctx.storage.get("sessionID");
   }
+  /**
+   * Deletes all bucket objects and durable storage entries for this session.
+   * @returns {Promise<void>} Resolves once all session data is removed.
+   */
   async clear() {
     const sessionID = await this.getSessionID();
     const list = await this.env.Bucket.list({
@@ -87,10 +145,22 @@ export class SyncServer extends DurableObject {
     await this.env.Bucket.delete(`session/info/${sessionID}`);
     await this.ctx.storage.deleteAll();
   }
+  /**
+   * Derives the short Durable Object name from a session id (its last 8 characters).
+   * @param {string} id - The full session id.
+   * @returns {string} The trailing 8-character short name.
+   */
   static shortName(id) {
     return id.substring(id.length - 8);
   }
 }
+/**
+ * The Hono application exported as the Worker fetch handler.
+ * Routes: GET "/" health check; POST "/share_create" to start sharing a session and get a secret/URL;
+ * POST "/share_delete" and "/share_delete_admin" to tear down a share; POST "/share_sync" to publish an entry;
+ * GET "/share_poll" to subscribe over WebSocket; GET "/share_data" to fetch aggregated session info and messages;
+ * POST "/feishu" to relay Feishu messages to Discord; the GitHub token-exchange endpoints below; and a catch-all 404.
+ */
 export default new Hono().get("/", c => c.text("Hello, world!")).post("/share_create", async c => {
   const body = await c.req.json();
   const sessionID = body.sessionID;

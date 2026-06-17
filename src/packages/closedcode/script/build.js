@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 /* Node/esbuild build script */;
+/** @file Primary esbuild build for the closedcode CLI binary: produces either an ESM bundle or a CommonJS Single Executable Application (SEA) bundle, optionally embeds the built Web UI, loads SQL migrations, injects build-time constants, writes the platform package.json, and copies text assets plus (for SEA) the native dependency sidecar closure. */
 import { $ } from "script/shell";
 import fs from "node:fs";
 import path from "node:path";
@@ -52,6 +53,11 @@ const migrations = await Promise.all(migrationDirs.map(async name => {
   };
 }));
 console.log(`Loaded ${migrations.length} migrations`);
+/**
+ * Build the sibling Web UI app and return its dist files as a base64-encoded map for embedding in the bundle.
+ * Returns null when --skip-embed-web-ui is passed.
+ * @returns {Promise<Object>} A promise resolving to an object keyed by relative file path with base64-encoded file contents, or null when embedding is skipped.
+ */
 async function buildEmbeddedWebUI() {
   if (skipEmbedWebUi) return null;
   console.log("Building Web UI to embed");
@@ -303,6 +309,11 @@ await fs.promises.writeFile(path.join(outDir, "package.json"), JSON.stringify({
 // Stage 2 (pure-vanilla): prompts/tool descriptions are read via fs at runtime
 // (src/util/asset.js) instead of bundler text imports — ship every src/**/*.txt
 // next to the bundle under assets/, preserving the src/-relative layout.
+/**
+ * Recursively copy every src/**\/*.txt file into <outRoot>/assets, preserving the src-relative directory layout.
+ * @param {string} outRoot - Output directory whose `assets/` subfolder receives the copied text files.
+ * @returns {void}
+ */
 function copyTextAssets(outRoot) {
   const srcRoot = path.join(dir, "src");
   const walk = d =>
@@ -324,6 +335,12 @@ copyTextAssets(path.join(outDir, "bin"));
 // to the bundle (bin/node_modules), where __ccRequire (createRequire(<execDir>))
 // resolves them at runtime. For win-x64 the host node_modules already holds the
 // matching native prebuilds; cross-platform CI installs per-target natives.
+/**
+ * Copy the externalized native/dynamic dependencies and their full transitive dependency closure into <outRoot>/node_modules so the SEA binary can resolve them at runtime.
+ * Walks each root package's dependencies and optionalDependencies, skipping any package without a readable package.json.
+ * @param {string} outRoot - Output directory whose `node_modules/` subfolder receives the sidecar packages.
+ * @returns {void}
+ */
 function copySidecars(outRoot) {
   const nm = path.join(dir, "../../node_modules"); // workspace (hoisted) node_modules
   // @parcel/watcher's wrapper.js is bundled, but its platform binding is loaded by

@@ -1,3 +1,4 @@
+/** @file CDP debug script: attaches to the running desktop app via Playwright, navigates the renderer to a session route, and dumps DOM/center-area layout details (editor areas, icons, and the "build anything" empty-state node) to the console. */
 import { chromium } from "playwright";
 
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");

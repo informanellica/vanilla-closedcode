@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build script that generates the thin npm wrapper package (dist/closedcode/): a launcher plus optionalDependencies on the per-platform SEA binary packages. */
 /* Generate the npm wrapper package `closedcode` (dist/closedcode/). It carries no
  * code of its own — only optionalDependencies on the per-platform packages
  * (closedcode-<os>-<arch>, each holding a Node SEA binary) and a tiny launcher

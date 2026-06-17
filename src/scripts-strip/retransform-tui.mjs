@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that re-compiles the closedcode TUI's `.tsx` sources (recovered from git HEAD) with babel's universal Solid generator targeting @opentui/solid, replacing the incorrect DOM-generator output from the initial type-strip pass. */
 // closedcode's TUI uses @opentui/solid (a non-DOM Solid renderer). The initial
 // pass compiled its .tsx with the default "dom" generator, which produced
 // imports for `template`/`setAttribute`/`delegateEvents`/etc. that @opentui/solid

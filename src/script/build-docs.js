@@ -1,3 +1,4 @@
+/** @file One-off build script that converts the Starlight MDX documentation under packages/web into static, localized HTML (plus CSS and language-index pages) bundled into the desktop Electron app's resources. */
 // One-off MDX → HTML converter for the vanilla-closedcode in-app documentation.
 // Reads packages/web/src/content/docs/<lang>/<page>.mdx, writes
 // packages/desktop-electron/resources/docs/<lang>/<page>.html, plus a single
@@ -45,6 +46,12 @@ const LANGS = [
 ]
 
 // Strip imports and exports (Starlight uses these for component-style MDX).
+/**
+ * Remove top-level `import` and `export` statements that Starlight MDX uses
+ * for component-style authoring, leaving plain Markdown content behind.
+ * @param {string} src - The raw MDX source.
+ * @returns {string} The source with module statements removed.
+ */
 function stripModuleStatements(src) {
   return src
     .replace(/^import\s+.+?$/gm, "")
@@ -53,6 +60,12 @@ function stripModuleStatements(src) {
 }
 
 // Extract frontmatter (title, description) and the body.
+/**
+ * Split leading YAML-style frontmatter from the document body, parsing simple
+ * `key: value` lines (with optional surrounding quotes) into an object.
+ * @param {string} src - The MDX source, optionally beginning with a `---` frontmatter block.
+ * @returns {Object} An object `{ fm, body }` where `fm` is the parsed frontmatter map and `body` is the remaining content.
+ */
 function parseFrontmatter(src) {
   const m = src.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/)
   if (!m) return { fm: {}, body: src }
@@ -72,6 +85,13 @@ function parseFrontmatter(src) {
 
 // Convert Starlight asides (:::note / :::tip / :::caution / :::danger) to
 // <aside class="note|tip|caution|danger">.
+/**
+ * Rewrite Starlight directive asides (`:::note`, `:::tip`, `:::caution`,
+ * `:::danger`, `:::warning`) into `<aside>` elements, optionally carrying an
+ * inline label heading.
+ * @param {string} src - The Markdown/MDX body to transform.
+ * @returns {string} The body with aside directives replaced by HTML.
+ */
 function rewriteAsides(src) {
   return src.replace(
     /^:::(note|tip|caution|danger|warning)(?:\[([^\]]+)\])?\s*\n([\s\S]*?)\n:::\s*$/gm,
@@ -82,6 +102,12 @@ function rewriteAsides(src) {
   )
 }
 
+/**
+ * Escape the HTML-significant characters `& < > " '` in a string so it is safe
+ * to interpolate into generated HTML.
+ * @param {*} s - The value to escape (coerced to a string).
+ * @returns {string} The escaped string.
+ */
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
@@ -90,6 +116,13 @@ function escapeHtml(s) {
 
 // Convert <Tabs> ... <TabItem label="X"> ... </TabItem> ... </Tabs> into a
 // minimal <details>-style fallback. Each TabItem becomes an h4 + content.
+/**
+ * Replace Starlight `<Tabs>`/`<TabItem>` component blocks with a static
+ * `<div class="tabs">` fallback where each tab becomes an `<h4>` label plus
+ * its body content.
+ * @param {string} src - The MDX body to transform.
+ * @returns {string} The body with tab components flattened to HTML.
+ */
 function rewriteTabs(src) {
   return src.replace(
     /<Tabs>([\s\S]*?)<\/Tabs>/g,
@@ -108,6 +141,12 @@ function rewriteTabs(src) {
 }
 
 // Convert <Steps>...ordered list...</Steps> wrapper into <ol class="steps">.
+/**
+ * Replace the Starlight `<Steps>` wrapper component with a plain
+ * `<div class="steps">` container, leaving the inner list untouched.
+ * @param {string} src - The MDX body to transform.
+ * @returns {string} The body with the steps wrapper rewritten.
+ */
 function rewriteSteps(src) {
   return src.replace(
     /<Steps>([\s\S]*?)<\/Steps>/g,
@@ -116,12 +155,25 @@ function rewriteSteps(src) {
 }
 
 // Lightweight text replacements for the fork.
+/**
+ * Apply fork-specific branding substitutions, rewriting upstream OpenCode
+ * names and URLs to their vanilla-closedcode equivalents.
+ * @param {string} src - The text to rebrand.
+ * @returns {string} The rebranded text.
+ */
 function rewriteBranding(src) {
   return src
     .replace(/\bOpenCode\b/g, "vanilla-closedcode")
     .replace(/\bopencode\.ai\b/g, "github.com/anomalyco/opencode")
 }
 
+/**
+ * Build the `<nav>` language-switcher select whose options link to the same
+ * page under each available language directory.
+ * @param {string} currentLang - The language code currently selected.
+ * @param {string} currentPage - The current page filename (including `.html`).
+ * @returns {string} The HTML for the language switcher nav.
+ */
 function langSwitcherHtml(currentLang, currentPage) {
   const opts = LANGS.map((l) => {
     const sel = l.code === currentLang ? " selected" : ""
@@ -136,6 +188,14 @@ function langSwitcherHtml(currentLang, currentPage) {
   </nav>`
 }
 
+/**
+ * Build the sidebar navigation listing all pages for a language, marking the
+ * current page active.
+ * @param {string} currentLang - The display name of the current language.
+ * @param {Array} allPages - The list of page filenames (including `.html`) for the language.
+ * @param {string} currentPage - The current page filename (including `.html`).
+ * @returns {string} The HTML for the sidebar nav.
+ */
 function pageNavHtml(currentLang, allPages, currentPage) {
   const links = allPages.map((p) => {
     const cls = p === currentPage ? ' class="active"' : ""
@@ -150,6 +210,18 @@ function pageNavHtml(currentLang, allPages, currentPage) {
   </aside>`
 }
 
+/**
+ * Render the full HTML document for a single documentation page.
+ * @param {Object} args - The page fields.
+ * @param {string} args.lang - The language display name.
+ * @param {string} args.langCode - The language code used for the `lang` attribute.
+ * @param {string} args.title - The page title.
+ * @param {string} args.description - The page description (may be empty).
+ * @param {string} args.contentHtml - The rendered article body HTML.
+ * @param {string} args.navHtml - The sidebar navigation HTML.
+ * @param {string} args.switcherHtml - The language-switcher HTML.
+ * @returns {string} The complete HTML document.
+ */
 function pageTemplate({ lang, langCode, title, description, contentHtml, navHtml, switcherHtml }) {
   return `<!doctype html>
 <html lang="${langCode}">
@@ -181,6 +253,15 @@ function pageTemplate({ lang, langCode, title, description, contentHtml, navHtml
 `
 }
 
+/**
+ * Render the per-language index page that links to all pages in that language.
+ * @param {Object} args - The index fields.
+ * @param {string} args.lang - The language display name.
+ * @param {string} args.langCode - The language code used for the `lang` attribute.
+ * @param {Array} args.pages - The list of page filenames (including `.html`) to link.
+ * @param {string} args.switcherHtml - The language-switcher HTML (unused in the body but kept for parity).
+ * @returns {string} The complete HTML index document.
+ */
 function indexTemplate({ lang, langCode, pages, switcherHtml }) {
   const items = pages.map((p) => {
     const label = p.replace(/\.html$/, "")
@@ -389,6 +470,13 @@ body {
 }
 `
 
+/**
+ * List the documentation page slugs in a directory: `.mdx` files with their
+ * extension stripped, excluding the `EXCLUDE` set, sorted alphabetically.
+ * Returns an empty list if the directory does not exist.
+ * @param {string} dir - The directory to scan for `.mdx` files.
+ * @returns {Promise<Array>} The sorted list of included page slugs.
+ */
 async function listPagesIn(dir) {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true })
@@ -403,12 +491,30 @@ async function listPagesIn(dir) {
   }
 }
 
+/**
+ * Read an MDX file and normalize its line endings to LF (translations may
+ * carry CRLF or CR).
+ * @param {string} file - The path to the MDX file.
+ * @returns {Promise<string>} The file contents with normalized line endings.
+ */
 async function readMdx(file) {
   const text = await fs.readFile(file, "utf8")
   // Normalise CRLF / CR to LF; multiple translations carry Windows line endings.
   return text.replace(/\r\n?/g, "\n")
 }
 
+/**
+ * Convert a single MDX source file into a complete HTML page: strip module
+ * statements, parse frontmatter, rewrite Starlight directives and branding,
+ * render Markdown, and wrap the result in the page template.
+ * @param {Object} args - The conversion inputs.
+ * @param {string} args.langCode - The language code.
+ * @param {string} args.langName - The language display name.
+ * @param {string} args.slug - The page slug (filename without extension).
+ * @param {string} args.srcPath - The absolute path to the source `.mdx` file.
+ * @param {Array} args.allPagesForLang - All page slugs for this language, used to build the sidebar.
+ * @returns {Promise<string>} The rendered HTML document.
+ */
 async function convertPage({ langCode, langName, slug, srcPath, allPagesForLang }) {
   let src = await readMdx(srcPath)
   src = stripModuleStatements(src)
@@ -430,6 +536,12 @@ async function convertPage({ langCode, langName, slug, srcPath, allPagesForLang 
   })
 }
 
+/**
+ * Build the entire documentation site: clear and recreate the output
+ * directory, emit shared assets (CSS and root language picker), then convert
+ * every page for each configured language and write a per-language index.
+ * @returns {Promise<void>} Resolves once all pages have been written.
+ */
 async function main() {
   await fs.rm(OUT, { recursive: true, force: true })
   await fs.mkdir(OUT, { recursive: true })

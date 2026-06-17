@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Post-install fixup that restores the executable bit on node-pty's prebuilt spawn-helper binaries on non-Windows platforms. */
 import fs from "fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";

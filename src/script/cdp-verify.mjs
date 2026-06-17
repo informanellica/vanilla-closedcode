@@ -1,3 +1,4 @@
+/** @file Connects to the running Electron renderer over the Chrome DevTools Protocol, reloads it, collects console/page errors, checks for an error-boundary input value, and captures a verification screenshot. */
 import { chromium } from "playwright";
 
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");

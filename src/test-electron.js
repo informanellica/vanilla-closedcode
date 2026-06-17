@@ -1,3 +1,4 @@
+/** @file Smoke-test harness for the packaged macOS Electron app; launches the app with remote debugging, connects over CDP, and reports failed asset loads, 5xx responses, and console errors before taking a screenshot. */
 const { chromium } = require("@playwright/test")
 const { execFile } = require("node:child_process")
 const { promisify } = require("node:util")
@@ -9,8 +10,18 @@ const execFileAsync = promisify(execFile)
 const APP = path.join(__dirname, "packages/desktop-electron/dist/mac-arm64/vanilla-closedcode.app")
 const PORT = 9222
 
+/**
+ * Logs the given arguments to the console, JSON-stringifying any non-string values first.
+ * @param {...*} a - Values to log; strings are printed as-is, everything else is JSON-stringified.
+ * @returns {void}
+ */
 const log = (...a) => console.log(...a.map((x) => (typeof x === "string" ? x : JSON.stringify(x))))
 
+/**
+ * Checks whether a TCP port is accepting connections on 127.0.0.1.
+ * @param {number} port - The TCP port to probe.
+ * @returns {Promise<boolean>} Resolves true if a connection succeeds, false on error.
+ */
 const portOpen = (port) =>
   new Promise((r) => {
     const s = net.createConnection({ port, host: "127.0.0.1" })
@@ -21,6 +32,10 @@ const portOpen = (port) =>
     s.on("error", () => r(false))
   })
 
+/**
+ * Runs the end-to-end smoke test: kills any running instance, sets the remote-debug env var, opens the packaged app, waits for the CDP port, connects to the renderer page, monitors network responses and console errors for a fixed window, prints a summary, screenshots the window, and tears everything down.
+ * @returns {Promise<void>} Resolves when the test run and cleanup complete.
+ */
 async function main() {
   log("[setup]")
   await execFileAsync("pkill", ["-9", "-f", "vanilla-closedcode"]).catch(() => {})

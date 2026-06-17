@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that walks every source file and rewrites relative/alias import specifiers ending in `.ts`/`.tsx` to `.js`, cleaning up references left over from the type-strip pass. */
 // Rewrite relative imports that still reference .ts/.tsx into .js.
 //
 // We also normalize: trailing `from "./foo"` is left as-is (Node ESM accepts
@@ -16,6 +17,12 @@ const EXCLUDE_DIRS = new Set(["node_modules", ".git", "dist", "build", ".output"
 
 const TARGET_EXTS = new Set([".js", ".mjs", ".cjs", ".jsx", ".json"])
 
+/**
+ * Recursively collect target source files under a directory, skipping excluded dirs.
+ * @param {string} dir - Directory to walk.
+ * @param {Array<string>} out - Accumulator array that matching file paths are pushed onto.
+ * @returns {Promise<void>}
+ */
 async function walk(dir, out) {
   let entries
   try {
@@ -33,6 +40,12 @@ async function walk(dir, out) {
 
 const IMPORT_RE = /((?:import|export)\s+[^"';]*?from\s+|import\s*\(\s*)(["'])([^"']+)\2/g
 
+/**
+ * Rewrite a relative or alias import specifier ending in `.ts`/`.tsx` to `.js`.
+ * Bare module specifiers are returned unchanged.
+ * @param {string} spec - The original import specifier.
+ * @returns {string} The possibly rewritten specifier.
+ */
 function transformSpec(spec) {
   // Only relative paths
   if (!spec.startsWith(".") && !spec.startsWith("/") && !spec.startsWith("@/") && !spec.startsWith("@tui/") && !spec.startsWith("@test/")) return spec
@@ -41,6 +54,11 @@ function transformSpec(spec) {
   return spec
 }
 
+/**
+ * Entry point: walk the repo, rewrite `.ts`/`.tsx` import specifiers to `.js`
+ * in every source file, and report how many files were modified.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const files = []
   await walk(ROOT, files)

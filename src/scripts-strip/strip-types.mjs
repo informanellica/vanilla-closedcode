@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @file Build-tooling script that converts every `.ts`/`.tsx` file in the repo into plain `.js` via babel (stripping types and compiling Solid/React JSX per package), deletes the originals and `.d.ts` files. */
 // Convert every .ts/.tsx in the repo into plain .js.
 //
 // Pipeline:
@@ -32,6 +33,11 @@ const JSX_CONFIG = [
   { prefix: ROOT, kind: "none" },
 ]
 
+/**
+ * Select the JSX/babel configuration for a file by longest matching path prefix.
+ * @param {string} filepath - Absolute path of the file being transformed.
+ * @returns {Object} The matching JSX_CONFIG entry, or a fallback object with kind "none".
+ */
 function pickJsxConfig(filepath) {
   let best = null
   for (const c of JSX_CONFIG) {
@@ -42,6 +48,13 @@ function pickJsxConfig(filepath) {
   return best ?? { kind: "none" }
 }
 
+/**
+ * Recursively collect TypeScript files under a directory, splitting `.d.ts`
+ * declaration files from transformable `.ts`/`.tsx` sources, skipping excluded dirs.
+ * @param {string} dir - Directory to walk.
+ * @param {Object} out - Accumulator with `tsfiles` and `dts` arrays that paths are pushed onto.
+ * @returns {Promise<void>}
+ */
 async function walk(dir, out) {
   let entries
   try {
@@ -64,6 +77,12 @@ async function walk(dir, out) {
   }
 }
 
+/**
+ * Build the babel transform options for a file: always the TypeScript preset,
+ * plus the Solid or React JSX preset for `.tsx` files according to the package config.
+ * @param {string} filepath - Absolute path of the file being transformed.
+ * @returns {Object} A babel transformAsync options object.
+ */
 function buildBabelOptions(filepath) {
   const isTsx = filepath.endsWith(".tsx")
   const cfg = pickJsxConfig(filepath)
@@ -100,6 +119,11 @@ function buildBabelOptions(filepath) {
   }
 }
 
+/**
+ * Read a single TypeScript file and return its babel-transformed JavaScript code.
+ * @param {string} filepath - Absolute path of the file to transform.
+ * @returns {Promise<string>} The emitted JavaScript source.
+ */
 async function transformOne(filepath) {
   const code = await fs.readFile(filepath, "utf8")
   const opts = buildBabelOptions(filepath)
@@ -108,12 +132,22 @@ async function transformOne(filepath) {
   return result.code
 }
 
+/**
+ * Compute the `.js` output path for a `.ts`/`.tsx` source file.
+ * @param {string} filepath - Absolute source path.
+ * @returns {string} The equivalent `.js` path (unchanged if not a `.ts`/`.tsx` file).
+ */
 function newPath(filepath) {
   if (filepath.endsWith(".tsx")) return filepath.slice(0, -4) + ".js"
   if (filepath.endsWith(".ts")) return filepath.slice(0, -3) + ".js"
   return filepath
 }
 
+/**
+ * Entry point: collect all TypeScript files, transform `.ts`/`.tsx` sources to
+ * `.js` in batches (deleting originals), remove `.d.ts` files, and report results.
+ * @returns {Promise<void>}
+ */
 async function main() {
   const out = { tsfiles: [], dts: [] }
   await walk(ROOT, out)

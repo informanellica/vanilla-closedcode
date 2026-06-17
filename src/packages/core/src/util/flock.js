@@ -4,13 +4,28 @@ import { randomBytes, randomUUID } from "crypto";
 import { mkdir, readFile, rm, stat, utimes, writeFile } from "fs/promises";
 import { Hash } from "./hash.js";
 import { Effect } from "effect";
+/**
+ * @file Cross-process advisory file lock (Flock). Uses atomic directory creation as the lock
+ * primitive, a heartbeat file to keep the lock fresh, stale detection with a single-contender
+ * "breaker" cleanup, exponential backoff with jitter while waiting, and token-checked release.
+ * Exposes Promise-based `acquire`/`withLock` plus an Effect-based `effect` resource.
+ */
 export let Flock;
 (function (_Flock) {
   let global;
+  /**
+   * Set the global context used to locate the default lock directory (under `global.state/locks`).
+   * @param {Object} g - The global context object exposing a `state` directory path.
+   * @returns {void}
+   */
   function setGlobal(g) {
     global = g;
   }
   _Flock.setGlobal = setGlobal;
+  /**
+   * Resolve the default lock directory, requiring that the global context has been set.
+   * @returns {string} The absolute path to the locks directory.
+   */
   const root = () => {
     if (!global) throw new Error("Flock global not set");
     return path.join(global.state, "locks");
@@ -23,12 +38,23 @@ export let Flock;
     baseDelayMs: 100,
     maxDelayMs: 2_000
   };
+  /**
+   * Extract the string `code` property from a Node filesystem error, if present.
+   * @param {*} err - The thrown error to inspect.
+   * @returns {string|undefined} The error code (e.g. "EEXIST", "ENOENT") or undefined.
+   */
   function code(err) {
     if (typeof err !== "object" || err === null || !("code" in err)) return;
     const value = err.code;
     if (typeof value !== "string") return;
     return value;
   }
+  /**
+   * Sleep for the given duration, rejecting early if the abort signal fires (or is already aborted).
+   * @param {number} ms - Milliseconds to wait.
+   * @param {AbortSignal} signal - Optional signal that aborts the wait.
+   * @returns {Promise<void>} Resolves after the delay; rejects with the abort reason on abort.
+   */
   function sleep(ms, signal) {
     return new Promise((resolve, reject) => {
       if (signal?.aborted) {
@@ -53,17 +79,35 @@ export let Flock;
       timer = setTimeout(done, ms);
     });
   }
+  /**
+   * Apply +/-30% random jitter to a delay to avoid thundering-herd retries.
+   * @param {number} ms - The base delay in milliseconds.
+   * @returns {number} The jittered, non-negative delay.
+   */
   function jitter(ms) {
     const j = Math.floor(ms * 0.3);
     const d = Math.floor(Math.random() * (2 * j + 1)) - j;
     return Math.max(0, ms + d);
   }
+  /**
+   * Read the monotonic clock (immune to wall-clock adjustments), for measuring elapsed time.
+   * @returns {number} A monotonic timestamp in milliseconds.
+   */
   function mono() {
     return performance.now();
   }
+  /**
+   * Read an approximate wall-clock time derived from the monotonic clock and its origin.
+   * @returns {number} A wall-clock timestamp in milliseconds.
+   */
   function wall() {
     return performance.timeOrigin + mono();
   }
+  /**
+   * Stat a path, treating "missing" errors (ENOENT/ENOTDIR) as absence rather than failure.
+   * @param {string} file - The path to stat.
+   * @returns {Promise<Object>} The fs.Stats object, or undefined when the path does not exist.
+   */
   async function stats(file) {
     try {
       return await stat(file);
@@ -73,6 +117,15 @@ export let Flock;
       throw err;
     }
   }
+  /**
+   * Determine whether an existing lock is stale (owner likely crashed) by checking the freshest
+   * available timestamp among the heartbeat file, the metadata file, and finally the lock directory.
+   * @param {string} lockDir - The lock directory path.
+   * @param {string} heartbeatPath - Path to the lock's heartbeat file.
+   * @param {string} metaPath - Path to the lock's metadata file.
+   * @param {number} staleMs - Age in milliseconds beyond which the lock is considered stale.
+   * @returns {Promise<boolean>} True when the lock is older than staleMs (or false if nothing exists).
+   */
   async function stale(lockDir, heartbeatPath, metaPath, staleMs) {
     // Stale detection allows automatic recovery after crashed owners.
     const now = wall();
@@ -90,6 +143,15 @@ export let Flock;
     }
     return now - dir.mtimeMs > staleMs;
   }
+  /**
+   * Attempt a single, non-blocking acquisition of the lock directory. Creates the directory atomically;
+   * on EEXIST it checks for staleness and, if stale, uses a `.breaker` sibling directory so only one
+   * contender performs cleanup before retrying. On success it writes heartbeat and meta files and
+   * returns handles to start the heartbeat and release the lock.
+   * @param {string} lockDir - The lock directory path to acquire.
+   * @param {Object} opts - Timing options (notably `staleMs`).
+   * @returns {Promise<Object>} `{ acquired: false }` when busy, or `{ acquired: true, startHeartbeat, release }`.
+   */
   async function tryAcquireLockDir(lockDir, opts) {
     const token = randomUUID?.() ?? randomBytes(16).toString("hex");
     const metaPath = path.join(lockDir, "meta.json");
@@ -189,6 +251,12 @@ export let Flock;
       throw new Error("Lock acquired but meta.json already existed (possible compromise).");
     });
     let timer;
+    /**
+     * Begin periodically touching the heartbeat file's mtime so long critical sections are not
+     * mistaken for stale. The interval is unref'd so it does not keep the process alive.
+     * @param {number} intervalMs - Touch interval in milliseconds (defaults to ~staleMs/3, min 100).
+     * @returns {void}
+     */
     const startHeartbeat = (intervalMs = Math.max(100, Math.floor(opts.staleMs / 3))) => {
       if (timer) return;
       // Heartbeat prevents long critical sections from being evicted as stale.
@@ -198,6 +266,12 @@ export let Flock;
       }, intervalMs);
       timer.unref?.();
     };
+    /**
+     * Release the lock: stop the heartbeat, verify ownership by comparing the stored token against
+     * this acquisition's token, then remove the lock directory. Refuses to release if the metadata is
+     * missing, invalid, or the token does not match (lock compromised or re-acquired elsewhere).
+     * @returns {Promise<void>} Resolves once the lock directory is removed.
+     */
     const release = async () => {
       if (timer) {
         clearInterval(timer);
@@ -234,6 +308,14 @@ export let Flock;
       release
     };
   }
+  /**
+   * Repeatedly try to acquire the lock directory, backing off with jittered exponential delays
+   * between attempts until success, timeout, or abort. Invokes `input.onWait` before each wait.
+   * @param {string} lockDir - The lock directory path to acquire.
+   * @param {Object} input - Acquisition context (`key`, optional `onWait` callback, optional `signal`).
+   * @param {Object} opts - Timing options (`timeoutMs`, `baseDelayMs`, `maxDelayMs`, `staleMs`).
+   * @returns {Promise<Object>} The successful acquisition result with `startHeartbeat` and `release`.
+   */
   async function acquireLockDir(lockDir, input, opts) {
     const stop = mono() + opts.timeoutMs;
     let attempt = 0;
@@ -261,6 +343,14 @@ export let Flock;
       delay = Math.min(opts.maxDelayMs, Math.floor(delay * 1.7));
     }
   }
+  /**
+   * Acquire a named lock, returning a disposable handle. The lock directory name is derived from a
+   * fast hash of the key. The returned handle exposes `release()` and implements `Symbol.asyncDispose`
+   * so it can be used with `await using`.
+   * @param {string} key - The logical lock key.
+   * @param {Object} input - Options: `dir`, `staleMs`, `timeoutMs`, `baseDelayMs`, `maxDelayMs`, `onWait`, `signal`.
+   * @returns {Promise<Object>} A handle with `release` and an async dispose method.
+   */
   async function acquire(key, input = {}) {
     input.signal?.throwIfAborted();
     const cfg = {
@@ -289,12 +379,26 @@ export let Flock;
     };
   }
   _Flock.acquire = acquire;
+  /**
+   * Acquire the lock, run a callback while holding it, and release the lock automatically afterward.
+   * @param {string} key - The logical lock key.
+   * @param {Function} fn - The callback to run while the lock is held; its return value is returned.
+   * @param {Object} input - Acquisition options forwarded to `acquire`.
+   * @returns {Promise<*>} A promise resolving to the callback's result.
+   */
   async function withLock(key, fn, input = {}) {
     await using _ = await acquire(key, input);
     input.signal?.throwIfAborted();
     return await fn();
   }
   _Flock.withLock = withLock;
+  /**
+   * Effect-based scoped resource that acquires the lock and releases it when the scope closes,
+   * wrapping acquire/release in tracing spans. Yields void within the scope.
+   * @param {string} key - The logical lock key.
+   * @param {Object} input - Acquisition options forwarded to `acquire` (signal is supplied by Effect).
+   * @returns {Object} An Effect that manages the lock as an acquire/release resource.
+   */
   const effect = _Flock.effect = Effect.fn("Flock.effect")(function* (key, input = {}) {
     return yield* Effect.acquireRelease(Effect.promise(signal => Flock.acquire(key, {
       ...input,

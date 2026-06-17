@@ -1,3 +1,4 @@
+/** @file Renders representative vanilla-TUI screens off-screen and emits SVG (and optional PNG) screenshots of each scenario. */
 // Render representative vanilla-TUI screens into a detached ScreenBufferHD (no
 // TTY) and emit faithful SVG "screenshots" — each rendered cell's 24-bit fg/bg
 // colors + bold/italic/underline/inverse are read back via buf.get() and drawn as
@@ -25,6 +26,14 @@ const W = 96, H = 30;
 const xml = s => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const rgb = c => (c ? `rgb(${c.r},${c.g},${c.b})` : "none");
 
+/**
+ * Convert a rendered terminal screen buffer into an SVG string, drawing each cell as a positioned background rect and glyph text with its fg/bg color and bold/italic/underline/inverse attributes, under a caption bar.
+ * @param {Object} buf - Terminal-kit ScreenBufferHD to read cells from via buf.get().
+ * @param {number} w - Buffer width in columns.
+ * @param {number} h - Buffer height in rows.
+ * @param {string} title - Caption text rendered in the title bar (XML-escaped).
+ * @returns {string} The complete SVG document as a string.
+ */
 function bufferToSvg(buf, w, h, title) {
   const CW = 8.6, CH = 18, FS = 14, PAD = 10, TITLE_H = 26;
   const wpx = Math.round(w * CW + PAD * 2);
@@ -62,6 +71,11 @@ function bufferToSvg(buf, w, h, title) {
 const hexR = h => parseInt(h.slice(1, 3), 16), hexG = h => parseInt(h.slice(3, 5), 16), hexB = h => parseInt(h.slice(5, 7), 16);
 
 // --- render one shell into a fresh detached buffer --------------------------
+/**
+ * Render a TUI shell into a fresh detached ScreenBufferHD of the fixed capture dimensions and return the populated buffer.
+ * @param {Object} shell - Vanilla TUI shell instance exposing a draw() method.
+ * @returns {Object} The terminal-kit ScreenBufferHD containing the rendered frame.
+ */
 function render(shell) {
   const buf = new tk.ScreenBufferHD({ width: W, height: H });
   buf.fill({ char: " ", attr: { color: defaultTheme.text, bgColor: defaultTheme.background } });
@@ -72,6 +86,11 @@ function render(shell) {
 // Representative TS edit diff used by the diff scenarios.
 const OLD_CODE = 'export function port() {\n  const p = 3000;\n  return p;\n}';
 const NEW_CODE = 'export function port(env) {\n  const p = Number(env.PORT) || 3000;\n  return p;\n}';
+/**
+ * Populate a shell with a demo session: navigate to a session, push a representative user message and an assistant reply containing markdown and an edit tool diff, then seed the prompt text.
+ * @param {Object} shell - Vanilla TUI shell instance to seed with demo conversation state.
+ * @returns {void}
+ */
 function seedChat(shell) {
   shell.navigate({ type: "session", sessionID: "demo" });
   shell.pushMessage({ role: "user", parts: [{ type: "text", text: "Read the dev server port from the PORT env var and show the diff." }] });

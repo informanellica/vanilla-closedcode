@@ -1,9 +1,11 @@
+/** @file esbuild build script for the VS Code extension; bundles src/extension.js to dist/extension.js with watch and production modes. */
 const esbuild = require("esbuild")
 
 const production = process.argv.includes("--production")
 const watch = process.argv.includes("--watch")
 
 /**
+ * esbuild plugin that logs build start/finish and prints errors in a format the editor problem matcher can parse.
  * @type {import('esbuild').Plugin}
  */
 const esbuildProblemMatcherPlugin = {
@@ -23,6 +25,10 @@ const esbuildProblemMatcherPlugin = {
   },
 }
 
+/**
+ * Builds the extension bundle once, or starts a rebuild-on-change watcher when --watch is passed.
+ * @returns {Promise<void>} Resolves after the one-shot build, or after the watcher is started.
+ */
 async function main() {
   const ctx = await esbuild.context({
     entryPoints: ["src/extension.js"],

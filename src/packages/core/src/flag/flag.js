@@ -1,9 +1,20 @@
+/** @file Resolves CLOSEDCODE_* environment variables into the typed `Flag` feature-flag object consumed across core. */
 import { Config } from "effect";
 import { InstallationChannel } from "../installation/version.js";
+/**
+ * Tests whether an environment variable is set to an affirmative value.
+ * @param {string} key - Name of the environment variable to read.
+ * @returns {boolean} True when the value (case-insensitive) is "true" or "1".
+ */
 function truthy(key) {
   const value = process.env[key]?.toLowerCase();
   return value === "true" || value === "1";
 }
+/**
+ * Tests whether an environment variable is set to a negative value.
+ * @param {string} key - Name of the environment variable to read.
+ * @returns {boolean} True when the value (case-insensitive) is "false" or "0".
+ */
 function falsy(key) {
   const value = process.env[key]?.toLowerCase();
   return value === "false" || value === "0";
@@ -12,6 +23,11 @@ function falsy(key) {
 // Channels that default to the new effect-httpapi server backend. The legacy
 // Express backend remains the default for stable (`prod`/`latest`) installs.
 const HTTPAPI_DEFAULT_ON_CHANNELS = new Set(["dev", "beta", "local"]);
+/**
+ * Parses an environment variable as a positive integer.
+ * @param {string} key - Name of the environment variable to read.
+ * @returns {number} The parsed positive integer, or undefined when unset or not a positive integer.
+ */
 function number(key) {
   const value = process.env[key];
   if (!value) return undefined;
@@ -22,6 +38,12 @@ const CLOSEDCODE_EXPERIMENTAL = truthy("CLOSEDCODE_EXPERIMENTAL");
 const CLOSEDCODE_DISABLE_CLAUDE_CODE = truthy("CLOSEDCODE_DISABLE_CLAUDE_CODE");
 const CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS = CLOSEDCODE_DISABLE_CLAUDE_CODE || truthy("CLOSEDCODE_DISABLE_CLAUDE_CODE_SKILLS");
 const copy = process.env["CLOSEDCODE_EXPERIMENTAL_DISABLE_COPY_ON_SELECT"];
+/**
+ * Centralized feature-flag and configuration object derived from CLOSEDCODE_* environment variables.
+ * Most entries are resolved at module load; getter properties are evaluated on access so that
+ * env vars set later at runtime (by tests, the CLI, or external tooling) are observed.
+ * @type {Object}
+ */
 export const Flag = {
   OTEL_EXPORTER_OTLP_ENDPOINT: process.env["OTEL_EXPORTER_OTLP_ENDPOINT"],
   OTEL_EXPORTER_OTLP_HEADERS: process.env["OTEL_EXPORTER_OTLP_HEADERS"],

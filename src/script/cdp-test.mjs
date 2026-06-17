@@ -1,3 +1,4 @@
+/** @file CDP debug script: attaches to the running desktop app via Playwright and, per the CLI mode argument ("dom", "reload", or default "screenshot"), inspects the review/file-tree panel layout, reloads the page, or captures a screenshot — reporting any error-boundary input value. */
 import { chromium } from "playwright";
 
 const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");

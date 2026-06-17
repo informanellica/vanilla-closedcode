@@ -1,3 +1,4 @@
+/** @file Observability wiring: when an OTLP endpoint is configured, exports logs and traces via OpenTelemetry; otherwise falls back to the plain Effect logger layer. */
 import { Effect, Layer, Logger } from "effect";
 import { FetchHttpClient } from "effect/unstable/http";
 import { OtlpLogger, OtlpSerialization } from "effect/unstable/observability";
@@ -6,6 +7,7 @@ import { Flag } from "../flag/flag.js";
 import { InstallationChannel, InstallationVersion } from "../installation/version.js";
 import { ensureProcessMetadata } from "../util/closedcode-process.js";
 const base = Flag.OTEL_EXPORTER_OTLP_ENDPOINT;
+/** Whether OTLP observability export is enabled (true when an OTLP endpoint is configured). */
 export const enabled = !!base;
 const processID = crypto.randomUUID();
 const headers = Flag.OTEL_EXPORTER_OTLP_HEADERS ? Flag.OTEL_EXPORTER_OTLP_HEADERS.split(",").reduce((acc, x) => {
@@ -13,6 +15,12 @@ const headers = Flag.OTEL_EXPORTER_OTLP_HEADERS ? Flag.OTEL_EXPORTER_OTLP_HEADER
   acc[key] = value.join("=");
   return acc;
 }, {}) : undefined;
+/**
+ * Build the OpenTelemetry resource descriptor for this process, combining
+ * service identity, installation channel/version, process metadata, and any
+ * attributes parsed from the OTEL_RESOURCE_ATTRIBUTES environment variable.
+ * @returns {Object} A resource object with `serviceName`, `serviceVersion`, and `attributes`.
+ */
 export function resource() {
   const processMetadata = ensureProcessMetadata("main");
   const attributes = (() => {
@@ -41,6 +49,11 @@ export function resource() {
     }
   };
 }
+/**
+ * Build the Effect Layer that logs via both the app logger and an OTLP log
+ * exporter pointed at the configured endpoint.
+ * @returns {Object} An Effect Layer providing the combined logger.
+ */
 function logs() {
   return Logger.layer([EffectLogger.logger, OtlpLogger.make({
     url: `${base}/v1/logs`,
@@ -50,6 +63,12 @@ function logs() {
     mergeWithExisting: false
   }).pipe(Layer.provide(OtlpSerialization.layerJson), Layer.provide(FetchHttpClient.layer));
 }
+/**
+ * Lazily import the OpenTelemetry tracing dependencies, register an
+ * AsyncLocalStorage context manager (so non-Effect spans nest correctly), and
+ * build the Effect tracing Layer with a batched OTLP trace exporter.
+ * @returns {Promise<Object>} A promise resolving to the Effect tracing Layer.
+ */
 const traces = async () => {
   const NodeSdk = await import("@effect/opentelemetry/NodeSdk");
   const OTLP = await import("@opentelemetry/exporter-trace-otlp-http");
@@ -78,10 +97,15 @@ const traces = async () => {
     }))
   }));
 };
+/**
+ * The observability Layer: the plain logger Layer when no OTLP endpoint is set,
+ * otherwise a merged Layer providing both OTLP tracing and OTLP logging.
+ */
 export const layer = !base ? EffectLogger.layer : Layer.unwrap(Effect.gen(function* () {
   const trace = yield* Effect.promise(traces);
   return Layer.mergeAll(trace, logs());
 }));
+/** Public observability handle bundling {@link enabled} and {@link layer}. */
 export const Observability = {
   enabled,
   layer

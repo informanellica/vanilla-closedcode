@@ -1,3 +1,4 @@
+/** @file Tree-sitter parser registry: maps each supported filetype to its WASM grammar URL and the highlight/locals query files used for syntax highlighting. */
 export default {
   // NOTE: FOR markdown, javascript and typescript, we use the opentui built-in parsers
   // Warn: when taking queries from the nvim-treesitter repo, make sure to include the query dependencies as well

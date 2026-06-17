@@ -1,7 +1,28 @@
+/**
+ * @file Test/headless environment setup: registers happy-dom globals (document,
+ * window, etc.) and patches HTMLCanvasElement.prototype.getContext with a no-op
+ * 2D context mock, since happy-dom does not provide a real canvas rendering
+ * context. Importing this module applies these side effects.
+ */
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 GlobalRegistrator.register();
 const originalGetContext = HTMLCanvasElement.prototype.getContext;
 // - we're overriding with a simplified mock
+/**
+ * Stub replacement for HTMLCanvasElement.prototype.getContext.
+ *
+ * For the "2d" context type it returns a mock CanvasRenderingContext2D whose
+ * drawing methods are no-ops (and whose measureText approximates width as
+ * eight pixels per character), so code that touches a 2D canvas runs without a
+ * real rendering backend. Any other context type is delegated to the original
+ * implementation.
+ *
+ * @param {string} contextType - Requested context identifier (e.g. "2d").
+ * @param {*} _options - Context attributes; ignored by the 2D mock and only
+ *   forwarded to the original getContext for non-2D types.
+ * @returns {Object} The mock 2D context, or whatever the original getContext
+ *   returns for non-2D context types.
+ */
 HTMLCanvasElement.prototype.getContext = function (contextType, _options) {
   if (contextType === "2d") {
     return {

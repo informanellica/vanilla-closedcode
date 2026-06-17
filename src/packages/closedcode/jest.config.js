@@ -1,3 +1,4 @@
+/** @file Jest configuration: module-name aliases (#-prefixed), test environment/setup, the test:leaks SIGHUP watchdog handshake, and the forceExit policy that works around effect/vm-modules timer leaks. */
 // test:leaks watchdog handshake — preload.js spawns a detached child that
 // sends SIGHUP 5s after teardown so jest can exit cleanly even with the
 // framework Timer leak. Registering the handler here (in the config loaded
