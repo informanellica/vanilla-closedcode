@@ -5,6 +5,7 @@ import { $ } from "script/shell";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 import { build as esbuild } from "esbuild";
 import { glob } from "glob";
 const __filename = fileURLToPath(import.meta.url);
@@ -292,10 +293,35 @@ if (!SEA) {
     mode: 0o755
   });
 }
+// Non-SEA ESM has no sidecar copy step (copySidecars runs only for --sea), so the
+// externalized native/dynamic deps must be declared as dependencies of the
+// published artifact; otherwise `npm install` of the non-SEA build leaves e.g.
+// terminal-kit/string-kit unresolved and `closedcode tui`/`attach` fail at load.
+// Prefer the version range this package already declares; fall back to the
+// installed version for transitive ones (e.g. string-kit via terminal-kit).
+let runtimeDeps;
+if (!SEA) {
+  const requireFrom = createRequire(path.join(dir, "package.json"));
+  const declared = { ...pkg.dependencies, ...pkg.optionalDependencies };
+  runtimeDeps = {};
+  for (const dep of EXTERNAL_NATIVE) {
+    if (declared[dep]) {
+      runtimeDeps[dep] = declared[dep];
+      continue;
+    }
+    try {
+      const v = requireFrom(`${dep}/package.json`).version;
+      if (v) runtimeDeps[dep] = `^${v}`;
+    } catch {
+      // optional / platform-specific package not installed here — skip it
+    }
+  }
+}
 await fs.promises.writeFile(path.join(outDir, "package.json"), JSON.stringify({
   name,
   version: Script.version,
   type: "module",
+  ...(runtimeDeps && Object.keys(runtimeDeps).length ? { dependencies: runtimeDeps } : {}),
   bin: {
     closedcode: SEA ? (process.platform === "win32" ? "./bin/closedcode.exe" : "./bin/closedcode") : "./bin/closedcode"
   },
