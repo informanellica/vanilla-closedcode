@@ -294,17 +294,21 @@ if (!SEA) {
   });
 }
 // Non-SEA ESM has no sidecar copy step (copySidecars runs only for --sea), so the
-// externalized native/dynamic deps must be declared as dependencies of the
-// published artifact; otherwise `npm install` of the non-SEA build leaves e.g.
-// terminal-kit/string-kit unresolved and `closedcode tui`/`attach` fail at load.
-// Prefer the version range this package already declares; fall back to the
-// installed version for transitive ones (e.g. string-kit via terminal-kit).
+// runtime deps that are NOT statically bundled must be declared as dependencies
+// of the published artifact; otherwise `npm install` of the non-SEA build leaves
+// them unresolved and the CLI crashes at load. This covers the externalized
+// native/dynamic deps (terminal-kit/string-kit + node-pty/tree-sitter/koffi) AND
+// the packages loaded via `createRequire(...).require(...)` — sequelize and its
+// sqlite3 driver (storage/sequelize.js) — which esbuild does not turn into a
+// bundled import in ESM output. Prefer the version range this package already
+// declares; fall back to the installed version for transitive ones (string-kit,
+// bindings, file-uri-to-path).
 let runtimeDeps;
 if (!SEA) {
   const requireFrom = createRequire(path.join(dir, "package.json"));
   const declared = { ...pkg.dependencies, ...pkg.optionalDependencies };
   runtimeDeps = {};
-  for (const dep of EXTERNAL_NATIVE) {
+  for (const dep of [...EXTERNAL_NATIVE, "sequelize", "sqlite3", "bindings", "file-uri-to-path"]) {
     if (declared[dep]) {
       runtimeDeps[dep] = declared[dep];
       continue;
