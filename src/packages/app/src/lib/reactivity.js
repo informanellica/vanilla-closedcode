@@ -144,6 +144,17 @@ class Computation extends OwnerNode {
       } else {
         this.value = next;
       }
+    } catch (err) {
+      // Route a render/effect/memo error to the nearest enclosing ErrorBoundary
+      // (walk the owner chain, same as currentSuspense). If there is none,
+      // rethrow so the error still surfaces to the update's caller as before.
+      let o = this.parent, handler = null;
+      while (o) {
+        if (o.context && ERROR_KEY in o.context) { handler = o.context[ERROR_KEY]; break; }
+        o = o.parent;
+      }
+      if (!handler) throw err;
+      handler(err);
     } finally {
       Owner = prevOwner; Listener = prevListener;
     }
@@ -863,6 +874,11 @@ export function Portal(props) {
 // while a fetch is in flight so Suspense can show its fallback until they
 // settle. Looked up by walking the owner chain (same as useContext).
 const SUSPENSE_KEY = Symbol("suspense");
+// ErrorBoundary publishes a handler on its owner-node context; a computation that
+// throws during run() walks the owner chain (like currentSuspense) to the nearest
+// one and routes the error to it instead of crashing the flush. No boundary ->
+// the error rethrows, preserving the previous propagate-to-caller behavior.
+const ERROR_KEY = Symbol("errorboundary");
 /**
  * Find the nearest enclosing Suspense handle by walking the owner chain.
  *
@@ -1100,12 +1116,18 @@ export function Match(props) {
  */
 export function ErrorBoundary(props) {
   const [error, setError] = createSignal();
+  // Own the children under a dedicated scope that publishes an error handler, so a
+  // throw from a DESCENDANT computation (a later render effect/memo, not just the
+  // synchronous first read) walks the owner chain to here and shows the fallback
+  // instead of leaving the renderer crashed/blank.
+  const node = new OwnerNode(Owner);
+  (node.context ??= {})[ERROR_KEY] = e => setError(() => e);
   // Capture children ONCE. Reading props.children inside the memo would re-invoke
   // the `children` getter (-> createComponent) on every re-run, re-creating the
   // whole subtree. Create it once and return the SAME stable accessor; insert()'s
   // nested effects resolve it without subscribing this memo to descendant signals.
   let childrenOnce;
-  try { childrenOnce = props.children; } catch (e) { setError(() => e); }
+  try { childrenOnce = runWithOwner(node, () => props.children); } catch (e) { setError(() => e); }
   return createMemo(() => {
     const err = error();
     if (err !== undefined) {
