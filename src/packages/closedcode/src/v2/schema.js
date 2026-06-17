@@ -1,4 +1,7 @@
-/** @module V2Schema - Shared Effect Schema primitives for the v2 session model (e.g. millisecond/DateTime conversion). */
+/**
+ * Shared Effect Schema primitives for the v2 session model (e.g. millisecond/DateTime conversion).
+ * @module closedcode/v2/schema
+ */
 import { DateTime, Schema, SchemaGetter } from "effect";
 
 /**

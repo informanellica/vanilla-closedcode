@@ -1,4 +1,4 @@
-/** @module Token */
+/** @module closedcode/util/token */
 /** @file Rough token-count estimation based on a fixed characters-per-token ratio. */
 
 /** Approximate number of characters represented by a single token. */

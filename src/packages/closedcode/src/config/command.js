@@ -1,4 +1,7 @@
-/** @module ConfigCommand Command config schema and loader that parses markdown command definitions from disk. */
+/**
+ * Command config schema and loader that parses markdown command definitions from disk.
+ * @module closedcode/config/command
+ */
 export * as ConfigCommand from "./command.js";
 import * as Log from "core/util/log";
 import { Schema } from "effect";

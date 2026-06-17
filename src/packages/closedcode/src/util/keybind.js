@@ -1,4 +1,7 @@
-/** @module Keybind - Parse, compare, and stringify keyboard shortcut descriptors. */
+/**
+ * Parse, compare, and stringify keyboard shortcut descriptors.
+ * @module closedcode/util/keybind
+ */
 
 import { isDeepEqual } from "remeda";
 

@@ -1,4 +1,7 @@
-/** @module ConfigAgent Agent/mode config schema and loaders that parse markdown definitions from disk. */
+/**
+ * Agent/mode config schema and loaders that parse markdown definitions from disk.
+ * @module closedcode/config/agent
+ */
 export * as ConfigAgent from "./agent.js";
 import { Exit, Schema, SchemaGetter } from "effect";
 import { Bus } from "#bus/index.js";

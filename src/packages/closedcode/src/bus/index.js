@@ -1,4 +1,7 @@
-/** @module Bus — Effect-based publish/subscribe event bus: per-instance PubSub channels (typed + wildcard) bridged to the process-wide GlobalBus, with Promise/callback helpers for non-Effect callers. */
+/**
+ * Effect-based publish/subscribe event bus: per-instance PubSub channels (typed + wildcard) bridged to the process-wide GlobalBus, with Promise/callback helpers for non-Effect callers.
+ * @module closedcode/bus
+ */
 import { Effect, Exit, Layer, PubSub, Scope, Context, Stream, Schema } from "effect";
 import { EffectBridge } from "#effect/bridge.js";
 import * as Log from "core/util/log";

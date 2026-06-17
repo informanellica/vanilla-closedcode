@@ -1,4 +1,7 @@
-/** @module LocalContext - Async-local-storage-backed scoped context provider. */
+/**
+ * Async-local-storage-backed scoped context provider.
+ * @module closedcode/util/local-context
+ */
 
 import { AsyncLocalStorage } from "async_hooks";
 

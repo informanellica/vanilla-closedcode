@@ -1,4 +1,7 @@
-/** @module Worktree - Effect service for managing per-project git worktrees: create, boot, remove and reset isolated working directories. */
+/**
+ * Effect service for managing per-project git worktrees: create, boot, remove and reset isolated working directories.
+ * @module closedcode/worktree
+ */
 import z from "zod";
 import { NamedError } from "core/util/error";
 import { Global } from "core/global";

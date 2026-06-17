@@ -1,4 +1,7 @@
-/** @module command Aggregates slash commands from built-in templates, config, MCP prompts, and skills. */
+/**
+ * Aggregates slash commands from built-in templates, config, MCP prompts, and skills.
+ * @module closedcode/command
+ */
 import { assetText } from "#util/asset.js";
 import { BusEvent } from "#bus/bus-event.js";
 import { InstanceState } from "#effect/instance-state.js";

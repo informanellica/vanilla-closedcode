@@ -1,4 +1,7 @@
-/** @module SessionPrompt - Effect Schema classes describing a user prompt and its file/agent attachments. */
+/**
+ * Effect Schema classes describing a user prompt and its file/agent attachments.
+ * @module closedcode/v2/session-prompt
+ */
 import * as Schema from "effect/Schema";
 
 /** Schema class for a text span source within a prompt: a [start, end) range plus the referenced text. */

@@ -1,4 +1,7 @@
-/** @module SessionMessageUpdater - Folds session events onto a mutable message list, projecting the event stream into the materialized SessionMessage view. */
+/**
+ * Folds session events onto a mutable message list, projecting the event stream into the materialized SessionMessage view.
+ * @module closedcode/v2/session-message-updater
+ */
 import { produce } from "immer";
 import { SessionEvent } from "./session-event.js";
 import { SessionMessage } from "./session-message.js";

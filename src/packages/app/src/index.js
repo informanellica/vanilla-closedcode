@@ -1,4 +1,7 @@
-/** @module index - Public entry point for the desktop app package; re-exports the top-level providers, interface, file-picker constants, and shared context hooks/utilities. */
+/**
+ * Public entry point for the desktop app package; re-exports the top-level providers, interface, file-picker constants, and shared context hooks/utilities.
+ * @module app
+ */
 export { AppBaseProviders, AppInterface } from "./app.js";
 export { ACCEPTED_FILE_EXTENSIONS, ACCEPTED_FILE_TYPES, filePickerFilters } from "./constants/file-picker.js";
 export { useCommand } from "./context/command.js";

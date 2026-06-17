@@ -1,4 +1,4 @@
-/** @module Wildcard */
+/** @module closedcode/util/wildcard */
 /** @file Glob-style wildcard matching (`*`/`?`) plus pattern-map lookups that resolve to the most specific match. */
 import { sortBy, pipe } from "remeda";
 

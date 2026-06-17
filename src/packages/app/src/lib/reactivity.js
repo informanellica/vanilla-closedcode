@@ -10,7 +10,10 @@
 // Derived in part from solid-js / dom-expressions (MIT License,
 // Copyright (c) 2016-2025 Ryan Carniato). See THIRD-PARTY-NOTICES.md.
 
-/** @module lib/reactivity API-compatible reimplementation of the solid-js subset the app uses: signals/effects/memos, owners, context, control-flow, and DOM helpers. */
+/**
+ * API-compatible reimplementation of the solid-js subset the app uses: signals/effects/memos, owners, context, control-flow, and DOM helpers.
+ * @module lib/reactivity
+ */
 
 let Owner = null;     // current ownership scope (cleanups, child computations, context)
 let Listener = null;  // current computation collecting dependencies

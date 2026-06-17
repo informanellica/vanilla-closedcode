@@ -1,4 +1,7 @@
-/** @module ToolOutput - Effect Schema definitions for tool-result content (text/file blocks) and structured output. */
+/**
+ * Effect Schema definitions for tool-result content (text/file blocks) and structured output.
+ * @module closedcode/v2/tool-output
+ */
 export * as ToolOutput from "./tool-output.js";
 import { Schema } from "effect";
 

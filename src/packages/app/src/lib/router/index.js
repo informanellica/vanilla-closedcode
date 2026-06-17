@@ -37,7 +37,10 @@ import {
   insert,
 } from "../reactivity.js";
 
-/** @module lib/router First-party reimplementation of the @solidjs/router subset the app uses (browser + memory history, nested route matching, reactive location/params, A/Navigate). */
+/**
+ * First-party reimplementation of the @solidjs/router subset the app uses (browser + memory history, nested route matching, reactive location/params, A/Navigate).
+ * @module lib/router
+ */
 
 // --- path helpers -----------------------------------------------------------
 

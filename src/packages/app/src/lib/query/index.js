@@ -19,7 +19,10 @@
 // using the names the self-written reactive core provides, so a later
 // import-map flip can swap the runtime without touching this code. No compiled
 // primitives from "../reactivity.js" are used.
-/** @module lib/query First-party reimplementation of the @tanstack/solid-query subset the app uses (queries, mutations, cache, client, Solid bindings). */
+/**
+ * First-party reimplementation of the @tanstack/solid-query subset the app uses (queries, mutations, cache, client, Solid bindings).
+ * @module lib/query
+ */
 
 import {
   batch,

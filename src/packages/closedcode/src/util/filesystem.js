@@ -1,4 +1,7 @@
-/** @module Filesystem - Path-normalizing filesystem helpers for cross-shell (Git Bash/Cygwin/WSL) Windows support. */
+/**
+ * Path-normalizing filesystem helpers for cross-shell (Git Bash/Cygwin/WSL) Windows support.
+ * @module closedcode/util/filesystem
+ */
 
 import { chmod, mkdir, readFile, stat as statFile, writeFile } from "fs/promises";
 import { createWriteStream, existsSync, statSync } from "fs";

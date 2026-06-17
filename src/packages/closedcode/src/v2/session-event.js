@@ -1,4 +1,7 @@
-/** @module SessionEvent - EventV2 definitions for the v2 session stream (agent/model switches, prompts, shell, steps, text, reasoning, tool calls, retries, compaction). */
+/**
+ * EventV2 definitions for the v2 session stream (agent/model switches, prompts, shell, steps, text, reasoning, tool calls, retries, compaction).
+ * @module closedcode/v2/session-event
+ */
 import { SessionID } from "#session/schema.js";
 import { NonNegativeInt } from "#util/schema.js";
 import { EventV2 } from "./event.js";

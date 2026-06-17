@@ -1,4 +1,7 @@
-/** @module SessionV2 - Effect service for the v2 session model: session Info schema plus list/messages/context queries and prompt/agent/model mutation operations backed by Sequelize. */
+/**
+ * Effect service for the v2 session model: session Info schema plus list/messages/context queries and prompt/agent/model mutation operations backed by Sequelize.
+ * @module closedcode/v2/session
+ */
 import { SessionID } from "#session/schema.js";
 import { WorkspaceID } from "#control-plane/schema.js";
 import { Op } from "#storage/sequelize.js";

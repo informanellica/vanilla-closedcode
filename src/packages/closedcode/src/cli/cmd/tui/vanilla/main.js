@@ -10,7 +10,10 @@
 // @-file search). Without a url (or if the client fails to construct) it falls
 // back to the self-contained stub shell. Feature parity vs the @opentui app is
 // still partial — see docs/milestones/solid-free-tui.md "Remaining work".
-/** @module Vanilla TUI entry — drop-in for app.js's tui(): mounts the immediate-mode shell, optionally wiring the real SDK backend, and resolves on exit. */
+/**
+ * Vanilla TUI entry — drop-in for app.js's tui(): mounts the immediate-mode shell, optionally wiring the real SDK backend, and resolves on exit.
+ * @module closedcode/cli/cmd/tui/vanilla/main
+ */
 import { mountShell } from "./shell.js";
 import { createDataLayer } from "./data/index.js";
 

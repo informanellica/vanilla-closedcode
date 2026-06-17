@@ -1,4 +1,4 @@
-/** @module EventV2 */
+/** @module closedcode/v2/event */
 /** @file V2 event definitions: branded event IDs, payload schema construction, and gated SyncEvent dispatch. */
 import { Identifier } from "#id/id.js";
 import { SyncEvent } from "#sync/index.js";

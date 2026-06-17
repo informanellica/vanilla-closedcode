@@ -1,4 +1,7 @@
-/** @module SessionMessage - Effect Schema classes for the materialized session message view (user/assistant/shell/compaction/etc.) derived from session events. */
+/**
+ * Effect Schema classes for the materialized session message view (user/assistant/shell/compaction/etc.) derived from session events.
+ * @module closedcode/v2/session-message
+ */
 import { Schema } from "effect";
 import { Prompt } from "./session-prompt.js";
 import { SessionEvent } from "./session-event.js";
