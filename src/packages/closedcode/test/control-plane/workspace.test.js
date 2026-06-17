@@ -52,8 +52,8 @@ function restoreEnv() {
     process.env[key] = value;
   });
 }
-beforeEach(() => {
-  Database.close();
+beforeEach(async () => {
+  await Database.closeAsync();
   Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES = true;
   restoreEnv();
 });

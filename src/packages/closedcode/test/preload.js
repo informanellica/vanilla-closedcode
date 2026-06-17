@@ -70,7 +70,7 @@ afterAll(async () => {
     await BootstrapRuntime.dispose()
   } catch {}
   const { Database } = await import("../src/storage/db.js")
-  Database.close()
+  await Database.closeAsync()
   // Node's global fetch (undici) keeps connections alive in a pooled dispatcher,
   // and node:http's globalAgent keeps free sockets open with keep-alive timers.
   // Close both so jest can exit after the suite.

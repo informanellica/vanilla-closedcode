@@ -15,8 +15,8 @@ const original = Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES;
 // and the async layer hold two different databases).
 const eventRows = () => Effect.promise(() => Database.useAsync(async h => (await h.models.Event.findAll({ transaction: h.tx })).map(row => row.get({ plain: true }))));
 const it = testEffect(Layer.mergeAll(SyncEvent.defaultLayer, CrossSpawnSpawner.defaultLayer));
-beforeEach(() => {
-  Database.close();
+beforeEach(async () => {
+  await Database.closeAsync();
   Flag.CLOSEDCODE_EXPERIMENTAL_WORKSPACES = true;
 });
 afterEach(() => {
