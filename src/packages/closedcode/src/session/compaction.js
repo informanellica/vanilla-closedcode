@@ -558,12 +558,12 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
         info: msg,
         parts: []
       });
-      EventV2.run(SessionEvent.Compaction.Ended.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.Compaction.Ended.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(Date.now()),
         text: summary ?? "",
         include: selected.tail_start_id
-      });
+      }));
       yield* bus.publish(Event.Compacted, {
         sessionID: input.sessionID
       });
@@ -596,11 +596,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
       auto: input.auto,
       overflow: input.overflow
     });
-    EventV2.run(SessionEvent.Compaction.Started.Sync, {
+    yield* Effect.promise(() => EventV2.run(SessionEvent.Compaction.Started.Sync, {
       sessionID: input.sessionID,
       timestamp: DateTime.makeUnsafe(Date.now()),
       reason: input.auto ? "auto" : "manual"
-    });
+    }));
   });
   return Service.of({
     isOverflow,

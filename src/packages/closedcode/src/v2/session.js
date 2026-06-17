@@ -317,11 +317,11 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
      * @returns {void}
      */
     switchAgent: Effect.fn("V2Session.switchAgent")(function* (input) {
-      EventV2.run(SessionEvent.AgentSwitched.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.AgentSwitched.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(Date.now()),
         agent: input.agent
-      });
+      }));
     }),
     /**
      * Switch the active model for a session by emitting a ModelSwitched event.
@@ -329,13 +329,13 @@ export const layer = Layer.effect(Service, Effect.gen(function* () {
      * @returns {void}
      */
     switchModel: Effect.fn("V2Session.switchModel")(function* (input) {
-      EventV2.run(SessionEvent.ModelSwitched.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.ModelSwitched.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(Date.now()),
         id: input.id,
         providerID: input.providerID,
         variant: input.variant
-      });
+      }));
     }),
     /**
      * Compact a session's history (currently a no-op stub).

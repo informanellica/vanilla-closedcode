@@ -874,12 +874,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           }
         };
         yield* sessions.updatePart(part);
-        EventV2.run(SessionEvent.Shell.Started.Sync, {
+        yield* Effect.promise(() => EventV2.run(SessionEvent.Shell.Started.Sync, {
           sessionID: input.sessionID,
           timestamp: DateTime.makeUnsafe(started),
           callID,
           command: input.command
-        });
+        }));
         return {
           msg,
           part,
@@ -896,12 +896,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           output += "\n\n" + ["<metadata>", "User aborted the command", "</metadata>"].join("\n");
         }
         const completed = Date.now();
-        EventV2.run(SessionEvent.Shell.Ended.Sync, {
+        yield* Effect.promise(() => EventV2.run(SessionEvent.Shell.Ended.Sync, {
           sessionID: input.sessionID,
           timestamp: DateTime.makeUnsafe(completed),
           callID: part.callID,
           output
-        });
+        }));
         if (!msg.time.completed) {
           msg.time.completed = completed;
           yield* sessions.updateMessage(msg);
@@ -1063,20 +1063,20 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       };
     }));
     if (current?.agent !== info.agent) {
-      EventV2.run(SessionEvent.AgentSwitched.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.AgentSwitched.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(info.time.created),
         agent: info.agent
-      });
+      }));
     }
     if (current?.model?.providerID !== info.model.providerID || current.model.id !== info.model.modelID || current.model.variant !== info.model.variant) {
-      EventV2.run(SessionEvent.ModelSwitched.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.ModelSwitched.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(info.time.created),
         id: info.model.modelID,
         providerID: info.model.providerID,
         variant: info.model.variant
-      });
+      }));
     }
     yield* Effect.addFinalizer(() => instruction.clear(info.id));
     const assign = part => ({
@@ -1454,7 +1454,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       synthetic: []
     });
     // TODO(v2): Temporary dual-write while migrating session messages to v2 events.
-    EventV2.run(SessionEvent.Prompted.Sync, {
+    yield* Effect.promise(() => EventV2.run(SessionEvent.Prompted.Sync, {
       sessionID: input.sessionID,
       timestamp: DateTime.makeUnsafe(info.time.created),
       prompt: {
@@ -1462,14 +1462,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         files: nextPrompt.files,
         agents: nextPrompt.agents
       }
-    });
+    }));
     for (const text of nextPrompt.synthetic) {
       // TODO(v2): Temporary dual-write while migrating session messages to v2 events.
-      EventV2.run(SessionEvent.Synthetic.Sync, {
+      yield* Effect.promise(() => EventV2.run(SessionEvent.Synthetic.Sync, {
         sessionID: input.sessionID,
         timestamp: DateTime.makeUnsafe(info.time.created),
         text
-      });
+      }));
     }
     return {
       info,
