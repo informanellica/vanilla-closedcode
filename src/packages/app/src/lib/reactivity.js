@@ -925,6 +925,16 @@ export function Show(props) {
       if (isRenderProp) return captured(props.keyed ? conditionValue : () => props.when);
       return captured;
     }
+    // Hidden: dispose the captured subtree so its cleanups run (the condition memo
+    // only re-runs on truthiness flips for non-keyed Show, so this is the single
+    // hide transition). Re-capture happens on the next truthy flip. Without this a
+    // hidden child's onCleanup never fires — e.g. a Portal'd find bar would stay
+    // mounted to <body> after the Show turned false.
+    if (!props.keyed && hasCaptured) {
+      node.dispose();
+      node = new OwnerNode(showOwner);
+      hasCaptured = false;
+    }
     return props.fallback;
   });
 }
@@ -1054,7 +1064,14 @@ export function Switch(props) {
     const list = Array.isArray(branches) ? branches : [branches];
     for (const branch of list) {
       if (branch && typeof branch === "object" && "when" in branch && branch.when) {
-        return branch.children;
+        // A render-prop child (arity >= 1, e.g. <Match>{value => ...}</Match>) is
+        // invoked with an accessor to the matched value, mirroring Show. insert()
+        // only auto-invokes zero-arg accessors, so a bare function child would
+        // otherwise render as its source text instead of the branch UI.
+        const branchChildren = branch.children;
+        return typeof branchChildren === "function" && branchChildren.length > 0
+          ? branchChildren(() => branch.when)
+          : branchChildren;
       }
     }
     return props.fallback;
