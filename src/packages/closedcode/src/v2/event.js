@@ -50,10 +50,13 @@ export function define(input) {
  * @param {Object} def - An event definition produced by {@link define}.
  * @param {Object} data - The event payload data.
  * @param {Object} options - Options forwarded to `SyncEvent.run`.
- * @returns {Promise|undefined} The SyncEvent write promise, or `undefined` when the experimental flag is off.
+ * @returns {Promise} The SyncEvent write promise, or an already-resolved promise when the experimental flag is off.
  */
 export function run(def, data, options) {
-  if (!Flag.CLOSEDCODE_EXPERIMENTAL_EVENT_SYSTEM) return;
+  // Always return a promise. Callers wrap this in `Effect.promise(() => run(...))`,
+  // which calls `.then` on the result, so returning `undefined` when the flag is
+  // off would crash the (production-default) path; resolve to a no-op instead.
+  if (!Flag.CLOSEDCODE_EXPERIMENTAL_EVENT_SYSTEM) return Promise.resolve();
   // Return the promise so callers can await the (now async) SyncEvent write and
   // surface its errors, instead of it running fire-and-forget.
   return SyncEvent.run(def, data, options);
