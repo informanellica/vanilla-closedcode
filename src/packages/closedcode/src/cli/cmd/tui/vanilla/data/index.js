@@ -52,7 +52,18 @@ export function createDataLayer(opts = {}) {
   let stopEvents = null;
 
   const onBatch = events => store.applyBatch(events);
-  const push = createBatcher(onBatch, schedule);
+  const batch = createBatcher(onBatch, schedule);
+  // Both event sources (the in-process worker relay and the SSE stream) deliver a
+  // GlobalBus envelope `{ directory, payload }` whose `payload` is the inner bus
+  // event `{ type, properties }`, but store.apply() reads `type`/`properties` off
+  // the top level. Unwrap an envelope (and pass an already-inner event through
+  // unchanged, e.g. tests that push directly), and drop "sync" frames, so live
+  // message/status/permission/question events aren't dropped as `type === undefined`.
+  const push = e => {
+    const inner = e && e.type === undefined && e.payload !== undefined ? e.payload : e;
+    if (!inner || inner.type === "sync") return;
+    batch(inner);
+  };
 
   /**
    * Start consuming the backend event stream — the in-process source (opts.events)
@@ -151,13 +162,28 @@ export function createDataLayer(opts = {}) {
       const args = rest.join(" ") + (firstLineEnd === -1 ? "" : "\n" + text.slice(firstLineEnd + 1));
       await sdk.session.command({ sessionID, command: command.slice(1), arguments: args, agent, model: model && `${model.providerID}/${model.modelID}`, messageID, variant });
     } else {
-      await sdk.session.prompt({ sessionID, messageID, agent, model, variant, parts: [{ id: ids.part(), type: "text", text }, ...parts] }).catch(() => {});
+      // Async dispatch (like the desktop app): the server forks the assistant loop
+      // and returns immediately, so submit() resolves once the prompt is accepted
+      // and the caller can navigate to the new session while the timeline streams
+      // in via the event loop. Don't swallow errors — surface them to the caller.
+      await sdk.session.promptAsync({ sessionID, messageID, agent, model, variant, parts: [{ id: ids.part(), type: "text", text }, ...parts] });
     }
     return sessionID;
   }
 
   /** Abort an in-flight session run. @param {string} sessionID @returns {Promise<*>} */
   const abort = sessionID => sdk.session.abort({ sessionID }).catch(() => {});
+  /**
+   * Fork a session into a new session (at its latest message point) and return
+   * the new session id. Used by the `--fork` launch flag.
+   * @param {string} sessionID - The session to fork.
+   * @returns {Promise<string>} The new (forked) session id.
+   */
+  async function fork(sessionID) {
+    const res = await sdk.session.fork({ sessionID });
+    if (res.error || !res.data?.id) throw new Error("session.fork failed");
+    return res.data.id;
+  }
   /** Search project files for "@" mentions. @param {string} query @returns {Promise<Array>} matching file records (empty on error). */
   const findFiles = query => sdk.find.files({ query, directory }).then(r => r.data ?? []).catch(() => []);
   /** Reply to a permission request. @param {string} requestID @param {*} reply @param {Object} extra @returns {Promise<*>} */
@@ -167,5 +193,5 @@ export function createDataLayer(opts = {}) {
   /** Reject a pending question request. @param {string} requestID @returns {Promise<*>} */
   const questionReject = requestID => sdk.question.reject({ requestID }).catch(() => {});
 
-  return { store, start, stop, bootstrap, syncSession, submit, abort, findFiles, permissionReply, questionReply, questionReject, ids, get sdk() { return sdk; } };
+  return { store, start, stop, bootstrap, syncSession, submit, abort, fork, findFiles, permissionReply, questionReply, questionReject, ids, get sdk() { return sdk; } };
 }

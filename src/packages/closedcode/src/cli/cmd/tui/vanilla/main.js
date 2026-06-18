@@ -22,7 +22,7 @@ import { createDataLayer } from "./data/index.js";
  * With input.url present, connects to the real backend (HTTP+SSE client + data
  * layer + persisted selection); otherwise falls back to the self-contained stub shell.
  * @param {Object} [input] - Entry input (same shape as app.js's tui()).
- * @param {Object} [input.args] - CLI args ({ agent, sessionID, prompt }).
+ * @param {Object} [input.args] - CLI args ({ agent, sessionID, prompt, model, continue, fork }).
  * @param {string} [input.url] - Backend URL; when set, the real SDK connection is used.
  * @returns {Promise<void>} Resolves when the TUI exits.
  */
@@ -55,6 +55,32 @@ export function tui(input = {}) {
     // leading "!" doesn't trip shell mode.
     if (args.prompt) shell.prompt.setText(String(args.prompt));
     app.start();
-    void shell.init(); // events + bootstrap (no-op in stub mode)
+    // events + bootstrap (no-op in stub mode), then honor the launch flags that
+    // need the loaded provider/session lists: --model preselects the model,
+    // --continue resumes the most recent session, and --fork opens a fork of the
+    // resolved session (an explicit --session already set the initial route above).
+    void shell.init().then(async () => {
+      if (!data) return;
+      // --model provider/model: preselect once providers are loaded.
+      if (typeof args.model === "string" && args.model.includes("/")) {
+        const slash = args.model.indexOf("/");
+        shell.selection?.model.set({ providerID: args.model.slice(0, slash), modelID: args.model.slice(slash + 1) });
+      }
+      // Resolve the session to open: explicit --session (already the initial
+      // route), else --continue resumes the most recent session.
+      let target = args.sessionID;
+      if (!target && args.continue) {
+        const sessions = data.store.sessions?.() ?? [];
+        target = sessions[sessions.length - 1]?.id; // sorted ascending by id (time-ordered)
+      }
+      // --fork: fork the resolved session into a new one and open that instead.
+      // (the command layer already enforces that --fork needs --continue/--session.)
+      if (args.fork && target) {
+        try { target = await data.fork(target); } catch (e) { shell.toast.error(e); }
+      }
+      if (target && (shell.route().type !== "session" || shell.route().sessionID !== target)) {
+        shell.navigate({ type: "session", sessionID: target });
+      }
+    });
   });
 }

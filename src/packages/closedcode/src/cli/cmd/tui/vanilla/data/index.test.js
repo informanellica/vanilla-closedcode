@@ -18,11 +18,12 @@ function mockSdk() {
     "app.agents": () => ({ data: [{ name: "build" }] }),
     "command.list": () => ({ data: [{ name: "help" }] }),
     "find.files": () => ({ data: ["a.js", "b.js"] }),
+    "session.fork": () => ({ data: { id: "ses_fork" } }),
   };
   const rec = name => async args => { calls.push([name, args]); return responses[name]?.(args) ?? {}; };
   return {
     calls,
-    session: { create: rec("session.create"), prompt: rec("session.prompt"), shell: rec("session.shell"), command: rec("session.command"), abort: rec("session.abort"), get: rec("session.get"), messages: rec("session.messages"), list: rec("session.list") },
+    session: { create: rec("session.create"), prompt: rec("session.prompt"), promptAsync: rec("session.promptAsync"), shell: rec("session.shell"), command: rec("session.command"), abort: rec("session.abort"), fork: rec("session.fork"), get: rec("session.get"), messages: rec("session.messages"), list: rec("session.list") },
     find: { files: rec("find.files") },
     config: { providers: rec("config.providers") },
     app: { agents: rec("app.agents") },
@@ -39,8 +40,8 @@ const IDS = { message: () => "msg_x", part: () => "prt_x" };
   const sid = await data.submit(undefined, "hello", { agent: "build", model: { providerID: "anthropic", modelID: "opus" } });
   eq(sid, "ses_new", "submit from no session creates one and returns its id");
   const names = sdk.calls.map(c => c[0]);
-  ok(names.includes("session.create") && names.includes("session.prompt"), "called create then prompt");
-  const prompt = sdk.calls.find(c => c[0] === "session.prompt")[1];
+  ok(names.includes("session.create") && names.includes("session.promptAsync"), "called create then promptAsync");
+  const prompt = sdk.calls.find(c => c[0] === "session.promptAsync")[1];
   eq(prompt.parts[0], { id: "prt_x", type: "text", text: "hello" }, "prompt carries a text part");
 }
 
@@ -94,6 +95,16 @@ const IDS = { message: () => "msg_x", part: () => "prt_x" };
   handler({ type: "message.updated", properties: { info: { id: "m1", sessionID: "ses_1", role: "user", time: {} } } });
   handler({ type: "message.part.updated", properties: { part: { id: "p1", messageID: "m1", type: "text", text: "streamed" } } });
   eq(data.store.timeline("ses_1"), [{ role: "user", parts: [{ type: "text", text: "streamed" }] }], "events from the source land in the store");
+}
+
+// fork(): forks a session and returns the new id (used by --fork)
+{
+  const sdk = mockSdk();
+  const data = createDataLayer({ sdk, ids: IDS, schedule: sync });
+  const newId = await data.fork("ses_1");
+  eq(newId, "ses_fork", "fork returns the new session id");
+  const call = sdk.calls.find(c => c[0] === "session.fork");
+  ok(call && call[1].sessionID === "ses_1", "fork called with the source sessionID");
 }
 
 console.log(`tui vanilla data-layer tests: ${passed} passed, ${failed} failed`);
