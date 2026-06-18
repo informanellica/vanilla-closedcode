@@ -14,6 +14,10 @@ import { env } from "@/lib/env.js";
 import pkg from "../package.json" with { type: "json" };
 import { ServerConnection } from "./context/server.js";
 const DEFAULT_SERVER_URL_KEY = "closedcode.settings.dat:defaultServerUrl";
+// opencode-era key, kept only as a one-time migration source so users upgrading
+// from opencode keep their configured default server instead of silently falling
+// back to location.origin.
+const LEGACY_DEFAULT_SERVER_URL_KEY = "opencode.settings.dat:defaultServerUrl";
 /**
  * Determine the active UI locale from the browser's preferred languages.
  * Currently only distinguishes Chinese ("zh") from the English ("en") default.
@@ -54,7 +58,14 @@ const setStorage = (key, value) => {
     return;
   }
 };
-const readDefaultServerUrl = () => getStorage(DEFAULT_SERVER_URL_KEY);
+const readDefaultServerUrl = () => {
+  const current = getStorage(DEFAULT_SERVER_URL_KEY);
+  if (current !== null) return current;
+  // Migrate a value left under the legacy opencode key into the new key once.
+  const legacy = getStorage(LEGACY_DEFAULT_SERVER_URL_KEY);
+  if (legacy !== null) setStorage(DEFAULT_SERVER_URL_KEY, legacy);
+  return legacy;
+};
 const writeDefaultServerUrl = url => setStorage(DEFAULT_SERVER_URL_KEY, url);
 const notify = async (title, description, href) => {
   if (!("Notification" in window)) return;
