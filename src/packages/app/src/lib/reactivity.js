@@ -1165,7 +1165,22 @@ export function Suspense(props) {
     },
   };
   let childrenOnce;
-  try { childrenOnce = runWithOwner(node, () => props.children); } catch { /* leave undefined -> fallback */ }
+  try {
+    childrenOnce = runWithOwner(node, () => props.children);
+  } catch (err) {
+    // A synchronous throw while first reading children is an error, not a pending
+    // state. Route it to the nearest ErrorBoundary (walk the owner chain like
+    // Computation.run) instead of swallowing it — otherwise childrenOnce stays
+    // undefined and Suspense pins its fallback forever (e.g. a no-server startup
+    // throw would leave the app stuck on the splash). With no boundary, rethrow.
+    let o = node.parent, handler = null;
+    while (o) {
+      if (o.context && ERROR_KEY in o.context) { handler = o.context[ERROR_KEY]; break; }
+      o = o.parent;
+    }
+    if (!handler) throw err;
+    handler(err);
+  }
   return createMemo(() => (childrenOnce === undefined || pending() > 0) ? props.fallback : childrenOnce);
 }
 
