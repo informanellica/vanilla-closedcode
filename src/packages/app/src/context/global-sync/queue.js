@@ -85,6 +85,16 @@ export function createRefreshQueue(input) {
     push,
     refresh,
     /**
+     * Resume the queue after a pause clears: schedule a drain if work remains.
+     * push()/refresh() skip scheduling while paused, so without this a refresh
+     * that arrived during a pause (e.g. a config update) would sit in the queue
+     * until an unrelated later push happened to reschedule it.
+     */
+    resume() {
+      if (input.paused()) return;
+      if (root || queued.size) schedule();
+    },
+    /**
      * Remove a directory from the pending queue without bootstrapping it.
      * @param {*} directory - Directory descriptor whose queued entry should be dropped.
      */

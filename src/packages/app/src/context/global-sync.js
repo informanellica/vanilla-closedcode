@@ -1,7 +1,7 @@
 /** @file GlobalSync context: orchestrates global + per-directory reactive stores, the bootstrap query, session loading, and routing of streamed SSE events (with per-frame delta coalescing) into those stores. */
 import { showToast } from "@/lib/toast.js";
 import { getFilename } from "core/util/path";
-import { batch, createComponent, createContext, getOwner, onCleanup, onMount, untrack, useContext } from "../lib/reactivity.js";
+import { batch, createComponent, createContext, createEffect, getOwner, onCleanup, onMount, untrack, useContext } from "../lib/reactivity.js";
 import { createStore, produce, reconcile } from "../lib/store.js";
 import { useLanguage } from "@/context/language.js";
 import { useGlobalSDK } from "./global-sdk.js";
@@ -185,6 +185,14 @@ function createGlobalSync() {
       queryKey: ["bootstrap"]
     }),
     bootstrapInstance
+  });
+  // Resume the queue when the reload pause clears. push()/refresh() skip
+  // scheduling while paused(), so a refresh enqueued during a config update would
+  // otherwise sit in the queue until an unrelated later push rescheduled it. Read
+  // globalStore.reload reactively here (paused() untracks, so it can't drive an
+  // effect) and drain once it returns to undefined.
+  createEffect(() => {
+    if (globalStore.reload === undefined) queue.resume();
   });
   /**
    * Get (creating and caching on first use) a directory-scoped SDK client.
