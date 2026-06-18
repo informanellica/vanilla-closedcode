@@ -1120,19 +1120,32 @@ export function ErrorBoundary(props) {
   // throw from a DESCENDANT computation (a later render effect/memo, not just the
   // synchronous first read) walks the owner chain to here and shows the fallback
   // instead of leaving the renderer crashed/blank.
-  const node = new OwnerNode(Owner);
-  (node.context ??= {})[ERROR_KEY] = e => setError(() => e);
+  let node = new OwnerNode(Owner);
   // Capture children ONCE. Reading props.children inside the memo would re-invoke
   // the `children` getter (-> createComponent) on every re-run, re-creating the
   // whole subtree. Create it once and return the SAME stable accessor; insert()'s
   // nested effects resolve it without subscribing this memo to descendant signals.
   let childrenOnce;
-  try { childrenOnce = runWithOwner(node, () => props.children); } catch (e) { setError(() => e); }
+  const capture = () => { childrenOnce = runWithOwner(node, () => props.children); };
+  const handler = e => {
+    // Entering the error state: dispose the failed subtree so its effects,
+    // resources, event listeners and onCleanup registrations stop running behind
+    // the fallback, then swap in a fresh owner so reset() can re-render cleanly.
+    node.dispose();
+    node = new OwnerNode(Owner);
+    (node.context ??= {})[ERROR_KEY] = handler;
+    setError(() => e);
+  };
+  (node.context ??= {})[ERROR_KEY] = handler;
+  try { capture(); } catch (e) { handler(e); }
   return createMemo(() => {
     const err = error();
     if (err !== undefined) {
       const fb = props.fallback;
-      return typeof fb === "function" ? fb(err, () => setError(undefined)) : fb;
+      return typeof fb === "function" ? fb(err, () => {
+        // reset(): re-read children under the fresh owner, then clear the error.
+        try { capture(); setError(undefined); } catch (e) { handler(e); }
+      }) : fb;
     }
     return childrenOnce;
   });
