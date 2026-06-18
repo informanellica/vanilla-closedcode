@@ -773,6 +773,16 @@ function Routes(props) {
       return next;
     }),
   );
+  // Dispose every live route root when the Routes owner is torn down (e.g. a
+  // server switch / Router remount). createRoot detaches these from the owner
+  // tree, so without this the old pages' effects/listeners/resources keep
+  // running against stale contexts. Dispose is idempotent, so this is safe
+  // alongside the per-match disposal above.
+  onCleanup(() => {
+    for (const dispose of disposers) {
+      if (dispose) dispose();
+    }
+  });
   return createOutlet(() => routeStates() && root)();
 }
 
