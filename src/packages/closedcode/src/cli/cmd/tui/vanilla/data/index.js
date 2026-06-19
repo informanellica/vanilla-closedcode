@@ -48,7 +48,8 @@ export function createDataLayer(opts = {}) {
   const directory = opts.directory;
   const schedule = opts.schedule ?? (fn => setTimeout(fn, 16));
   const store = createDataStore();
-  const synced = new Set();
+  const synced = new Set();   // sessions whose history has been hydrated
+  const inFlight = new Set(); // sessions whose hydration is currently in progress
   let stopEvents = null;
 
   const onBatch = events => store.applyBatch(events);
@@ -60,7 +61,13 @@ export function createDataLayer(opts = {}) {
   // unchanged, e.g. tests that push directly), and drop "sync" frames, so live
   // message/status/permission/question events aren't dropped as `type === undefined`.
   const push = e => {
-    const inner = e && e.type === undefined && e.payload !== undefined ? e.payload : e;
+    const isEnvelope = e && e.type === undefined && e.payload !== undefined;
+    // The global stream carries every directory's events, but this data layer is
+    // scoped to one directory. Drop envelopes addressed to a DIFFERENT directory so
+    // other projects' sessions/permissions/questions don't leak into this store.
+    // (Envelopes with no directory, and already-inner events from tests, pass through.)
+    if (isEnvelope && e.directory !== undefined && directory !== undefined && e.directory !== directory) return;
+    const inner = isEnvelope ? e.payload : e;
     if (!inner || inner.type === "sync") return;
     batch(inner);
   };
@@ -102,7 +109,7 @@ export function createDataLayer(opts = {}) {
       sdk.config.providers({}).then(r => r.data).catch(() => undefined),
       sdk.app.agents({}).then(r => r.data).catch(() => undefined),
       sdk.command.list({}).then(r => r.data).catch(() => undefined),
-      sdk.session.list({ start: Date.now() - 30 * 86400000 }).then(r => r.data).catch(() => undefined), // 30-day window, like the live sync
+      sdk.session.list({}).then(r => r.data).catch(() => undefined), // newest sessions (time_updated DESC, server default limit) — no time cutoff so --continue still finds idle sessions
     ]);
     store.setBootstrap({
       providers: providers?.providers ?? providers,
@@ -119,18 +126,27 @@ export function createDataLayer(opts = {}) {
    */
   // Lazily hydrate a session's full message+part history (once).
   async function syncSession(sessionID) {
-    if (!sessionID || synced.has(sessionID)) return;
-    synced.add(sessionID);
-    const opt = fn => (fn ? fn({ sessionID }).then(r => r.data).catch(() => undefined) : Promise.resolve(undefined));
-    const [session, messages, todo, diff] = await Promise.all([
-      sdk.session.get({ sessionID }).then(r => r.data).catch(() => undefined),
-      sdk.session.messages({ sessionID, limit: 100 }).then(r => r.data).catch(() => undefined),
-      opt(sdk.session.todo),
-      opt(sdk.session.diff),
-    ]);
-    const parts = {};
-    for (const m of messages ?? []) if (m.info && m.parts) parts[m.info.id] = m.parts;
-    store.hydrateSession(sessionID, { session, messages: (messages ?? []).map(m => m.info ?? m), parts, todo, diff });
+    if (!sessionID || synced.has(sessionID) || inFlight.has(sessionID)) return;
+    inFlight.add(sessionID); // gate concurrent calls so a retry doesn't double-fetch
+    try {
+      const opt = fn => (fn ? fn({ sessionID }).then(r => r.data).catch(() => undefined) : Promise.resolve(undefined));
+      const [session, messages, todo, diff] = await Promise.all([
+        sdk.session.get({ sessionID }).then(r => r.data).catch(() => undefined),
+        sdk.session.messages({ sessionID, limit: 100 }).then(r => r.data).catch(() => undefined),
+        opt(sdk.session.todo),
+        opt(sdk.session.diff),
+      ]);
+      // Transient failure (neither the session nor its messages loaded): leave it
+      // un-synced so a later navigation/submit retries instead of being permanently
+      // stuck with an empty/partial timeline.
+      if (session === undefined && messages === undefined) return;
+      const parts = {};
+      for (const m of messages ?? []) if (m.info && m.parts) parts[m.info.id] = m.parts;
+      store.hydrateSession(sessionID, { session, messages: (messages ?? []).map(m => m.info ?? m), parts, todo, diff });
+      synced.add(sessionID); // only mark synced after a successful hydrate
+    } finally {
+      inFlight.delete(sessionID);
+    }
   }
 
   /** Whether `name` matches a known store command. @param {string} name @returns {boolean} */

@@ -73,7 +73,7 @@ export function createDataStore() {
   function apply(event) {
     const p = event.properties ?? {};
     switch (event.type) {
-      case "session.updated": upsert(s.sessions, p.info); break;
+      case "session.created": case "session.updated": upsert(s.sessions, p.info); break;
       case "session.deleted": removeById(s.sessions, p.info.id); break;
       case "session.status": s.sessionStatus.set(p.sessionID, p.status); break;
       case "message.updated": {
