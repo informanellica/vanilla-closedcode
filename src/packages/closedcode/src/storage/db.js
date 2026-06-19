@@ -169,11 +169,16 @@ export async function useAsync(callback) {
  * @param {Object} options - Optional settings; `behavior` is one of "immediate", "exclusive", or "deferred".
  * @returns {Promise<*>} Promise resolving to the callback's result.
  */
+// Serializes top-level transactionAsync calls. BEGIN/COMMIT are connection-level
+// state on the single pooled connection (pool max:1), so two concurrent top-level
+// callers would otherwise both pass the ambient check and issue overlapping BEGINs
+// — the second fails "cannot start a transaction within a transaction" and its
+// ROLLBACK aborts the first caller's open transaction. Chaining keeps exactly one
+// transaction open at a time. Nested calls (ambient set) bypass this entirely.
+let txChain = Promise.resolve();
 export async function transactionAsync(callback, options) {
   const ambient = transactionStorage.getStore();
   if (ambient) return callback({ ...ambient.handle });
-  const { sequelize, models } = await ormInit();
-  const effects = [];
   // Hand-rolled BEGIN/COMMIT instead of sequelize.transaction(): the managed
   // transaction pins the single pooled connection (pool max:1) for its whole
   // body, so any nested query that lost the AsyncLocalStorage context (the
@@ -182,19 +187,30 @@ export async function transactionAsync(callback, options) {
   // With plain queries every statement serializes onto the one connection,
   // where sqlite transactions are connection-level state — nested calls land
   // inside the open transaction exactly like the legacy synchronous layer.
-  const types = { immediate: "IMMEDIATE", exclusive: "EXCLUSIVE", deferred: "DEFERRED" };
-  const behavior = types[options?.behavior] ?? "DEFERRED";
-  await sequelize.query(`BEGIN ${behavior} TRANSACTION`);
-  const handle = { models, sequelize, tx: undefined };
-  try {
-    const result = await transactionStorage.run({ effects, handle }, () => callback(handle));
-    await sequelize.query("COMMIT");
-    for (const fn of effects) fn();
-    return result;
-  } catch (error) {
-    await sequelize.query("ROLLBACK").catch(() => {});
-    throw error;
-  }
+  const run = async () => {
+    const { sequelize, models } = await ormInit();
+    const effects = [];
+    const types = { immediate: "IMMEDIATE", exclusive: "EXCLUSIVE", deferred: "DEFERRED" };
+    const behavior = types[options?.behavior] ?? "DEFERRED";
+    await sequelize.query(`BEGIN ${behavior} TRANSACTION`);
+    const handle = { models, sequelize, tx: undefined };
+    try {
+      const result = await transactionStorage.run({ effects, handle }, () => callback(handle));
+      await sequelize.query("COMMIT");
+      for (const fn of effects) fn();
+      return result;
+    } catch (error) {
+      await sequelize.query("ROLLBACK").catch(() => {});
+      throw error;
+    }
+  };
+  // Grab the mutex synchronously (no await between read and reassign) so two
+  // concurrent callers can't both chain off the same prior link. The gate promise
+  // swallows the outcome so a failed transaction doesn't poison the chain, while
+  // the caller still sees the real result/error via `result`.
+  const result = txChain.then(run);
+  txChain = result.then(() => {}, () => {});
+  return result;
 }
 // Commit-deferred side effects (parity with effect() above): inside an
 // ambient transaction they run after commit, otherwise immediately.
