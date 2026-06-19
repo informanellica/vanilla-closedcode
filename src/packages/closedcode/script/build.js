@@ -353,12 +353,16 @@ if (!SEA) {
 // bundled import in ESM output. Prefer the version range this package already
 // declares; fall back to the installed version for transitive ones (string-kit,
 // bindings, file-uri-to-path).
+// @parcel/watcher's platform binding is loaded by a computed runtime require in
+// file/watcher.js (esbuild can't see it), so it must ship for both build variants:
+// declared as a non-SEA dependency here, and copied as a SEA sidecar below.
+const watcherBinding = `@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? "-" + libc : ""}`;
 let runtimeDeps;
 if (!SEA) {
   const requireFrom = createRequire(path.join(dir, "package.json"));
   const declared = { ...pkg.dependencies, ...pkg.optionalDependencies };
   runtimeDeps = {};
-  for (const dep of [...EXTERNAL_NATIVE, "sequelize", "sqlite3", "bindings", "file-uri-to-path"]) {
+  for (const dep of [...EXTERNAL_NATIVE, "sequelize", "sqlite3", "bindings", "file-uri-to-path", "@parcel/watcher", watcherBinding]) {
     if (declared[dep]) {
       runtimeDeps[dep] = declared[dep];
       continue;
@@ -423,10 +427,9 @@ copyTextAssets(path.join(outDir, "bin"));
  */
 function copySidecars(outRoot) {
   const nm = path.join(dir, "../../node_modules"); // workspace (hoisted) node_modules
-  // @parcel/watcher's wrapper.js is bundled, but its platform binding is loaded by
-  // a computed require at runtime (file/watcher.js) — ship that binding (+ the
-  // @parcel/watcher closure) as a sidecar so the watcher works in the SEA build.
-  const watcherBinding = `@parcel/watcher-${process.platform}-${process.arch}${process.platform === "linux" ? "-" + libc : ""}`;
+  // @parcel/watcher's wrapper.js is bundled, but its platform binding (watcherBinding,
+  // computed above) is loaded by a computed require at runtime (file/watcher.js) —
+  // ship that binding (+ the @parcel/watcher closure) as a sidecar for the SEA build.
   // sqlite3 (+ its bindings/file-uri-to-path deps) is loaded by Sequelize via a
   // runtime require esbuild can't see, so it must ship as a sidecar or the SEA
   // binary fails the moment the ORM loads. The desktop build already unpacks
