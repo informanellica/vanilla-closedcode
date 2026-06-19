@@ -1119,8 +1119,12 @@ export function ErrorBoundary(props) {
   // Own the children under a dedicated scope that publishes an error handler, so a
   // throw from a DESCENDANT computation (a later render effect/memo, not just the
   // synchronous first read) walks the owner chain to here and shows the fallback
-  // instead of leaving the renderer crashed/blank.
-  let node = new OwnerNode(Owner);
+  // instead of leaving the renderer crashed/blank. Capture the boundary's owner
+  // now: the handler runs from Computation.run()'s catch where the global `Owner`
+  // is the FAILED computation (run() restores it only in finally), so a fresh node
+  // parented on `Owner` there would attach under a disposed computation and leak.
+  const boundaryOwner = Owner;
+  let node = new OwnerNode(boundaryOwner);
   // Capture children ONCE. Reading props.children inside the memo would re-invoke
   // the `children` getter (-> createComponent) on every re-run, re-creating the
   // whole subtree. Create it once and return the SAME stable accessor; insert()'s
@@ -1130,9 +1134,10 @@ export function ErrorBoundary(props) {
   const handler = e => {
     // Entering the error state: dispose the failed subtree so its effects,
     // resources, event listeners and onCleanup registrations stop running behind
-    // the fallback, then swap in a fresh owner so reset() can re-render cleanly.
+    // the fallback, then swap in a fresh owner (under the boundary, not the failed
+    // computation) so reset() can re-render cleanly inside the live owner tree.
     node.dispose();
-    node = new OwnerNode(Owner);
+    node = new OwnerNode(boundaryOwner);
     (node.context ??= {})[ERROR_KEY] = handler;
     setError(() => e);
   };
