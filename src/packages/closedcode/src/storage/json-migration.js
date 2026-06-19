@@ -32,8 +32,8 @@ const TABLES = {
   },
   session: {
     name: "session",
-    columns: ["id", "project_id", "parent_id", "slug", "directory", "path", "title", "version", "share_url", "summary_additions", "summary_deletions", "summary_files", "summary_diffs", "revert", "permission", "time_created", "time_updated", "time_compacting", "time_archived"],
-    json: new Set(["summary_diffs", "revert", "permission"])
+    columns: ["id", "project_id", "parent_id", "slug", "directory", "path", "title", "version", "share_url", "summary_additions", "summary_deletions", "summary_files", "summary_diffs", "revert", "permission", "workspace_id", "agent", "model", "time_created", "time_updated", "time_compacting", "time_archived"],
+    json: new Set(["summary_diffs", "revert", "permission", "model"])
   },
   message: {
     name: "message",
@@ -295,6 +295,9 @@ export async function run(options) {
           summary_diffs: data.summary?.diffs ?? null,
           revert: data.revert ?? null,
           permission: data.permission ?? null,
+          workspace_id: data.workspaceID ?? null,
+          agent: data.agent ?? null,
+          model: data.model ?? null,
           time_created: data.time?.created ?? now,
           time_updated: data.time?.updated ?? now,
           time_compacting: data.time?.compacting ?? null,
