@@ -567,6 +567,19 @@ export function createShell(opts = {}) {
    */
   async function init() {
     if (!data) return;
+    // Route tui.* CONTROL events from the event stream to the shell (the store
+    // reducer is pure; these are UI side effects). Registered before data.start()
+    // so it's in place when events begin streaming. e.g. MCP OAuth failures publish
+    // tui.toast.show, which would otherwise be silently dropped.
+    data.setControlHandler?.(ev => {
+      const p = ev.properties ?? {};
+      switch (ev.type) {
+        case "tui.toast.show": toast.show({ title: p.title, message: p.message, variant: p.variant, duration: p.duration }); break;
+        case "tui.prompt.append": prompt.setText((prompt.value?.() ?? "") + (p.text ?? "")); break;
+        case "tui.command.execute": if (p.command) dispatch(p.command); break;
+        case "tui.session.select": if (p.sessionID) navigate({ type: "session", sessionID: p.sessionID }); break;
+      }
+    });
     try { await data.start(); await data.bootstrap(); if (route().type === "session") data.syncSession(route().sessionID); }
     catch (e) { toast.error(e); }
   }

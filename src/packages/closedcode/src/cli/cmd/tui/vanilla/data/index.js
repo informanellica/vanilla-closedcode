@@ -50,6 +50,10 @@ export function createDataLayer(opts = {}) {
   const store = createDataStore();
   const synced = new Set();   // sessions whose history has been hydrated
   const inFlight = new Set(); // sessions whose hydration is currently in progress
+  // tui.* are CONTROL events (toast/prompt/command side effects on the shell), not
+  // store state. The shell registers a handler via setControlHandler(); until then
+  // they are dropped (e.g. headless tests).
+  let controlHandler = opts.onControlEvent ?? null;
   let stopEvents = null;
 
   const onBatch = events => store.applyBatch(events);
@@ -69,6 +73,9 @@ export function createDataLayer(opts = {}) {
     if (isEnvelope && e.directory !== undefined && directory !== undefined && e.directory !== directory) return;
     const inner = isEnvelope ? e.payload : e;
     if (!inner || inner.type === "sync") return;
+    // tui.* control events drive the shell (toast/prompt/command), not the store —
+    // route them out instead of letting the pure reducer drop them.
+    if (typeof inner.type === "string" && inner.type.startsWith("tui.")) { controlHandler?.(inner); return; }
     batch(inner);
   };
 
@@ -169,19 +176,21 @@ export function createDataLayer(opts = {}) {
       sessionID = res.data.id;
     }
     const messageID = ids.message();
+    // All three dispatch paths are non-blocking (like the desktop composer): we
+    // return the sessionID as soon as the request is accepted so the caller can
+    // navigate and the timeline streams in via the event loop. session.shell and
+    // session.command run the full loop server-side before resolving, so they are
+    // fire-and-forget (errors surface as error events on the stream); the prompt
+    // path uses the async endpoint that returns immediately.
     if (mode === "shell") {
-      await sdk.session.shell({ sessionID, agent, model: model && { providerID: model.providerID, modelID: model.modelID }, command: text });
+      sdk.session.shell({ sessionID, agent, model: model && { providerID: model.providerID, modelID: model.modelID }, command: text }).catch(() => {});
     } else if (text.startsWith("/") && isKnownCommand(text.slice(1).split(/\s+/)[0])) {
       const firstLineEnd = text.indexOf("\n");
       const firstLine = firstLineEnd === -1 ? text : text.slice(0, firstLineEnd);
       const [command, ...rest] = firstLine.split(" ");
       const args = rest.join(" ") + (firstLineEnd === -1 ? "" : "\n" + text.slice(firstLineEnd + 1));
-      await sdk.session.command({ sessionID, command: command.slice(1), arguments: args, agent, model: model && `${model.providerID}/${model.modelID}`, messageID, variant });
+      sdk.session.command({ sessionID, command: command.slice(1), arguments: args, agent, model: model && `${model.providerID}/${model.modelID}`, messageID, variant }).catch(() => {});
     } else {
-      // Async dispatch (like the desktop app): the server forks the assistant loop
-      // and returns immediately, so submit() resolves once the prompt is accepted
-      // and the caller can navigate to the new session while the timeline streams
-      // in via the event loop. Don't swallow errors — surface them to the caller.
       await sdk.session.promptAsync({ sessionID, messageID, agent, model, variant, parts: [{ id: ids.part(), type: "text", text }, ...parts] });
     }
     return sessionID;
@@ -208,6 +217,8 @@ export function createDataLayer(opts = {}) {
   const questionReply = (requestID, answers) => sdk.question.reply({ requestID, answers }).catch(() => {});
   /** Reject a pending question request. @param {string} requestID @returns {Promise<*>} */
   const questionReject = requestID => sdk.question.reject({ requestID }).catch(() => {});
+  /** Register the handler for tui.* control events (toast/prompt/command). @param {Function} fn @returns {void} */
+  const setControlHandler = fn => { controlHandler = fn; };
 
-  return { store, start, stop, bootstrap, syncSession, submit, abort, fork, findFiles, permissionReply, questionReply, questionReject, ids, get sdk() { return sdk; } };
+  return { store, start, stop, bootstrap, syncSession, submit, abort, fork, findFiles, permissionReply, questionReply, questionReject, setControlHandler, ids, get sdk() { return sdk; } };
 }
