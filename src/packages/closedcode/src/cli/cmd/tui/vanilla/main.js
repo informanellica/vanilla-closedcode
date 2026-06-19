@@ -71,7 +71,12 @@ export function tui(input = {}) {
       let target = args.sessionID;
       if (!target && args.continue) {
         const sessions = data.store.sessions?.() ?? [];
-        target = sessions[sessions.length - 1]?.id; // sorted ascending by id (time-ordered)
+        // Most recent by last activity. (Session ids are minted "descending", so
+        // the store's ascending-by-id order is actually newest-first; sort by time
+        // explicitly so this stays correct regardless of the store's ordering.)
+        const recent = [...sessions].sort((a, b) =>
+          (b.time?.updated ?? b.time?.created ?? 0) - (a.time?.updated ?? a.time?.created ?? 0))[0];
+        target = recent?.id;
       }
       // --fork: fork the resolved session into a new one and open that instead.
       // (the command layer already enforces that --fork needs --continue/--session.)
