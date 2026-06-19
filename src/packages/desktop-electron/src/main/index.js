@@ -227,6 +227,14 @@ function setInitStep(step) {
  * @returns {Promise<void>} Resolves once the main window has been created.
  */
 async function initialize() {
+  // Prepare the sidecar env (login-shell vars like XDG_DATA_HOME / XDG_STATE_HOME)
+  // FIRST: sqliteFileExists() below reads XDG_DATA_HOME to decide needsMigration,
+  // and the later sidecar import caches core/global's data/config paths — both must
+  // see the shell-provided dirs, not the ~/.local/share defaults, or the first-run
+  // migration decision (and the migration itself) target the wrong directory.
+  // Idempotent, so spawnLocalServer()'s own prepareServerEnv() call stays a no-op.
+  const password = randomUUID();
+  prepareServerEnv(password);
   const needsMigration = !sqliteFileExists();
   const sqliteDone = needsMigration ? defer() : undefined;
   // Show the splash window immediately on EVERY launch. Previously it was created
@@ -238,7 +246,6 @@ async function initialize() {
   const port = await getSidecarPort();
   const hostname = "127.0.0.1";
   const url = `http://${hostname}:${port}`;
-  const password = randomUUID();
   const loadingTask = (async () => {
     logger.log("sidecar connection started", {
       url
@@ -251,13 +258,6 @@ async function initialize() {
       if (mainWindow) sendSqliteMigrationProgress(mainWindow, progress);
       if (progress.type === "Done") sqliteDone?.resolve();
     });
-    // Prepare the sidecar env (login-shell vars like XDG_DATA_HOME, XDG_STATE_HOME)
-    // BEFORE importing the sidecar: that import evaluates core/global, which
-    // resolves+caches the data/config paths from process.env. Without this the
-    // first-run migration (and the later cached server) would use the wrong
-    // directories for users whose XDG vars live only in their login shell.
-    // Idempotent, so spawnLocalServer()'s own call below is a no-op.
-    prepareServerEnv(password);
     if (needsMigration) {
       // Resolve the sidecar entry (packaged asar-unpacked path, or the
       // build-less packages/closedcode/dist/node fallback) before importing.
