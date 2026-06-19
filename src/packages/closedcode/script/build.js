@@ -223,10 +223,11 @@ await esbuild({
     CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
     CLOSEDCODE_LIBC: JSON.stringify(libc),
     // SEA: the TUI Worker entry is a sidecar worker.cjs next to the exe (built
-    // below); compute its path from the exe dir at runtime. ESM: the source path.
-    CLOSEDCODE_WORKER_PATH: SEA
-      ? "globalThis.__ccWorkerPath"
-      : JSON.stringify("./src/cli/cmd/tui/worker.js"),
+    // below); compute its path from the exe dir at runtime. Non-SEA: leave this
+    // UNDEFINED so thread.js's target() falls back to the bundle-adjacent
+    // ./worker.js sidecar emitted below (the old "./src/..." source path resolved
+    // under the user's cwd after thread.js chdir'd, and wasn't shipped anyway).
+    ...(SEA ? { CLOSEDCODE_WORKER_PATH: "globalThis.__ccWorkerPath" } : {}),
     OTUI_TREE_SITTER_WORKER_PATH: JSON.stringify(""),
     CLOSEDCODE_EMBEDDED_WEB_UI: JSON.stringify(embeddedFileMap ?? {})
   },
@@ -283,6 +284,55 @@ if (SEA) {
     loader: { ".wav": "file", ".node": "file" }
   });
   console.log("built sidecar worker.cjs");
+}
+
+// Non-SEA: emit the TUI Worker entry as a bundle-adjacent sidecar (bin/worker.js).
+// worker_threads need a real file path and the ESM bundle can't host the worker
+// module, and the source tree isn't shipped — so without this `closedcode tui`
+// fails to spawn its worker outside the workspace. CLOSEDCODE_WORKER_PATH is left
+// undefined for non-SEA (above), so target() resolves ./worker.js next to the
+// bundle. Same plugins/aliases/banner as the main ESM bundle.
+if (!SEA) {
+  await esbuild({
+    entryPoints: [path.join(dir, "src/cli/cmd/tui/worker.js")],
+    outfile: path.join(outDir, "bin/worker.js"),
+    bundle: true,
+    platform: "node",
+    target: "node22",
+    format: "esm",
+    minify: true,
+    plugins: [pathAliases, externalize, {
+      name: "optional-stubs",
+      setup(b) {
+        b.onResolve({ filter: /.*/ }, (args) => {
+          const pkgName = args.path.startsWith("@") ? args.path.split("/").slice(0, 2).join("/") : args.path.split("/")[0];
+          if (optionalStubs.has(pkgName)) return { path: args.path, namespace: "optional-stub" };
+          return null;
+        });
+        b.onLoad({ filter: /.*/, namespace: "optional-stub" }, (args) => ({
+          contents: `module.exports = new Proxy({}, { get(target, prop) { if (prop === '__esModule' || typeof prop === 'symbol') return undefined; throw new Error('Optional dep ${args.path} not bundled'); } });`,
+          loader: "js",
+        }));
+      },
+    }],
+    alias: {
+      "bun": path.join(dir, "src/util/bun-stub.js"),
+      "jsonc-parser": path.join(dir, "../../node_modules/jsonc-parser/lib/esm/main.js"),
+      "ws": path.join(dir, "node_modules/ws/index.js")
+    },
+    conditions: ["browser"],
+    banner: { js: "import { createRequire as __createRequire_banner } from 'node:module'; import { fileURLToPath as __fileURLToPath_banner } from 'node:url'; import { dirname as __dirname_banner } from 'node:path'; const require = __createRequire_banner(import.meta.url); const __filename = __fileURLToPath_banner(import.meta.url); const __dirname = __dirname_banner(__filename);" },
+    define: {
+      CLOSEDCODE_VERSION: JSON.stringify(Script.version),
+      CLOSEDCODE_MIGRATIONS: JSON.stringify(migrations),
+      CLOSEDCODE_CHANNEL: JSON.stringify(Script.channel),
+      CLOSEDCODE_LIBC: JSON.stringify(libc),
+      OTUI_TREE_SITTER_WORKER_PATH: JSON.stringify(""),
+      CLOSEDCODE_EMBEDDED_WEB_UI: JSON.stringify(embeddedFileMap ?? {})
+    },
+    loader: { ".wav": "file", ".node": "file" }
+  });
+  console.log("built sidecar worker.js (non-SEA)");
 }
 
 // ESM build only: a node wrapper that imports the bundle. The SEA build skips
