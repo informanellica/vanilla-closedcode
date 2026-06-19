@@ -134,12 +134,20 @@ export async function spawnLocalServer(hostname, port, password) {
     }
   };
 }
+let envPrepared = false;
 /**
- * Build and apply the environment for the server sidecar, merging the user's login-shell env (non-Windows) and closedcode-specific variables into process.env.
+ * Build and apply the environment for the server sidecar, merging the user's
+ * login-shell env (non-Windows) and closedcode-specific variables into
+ * process.env. Idempotent: only the first call probes the shell and mutates the
+ * env, so callers can prepare the env early (e.g. before importing the sidecar
+ * for the first-run SQLite migration, so core/global resolves XDG paths from the
+ * login-shell env) without the later spawnLocalServer() call re-probing.
  * @param {string} password - The server password injected as CLOSEDCODE_SERVER_PASSWORD.
  * @returns {void}
  */
-function prepareServerEnv(password) {
+export function prepareServerEnv(password) {
+  if (envPrepared) return;
+  envPrepared = true;
   const shell = process.platform === "win32" ? null : getUserShell();
   const shellEnv = shell ? loadShellEnv(shell) ?? {} : {};
   const env = {

@@ -60,7 +60,7 @@ import { registerIpcHandlers, sendDeepLinks, sendMenuCommand, sendSqliteMigratio
 import { initLogging } from "./logging.js";
 import { parseMarkdown } from "./markdown.js";
 import { createMenu } from "./menu.js";
-import { getDefaultServerUrl, getWslConfig, resolveSidecarUrl, setDefaultServerUrl, setWslConfig, spawnLocalServer } from "./server.js";
+import { getDefaultServerUrl, getWslConfig, prepareServerEnv, resolveSidecarUrl, setDefaultServerUrl, setWslConfig, spawnLocalServer } from "./server.js";
 import { createLoadingWindow, createMainWindow, registerRendererProtocol, setBackgroundColor, setDockIcon } from "./windows.js";
 const initEmitter = new EventEmitter();
 let initStep = {
@@ -251,6 +251,13 @@ async function initialize() {
       if (mainWindow) sendSqliteMigrationProgress(mainWindow, progress);
       if (progress.type === "Done") sqliteDone?.resolve();
     });
+    // Prepare the sidecar env (login-shell vars like XDG_DATA_HOME, XDG_STATE_HOME)
+    // BEFORE importing the sidecar: that import evaluates core/global, which
+    // resolves+caches the data/config paths from process.env. Without this the
+    // first-run migration (and the later cached server) would use the wrong
+    // directories for users whose XDG vars live only in their login shell.
+    // Idempotent, so spawnLocalServer()'s own call below is a no-op.
+    prepareServerEnv(password);
     if (needsMigration) {
       // Resolve the sidecar entry (packaged asar-unpacked path, or the
       // build-less packages/closedcode/dist/node fallback) before importing.
