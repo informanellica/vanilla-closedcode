@@ -941,12 +941,13 @@ export function Show(props) {
       if (isRenderProp) return captured(props.keyed ? conditionValue : () => props.when);
       return captured;
     }
-    // Hidden: dispose the captured subtree so its cleanups run (the condition memo
-    // only re-runs on truthiness flips for non-keyed Show, so this is the single
-    // hide transition). Re-capture happens on the next truthy flip. Without this a
-    // hidden child's onCleanup never fires — e.g. a Portal'd find bar would stay
-    // mounted to <body> after the Show turned false.
-    if (!props.keyed && hasCaptured) {
+    // Hidden: dispose the captured subtree so its cleanups run, then re-capture on
+    // the next truthy flip. Applies to BOTH keyed and non-keyed Show — when `when`
+    // goes falsy the children should tear down (keyed key-CHANGES still remount via
+    // the branch above). Without this a hidden child's onCleanup never fires — e.g.
+    // a Portal'd find bar stays mounted to <body>, or a keyed terminal panel keeps
+    // its websocket/resize listener/timers alive after the last tab closes.
+    if (hasCaptured) {
       node.dispose();
       node = new OwnerNode(showOwner);
       hasCaptured = false;
@@ -1010,7 +1011,11 @@ export function mapArray(list, mapFn) {
       }
     }
     for (let j = 0; j < items.length; j++) if (!reused[j]) disposers[j]();
-    items = next; mapped = newMapped; disposers = newDisposers; indexSetters = newIndexSetters;
+    // Snapshot (shallow copy): list() may be a createStore array that reconcile
+    // mutates IN PLACE, so keeping `next` by reference would make next run's prev
+    // map reflect the already-mutated contents — removed rows would be missing from
+    // it and their disposers never run (leaking the row's effects/listeners).
+    items = next.slice(); mapped = newMapped; disposers = newDisposers; indexSetters = newIndexSetters;
     return mapped;
   });
 }
