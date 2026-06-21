@@ -1215,7 +1215,7 @@ describe("session.message-v2.fromError", () => {
     });
     expect(MessageV2.APIError.isInstance(result)).toBe(true);
     expect(result.data.isRetryable).toBe(true);
-    expect(result.data.message).toInclude("decompression");
+    expect(result.data.message).toContain("decompression");
   });
   test("classifies ZlibError as AbortedError when abort context is provided", () => {
     const zlibError = new Error('ZlibError fetching "https://opencode.cloudflare.dev/anthropic/messages". For more information, pass `verbose: true` in the second argument to fetch()');

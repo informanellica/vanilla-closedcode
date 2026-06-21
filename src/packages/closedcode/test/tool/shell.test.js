@@ -809,7 +809,7 @@ describe("tool.shell abort", () => {
       }
     });
   }, 15_000);
-  test.skipIf(process.platform === "win32")("captures stderr in output", async () => {
+  (process.platform === "win32" ? test.skip : test)("captures stderr in output", async () => {
     await WithInstance.provide({
       directory: projectRoot,
       fn: async () => {

@@ -233,7 +233,7 @@ describe("tool.write", () => {
         filePath: filepath,
         content: "export const Button = () => {}"
       });
-      expect(result.title).toEndWith(path.join("src", "components", "Button.tsx"));
+      expect(result.title.endsWith(path.join("src", "components", "Button.tsx"))).toBe(true);
     }));
   });
 });

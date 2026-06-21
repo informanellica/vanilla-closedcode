@@ -76,7 +76,7 @@ describe("Worktree", () => {
       const svc = yield* Worktree.Service;
       const info = yield* svc.create();
       expect(info.name).toBeDefined();
-      expect(info.branch).toStartWith("closedcode/");
+      expect(info.branch).toMatch(/^closedcode\//);
       expect(info.directory).toBeDefined();
       yield* Effect.promise(() => sleep(1000));
       const ok = yield* svc.remove({
@@ -91,7 +91,7 @@ describe("Worktree", () => {
       const ready = waitReady();
       const info = yield* svc.create();
       expect(info.name).toBeDefined();
-      expect(info.branch).toStartWith("closedcode/");
+      expect(info.branch).toMatch(/^closedcode\//);
       const text = yield* Effect.promise(() => $`git worktree list --porcelain`.cwd(dir).quiet().text());
       const next = yield* Effect.promise(() => fs.realpath(info.directory).catch(() => info.directory));
       expect(normalize(text)).toContain(normalize(next));

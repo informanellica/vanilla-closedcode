@@ -28,7 +28,7 @@ function run(fx) {
   return Effect.runPromise(fx.pipe(Effect.scoped, Effect.provide(Layer.mergeAll(SessionPrompt.defaultLayer, Session.defaultLayer))));
 }
 describe("StructuredOutput Integration", () => {
-  test.skipIf(!hasApiKey)("produces structured output with simple schema", async () => {
+  (!hasApiKey ? test.skip : test)("produces structured output with simple schema", async () => {
     await withInstance(() => run(Effect.gen(function* () {
       const prompt = yield* SessionPrompt.Service;
       const sessions = yield* Session.Service;
@@ -77,7 +77,7 @@ describe("StructuredOutput Integration", () => {
       // Note: Not removing session to avoid race with background SessionSummary.summarize
     })));
   }, 60000);
-  test.skipIf(!hasApiKey)("produces structured output with nested objects", async () => {
+  (!hasApiKey ? test.skip : test)("produces structured output with nested objects", async () => {
     await withInstance(() => run(Effect.gen(function* () {
       const prompt = yield* SessionPrompt.Service;
       const sessions = yield* Session.Service;
@@ -140,7 +140,7 @@ describe("StructuredOutput Integration", () => {
       // Note: Not removing session to avoid race with background SessionSummary.summarize
     })));
   }, 60000);
-  test.skipIf(!hasApiKey)("works with text outputFormat (default)", async () => {
+  (!hasApiKey ? test.skip : test)("works with text outputFormat (default)", async () => {
     await withInstance(() => run(Effect.gen(function* () {
       const prompt = yield* SessionPrompt.Service;
       const sessions = yield* Session.Service;
@@ -172,7 +172,7 @@ describe("StructuredOutput Integration", () => {
       // Note: Not removing session to avoid race with background SessionSummary.summarize
     })));
   }, 60000);
-  test.skipIf(!hasApiKey)("stores outputFormat on user message", async () => {
+  (!hasApiKey ? test.skip : test)("stores outputFormat on user message", async () => {
     await withInstance(() => run(Effect.gen(function* () {
       const prompt = yield* SessionPrompt.Service;
       const sessions = yield* Session.Service;
