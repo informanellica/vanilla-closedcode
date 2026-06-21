@@ -9,8 +9,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createRequire } from "node:module";
 import tk from "terminal-kit";
+import { emitImage } from "./lib/png.mjs";
 import { makeRegion } from "../src/cli/cmd/tui/runtime/layout.js";
 import { width as dispWidth } from "../src/cli/cmd/tui/runtime/text.js";
 import { createShell } from "../src/cli/cmd/tui/vanilla/shell.js";
@@ -109,25 +109,13 @@ const scenarios = [
 ];
 
 fs.mkdirSync(OUT, { recursive: true });
-// sharp is optional (PNG rasterization). Try the workspace, then a path from
-// CC_SHARP_PATH if set. SVG is always emitted regardless.
-let sharp = null;
-const sharpCandidates = ["sharp", process.env.CC_SHARP_PATH].filter(Boolean);
-for (const cand of sharpCandidates) {
-  try { sharp = createRequire(import.meta.url)(cand); break; } catch { /* try next */ }
-}
-
+// PNG by default (emitImage resolves sharp; falls back to SVG only if unavailable).
+// Pass --keep-svg to also write the SVG source.
+const keepSvg = process.argv.includes("--keep-svg");
 const made = [];
 for (const sc of scenarios) {
-  const buf = sc.build();
-  const svg = bufferToSvg(buf, W, H, sc.title);
-  const svgPath = path.join(OUT, sc.name + ".svg");
-  fs.writeFileSync(svgPath, svg);
-  made.push(sc.name + ".svg");
-  if (sharp) {
-    try { await sharp(Buffer.from(svg)).png().toFile(path.join(OUT, sc.name + ".png")); made.push(sc.name + ".png"); }
-    catch (e) { console.error("png skip", sc.name, e.message); }
-  }
+  const svg = bufferToSvg(sc.build(), W, H, sc.title);
+  made.push(...await emitImage(path.join(OUT, sc.name), svg, { keepSvg }));
 }
 console.log("captures ->", OUT);
 console.log(made.join("\n"));

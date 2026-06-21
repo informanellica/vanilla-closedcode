@@ -381,7 +381,7 @@ export function MessageTimeline(props) {
     mutationFn: input => controller.updateTitle(input.id, input.title),
     onSuccess: (_, input) => {
       sync.set(produce(draft => {
-        const index = draft.session.findIndex(s => s.id === input.id);
+        const index = draft.session.findIndex(s => s?.id === input.id);
         if (index !== -1) draft.session[index].title = input.title;
       }));
       setTitle("editing", false);

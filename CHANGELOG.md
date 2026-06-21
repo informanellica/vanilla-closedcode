@@ -11,12 +11,45 @@ string from the **release channel** as `0.0.0-<channel>-<timestamp>`
 otherwise the current git branch.
 
 - `0.1.0-preview` — the first public preview line (git tag `v0.1.0-preview`).
-- `0.1.0-dev` — the active development line that supersedes the preview. Build it
-  with `CLOSEDCODE_CHANNEL=0.1.0-dev` (e.g. `CLOSEDCODE_CHANNEL=0.1.0-dev npm run build`).
+- `0.1.0-dev` — the development line that followed the preview.
+- `0.1.0` — first stable release (git tag `v0.1.0`), cut from the `0.1.0-dev` line
+  (build with `CLOSEDCODE_VERSION=0.1.0`).
 
-## [Unreleased] — 0.1.0-dev
+## [0.1.0] — 2026-06-20
 
-Development line following `0.1.0-preview`.
+First stable release, following `0.1.0-preview`. The changes below accumulated on
+the `0.1.0-dev` line and ship as `0.1.0`.
+
+### Added — chat-pane workspace & session management
+- **Multiple chat sessions as tabs**: the bottom chat pane is now a tabbed
+  workspace. `+` opens a new session as a tab; click a tab to switch, the pencil
+  renames it inline, and `×` or a **middle-click** closes it.
+- **Searchable session-history popup** (the clock icon, dropping down on-screen):
+  a search box filters the list, each row reveals **rename** (pencil) and
+  **delete** (trash, with a confirm) actions on hover, and a **"もっと読む"
+  (load more)** button fetches sessions beyond the synced/trimmed working set.
+- **Category tabs (tabs-within-tabs)** across the panels: a `チャット` category
+  above the session tabs in the chat pane, `エクスプローラー` on the left sidebar
+  and `レビュー` on the right sidebar — a scaffold for future categories such as
+  a terminal.
+- **Theme-aware pane-resize cursor**: the resize handles use a custom
+  double-arrow cursor (a dark arrow on light themes, a light one on dark themes)
+  instead of the OS cursor that rendered as a hard-to-see white glyph, plus a
+  visible hover divider.
+
+### Fixed — chat-pane workspace
+- **Crash when switching session tabs mid-stream**: switching to another tab while
+  an assistant turn was still streaming threw `Cannot read properties of undefined
+  (reading 'id')` — a `session-turn` render effect read `message().id` during the
+  router transition before its `Show` disposed the slot — and tripped the
+  session-view error boundary. The read is now guarded.
+- **Blank agent selector in the composer**: the agent `<select>` could render
+  empty because the vanilla `Select` snapshots its options/current once at build
+  time while the built-in agents load asynchronously. It is now re-created
+  reactively when the agent list / current agent changes.
+- **Splash and main window shown together at startup**: the main window is now
+  revealed only after the splash is hidden (hide → show → close), so the two are
+  never on screen at once (and there is still no blank gap).
 
 ### Added
 - **Editor font controls in the toolbar**: Font (default shown as "Consolas (default)",
@@ -234,6 +267,53 @@ Development line following `0.1.0-preview`.
   root. `triggerId` was flagged as missing but is already exposed on the
   dropdown state. Ownerless (manual DOM) usage is explicitly unsupported and
   documented in the Portal.
+
+- **Review feedback rounds 6+ — vanilla reactivity shim, TUI data layer, and
+  storage hardening.**
+  *Reactivity (`packages/app/src/lib/reactivity.js`):* `ErrorBoundary` captures the
+  boundary's owner at construction so the fallback/reset run under the boundary, not
+  the failed computation; synchronous child throws route through an owner-chain
+  `ERROR_KEY` channel (`Suspense`/`Show` included); `Show`'s hide path disposes the
+  captured branch for both keyed and non-keyed forms; `mapArray` snapshots `items`
+  before diffing; `Switch`/`Match` invoke render-prop children. (reactivity 22/22.)
+  *TUI (`cli/cmd/tui/vanilla`):* the data layer unwraps the GlobalBus
+  `{directory,payload}` envelope and drops events addressed to other directories, so
+  live message/status/permission/question events are no longer dropped as
+  `type === undefined` (permission and question prompts appear again); `tui.*`
+  control events route to a shell-registered handler
+  (toast/prompt/command/session-select); bootstrap lists sessions with no 30-day
+  cutoff so `--continue` finds idle sessions; `submit()` is non-blocking
+  (shell/command fire-and-forget, prompt via `promptAsync`); `syncSession` marks a
+  session synced only after a successful hydrate and guards against concurrent
+  double-fetch; `--continue` picks the most recent session by `time.updated`, and
+  `--model` / `--fork` are honored. (data 15/15, store 21/21.)
+  *Storage:* top-level `transactionAsync` calls serialize through a synchronous
+  mutex chain so two concurrent callers can't issue overlapping `BEGIN`s on the
+  single pooled connection (pool max 1); the legacy event flag-off path returns a
+  resolved promise instead of `undefined`; the desktop sidecar prepares its server
+  env (password) before the migration probe; the JSON-import path carries
+  `workspace_id`/`agent`/`model` onto session rows.
+  (storage/sync/control-plane jest 83/83.)
+
+### Changed
+- **Linux ships a glibc (Debian-built) release only.** The Linux CLI/TUI SEA binary
+  is built on `node:22` (Debian bookworm, glibc) via `Dockerfile.sea-linux`; the npm
+  wrapper's `optionalDependencies` are `windows-x64`, `linux-x64`, `linux-arm64`,
+  `darwin-x64`, `darwin-arm64` — **glibc only** (musl/Alpine is not a build target
+  this release). `linux-arm64` is declared for forward-compatibility but not yet
+  published; npm skips any optional dependency that isn't published, so x64/darwin
+  installs are unaffected.
+- **Non-SEA (ESM) build emits a `bin/worker.js` sidecar and pins runtime deps.**
+  `package.json#runtimeDeps` now include `sequelize`/`sqlite3`/`bindings`/
+  `file-uri-to-path` and `@parcel/watcher` (plus its native binding) so a plain
+  `node bin/closedcode.js` install resolves them; the worker path stays SEA-only.
+
+### Documentation
+- **Full JSDoc coverage of the own-source JavaScript** (engine, renderer, scripts;
+  third-party `vendor/` and tests excluded) with `@module` normalization, and the
+  HTML **API reference regenerated** with bilingual (en/ja) post-processed output
+  (`DOC_LANG` + `docs-i18n/ja.json`). Source comments remain English-only; the
+  comments-only nature of the pass was verified by esbuild AST comparison.
 
 ## [0.1.0-preview] — 2026-06-07
 

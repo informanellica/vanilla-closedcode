@@ -6,13 +6,13 @@
 import { insert } from "../lib/reactivity.js";
 import { useDialog } from "@/lib/dialog.js";
 import { createQuery, skipToken } from "../lib/query/index.js";
-import { onCleanup, Show, Match, Switch, For, createComponent, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "../lib/reactivity.js";
+import { onCleanup, Show, Match, Switch, For, createComponent, createSignal, createMemo, createEffect, createComputed, createRenderEffect, on, onMount, untrack, createResource } from "../lib/reactivity.js";
 import { makeEventListener } from "../lib/primitives/event-listener.js";
 import { createMediaQuery } from "../lib/primitives/media.js";
 import { createResizeObserver } from "../lib/primitives/resize-observer.js";
 import { useLocal } from "@/context/local.js";
 import { selectionFromLines, useFile } from "@/context/file.js";
-import { createStore } from "../lib/store.js";
+import { createStore, produce } from "../lib/store.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
 import { Select } from "@/bs/select.js";
 import { Tabs } from "@/bs/tabs.js";
@@ -322,6 +322,21 @@ export default function Page() {
   const sessionTabList = createMemo(() => {
     const childStore = sessionTabChildStore();
     return childStore ? sortedRootSessions(childStore, Date.now()) : [];
+  });
+  // Auto-select the first session when landing on a directory with no session
+  // in the URL (e.g. opening a project), so the selector reflects an active
+  // session instead of going blank. One-shot + guarded so it never overrides a
+  // deliberate blank state: a pending prompt-seed, or the "+ new" button (which
+  // navigates to the id-less route on purpose AFTER this has already fired).
+  let autoSelectedSession = false;
+  createEffect(() => {
+    const list = sessionTabList();
+    if (autoSelectedSession) return;
+    if (params.id || searchParams.prompt) { autoSelectedSession = true; return; }
+    if (!list.length) return; // wait for the session list to load
+    autoSelectedSession = true;
+    const first = list[0];
+    navigate(`/${base64Encode(first.directory)}/session/${first.id}`, { replace: true });
   });
   createEffect(() => {
     if (!prompt.ready()) return;
@@ -1579,13 +1594,116 @@ export default function Page() {
   // Session tab bar lives at the TOP of the bottom chat pane (chatPaneEl),
   // replacing the in-chat session title. Inserted while chatPaneEl is still
   // empty so it ends up above the message timeline + composer.
+  // Open sessions shown as tabs (like editor tabs): every visited session id is
+  // tracked here so it renders as a tab; "+" creates a new session (onNew) which
+  // then lands here via the active-id effect below. The set is PERSISTED per
+  // workspace so a restart restores the tabs the user had open (the sessions
+  // themselves live in the DB; this just remembers which were open as tabs).
+  const [savedTabs, setSavedTabs, , savedTabsReady] = persisted(
+    Persist.workspace(sdk.directory, "open-tabs", ["open-tabs.v1"]),
+    createStore({ ids: [] })
+  );
+  const [openSessions, setOpenSessions] = createSignal([]);
+  let tabsRestored = false;
+  // Restore the saved tabs once the persisted store has HYDRATED from disk
+  // (savedTabsReady — otherwise we'd read an empty store mid-load) and the
+  // session list has loaded, keeping only ids that still exist (so deleted
+  // sessions don't come back), in the saved order.
+  createEffect(() => {
+    if (tabsRestored) return;
+    if (!savedTabsReady()) return;
+    const list = sessionTabList();
+    if (!list.length) return;
+    tabsRestored = true;
+    const existing = new Set(list.map(s => s?.id).filter(Boolean));
+    const restored = (savedTabs.ids ?? []).filter(id => existing.has(id));
+    if (restored.length) {
+      setOpenSessions(prev => {
+        const merged = [...restored];
+        for (const id of prev) if (id && !merged.includes(id)) merged.push(id);
+        return merged;
+      });
+    }
+  });
+  createEffect(() => {
+    const id = params.id;
+    if (id) setOpenSessions(prev => (prev.includes(id) ? prev : [...prev, id]));
+  });
+  // Persist the open set — but only AFTER the restore has run, so the initial
+  // empty signal can't clobber the saved tabs before we read them.
+  createEffect(() => {
+    const ids = openSessions();
+    if (tabsRestored) setSavedTabs("ids", ids);
+  });
+  const closeSessionTab = id => {
+    const remaining = openSessions().filter(x => x !== id);
+    setOpenSessions(remaining);
+    if (params.id !== id) return;
+    const dir = sdk.directory;
+    if (!dir) return;
+    if (remaining.length) navigate(`/${base64Encode(dir)}/session/${remaining[remaining.length - 1]}`);
+    else navigate(`/${base64Encode(dir)}/session`);
+  };
+  // History popup data: by default the synced/trimmed working set (sessionTabList);
+  // "load more" fetches the FULL session list for the directory and shows it all.
+  const [fullSessions, setFullSessions] = createSignal(null);
+  const [loadingMore, setLoadingMore] = createSignal(false);
+  const popupSessions = createMemo(() => fullSessions() ?? sessionTabList());
+  const sessionTotalCount = createMemo(() => sessionTabChildStore()?.sessionTotal ?? 0);
+  const hasMoreSessions = createMemo(() => !fullSessions() && sessionTotalCount() > popupSessions().length);
+  const loadMoreSessions = () => {
+    const dir = sdk.directory;
+    if (loadingMore() || fullSessions() || !dir) return;
+    setLoadingMore(true);
+    Promise.resolve(controller.listSessions(dir))
+      .then(data => setFullSessions(sortedRootSessions({ session: data ?? [], path: { directory: dir } }, Date.now())))
+      .catch(e => console.error("[session] loadMore", e))
+      .finally(() => setLoadingMore(false));
+  };
+  // Delete a session from the popup: server delete + optimistic prune from the
+  // synced store and the loaded full list, then close its tab / navigate away.
+  const deleteSessionFromPopup = id => {
+    if (!id) return;
+    Promise.resolve(controller.deleteSession(id)).then(() => {
+      sync.set(produce(draft => {
+        const i = draft.session.findIndex(s => s?.id === id);
+        if (i !== -1) draft.session.splice(i, 1);
+      }));
+      setFullSessions(prev => (prev ? prev.filter(s => s?.id !== id) : prev));
+      closeSessionTab(id);
+    }).catch(e => console.error("[session] delete", e));
+  };
   insert(chatPaneEl, createComponent(SessionTabBar, {
-    sessions: sessionTabList,
+    openIds: openSessions,
+    sessions: popupSessions,
     currentId: () => params.id,
+    hasMore: hasMoreSessions,
+    onLoadMore: loadMoreSessions,
+    onDelete: deleteSessionFromPopup,
     onSelect: session => navigate(`/${base64Encode(session.directory)}/session/${session.id}`),
+    onCloseTab: closeSessionTab,
     onNew: () => {
       const dir = sdk.directory;
-      if (dir) navigate(`/${base64Encode(dir)}/session`);
+      if (!dir) return;
+      // Create a real session up front so "+" adds a concrete new tab (a blank
+      // id-less route can't coexist with another blank, so tabs wouldn't grow).
+      Promise.resolve(controller.createSession())
+        .then(created => {
+          if (created?.id) navigate(`/${base64Encode(dir)}/session/${created.id}`);
+          else navigate(`/${base64Encode(dir)}/session`);
+        })
+        .catch(e => { console.error("[session] new", e); navigate(`/${base64Encode(dir)}/session`); });
+    },
+    // Inline rename from the session-name tab: persist via the controller and
+    // optimistically reflect the new title in the sync store.
+    onRename: (id, title) => {
+      if (!id || !title) return;
+      Promise.resolve(controller.updateTitle(id, title)).then(() => {
+        sync.set(produce(draft => {
+          const i = draft.session.findIndex(s => s?.id === id);
+          if (i !== -1) draft.session[i].title = title;
+        }));
+      }).catch(e => console.error("[session] rename", e));
     },
     // "×" hides the bottom chat pane (reopen via the toolbar chat button).
     onClose: () => view().chatPanel.close()
@@ -1830,9 +1948,11 @@ export default function Page() {
     }
   }));
   // --- Vertical resize handle between editor and chat ---
+  // Gated only on the chat pane being open (NOT on params.id): the pane is
+  // resizable even with no session selected / a blank session selector.
   insert(centerEl, createComponent(Show, {
     get when() {
-      return params.id && view().chatPanel.opened();
+      return view().chatPanel.opened();
     },
     get children() {
       const host = template(`<div></div>`);

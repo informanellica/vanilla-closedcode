@@ -5,6 +5,8 @@ FROM node:22
 RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
   && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Release version baked into the build. Override with --build-arg CLOSEDCODE_VERSION=...
+ARG CLOSEDCODE_VERSION=0.1.0
 ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
     HUSKY=0 \
     CI=1 \
@@ -13,8 +15,8 @@ ENV ELECTRON_SKIP_BINARY_DOWNLOAD=1 \
     # .git is excluded from the build context (.dockerignore), so the build's
     # `git branch --show-current` channel probe (packages/script/src/index.js)
     # would fail with exit 128. Pin the version explicitly — the build supports
-    # this override — so it never shells out to git. Matches the v0.1.0-dev tag.
-    CLOSEDCODE_VERSION=0.1.0-dev
+    # this override — so it never shells out to git.
+    CLOSEDCODE_VERSION=${CLOSEDCODE_VERSION}
 COPY . /app
 # Install the workspace (linux native prebuilds). Fall back to `npm install` if the
 # lockfile can't be satisfied with `ci`.

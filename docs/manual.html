@@ -104,6 +104,7 @@ npm run dev:desktop</code></pre>
     <li><strong>新規セッション</strong> <i class="bi bi-plus-square"></i> — <code>File &gt; New Session</code> (<kbd>Shift</kbd>+<kbd>Cmd</kbd>+<kbd>S</kbd>) でその場で新しいチャットを開始</li>
     <li><strong>新規ウィンドウ</strong> — <code>File &gt; New Window</code> (<kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>) で別プロジェクトを同時に開ける</li>
     <li><strong>サイドバー切替</strong> <i class="bi bi-layout-sidebar"></i> — <code>View &gt; Toggle Sidebar</code> (<kbd>Cmd</kbd>+<kbd>B</kbd>) でセッション一覧の表示/非表示</li>
+    <li><strong>パネルのサイズ調整</strong> <i class="bi bi-arrows-angle-expand"></i> — パネル間の境界をドラッグして幅・高さを調整します。境界にカーソルを合わせると、テーマ (ライト/ダーク) に応じた色のリサイズカーソルに変わります。</li>
     <li><strong>戻る・進む</strong> <i class="bi bi-arrow-left"></i><i class="bi bi-arrow-right"></i> — <kbd>Cmd</kbd>+<kbd>[</kbd> / <kbd>Cmd</kbd>+<kbd>]</kbd> で履歴を行き来</li>
   </ul>
 
@@ -117,11 +118,22 @@ npm run dev:desktop</code></pre>
   </ul>
 
   <h3>セッション</h3>
+  <p>下部のチャットペインは<strong>タブ式のワークスペース</strong>です。複数の会話をタブとして同時に開き、切り替えながら作業できます。</p>
   <ul>
-    <li><strong>セッション一覧</strong> — 左サイドバーで過去の会話を選択。プロジェクトごとに分離されます</li>
+    <li><i class="bi bi-plus-lg"></i> <strong>新しいセッションタブ</strong> — タブバーの「+」で新しいセッションをタブとして開きます (押すたびにタブが増えます)。</li>
+    <li><strong>切り替え・閉じる</strong> — タブをクリックで切り替え。タブの「×」または<strong>マウスの中ボタンクリック</strong>で閉じます。</li>
+    <li><i class="bi bi-pencil"></i> <strong>名前の変更</strong> — アクティブなタブの鉛筆アイコン (またはタブ名のダブルクリック) でその場で改名できます。</li>
+    <li><i class="bi bi-clock-history"></i> <strong>履歴ポップアップ</strong> — タブバー右の時計アイコンで、全セッションの一覧がバーの下にポップアップ表示されます (画面内に収まるよう自動配置し、長い履歴はスクロールできます)。
+      <ul>
+        <li><strong>検索</strong> — 一番上の検索ボックスで名前から絞り込み</li>
+        <li><i class="bi bi-pencil"></i> <strong>名前変更</strong> / <i class="bi bi-trash"></i> <strong>削除</strong> — 各行にマウスを重ねると右側に編集・削除アイコンが現れます (削除は確認付き)</li>
+        <li><strong>もっと読む</strong> — 一番下のボタンで、同期済みの作業セット (直近分) を超えた古いセッションも読み込みます</li>
+      </ul>
+    </li>
+    <li><strong>セッション再開</strong> — 一覧から選ぶと履歴とコンテキストごと復元されます。プロジェクトごとに分離されます。</li>
     <li><strong>前後のセッションへ移動</strong> — <kbd>Option</kbd>+<kbd>↑</kbd> / <kbd>Option</kbd>+<kbd>↓</kbd></li>
-    <li><strong>セッション再開</strong> — 一覧から選ぶと履歴とコンテキストごと復元</li>
   </ul>
+  <p class="small text-body-secondary">各パネル (チャット / 左サイドバーの<strong>エクスプローラー</strong> / 右サイドバーの<strong>レビュー</strong>) の最上部には<strong>カテゴリタブ</strong>があり、その中にセッションタブやサブタブが入る「タブの中のタブ」構造です。今後ターミナルなどのカテゴリを追加するための土台になっています。</p>
 
   <h3>プロジェクト</h3>
   <ul>

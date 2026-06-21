@@ -779,6 +779,14 @@ export function useSessionController(options = {}) {
     halt,
     merge,
 
+    // session lifecycle: create a fresh empty session (used by the "+" tab so a
+    // new tab maps to a real session id immediately, not a transient blank).
+    createSession: () => sdk.client.session.create().then(x => x.data ?? undefined),
+
+    // list ALL sessions for a directory (used by the history popup's "load more"
+    // to reach sessions beyond the synced/trimmed working set).
+    listSessions: directory => sdk.client.session.list({ directory }).then(x => x.data ?? []),
+
     // git / vcs orchestration
     initGit,
     queryVcsDiff,

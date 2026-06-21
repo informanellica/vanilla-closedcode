@@ -27,10 +27,15 @@ export const useSessionLayout = () => {
     params,
     sessionKey
   } = useSessionKey();
+  // Editor file tabs belong to the WORKSPACE (directory), not the chat session:
+  // switching the chat session must NOT swap which files are open. Key the tab
+  // set by the directory only. `view` keeps the session key because it holds
+  // per-session state (e.g. scroll position).
+  const workspaceKey = createMemo(() => params.dir);
   return {
     params,
     sessionKey,
-    tabs: createMemo(() => layout.tabs(sessionKey)),
+    tabs: createMemo(() => layout.tabs(workspaceKey)),
     view: createMemo(() => layout.view(sessionKey))
   };
 };

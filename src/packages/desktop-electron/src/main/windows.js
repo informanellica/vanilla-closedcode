@@ -117,7 +117,8 @@ export function setDockIcon() {
  * Create the main application BrowserWindow with persisted window state, CORS header rewriting, fixed zoom, and deferred show until first paint.
  * @returns {BrowserWindow} The newly created main window.
  */
-export function createMainWindow() {
+export function createMainWindow(opts = {}) {
+  const autoShow = opts.autoShow !== false;
   const state = windowState({
     defaultWidth: 1280,
     defaultHeight: 800
@@ -167,7 +168,9 @@ export function createMainWindow() {
   loadWindow(win, "index.html");
   wireZoom(win);
   win.once("ready-to-show", () => {
-    win.show();
+    // When autoShow is false the caller reveals the window itself (e.g. only
+    // AFTER hiding the splash, so the two are never on screen together).
+    if (autoShow) win.show();
   });
   return win;
 }

@@ -697,9 +697,16 @@ export function SessionTurn(props) {
     let prevMessage;
     let prevContainerClass;
     createRenderEffect(() => {
-      const nextMessage = message().id;
+      // message() can be undefined here: when params.id flips (a tab switch)
+      // while a turn is still streaming, this render effect re-runs from the
+      // router transition BEFORE the wrapping `Show when={message()}` disposes
+      // this slot, so reading message().id directly throws "reading 'id'" (the
+      // crash the SessionRoute ErrorBoundary surfaces). Read message() to keep
+      // the dependency, but only touch data-message while it still exists.
+      const msg = message();
+      const nextMessage = msg?.id;
       const nextClass = props.classes?.container;
-      if (nextMessage !== prevMessage) container.setAttribute("data-message", prevMessage = nextMessage);
+      if (msg && nextMessage !== prevMessage) container.setAttribute("data-message", prevMessage = nextMessage);
       if (nextClass !== prevContainerClass) {
         prevContainerClass = nextClass;
         if (nextClass == null) container.removeAttribute("class");

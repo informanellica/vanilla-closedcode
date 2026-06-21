@@ -11,8 +11,11 @@
  */
 function sessionTreeRequest(session, request, sessionID, include = () => true) {
   if (!sessionID) return;
-  const map = session.reduce((acc, item) => {
-    if (!item.parentID) return acc;
+  // Defensive against a transiently undefined/holey session list (the synced
+  // list can momentarily hold gaps while a turn streams): skip null entries and
+  // optional-chain `request` so this composer-render path never throws.
+  const map = (session ?? []).reduce((acc, item) => {
+    if (!item?.parentID) return acc;
     const list = acc.get(item.parentID);
     if (list) list.push(item.id);
     if (!list) acc.set(item.parentID, [item.id]);
@@ -29,9 +32,9 @@ function sessionTreeRequest(session, request, sessionID, include = () => true) {
       ids.push(child);
     }
   }
-  const id = ids.find(id => request[id]?.some(include));
+  const id = ids.find(id => request?.[id]?.some(include));
   if (!id) return;
-  return request[id]?.find(include);
+  return request?.[id]?.find(include);
 }
 /**
  * Find a pending permission request for the session tree.

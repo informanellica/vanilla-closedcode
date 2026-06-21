@@ -3,6 +3,7 @@ import { useParams } from "../../lib/router/index.js";
 import { base64Decode } from "core/util/encode";
 import { createMediaQuery } from "../../lib/primitives/media.js";
 import { ResizeHandle } from "@/vendor/ui/components/resize-handle.js";
+import { CategoryTabStrip } from "@/components/category-tab-strip.js";
 import FileTree from "@/components/file-tree.js";
 import { env } from "@/lib/env.js";
 import { useFile } from "@/context/file.js";
@@ -124,6 +125,8 @@ export function FileTreePane(props) {
     get children() {
       const root = template(`<div id="file-tree-panel" class="relative min-w-0 h-100 shrink-0 overflow-hidden border-r border"><div class="h-100 d-flex flex-column overflow-hidden"></div></div>`);
       const column = root.firstChild;
+      // Outer category tab at the very top of the left sidebar (tabs-within-tabs).
+      column.appendChild(CategoryTabStrip([{ id: "explorer", label: "エクスプローラー", icon: "bi-folder2-open" }], "explorer"));
 
       // Close button. It sits inline in the header row (not absolutely
       // positioned) so it lines up vertically with the "すべてのファイル"

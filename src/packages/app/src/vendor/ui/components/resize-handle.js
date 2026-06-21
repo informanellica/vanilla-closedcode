@@ -70,6 +70,9 @@ export function ResizeHandle(props) {
     let current = startSize;
     document.body.style.userSelect = "none";
     document.body.style.overflow = "hidden";
+    // Pin the themed resize cursor across the whole document while dragging, so
+    // it stays correct even when the pointer leaves the thin handle strip.
+    document.body.classList.add(`cc-resizing-${local.direction}`);
     const onMouseMove = moveEvent => {
       const pos = local.direction === "horizontal" ? moveEvent.clientX : moveEvent.clientY;
       const delta = local.direction === "vertical" ? edge === "end" ? pos - start : start - pos : edge === "start" ? start - pos : pos - start;
@@ -80,6 +83,7 @@ export function ResizeHandle(props) {
     const onMouseUp = () => {
       document.body.style.userSelect = "";
       document.body.style.overflow = "";
+      document.body.classList.remove(`cc-resizing-${local.direction}`);
       document.removeEventListener("mousemove", onMouseMove);
       document.removeEventListener("mouseup", onMouseUp);
       const threshold = local.collapseThreshold ?? 0;

@@ -2,6 +2,7 @@
 import { Show, createComponent, createEffect, createMemo, createRenderEffect } from "../../lib/reactivity.js";
 import { createMediaQuery } from "../../lib/primitives/media.js";
 import { Tabs } from "@/bs/tabs.js";
+import { CategoryTabStrip } from "@/components/category-tab-strip.js";
 import { IconButton } from "@/bs/icon-button.js";
 import { TooltipKeybind } from "@/bs/tooltip.js";
 import { SessionContextUsage } from "@/components/session-context-usage.js";
@@ -103,6 +104,13 @@ export function SessionSidePanel(props) {
       const frame = root.firstChild;
       const inner = frame.firstChild;
       const tabsHost = inner.firstChild;
+      // Outer category tab at the very top of the right sidebar (tabs-within-tabs:
+      // the review/context sub-tabs render below it). Make `inner` a column so the
+      // strip sits above the tabs host, which now flexes to fill the rest.
+      inner.classList.add("d-flex", "flex-column");
+      tabsHost.classList.remove("size-full", "h-100");
+      tabsHost.classList.add("w-100", "flex-1", "min-h-0");
+      inner.insertBefore(CategoryTabStrip([{ id: "review", label: "レビュー", icon: "bi-clipboard-check" }], "review"), tabsHost);
 
       // Close button (static markup verbatim from the original template,
       // including its hardcoded title/aria-label strings). Appended after the

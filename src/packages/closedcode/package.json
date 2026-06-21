@@ -9,6 +9,8 @@
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest --testTimeout 30000",
     "test:ci": "mkdir -p .artifacts/unit && NODE_OPTIONS='--experimental-vm-modules' jest --testTimeout 30000 --reporters=default --reporters=jest-junit",
     "test:leaks": "JEST_NO_FORCE_EXIT=1 NODE_OPTIONS='--experimental-vm-modules' jest --testTimeout 30000 --detectOpenHandles --runInBand",
+    "smoke:ollama": "node script/smoke-ollama-cli.mjs",
+    "smoke:ollama:tui": "node script/smoke-ollama-tui.mjs",
     "build": "node script/build.js",
     "fix-node-pty": "node script/fix-node-pty.js",
     "upgrade-opentui": "node script/upgrade-opentui.js",

@@ -198,6 +198,68 @@ export async function launchDesktopWithConfig(config) {
   return { browser, child, root, configDir };
 }
 
+/**
+ * Relaunch the desktop app against an EXISTING temp tree (same HOME / config /
+ * data / state dirs) from a prior launchDesktopWithConfig — for testing that data
+ * such as the session history survives a full process restart. The sidecar server
+ * and its SQLite DB live under those dirs, so reusing them re-reads the persisted
+ * state exactly as a real restart would.
+ * @param {string} root - The root temp dir returned by launchDesktopWithConfig.
+ * @param {Object} [config] - closedcode.json config to rewrite (defaults to the same minimal config).
+ * @returns {Promise<Object>} Handle with `browser` (CDP Browser), `child` (Electron process), and `root`.
+ */
+export async function relaunchDesktop(root, config = {}) {
+  const home = path.join(root, "home");
+  const configHome = path.join(root, "config");
+  const configDir = path.join(configHome, "closedcode");
+  const dataDir = path.join(root, "data");
+  const stateDir = path.join(root, "state");
+  const appDataDir = path.join(root, "app-data");
+  const debugPort = await freePort();
+
+  await writeFile(
+    path.join(configDir, "closedcode.json"),
+    JSON.stringify({ formatter: false, lsp: false, ...config }, null, 2),
+  );
+
+  const env = { ...process.env };
+  delete env.ELECTRON_RUN_AS_NODE;
+  Object.assign(env, {
+    HOME: home,
+    XDG_CONFIG_HOME: configHome,
+    XDG_DATA_HOME: dataDir,
+    XDG_STATE_HOME: stateDir,
+    CLOSEDCODE_APP_DATA_DIR: appDataDir,
+    CLOSEDCODE_CONFIG_DIR: configDir,
+    CLOSEDCODE_REMOTE_DEBUG: String(debugPort),
+    CLOSEDCODE_CHANNEL: "dev",
+    ELECTRON_ENABLE_LOGGING: "1",
+    NO_PROXY: "127.0.0.1,localhost,::1",
+    no_proxy: "127.0.0.1,localhost,::1",
+  });
+
+  const child = spawn(electronPath, [desktopRoot], {
+    cwd: desktopRoot,
+    env,
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  let stderr = "";
+  child.stderr?.on("data", (chunk) => {
+    stderr += chunk.toString();
+  });
+  child.stdout?.on("data", () => undefined);
+
+  await waitForPort(debugPort).catch((error) => {
+    child.kill();
+    error.message += stderr ? `\nElectron stderr:\n${stderr}` : "";
+    throw error;
+  });
+
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
+  return { browser, child, root };
+}
+
 // Resolve the renderer window: wait for the vcc://renderer page to finish the
 // loading.html -> index.html navigation on the same page object.
 /**

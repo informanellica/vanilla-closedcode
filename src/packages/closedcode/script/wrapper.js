@@ -20,7 +20,13 @@ const pkg = require(path.join(dir, "package.json"));
 const version = Script.version;
 
 // Platform packages produced by `build.js --sea` + `sea.js` on each target.
-const PLATFORMS = ["windows-x64", "linux-x64", "linux-x64-musl", "darwin-x64", "darwin-arm64"];
+// Declared as optionalDependencies so npm fetches the one matching the host's
+// os/cpu/libc. Linux ships glibc only (Debian/Ubuntu/RHEL/Fedora/...); musl/Alpine
+// is not a build target. linux-arm64 is declared for completeness / forward
+// compatibility (and to satisfy the launcher's arch-derived name) even though a
+// given release may not actually build/publish arm64 — npm skips any optional
+// dependency that isn't published, so x64/darwin installs are unaffected.
+const PLATFORMS = ["windows-x64", "linux-x64", "linux-arm64", "darwin-x64", "darwin-arm64"];
 
 const out = path.join(dir, "dist", "closedcode");
 fs.rmSync(out, { recursive: true, force: true });

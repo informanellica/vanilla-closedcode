@@ -1870,15 +1870,23 @@ PART_MAPPING["text"] = function TextPartDisplay(props) {
     return items.filter(x => !!x).join(" \u00B7 ");
   });
   const streaming = createMemo(() => props.message?.role === "assistant" && typeof props.message?.time.completed !== "number");
-  const text = () => (part().text ?? "").trim();
+  // part() resolves to AssistantParts' item(), which becomes undefined the
+  // instant the referenced part leaves the active session's part Map — e.g. when
+  // params.id flips (tab switch) while a turn is still streaming. These memos
+  // subscribe DIRECTLY to data.store.part[...], so a streaming delta re-runs them
+  // in the same flush wave that makes item() undefined, BEFORE the wrapping
+  // `Show when={item()}` tears the slot down. Optional-chain so a disposing slot
+  // yields false/empty instead of throwing "reading 'id'"/"reading 'text'";
+  // part() is still invoked, so the item() dependency (and reactivity) is intact.
+  const text = () => (part()?.text ?? "").trim();
   const isLastTextPart = createMemo(() => {
     const last = (data.store.part?.[props.message?.id] ?? []).filter(item => item?.type === "text" && !!item.text?.trim()).at(-1);
-    return last?.id === part().id;
+    return last?.id === part()?.id;
   });
   const showCopy = createMemo(() => {
     if (props.message?.role !== "assistant") return isLastTextPart();
     if (props.showAssistantCopyPartID === null) return false;
-    if (typeof props.showAssistantCopyPartID === "string") return props.showAssistantCopyPartID === part().id;
+    if (typeof props.showAssistantCopyPartID === "string") return props.showAssistantCopyPartID === part()?.id;
     return isLastTextPart();
   });
   const [copied, setCopied] = createSignal(false);

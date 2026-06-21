@@ -312,10 +312,19 @@ async function initialize() {
   if (needsMigration) {
     await Promise.race([loadingComplete.promise, delay(2_500)]);
   }
-  mainWindow = createMainWindow();
+  // autoShow:false — we reveal the main window OURSELVES below, only AFTER the
+  // splash is hidden, so the splash and the main window are never both on screen.
+  mainWindow = createMainWindow({ autoShow: false });
   wireMenu();
-  // Close the splash only once the main window has actually painted — no blank gap.
-  mainWindow.once("ready-to-show", () => overlay?.close());
+  // Once the main window has actually painted: hide the splash first (instant),
+  // THEN show the main window, THEN close the splash. Hiding before showing means
+  // there is no frame where both windows are visible at once; showing an
+  // already-painted window keeps it gap-free (no blank flash).
+  mainWindow.once("ready-to-show", () => {
+    if (overlay && !overlay.isDestroyed()) overlay.hide();
+    mainWindow.show();
+    if (overlay && !overlay.isDestroyed()) overlay.close();
+  });
 }
 /**
  * Build the application menu and bind its commands to the current main window.

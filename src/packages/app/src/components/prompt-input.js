@@ -6,7 +6,7 @@
 import { insert } from "../lib/reactivity.js";
 import { useFilteredList } from "@/lib/hooks.js";
 import { useSpring } from "@/vendor/ui/components/motion-spring.js";
-import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal } from "../lib/reactivity.js";
+import { createComponent, createEffect, createRenderEffect, on, Show, onCleanup, createMemo, createSignal, untrack } from "../lib/reactivity.js";
 import { createStore } from "../lib/store.js";
 import { useLocal } from "@/context/local.js";
 import { useProvidersController } from "@/controllers/providers.js";
@@ -1572,28 +1572,36 @@ export const PromptInput = props => {
       get keybind() {
         return command.keybind("agent.cycle");
       },
-      children: createComponent(Select, {
-        size: "normal",
-        get options() {
-          return agentNames();
-        },
-        get current() {
-          return local.agent.current()?.name ?? "";
-        },
-        onSelect: value => {
-          local.agent.set(value);
-          restoreFocus();
-        },
-        "class": "capitalize max-w-[160px] text-body",
-        valueClass: "truncate fw-normal text-body",
-        get triggerStyle() {
-          return control();
-        },
-        triggerProps: {
-          "data-action": "prompt-agent"
-        },
-        variant: "ghost"
-      })
+      // bs/select.js's Select snapshots options/current ONCE at build time, but
+      // the agent list loads asynchronously — a Select built before agents arrive
+      // stays blank (the reported empty selector). Re-create it whenever the agent
+      // list or current agent changes (the pattern settings-general.js uses for
+      // its async selects); control() (the mode animation) is read untracked so it
+      // doesn't churn the select every frame.
+      children: (() => {
+        const slot = template(`<span style="display:contents"></span>`);
+        createRenderEffect(() => {
+          const options = agentNames();
+          const current = local.agent.current()?.name ?? "";
+          const sel = createComponent(Select, {
+            size: "normal",
+            options,
+            current,
+            onSelect: value => {
+              local.agent.set(value);
+              restoreFocus();
+            },
+            "class": "capitalize max-w-[160px] text-body",
+            valueClass: "truncate fw-normal text-body",
+            triggerStyle: untrack(() => control()),
+            triggerProps: { "data-action": "prompt-agent" },
+            variant: "ghost"
+          });
+          sel.setAttribute("data-action", "prompt-agent");
+          slot.replaceChildren(sel);
+        });
+        return slot;
+      })()
     }));
     bindFadeIn(el, agentsShouldFadeIn);
     return el;

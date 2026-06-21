@@ -10,13 +10,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       dpkg fakeroot rpm binutils \
     && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
+# Release version baked into the build. Override with --build-arg CLOSEDCODE_VERSION=...
+ARG CLOSEDCODE_VERSION=0.1.0
 ENV HUSKY=0 \
     CI=1 \
     npm_config_fund=false \
     npm_config_audit=false \
     # .git is excluded from the build context; pin the version so the build's
     # `git branch` channel probe never shells out.
-    CLOSEDCODE_VERSION=0.1.0-dev \
+    CLOSEDCODE_VERSION=${CLOSEDCODE_VERSION} \
     ELECTRON_CACHE=/root/.cache/electron \
     ELECTRON_BUILDER_CACHE=/root/.cache/electron-builder
 COPY . /app
