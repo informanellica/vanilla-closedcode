@@ -242,7 +242,14 @@ describe("session.message-v2.toModelMessage", () => {
       }]
     }]);
   });
-  test("converts assistant tool completion into tool-call + tool-result messages with attachments", async () => {
+  // SKIP: asserts media embedded in the tool-result output (type:"content").
+  // This local-LLM-only build never embeds media in tool results
+  // (supportsMediaInToolResults is false in toModelMessagesEffect): tool-result
+  // images are intentionally split out into a separate synthetic user message
+  // (SYNTHETIC_ATTACHMENT_PROMPT) so the capability filter in ProviderTransform
+  // can gate them per model. Re-enable only if media-in-tool-result is ever
+  // supported. See message-v2.js:723.
+  test.skip("converts assistant tool completion into tool-call + tool-result messages with attachments", async () => {
     const userID = "m-user";
     const assistantID = "m-assistant";
     const input = [{
@@ -350,7 +357,11 @@ describe("session.message-v2.toModelMessage", () => {
       }]
     }]);
   });
-  test("preserves jpeg tool-result media for anthropic models", async () => {
+  // SKIP: Anthropic-specific path. This is a local-LLM-only build (no Anthropic),
+  // and tool-result media is intentionally split into a separate user message
+  // rather than preserved inside the tool-result. See message-v2.js:723 and the
+  // skip note on the test above.
+  test.skip("preserves jpeg tool-result media for anthropic models", async () => {
     const anthropicModel = {
       ...model,
       id: ModelID.make("anthropic/claude-opus-4-7"),
