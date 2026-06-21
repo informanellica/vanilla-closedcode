@@ -85,6 +85,34 @@ docker cp cc-sea-x:/app/packages/closedcode/dist/closedcode-linux-x64 ./dist/
 docker rm -f cc-sea-x
 ```
 
+## Signing & notarizing (macOS)
+
+The `codesign --sign -` above is **ad-hoc** — fine for local runs, but a build
+distributed to other Macs must be **Developer ID signed + notarized** or
+Gatekeeper blocks it. The SEA package has many Mach-O files (native `.node`
+addons, node-pty's `spawn-helper`, `.bare` dylibs), and `notarytool` rejects the
+archive unless *every* one is signed with a Developer ID cert, a secure
+timestamp, and the hardened runtime. `script/sign-mac.sh` discovers them by file
+type and signs them all, then re-signs the main binary with the JIT/library
+entitlements in `resources/entitlements.mac.plist`:
+
+```sh
+node script/build.js --sea          # build.js prunes foreign-arch prebuilds
+node script/sea.js                  #   so only this arch's Mach-O remain
+CC_MAC_SIGN_ID="Developer ID Application: Name (TEAMID)" \
+  script/sign-mac.sh dist/closedcode-darwin-arm64
+
+# notarize the signed package (App Store Connect API key in the env)
+ditto -c -k --keepParent dist/closedcode-darwin-arm64 /tmp/cc-darwin-arm64.zip
+xcrun notarytool submit /tmp/cc-darwin-arm64.zip \
+  --key "$APPLE_API_KEY" --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
+```
+
+A bare executable can't have a notarization ticket stapled (only `.app`/`.dmg`/
+`.pkg` can), so the ticket is verified online on first run. `build.js`'s prune
+step is what keeps notarization green: without it the darwin package ships
+x86_64/iOS prebuilds whose unsigned Mach-O fail validation.
+
 ## Startup performance (Windows)
 
 A large unsigned SEA can feel slow to launch on Windows for two distinct reasons:

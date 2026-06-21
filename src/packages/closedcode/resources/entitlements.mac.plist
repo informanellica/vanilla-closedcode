@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Node's V8 JIT writes+executes memory, so a hardened-runtime closedcode
+	     binary needs these two or it crashes on launch. -->
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+	<!-- The SEA loads native sidecars (node-pty, tree-sitter, koffi, sqlite3,
+	     @parcel/watcher) from bin/node_modules at runtime; allow loading those
+	     dylibs/.node bundles alongside hardened runtime. -->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+</dict>
+</plist>
