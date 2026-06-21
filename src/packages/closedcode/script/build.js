@@ -456,7 +456,59 @@ function copySidecars(outRoot) {
   }
   console.log(`copied ${count} sidecar packages -> ${path.relative(dir, outRoot)}/node_modules`);
 }
-if (SEA) copySidecars(path.join(outDir, "bin"));
+/**
+ * Strip foreign-platform prebuilds and node-gyp build intermediates from the
+ * copied sidecar tree, leaving only the binaries this target actually loads.
+ * cpSync copies each dep wholesale, so the darwin-arm64 SEA would otherwise ship
+ * x86_64/iOS Mach-O prebuilds (bare-fs/bare-os/koffi/tree-sitter, …) plus stray
+ * `.o` objects from build/Release/obj.target. Those are dead weight AND make
+ * `notarytool` reject the archive (unsigned / wrong-arch Mach-O), so drop them:
+ * keep only prebuilds/<platform>-<arch>, koffi build/koffi/<platform>_<arch>, and
+ * the compiled bindings — never the obj.target intermediates.
+ * @param {string} outRoot - The bin/ dir whose node_modules/ was just populated.
+ * @returns {void}
+ */
+function pruneForeignBinaries(outRoot) {
+  const keepPrebuild = `${process.platform}-${process.arch}`; // e.g. darwin-arm64
+  const keepKoffi = `${process.platform}_${process.arch}`; // koffi uses os_arch
+  const nmRoot = path.join(outRoot, "node_modules");
+  if (!fs.existsSync(nmRoot)) return;
+  let removed = 0;
+  const rm = p => {
+    fs.rmSync(p, { recursive: true, force: true });
+    removed++;
+  };
+  const walk = d => {
+    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+      const p = path.join(d, e.name);
+      if (!e.isDirectory()) {
+        if (e.name.endsWith(".o")) rm(p); // node-gyp object intermediates
+        continue;
+      }
+      if (e.name === "obj.target") {
+        rm(p);
+        continue;
+      }
+      if (e.name === "prebuilds") {
+        for (const s of fs.readdirSync(p, { withFileTypes: true }))
+          if (s.isDirectory() && s.name !== keepPrebuild) rm(path.join(p, s.name));
+        continue;
+      }
+      if (path.basename(d) === "koffi" && e.name === "build" && fs.existsSync(path.join(p, "koffi"))) {
+        const kdir = path.join(p, "koffi");
+        for (const s of fs.readdirSync(kdir, { withFileTypes: true }))
+          if (s.isDirectory() && s.name !== keepKoffi) rm(path.join(kdir, s.name));
+      }
+      walk(p);
+    }
+  };
+  walk(nmRoot);
+  console.log(`pruned ${removed} foreign/intermediate artifacts -> ${path.relative(dir, outRoot)}/node_modules`);
+}
+if (SEA) {
+  copySidecars(path.join(outDir, "bin"));
+  pruneForeignBinaries(path.join(outDir, "bin"));
+}
 
 console.log(`built ${name} → ${outDir}`);
 export const binaries = {
