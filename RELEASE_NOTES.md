@@ -30,13 +30,15 @@ A **local-only, no-egress AI coding workspace** with full-featured CLI, desktop 
 | Component | Platform | File |
 |-----------|----------|------|
 | Desktop GUI | Windows x64 (NSIS installer, code-signed) | `vanilla-closedcode-win-x64.exe` |
+| Desktop GUI | macOS arm64 (Apple Silicon, DMG) | `vanilla-closedcode-mac-arm64.dmg` |
 | Desktop GUI | Linux x64 (AppImage) | `vanilla-closedcode-linux-x86_64.AppImage` |
 | Desktop GUI | Linux x64 (Debian) | `vanilla-closedcode-linux-amd64.deb` |
 | Desktop GUI | Linux x64 (RPM) | `vanilla-closedcode-linux-x86_64.rpm` |
 | CLI + TUI (Node SEA) | Windows x64 | `closedcode-windows-x64.tar.gz` |
+| CLI + TUI (Node SEA) | macOS arm64 | `closedcode-darwin-arm64.tar.gz` |
 | CLI + TUI (Node SEA) | Linux x64 (glibc) | `closedcode-linux-x64.tar.gz` |
 
-> CLI/TUI archives contain the SEA binary plus its native sidecars — extract the whole folder and run `bin/closedcode(.exe)`. Linux GUI/CLI binaries may need `chmod +x` after download. macOS `.dmg` is published on the v0.1.0-preview release. The Windows GUI installer is code-signed; the CLI archives and Linux binaries are unsigned.
+> CLI/TUI archives contain the SEA binary plus its native sidecars — extract the whole folder and run `bin/closedcode(.exe)`. Linux GUI/CLI binaries may need `chmod +x` after download. The macOS `.dmg` and the `closedcode-darwin-arm64.tar.gz` archive are included in this release. The Windows GUI installer is code-signed; the CLI archives and Linux binaries are unsigned.
 
 ### ✨ Highlights
 
