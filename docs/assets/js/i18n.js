@@ -44,8 +44,9 @@
     sec_download: { en: "Download", ja: "ダウンロード" },
     dl_p: { en: "Builds are published on the GitHub Releases page. Grab the installer for your platform from the latest release.", ja: "ビルドは GitHub Releases ページで公開しています。最新リリースからお使いのプラットフォーム向けインストーラを入手してください。" },
     btn_releases: { en: "Go to Releases", ja: "リリースへ" },
-    dl_li1: { en: '<strong>Windows</strong> (64-bit) — installer <code>.exe</code> — available now (preview).', ja: '<strong>Windows</strong>（64-bit）— インストーラ <code>.exe</code> — プレビュー版を公開中。' },
-    dl_li2: { en: '<strong>macOS</strong> (Apple Silicon / arm64) — <code>.dmg</code> — included in this preview.', ja: '<strong>macOS</strong>（Apple Silicon / arm64）— <code>.dmg</code> — 本プレビューで対応。' },
+    dl_li1: { en: '<strong>Windows</strong> (64-bit) — GUI installer <code>.exe</code> (code-signed), plus a CLI/TUI archive.', ja: '<strong>Windows</strong>（64-bit）— GUI インストーラ <code>.exe</code>（署名済み）と CLI/TUI アーカイブ。' },
+    dl_li2: { en: '<strong>macOS</strong> (Apple Silicon / arm64) — GUI <code>.dmg</code>, plus a CLI/TUI archive.', ja: '<strong>macOS</strong>（Apple Silicon / arm64）— GUI <code>.dmg</code> と CLI/TUI アーカイブ。' },
+    dl_li_linux: { en: '<strong>Linux</strong> (x64) — GUI <code>.AppImage</code> / <code>.deb</code> / <code>.rpm</code>, plus a CLI/TUI archive.', ja: '<strong>Linux</strong>（x64）— GUI <code>.AppImage</code> / <code>.deb</code> / <code>.rpm</code> と CLI/TUI アーカイブ。' },
     dl_li3: { en: "A local LLM runtime (for example an Ollama / llama.cpp compatible endpoint) is required for inference.", ja: "推論にはローカル LLM ランタイム（例: Ollama / llama.cpp 互換エンドポイント）が必要です。" },
 
     // getting started
